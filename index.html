@@ -1151,8 +1151,11 @@ body { background: #08080f !important; }
             <div class="text-center">
                 <h1 class="text-4xl font-bold epic-glow-text" style="color:#ff4444;text-shadow:0 0 25px #ff4444,0 0 50px #ff0000,0 0 80px rgba(255,0,0,0.3);animation:goTitlePulse 2s ease-in-out infinite;">VOCÊ MORREU</h1>
                 <div class="mt-2 text-[10px] uppercase tracking-[0.2em]" style="color:rgba(255,60,60,0.4);">O Abismo Reivindica Mais Um</div>
+                <div style="margin-top:8px;font-size:11px;color:rgba(255,255,255,0.45);"><span id="go-class"></span> &middot; <span id="go-floor"></span> &middot; <span id="go-time"></span></div>
             </div>
             <div id="game-over-stats" class="w-full text-sm" style="color:rgba(255,255,255,0.6);"></div>
+            <div id="go-best-stats" style="width:100%;"></div>
+            <div id="go-records" style="width:100%;text-align:center;"></div>
             <div id="go-tip" class="text-xs hidden text-center px-4" style="color:#ffcc00;"></div>
             <div id="go-lore-teaser" class="text-xs hidden text-center px-4" style="color:#e0b6ff;"></div>
             <button id="restart-btn" style="width:100%;padding:16px 0;border-radius:12px;color:#fff;font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:0.05em;background:linear-gradient(135deg,#b8000f,#e84525);border:1px solid rgba(255,100,80,0.3);box-shadow:0 4px 20px rgba(200,0,15,0.3);transition:all 0.3s;text-shadow:0 1px 4px rgba(0,0,0,0.4);cursor:pointer;">TENTAR NOVAMENTE</button>
@@ -2239,11 +2242,7 @@ var CONFIG = {
      // Canvas & Rendering
     CANVAS_DEFAULT_WIDTH: 800,
     CANVAS_DEFAULT_HEIGHT: 600,
-    CAMERA_LERP: 0.1,
     TARGET_FPS: 60,
-    JOYSTICK_RADIUS: 40,
-    JOYSTICK_KNOB_RADIUS: 20,
-    JOYSTICK_MAX_DIST: 40,
     TILE_SIZE: 48,
     WALL_COLOR: '#1a1a22',
     FLOOR_COLOR: '#080810',
@@ -14941,7 +14940,7 @@ window.SkillTreeUI = SkillTreeUI;
 // === js/core/bootstrap.js ===
 // GAME BOOTSTRAP - New game initialization
 // v=2 - CLEAN REWRITE
-console.error("====== BOOTSTRAP.JS IS EXECUTING ======");
+console.log("====== BOOTSTRAP.JS IS EXECUTING ======");
 
 window.GameBootstrap = {
     start(cls) {
