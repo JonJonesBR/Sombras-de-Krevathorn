@@ -6264,9 +6264,9 @@ const SHOP_ITEMS = [
     { id: 'maxHpUp', name: 'Upgrade de Vida', desc: '+30 Max HP', cost: 120, effect: (p) => { p.maxHp += 30; p.hp += 30; } },
     { id: 'weaponUpgrade', name: 'Upgrade de Arma', desc: '+1 weapon lv', cost: 175, effect: (p) => { p.weaponLevel = Math.min(5, p.weaponLevel + 1); } },
     { id: 'fullHeal', name: 'Cura Completa', desc: 'Full HP', cost: 200, effect: (p) => { p.hp = p.maxHp; } },
-    { id: 'petWolf', name: ' Wolf Pet', desc: 'Tank companion', cost: 250, effect: (p) => { pets.push(new Pet('wolf')); } },
-    { id: 'petOwl', name: ' Owl Pet', desc: 'Damage buffer', cost: 300, effect: (p) => { pets.push(new Pet('owl')); } },
-    { id: 'petSpirit', name: ' Spirit Healer', desc: 'Heals over time', cost: 350, effect: (p) => { pets.push(new Pet('spirit')); } },
+    { id: 'petWolf', name: ' Lobo Guardio', desc: 'Companheiro tanque, ataca inimigos prximos', cost: 250, effect: (p) => { pets.push(new Pet('wolf')); } },
+    { id: 'petOwl', name: ' Coruja Arcana', desc: 'Concede +25% de dano periodicamente', cost: 300, effect: (p) => { pets.push(new Pet('owl')); } },
+    { id: 'petSpirit', name: ' Esprito Curador', desc: 'Cura o jogador ao longo do tempo', cost: 350, effect: (p) => { pets.push(new Pet('spirit')); } },
     { id: 'reroll', name: ' Reroll Loja', desc: 'Troca os itens', cost: 20, effect: (p) => { ShopSystem.rerollItems(); } }
 ];
 
@@ -11869,6 +11869,33 @@ const PET_TYPES = {
         scoutRadius: 250,      // reveals enemies farther away (light radius boost)
         diveInterval: 90, diveDamage: 40,
         desc: 'Revela inimigos longe. Monte para +100% vel.'
+    },
+    // Shop pet: Tank companion
+    wolf: {
+        name: ' Lobo Guardio',
+        color: '#889966',
+        hp: 150, damage: 18, radius: 15,
+        ability: 'guard',
+        guardRange: 70, guardInterval: 40,
+        desc: 'Ataca inimigos prximos com mordidas frequentes'
+    },
+    // Shop pet: Damage buffer
+    owl: {
+        name: ' Coruja Arcana',
+        color: '#ddccff',
+        hp: 55, damage: 5, radius: 12,
+        ability: 'buff',
+        buffInterval: 300, buffDuration: 240,
+        desc: 'Concede +25% de dano periodicamente'
+    },
+    // Shop pet: Heals over time
+    spirit: {
+        name: ' Esprito Curador',
+        color: '#88ffcc',
+        hp: 70, damage: 0, radius: 13,
+        ability: 'heal',
+        healInterval: 180, healAmount: 8,
+        desc: 'Cura o jogador ao longo do tempo'
     }
 };
 
@@ -12016,6 +12043,35 @@ class Pet {
                 }
             }
         }
+
+        if(this.ability === 'guard' && this._abilityTimer % this.data.guardInterval === 0) {
+            const guardSq = this.data.guardRange * this.data.guardRange;
+            let nearest = null, minDSq = guardSq;
+            for(let i = 0; i < entities.length; i++) {
+                const e = entities[i];
+                if((e instanceof Enemy || e.isEnemy) && e.alive) {
+                    const edx = e.x - this.x, edy = e.y - this.y;
+                    const dSq = edx * edx + edy * edy;
+                    if(dSq < minDSq) { minDSq = dSq; nearest = e; }
+                }
+            }
+            if(nearest) {
+                nearest.takeDamage(this.damage, m, player);
+                spawnParticles(nearest.x, nearest.y, this.color, 8, 3);
+            }
+        }
+
+        if(this.ability === 'buff' && this._abilityTimer % this.data.buffInterval === 0) {
+            player.damageBoost = Math.max(player.damageBoost || 0, this.data.buffDuration);
+            spawnParticles(player.x, player.y, this.color, 10, 3);
+        }
+
+        if(this.ability === 'heal' && this._abilityTimer % this.data.healInterval === 0) {
+            if(player.hp < player.maxHp) {
+                player.hp = Math.min(player.maxHp, player.hp + this.data.healAmount);
+                spawnParticles(player.x, player.y, this.color, 6, 2);
+            }
+        }
     }
 
     takeDamage(a, m) {
@@ -12068,10 +12124,23 @@ class Pet {
             // Wing spread line
             ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
             ctx.beginPath(); ctx.moveTo(sx-this.radius-6, sy+bob-4); ctx.lineTo(sx, sy+bob); ctx.lineTo(sx+this.radius+6, sy+bob-4); ctx.stroke();
+        } else if(this.type === 'wolf') {
+            // Ear triangles
+            ctx.beginPath(); ctx.moveTo(sx-6, sy+bob-this.radius+2); ctx.lineTo(sx-9, sy+bob-this.radius-6); ctx.lineTo(sx-3, sy+bob-this.radius-2); ctx.closePath(); ctx.fill();
+            ctx.beginPath(); ctx.moveTo(sx+6, sy+bob-this.radius+2); ctx.lineTo(sx+9, sy+bob-this.radius-6); ctx.lineTo(sx+3, sy+bob-this.radius-2); ctx.closePath(); ctx.fill();
+        } else if(this.type === 'owl') {
+            // Round eyes
+            ctx.beginPath(); ctx.arc(sx-4, sy+bob-2, 2.5, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(sx+4, sy+bob-2, 2.5, 0, Math.PI*2); ctx.fill();
+        } else if(this.type === 'spirit') {
+            // Faint halo ring
+            ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.5 + Math.sin(this.timer * 0.1) * 0.3;
+            ctx.beginPath(); ctx.arc(sx, sy+bob-this.radius-6, 5, 0, Math.PI*2); ctx.stroke();
+            ctx.globalAlpha = 1;
         }
         // Label text (ASCII only, fast)
         ctx.fillStyle = '#fff'; ctx.font = 'bold 8px ' + COLORS.CANVAS_FONT; ctx.textAlign = 'center';
-        const labels = { horse: 'CORCEL', dragon: 'DRAGAO', eagle: 'AGUIA' };
+        const labels = { horse: 'CORCEL', dragon: 'DRAGAO', eagle: 'AGUIA', wolf: 'LOBO', owl: 'CORUJA', spirit: 'ESPIRITO' };
         ctx.fillText(labels[this.type] || '?', sx, sy + bob + this.radius + 10);
 
         // Mounted indicator
