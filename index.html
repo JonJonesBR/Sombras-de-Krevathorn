@@ -930,6 +930,18 @@ body { background: #08080f !important; }
                 Evolua seu personagem em dungeons cada vez mais dificeis.
             </div>
 
+            <!-- Difficulty Selection -->
+            <div style="margin-bottom:8px;">
+                <div style="text-align:center;font-size:clamp(0.55rem,2vw,0.68rem);letter-spacing:0.25em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:5px;">Dificuldade</div>
+                <div id="difficulty-row" style="display:flex;gap:5px;">
+                    <button class="diff-btn" data-diff="facil" onclick="window.setDifficulty('facil')" style="flex:1;padding:8px 2px;border-radius:12px;font-size:clamp(0.6rem,2.4vw,0.78rem);font-weight:600;border:1.5px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.45);cursor:pointer;transition:all 0.2s;touch-action:manipulation;">🌱 Fácil</button>
+                    <button class="diff-btn" data-diff="normal" onclick="window.setDifficulty('normal')" style="flex:1;padding:8px 2px;border-radius:12px;font-size:clamp(0.6rem,2.4vw,0.78rem);font-weight:600;border:1.5px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.45);cursor:pointer;transition:all 0.2s;touch-action:manipulation;">⚔️ Normal</button>
+                    <button class="diff-btn" data-diff="dificil" onclick="window.setDifficulty('dificil')" style="flex:1;padding:8px 2px;border-radius:12px;font-size:clamp(0.6rem,2.4vw,0.78rem);font-weight:600;border:1.5px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.45);cursor:pointer;transition:all 0.2s;touch-action:manipulation;">💀 Difícil</button>
+                    <button class="diff-btn" data-diff="pesadelo" onclick="window.setDifficulty('pesadelo')" style="flex:1;padding:8px 2px;border-radius:12px;font-size:clamp(0.6rem,2.4vw,0.78rem);font-weight:600;border:1.5px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.45);cursor:pointer;transition:all 0.2s;touch-action:manipulation;">🔥 Pesadelo</button>
+                </div>
+                <div id="difficulty-desc" style="text-align:center;font-size:clamp(0.58rem,2vw,0.7rem);color:rgba(255,255,255,0.4);margin-top:4px;min-height:1.2em;line-height:1.3;">A experiência padrão de Krevathorn.</div>
+            </div>
+
             <!-- Continue (shown only if a saved run exists) -->
             <button id="continue-run-btn" onclick="window.continueGame()" style="display:none;width:100%;padding:12px;margin-bottom:8px;border-radius:16px;font-size:clamp(0.85rem,3vw,1rem);font-weight:800;border:1.5px solid rgba(60,227,106,0.4);background:linear-gradient(135deg,rgba(0,136,54,0.25),rgba(60,227,106,0.15));color:#3ce36a;text-transform:uppercase;letter-spacing:0.06em;transition:all 0.2s;touch-action:manipulation;">
                 ▶ Continuar Jogo
@@ -1018,7 +1030,10 @@ body { background: #08080f !important; }
                     <div id="heat-bar"></div>
                 </div>
             </div>
-            <div id="level-badge" class="lv-text" style="font-size:9px;padding:2px 10px;background:rgba(224,182,255,0.1);border-radius:999px;border:1px solid rgba(224,182,255,0.15);">N1</div>
+            <div style="display:flex;gap:4px;align-items:center;">
+                <span id="difficulty-badge" class="lv-text" style="font-size:9px;padding:2px 8px;background:rgba(224,182,255,0.08);border-radius:999px;border:1px solid rgba(224,182,255,0.25);">⚔️ Normal</span>
+                <div id="level-badge" class="lv-text" style="font-size:9px;padding:2px 10px;background:rgba(224,182,255,0.1);border-radius:999px;border:1px solid rgba(224,182,255,0.15);">N1</div>
+            </div>
         </div>
 
         <!-- DUNGEON PROGRESS (top center, during dungeons) -->
@@ -4702,7 +4717,7 @@ function drawDebugOverlay(ctx) {
         `Hazards: ${hazards.length} | Pets: ${pets.length}`,
         `Death Anims: ${DeathAnimations.getActiveCount()} | Remains: ${DeathAnimations.getRemainsCount()}`,
         `Biome: ${BiomeSystem.getDisplayName()} | Dungeons: ${BiomeSystem.dungeonsCompleted}`,
-        `Difficulty: Lv${DifficultySystem.dungeonLevel} | DDA: ${_ddaInfo.status} (${_ddaInfo.multiplier.toFixed(2)}x)`,
+        `Difficulty: ${DifficultySystem.getPreset().name} | Lv${DifficultySystem.dungeonLevel} | DDA: ${_ddaInfo.status} (${_ddaInfo.multiplier.toFixed(2)}x)`,
         `Errors: ${Debug.errorCount} | Warns: ${Debug.warnCount}`,
         `Event: ${currentEvent ? currentEvent.type : 'none'}`,
         `Boss Active: ${bossActive} | Dungeon: ${dungeonLevel}`,
@@ -6867,9 +6882,26 @@ _narrativeGlobal.NarrativeSystem = NarrativeSystem;
     <script>
 // === js/systems/difficulty.js ===
 // DIFFICULTY SCALING SYSTEM - Dynamic and dungeon-based difficulty
+
+// ============================================================
+// Player-selectable difficulty presets (chosen on start screen)
+// hpMult  - multiplies enemy/boss HP
+// dmgMult - multiplies damage the player takes
+// xpMult  - multiplies XP rewards (risk vs reward)
+// ============================================================
+const DIFFICULTY_PRESETS = {
+    facil:    { name: 'Fácil',    icon: '🌱', hpMult: 0.70, dmgMult: 0.60, xpMult: 0.80, color: '#5cff82', desc: 'Inimigos mais fracos. Ideal para aprender o jogo.' },
+    normal:   { name: 'Normal',   icon: '⚔️', hpMult: 1.00, dmgMult: 1.00, xpMult: 1.00, color: '#e0b6ff', desc: 'A experiência padrão de Krevathorn.' },
+    dificil:  { name: 'Difícil',  icon: '💀', hpMult: 1.40, dmgMult: 1.35, xpMult: 1.30, color: '#ffaa44', desc: 'Inimigos mais fortes. +30% de XP.' },
+    pesadelo: { name: 'Pesadelo', icon: '🔥', hpMult: 1.90, dmgMult: 1.70, xpMult: 1.60, color: '#ff4444', desc: 'Só para veteranos. +60% de XP.' }
+};
+
 const DifficultySystem = {
     // Current dungeon level (tracks difficulty progression)
     dungeonLevel: 1,
+
+    // Player-selected difficulty preset (key of DIFFICULTY_PRESETS)
+    preset: 'normal',
 
     // Kill tracking for dynamic difficulty
     recentKills: 0,
@@ -6917,6 +6949,9 @@ const DifficultySystem = {
 
         // Apply DDA
         hp *= this.ddaMultiplier;
+
+        // Apply player-selected difficulty preset
+        hp *= this.getPreset().hpMult;
 
         return Math.max(1, Math.floor(hp));
     },
@@ -7039,6 +7074,23 @@ const DifficultySystem = {
     },
 
     // ============================================================
+    // Player-selected difficulty preset helpers
+    // ============================================================
+    getPreset() {
+        return DIFFICULTY_PRESETS[this.preset] || DIFFICULTY_PRESETS.normal;
+    },
+
+    // XP reward multiplier (risk vs reward)
+    getXpMult() {
+        return this.getPreset().xpMult;
+    },
+
+    // Multiplier for damage taken by the player
+    getPlayerDamageTakenMult() {
+        return this.getPreset().dmgMult;
+    },
+
+    // ============================================================
     // Reset on game restart
     // ============================================================
     reset() {
@@ -7050,6 +7102,61 @@ const DifficultySystem = {
         this.lastAdjustmentFrame = 0;
     }
 };
+
+// ============================================================
+// Difficulty selection API (used by the start screen buttons)
+// ============================================================
+window.setDifficulty = function(key) {
+    if (!DIFFICULTY_PRESETS[key]) return;
+    DifficultySystem.preset = key;
+    try { localStorage.setItem('krev_difficulty', key); } catch(e) {}
+    window._refreshDifficultyUI();
+};
+
+window._refreshDifficultyUI = function() {
+    var cur = DifficultySystem.preset;
+    var preset = DifficultySystem.getPreset();
+    // Start screen buttons
+    var btns = document.querySelectorAll('.diff-btn');
+    for (var i = 0; i < btns.length; i++) {
+        var k = btns[i].getAttribute('data-diff');
+        var p = DIFFICULTY_PRESETS[k];
+        if (!p) continue;
+        var sel = (k === cur);
+        btns[i].style.borderColor = sel ? p.color : 'rgba(255,255,255,0.12)';
+        btns[i].style.background = sel ? p.color + '26' : 'rgba(255,255,255,0.04)';
+        btns[i].style.color = sel ? p.color : 'rgba(255,255,255,0.45)';
+        btns[i].style.boxShadow = sel ? ('0 0 12px ' + p.color + '44') : 'none';
+        btns[i].style.fontWeight = sel ? '800' : '600';
+    }
+    // Description text under the buttons
+    var desc = document.getElementById('difficulty-desc');
+    if (desc) {
+        desc.textContent = preset.desc;
+        desc.style.color = preset.color;
+    }
+    // HUD badge
+    var badge = document.getElementById('difficulty-badge');
+    if (badge) {
+        badge.textContent = preset.icon + ' ' + preset.name;
+        badge.style.color = preset.color;
+        badge.style.borderColor = preset.color + '66';
+        badge.style.background = preset.color + '14';
+    }
+};
+
+// Restore saved difficulty preference
+try {
+    var _savedDiff = localStorage.getItem('krev_difficulty');
+    if (_savedDiff && DIFFICULTY_PRESETS[_savedDiff]) DifficultySystem.preset = _savedDiff;
+} catch(e) {}
+
+// Sync UI once DOM is ready (script runs after the start screen markup)
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', window._refreshDifficultyUI);
+} else {
+    window._refreshDifficultyUI();
+}
 
 
 </script>
@@ -12517,6 +12624,7 @@ class Player extends Entity {
 
     gainXP(a) {
         let xpMult = (currentEvent && currentEvent.type === 'doubleXP') ? CONFIG.DOUBLE_XP_MULTIPLIER : 1;
+        if(typeof DifficultySystem !== 'undefined') xpMult *= DifficultySystem.getXpMult();
         if(window.RelicSystem) xpMult *= RelicSystem.xpMult(this);
         if(prestigeLevel > 0) { const prestigeData = PRESTIGE_REWARDS.find(r => prestigeLevel >= r.level) || PRESTIGE_REWARDS[0]; xpMult *= (1 + prestigeData.bonus); }
         this.xp += a * xpMult;
@@ -13066,6 +13174,8 @@ class Player extends Entity {
         if(this.type === 'mage' && this.orbShieldReady && a > 0) { this.orbShieldReady = false; this.orbShieldTimer = 0; spawnParticles(this.x, this.y, COLORS.CLASS_MAGE, 15, 4); SND.play(440, 'sine', 0.2, 0.2); DamageNumbers.add(this.x, this.y, 'ORB SHIELD!', 'heal'); return; }
         if(this.type === 'rogue' || this.type === 'mage') this.mageComboCount = 0;
         let dmg = a;
+        // Player-selected difficulty preset scales all incoming damage
+        if (a > 0 && typeof DifficultySystem !== 'undefined') dmg = a * DifficultySystem.getPlayerDamageTakenMult();
         if(typeof pets !== 'undefined' && pets.length > 0) { const mount = pets.find(p => p.alive && p.mounted); if(mount) dmg = mount.onPlayerHit(dmg); }
         
         // VIBRATION FEEDBACK
