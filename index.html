@@ -470,6 +470,64 @@ body { background: #08080f !important; }
     box-shadow: 0 0 12px rgba(157, 78, 221, 0.25);
 }
 
+/* ── Settings UI Utility Classes ── */
+/* Flex & Layout */
+.flex { display: flex; }
+.flex-1 { flex: 1; }
+.gap-2 { gap: 8px; }
+.w-full { width: 100%; }
+.overflow-y-auto { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+
+/* Spacing */
+.mb-2 { margin-bottom: 8px; }
+.mb-4 { margin-bottom: 16px; }
+.mb-5 { margin-bottom: 20px; }
+.mt-4 { margin-top: 16px; }
+.py-3 { padding-top: 12px; padding-bottom: 12px; }
+.py-4 { padding-top: 16px; padding-bottom: 16px; }
+.px-2 { padding-left: 8px; padding-right: 8px; }
+
+/* Typography */
+.text-2xl { font-size: 24px; line-height: 1.3; }
+.text-xs { font-size: 12px; }
+.text-sm { font-size: 14px; }
+.font-bold { font-weight: 700; }
+.text-center { text-align: center; }
+.text-white { color: #ffffff; }
+.text-gray-300 { color: #d1d5db; }
+.uppercase { text-transform: uppercase; }
+.tracking-widest { letter-spacing: 0.1em; }
+.opacity-90 { opacity: 0.9; }
+
+/* Colors (theme-aware) */
+.text-primary { color: #e0b6ff; }
+.text-secondary { color: #9ca3af; }
+.bg-primary\/30 { background: rgba(224, 182, 255, 0.3); }
+.bg-primary\/10 { background: rgba(224, 182, 255, 0.1); }
+.border-primary { border-color: #e0b6ff; }
+.border-white\/15 { border-color: rgba(255, 255, 255, 0.15); }
+.border { border: 1px solid; }
+
+/* Border radius */
+.rounded-xl { border-radius: 12px; }
+
+/* Headline font */
+.font-headline-xl { font-family: "Newsreader", Georgia, "Times New Roman", serif; letter-spacing: 0.03em; }
+
+/* Transitions */
+.transition-all { transition: all 0.2s ease-in-out; }
+
+/* Panel animations */
+.fade-in-panel { animation: fadeInPanel 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+@keyframes fadeInPanel {
+    from { opacity: 0; transform: translateY(12px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.fade-out-panel { animation: fadeOutPanel 0.15s ease-in forwards; }
+@keyframes fadeOutPanel {
+    from { opacity: 1; transform: translateY(0) scale(1); }
+    to   { opacity: 0; transform: translateY(8px) scale(0.97); }
+}
 /* ============================================================
    GAME OVER / WIN / CONTINUE
    ============================================================ */
@@ -4077,10 +4135,11 @@ function _updatePortalAndFloor() {
 
         if (dungeonLevel === 10 && !window._bossCutsceneTriggered) {
             window._bossCutsceneTriggered = true;
-            gameState = 'CUTSCENE';
-            if (typeof NarrativeSystem.triggerBossCutscene === 'function') NarrativeSystem.triggerBossCutscene();
+            if (typeof NarrativeSystem.triggerBossCutscene === 'function') {
+                gameState = 'CUTSCENE';
+                NarrativeSystem.triggerBossCutscene();
+            }
         }
-
         const depth = 10 - (dungeonLevel - 1);
         _fadeText = 'Piso B' + depth;
         _fadeState = { alpha: 0, phase: 'in' };
@@ -4089,6 +4148,7 @@ function _updatePortalAndFloor() {
 }
 
 function _updateEnemySpawning() {
+    if (_transitioning) return;
     let aliveEnemies = 0;
     for (let i = 0; i < entities.length; i++) { if (entities[i] !== player && entities[i].alive) aliveEnemies++; }
     const _tutSuppressSpawn = typeof TutorialSystem !== 'undefined' && TutorialSystem.active && TutorialSystem.suppressEnemySpawns;
