@@ -166,7 +166,6 @@ body { background: #08080f !important; }
     letter-spacing: 0.03em;
     pointer-events: none;
 }
-.xp-container {
     display: none;
 }/* xp now at bottom strip */
 #xp-bar-strip {
@@ -443,11 +442,6 @@ body { background: #08080f !important; }
     to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-.settings-section {
-    border-bottom: 1px solid rgba(224, 182, 255, 0.1);
-    padding-bottom: 14px;
-    margin-bottom: 14px;
-}
 
 .panel-btn {
     padding: 10px 14px;
@@ -555,7 +549,6 @@ body { background: #08080f !important; }
 }
 .go-stats-table td:first-child { color: #888; text-align: left; }
 .go-stats-table td:last-child { color: #e0b6ff; text-align: right; font-weight: bold; }
-.record-beat { color: #ffdd00; font-weight: bold; }
 
 /* ============================================================
    START SCREEN
@@ -674,7 +667,6 @@ body { background: #08080f !important; }
 .class-card h3 { text-shadow: 0 0 10px currentColor; }
 .class-card p { color: rgba(255, 255, 255, 0.55); font-size: 0.8rem; line-height: 1.5; }
 
-.stat-bar {
     height: 4px;
     background: rgba(0, 0, 0, 0.6);
     border-radius: 2px;
@@ -682,7 +674,6 @@ body { background: #08080f !important; }
     overflow: hidden;
     border: 1px solid rgba(255, 255, 255, 0.06);
 }
-.stat-fill {
     height: 100%;
     border-radius: 2px;
     transition: width 0.5s ease-out;
@@ -702,7 +693,6 @@ body { background: #08080f !important; }
     50% { transform: translateY(-6px); }
 }
 
-.stat-fill { animation: statPulse 2s ease-in-out infinite alternate; }
 @keyframes statPulse { from { filter: brightness(1); } to { filter: brightness(1.15); } }
 
 .icon-inline {
@@ -762,21 +752,15 @@ body { background: #08080f !important; }
    ============================================================ */
 
 /* Combo counter pulse animation */
-@keyframes comboPulse {
-    0% { transform: scale(1); }
     50% { transform: scale(1.15); }
     100% { transform: scale(1); }
 }
 
 /* Loot card slide in */
-@keyframes lootSlideIn {
-    from { transform: translateX(-50%) translateY(30px); opacity: 0; }
     to { transform: translateX(-50%) translateY(0); opacity: 1; }
 }
 
 /* Achievement toast slide */
-@keyframes achievementSlide {
-    from { transform: translateX(-50%) translateY(-20px); opacity: 0; }
     to { transform: translateX(-50%) translateY(0); opacity: 1; }
 }
 
@@ -923,13 +907,9 @@ body { background: #08080f !important; }
 
     <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
       <symbol id="ic-swords" viewBox="0 0 24 24"><path d="M14.5 17.5L3 6V3h3l11.5 11.5M13 19l6-6M15 21l6-6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-      <symbol id="ic-magic" viewBox="0 0 24 24"><path d="M3 21l1.65-3.8a9 9 0 0 1 0-4.4L3 9l3-7 7 3-7 3-3 7-3-3L1 21zM21 15l-3-7-7 3 7 3 3 7 3-3-3-7z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-      <symbol id="ic-arrow-back" viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
       <symbol id="ic-store" viewBox="0 0 24 24"><path d="M3 9l1-4h16l1 4M3 9v11a1 1 0 001 1h16a1 1 0 001-1V9M9 21V13h6v8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
       <symbol id="ic-tree" viewBox="0 0 24 24"><path d="M12 3l-6 9h4l-3 9h10l-3-9h4z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
       <symbol id="ic-bar-chart" viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-      <symbol id="ic-trophy" viewBox="0 0 24 24"><path d="M8 21h8M12 17v4M6 3h12v5a6 6 0 01-12 0V3zM6 5H3v2a3 3 0 003 3M18 5h3v2a3 3 0 01-3 3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-      <symbol id="ic-settings" viewBox="0 0 24 24"><path d="M12 15a3 3 0 100-6 3 3 0 000 6z" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
       <symbol id="ic-dodge" viewBox="0 0 24 24"><path d="M13.5 5.5c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zM9.8 8.9L7 23h2.1l1.8-8 2.1 2v6h2v-7.5l-2.1-2 .6-3C14.8 12 16.8 13 19 13v-2c-1.9 0-3.5-1-4.3-2.4l-1-1.6c-.4-.6-1-1-1.7-1-.3 0-.5.1-.8.1L6 8.3V13h2V9.6l1.8-.7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
       <symbol id="ic-fire" viewBox="0 0 24 24"><path d="M12 23c-3.6 0-8-3.12-8-8 0-3.87 3.36-7.06 5-8.56 1.32 1.62 2.26 2.56 3 2.56.74 0 1.68-.94 3-2.56C16.64 7.94 20 11.13 20 15c0 4.88-4.4 8-8 8z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
     </svg>
@@ -958,7 +938,7 @@ body { background: #08080f !important; }
             
             <!-- Mode Tabs (pill-style) -->
             <div style="display:flex;gap:6px;justify-content:center;margin-bottom:8px;">
-                <button id="mode-tab-dungeon" onclick="
+                <button onclick="
         window._toggleMinimap = function() {
             var mm = document.getElementById('minimap-container');
             if (mm) {
@@ -984,14 +964,14 @@ body { background: #08080f !important; }
             </div>
             
             <!-- Mode description (dynamic) -->
-            <div id="mode-description" style="text-align:center;font-size:clamp(0.65rem,2.2vw,0.8rem);color:rgba(255,255,255,0.45);margin-bottom:10px;min-height:2.2em;line-height:1.4;padding:0 8px;">
+            <div style="text-align:center;font-size:clamp(0.65rem,2.2vw,0.8rem);color:rgba(255,255,255,0.45);margin-bottom:10px;min-height:2.2em;line-height:1.4;padding:0 8px;">
                 Evolua seu personagem em dungeons cada vez mais dificeis.
             </div>
 
             <!-- Difficulty Selection -->
             <div style="margin-bottom:8px;">
                 <div style="text-align:center;font-size:clamp(0.55rem,2vw,0.68rem);letter-spacing:0.25em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:5px;">Dificuldade</div>
-                <div id="difficulty-row" style="display:flex;gap:5px;">
+                <div style="display:flex;gap:5px;">
                     <button class="diff-btn" data-diff="facil" onclick="window.setDifficulty('facil')" style="flex:1;padding:8px 2px;border-radius:12px;font-size:clamp(0.6rem,2.4vw,0.78rem);font-weight:600;border:1.5px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.45);cursor:pointer;transition:all 0.2s;touch-action:manipulation;">🌱 Fácil</button>
                     <button class="diff-btn" data-diff="normal" onclick="window.setDifficulty('normal')" style="flex:1;padding:8px 2px;border-radius:12px;font-size:clamp(0.6rem,2.4vw,0.78rem);font-weight:600;border:1.5px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.45);cursor:pointer;transition:all 0.2s;touch-action:manipulation;">⚔️ Normal</button>
                     <button class="diff-btn" data-diff="dificil" onclick="window.setDifficulty('dificil')" style="flex:1;padding:8px 2px;border-radius:12px;font-size:clamp(0.6rem,2.4vw,0.78rem);font-weight:600;border:1.5px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.45);cursor:pointer;transition:all 0.2s;touch-action:manipulation;">💀 Difícil</button>
@@ -1006,7 +986,7 @@ body { background: #08080f !important; }
             </button>
 
             <!-- Class Selection (inline, no back/forth) -->
-            <div id="class-row" style="display:flex;gap:6px;margin-bottom:6px;">
+            <div style="display:flex;gap:6px;margin-bottom:6px;">
                 <div onclick="startGame('warrior')" class="class-mini-card warrior" style="flex:1;padding:10px 6px;border-radius:16px;border:1.5px solid rgba(250,204,21,0.25);background:rgba(250,204,21,0.08);text-align:center;cursor:pointer;transition:all 0.2s;touch-action:manipulation;">
                     <div style="font-size:clamp(1.5rem,5vw,2rem);margin-bottom:2px;">⚔️</div>
                     <div style="font-size:clamp(0.7rem,2.5vw,0.85rem);font-weight:800;text-transform:uppercase;color:#facc15;letter-spacing:0.06em;text-shadow:0 0 8px rgba(250,204,21,0.3);">Guerreiro</div>
@@ -1046,7 +1026,7 @@ body { background: #08080f !important; }
                 </button>
             </div>
             
-            <div id="game-version" style="text-align:center;margin-top:auto;padding:6px 0 4px;font-size:0.6rem;color:rgba(255,255,255,0.2);letter-spacing:0.1em;">v2.0 PREMIUM</div>
+            <div style="text-align:center;margin-top:auto;padding:6px 0 4px;font-size:0.6rem;color:rgba(255,255,255,0.2);letter-spacing:0.1em;">v2.0 PREMIUM</div>
         </div>
     </div>
     <!-- TUTORIAL PROMPT (shown on first game start) -->
@@ -1095,11 +1075,11 @@ body { background: #08080f !important; }
         </div>
 
         <!-- DUNGEON PROGRESS (top center, during dungeons) -->
-        <div id="dungeon-progress" class="hidden" style="position:absolute;top:max(36px,calc(env(safe-area-inset-top,36px) + 8px));left:50%;transform:translateX(-50%);z-index:115;pointer-events:none;text-align:center;">
+        <div class="hidden" style="position:absolute;top:max(36px,calc(env(safe-area-inset-top,36px) + 8px));left:50%;transform:translateX(-50%);z-index:115;pointer-events:none;text-align:center;">
             <div style="display:flex;align-items:center;gap:6px;background:rgba(0,0,0,0.5);padding:2px 10px;border-radius:999px;border:1px solid rgba(224,182,255,0.1);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);">
-                <span style="font-size:8px;color:rgba(224,182,255,0.5);font-weight:600;" id="dungeon-label">Piso 1</span>
+                <span style="font-size:8px;color:rgba(224,182,255,0.5);font-weight:600;">Piso 1</span>
                 <span style="font-size:7px;color:rgba(255,255,255,0.2);">|</span>
-                <span style="font-size:8px;color:rgba(255,255,255,0.4);font-weight:600;" id="progress-label">0/10</span>
+                <span style="font-size:8px;color:rgba(255,255,255,0.4);font-weight:600;">0/10</span>
             </div>
         </div>
 
@@ -1242,7 +1222,7 @@ body { background: #08080f !important; }
             <div style="position:relative;width:6rem;height:6rem;display:flex;align-items:center;justify-content:center;">
                 <svg style="position:absolute;inset:0;width:100%;height:100%;" viewBox="0 0 100 100">
                     <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(60,227,106,0.15)" stroke-width="6"/>
-                    <circle id="continue-ring" cx="50" cy="50" r="42" fill="none" stroke="#3ce36a" stroke-width="6" stroke-linecap="round" stroke-dasharray="264" stroke-dashoffset="0" transform="rotate(-90 50 50)" style="transition:stroke-dashoffset 1s linear;"/>
+                    <circle cx="50" cy="50" r="42" fill="none" stroke="#3ce36a" stroke-width="6" stroke-linecap="round" stroke-dasharray="264" stroke-dashoffset="0" transform="rotate(-90 50 50)" style="transition:stroke-dashoffset 1s linear;"/>
                 </svg>
                 <div class="text-5xl font-bold text-white" id="continue-countdown" style="text-shadow:0 0 20px rgba(255,255,255,0.3);">10</div>
             </div>
@@ -1587,7 +1567,7 @@ var camX = 0, camY = 0, shake = 0, gameTime = 0, bossActive = false, dungeonLeve
 var dungeonKills = 0, dungeonKillTarget = 18, dungeonPortal = null;
 var hitstopFrames = 0;
 var merchantActive = false, skillTreeOpen = false, statsOpen = false, achievementsOpen = false;
-var currentEvent = null, eventTimer = 0;
+var currentEvent = null;
 var weather = null, weatherTimer = 0;
 var prestigeLevel = 0, totalGamesPlayed = 0;
 var pets = [], weaponPickups = [], equipmentPickups = [];
@@ -3242,7 +3222,7 @@ window.addEventListener('keydown', (e) => {
     // 'd' is a movement key (move right) - debug overlay is F3-only to avoid
     // toggling every frame while holding D to move
     // hero mode removed
-    if(key === 'escape') { _closeAll(); if(window.HeroCraftSystem) HeroCraftSystem.close(); debugVisible = false; }
+    if(key === 'escape') { _closeAll(); debugVisible = false; }
     if(key === 'f3') { e.preventDefault(); window.toggleDebug(); }
 });
 
@@ -3778,7 +3758,6 @@ function _updateSystems() {
         player.hp = Math.min(player.hp, player.maxHp);
     }
     
-    if (window.QuestSystem) QuestSystem.update();
     if (window.PetSystem) PetSystem.update(player); // Pet System
     Input.update();
     if (typeof ElementalSystem !== "undefined" && entities) {
@@ -3794,9 +3773,9 @@ function _updateSystems() {
 }
 
 function _anyPanelOpen() {
-    return merchantActive || skillTreeOpen || statsOpen || achievementsOpen ||
+    return (typeof NPCInteractionPanel !== 'undefined' && NPCInteractionPanel.visible) ||
+           merchantActive || skillTreeOpen || statsOpen || achievementsOpen ||
            (typeof NarrativeSystem !== 'undefined' && NarrativeSystem.uiOpen) ||
-           (window.HeroCraftSystem && HeroCraftSystem.open) ||
            (typeof SettingsUI !== 'undefined' && SettingsUI.open) ||
            (typeof PauseSystem !== 'undefined' && PauseSystem.active);
 }
@@ -4068,11 +4047,7 @@ function _updateEntitySimulation() {
         if (!entities[i].alive && entities[i] !== player) {
             const deadEnt = entities[i];
             if (!deadEnt.isB) dungeonKills++;
-            if (window.ResourceSystem) ResourceSystem.dropFromEnemy(deadEnt);
-            if (window.QuestSystem) {
-                QuestSystem.onKill(deadEnt);
-                if (deadEnt.elite) QuestSystem.onEliteKill();
-            }
+            if (window.Bestiary && deadEnt.enemyType) Bestiary.discover(deadEnt.enemyType);
             entities.splice(i, 1);
         }
     }
@@ -4208,7 +4183,6 @@ function _updateEnemySpawning() {
         chests.push(new Chest(bossPos.x, bossPos.y, Math.random() < 0.35 ? 'lendario' : 'epico'));
         addLog('Bau do Chefe apareceu!');
         dungeonKills = Math.max(dungeonKills, dungeonKillTarget);
-        if (window.QuestSystem) QuestSystem.onKill({ isBoss: true });
     }
     if (dungeonKills >= dungeonKillTarget && !dungeonPortal && !bossActive) {
         dungeonPortal = player ? new Portal(player.x, player.y) : null;
@@ -4255,14 +4229,14 @@ function update() {
     // --- Phase 4: Hitstop  freeze world for N frames on kill ---
     // Brief hitstop for punchy combat (2 frames)
     if (hitstopFrames > 0) { hitstopFrames--; return; }
-    Debug.safe(() => _updateSystems(), 'updateSystems');
     if (_anyPanelOpen()) return;
+    Debug.safe(() => _updateSystems(), 'updateSystems');
     Debug.safe(() => _updateWorldSim(), 'updateWorldSim');
     Debug.safe(() => Debug.time('entities', _updateEntitySimulation), 'updateEntitySimulation');
     Debug.safe(() => _updatePortalAndFloor(), 'updatePortalAndFloor');
     Debug.safe(() => _updateEnemySpawning(), 'updateEnemySpawning');
     Debug.safe(() => _updateCameraAndHUD(), 'updateCameraAndHUD');
-    if (gameTime % 1200 === 0) Debug.safe(() => SaveSystem.save(), 'autosaveTimer');
+    if (gameTime % 1200 === 0) { Debug.safe(() => SaveSystem.save(), 'autosaveTimer'); Debug.safe(() => RunState.save(), 'autoSaveRun'); }
 }
 
 // ============================================================
@@ -4542,7 +4516,6 @@ function _drawScreenSpaceHUD() {
 
 function _drawPanels() {
     // hero HUD removed
-    if (window.HeroCraftSystem && HeroCraftSystem.open) HeroCraftSystem.drawPanel(ctx);
     if (typeof TutorialSystem !== 'undefined' && TutorialSystem.active) TutorialSystem.draw(ctx);
 }
 
@@ -4578,7 +4551,7 @@ function draw() {
         
         // Draw world layer ONCE with the correct transform
         // Skip world rendering when panels are open for performance
-        if (!_anyPanelOpen() || gameState === 'PLAYING') {
+        if (!_anyPanelOpen()) {
 
         Debug.time('world', _drawWorldLayer);
         Debug.time('light', _drawLightingLayer);
@@ -4594,7 +4567,7 @@ function draw() {
         _drawScreenSpaceHUD();
         
         // Boss intro banner
-        if (_bossBanner && _bossBanner.timer > 0) {
+        if (_bossBanner && _bossBanner.timer > 0 && !_anyPanelOpen()) {
             _bossBanner.timer--;
             const bt = _bossBanner.timer;
             ctx.save();
@@ -4634,13 +4607,13 @@ function draw() {
                 ctx.fillText('Aguardando...', width/2, height/2 + 20);
             }
             ctx.restore();
-            if (_fadeState.phase === 'in') {
+            if (_fadeState.phase === 'in' && !_anyPanelOpen()) {
                 _fadeState.alpha += 0.05;
                 if (_fadeState.alpha >= 1) {
                     _fadeState.alpha = 1;
                     _fadeState.phase = 'mid';
                 }
-            } else if (_fadeState.phase === 'mid') {
+            } else if (_fadeState.phase === 'mid' && !_anyPanelOpen()) {
                 try {
                 _cachedLightCanvas = null; _lightingThrottle = 0; _lightingDirty = true;
                 map = new Map(); _mmDirty = true;
@@ -4651,18 +4624,6 @@ function draw() {
                 if (window.NPCSystem) NPCSystem.reset();
                 if (window.RelicSystem) RelicSystem.onNewDungeon(player);
                 DifficultySystem.dungeonLevel = dungeonLevel;
-                if (gameMode === 'hero') {
-                    const heroZones = ['forest', 'dungeon', 'lavaCave', 'crypt'];
-                    const zoneIdx = (dungeonLevel - 1) % heroZones.length;
-                    BiomeSystem.setBiome(heroZones[zoneIdx]);
-                    SND.startMusic(BiomeSystem.currentBiome);
-                    addLog('Nova zona: ' + BiomeSystem.getDisplayName().replace(/[^-]/g, '') + ' - Explorando!');
-                } else {
-                    BiomeSystem.onDungeonComplete();
-                    SND.startMusic(BiomeSystem.currentBiome);
-                    const depth = 10 - (dungeonLevel - 1);
-                    if (depth > 0) addLog('Piso B' + depth + '! Mate ' + dungeonKillTarget + ' inimigos!');
-                }
                 for (let i = 0; i < CONFIG.ENEMY_INITIAL_COUNT; i++) {
                     const ep = map.getSafeSpawn(CONFIG.ENEMY_SPAWN_MIN_DIST);
                     entities.push(new Enemy(ep.x, ep.y, false));
@@ -4678,7 +4639,7 @@ function draw() {
                     if (!entities || !entities.length) entities = player ? [player] : [];
                 }
                 _fadeState.phase = 'out';
-            } else if (_fadeState.phase === 'out') {
+            } else if (_fadeState.phase === 'out' && !_anyPanelOpen()) {
                 _fadeState.alpha -= 0.04;
                 if (_fadeState.alpha <= 0) {
                     _fadeState = null; _fadeText = ''; _transitioning = false;
@@ -4793,54 +4754,6 @@ function drawDebugOverlay(ctx) {
         ctx.fillStyle = line.startsWith('[F3]') ? COLORS.DEBUG_INFO : COLORS.DEBUG_WARN;
         ctx.fillText(line, x + 5, y + 15 + i * 14);
     });
-}
-
-// ============================================================
-// HERO MODE HUD
-// ============================================================
-function _drawHeroHUD(ctx) {
-    if(!player) return;
-    ctx.save();
-
-    // Pet mount indicator
-    if(window.pets && pets.length > 0) {
-        for(const pet of pets) {
-            if(pet.mounted && pet.alive && pet.drawMountIndicator) {
-                pet.drawMountIndicator(ctx, camX, camY);
-            }
-        }
-    }
-
-    // Resource bar  bottom center
-    if(window.ResourceSystem) {
-        const resStr = ResourceSystem.getHUDString();
-        const bx = width / 2;
-        const by = height - 12;
-        ctx.font = '11px ' + COLORS.CANVAS_FONT;
-        ctx.textAlign = 'center';
-        const tw = ctx.measureText(resStr).width;
-        ctx.fillStyle = 'rgba(0,0,0,0.85)';
-        ctx.fillRect(bx - tw / 2 - 6, by - 14, tw + 12, 18);
-        ctx.fillStyle = '#88ffaa';
-        ctx.fillText(resStr, bx, by);
-    }
-
-    // Zone indicator  top-right area, below level bar
-    const zoneNames = ['Floresta Inicial', 'Masmorra', 'Caverna de Lava', 'Cripta'];
-    const zoneIdx = (dungeonLevel - 1) % zoneNames.length;
-    const zoneName = 'Zona: ' + zoneNames[zoneIdx];
-    ctx.font = 'bold 11px ' + COLORS.CANVAS_FONT;
-    ctx.textAlign = 'right';
-    ctx.fillStyle = 'rgba(0,0,0,0.85)';
-    const ztw = ctx.measureText(zoneName).width;
-    ctx.fillRect(width - ztw - 16, 26, ztw + 12, 16);
-    ctx.fillStyle = '#88ddff';
-    ctx.fillText(zoneName, width - 10, 38);
-
-    // Quest tracker  drawn by QuestSystem
-    if(window.QuestSystem) QuestSystem.drawHUD(ctx);
-
-    ctx.restore();
 }
 
 // ============================================================
@@ -5093,7 +5006,6 @@ window._toggleSound = function() {
 
 // --- Hook into existing systems ---
 // Override achievement check to show toast
-var _origCheckAchievements = window.checkAchievements || null;
 (function() {
     // Monkey-patch the AchievementSystem if it exists
     if (typeof AchievementSystem !== 'undefined' && AchievementSystem.check) {
@@ -6860,7 +6772,6 @@ const NarrativeSystem = {
         if (Statistics) Statistics.data.loreFragments = this.getDiscoveredCount();
         addLog(` Lore descoberta: ${fragment.title}`);
         SND.playLoreDiscover ? SND.playLoreDiscover() : SND.playAchievement();
-        if (typeof QuestSystem !== 'undefined') QuestSystem.onLoreDiscover(id);
         return true;
     },
 
@@ -7241,79 +7152,6 @@ const BIOME_RESOURCE_WEIGHTS = {
     crypt:    [0.05, 0.10, 0.20, 0.20, 0.45]
 };
 
-const ResourceSystem = {
-    inventory: { herbs: 0, wood: 0, stone: 0, ore: 0, crystal: 0 },
-
-    // Drop resource from enemy kill  called after kill confirmed
-    dropFromEnemy(enemy) {
-        if (typeof gameMode === 'undefined' || gameMode !== 'hero') return;
-
-        const isElite = !!(enemy.elite || enemy.isBoss);
-        const chance = isElite ? 0.85 : 0.50; // increased from 80%/40%
-        if (Math.random() > chance) return;
-
-        const amount = (isElite || Math.random() < 0.3) ? 2 : 1;
-
-        // Pick resource type based on current biome
-        const biome = (typeof BiomeSystem !== 'undefined') ? BiomeSystem.currentBiome : 'dungeon';
-        const weights = BIOME_RESOURCE_WEIGHTS[biome] || BIOME_RESOURCE_WEIGHTS.dungeon;
-        const keys = Object.keys(RESOURCE_TYPES);
-
-        let r = Math.random();
-        let cumulative = 0;
-        let chosen = keys[0];
-        for (let i = 0; i < keys.length; i++) {
-            cumulative += weights[i];
-            if (r <= cumulative) { chosen = keys[i]; break; }
-        }
-
-        this.add(chosen, amount);
-
-        // Floating text on canvas via DamageNumbers
-        if (typeof DamageNumbers !== 'undefined' && typeof enemy !== 'undefined') {
-            const info = RESOURCE_TYPES[chosen];
-            DamageNumbers.add(enemy.x, enemy.y, '+' + amount + ' ' + info.name, 'normal');
-        }
-    },
-
-    add(type, amount) {
-        if (!this.inventory.hasOwnProperty(type)) return;
-        this.inventory[type] = (this.inventory[type] || 0) + amount;
-        // Track herb collection for quests
-        if (typeof QuestSystem !== 'undefined') {
-            QuestSystem.onResourceCollect(type, amount);
-        }
-    },
-
-    // Check if inventory meets requirements object e.g. {herbs:3, ore:1}
-    has(requirements) {
-        for (const key in requirements) {
-            if ((this.inventory[key] || 0) < requirements[key]) return false;
-        }
-        return true;
-    },
-
-    // Remove resources from inventory (call has() first)
-    consume(requirements) {
-        for (const key in requirements) {
-            this.inventory[key] = Math.max(0, (this.inventory[key] || 0) - requirements[key]);
-        }
-    },
-
-    reset() {
-        for (const key in this.inventory) this.inventory[key] = 0;
-    },
-
-    // Plain ASCII HUD string  NO emoji
-    getHUDString() {
-        const inv = this.inventory;
-        return 'Erv:' + inv.herbs + ' Mad:' + inv.wood + ' Ped:' + inv.stone + ' Min:' + inv.ore + ' Cri:' + inv.crystal;
-    }
-};
-
-// Expose globally
-window.ResourceSystem = ResourceSystem;
-window.RESOURCE_TYPES = RESOURCE_TYPES;
 
 
 </script>
@@ -7325,29 +7163,6 @@ window.RESOURCE_TYPES = RESOURCE_TYPES;
  * v=1
  */
 
-const CraftingSystem = {
-    // Definir receitas de craft
-    recipes: [
-        { id: 'upgrade_damage', name: 'Aumentar Dano', cost: 5, action: (player) => { player.baseDmg = (player.baseDmg || 10) + 2; } },
-        { id: 'upgrade_hp', name: 'Aumentar Vida', cost: 5, action: (player) => { player.maxHp += 20; player.hp += 20; } },
-        { id: 'upgrade_speed', name: 'Aumentar Velocidade', cost: 8, action: (player) => { player.speed += 0.2; } }
-    ],
-
-    craft(player, recipeId) {
-        const recipe = this.recipes.find(r => r.id === recipeId);
-        if (!recipe) return false;
-        
-        if ((player.essence || 0) >= recipe.cost) {
-            player.essence -= recipe.cost;
-            recipe.action(player);
-            console.log(`Crafted: ${recipe.name}`);
-            return true;
-        }
-        return false;
-    }
-};
-
-window.CraftingSystem = CraftingSystem;
 
 
 </script>
@@ -7356,371 +7171,7 @@ window.CraftingSystem = CraftingSystem;
 // QUEST SYSTEM - Hero's Journey mode quest tracking
 // v=23
 
-const HERO_QUESTS = [
-    {
-        id: 'q1',
-        title: 'Primeira Caca',
-        desc: 'Elimine 5 inimigos.',
-        type: 'kill',
-        target: 5,
-        progress: 0,
-        reward: { xp: 100, currency: 20 }
-    },
-    {
-        id: 'q2',
-        title: 'Herbologia',
-        desc: 'Colete 5 porcoes de ervas.',
-        type: 'collect',
-        resource: 'herbs',
-        target: 5,
-        progress: 0,
-        reward: { xp: 80, currency: 15 }
-    },
-    {
-        id: 'q3',
-        title: 'Forjador',
-        desc: 'Fabrique sua primeira arma.',
-        type: 'craft',
-        target: 'iron_sword',
-        progress: 0,
-        reward: { xp: 150, currency: 30 }
-    },
-    {
-        id: 'q4',
-        title: 'Sobrevivente',
-        desc: 'Alcance o nivel 5.',
-        type: 'level',
-        target: 5,
-        progress: 0,
-        reward: { xp: 200, currency: 50 }
-    },
-    {
-        id: 'q5',
-        title: 'O Guardiao',
-        desc: 'Derrote o guardiao da masmorra.',
-        type: 'boss',
-        target: 1,
-        progress: 0,
-        reward: { xp: 500, currency: 100 }
-    },
-    {
-        id: 'q6',
-        title: 'Resistir',
-        desc: 'Sobrevisa por 60 segundos.',
-        type: 'survive',
-        target: 60,
-        progress: 0,
-        reward: { xp: 150, currency: 30 }
-    },
-    {
-        id: 'q7',
-        title: 'Sem Dano',
-        desc: 'Derrote 3 inimigos sem levar dano.',
-        type: 'noDamageKills',
-        target: 3,
-        progress: 0,
-        reward: { xp: 200, currency: 40 }
-    },
-    {
-        id: 'q8',
-        title: 'Arquelogo',
-        desc: 'Descubra 5 fragmentos de lore.',
-        type: 'lore',
-        target: 5,
-        progress: 0,
-        reward: { xp: 300, currency: 60 }
-    },
-    {
-        id: 'q9',
-        title: 'Caador de Elites',
-        desc: 'Elimine 3 inimigos de elite.',
-        type: 'killElite',
-        target: 3,
-        progress: 0,
-        reward: { xp: 350, currency: 80 }
-    },
-    {
-        id: 'q10',
-        title: 'Mestre Arteso',
-        desc: 'Fabrique 3 itens diferentes.',
-        type: 'craftCount',
-        target: 3,
-        progress: 0,
-        reward: { xp: 400, currency: 100 }
-    },
-    {
-        id: 'q11',
-        title: 'Reputao',
-        desc: 'Ajude 3 habitantes da Vila.',
-        type: 'reputation',
-        target: 3,
-        progress: 0,
-        reward: { xp: 250, currency: 70 }
-    },
-    {
-        id: 'q12',
-        title: 'Lmina de Aldric',
-        desc: 'Encontre a espada do Rei Aldric.',
-        type: 'loreSpecific',
-        target: 'lore_050',
-        progress: 0,
-        reward: { xp: 1000, currency: 200 }
-    }
-];
 
-const QuestSystem = {
-    active: [],      // active quest state objects (clones from HERO_QUESTS)
-    completed: [],   // completed quest ids
-    _ticker: 0,
-    _craftedItems: new Set(), // track distinct crafted item ids for q10
-    reputation: 0,           // village reputation counter
-
-    init() {
-        this.active = [];
-        this.completed = [];
-        this._ticker = 0;
-        this._craftedItems = new Set();
-        this.reputation = 0;
-        // Assign first 3 quests as active
-        for (let i = 0; i < Math.min(3, HERO_QUESTS.length); i++) {
-            this.active.push(this._cloneQuest(HERO_QUESTS[i]));
-        }
-    },
-
-    _cloneQuest(q) {
-        return Object.assign({}, q, { progress: 0 });
-    },
-
-    // Called each frame (throttled internally)
-    _gameStartTime: 0,
-    _noDamageStreak: 0,
-
-    update() {
-        if (typeof gameMode === 'undefined' || gameMode !== 'hero') return;
-        this._ticker++;
-        if (this._ticker % 60 !== 0) return; // check once per second
-
-        // Track survival time
-        if (this._gameStartTime === 0) this._gameStartTime = gameTime;
-
-        // Level quest check
-        if (typeof player !== 'undefined' && player) {
-            for (const q of this.active) {
-                if (q.type === 'level' && !q._done) {
-                    q.progress = player.lvl;
-                    if (player.lvl >= q.target) this._complete(q.id);
-                }
-                if (q.type === 'survive' && !q._done) {
-                    const elapsed = Math.floor((gameTime - this._gameStartTime) / 60);
-                    q.progress = elapsed;
-                    if (elapsed >= q.target) this._complete(q.id);
-                }
-            }
-        }
-    },
-
-    // Call before each new game
-    _resetTracking() {
-        this._gameStartTime = gameTime || 0;
-        this._noDamageStreak = 0;
-    },
-
-    // Call when player takes damage
-    onPlayerDamage() {
-        this._noDamageStreak = 0;
-    },
-
-    // Call after each successful kill (check no damage quest)
-    onKillCheck() {
-        if (gameMode !== 'hero') return;
-        // Check no-damage kills
-        for (const q of this.active) {
-            if (q.type === 'noDamageKills' && !q._done) {
-                this._noDamageStreak++;
-                q.progress = this._noDamageStreak;
-                if (this._noDamageStreak >= q.target) this._complete(q.id);
-            }
-        }
-    },
-
-    // Kill event  called from engine on kill
-    onKill(enemy) {
-        if (typeof gameMode === 'undefined' || gameMode !== 'hero') return;
-        const isBoss = !!(enemy && (enemy.isBoss || enemy.isB));
-        for (const q of this.active) {
-            if (q._done) continue;
-            if (q.type === 'kill') {
-                q.progress++;
-                if (q.progress >= q.target) this._complete(q.id);
-            }
-            if (q.type === 'boss' && isBoss) {
-                q.progress++;
-                if (q.progress >= q.target) this._complete(q.id);
-            }
-        }
-    },
-
-    // Resource collected event  called from ResourceSystem.add()
-    onResourceCollect(type, amount) {
-        if (typeof gameMode === 'undefined' || gameMode !== 'hero') return;
-        for (const q of this.active) {
-            if (q._done) continue;
-            if (q.type === 'collect' && q.resource === type) {
-                q.progress += amount;
-                if (q.progress >= q.target) this._complete(q.id);
-            }
-        }
-    },
-
-    // Craft event  called from HeroCraftSystem.craft()
-    onCraft(recipeId) {
-        if (typeof gameMode === 'undefined' || gameMode !== 'hero') return;
-        this._craftedItems.add(recipeId);
-        for (const q of this.active) {
-            if (q._done) continue;
-            if (q.type === 'craft' && q.target === recipeId) {
-                q.progress = 1;
-                this._complete(q.id);
-            }
-            if (q.type === 'craftCount') {
-                q.progress = this._craftedItems.size;
-                if (q.progress >= q.target) this._complete(q.id);
-            }
-        }
-    },
-
-    // Lore fragment discovered  called from NarrativeSystem.discover()
-    onLoreDiscover(fragmentId) {
-        if (typeof gameMode === 'undefined' || gameMode !== 'hero') return;
-        const loreCount = typeof NarrativeSystem !== 'undefined' ? NarrativeSystem.getDiscoveredCount() : 0;
-        for (const q of this.active) {
-            if (q._done) continue;
-            if (q.type === 'lore') {
-                q.progress = loreCount;
-                if (q.progress >= q.target) this._complete(q.id);
-            }
-            if (q.type === 'loreSpecific' && q.target === fragmentId) {
-                q.progress = 1;
-                this._complete(q.id);
-            }
-        }
-    },
-
-    // Elite enemy killed
-    onEliteKill() {
-        if (typeof gameMode === 'undefined' || gameMode !== 'hero') return;
-        for (const q of this.active) {
-            if (q._done) continue;
-            if (q.type === 'killElite') {
-                q.progress++;
-                if (q.progress >= q.target) this._complete(q.id);
-            }
-        }
-    },
-
-    // NPC helped (guide/merchant interaction completed)
-    onNPCHelped() {
-        if (typeof gameMode === 'undefined' || gameMode !== 'hero') return;
-        this.reputation++;
-        for (const q of this.active) {
-            if (q._done) continue;
-            if (q.type === 'reputation') {
-                q.progress = this.reputation;
-                if (q.progress >= q.target) this._complete(q.id);
-            }
-        }
-    },
-
-    _complete(questId) {
-        const idx = this.active.findIndex(q => q.id === questId);
-        if (idx === -1) return;
-        const q = this.active[idx];
-        if (q._done) return;
-        q._done = true;
-        this.completed.push(questId);
-
-        // Give reward
-        if (typeof player !== 'undefined' && player && q.reward) {
-            if (q.reward.xp) player.gainXP(q.reward.xp);
-            if (q.reward.currency) {
-                player.currency = (player.currency || 0) + q.reward.currency;
-                if (typeof Statistics !== 'undefined') Statistics.data.totalCurrencyEarned += q.reward.currency;
-            }
-        }
-
-        if (typeof addLog !== 'undefined') addLog('Missao concluida: ' + q.title + '! +' + (q.reward.xp || 0) + ' XP');
-        if (typeof SND !== 'undefined' && SND.playAchievement) SND.playAchievement();
-        if (typeof spawnParticles !== 'undefined' && typeof player !== 'undefined') spawnParticles(player.x, player.y, '#ffdd00', 20, 5);
-
-        // Remove from active and add next available quest
-        this.active.splice(idx, 1);
-        this._assignNext();
-    },
-
-    _assignNext() {
-        // Find first quest not yet active or completed
-        const allActive = this.active.map(q => q.id);
-        for (const template of HERO_QUESTS) {
-            if (!this.completed.includes(template.id) && !allActive.includes(template.id)) {
-                if (this.active.length < 3) {
-                    this.active.push(this._cloneQuest(template));
-                }
-                break;
-            }
-        }
-    },
-
-    // Draw quest tracker HUD  bottom-left, plain ASCII
-    drawHUD(ctx) {
-        if (typeof gameMode === 'undefined' || gameMode !== 'hero') return;
-        if (!this.active || this.active.length === 0) return;
-
-        const x = 8;
-        const baseY = height - 100;
-        const lineH = 15;
-        const maxShow = 2;
-
-        ctx.save();
-        ctx.globalAlpha = 0.88;
-        ctx.fillStyle = 'rgba(0,0,0,0)';
-        const bgH = Math.min(maxShow, this.active.length) * lineH * 2 + 22;
-        _roundRect(ctx, x - 4, baseY - 14, 220, bgH, 6);
-        ctx.fill();
-
-        ctx.fillStyle = '#ffcc44';
-        ctx.font = 'bold 11px ' + COLORS.CANVAS_FONT;
-        ctx.textAlign = 'left';
-        ctx.fillText('MISSOES:', x, baseY);
-
-        for (let i = 0; i < Math.min(maxShow, this.active.length); i++) {
-            const q = this.active[i];
-            const qy = baseY + (i + 1) * (lineH * 2);
-            ctx.fillStyle = '#ddccff';
-            ctx.font = 'bold 11px ' + COLORS.CANVAS_FONT;
-            ctx.fillText(q.title, x, qy - lineH + 4);
-            ctx.fillStyle = '#8899bb';
-            ctx.font = '10px ' + COLORS.CANVAS_FONT;
-
-            let progStr = '';
-            if (q.type === 'kill' || q.type === 'boss' || q.type === 'killElite') progStr = q.progress + '/' + q.target + ' abates';
-            else if (q.type === 'collect') progStr = q.progress + '/' + q.target + ' ' + (q.resource || '');
-            else if (q.type === 'craft') progStr = q.progress > 0 ? 'Concluido!' : 'Pendente';
-            else if (q.type === 'craftCount') progStr = q.progress + '/' + q.target + ' itens';
-            else if (q.type === 'level') progStr = 'Lv ' + (typeof player !== 'undefined' ? player.lvl : '?') + '/' + q.target;
-            else if (q.type === 'survive') progStr = q.progress + '/' + q.target + 's';
-            else if (q.type === 'noDamageKills') progStr = q.progress + '/' + q.target + ' sem dano';
-            else if (q.type === 'lore' || q.type === 'loreSpecific') progStr = q.progress + '/' + q.target + ' fragmentos';
-            else if (q.type === 'reputation') progStr = q.progress + '/' + q.target + ' habitantes';
-
-            ctx.fillText(progStr, x, qy);
-        }
-        ctx.restore();
-    }
-};
-
-// Expose globally
-window.QuestSystem = QuestSystem;
-window.HERO_QUESTS = HERO_QUESTS;
 
 
 </script>
@@ -7901,16 +7352,6 @@ const RunState = {
     }
 };
 
-// Auto-save periodically (every 30 seconds)
-let _autoSaveTimer = 0;
-function autoSaveRun() {
-    _autoSaveTimer++;
-    if(_autoSaveTimer >= 1800) { // 30s at 60fps
-        _autoSaveTimer = 0;
-        RunState.save();
-    }
-}
-
 // Hook into engine update
 window.RunState = RunState;
 
@@ -7944,85 +7385,6 @@ window.EventBus = EventBus;
     <script>
 // === js/systems/leaderboard.js ===
 // LEADERBOARD SYSTEM - Local rankings by class
-const Leaderboard = {
-    MAX_ENTRIES: 10,
-    _entries: {
-        warrior: [],
-        rogue: [],
-        mage: []
-    },
-
-    init() {
-        try {
-            const saved = localStorage.getItem('aethelgard_leaderboard');
-            if(saved) this._entries = JSON.parse(saved);
-        } catch(e) {
-            this._entries = { warrior: [], rogue: [], mage: [] };
-        }
-    },
-
-    submit(cls, score, dungeonLevel, timeSeconds) {
-        const entry = {
-            score: score, // calculated score
-            dungeonLevel: dungeonLevel,
-            timeSeconds: timeSeconds,
-            timestamp: Date.now()
-        };
-
-        // Calculate score: dungeon * 100 + kills + (time survival bonus)
-        const baseScore = (dungeonLevel || 1) * 100;
-        const killBonus = player ? player.kills || 0 : 0;
-        const timeBonus = Math.floor((timeSeconds || 0) / 60);
-        entry.score = baseScore + killBonus + timeBonus;
-
-        this._entries[cls] = this._entries[cls] || [];
-        this._entries[cls].push(entry);
-        
-        // Sort by score descending
-        this._entries[cls].sort((a, b) => b.score - a.score);
-        
-        // Keep only top entries
-        this._entries[cls] = this._entries[cls].slice(0, this.MAX_ENTRIES);
-        
-        this._persist();
-        return this._entries[cls].indexOf(entry) + 1; // rank
-    },
-
-    getRankings(cls) {
-        return this._entries[cls] || [];
-    },
-
-    getTopScore(cls) {
-        const entries = this._entries[cls] || [];
-        return entries.length > 0 ? entries[0].score : 0;
-    },
-
-    clear(cls) {
-        if(cls) {
-            this._entries[cls] = [];
-        } else {
-            this._entries = { warrior: [], rogue: [], mage: [] };
-        }
-        this._persist();
-    },
-
-    _persist() {
-        try {
-            localStorage.setItem('aethelgard_leaderboard', JSON.stringify(this._entries));
-        } catch(e) {}
-    },
-
-    getDisplayString(entry) {
-        if(!entry) return '';
-        const mins = Math.floor(entry.timeSeconds / 60);
-        const secs = entry.timeSeconds % 60;
-        return `D${entry.dungeonLevel} | ${entry.score}pts | ${mins}:${secs.toString().padStart(2,'0')}`;
-    }
-};
-
-// Auto-init
-Leaderboard.init();
-window.Leaderboard = Leaderboard;
 
 
 </script>
@@ -13617,7 +12979,6 @@ class NPC {
                     NPCInteractionPanel.hide();
                     self.interacted = true;
                     self.alive = false;
-                    if (typeof QuestSystem !== 'undefined') QuestSystem.onNPCHelped();
                 } }
             ]);
 
@@ -13658,7 +13019,6 @@ class NPC {
         if (idx < this._merchantItems.length - 1) buttons.push({ label: '>', action: () => self._showMerchantItem(idx + 1) });
         buttons.push({ label: closeLabel, action: () => {
             NPCInteractionPanel.hide();
-            if (!self.interacted && typeof QuestSystem !== 'undefined') QuestSystem.onNPCHelped();
             self.interacted = true;
         } });
 
@@ -15230,6 +14590,7 @@ window.GameBootstrap = {
 
     _resetState(cls) {
         if (!SeedSystem.isSeeded()) { SeedSystem.clearSeed(); }
+        if (window.DailyChallenge) { var _dc = DailyChallenge.getTodayChallenge(); if (_dc) DailyChallenge.applyChallenge(_dc); }
         SND.init();
         if (window.GameSettings) GameSettings.apply();
         if (window.SpatialHash) { spatialHash = new SpatialHash(); }
@@ -15244,7 +14605,7 @@ window.GameBootstrap = {
         guidedBullets = []; rogueClones = []; hitstopFrames = 0;
         
         if (window.ShopSystem) ShopSystem.reset();
-        gameTime = 0; bossActive = false; dungeonLevel = 1; currentEvent = null; eventTimer = 0;
+        gameTime = 0; bossActive = false; dungeonLevel = 1; currentEvent = null;
         dungeonKills = 0; dungeonKillTarget = 18; dungeonPortal = null;
         continuesLeft = 3; _continueActive = false; minimapExpanded = false;
         weather = null; weatherTimer = 0;
@@ -15283,7 +14644,6 @@ window.GameBootstrap = {
         if (window.PoolManager) PoolManager.init();
         var craftBtn = document.getElementById('craft-btn');
         if (craftBtn) craftBtn.style.display = 'none';
-        if (window.HeroCraftSystem) HeroCraftSystem.open = false;
         SND.startMusic();
     },
 
