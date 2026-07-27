@@ -1593,7 +1593,7 @@ function _initCanvas() {
     _mmCtx = _mmBuffer.getContext('2d');
     
     if (canvas) {
-        console.log('[Constants] Canvas initialized:', canvas.width, 'x', canvas.height);
+        Debug.info('[Constants] Canvas initialized:', canvas.width, 'x', canvas.height);
         // Now resize to set correct dimensions
         resize();
     } else {
@@ -1635,7 +1635,7 @@ function getFontScale() {
 function resize() {
     // Only resize if canvas exists
     if (!canvas) {
-        console.log('[Resize] Canvas not ready yet, skipping');
+        Debug.info('[Resize] Canvas not ready yet, skipping');
         return;
     }
     // PERF: Force DPR=1 on mobile to avoid 2-3x pixel rendering (huge GPU savings)
@@ -1655,7 +1655,7 @@ function resize() {
     canvas.style.height = window.innerHeight + 'px';
     canvas.style.imageRendering = 'pixelated'; // for pixel art
     if (ctx) {
-        console.log(`[Resize] Context detected. Setting resolution to ${width}x${height}`);
+        Debug.info(`[Resize] Context detected. Setting resolution to ${width}x${height}`);
         ctx.setTransform(1, 0, 0, 1, 0, 0);
     }
     
@@ -3308,11 +3308,24 @@ function _doContinue() {
     player.poisonStacks = 0;
     player.poisonTimer = 0;
     
-    // Clear hazards and bullets to prevent immediate death
+    // Clear all game state to prevent immediate death and stale state
     bullets = [];
     guidedBullets = [];
     hazards = [];
+    particles = [];
+    pickups = [];
+    weaponPickups = [];
+    equipmentPickups = [];
+    chests = [];
     if (typeof rogueClones !== 'undefined') rogueClones = [];
+    currentEvent = null;
+    weather = null;
+    weatherTimer = 0;
+    bossActive = false;
+    shake = 0;
+    _bossBanner = null;
+    _fadeState = null;
+    _transitioning = false;
     
     const sp = map.getSafeSpawn(200);
     player && (player.x = sp.x, player.y = sp.y);
@@ -3869,6 +3882,7 @@ function _drawWeatherOverlay(ctx) {
 }
 
 function _handlePlayerDeath() {
+    if (_anyPanelOpen()) return;
     if (player && (!player.alive || player.hp <= 0) && !_continueActive) {
         // Critical game-state changes MUST happen outside Debug.safe() so that
         // a failure in Statistics/NarrativeSystem/StorageManager does not
@@ -4452,7 +4466,7 @@ function _drawInWorldHUD() {
 function _drawScreenSpaceHUD() {
     _drawNavArrows(ctx);
     Input.drawJoystick(ctx, Input.left, "left"); Input.drawJoystick(ctx, Input.right, "right");
-    Debug.time('postfx', () => ScreenEffects.drawPostProcess(ctx, lightCanvas));
+    if (!_anyPanelOpen()) Debug.time('postfx', () => ScreenEffects.drawPostProcess(ctx, lightCanvas));
     drawMinimap();
     if (typeof NPCInteractionPanel !== 'undefined' && NPCInteractionPanel.visible) NPCInteractionPanel.draw(ctx, width || 800);
 
@@ -5216,7 +5230,7 @@ function _initEngine() {
     }
 
     // Start the game loop
-    console.log("[BOOTSTRAP] Starting engine loop...");
+    Debug.info("[BOOTSTRAP] Starting engine loop...");
     requestAnimationFrame(loop);
 }
 
@@ -5554,7 +5568,7 @@ window.SND = {
         this._musicStep = 0;
         const profile = this._MUSIC_PROFILES[target] || this._MUSIC_PROFILES.dungeon;
         this._musicInterval = setInterval(() => {
-            if(gameState === 'PLAYING') this._playMusicNote(profile);
+            if(gameState === 'PLAYING' && !_anyPanelOpen()) this._playMusicNote(profile);
         }, profile.tempo);
     },
 
@@ -5597,7 +5611,7 @@ window.SND = {
     startAmbient() {
         if(this._ambientInterval) return;
         this._ambientInterval = setInterval(() => {
-            if(gameState === 'PLAYING') {
+            if(gameState === 'PLAYING' && !_anyPanelOpen()) {
                 this._playBiomeAmbient();
             }
         }, CONFIG.AUDIO_AMBIENT_INTERVAL || 3000);
@@ -7204,7 +7218,7 @@ function setSeed(seed) {
     }
     _currentSeed = seed;
     _rndFn = createMulberry32(seed);
-    console.log('[Seed] Seed set:', seed);
+    Debug.info('[Seed] Seed set:', seed);
 }
 
 // Clear seed, return to normal random
@@ -7454,7 +7468,7 @@ const DailyChallenge = {
             window._forcedClass = mods.forceClass;
         }
         
-        console.log('[Daily Challenge] Active:', challenge.name, '-', challenge.desc);
+        Debug.info('[Daily Challenge] Active:', challenge.name, '-', challenge.desc);
     },
 
     complete(dungeonLevel, timeSeconds) {
@@ -8663,7 +8677,7 @@ const BiomeSystem = {
         const variantKeys = Object.keys(this._variants);
         const variant = variantKeys[Math.floor(Math.random() * variantKeys.length)];
         this.currentVariant = variant;
-        console.log('[Biome] Variant:', this._variants[variant].name);
+        Debug.info('[Biome] Variant:', this._variants[variant].name);
         return this.currentVariant;
     },
 
@@ -9257,7 +9271,7 @@ const ElementalSystem = {
 };
 
 window.ElementalSystem = ElementalSystem;
-console.log('[SYSTEM] ElementalSystem loaded');
+Debug.info('[SYSTEM] ElementalSystem loaded');
 
 </script>
     <script>
@@ -10061,7 +10075,7 @@ class Entity {
             // Haptic feedback on kill
             if(this.isB) Vibrate.trigger('bossKill');
             else if(this.elite) Vibrate.trigger('eliteKill');
-            if(this.isB) { Statistics.data.bossKills++; DifficultySystem.trackKill(); DifficultySystem.trackKill(); SND.playEnemyDeath('boss'); NarrativeSystem.tryDropLore(null, true); } else if(source === player) { Statistics.data.totalKills++; DifficultySystem.trackKill(); SND.playEnemyDeath(this.elite ? 'elite' : (this.enemyType === 'swarm' ? 'swarm' : (this.enemyType === 'trap' ? 'trap' : (this.enemyType === 'mimic' ? 'mimic' : 'normal')))); NarrativeSystem.tryDropLore(this.elite ? 'elite' : 'normal', false); if(this.elite) ScreenEffects.onEliteDeath(); } if(this.isB) { Statistics.data.totalDamageDealt += CONFIG.BOSS_DAMAGE_DEALT_STAT; } if(source && source.skills && source.skills.stealth) source.stealth = CONFIG.STEALTH_DURATION; if(source === player && Math.random() < CONFIG.ENEMY_CURRENCY_DROP_CHANCE) pickups.push(new Pickup(this.x + (Math.random()-0.5)*30, this.y + (Math.random()-0.5)*30, 'currency'));
+            if(this.isB) { Statistics.data.bossKills++; DifficultySystem.trackKill(); SND.playEnemyDeath('boss'); NarrativeSystem.tryDropLore(null, true); } else if(source === player) { Statistics.data.totalKills++; DifficultySystem.trackKill(); SND.playEnemyDeath(this.elite ? 'elite' : (this.enemyType === 'swarm' ? 'swarm' : (this.enemyType === 'trap' ? 'trap' : (this.enemyType === 'mimic' ? 'mimic' : 'normal')))); NarrativeSystem.tryDropLore(this.elite ? 'elite' : 'normal', false); if(this.elite) ScreenEffects.onEliteDeath(); } if(this.isB) { Statistics.data.totalDamageDealt += CONFIG.BOSS_DAMAGE_DEALT_STAT; } if(source && source.skills && source.skills.stealth) source.stealth = CONFIG.STEALTH_DURATION; if(source === player && (this.isB || Math.random() < CONFIG.ENEMY_CURRENCY_DROP_CHANCE)) { const _mult = this.isB ? CONFIG.BOSS_LOOT_MULTIPLIER : 1; for(let _ci = 0; _ci < Math.ceil(_mult); _ci++) pickups.push(new Pickup(this.x + (Math.random()-0.5)*30, this.y + (Math.random()-0.5)*30, 'currency')); }
         }
     }
     move(dx, dy, m) {
@@ -12031,8 +12045,6 @@ class Player extends Entity {
         this.spriteAngle = this.angle;
         
         // Cloak Physics Setup
-        this.cloakPoints = [];
-        for(let i=0; i<6; i++) this.cloakPoints.push({x: x, y: y});
     }
 
     addMutation(type) {
@@ -12236,23 +12248,6 @@ class Player extends Entity {
 
     update(m) {
         if (!this.alive) return;
-        // Update cloak points with follow physics (lag behind)
-        if (this.cloakPoints && this.cloakPoints.length > 0) {
-            let prev = {x: this.x, y: this.y};
-            this.cloakPoints.forEach((p, i) => {
-                const dx = prev.x - p.x, dy = prev.y - p.y;
-                const dist = Math.hypot(dx, dy);
-                const targetDist = i === 0 ? 6 : 4;
-                if (dist > targetDist) {
-                    const angle = Math.atan2(dy, dx);
-                    p.x = prev.x - Math.cos(angle) * targetDist;
-                    p.y = prev.y - Math.sin(angle) * targetDist;
-                }
-                prev = p;
-            });
-        }
-
-        this.updateMutations(); if(this.damageBoost > 0) this.damageBoost--;
         if(this.shadowShieldTimer > 0) { this.shadowShieldTimer--; if(this.shadowShieldTimer <= 0) this.shield = 0; }
         if(this.dodgeCooldown > 0) this.dodgeCooldown--;
 
@@ -12428,41 +12423,6 @@ class Player extends Entity {
             ctx.restore();
         }
         
-        // Dynamic Cloak VFX with glow
-        if (this.cloakPoints && this.cloakPoints.length > 1) {
-            ctx.save();
-            ctx.strokeStyle = this.color;
-            ctx.globalAlpha = 0.15;
-            ctx.lineWidth = this.radius * 1.2;
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-            ctx.shadowColor = this.color;
-            ctx.shadowBlur = 15;
-            ctx.beginPath();
-            ctx.moveTo(this.cloakPoints[0].x - cx, this.cloakPoints[0].y - cy);
-            for(let i=1; i<this.cloakPoints.length; i++) {
-                ctx.lineTo(this.cloakPoints[i].x - cx, this.cloakPoints[i].y - cy);
-            }
-            ctx.stroke();
-            ctx.shadowBlur = 0;
-            ctx.restore();
-            
-            ctx.save();
-            ctx.strokeStyle = this.color;
-            ctx.lineWidth = this.radius * 0.8;
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-            ctx.globalAlpha = 0.5;
-            ctx.beginPath();
-            ctx.moveTo(this.cloakPoints[0].x - cx, this.cloakPoints[0].y - cy);
-            for(let i=1; i<this.cloakPoints.length; i++) {
-                ctx.lineWidth = this.radius * 0.8 * (1 - i/this.cloakPoints.length);
-                ctx.lineTo(this.cloakPoints[i].x - cx, this.cloakPoints[i].y - cy);
-            }
-            ctx.stroke();
-            ctx.restore();
-        }
-
         // Class-specific Hero Aura VFX
         const auraAlpha = 0.15 + Math.sin(gameTime * 0.05) * 0.05;
         const auraRadius = this.radius * (1.3 + Math.sin(gameTime * 0.08) * 0.15);
@@ -13524,7 +13484,7 @@ const RELICS = {
 const RelicSystem = {
     // Initializer to avoid errors in GameInit
     init() {
-        console.log('[Relics] Relic System initialized.');
+        Debug.info('[Relics] Relic System initialized.');
     },
 
     // Apply a relic to the player
@@ -14075,7 +14035,7 @@ window.SkillTreeUI = SkillTreeUI;
             this.overlay = document.getElementById('modal-overlay');
             this.setupButtons();
             this.setupOverlay();
-            console.log("UIManager initialized");
+            Debug.info("UIManager initialized");
         },
 
         setupButtons() {
@@ -14539,11 +14499,11 @@ window.SkillTreeUI = SkillTreeUI;
 // === js/core/bootstrap.js ===
 // GAME BOOTSTRAP - New game initialization
 // v=2 - CLEAN REWRITE
-console.log("====== BOOTSTRAP.JS IS EXECUTING ======");
+Debug.info("====== BOOTSTRAP.JS IS EXECUTING ======");
 
 window.GameBootstrap = {
     start(cls) {
-        console.log('[BOOTSTRAP] Starting game with class:', cls);
+        Debug.info('[BOOTSTRAP] Starting game with class:', cls);
 
         Debug.safe(() => {
             this._resetState(cls);
@@ -14551,7 +14511,7 @@ window.GameBootstrap = {
             this._spawnInitialEntities(cls);
             this._startUI();
             Debug.info('Game started: ' + cls + ' class, mode: ' + gameMode);
-            console.log('[BOOTSTRAP] player=' + (player ? 'YES' : 'NO') + ', map=' + (map ? 'YES' : 'NO') + ', gameState=' + gameState);
+            Debug.info('[BOOTSTRAP] player=' + (player ? 'YES' : 'NO') + ', map=' + (map ? 'YES' : 'NO') + ', gameState=' + gameState);
             if (typeof SaveSystem !== 'undefined') Debug.safe(() => SaveSystem.save(), 'autosaveNewGame');
         }, 'startGame');
     },
@@ -14562,7 +14522,7 @@ window.GameBootstrap = {
     continueGame() {
         const save = (typeof SaveSystem !== 'undefined') ? SaveSystem.load() : null;
         if (!save) { this.start('warrior'); return; }
-        console.log('[BOOTSTRAP] Continuing saved game from floor', save.dungeonLevel);
+        Debug.info('[BOOTSTRAP] Continuing saved game from floor', save.dungeonLevel);
 
         Debug.safe(() => {
             const cls = save.type || 'warrior';
