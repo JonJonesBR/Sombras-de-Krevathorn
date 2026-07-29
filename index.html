@@ -3333,7 +3333,7 @@ function _doContinue() {
     uiG.classList.add('hidden');
     const msg = window.I18n ? I18n.t('continue.revived') : 'Revivido! Seja mais cuidadoso!';
     addLog(msg);
-    if (window.SND) SND.playLevelUp && SND.playLevelUp();
+    if (window.SND) window.SND && SND.playLevelUp && window.SND && SND.playLevelUp();
     player && spawnParticles(player.x, player.y, '#33ff88', 10, 3);
 }
 
@@ -3437,7 +3437,7 @@ function _triggerWin() {
     Statistics.save();
     NarrativeSystem.save();
     if (typeof SaveSystem !== 'undefined') Debug.safe(() => SaveSystem.clear(), 'clearSaveOnWin');
-    if(typeof SND !== 'undefined' && SND.playAchievement) SND.playAchievement();
+    if(typeof SND !== 'undefined' && SND.playAchievement) window.SND &&  SND.playAchievement();
     if (typeof ScreenEffects !== "undefined") {
         if (ScreenEffects.onBossDeath) ScreenEffects.onBossDeath();
         if (ScreenEffects.triggerFlash) ScreenEffects.triggerFlash(0.5, '#44ff88');
@@ -3822,7 +3822,7 @@ function _updateWorldSim() {
         const pos = map.getSafeSpawn(200);
         pets.push(new Pet(type, pos.x, pos.y));
         addLog(" Um pet apareceu!");
-        SND.play(500, 'sine', 0.2, 0.2);
+        window.SND && SND.play(500, 'sine', 0.2, 0.2);
     }
 
     if(currentEvent) { if(!currentEvent.update()) { currentEvent = null; addLog("Evento terminado!"); } }
@@ -3848,7 +3848,7 @@ function _updateWeather() {
                 spawnParticles(nearest.x, nearest.y, '#ffffaa', 20, 8);
                 shake = 12;
                 if (typeof ScreenEffects !== 'undefined') ScreenEffects.triggerFlash(0.3, '#ffffff', 8);
-                SND.play(200, 'square', 0.15, 0.3);
+                window.SND && SND.play(200, 'square', 0.15, 0.3);
             }
         }
     } else if (gameTime % CONFIG.WEATHER_SPAWN_INTERVAL === 0 && Math.random() < CONFIG.WEATHER_SPAWN_CHANCE) {
@@ -3985,10 +3985,10 @@ function _updateEntitySimulation() {
         if (pdSq < collectDistSq) {
             p.alive = false;
             if (p.type === 'currency') {
-                SND.playCoinPickup ? SND.playCoinPickup() : SND.playPickup();
+                window.SND && (SND.playCoinPickup ? SND.playCoinPickup() : SND.playPickup());
                 player.currency += p.value; Statistics.data.totalCurrencyEarned += p.value; DamageNumbers.add(player.x, player.y, `+${p.value} `, 'normal');
             } else {
-                SND.playPickup();
+                window.SND &&  SND.playPickup();
                 ScreenEffects.onBuff(p.type);
                 if (p.type === 'health') { 
                     const healVal = (typeof prestigeLevel !== 'undefined' && prestigeLevel >= 2) ? Math.ceil(p.value * 0.5) : p.value;
@@ -4013,7 +4013,7 @@ function _updateEntitySimulation() {
         const wpCollectDistSq = wpCollectDist * wpCollectDist;
         if (wpdSq < wpCollectDistSq) {
             wp.alive = false;
-            SND.playPickup();
+            window.SND &&  SND.playPickup();
             if (typeof WeaponSystem !== 'undefined' && WeaponSystem.applyWeapon) {
                 WeaponSystem.applyWeapon(player, wp.weapon);
                 const msg = wp.weapon.name || 'Arma';
@@ -4032,7 +4032,7 @@ function _updateEntitySimulation() {
         const epCollectDistSq = epCollectDist * epCollectDist;
         if (epdSq < epCollectDistSq) {
             ep.alive = false;
-            SND.playPickup();
+            window.SND &&  SND.playPickup();
             if (typeof EquipmentSystem !== 'undefined' && EquipmentSystem.applyEquipment) {
                 EquipmentSystem.applyEquipment(player, ep.equip);
                 const msg = ep.equip.name || 'Equipamento';
@@ -4160,7 +4160,7 @@ function _updateEnemySpawning() {
                 boss.applyArchetype(BOSS_ARCHETYPES[Math.floor(Math.random() * BOSS_ARCHETYPES.length)]);
                 addLog('CHEFE APROXIMANDO: ' + boss.name + '!');
             }
-            entities.push(boss); SND.playBoss(); SND.startBossMusic(); shake = 20; ScreenEffects.onBossSpawn();
+            entities.push(boss); window.SND && SND.playBoss(); window.SND && SND.startBossMusic(); shake = 20; ScreenEffects.onBossSpawn();
             _bossBanner = { name: boss.name, timer: 90 };
         } else {
             const roll = Math.random();
@@ -4191,7 +4191,7 @@ function _updateEnemySpawning() {
     let bossAlive = false;
     if (bossActive) { for (let i = 0; i < entities.length; i++) { if (entities[i].isBoss && entities[i].alive) { bossAlive = true; break; } } }
     if (bossActive && !bossAlive) {
-        bossActive = false; SND.resumeBiomeMusic();
+        bossActive = false; window.SND && SND.resumeBiomeMusic();
         addLog('Chefe abatido!'); player.gainXP(CONFIG.XP_BOSS_REWARD); ScreenEffects.onBossDeath();
         const bossPos = map.getSafeSpawn(0);
         chests.push(new Chest(bossPos.x, bossPos.y, Math.random() < 0.35 ? 'lendario' : 'epico'));
@@ -4208,7 +4208,7 @@ function _updateEnemySpawning() {
             addLog('Zona limpa! Portal para nova area abriu!');
         }
         player && spawnParticles(player.x, player.y, COLORS.CLASS_MAGE, 20, 4);
-        SND.playAchievement && SND.playAchievement(); shake = 15;
+        window.SND && SND.playAchievement && window.SND && SND.playAchievement(); shake = 15;
     }
 }
 
@@ -4238,7 +4238,10 @@ function _updateCameraAndHUD() {
 
 function update() {
     if (gameState !== 'PLAYING') return;
-    Debug.safe(() => _handlePlayerDeath(), 'handlePlayerDeath');
+    // Don't process player death while menus/panels are open
+    if (!_anyPanelOpen()) {
+        Debug.safe(() => _handlePlayerDeath(), 'handlePlayerDeath');
+    }
     if (gameState !== 'PLAYING') return;
     // --- Phase 4: Hitstop  freeze world for N frames on kill ---
     // Brief hitstop for punchy combat (2 frames)
@@ -4621,13 +4624,13 @@ function draw() {
                 ctx.fillText('Aguardando...', width/2, height/2 + 20);
             }
             ctx.restore();
-            if (_fadeState.phase === 'in' && !_anyPanelOpen()) {
+            if (_fadeState.phase === 'in') {
                 _fadeState.alpha += 0.05;
                 if (_fadeState.alpha >= 1) {
                     _fadeState.alpha = 1;
                     _fadeState.phase = 'mid';
                 }
-            } else if (_fadeState.phase === 'mid' && !_anyPanelOpen()) {
+            } else if (_fadeState.phase === 'mid') {
                 try {
                 _cachedLightCanvas = null; _lightingThrottle = 0; _lightingDirty = true;
                 map = new Map(); _mmDirty = true;
@@ -4653,7 +4656,7 @@ function draw() {
                     if (!entities || !entities.length) entities = player ? [player] : [];
                 }
                 _fadeState.phase = 'out';
-            } else if (_fadeState.phase === 'out' && !_anyPanelOpen()) {
+            } else if (_fadeState.phase === 'out') {
                 _fadeState.alpha -= 0.04;
                 if (_fadeState.alpha <= 0) {
                     _fadeState = null; _fadeText = ''; _transitioning = false;
@@ -6058,7 +6061,7 @@ function checkAchievements() {
             if(!unlocked.includes(ach.id) && ach.check(Statistics.data)) {
                 unlocked.push(ach.id);
                 Statistics.data.achievementsUnlocked = unlocked.length;
-                SND.playAchievement();
+                window.SND &&  SND.playAchievement();
                 addLog(`🏆 ${ach.name}!`);
                 spawnParticles(player.x, player.y, '#ffdd00', CONFIG.PARTICLE_SPAWN_ACHIEVEMENT, 6);
                 // Show toast
@@ -6226,7 +6229,7 @@ window.doPrestige = function() {
     Debug.safe(() => {
         if(gameState === 'GAME_OVER' && player && player.lvl >= CONFIG.PRESTIGE_MIN_LEVEL) {
             prestigeLevel++; Statistics.data.totalPrestiges++; totalGamesPlayed++;
-            SND.playPrestige(); addLog(` PRESTIGE ${prestigeLevel}!`);
+            window.SND && SND.playPrestige(); addLog(` PRESTIGE ${prestigeLevel}!`);
             const reward = PRESTIGE_REWARDS.find(r => prestigeLevel >= r.level) || PRESTIGE_REWARDS[0];
             addLog(`Bnus: ${reward.name} (+${reward.bonus*100}% XP)`);
             if(getPrestigeHpBonus(prestigeLevel) > 0) addLog(` +${getPrestigeHpBonus(prestigeLevel)} HP permanente`);
@@ -6785,7 +6788,7 @@ const NarrativeSystem = {
         this.discovered[id] = true;
         if (Statistics) Statistics.data.loreFragments = this.getDiscoveredCount();
         addLog(` Lore descoberta: ${fragment.title}`);
-        SND.playLoreDiscover ? SND.playLoreDiscover() : SND.playAchievement();
+        SND.playLoreDiscover ? SND.playLoreDiscover() : window.SND &&  SND.playAchievement();
         return true;
     },
 
@@ -9966,12 +9969,12 @@ class Entity {
             if (source && source.type === 'warrior') {
                 finalDmg *= 1.5;
                 DamageNumbers.add(this.x, this.y, 'SHATTER!', 'crit');
-                SND.play(400, 'square', 0.1, 0.2);
+                window.SND && SND.play(400, 'square', 0.1, 0.2);
             }
         }
         if(Math.random() < (source && source.critChance ? CONFIG.CRIT_CHANCE_BASE + source.critChance : CONFIG.CRIT_CHANCE_BASE)) { 
             finalDmg *= CONFIG.CRIT_MULTIPLIER; dmgType = 'crit'; 
-            if(source) { SND.playCrit(); ScreenEffects.onCrit(); }
+            if(source) { window.SND && SND.playCrit(); ScreenEffects.onCrit(); }
             if(typeof hitstopFrames !== 'undefined' && this !== player) hitstopFrames = 2;
         }
         if(source && source.damageBoost > 0) finalDmg *= CONFIG.DAMAGE_BOOST_MULTIPLIER;
@@ -10027,7 +10030,7 @@ class Entity {
             }
         }
         
-        if(this === player) { shake = CONFIG.SHAKE_HIT; SND.playHit(); Statistics.data.totalDamageTaken += finalDmg; ScreenEffects.onHitEnemy(finalDmg, source ? source.x : 0, source ? source.y : 0, this.x, this.y); this.combatTimer = 0; }
+        if(this === player) { shake = CONFIG.SHAKE_HIT; window.SND && SND.playHit(); Statistics.data.totalDamageTaken += finalDmg; ScreenEffects.onHitEnemy(finalDmg, source ? source.x : 0, source ? source.y : 0, this.x, this.y); this.combatTimer = 0; }
         
         // Relic: Espinhos de Escudo
         if(window.RelicSystem && this === player) RelicSystem.espinhosReflect(this, source, finalDmg);
@@ -10075,7 +10078,7 @@ class Entity {
             // Haptic feedback on kill
             if(this.isB) Vibrate.trigger('bossKill');
             else if(this.elite) Vibrate.trigger('eliteKill');
-            if(this.isB) { Statistics.data.bossKills++; DifficultySystem.trackKill(); SND.playEnemyDeath('boss'); NarrativeSystem.tryDropLore(null, true); } else if(source === player) { Statistics.data.totalKills++; DifficultySystem.trackKill(); SND.playEnemyDeath(this.elite ? 'elite' : (this.enemyType === 'swarm' ? 'swarm' : (this.enemyType === 'trap' ? 'trap' : (this.enemyType === 'mimic' ? 'mimic' : 'normal')))); NarrativeSystem.tryDropLore(this.elite ? 'elite' : 'normal', false); if(this.elite) ScreenEffects.onEliteDeath(); } if(this.isB) { Statistics.data.totalDamageDealt += CONFIG.BOSS_DAMAGE_DEALT_STAT; } if(source && source.skills && source.skills.stealth) source.stealth = CONFIG.STEALTH_DURATION; if(source === player && (this.isB || Math.random() < CONFIG.ENEMY_CURRENCY_DROP_CHANCE)) { const _mult = this.isB ? CONFIG.BOSS_LOOT_MULTIPLIER : 1; for(let _ci = 0; _ci < Math.ceil(_mult); _ci++) pickups.push(new Pickup(this.x + (Math.random()-0.5)*30, this.y + (Math.random()-0.5)*30, 'currency')); }
+            if(this.isB) { Statistics.data.bossKills++; DifficultySystem.trackKill(); window.SND && SND.playEnemyDeath('boss'); NarrativeSystem.tryDropLore(null, true); } else if(source === player) { Statistics.data.totalKills++; DifficultySystem.trackKill(); window.SND && SND.playEnemyDeath(this.elite ? 'elite' : (this.enemyType === 'swarm' ? 'swarm' : (this.enemyType === 'trap' ? 'trap' : (this.enemyType === 'mimic' ? 'mimic' : 'normal')))); NarrativeSystem.tryDropLore(this.elite ? 'elite' : 'normal', false); if(this.elite) ScreenEffects.onEliteDeath(); } if(this.isB) { Statistics.data.totalDamageDealt += CONFIG.BOSS_DAMAGE_DEALT_STAT; } if(source && source.skills && source.skills.stealth) source.stealth = CONFIG.STEALTH_DURATION; if(source === player && (this.isB || Math.random() < CONFIG.ENEMY_CURRENCY_DROP_CHANCE)) { const _mult = this.isB ? CONFIG.BOSS_LOOT_MULTIPLIER : 1; for(let _ci = 0; _ci < Math.ceil(_mult); _ci++) pickups.push(new Pickup(this.x + (Math.random()-0.5)*30, this.y + (Math.random()-0.5)*30, 'currency')); }
         }
     }
     move(dx, dy, m) {
@@ -10209,7 +10212,7 @@ class Enemy extends Entity {
         let dSq = dx * dx + dy * dy;
         let d = Math.sqrt(dSq);
         if(this.isB && this.alive && this.hp < this.maxHp * CONFIG.ENRAGE_HP_THRESHOLD && this.phase === 1) {
-            this.phase = 2; this.s = CONFIG.BOSS_ENRAGE_SPEED; SND.playBoss(); addLog(" BOSS ENRAGED!");
+            this.phase = 2; this.s = CONFIG.BOSS_ENRAGE_SPEED; window.SND && SND.playBoss(); addLog(" BOSS ENRAGED!");
         }
         let speedMult = 1;
         if(player && player.skills.slow) speedMult *= (1 - player.skills.slow);
@@ -10792,7 +10795,7 @@ class TreasureGoblin extends Enemy {
     constructor(x,y) { super(x,y,false); this.color='#ffdd00'; this.s=CONFIG.TREASURE_GOBLIN_SPEED; this.hp=CONFIG.TREASURE_GOBLIN_HP; this.maxHp=CONFIG.TREASURE_GOBLIN_HP; this.enemyType='melee'; }
     onDeath(source) {
         for(let i=0; i<CONFIG.TREASURE_GOBLIN_CURRENCY_DROP; i++) pickups.push(new Pickup(this.x+(Math.random()-0.5)*50, this.y+(Math.random()-0.5)*50, 'currency'));
-        SND.playTreasure(); addLog(" Goblin derrotado!");
+        window.SND &&  SND.playTreasure(); addLog(" Goblin derrotado!");
     }
     update(p, m) {
         let dx = p.x - this.x, dy = p.y - this.y;
@@ -11370,7 +11373,7 @@ class SummonerEnemy extends Enemy {
             if(!m.isWall(sx, sy)) {
                 entities.push(new SwarmEnemy(sx, sy));
                 spawnParticles(sx, sy, CONFIG.SWARM_COLOR, 10, 3);
-                SND.play(400, 'triangle', 0.2, 0.15);
+                window.SND && SND.play(400, 'triangle', 0.2, 0.15);
             }
         }
     }
@@ -11462,7 +11465,7 @@ class Pet {
         this.timer = 0;
         this._abilityTimer = 0;
         this._diveTarget = null;
-        SND.playPetSpawn();
+        window.SND && SND.playPetSpawn();
         spawnParticles(this.x, this.y, this.color, 20, 5);
         addLog(`${this.name} apareceu! Toque nele para montar.`);
     }
@@ -11480,7 +11483,7 @@ class Pet {
         }
         spawnParticles(player.x, player.y, this.color, 15, 4);
         addLog(` ${this.name}! (+${Math.round((this.data.mountSpeedMult-1)*100)}% vel)`);
-        SND.playLevelUp && SND.playLevelUp();
+        window.SND && SND.playLevelUp && window.SND && SND.playLevelUp();
     }
 
     dismount() {
@@ -11780,7 +11783,7 @@ class Bullet {
                         if(diff > Math.PI) diff = Math.PI * 2 - diff;
                         if(diff < Math.PI / 2) {
                             spawnParticles(e.x, e.y, '#8888ff', 5, 3);
-                            SND.play(300, 'square', 0.05, 0.08);
+                            window.SND && SND.play(300, 'square', 0.05, 0.08);
                             this.alive = false;
                             break;
                         }
@@ -11905,7 +11908,7 @@ class Bullet {
                     if(wasAlive && !e.alive && this.isP) {
                         const xpReward = e.xpReward || (e.isB ? CONFIG.XP_BOSS_REWARD : CONFIG.XP_ENEMY_REWARD);
                         player.gainXP(xpReward); player.kills++; player.comboCount++; player.comboTimer = CONFIG.COMBO_DECAY_TIME;
-                        SND.playKill();
+                        window.SND && SND.playKill();
                         if(player.comboCount > CONFIG.COMBO_DISPLAY_MIN) DamageNumbers.add(player.x, player.y, `${player.comboCount}x COMBO!`, 'crit');
                         if(Math.random() < CONFIG.LOOT_DROP_CHANCE) {
                             const types = ['health', 'xp', 'shield', 'speed', 'essence'];
@@ -12050,7 +12053,7 @@ class Player extends Entity {
     addMutation(type) {
         if(this.mutations[type]) this.mutations[type].timeLeft = MUTATIONS[type].duration;
         else this.mutations[type] = new ActiveMutation(type);
-        SND.playMutation(); addLog(`${MUTATIONS[type].name}!`); spawnParticles(this.x, this.y, MUTATIONS[type].color, CONFIG.PARTICLE_SPAWN_MUTATION, 5);
+        window.SND && SND.playMutation(); addLog(`${MUTATIONS[type].name}!`); spawnParticles(this.x, this.y, MUTATIONS[type].color, CONFIG.PARTICLE_SPAWN_MUTATION, 5);
         Statistics.data.mutationsUsed++;
     }
 
@@ -12069,7 +12072,7 @@ class Player extends Entity {
             this.maxHp += CONFIG.XP_LEVEL_HP_GAIN; 
             this.hp = this.maxHp; 
             this.lr += CONFIG.XP_LEVEL_LR_GAIN;
-            SND.playLevelUp(); 
+            window.SND && SND.playLevelUp(); 
             if (typeof ScreenEffects !== "undefined" && ScreenEffects.onLevelUp) ScreenEffects.onLevelUp();
             this.levelUpAnim = 30;
             addLog(" Nível UP! " + this.lvl + " (+1 Ponto)"); 
@@ -12145,7 +12148,7 @@ class Player extends Entity {
             ScreenEffects.triggerShake(18);
             ScreenEffects.triggerFlash(0.4, '#ff8800', 15);
             ScreenEffects.triggerChromatic(4);
-            SND.play(120, 'sawtooth', 0.3, 0.3);
+            window.SND && SND.play(120, 'sawtooth', 0.3, 0.3);
             const slamRangeSq = slamRange * slamRange;
             for(let i = 0; i < entities.length; i++) {
                 const e = entities[i];
@@ -12200,7 +12203,7 @@ class Player extends Entity {
                     }
                 }
             }
-            spawnParticles(this.x, this.y, '#33ff33', 25, 5); SND.play(600, 'square', 0.1, 0.25); SND.schedule(() => SND.play(800, 'square', 0.08, 0.2), 60); shake = 5; addLog(this.skills.ult1 ? " ARROW STORM!" : " ARROW BARRAGE!");
+            spawnParticles(this.x, this.y, '#33ff33', 25, 5); window.SND && SND.play(600, 'square', 0.1, 0.25); window.SND && SND.schedule(() => window.SND && SND.play(800, 'square', 0.08, 0.2), 60); shake = 5; addLog(this.skills.ult1 ? " ARROW STORM!" : " ARROW BARRAGE!");
         } else if(this.type === 'mage') {
             this.skillCooldown = Math.floor(CONFIG.MAGE_ARCANE_STORM_COOLDOWN * Math.max(0.5, 1 - (this.cdrMult || 0)));
             if(this.skills.ult1) {
@@ -12224,7 +12227,7 @@ class Player extends Entity {
                 if (typeof ScreenEffects !== "undefined" && ScreenEffects.onMeteor) ScreenEffects.onMeteor();
                 addLog(" METEOR!");
             } else {
-                SND.play(500, 'sine', 0.5, 0.2);
+                window.SND && SND.play(500, 'sine', 0.5, 0.2);
                 spawnParticles(this.x, this.y, '#9966ff', 25, 8);
                 spawnParticles(this.x, this.y, '#ffffff', 15, 5);
                 ScreenEffects.triggerFlash(0.2, '#9966ff', 10);
@@ -12298,7 +12301,7 @@ class Player extends Entity {
             this.attackHeat = Math.min(effectiveHeatMax, this.attackHeat + CONFIG.HEAT_PER_SHOT);
             if(this.attackHeat >= effectiveHeatMax && !this.overheated) {
                 this.overheated = true;
-                SND.play(180, 'sawtooth', 0.2, 0.15);
+                window.SND && SND.play(180, 'sawtooth', 0.2, 0.15);
                 DamageNumbers.add(this.x, this.y, 'SUPERAQUECIDO!', 'normal');
             }
             const invMag = 1 / Math.sqrt(joystickMagSq);
@@ -12355,7 +12358,7 @@ class Player extends Entity {
                         }
                     }
                 }
-                this.scd = effectiveFireRate; if(hitAny) SND.play(150, 'sawtooth', 0.15, 0.3); else SND.play(80, 'triangle', 0.04, 0.08);
+                this.scd = effectiveFireRate; if(hitAny) window.SND && SND.play(150, 'sawtooth', 0.15, 0.3); else window.SND && SND.play(80, 'triangle', 0.04, 0.08);
             } else {
                 this.walkTimer = 60;
                 let dmg = Math.floor(cls.baseDmg * this.weaponLevel * this.weaponDamageMult);
@@ -12384,7 +12387,7 @@ class Player extends Entity {
                             }
                         }
                         DamageNumbers.add(this.x, this.y, 'SPELL COMBO!', 'crit');
-                        SND.play(660, 'sine', 0.3, 0.15);
+                        window.SND && SND.play(660, 'sine', 0.3, 0.15);
                     }
                 }
                 bullets.push(window.PoolManager ? PoolManager.acquire('Bullet', this.x, this.y, sx*bulletSpeed, sy*bulletSpeed, this.color, dmg, true, this.currentWeapon, range) : new Bullet(this.x, this.y, sx*bulletSpeed, sy*bulletSpeed, this.color, dmg, true, this.currentWeapon, range));
@@ -12398,7 +12401,7 @@ class Player extends Entity {
                         bullets.push(extraBullet);
                     }
                 }
-                this.scd = effectiveFireRate; SND.playShoot(this.type);
+                this.scd = effectiveFireRate; window.SND && SND.playShoot(this.type);
             }
         }
         if(Input.keys[' ']) this.useSkill();
@@ -12553,7 +12556,7 @@ class Player extends Entity {
     takeDamage(a, m, source=null) {
         if (this.invincibleTimer > 0) return;
         if (this.dodgeChance && a > 0 && Math.random() < Math.min(0.75, this.dodgeChance)) { spawnParticles(this.x, this.y, '#33ff33', 8, 4); DamageNumbers.add(this.x, this.y, 'ESQUIVA!', 'heal'); return; }
-        if(this.type === 'mage' && this.orbShieldReady && a > 0) { this.orbShieldReady = false; this.orbShieldTimer = 0; spawnParticles(this.x, this.y, COLORS.CLASS_MAGE, 15, 4); SND.play(440, 'sine', 0.2, 0.2); DamageNumbers.add(this.x, this.y, 'ORB SHIELD!', 'heal'); return; }
+        if(this.type === 'mage' && this.orbShieldReady && a > 0) { this.orbShieldReady = false; this.orbShieldTimer = 0; spawnParticles(this.x, this.y, COLORS.CLASS_MAGE, 15, 4); window.SND && SND.play(440, 'sine', 0.2, 0.2); DamageNumbers.add(this.x, this.y, 'ORB SHIELD!', 'heal'); return; }
         if(this.type === 'rogue' || this.type === 'mage') this.mageComboCount = 0;
         let dmg = a;
         // Player-selected difficulty preset scales all incoming damage
@@ -12968,7 +12971,7 @@ class NPC {
                     item.action(player);
                     const bought = window.I18n ? I18n.t('npc.bought') : 'Comprado!';
                     NPCInteractionPanel.showFeedback(bought);
-                    if (window.SND) SND.playPickup && SND.playPickup();
+                    if (window.SND) SND.playPickup && window.SND &&  SND.playPickup();
                     if (window.addLog) addLog(item.name + ' comprado!');
                 } else {
                     const noCoins = window.I18n ? I18n.t('npc.nocoins') : 'Moedas insuficientes';
@@ -13010,7 +13013,7 @@ class NPC {
                         // Mark portal and first chest on minimap via global oracle markers
                         if (window.NPCSystem) NPCSystem._oracleReveal();
                         NPCInteractionPanel.showFeedback('Revelado no minimapa!');
-                        if (window.SND) SND.playAchievement && SND.playAchievement();
+                        if (window.SND) SND.playAchievement && window.SND &&  SND.playAchievement();
                     } else {
                         NPCInteractionPanel.showFeedback('Ja revelado!');
                     }
@@ -13497,7 +13500,7 @@ const RelicSystem = {
         if (player.relics.has(relicId)) {
             player.currency += 60;
             addLog(`${r.icon} Duplicata! +60 moedas`);
-            SND.playPickup();
+            window.SND &&  SND.playPickup();
             return;
         }
 
@@ -13530,7 +13533,7 @@ const RelicSystem = {
         addLog(`${r.icon} ${r.name}!`);
         DamageNumbers.add(player.x, player.y, r.name, 'crit');
         spawnParticles(player.x, player.y, r.color, 30, 6);
-        SND.playAchievement();
+        window.SND &&  SND.playAchievement();
         Statistics.data.skillsUnlocked = (Statistics.data.skillsUnlocked || 0) + 1;
     },
 
@@ -13561,7 +13564,7 @@ const RelicSystem = {
             }
         }
         spawnParticles(enemy.x, enemy.y, '#ff4400', 20, 5);
-        SND.play(150, 'sawtooth', 0.2, 0.25);
+        window.SND && SND.play(150, 'sawtooth', 0.2, 0.25);
     },
 
     // XP multiplier check (called from player.gainXP)
@@ -13687,7 +13690,7 @@ const RelicSystem = {
         }
 
         addLog(` Ba ${r.toUpperCase()}! ${msg} +${currencyBonus}`);
-        SND.playTreasure();
+        window.SND && SND.playTreasure();
     },
 
     _randomRelic(rarity) {
@@ -14003,7 +14006,7 @@ const SkillTreeUI = {
                     e.preventDefault(); // Prevent double firing if click also happens
                     if (SkillTree.unlock(window.player, s.id)) {
                         window.player.currency -= s.cost;
-                        if (window.SND && SND.playPickup) SND.playPickup();
+                        if (window.SND && SND.playPickup) window.SND &&  SND.playPickup();
                         this.render(); 
                     }
                 };
@@ -14175,7 +14178,7 @@ window.SkillTreeUI = SkillTreeUI;
             if (item && player.currency >= item.cost) {
                 player.currency -= item.cost;
                 if (item.effect) item.effect(player);
-                if (window.SND && SND.playPickup) SND.playPickup();
+                if (window.SND && SND.playPickup) window.SND &&  SND.playPickup();
                 this.openPanel('shop'); // Refresh
             } else {
                 if (window.SND && SND.playHit) SND.playHit();
@@ -14551,7 +14554,7 @@ window.GameBootstrap = {
     _resetState(cls) {
         if (!SeedSystem.isSeeded()) { SeedSystem.clearSeed(); }
         if (window.DailyChallenge) { var _dc = DailyChallenge.getTodayChallenge(); if (_dc) DailyChallenge.applyChallenge(_dc); }
-        SND.init();
+        window.SND && SND.init();
         if (window.GameSettings) GameSettings.apply();
         if (window.SpatialHash) { spatialHash = new SpatialHash(); }
         
@@ -14577,8 +14580,8 @@ window.GameBootstrap = {
         DeathAnimations.clearAll();
         BiomeSystem.reset();
         DifficultySystem.reset();
-        SND.clearAudioTimers();
-        SND.startAmbient && SND.startAmbient();
+        window.SND && SND.clearAudioTimers();
+        window.SND && SND.startAmbient && SND.startAmbient();
         NarrativeSystem.reset();
         NarrativeSystem.load();
         totalGamesPlayed++;
@@ -14604,7 +14607,7 @@ window.GameBootstrap = {
         if (window.PoolManager) PoolManager.init();
         var craftBtn = document.getElementById('craft-btn');
         if (craftBtn) craftBtn.style.display = 'none';
-        SND.startMusic();
+        window.SND && SND.startMusic();
     },
 
     _spawnInitialEntities(cls) {
