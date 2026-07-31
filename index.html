@@ -5267,13 +5267,11 @@ window.SND = {
     ctx: null, musicGain: null, sfxGain: null, ambientTimer: null, ambientNodes: [],
     // Sound variation state
     lastDeathPitch: 0, lastHitPitch: 0, _step: 0,
-    // Audio Object Pool
-    _nodePool: { oscillators: [], gains: [] },
-    _POOL_SIZE: 10,
     // Ambient sounds control
     _ambientInterval: null,
     _ambientGain: null,
     _masterMusicGain: null,
+    _sfxCompressor: null,
 
     // Audio configuration state
     settings: { music: 0.15, ambient: 0.08, sfx: 0.3 },
@@ -5316,13 +5314,16 @@ window.SND = {
 
             this.sfxGain = this.ctx.createGain();
             this.sfxGain.gain.value = this.settings.sfx;
-            this.sfxGain.connect(this.ctx.destination);
 
-            // Pre-fill pool
-            for(let i=0; i<this._POOL_SIZE; i++) {
-                this._nodePool.oscillators.push(this.ctx.createOscillator());
-                this._nodePool.gains.push(this.ctx.createGain());
-            }
+            // Master SFX compressor: provides consistent limiting across combat spikes
+            this._sfxCompressor = this.ctx.createDynamicsCompressor();
+            this._sfxCompressor.threshold.value = -12;
+            this._sfxCompressor.knee.value = 6;
+            this._sfxCompressor.ratio.value = 4;
+            this._sfxCompressor.attack.value = 0.003;
+            this._sfxCompressor.release.value = 0.15;
+            this.sfxGain.connect(this._sfxCompressor);
+            this._sfxCompressor.connect(this.ctx.destination);
         }, 'audioInit');
     },
 
@@ -5342,25 +5343,38 @@ window.SND = {
 
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
+        const now = this.ctx.currentTime;
+
         osc.type = type;
-        osc.frequency.value = freq;
-        gain.gain.value = finalVol;
+        osc.frequency.setValueAtTime(freq, now);
+
+        // Proper gain envelope: 3ms attack, exponential decay
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(finalVol, now + 0.003);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + dur);
 
         const dest = target === 'music' ? this.musicGain : this.sfxGain;
-        
+
         if (pan !== 0 && this.ctx.createStereoPanner) {
             const panner = this.ctx.createStereoPanner();
             panner.pan.value = pan;
             osc.connect(gain);
             gain.connect(panner);
             panner.connect(dest);
+            osc.start();
+            osc.stop(now + dur);
+            osc.onended = () => {
+                try { panner.disconnect(); gain.disconnect(); } catch(e) {}
+            };
         } else {
             osc.connect(gain);
             gain.connect(dest);
+            osc.start();
+            osc.stop(now + dur);
+            osc.onended = () => {
+                try { gain.disconnect(); } catch(e) {}
+            };
         }
-        
-        osc.start();
-        osc.stop(this.ctx.currentTime + dur);
     },
 
     playNoise(vol, dur, freq, filterType, x = null, y = null) {
@@ -5381,10 +5395,18 @@ window.SND = {
         const noise = this.ctx.createBufferSource();
         noise.buffer = buffer;
         const filter = this.ctx.createBiquadFilter();
-        filter.type = filterType;
-        filter.frequency.value = freq;
         const gain = this.ctx.createGain();
-        gain.gain.value = finalVol;
+        const now = this.ctx.currentTime;
+
+        filter.type = filterType;
+        filter.frequency.setValueAtTime(freq, now);
+        filter.Q.setValueAtTime(1.5, now);
+
+        // Proper gain envelope: 10ms attack, exponential decay
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(finalVol, now + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + dur);
+
         noise.connect(filter);
         filter.connect(gain);
 
@@ -5393,11 +5415,19 @@ window.SND = {
             panner.pan.value = pan;
             gain.connect(panner);
             panner.connect(this.sfxGain);
+            noise.start();
+            noise.stop(now + dur);
+            noise.onended = () => {
+                try { panner.disconnect(); gain.disconnect(); filter.disconnect(); } catch(e) {}
+            };
         } else {
             gain.connect(this.sfxGain);
+            noise.start();
+            noise.stop(now + dur);
+            noise.onended = () => {
+                try { gain.disconnect(); filter.disconnect(); } catch(e) {}
+            };
         }
-
-        noise.start();
     },
 
     _noiseBuffer(dur) {
@@ -5647,41 +5677,35 @@ window.SND = {
         const depth = typeof dungeonLevel !== 'undefined' ? dungeonLevel : 1;
         const freq = 40 + (depth * 2); // Deeper frequencies for higher levels
         const dur = 2.0;
-        
+        const now = this.ctx.currentTime;
+
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         const filter = this.ctx.createBiquadFilter();
-        
+
         osc.type = 'triangle';
-        osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(freq * 0.95, this.ctx.currentTime + dur);
-        
+        osc.frequency.setValueAtTime(freq, now);
+        osc.frequency.exponentialRampToValueAtTime(freq * 0.95, now + dur);
+
         filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(400, this.ctx.currentTime);
-        filter.Q.setValueAtTime(10, this.ctx.currentTime);
-        
-        gain.gain.setValueAtTime(0, this.ctx.currentTime);
-        gain.gain.linearRampToValueAtTime(this.settings.ambient * 0.5, this.ctx.currentTime + 0.5);
-        gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + dur);
-        
+        filter.frequency.setValueAtTime(400, now);
+        filter.Q.setValueAtTime(0.5, now); // Reduced Q to avoid ringing
+
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(this.settings.ambient * 0.5, now + 0.5);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + dur);
+
         osc.connect(filter);
         filter.connect(gain);
         gain.connect(this._ambientGain || this.ctx.destination);
-        
+
         osc.start();
-        osc.stop(this.ctx.currentTime + dur);
+        osc.stop(now + dur);
+        osc.onended = () => {
+            try { filter.disconnect(); gain.disconnect(); } catch(e) {}
+        };
     },
 
-    // Crossfade ambient sounds
-    transitionAmbient(newBiome) {
-        if (!this.ctx) return;
-        const targetGain = 0.08;
-        this._ambientGain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.5);
-        setTimeout(() => {
-            BiomeSystem.currentBiome = newBiome;
-            this._ambientGain.gain.exponentialRampToValueAtTime(targetGain, this.ctx.currentTime + 0.5);
-        }, 500);
-    },
     playShoot(type) {
         if (!this.ctx) return;
         const pitchVar = (Math.random() - 0.5) * 60;
@@ -5790,8 +5814,133 @@ window.SND = {
     },
 
     playCrit() {
-        this.play(800, 'square', 0.05, 0.2);
-        setTimeout(() => this.play(1000, 'sine', 0.06, 0.15), 60);
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+
+        // (a) Click transient: short highpass noise burst ~3.5kHz, 25ms, vol ~0.15
+        (() => {
+            const buffer = this._noiseBuffer(0.025);
+            const noise = this.ctx.createBufferSource();
+            noise.buffer = buffer;
+            const filter = this.ctx.createBiquadFilter();
+            const gain = this.ctx.createGain();
+
+            filter.type = 'highpass';
+            filter.frequency.setValueAtTime(3500 * (0.95 + Math.random() * 0.1), now);
+            filter.Q.setValueAtTime(2, now);
+
+            gain.gain.setValueAtTime(0, now);
+            gain.gain.linearRampToValueAtTime(0.25, now + 0.003);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.025);
+
+            noise.connect(filter);
+            filter.connect(gain);
+            gain.connect(this.sfxGain);
+            noise.start(now);
+            noise.stop(now + 0.025);
+            noise.onended = () => {
+                try { filter.disconnect(); gain.disconnect(); } catch(e) {}
+            };
+        })();
+
+        // (b) Tonal body: ~250Hz square/triangle, exponential decay over ~120ms, starting ~5ms after click
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(250 * (0.95 + Math.random() * 0.1), now + 0.005);
+        gain.gain.setValueAtTime(0, now + 0.005);
+        gain.gain.linearRampToValueAtTime(0.32, now + 0.008);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.125);
+        osc.connect(gain);
+        gain.connect(this.sfxGain);
+        osc.start(now + 0.005);
+        osc.stop(now + 0.125);
+        osc.onended = () => {
+            try { gain.disconnect(); } catch(e) {}
+        };
+
+        // (c) Sub thump: 50-55Hz sine, exponential decay over ~200ms
+        const sub = this.ctx.createOscillator();
+        const subGain = this.ctx.createGain();
+        sub.type = 'sine';
+        sub.frequency.setValueAtTime(50 + Math.random() * 5, now);
+        subGain.gain.setValueAtTime(0, now);
+        subGain.gain.linearRampToValueAtTime(0.28, now + 0.003);
+        subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+        sub.connect(subGain);
+        subGain.connect(this.sfxGain);
+        sub.start();
+        sub.stop(now + 0.2);
+        sub.onended = () => {
+            try { subGain.disconnect(); } catch(e) {}
+        };
+
+        Vibrate.trigger('hit');
+    },
+
+    playBossImpact() {
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+
+        // (a) Click transient: louder and higher, ~5kHz, 30ms, vol ~0.25
+        (() => {
+            const buffer = this._noiseBuffer(0.03);
+            const noise = this.ctx.createBufferSource();
+            noise.buffer = buffer;
+            const filter = this.ctx.createBiquadFilter();
+            const gain = this.ctx.createGain();
+
+            filter.type = 'highpass';
+            filter.frequency.setValueAtTime(5000 * (0.95 + Math.random() * 0.1), now);
+            filter.Q.setValueAtTime(2.5, now);
+
+            gain.gain.setValueAtTime(0, now);
+            gain.gain.linearRampToValueAtTime(0.25, now + 0.003);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
+
+            noise.connect(filter);
+            filter.connect(gain);
+            gain.connect(this.sfxGain);
+            noise.start(now);
+            noise.stop(now + 0.03);
+            noise.onended = () => {
+                try { filter.disconnect(); gain.disconnect(); } catch(e) {}
+            };
+        })();
+
+        // (b) Tonal body: ~120Hz square, exponential decay over ~250ms, vol ~0.3
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(120 * (0.95 + Math.random() * 0.1), now + 0.01);
+        gain.gain.setValueAtTime(0, now + 0.01);
+        gain.gain.linearRampToValueAtTime(0.3, now + 0.013);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.26);
+        osc.connect(gain);
+        gain.connect(this.sfxGain);
+        osc.start(now + 0.01);
+        osc.stop(now + 0.26);
+        osc.onended = () => {
+            try { gain.disconnect(); } catch(e) {}
+        };
+
+        // (c) Sub thump: ~40Hz sine, exponential decay over ~350ms, vol ~0.25
+        const sub = this.ctx.createOscillator();
+        const subGain = this.ctx.createGain();
+        sub.type = 'sine';
+        sub.frequency.setValueAtTime(40 * (0.95 + Math.random() * 0.1), now);
+        subGain.gain.setValueAtTime(0, now);
+        subGain.gain.linearRampToValueAtTime(0.25, now + 0.005);
+        subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+        sub.connect(subGain);
+        subGain.connect(this.sfxGain);
+        sub.start();
+        sub.stop(now + 0.35);
+        sub.onended = () => {
+            try { subGain.disconnect(); } catch(e) {}
+        };
+
+        Vibrate.trigger('bossHit');
     },
 
     playAchievement() {
@@ -5827,24 +5976,46 @@ window.SND = {
         if (!this.ctx || this._layerNodes[name]) return;
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
+        const now = this.ctx.currentTime;
+
         osc.type = waveType;
-        osc.frequency.value = freq;
-        gain.gain.setValueAtTime(0, this.ctx.currentTime);
-        gain.gain.linearRampToValueAtTime(targetVol, this.ctx.currentTime + fadeTime);
+        osc.frequency.setValueAtTime(freq, now);
+
+        // Register + start BEFORE automation so a throw never strands the node
         osc.connect(gain);
         gain.connect(this.musicGain);
         osc.start();
         this._layerNodes[name] = { osc, gain, targetVol };
+
+        // Smooth fade-in; setTargetAtTime is safe against overlapping automation
+        try {
+            gain.gain.setValueAtTime(0, now);
+            gain.gain.setTargetAtTime(targetVol, now, fadeTime / 3);
+        } catch(e) {}
     },
 
     _stopLayer(name, fadeTime) {
         const layer = this._layerNodes[name];
         if (!layer || !this.ctx) return;
-        layer.gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + fadeTime);
+        const now = this.ctx.currentTime;
+        // Schedule cleanup FIRST so a throw below can never strand the oscillator
+        delete this._layerNodes[name];
         setTimeout(() => {
             try { layer.osc.stop(); } catch(e) {}
-            delete this._layerNodes[name];
+            try { layer.gain.disconnect(); } catch(e) {}
         }, (fadeTime + 0.2) * 1000);
+        // Cancel any in-flight automation, hold current value, then fade to 0
+        try {
+            const g = layer.gain.gain;
+            if (g.cancelAndHoldAtTime) {
+                g.cancelAndHoldAtTime(now);
+            } else {
+                const cur = g.value;
+                g.cancelScheduledValues(now);
+                g.setValueAtTime(cur, now);
+            }
+            g.setTargetAtTime(0, now, fadeTime / 3);
+        } catch(e) {}
     },
 
     // Called once per second from engine to adjust music layers
@@ -11031,6 +11202,7 @@ class Boss extends Enemy {
             addLog(` ${this.name} - FASE 3!`);
             shake = 20;
             ScreenEffects.onBossPhase3(true);
+            if (window.SND && SND.playBossImpact) SND.playBossImpact();
             this.trySummonMinions(m);
         } else if(hpRatio <= CONFIG.BOSS_PHASE_2_THRESHOLD && this.phase < 2) {
             this.phase = 2;
@@ -11040,6 +11212,7 @@ class Boss extends Enemy {
             shake = 15;
             ScreenEffects.onBossPhase3(false);
             if (window.SND && SND.playBossPhase2) SND.playBossPhase2();
+            if (window.SND && SND.playBossImpact) SND.playBossImpact();
             this.trySummonMinions(m);
             // --- Phase 4: Spawn fire pillars on phase 2 ---
             this._spawnFirePillars(p, m);
@@ -11102,6 +11275,7 @@ class Boss extends Enemy {
                         p.takeDamage(CONFIG.BOSS_ABILITY_CHARGE_DAMAGE, m);
                         spawnParticles(p.x, p.y, '#ff0000', 10, 4);
                         this.charging = false; shake = 12; ScreenEffects.onChargeHit();
+                        if (window.SND && SND.playBossImpact) SND.playBossImpact();
                     }
                 }
             } else {
@@ -11180,6 +11354,7 @@ class Boss extends Enemy {
             const pdx = p.x - this.x, pdy = p.y - this.y;
             const distSq = pdx * pdx + pdy * pdy;
             spawnParticles(this.x, this.y, '#ff6600', 30, 5); shake = 18;
+            if (window.SND && SND.playBossImpact) SND.playBossImpact();
             if(distSq < 48400) {
                 p.takeDamage(dmg * 2, m);
                 spawnParticles(p.x, p.y, '#ff3300', 15, 5);
