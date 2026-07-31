@@ -2602,12 +2602,12 @@ var CONFIG = {
     DIFFICULTY_MIMIC_UNLOCK_DUNGEON: 6,
 
     // Dynamic difficulty adjustment
-    DDA_LOOKBACK_FRAMES: 3600,
+    DDA_LOOKBACK_FRAMES: 1800,
     DDA_EASY_THRESHOLD: 0.02,
     DDA_HARD_THRESHOLD: 0.005,
     DDA_EASY_HP_MULT: 0.9,
     DDA_HARD_HP_MULT: 1.2,
-    DDA_ADJUSTMENT_COOLDOWN: 1800,
+    DDA_ADJUSTMENT_COOLDOWN: 600,
 
     // Treasure Goblin
     TREASURE_GOBLIN_HP: 100,
@@ -3927,7 +3927,11 @@ function _updateEntitySimulation() {
                 const dist2 = edx * edx + edy * edy;
                 // Near enemies: every frame, Medium: every 2, Far: every 4
                 const rate = dist2 < nearDist2 ? 1 : (dist2 < farDist2 ? 3 : 5); // Slightly more aggressive staggering
-                if ((i + gameTime) % rate === 0) e.update(player, map); 
+                if ((i + gameTime) % rate === 0) e.update(player, map);
+                // Knockback momentum must run every frame (staggered/idle enemies included).
+                // Entity.prototype.move avoids Enemy.move's angle snap; _kbFrame guard
+                // prevents double-application when e.update() already moved this frame.
+                if (e.alive && (e.kbVx || e.kbVy)) Entity.prototype.move.call(e, 0, 0, map);
             }
         }
     }
@@ -6868,7 +6872,9 @@ const EquipmentSystem = {
         if(s.maxHp) { player.maxHp += Math.floor(s.maxHp); player.hp += Math.floor(s.maxHp); }
         if(s.maxHpFlat) { player.maxHp += Math.floor(s.maxHpFlat); player.hp += Math.floor(s.maxHpFlat); }
         if(s.damageMult) player.damageMult = (player.damageMult || 1) + s.damageMult;
-        if(s.speedMult) player.speed *= (1 + s.speedMult);
+        // Additive stacking (same convention as damageMult); consumed in Player.update
+        // as speed * min(2, 1 + speedMultBonus). Symmetric + idempotent with remove.
+        if(s.speedMult) player.speedMultBonus = (player.speedMultBonus || 0) + s.speedMult;
         if(s.critChance) player.critChance = (player.critChance || 0) + s.critChance;
         if(s.thornPct) player.thornPct = (player.thornPct || 0) + s.thornPct;
         if(s.poisonPotency) player.poisonPotency = (player.poisonPotency || 1) + s.poisonPotency;
@@ -6886,13 +6892,15 @@ const EquipmentSystem = {
         if(s.maxHp) { player.maxHp = Math.max(1, player.maxHp - Math.floor(s.maxHp)); }
         if(s.maxHpFlat) { player.maxHp = Math.max(1, player.maxHp - Math.floor(s.maxHpFlat)); }
         if(s.damageMult) player.damageMult = Math.max(1, (player.damageMult || 1) - s.damageMult);
-        if(s.speedMult) player.speed = Math.max(1, player.speed / (1 + s.speedMult));
+        if(s.speedMult) player.speedMultBonus = Math.max(0, (player.speedMultBonus || 0) - s.speedMult);
         if(s.critChance) player.critChance = Math.max(0, (player.critChance || 0) - s.critChance);
         if(s.thornPct) player.thornPct = Math.max(0, (player.thornPct || 0) - s.thornPct);
         if(s.poisonPotency) player.poisonPotency = Math.max(1, (player.poisonPotency || 1) - s.poisonPotency);
         if(s.dodgeChance) player.dodgeChance = Math.max(0, (player.dodgeChance || 0) - s.dodgeChance);
         if(s.equipLifesteal) player.equipLifesteal = Math.max(0, (player.equipLifesteal || 0) - s.equipLifesteal);
         if(s.cdrMult) player.cdrMult = Math.max(0, (player.cdrMult || 0) - s.cdrMult);
+        // Keep hp consistent after maxHp reduction (apply raises hp, remove lowers cap)
+        player.hp = Math.min(player.hp, player.maxHp);
     },
 
     // Draw equipment HUD
@@ -7082,6 +7090,10 @@ const DifficultySystem = {
     killHistory: [],
     lastKillFrame: 0,
 
+    // Near-death events (player HP crossing below 25% of max) - strongest
+    // "player is struggling" signal for the DDA
+    nearDeathHistory: [],
+
     // Dynamic difficulty adjustment state
     ddaMultiplier: 1.0, // 1.0 = normal, 0.9 = easier, 1.2 = harder
     lastAdjustmentFrame: 0,
@@ -7215,22 +7227,37 @@ const DifficultySystem = {
     },
 
     // ============================================================
+    // Track a near-death event (player HP crossed below 25% of max)
+    // ============================================================
+    trackNearDeath() {
+        this.nearDeathHistory.push(gameTime);
+        const cutoff = gameTime - CONFIG.DDA_LOOKBACK_FRAMES;
+        this.nearDeathHistory = this.nearDeathHistory.filter(t => t > cutoff);
+    },
+
+    // ============================================================
     // Dynamic Difficulty Adjustment - check and adjust
     // ============================================================
     updateDDA() {
+        // Evaluate every DDA_ADJUSTMENT_COOLDOWN frames (10s)
         if (gameTime - this.lastAdjustmentFrame < CONFIG.DDA_ADJUSTMENT_COOLDOWN) return;
+        this.lastAdjustmentFrame = gameTime;
 
-        const killsInWindow = this.killHistory.filter(t => t > gameTime - CONFIG.DDA_LOOKBACK_FRAMES).length;
-        const killsPerFrame = killsInWindow / CONFIG.DDA_LOOKBACK_FRAMES;
+        const cutoff = gameTime - CONFIG.DDA_LOOKBACK_FRAMES;
+        this.killHistory = this.killHistory.filter(t => t > cutoff);
+        this.nearDeathHistory = this.nearDeathHistory.filter(t => t > cutoff);
+        const killsPerFrame = this.killHistory.length / CONFIG.DDA_LOOKBACK_FRAMES;
+        const nearDeaths = this.nearDeathHistory.length;
 
-        if (killsPerFrame > CONFIG.DDA_EASY_THRESHOLD) {
+        if (nearDeaths >= 2) {
+            // Player repeatedly close to dying - strongest signal, ease off
+            this.ddaMultiplier = Math.max(0.65, this.ddaMultiplier - 0.08);
+        } else if (killsPerFrame > CONFIG.DDA_EASY_THRESHOLD) {
             // Player is killing too fast - make it harder
-            this.ddaMultiplier = Math.min(1.5, this.ddaMultiplier + 0.05);
-            this.lastAdjustmentFrame = gameTime;
-        } else if (killsPerFrame < CONFIG.DDA_HARD_THRESHOLD) {
-            // Player is struggling - make it easier
-            this.ddaMultiplier = Math.max(0.7, this.ddaMultiplier - 0.05);
-            this.lastAdjustmentFrame = gameTime;
+            this.ddaMultiplier = Math.min(1.5, this.ddaMultiplier + 0.06);
+        } else if (killsPerFrame < CONFIG.DDA_HARD_THRESHOLD && nearDeaths === 0) {
+            // Slow kills but not in danger - gentle ease
+            this.ddaMultiplier = Math.max(0.65, this.ddaMultiplier - 0.03);
         }
     },
 
@@ -7272,6 +7299,7 @@ const DifficultySystem = {
         this.recentKills = 0;
         this.killHistory = [];
         this.lastKillFrame = 0;
+        this.nearDeathHistory = [];
         this.ddaMultiplier = 1.0;
         this.lastAdjustmentFrame = 0;
     }
@@ -10233,7 +10261,7 @@ class Entity {
         }
         if(source && source.damageBoost > 0) finalDmg *= CONFIG.DAMAGE_BOOST_MULTIPLIER;
         if(currentEvent && currentEvent.type === 'bloodMoon' && source === player) finalDmg *= CONFIG.BLOOD_MOON_DAMAGE_BOOST;
-        if(source === player && player && player.damageMult > 1) finalDmg *= player.damageMult;
+        if(source === player && player && player.damageMult > 1) finalDmg *= Math.min(5, player.damageMult);
         if(this.shield > 0) { this.shield -= finalDmg; if(this.shield < 0) { this.hp += this.shield; this.shield = 0; } } else { this.hp -= finalDmg; if(source === player || (source && source.owner === player)) DamageNumbers.add(this.x, this.y, finalDmg, dmgType); }
         
         // EventBus hook
@@ -10269,11 +10297,13 @@ class Entity {
                 );
             }
             
-            // Flinch / knockback (only for non-player, non-boss entities)
-            if (this !== player && !this.isB) {
-                this.flinchTimer = Math.min(4 + Math.floor(finalDmg / 5), 12);
-                this.flinchVx = Math.cos(angle) * Math.min(1 + finalDmg * 0.03, 5);
-                this.flinchVy = Math.sin(angle) * Math.min(1 + finalDmg * 0.03, 5);
+            // Knockback impulse with exponential decay (applied per-frame in move(),
+            // *0.82 decay, cutoff below 0.1). Elites/bosses heavily resist.
+            if (this !== player) {
+                const kbMult = (this.elite || this.isB) ? CONFIG.KNOCKBACK_HEAVY_MULT : 1.0;
+                const kbMag = Math.min(12, 6 + finalDmg * 0.04) * kbMult;
+                this.kbVx = Math.cos(angle) * kbMag;
+                this.kbVy = Math.sin(angle) * kbMag;
                 // Brief material flash
                 this.hitFlashTimer = 4;
             }
@@ -10350,8 +10380,17 @@ class Entity {
         }
     }
     move(dx, dy, m) {
-        // Apply flinch knockback
+        // Apply knockback velocity with exponential decay (once per frame, guarded
+        // by _kbFrame so a second move() call in the same frame doesn't double-apply)
         let fx = dx, fy = dy;
+        if ((this.kbVx || this.kbVy) && this._kbFrame !== gameTime) {
+            this._kbFrame = gameTime;
+            fx += this.kbVx;
+            fy += this.kbVy;
+            this.kbVx *= 0.82; this.kbVy *= 0.82;
+            if (this.kbVx * this.kbVx + this.kbVy * this.kbVy < 0.01) { this.kbVx = 0; this.kbVy = 0; }
+        }
+        // Legacy flinch (no longer set on hit, kept for compatibility)
         if (this.flinchTimer > 0) {
             fx += this.flinchVx;
             fy += this.flinchVy;
@@ -10442,6 +10481,30 @@ class Entity {
     <script>
 // === js/entities/enemy.js ===
 // ENEMY & BOSS CLASSES
+// Separation steering (anti-stacking): normalized push-away vector from nearby
+// living non-boss enemies within `range`. Uses spatialHash when available
+// (rebuilt every frame in _updateEntitySimulation), falls back to O(n^2) over
+// entities - enemy counts are small. Returns null when not crowded.
+function computeEnemySeparation(self, range) {
+    let sx = 0, sy = 0, count = 0;
+    const rangeSq = range * range;
+    const pool = (window.spatialHash && spatialHash.query) ? spatialHash.query(self.x, self.y, range) : (typeof entities !== 'undefined' ? entities : []);
+    for (let i = 0; i < pool.length; i++) {
+        const o = pool[i];
+        if (o === self || !o.alive || !o.isEnemy || o.isB) continue;
+        const dx = self.x - o.x, dy = self.y - o.y;
+        const dSq = dx * dx + dy * dy;
+        if (dSq > 0.0001 && dSq < rangeSq) {
+            const inv = 1 / dSq; // closer neighbors push harder
+            sx += dx * inv; sy += dy * inv; count++;
+        }
+    }
+    if (count === 0) return null;
+    const mag = Math.sqrt(sx * sx + sy * sy);
+    if (mag < 0.0001) return null;
+    return { x: sx / mag, y: sy / mag };
+}
+
 class Enemy extends Entity {
     constructor(x,y,isB=false, type=null) {
         const baseHp = isB ? DifficultySystem.getScaledHp(CONFIG.BOSS_HP, true) : DifficultySystem.getScaledHp(CONFIG.ENEMY_HP, false);
@@ -10502,7 +10565,23 @@ class Enemy extends Entity {
                 }
             }
         } else {
-            if(d > 0 && d < CONFIG.ENEMY_CHASE_RANGE) { let vx = (dx/d)*this.s*speedMult, vy = (dy/d)*this.s*speedMult; this.move(vx, vy, m); }
+            if(d > 0 && d < CONFIG.ENEMY_CHASE_RANGE) {
+                const sep = computeEnemySeparation(this, this.radius * 3.5);
+                if(d <= p.radius + this.radius - 4) {
+                    // Already biting: hold position (contact damage still applies),
+                    // only drift apart so the pack rings the player instead of
+                    // collapsing onto a single point
+                    if(sep) this.move(sep.x*this.s*speedMult*0.5, sep.y*this.s*speedMult*0.5, m);
+                } else {
+                    let nx = dx/d, ny = dy/d;
+                    // Blend chase with separation so packs fan out instead of blobbing
+                    if(sep) {
+                        nx = nx * 0.6 + sep.x * 0.4; ny = ny * 0.6 + sep.y * 0.4;
+                        const nm = Math.sqrt(nx*nx + ny*ny) || 1; nx /= nm; ny /= nm;
+                    }
+                    this.move(nx*this.s*speedMult, ny*this.s*speedMult, m);
+                }
+            }
             const meleeDmg = this._berserkerDmgMult ? this.scaledDamage * this._berserkerDmgMult : this.scaledDamage;
             if(d < p.radius + this.radius) p.takeDamage(meleeDmg, m);
         }
@@ -10649,7 +10728,20 @@ class EliteEnemy extends Enemy {
             }
         } else {
             const chaseRangeSq = CONFIG.ENEMY_CHASE_RANGE * CONFIG.ENEMY_CHASE_RANGE;
-            if(dSq > 0 && dSq < chaseRangeSq) { const invD = 1/d; this.move((dx*invD)*this.s*speedMult, (dy*invD)*this.s*speedMult, m); }
+            if(dSq > 0 && dSq < chaseRangeSq) {
+                const invD = 1/d;
+                const sep = computeEnemySeparation(this, this.radius * 3.5);
+                if(d <= p.radius + this.radius - 4) {
+                    if(sep) this.move(sep.x*this.s*speedMult*0.5, sep.y*this.s*speedMult*0.5, m);
+                } else {
+                    let nx = dx*invD, ny = dy*invD;
+                    if(sep) {
+                        nx = nx * 0.6 + sep.x * 0.4; ny = ny * 0.6 + sep.y * 0.4;
+                        const nm = Math.sqrt(nx*nx + ny*ny) || 1; nx /= nm; ny /= nm;
+                    }
+                    this.move(nx*this.s*speedMult, ny*this.s*speedMult, m);
+                }
+            }
             const contactSq = (p.radius + this.radius) * (p.radius + this.radius);
             if(dSq < contactSq) {
                 // Start telegraph before heavy attack
@@ -10741,8 +10833,20 @@ class SwarmEnemy extends Entity {
         if(player && player.skills.slow) speedMult *= (1 - player.skills.slow);
         const chaseRangeSq = CONFIG.ENEMY_CHASE_RANGE * CONFIG.ENEMY_CHASE_RANGE;
         if(dSq > 0 && dSq < chaseRangeSq) {
-            const invD = 1.0 / Math.sqrt(dSq);
-            this.move((dx*invD)*this.s*speedMult, (dy*invD)*this.s*speedMult, m);
+            const d = Math.sqrt(dSq);
+            const invD = 1.0 / d;
+            // Swarms keep tighter packing (weaker separation) to preserve their identity
+            const sep = computeEnemySeparation(this, this.radius * 3.5);
+            if(d <= p.radius + this.radius - 2) {
+                if(sep) this.move(sep.x*this.s*speedMult*0.3, sep.y*this.s*speedMult*0.3, m);
+            } else {
+                let nx = dx*invD, ny = dy*invD;
+                if(sep) {
+                    nx = nx * 0.85 + sep.x * 0.15; ny = ny * 0.85 + sep.y * 0.15;
+                    const nm = Math.sqrt(nx*nx + ny*ny) || 1; nx /= nm; ny /= nm;
+                }
+                this.move(nx*this.s*speedMult, ny*this.s*speedMult, m);
+            }
         }
         const contactSq = (p.radius + this.radius) * (p.radius + this.radius);
         if(dSq < contactSq) p.takeDamage(CONFIG.SWARM_DAMAGE, m);
@@ -11541,15 +11645,8 @@ class Boss extends Enemy {
         for (let i = this.arenaHazards.length - 1; i >= 0; i--) { if (!this.arenaHazards[i].alive) this.arenaHazards.splice(i, 1); }
     }
     takeDamage(a, m, source=null) {
-        if (source && source.type !== 'rogue') {
-            const dx = this.x - source.x;
-            const dy = this.y - source.y;
-            const distSq = dx * dx + dy * dy;
-            const dist = Math.sqrt(distSq) || 1;
-            const kbMult = (this.elite || this.isB) ? CONFIG.KNOCKBACK_HEAVY_MULT : 1.0;
-            this.vx = (dx / dist) * CONFIG.KNOCKBACK_STRENGTH * kbMult;
-            this.vy = (dy / dist) * CONFIG.KNOCKBACK_STRENGTH * kbMult;
-        }
+        // (Removed dead vx/vy knockback assignment - those fields were never consumed.
+        // Boss knockback now comes from the decaying kbVx/kbVy in Entity.takeDamage.)
         super.takeDamage(a, m, source);
 
         // --- Phase 4: Thorn aura in phase 3+  reflect 10% damage to attacker ---
@@ -12016,6 +12113,7 @@ class Bullet {
         this.spd = Math.sqrt(vx * vx + vy * vy);
         this.poisonDmg = weapon && weapon.poison ? Math.floor(dmg * 0.3) : 0;
         this.hitCount = 0;
+        this.hitList = null; // entities already hit (pierce must not re-hit); reset on pool reuse
         this.applyPoison = weapon && weapon.poison;
         
         if (this.isP) {
@@ -12046,6 +12144,11 @@ class Bullet {
                     const edx = e.x-this.x, edy = e.y-this.y;
                     const hitDist = e.radius + 5;
                     if(edx * edx + edy * edy < hitDist * hitDist) {
+                        // Never damage the same entity twice with one bullet
+                        // (piercing bullets used to re-hit every overlap frame)
+                        if(this.hitList && this.hitList.indexOf(e) !== -1) continue;
+                        if(!this.hitList) this.hitList = [];
+                        this.hitList.push(e);
                         const wasAlive = e.alive;
 
                     // --- Phase 4: ShieldEnemy blocks frontal hits ---
@@ -12138,16 +12241,8 @@ class Bullet {
                         e.poisonStacks = Math.min(CONFIG.ROGUE_POISON_MAX_STACKS, (e.poisonStacks || 0) + 1);
                         spawnParticles(e.x, e.y, '#33ff88', 3, 2);
                     }
-                    // --- Phase 4: Knockback from player bullets ---
-                    if(this.isP && e.alive && !e.isB) {
-                        const bd = this.spd || 1;
-                        const kbMult = e.elite ? CONFIG.KNOCKBACK_HEAVY_MULT : 1.0;
-                        const kbx = (this.vx/bd) * CONFIG.KNOCKBACK_STRENGTH * kbMult;
-                        const kby = (this.vy/bd) * CONFIG.KNOCKBACK_STRENGTH * kbMult;
-                        if(!m.isWall(e.x + kbx, e.y + kby)) { e.x += kbx; e.y += kby; }
-                        else if(!m.isWall(e.x + kbx, e.y)) { e.x += kbx; }
-                        else if(!m.isWall(e.x, e.y + kby)) { e.y += kby; }
-                    }
+                    // Knockback from player bullets now handled by the decaying
+                    // kbVx/kbVy impulse set in Entity.takeDamage (wall-checked in move()).
                     // --- Phase 4: Rogue crit-zoom on high damage ---
                     if(this.isP && source && source.type === 'rogue' && this.dmg >= CONFIG.ROGUE_CRIT_ZOOM_THRESHOLD) {
                         source.critZoomTimer = CONFIG.ROGUE_CRIT_ZOOM_DURATION;
@@ -12283,6 +12378,8 @@ class Player extends Entity {
         this.skillCooldown = 0; this.weaponLevel = 1; this.comboCount = 0; this.comboTimer = 0;
         this.mutations = {}; this.skills = {}; this.unlockedSkills = []; this.currency = 0;
         this.damageBoost = 0; this.critChance = 0; this.damageMult = 1;
+        this.speedMultBonus = 0; // additive equipment speed bonus (consumed in update)
+        this._slamWindup = 0; this._slamDir = null; // warrior slam windup state
         this.shadowShieldTimer = 0; this.speedBoost = 0; this.shield = 0;
         this.combatTimer = 9999;
         // Weapon system
@@ -12459,7 +12556,7 @@ class Player extends Entity {
                 if(!map.isWall(nx, ny)) { this.x = nx; this.y = ny; }
             }
             const arrowCount = this.skills.ult1 ? 20 : 12;
-            const cls = CONFIG.PLAYER[this.type], arrowDmg = Math.floor(cls.baseDmg * this.weaponLevel * this.weaponDamageMult * (this.damageMult || 1) * 2), spd = CONFIG.PLAYER.rogue.bulletSpeed || 12;
+            const cls = CONFIG.PLAYER[this.type], arrowDmg = Math.floor(cls.baseDmg * this.weaponLevel * this.weaponDamageMult * Math.min(5, this.damageMult || 1) * 2), spd = CONFIG.PLAYER.rogue.bulletSpeed || 12;
             for(let i = 0; i < arrowCount; i++) {
                 const angle = (i / arrowCount) * Math.PI * 2;
                 bullets.push(window.PoolManager ? PoolManager.acquire('Bullet', this.x, this.y, Math.cos(angle)*spd, Math.sin(angle)*spd, '#33ff33', arrowDmg, true, null, 380) : new Bullet(this.x, this.y, Math.cos(angle)*spd, Math.sin(angle)*spd, '#33ff33', arrowDmg, true, null, 380));
@@ -12521,6 +12618,61 @@ class Player extends Entity {
         }
     }
 
+    // Warrior slam release: fires at the end of the 5-frame windup started in the
+    // attack input handler. Uses the committed direction (this._slamDir), lunges
+    // ~6px forward (wall-checked via Entity.move) and applies the arc damage.
+    _releaseWarriorSlam(m) {
+        const dirX = this._slamDir ? this._slamDir.x : Math.cos(this.angle);
+        const dirY = this._slamDir ? this._slamDir.y : Math.sin(this.angle);
+        const cls = CONFIG.PLAYER[this.type];
+        // Forward lunge at the moment of release (move() handles wall collision)
+        this.move(dirX * 6, dirY * 6, m);
+        const attackAngle = Math.atan2(dirY, dirX), arcHalf = (CONFIG.WARRIOR_MELEE_ARC_DEG / 2) * Math.PI / 180;
+        DamageNumbers.addSlash(this.x, this.y, attackAngle, CONFIG.WARRIOR_MELEE_RANGE * 0.9, '#ffcc00');
+        // Spawn swing trail particles along the arc
+        const arcStart = attackAngle - arcHalf, arcEnd = attackAngle + arcHalf;
+        for (let _a = 0; _a < 12; _a++) {
+            const t = _a / 11, ang = arcStart + (arcEnd - arcStart) * t;
+            const px = this.x + Math.cos(ang) * CONFIG.WARRIOR_MELEE_RANGE * 0.7;
+            const py = this.y + Math.sin(ang) * CONFIG.WARRIOR_MELEE_RANGE * 0.7;
+            spawnParticles(px, py, '#ffaa00', 2, 3 + Math.random() * 2);
+        }
+        ScreenEffects.triggerShake(CONFIG.SHAKE_HIT * 0.5, dirX, dirY);
+        const furyMult = 1 + this.furyStacks * CONFIG.WARRIOR_FURY_DMG_PER_STACK;
+        let dmg = Math.floor(cls.baseDmg * this.weaponLevel * this.weaponDamageMult * furyMult);
+        if(this.mutations.berserk) dmg *= CONFIG.BERSERK_DAMAGE_MULT;
+        if(this.damageBoost > 0) dmg *= CONFIG.DAMAGE_BOOST_MULTIPLIER;
+        if(window.RelicSystem) dmg = Math.floor(dmg * RelicSystem.berserkerMult(this));
+        if(this.damageMult > 1) dmg = Math.floor(dmg * Math.min(5, this.damageMult));
+        let hitAny = false;
+        if (this.fireTrail && typeof hazards !== 'undefined') { const fx = this.x + Math.cos(attackAngle) * 40, fy = this.y + Math.sin(attackAngle) * 40; if (!m.isWall(fx, fy)) hazards.push(new Hazard(fx, fy, 'fire', true)); }
+        const meleeRangeSq = CONFIG.WARRIOR_MELEE_RANGE * CONFIG.WARRIOR_MELEE_RANGE;
+        for(let i = 0; i < entities.length; i++) {
+            const e = entities[i];
+            if(e !== this && e.alive && typeof Enemy !== 'undefined' && (e instanceof Enemy || e.isEnemy)) {
+                const edx = e.x - this.x, edy = e.y - this.y;
+                const distSq = edx*edx + edy*edy;
+                if(distSq < meleeRangeSq) {
+                    const angleToEnemy = Math.atan2(edy, edx);
+                    let diff = Math.abs(angleToEnemy - attackAngle);
+                    if(diff > Math.PI) diff = Math.PI * 2 - diff;
+                    if(diff <= arcHalf) {
+                        e.takeDamage(dmg, m, this); hitAny = true;
+                        // VIBRATION FEEDBACK
+                        if(window.Vibrate) Vibrate.trigger('normalHit');
+                        ScreenEffects.triggerShake(CONFIG.SHAKE_HIT, dirX, dirY);
+                        spawnParticles(e.x, e.y, '#ffaa00', 6, 4);
+                        if (this.furyStacks >= 5) ScreenEffects.triggerFlash(0.15, '#ff8800', 8);
+                        this.furyStacks = Math.min(CONFIG.WARRIOR_FURY_MAX_STACKS, this.furyStacks + 1);
+                        this.furyDecayTimer = CONFIG.WARRIOR_FURY_DECAY_FRAMES;
+                        // Knockback handled by the decaying kbVx/kbVy impulse in takeDamage
+                    }
+                }
+            }
+        }
+        if(hitAny) window.SND && SND.play(150, 'sawtooth', 0.15, 0.3); else window.SND && SND.play(80, 'triangle', 0.04, 0.08);
+    }
+
     update(m) {
         if (!this.alive) return;
         if(this.shadowShieldTimer > 0) { this.shadowShieldTimer--; if(this.shadowShieldTimer <= 0) this.shield = 0; }
@@ -12534,6 +12686,10 @@ class Player extends Entity {
         else if(this.skills.speed1) currentSpeed *= 1.1;
         if(typeof WeaponSystem !== 'undefined' && WeaponSystem.getSpeedMult) currentSpeed *= WeaponSystem.getSpeedMult(this);
         if(this._hazardSlowTimer > 0) { currentSpeed *= 0.6; this._hazardSlowTimer--; }
+        // Equipment speed bonus (additive stacking, total multiplier clamped at 2x)
+        currentSpeed *= Math.min(2, 1 + (this.speedMultBonus || 0));
+        // Warrior slam windup: rooted to 30% speed while committed
+        if(this._slamWindup > 0) currentSpeed *= 0.3;
 
         if (dx !== 0 || dy !== 0) {
             this.move(dx * currentSpeed, dy * currentSpeed, m);
@@ -12546,6 +12702,11 @@ class Player extends Entity {
         } else { this.walkTimer = 0; this._footstepTimer = 0; }
 
         if(this.scd > 0) this.scd--; if(this.skillCooldown > 0) this.skillCooldown--; if(this.speedBoost > 0) this.speedBoost--;
+        // Warrior slam windup countdown -> release at frame 0
+        if(this._slamWindup > 0) {
+            this._slamWindup--;
+            if(this._slamWindup <= 0) this._releaseWarriorSlam(m);
+        }
         if(this.comboTimer > 0) { this.comboTimer--; if(this.comboTimer <= 0) this.comboCount = 0; }
 
         if(this.type === 'warrior') {
@@ -12581,56 +12742,16 @@ class Player extends Entity {
             this.spriteAngle = this.angle;
 
             if(this.type === 'warrior') {
+                // 5-frame windup: commit direction now, root movement to 30%,
+                // release the arc (with lunge) in _releaseWarriorSlam. Cooldown
+                // starts at input so total cadence/DPS is unchanged.
                 this.walkTimer = 48; // Attack frame
-                const attackAngle = Math.atan2(sy, sx), arcHalf = (CONFIG.WARRIOR_MELEE_ARC_DEG / 2) * Math.PI / 180;
-                DamageNumbers.addSlash(this.x, this.y, attackAngle, CONFIG.WARRIOR_MELEE_RANGE * 0.9, '#ffcc00');
-                // Spawn swing trail particles along the arc
-                const arcStart = attackAngle - arcHalf, arcEnd = attackAngle + arcHalf;
-                for (let _a = 0; _a < 12; _a++) {
-                    const t = _a / 11, ang = arcStart + (arcEnd - arcStart) * t;
-                    const px = this.x + Math.cos(ang) * CONFIG.WARRIOR_MELEE_RANGE * 0.7;
-                    const py = this.y + Math.sin(ang) * CONFIG.WARRIOR_MELEE_RANGE * 0.7;
-                    spawnParticles(px, py, '#ffaa00', 2, 3 + Math.random() * 2);
-                }
-                ScreenEffects.triggerShake(CONFIG.SHAKE_HIT * 0.5, sx, sy);
-                // Quick flash at start of swing
+                this._slamWindup = 5;
+                this._slamDir = { x: sx * invMag, y: sy * invMag };
+                this.scd = effectiveFireRate;
+                // Windup cue: small spark at the blade + quick flash
+                spawnParticles(this.x + this._slamDir.x * 18, this.y + this._slamDir.y * 18, '#ffcc00', 3, 2);
                 ScreenEffects.triggerFlash(0.08, '#ffcc00');
-                const furyMult = 1 + this.furyStacks * CONFIG.WARRIOR_FURY_DMG_PER_STACK;
-                let dmg = Math.floor(cls.baseDmg * this.weaponLevel * this.weaponDamageMult * furyMult);
-                if(this.mutations.berserk) dmg *= CONFIG.BERSERK_DAMAGE_MULT;
-                if(this.damageBoost > 0) dmg *= CONFIG.DAMAGE_BOOST_MULTIPLIER;
-                if(window.RelicSystem) dmg = Math.floor(dmg * RelicSystem.berserkerMult(this));
-                if(this.damageMult > 1) dmg = Math.floor(dmg * this.damageMult);
-                let hitAny = false;
-                if (this.fireTrail && typeof hazards !== 'undefined') { const fx = this.x + Math.cos(attackAngle) * 40, fy = this.y + Math.sin(attackAngle) * 40; if (!m.isWall(fx, fy)) hazards.push(new Hazard(fx, fy, 'fire', true)); }
-                const meleeRangeSq = CONFIG.WARRIOR_MELEE_RANGE * CONFIG.WARRIOR_MELEE_RANGE;
-                for(let i = 0; i < entities.length; i++) {
-                    const e = entities[i];
-                    if(e !== this && e.alive && typeof Enemy !== 'undefined' && (e instanceof Enemy || e.isEnemy)) {
-                        const edx = e.x - this.x, edy = e.y - this.y;
-                        const distSq = edx*edx + edy*edy;
-                        if(distSq < meleeRangeSq) {
-                            const angleToEnemy = Math.atan2(edy, edx);
-                            let diff = Math.abs(angleToEnemy - attackAngle);
-                            if(diff > Math.PI) diff = Math.PI * 2 - diff;
-                            if(diff <= arcHalf) {
-                                e.takeDamage(dmg, m, this); hitAny = true;
-                                // VIBRATION FEEDBACK
-                                if(window.Vibrate) Vibrate.trigger('normalHit');
-                                ScreenEffects.triggerShake(CONFIG.SHAKE_HIT, sx, sy);
-                                spawnParticles(e.x, e.y, '#ffaa00', 6, 4);
-                                if (this.furyStacks >= 5) ScreenEffects.triggerFlash(0.15, '#ff8800', 8);
-                                this.furyStacks = Math.min(CONFIG.WARRIOR_FURY_MAX_STACKS, this.furyStacks + 1);
-                                this.furyDecayTimer = CONFIG.WARRIOR_FURY_DECAY_FRAMES;
-                                const ed = distSq > 0 ? Math.sqrt(distSq) : 1;
-                                const kbMult = (e.elite || e.isB) ? CONFIG.KNOCKBACK_HEAVY_MULT : 1.0;
-                                const kbx = (edx/ed) * (CONFIG.KNOCKBACK_STRENGTH * 1.5) * kbMult, kby = (edy/ed) * (CONFIG.KNOCKBACK_STRENGTH * 1.5) * kbMult;
-                                if(!m.isWall(e.x + kbx, e.y + kby)) { e.x += kbx; e.y += kby; }
-                            }
-                        }
-                    }
-                }
-                this.scd = effectiveFireRate; if(hitAny) window.SND && SND.play(150, 'sawtooth', 0.15, 0.3); else window.SND && SND.play(80, 'triangle', 0.04, 0.08);
             } else {
                 this.walkTimer = 60;
                 let dmg = Math.floor(cls.baseDmg * this.weaponLevel * this.weaponDamageMult);
@@ -12660,10 +12781,18 @@ class Player extends Entity {
                         }
                         DamageNumbers.add(this.x, this.y, 'SPELL COMBO!', 'crit');
                         window.SND && SND.play(660, 'sine', 0.3, 0.15);
+                        // Heavier low layer so the combo shot is audibly distinct
+                        window.SND && SND.play(165, 'sawtooth', 0.3, 0.22);
                     }
                 }
                 bullets.push(window.PoolManager ? PoolManager.acquire('Bullet', this.x, this.y, sx*bulletSpeed, sy*bulletSpeed, this.color, dmg, true, this.currentWeapon, range) : new Bullet(this.x, this.y, sx*bulletSpeed, sy*bulletSpeed, this.color, dmg, true, this.currentWeapon, range));
-                if(this.type === 'rogue') bullets[bullets.length-1].applyPoison = true;
+                if(this.type === 'rogue') {
+                    bullets[bullets.length-1].applyPoison = true;
+                    // Micro-dash: each shot nudges the rogue 3px in the shot direction
+                    // (wall-checked) for Dead Cells-style strafe-flow
+                    const _mdx = sx * invMag * 3, _mdy = sy * invMag * 3;
+                    if(!m.isWall(this.x + _mdx, this.y + _mdy)) { this.x += _mdx; this.y += _mdy; }
+                }
                 if(this.multiShot) {
                     const baseAngle = Math.atan2(sy, sx);
                     for (let ms = 1; ms <= this.multiShot; ms++) {
@@ -12839,7 +12968,12 @@ class Player extends Entity {
         if(window.Vibrate) Vibrate.trigger('normalHit');
         
         this.invincibleTimer = 15;
+        const _hpBefore = this.hp;
         super.takeDamage(dmg, m, source);
+        // DDA: near-death event when HP crosses below 25% of max
+        if(this.alive && _hpBefore >= this.maxHp * 0.25 && this.hp < this.maxHp * 0.25 && typeof DifficultySystem !== 'undefined') {
+            DifficultySystem.trackNearDeath();
+        }
         this.stealth = 0;
     }
 }
