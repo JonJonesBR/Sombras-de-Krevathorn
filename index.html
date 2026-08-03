@@ -4271,9 +4271,8 @@ function _updateEnemySpawning() {
             const BOSS_ARCHETYPES = ['brutamontes', 'arcano', 'convocador'];
             if (gameMode === 'dungeon') {
                 const depth = Math.max(1, 10 - (dungeonLevel - 1));
-                const nameIdx = Math.min(dungeonLevel - 1, CONFIG.FLOOR_BOSS_NAMES.length - 1);
-                boss.name = CONFIG.FLOOR_BOSS_NAMES[nameIdx];
-                boss.applyArchetype(BOSS_ARCHETYPES[nameIdx % BOSS_ARCHETYPES.length]);
+                const floorIdx = Math.min(dungeonLevel - 1, BOSS_BLUEPRINTS.length - 1);
+                boss.applyFloorBlueprint(floorIdx);
                 const _preBossLines = typeof BOSS_PRE_COMBAT_LINES !== 'undefined' ? BOSS_PRE_COMBAT_LINES : [];
                 if (_preBossLines.length > 0) addLog(_preBossLines[Math.floor(Math.random() * _preBossLines.length)]);
                 addLog('O guardiao do Piso B' + depth + ' bloqueia sua passagem!');
@@ -8419,6 +8418,16 @@ const SpriteManager = {
         ranged:   ['#000', '#e67e22', '#a04000', '#5e3307', '#5d6d7e', '#f1c40f', '#331111', '#ff8c00', '#ffb347'],
         swarm:    ['#000', '#2c3e50', '#1c2833', '#000', '#000', '#e74c3c', '#000', '#34495e', '#566573'],
         boss:     ['#000', '#8e44ad', '#4a235a', '#2c3e50', '#1c2833', '#e74c3c', '#000', '#9b59b6', '#c39bd3'],
+        shadow: ["#000","#6a4cff","#3a1f8c","#1b0f3a","#2b1650","#ffec9e","#12082e","#8b66ff","#c2b2ff"],
+        dark: ["#000","#ff8c00","#8a2be2","#2b0a3d","#4b0b6b","#ffd27f","#160a2e","#b45bff","#e6b8ff"],
+        death: ["#000","#f5f5f5","#67737a","#2b3238","#12161a","#ff5252","#000","#b0bec5","#eceff1"],
+        stone: ["#000","#8d8d8d","#5a5a5a","#3b3b3b","#242424","#ffb84d","#141414","#a8a8a8","#d0d0d0"],
+        specter: ["#000","#9ff7ff","#4fd6cc","#1d6f6a","#34c3bd","#ffffff","#0b2f2c","#7ff3ff","#d8feff"],
+        devour: ["#000","#ff3b5c","#7a1430","#3b0a18","#5c0f24","#ffe066","#200410","#ff5e7d","#ffb3c2"],
+        bone: ["#000","#f2e6d0","#d9c9a8","#9c8a66","#6e5c3e","#ffdd57","#2e271a","#fff3d6","#ffe8c2"],
+        demon: ["#000","#ff4d21","#8c1d05","#3f0d02","#6e1503","#ffd24d","#1f0800","#ff7a3c","#ffc2a3"],
+        corrupt: ["#000","#a6e22e","#4c7a12","#234707","#3a6b0d","#ffec59","#101f03","#7fd612","#d5ff7a"],
+        final: ["#000","#c0392b","#4a235a","#1c2833","#7f8c8d","#ff4b4b","#0b0b12","#ff8c00","#f5f5f5"],
         merchant: ['#000', '#f1c27d', '#f4d03f', '#b7950b', '#784212', '#fff', '#553300', '#f7dc6f', '#f9e79f'],
         trap:     ['#000', '#7f8c8d', '#c0392b', '#e74c3c', '#f39c12', '#fff', '#641e16', '#ec7063', '#f1948a'],
         mimic:    ['#000', '#f1c27d', '#8B4513', '#D2691E', '#CD853F', '#f1c40f', '#3e1f00', '#a04000', '#ba4a00'],
@@ -8595,7 +8604,727 @@ const SpriteManager = {
             "3334444444455533", "3333333333333333", "0113333333333110", "0013333333331000",
             "0013333333331000", "0177111111177100", "1777100001777100", "1111000000111100"
         ],
-        merchant_idle: [
+        shadow_idle: [
+            "0000000000000000",
+            "0000000990000000",
+            "0000007337000000",
+            "0000073222237000",
+            "0000732222223700",
+            "0000732222223700",
+            "0000732666263700",
+            "0000732666263700",
+            "0000732222223700",
+            "0000732222223700",
+            "0000073222237000",
+            "0000072222227000",
+            "0000777777777000",
+            "0001111111110000",
+            "0007000000007000",
+            "0700000000000070",
+        ],
+        dark_idle: [
+            "0000000000000000",
+            "0000001111000000",
+            "0000001991000000",
+            "0000013333310000",
+            "0000133333331000",
+            "0001332222223100",
+            "0013322222222330",
+            "0013222666222300",
+            "0013222666222300",
+            "0013222222222300",
+            "0113222222222310",
+            "1332222222222331",
+            "3332222222222333",
+            "3333733333337333",
+            "0111111111111100",
+            "0000000000000000",
+        ],
+        death_idle: [
+            "0000000000000000",
+            "0000007337000000",
+            "0000073333370000",
+            "0000072222227000",
+            "0000072666227000",
+            "0000072222227000",
+            "0001111111111000",
+            "0013333333333100",
+            "0133222222222310",
+            "0133222222222310",
+            "0013222222223100",
+            "0001322222231000",
+            "0001333333331000",
+            "0000177717771000",
+            "0000011111110000",
+            "0000000000000000",
+        ],
+        stone_idle: [
+            "0000000000000000",
+            "0000111111110000",
+            "0013333333333100",
+            "0133222222222310",
+            "0133262226222310",
+            "0133266226262310",
+            "0133222222222310",
+            "0133222222222310",
+            "1332222222222331",
+            "1332222222222331",
+            "3332222222222333",
+            "3332222222222333",
+            "3333333333333333",
+            "1777111111177710",
+            "7710000000000177",
+            "1110000000000111",
+        ],
+        specter_idle: [
+            "0000000000000000",
+            "0000000770000000",
+            "0000007277000000",
+            "0000072227700000",
+            "0000722222770000",
+            "0000722266277000",
+            "0007222222227700",
+            "0072222222222770",
+            "0072222222222770",
+            "0072222222222770",
+            "0007222222227700",
+            "0000722222277000",
+            "0000072222770000",
+            "0000007227700000",
+            "0000000770000000",
+            "0000000000000000",
+        ],
+        devour_idle: [
+            "0000000000000000",
+            "0000001111000000",
+            "0000133333310000",
+            "0001333333331000",
+            "0013333333333100",
+            "0133222222222310",
+            "0132626666622310",
+            "0132662662662310",
+            "0132666666662310",
+            "0132622222222310",
+            "0013222222223100",
+            "0001322222231000",
+            "0000133333310000",
+            "0000111111110000",
+            "0000000000000000",
+            "0000000000000000",
+        ],
+        bone_idle: [
+            "0000000000000000",
+            "0000000333000000",
+            "0000033333330000",
+            "0000333333333000",
+            "0003333333333300",
+            "0003326666233300",
+            "0033222222223300",
+            "0332222222222330",
+            "0332222222222330",
+            "0332222222222330",
+            "0033333333333300",
+            "0003333333333000",
+            "0001777777771000",
+            "0001111111110000",
+            "0001000000001000",
+            "0000000000000000",
+        ],
+        demon_idle: [
+            "0000000000000000",
+            "0000000777000000",
+            "0000077777770000",
+            "0013777777773100",
+            "0001377777731000",
+            "0000133333310000",
+            "0001333333331000",
+            "0013332222333100",
+            "0133222666222310",
+            "0133222666222310",
+            "0133222222222310",
+            "0013222222223100",
+            "0001322222231000",
+            "0001133333311000",
+            "0000111111110000",
+            "0000000000000000",
+        ],
+        corrupt_idle: [
+            "0000000000000000",
+            "0000000000000000",
+            "0000000110000000",
+            "0000001770000000",
+            "0000013333100000",
+            "0000133333310000",
+            "0001333333331000",
+            "0013337777333100",
+            "0013376666733100",
+            "0013337777333100",
+            "0001333333331000",
+            "0000133333310000",
+            "0000013333100000",
+            "0000001770000000",
+            "0000000000000000",
+            "0000000000000000",
+        ],
+        final_idle: [
+            "0000000000000000",
+            "0000001710000000",
+            "0000017771000000",
+            "0001777777710000",
+            "0001777777710000",
+            "0000133333310000",
+            "0001333333331000",
+            "0013332222333100",
+            "0133222666222310",
+            "0133222666222310",
+            "0133222222222310",
+            "0133222222222310",
+            "0013222222223100",
+            "0001333333331000",
+            "0001111111110000",
+            "0000000000000000",
+        ],
+        shadow_walk1: [
+            "0000000000000000",
+            "0000000990000000",
+            "0000007337000000",
+            "0000073222237000",
+            "0000732222223700",
+            "0000732222223700",
+            "0000732666263700",
+            "0000732666263700",
+            "0000732222223700",
+            "0000732222223700",
+            "0000073222237000",
+            "0000072222227000",
+            "0000777777777000",
+            "0001111111110000",
+            "0000000000000000",
+            "0700000000000070",
+        ],
+        shadow_walk2: [
+            "0000000000000000",
+            "0000000990000000",
+            "0000007337000000",
+            "0000073222237000",
+            "0000732222223700",
+            "0000732222223700",
+            "0000732666263700",
+            "0000732666263700",
+            "0000732222223700",
+            "0000732222223700",
+            "0000073222237000",
+            "0000072222227000",
+            "0000777777777000",
+            "0001111111110000",
+            "0000000000000000",
+            "0007000000000070",
+        ],
+        shadow_attack: [
+            "0000000000000000",
+            "0000000990000000",
+            "0000007337000000",
+            "0000073222237000",
+            "0000732222223700",
+            "0000732222223700",
+            "0000732666263700",
+            "0000732666263700",
+            "0000732222223700",
+            "0000732222223700",
+            "0000073222237000",
+            "0000072222227000",
+            "0000777777777000",
+            "0001111111110000",
+            "0007000000007000",
+            "0700000000000070",
+        ],
+        dark_walk1: [
+            "0000000000000000",
+            "0000001111000000",
+            "0000001991000000",
+            "0000013333310000",
+            "0000133333331000",
+            "0001332222223100",
+            "0013322222222330",
+            "0013222666222300",
+            "0013222666222300",
+            "0013222222222300",
+            "0113222222222310",
+            "1332222222222331",
+            "3332222222222333",
+            "3333733333337333",
+            "0000000000000000",
+            "1110000000000111",
+        ],
+        dark_walk2: [
+            "0000000000000000",
+            "0000001111000000",
+            "0000001991000000",
+            "0000013333310000",
+            "0000133333331000",
+            "0001332222223100",
+            "0013322222222330",
+            "0013222666222300",
+            "0013222666222300",
+            "0013222222222300",
+            "0113222222222310",
+            "1332222222222331",
+            "3332222222222333",
+            "3333733333337333",
+            "0000000000000000",
+            "0001111111110000",
+        ],
+        dark_attack: [
+            "0000000000000000",
+            "0000001111000000",
+            "0000001991000000",
+            "0000013333310000",
+            "0000133333331000",
+            "0001332222223100",
+            "0013322222222330",
+            "0013222666222300",
+            "0013222666222300",
+            "0013222222222300",
+            "0113222222222310",
+            "1332222222222331",
+            "3332222222222333",
+            "3333733333337333",
+            "0111111111111100",
+            "0000000000000000",
+        ],
+        death_walk1: [
+            "0000000000000000",
+            "0000007337000000",
+            "0000073333370000",
+            "0000072222227000",
+            "0000072666227000",
+            "0000072222227000",
+            "0001111111111000",
+            "0013333333333100",
+            "0133222222222310",
+            "0133222222222310",
+            "0013222222223100",
+            "0001322222231000",
+            "0001333333331000",
+            "0000177717771000",
+            "0000000000000000",
+            "0001110000011100",
+        ],
+        death_walk2: [
+            "0000000000000000",
+            "0000007337000000",
+            "0000073333370000",
+            "0000072222227000",
+            "0000072666227000",
+            "0000072222227000",
+            "0001111111111000",
+            "0013333333333100",
+            "0133222222222310",
+            "0133222222222310",
+            "0013222222223100",
+            "0001322222231000",
+            "0001333333331000",
+            "0000177717771000",
+            "0000000000000000",
+            "0000001111000000",
+        ],
+        death_attack: [
+            "0000000000000000",
+            "0000007337000000",
+            "0000073333370000",
+            "0000072222227000",
+            "0000072666227000",
+            "0000072222227000",
+            "0001111111111000",
+            "0013333333333100",
+            "0133222222222310",
+            "0133222222222310",
+            "0013222222223100",
+            "0001322222231000",
+            "0001333333331000",
+            "0000177717771000",
+            "0000011111110000",
+            "0000000000000000",
+        ],
+        stone_walk1: [
+            "0000000000000000",
+            "0000111111110000",
+            "0013333333333100",
+            "0133222222222310",
+            "0133262226222310",
+            "0133266226262310",
+            "0133222222222310",
+            "0133222222222310",
+            "1332222222222331",
+            "1332222222222331",
+            "3332222222222333",
+            "3332222222222333",
+            "3333333333333333",
+            "1777111111177710",
+            "1000000000000001",
+            "1000000000000001",
+        ],
+        stone_walk2: [
+            "0000000000000000",
+            "0000111111110000",
+            "0013333333333100",
+            "0133222222222310",
+            "0133262226222310",
+            "0133266226262310",
+            "0133222222222310",
+            "0133222222222310",
+            "1332222222222331",
+            "1332222222222331",
+            "3332222222222333",
+            "3332222222222333",
+            "3333333333333333",
+            "1777111111177710",
+            "0000000000000000",
+            "1110000000000111",
+        ],
+        stone_attack: [
+            "0000000000000000",
+            "0000111111110000",
+            "0013333333333100",
+            "0133222222222310",
+            "0133262226222310",
+            "0133266226262310",
+            "0133222222222310",
+            "0133222222222310",
+            "1332222222222331",
+            "1332222222222331",
+            "3332222222222333",
+            "3332222222222333",
+            "3333333333333333",
+            "1777111111177710",
+            "7710000000000177",
+            "1110000000000111",
+        ],
+        specter_walk1: [
+            "0000000000000000",
+            "0000000770000000",
+            "0000007277000000",
+            "0000072227700000",
+            "0000722222770000",
+            "0000722266277000",
+            "0007222222227700",
+            "0072222222222770",
+            "0072222222222770",
+            "0072222222222770",
+            "0007222222227700",
+            "0000722222277000",
+            "0000072222770000",
+            "0000007227700000",
+            "0000000000000000",
+            "0000000000000000",
+        ],
+        specter_walk2: [
+            "0000000000000000",
+            "0000000770000000",
+            "0000007277000000",
+            "0000072227700000",
+            "0000722222770000",
+            "0000722266277000",
+            "0007222222227700",
+            "0072222222222770",
+            "0072222222222770",
+            "0072222222222770",
+            "0007222222227700",
+            "0000722222277000",
+            "0000072222770000",
+            "0000007227700000",
+            "0000000000000000",
+            "0000000000000000",
+        ],
+        specter_attack: [
+            "0000000000000000",
+            "0000000770000000",
+            "0000007277000000",
+            "0000072227700000",
+            "0000722222770000",
+            "0000722266277000",
+            "0007222222227700",
+            "0072222222222770",
+            "0072222222222770",
+            "0072222222222770",
+            "0007222222227700",
+            "0000722222277000",
+            "0000072222770000",
+            "0000007227700000",
+            "0000000770000000",
+            "0000000000000000",
+        ],
+        devour_walk1: [
+            "0000000000000000",
+            "0000001111000000",
+            "0000133333310000",
+            "0001333333331000",
+            "0013333333333100",
+            "0133222222222310",
+            "0132626666622310",
+            "0132662662662310",
+            "0132666666662310",
+            "0132622222222310",
+            "0013222222223100",
+            "0001322222231000",
+            "0000133333310000",
+            "0000111111110000",
+            "0000000000000000",
+            "0000000000000000",
+        ],
+        devour_walk2: [
+            "0000000000000000",
+            "0000001111000000",
+            "0000133333310000",
+            "0001333333331000",
+            "0013333333333100",
+            "0133222222222310",
+            "0132626666622310",
+            "0132662662662310",
+            "0132666666662310",
+            "0132622222222310",
+            "0013222222223100",
+            "0001322222231000",
+            "0000133333310000",
+            "0000111111110000",
+            "0000000000000000",
+            "0000000000000000",
+        ],
+        devour_attack: [
+            "0000000000000000",
+            "0000001111000000",
+            "0000133333310000",
+            "0001333333331000",
+            "0013333333333100",
+            "0133222222222310",
+            "0132626666622310",
+            "0132662662662310",
+            "0132666666662310",
+            "0132622222222310",
+            "0013222222223100",
+            "0001322222231000",
+            "0000133333310000",
+            "0000111111110000",
+            "0000000000000000",
+            "0000000000000000",
+        ],
+        bone_walk1: [
+            "0000000000000000",
+            "0000000333000000",
+            "0000033333330000",
+            "0000333333333000",
+            "0003333333333300",
+            "0003326666233300",
+            "0033222222223300",
+            "0332222222222330",
+            "0332222222222330",
+            "0332222222222330",
+            "0033333333333300",
+            "0003333333333000",
+            "0001777777771000",
+            "0001111111110000",
+            "0000000000000000",
+            "0000000000000000",
+        ],
+        bone_walk2: [
+            "0000000000000000",
+            "0000000333000000",
+            "0000033333330000",
+            "0000333333333000",
+            "0003333333333300",
+            "0003326666233300",
+            "0033222222223300",
+            "0332222222222330",
+            "0332222222222330",
+            "0332222222222330",
+            "0033333333333300",
+            "0003333333333000",
+            "0001777777771000",
+            "0001111111110000",
+            "0000000000000000",
+            "0000000000000000",
+        ],
+        bone_attack: [
+            "0000000000000000",
+            "0000000333000000",
+            "0000033333330000",
+            "0000333333333000",
+            "0003333333333300",
+            "0003326666233300",
+            "0033222222223300",
+            "0332222222222330",
+            "0332222222222330",
+            "0332222222222330",
+            "0033333333333300",
+            "0003333333333000",
+            "0001777777771000",
+            "0001111111110000",
+            "0001000000001000",
+            "0000000000000000",
+        ],
+        demon_walk1: [
+            "0000000000000000",
+            "0000000777000000",
+            "0000077777770000",
+            "0013777777773100",
+            "0001377777731000",
+            "0000133333310000",
+            "0001333333331000",
+            "0013332222333100",
+            "0133222666222310",
+            "0133222666222310",
+            "0133222222222310",
+            "0013222222223100",
+            "0001322222231000",
+            "0001133333311000",
+            "0000000000000000",
+            "1110000000000111",
+        ],
+        demon_walk2: [
+            "0000000000000000",
+            "0000000777000000",
+            "0000077777770000",
+            "0013777777773100",
+            "0001377777731000",
+            "0000133333310000",
+            "0001333333331000",
+            "0013332222333100",
+            "0133222666222310",
+            "0133222666222310",
+            "0133222222222310",
+            "0013222222223100",
+            "0001322222231000",
+            "0001133333311000",
+            "0000000000000000",
+            "0001111111110000",
+        ],
+        demon_attack: [
+            "0000000000000000",
+            "0000000777000000",
+            "0000077777770000",
+            "0013777777773100",
+            "0001377777731000",
+            "0000133333310000",
+            "0001333333331000",
+            "0013332222333100",
+            "0133222666222310",
+            "0133222666222310",
+            "0133222222222310",
+            "0013222222223100",
+            "0001322222231000",
+            "0001133333311000",
+            "0000111111110000",
+            "0000000000000000",
+        ],
+        corrupt_walk1: [
+            "0000000000000000",
+            "0000000000000000",
+            "0000000110000000",
+            "0000001770000000",
+            "0000013333100000",
+            "0000133333310000",
+            "0001333333331000",
+            "0013337777333100",
+            "0013376666733100",
+            "0013337777333100",
+            "0001333333331000",
+            "0000133333310000",
+            "0000013333100000",
+            "0000001770000000",
+            "0000000000000000",
+            "0000000000000000",
+        ],
+        corrupt_walk2: [
+            "0000000000000000",
+            "0000000000000000",
+            "0000000110000000",
+            "0000001770000000",
+            "0000013333100000",
+            "0000133333310000",
+            "0001333333331000",
+            "0013337777333100",
+            "0013376666733100",
+            "0013337777333100",
+            "0001333333331000",
+            "0000133333310000",
+            "0000013333100000",
+            "0000001770000000",
+            "0000000000000000",
+            "0000000000000000",
+        ],
+        corrupt_attack: [
+            "0000000000000000",
+            "0000000000000000",
+            "0000000110000000",
+            "0000001770000000",
+            "0000013333100000",
+            "0000133333310000",
+            "0001333333331000",
+            "0013337777333100",
+            "0013376666733100",
+            "0013337777333100",
+            "0001333333331000",
+            "0000133333310000",
+            "0000013333100000",
+            "0000001770000000",
+            "0000000000000000",
+            "0000000000000000",
+        ],
+        final_walk1: [
+            "0000000000000000",
+            "0000001710000000",
+            "0000017771000000",
+            "0001777777710000",
+            "0001777777710000",
+            "0000133333310000",
+            "0001333333331000",
+            "0013332222333100",
+            "0133222666222310",
+            "0133222666222310",
+            "0133222222222310",
+            "0133222222222310",
+            "0013222222223100",
+            "0001333333331000",
+            "0000000000000000",
+            "1110000000000111",
+        ],
+        final_walk2: [
+            "0000000000000000",
+            "0000001710000000",
+            "0000017771000000",
+            "0001777777710000",
+            "0001777777710000",
+            "0000133333310000",
+            "0001333333331000",
+            "0013332222333100",
+            "0133222666222310",
+            "0133222666222310",
+            "0133222222222310",
+            "0133222222222310",
+            "0013222222223100",
+            "0001333333331000",
+            "0000000000000000",
+            "0001111111110000",
+        ],
+        final_attack: [
+            "0000000000000000",
+            "0000001710000000",
+            "0000017771000000",
+            "0001777777710000",
+            "0001777777710000",
+            "0000133333310000",
+            "0001333333331000",
+            "0013332222333100",
+            "0133222666222310",
+            "0133222666222310",
+            "0133222222222310",
+            "0133222222222310",
+            "0013222222223100",
+            "0001333333331000",
+            "0001111111110000",
+            "0000000000000000",
+        ],
+                merchant_idle: [
             "0000001111000000", "0000144444410000", "0001333333331000", "0001322222231000",
             "0001226226221000", "0001222222221000", "0000122222210000", "0001311111131000",
             "0013344444433100", "0133344444433315", "0133333333333315", "0011333333311000",
@@ -11501,6 +12230,20 @@ class TreasureGoblin extends Enemy {
 }
 
 // BOSS CLASS - Multi-phase boss with abilities and arena hazards
+// Per-floor boss identities: sprite, palette, stats, move pool per phase.
+const BOSS_BLUEPRINTS = [
+    { key:'shadow_warden', name:'Guarda das Sombras', sprite:'shadow', glow:'#8b66ff', hpMult:0.85, speed:1.9, radiusMult:0.95, moves:{1:['shadowStrike','targetedBarrage'],2:['shadowStrike','charge','projectileBurst'],3:['shadowStrike','teleport','projectileBurst'],4:['shadowStrike','guidedProjectile','teleport'],5:['shadowStrike','spiralBurst','teleport']} },
+    { key:'dark_lord', name:'Senhor das Trevas', sprite:'dark', glow:'#b45bff', hpMult:1.0, speed:1.3, summonChance:0.5, moves:{1:['darkNova','targetedBarrage'],2:['darkNova','teleport','projectileBurst'],3:['darkNova','spiralBurst','targetedBarrage'],4:['darkNova','guidedProjectile','teleport'],5:['spiralBurst','darkNova','guidedProjectile']} },
+    { key:'death_herald', name:'Arauto da Morte', sprite:'death', glow:'#ff8a8a', hpMult:1.15, speed:1.5, dmgMult:1.1, moves:{1:['deathScythe','projectileBurst'],2:['deathScythe','charge','groundPound'],3:['deathScythe','spiralBurst','groundPound'],4:['deathScythe','teleport','guidedProjectile'],5:['spiralBurst','deathScythe','charge']} },
+    { key:'stone_colossus', name:'Colosso de Pedra', sprite:'stone', glow:'#d0d0d0', hpMult:1.5, speed:0.9, radiusMult:1.45, dmgMult:1.15, armor:0.45, moves:{1:['rockThrow','groundPound'],2:['rockThrow','charge','groundPound'],3:['rockThrow','spiralBurst','charge'],4:['rockThrow','groundPound','teleport'],5:['spiralBurst','rockThrow','charge']} },
+    { key:'specter', name:'Espectro Ancestral', sprite:'specter', glow:'#7ff3ff', hpMult:0.9, speed:1.7, radiusMult:0.95, moves:{1:['chillWave','teleport'],2:['teleport','chillWave','projectileBurst'],3:['chillWave','teleport','spiralBurst'],4:['teleport','guidedProjectile','chillWave'],5:['spiralBurst','teleport','chillWave']} },
+    { key:'soul_devourer', name:'Devorador de Almas', sprite:'devour', glow:'#ff5e7d', hpMult:1.05, speed:1.35, moves:{1:['soulDrain','targetedBarrage'],2:['soulDrain','charge','projectileBurst'],3:['soulDrain','spiralBurst','charge'],4:['soulDrain','teleport','guidedProjectile'],5:['spiralBurst','soulDrain','charge']} },
+    { key:'bone_lord', name:'Senhor dos Ossos', sprite:'bone', glow:'#fff3d6', hpMult:1.1, speed:1.2, summonChance:0.6, moves:{1:['boneVolley','projectileBurst'],2:['boneVolley','charge','projectileBurst'],3:['boneVolley','spiralBurst','charge'],4:['boneVolley','guidedProjectile','teleport'],5:['spiralBurst','boneVolley','guidedProjectile']} },
+    { key:'deep_demon', name:'Demonio das Profundezas', sprite:'demon', glow:'#ff7a3c', hpMult:1.2, speed:1.45, dmgMult:1.1, summonChance:0.25, moves:{1:['fireWall','projectileBurst'],2:['fireWall','charge','groundPound'],3:['fireWall','spiralBurst','charge'],4:['fireWall','teleport','guidedProjectile'],5:['spiralBurst','fireWall','charge']} },
+    { key:'corrupted', name:'O Corrompido', sprite:'corrupt', glow:'#7fd612', hpMult:1.1, speed:1.25, regen:2, summonChance:0.2, moves:{1:['corruptionPool','targetedBarrage'],2:['corruptionPool','projectileBurst','charge'],3:['corruptionPool','spiralBurst','charge'],4:['corruptionPool','guidedProjectile','teleport'],5:['spiralBurst','corruptionPool','guidedProjectile']} },
+    { key:'final_guardian', name:'O Guardiao Final', sprite:'final', glow:'#ff8c00', hpMult:1.6, speed:1.55, radiusMult:1.15, dmgMult:1.2, armor:0.3, summonChance:0.4, moves:{1:['finalBurst','darkNova','targetedBarrage'],2:['finalBurst','charge','groundPound'],3:['spiralBurst','finalBurst','deathScythe'],4:['teleport','guidedProjectile','finalBurst'],5:['spiralBurst','fireWall','finalBurst','soulDrain']} }
+];
+
 class Boss extends Enemy {
     constructor(x, y) {
         super(x, y, true);
@@ -11522,6 +12265,13 @@ class Boss extends Enemy {
         this.summonedMinions = [];
         this.archetype = null;
         this._archDamageMult = 1.0;
+        this._blueprint = null;
+        this._sprite = 'boss';
+        this._bpGlow = '#ff00ff';
+        this._drainT = 0;
+        this._armorHp = 0;
+        this._regen = 0;
+        this._summonChance = CONFIG.BOSS_ABILITY_SUMMON_CHANCE;
     }
 
     // Give this boss a combat identity (color, stat lean, ability bias) beyond a cosmetic name
@@ -11541,6 +12291,254 @@ class Boss extends Enemy {
             this.color = '#33ff88';
             this._archDamageMult = 1.0;
         }
+    }
+
+    // Give this boss the identity of a specific dungeon floor
+    applyFloorBlueprint(floorIdx) {
+        const bp = BOSS_BLUEPRINTS[Math.abs(floorIdx) % BOSS_BLUEPRINTS.length];
+        this._blueprint = bp;
+        this._sprite = bp.sprite;
+        this.name = bp.name;
+        this.color = bp.glow;
+        this._bpGlow = bp.glow;
+        const base = DifficultySystem.getScaledHp(CONFIG.BOSS_HP, true);
+        this.maxHp = Math.floor(base * (bp.hpMult || 1));
+        this.hp = this.maxHp;
+        this.s = bp.speed || CONFIG.BOSS_SPEED;
+        this.radius = Math.max(20, Math.floor(CONFIG.BOSS_RADIUS * (bp.radiusMult || 1)));
+        this._archDamageMult = bp.dmgMult || 1.0;
+        this._armorHp = bp.armor ? Math.floor(this.maxHp * bp.armor) : 0;
+        this._regen = bp.regen || 0;
+        this._summonChance = bp.summonChance !== undefined ? bp.summonChance : CONFIG.BOSS_ABILITY_SUMMON_CHANCE;
+        return bp;
+    }
+
+    // Weighted move pool for the current phase (duplicates increase weight)
+    _poolForPhase() {
+        const bp = this._blueprint;
+        if(!bp || !bp.moves) {
+            const a = ['projectileBurst', 'targetedBarrage'];
+            if(this.phase >= 2) { a.push('charge', 'groundPound'); }
+            if(this.phase >= 3) { a.push('spiralBurst', 'charge', 'charge'); }
+            if(this.phase >= 4) { a.push('teleport', 'spiralBurst', 'guidedProjectile', 'guidedProjectile'); }
+            if(this.phase >= 5) { a.push('teleport', 'teleport', 'spiralBurst', 'guidedProjectile'); }
+            return a;
+        }
+        const stage = Math.max(1, Math.min(5, this.phase));
+        let pool = [];
+        for(let key in bp.moves) {
+            if(parseInt(key, 10) <= stage) pool = pool.concat(bp.moves[key]);
+        }
+        return pool.length ? pool : ['projectileBurst'];
+    }
+
+    // Routes floor-specific signature abilities; returns true if handled
+    _runSignatureAbility(id, p, m) {
+        const sig = {
+            shadowStrike:'_ab_shadowStrike', darkNova:'_ab_darkNova', deathScythe:'_ab_deathScythe',
+            rockThrow:'_ab_rockThrow', chillWave:'_ab_chillWave', soulDrain:'_ab_soulDrain',
+            boneVolley:'_ab_boneVolley', fireWall:'_ab_fireWall', corruptionPool:'_ab_corruptionPool',
+            finalBurst:'_ab_finalBurst'
+        };
+        const fn = sig[id];
+        if(!fn || typeof this[fn] !== 'function') return false;
+        this[fn](p, m);
+        return true;
+    }
+
+    _pushBullet(x, y, vx, vy, color, dmg) {
+        if (window.PoolManager) bullets.push(PoolManager.acquire('Bullet', x, y, vx, vy, color, dmg, false));
+        else bullets.push(new Bullet(x, y, vx, vy, color, dmg, false));
+    }
+
+    // --- Floor signature abilities ---
+    _ab_shadowStrike(p, m) {
+        addLog(' ' + this.name + ' sumiu nas sombras!');
+        const a = Math.atan2(p.y - this.y, p.x - this.x);
+        let nx = p.x - Math.cos(a) * 90, ny = p.y - Math.sin(a) * 90;
+        if(m && m.isWall && m.isWall(nx, ny)) { nx = p.x; ny = p.y; }
+        spawnParticles(this.x, this.y, this._bpGlow, 12, 4);
+        this.x = nx; this.y = ny;
+        spawnParticles(this.x, this.y, this._bpGlow, 16, 5);
+        shake = 8;
+        for(let i = 0; i < 3; i++) {
+            setTimeout(() => {
+                if(!this.alive || typeof player === 'undefined' || !player) return;
+                const pa = Math.atan2(player.y - this.y, player.x - this.x);
+                if (typeof DamageNumbers !== 'undefined') DamageNumbers.addSlash(this.x + Math.cos(pa) * this.radius, this.y + Math.sin(pa) * this.radius, pa, this.radius * 2, '#b48cff');
+                const pd = Math.hypot(player.x - this.x, player.y - this.y);
+                if(pd < this.radius * 2 + player.radius) player.takeDamage(CONFIG.ENEMY_MELEE_DAMAGE * 1.2, m);
+            }, i * 120);
+        }
+    }
+
+    _ab_darkNova(p, m) {
+        const sp = CONFIG.BOSS_ABILITY_PROJECTILE_SPEED * 1.1;
+        const dmg = CONFIG.BOSS_ABILITY_PROJECTILE_DAMAGE;
+        const n = 14 + this.phase * 3;
+        for(let i = 0; i < n; i++) {
+            const a = (i / n) * Math.PI * 2 + Math.random() * 0.1;
+            this._pushBullet(this.x, this.y, Math.cos(a) * sp, Math.sin(a) * sp, '#a45bff', dmg);
+        }
+        spawnParticles(this.x, this.y, '#a45bff', 20, 5); shake = 10;
+    }
+
+    _ab_deathScythe(p, m) {
+        const pa = Math.atan2(p.y - this.y, p.x - this.x);
+        this.angle = pa;
+        this._steer(p.x, p.y, m);
+        if (typeof DamageNumbers !== 'undefined') DamageNumbers.addSlash(this.x, this.y, pa, this.radius * 2.4, '#ff8a8a');
+        for(let i = 0; i < 16; i++) {
+            const a = (i / 16) * Math.PI * 2;
+            if(i % 2 === 0) this._pushBullet(this.x, this.y, Math.cos(a) * 7, Math.sin(a) * 7, '#f8f8f8', CONFIG.BOSS_ABILITY_PROJECTILE_DAMAGE * 0.8);
+        }
+        spawnParticles(this.x, this.y, '#ff8a8a', 18, 5);
+        const d = Math.hypot(p.x - this.x, p.y - this.y);
+        if(d < 120) p.takeDamage(CONFIG.ENEMY_MELEE_DAMAGE * 1.4, m);
+        shake = 10;
+    }
+
+    _ab_rockThrow(p, m) {
+        const base = Math.atan2(p.y - this.y, p.x - this.x);
+        const dmg = CONFIG.BOSS_ABILITY_PROJECTILE_DAMAGE * 1.2;
+        for(let i = 0; i < 4; i++) {
+            const a = base + (Math.random() - 0.5) * 0.9;
+            const sp = 6 + Math.random() * 2;
+            this._pushBullet(this.x, this.y, Math.cos(a) * sp, Math.sin(a) * sp, '#a9a9a9', dmg);
+        }
+        spawnParticles(this.x, this.y, '#8d8d8d', 12, 4); shake = 6;
+    }
+
+    _ab_chillWave(p, m) {
+        const sp = CONFIG.BOSS_ABILITY_PROJECTILE_SPEED * 0.9;
+        const dmg = CONFIG.BOSS_ABILITY_PROJECTILE_DAMAGE;
+        for(let wave = 0; wave < 2; wave++) {
+            const n = 12 + this.phase * 2;
+            for(let i = 0; i < n; i++) {
+                const a = (i / n) * Math.PI * 2 + wave * Math.PI / n;
+                this._pushBullet(this.x, this.y, Math.cos(a) * (sp - wave * 1.6), Math.sin(a) * (sp - wave * 1.6), '#9ff7ff', dmg * 0.9);
+            }
+        }
+        spawnParticles(this.x, this.y, '#bfefff', 16, 5); shake = 6;
+    }
+
+    _ab_soulDrain(p, m) {
+        this._drainT = 90;
+        addLog(' ' + this.name + ' drena a sua alma!');
+        spawnParticles(this.x, this.y, '#ff3b5c', 14, 4);
+    }
+
+    _ab_boneVolley(p, m) {
+        const dmg = CONFIG.BOSS_ABILITY_PROJECTILE_DAMAGE;
+        const base = Math.atan2(p.y - this.y, p.x - this.x);
+        for(let w = 0; w < 3; w++) {
+            const a = base + (w - 1) * 0.28;
+            this._pushBullet(this.x, this.y, Math.cos(a) * 7.5, Math.sin(a) * 7.5, '#f2e6d0', dmg);
+            this._pushBullet(this.x, this.y, Math.cos(a) * 5.5, Math.sin(a) * 5.5, '#d9c9a8', dmg * 0.8);
+        }
+        spawnParticles(this.x, this.y, '#f2e6d0', 10, 4); shake = 4;
+    }
+
+    _ab_fireWall(p, m) {
+        const base = Math.atan2(p.y - this.y, p.x - this.x);
+        const perp = base + Math.PI / 2;
+        const dmg = CONFIG.BOSS_ABILITY_PROJECTILE_DAMAGE;
+        for(let i = -4; i <= 4; i++) {
+            const a = base + i * 0.5;
+            const sp = 7 + Math.abs(i) * 0.6;
+            this._pushBullet(this.x + Math.cos(perp) * i * 24, this.y + Math.sin(perp) * i * 24, Math.cos(a) * sp, Math.sin(a) * sp, '#ff7a3c', dmg);
+        }
+        spawnParticles(this.x, this.y, '#ff7a3c', 16, 5); shake = 8;
+    }
+
+    _ab_corruptionPool(p, m) {
+        const count = 3 + Math.min(3, this.phase);
+        for(let i = 0; i < count; i++) {
+            let hx = p.x + (Math.random() - 0.5) * 200;
+            let hy = p.y + (Math.random() - 0.5) * 200;
+            if(m && m.isWall && m.isWall(hx, hy)) { hx = p.x; hy = p.y; }
+            const hz = new BossArenaHazard(hx, hy);
+            hz.color = '#7fd612';
+            hz.damage = CONFIG.BOSS_ARENA_HAZARD_DAMAGE * 2;
+            hz.radius = CONFIG.BOSS_ARENA_HAZARD_RADIUS * 1.1;
+            hz.warningTimer = 40;
+            this.arenaHazards.push(hz);
+        }
+        spawnParticles(p.x, p.y, '#7fd612', 12, 4);
+        addLog(' ' + this.name + ' corrompe o chao!');
+    }
+
+    _ab_finalBurst(p, m) {
+        this._burstTelegraph = 30;
+        this._burstTelegraphTimer = 30;
+        this.trySummonMinions(m);
+        if(typeof guidedBullets !== 'undefined') guidedBullets.push(new GuidedBullet(this.x, this.y));
+        addLog(' ' + this.name + ' libera todo o seu poder!');
+        shake = 14;
+    }
+
+    // Extra per-boss decoration drawn on top of the sprite
+    _drawBossDecor(ctx, px, py) {
+        if(!this._blueprint) return;
+        const key = this._blueprint.key, R = this.radius, pulse = Math.sin(gameTime * 0.15) * R * 0.16;
+        ctx.save();
+        switch(key) {
+            case 'shadow_warden': {
+                ctx.strokeStyle = this._bpGlow; ctx.lineWidth = 3; ctx.globalAlpha = 0.9;
+                ctx.beginPath(); ctx.moveTo(px - R, py - R); ctx.lineTo(px - R * 0.15, py - R * 0.35); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(px + R, py - R); ctx.lineTo(px + R * 0.15, py - R * 0.35); ctx.stroke();
+                ctx.globalAlpha = 1; break;
+            }
+            case 'dark_lord': {
+                ctx.fillStyle = '#ffd27f';
+                ctx.beginPath(); ctx.moveTo(px - R * 0.6, py - R - 6); ctx.lineTo(px, py - R - 16 - pulse); ctx.lineTo(px + R * 0.6, py - R - 6); ctx.closePath(); ctx.fill();
+                break;
+            }
+            case 'death_herald': {
+                ctx.strokeStyle = '#eceff1'; ctx.lineWidth = 3; ctx.globalAlpha = 0.9;
+                ctx.beginPath(); ctx.arc(px + R * 0.2, py - R, R * 0.8, -Math.PI * 0.9, -Math.PI * 0.2); ctx.stroke();
+                ctx.globalAlpha = 1; break;
+            }
+            case 'stone_colossus': {
+                ctx.strokeStyle = '#ffb84d'; ctx.lineWidth = 2; ctx.globalAlpha = 0.7;
+                ctx.beginPath(); ctx.arc(px, py, R, 0, Math.PI * 2); ctx.stroke();
+                ctx.globalAlpha = 1; break;
+            }
+            case 'specter': {
+                ctx.fillStyle = '#9ff7ff'; ctx.globalAlpha = 0.5;
+                for(let i = 0; i < 3; i++) { const w = Math.sin(gameTime * 0.2 + i); ctx.beginPath(); ctx.arc(px - w * R * 0.8, py + R + i * 4, 3 - i * 0.7, 0, Math.PI * 2); ctx.fill(); }
+                ctx.globalAlpha = 1; break;
+            }
+            case 'soul_devourer': {
+                ctx.strokeStyle = '#ff5e7d'; ctx.lineWidth = 2; ctx.globalAlpha = 0.8;
+                for(let i = 0; i < 3; i++) { ctx.beginPath(); ctx.arc(px, py, R * 0.5 + i * R * 0.28, i * (Math.PI / 2) + gameTime * 0.1, i * (Math.PI / 2) + Math.PI * 1.4 + gameTime * 0.1); ctx.stroke(); }
+                ctx.globalAlpha = 1; break;
+            }
+            case 'bone_lord': {
+                ctx.strokeStyle = '#fff3d6'; ctx.lineWidth = 2; ctx.globalAlpha = 0.9;
+                for(let i = 0; i < 3; i++) { ctx.beginPath(); ctx.arc(px - R * 0.3 + i * R * 0.3, py - R * 0.2, R * 0.18, Math.PI * 1.15, Math.PI * 1.85); ctx.stroke(); }
+                ctx.globalAlpha = 1; break;
+            }
+            case 'deep_demon': {
+                ctx.fillStyle = '#ff7a3c';
+                ctx.beginPath(); ctx.moveTo(px - R * 0.9, py - R * 0.4); ctx.lineTo(px - R * 0.35, py - R * 1.1 - pulse); ctx.lineTo(px - R * 0.1, py - R * 0.5); ctx.closePath(); ctx.fill();
+                ctx.beginPath(); ctx.moveTo(px + R * 0.9, py - R * 0.4); ctx.lineTo(px + R * 0.35, py - R * 1.1 - pulse); ctx.lineTo(px + R * 0.1, py - R * 0.5); ctx.closePath(); ctx.fill();
+                break;
+            }
+            case 'corrupted': {
+                ctx.fillStyle = '#7fd612';
+                for(let i = 0; i < 4; i++) { const a = i * Math.PI / 2 + gameTime * 0.05; ctx.beginPath(); ctx.arc(px + Math.cos(a) * R * 0.85, py + Math.sin(a) * R * 0.85, 3, 0, Math.PI * 2); ctx.fill(); }
+                break;
+            }
+            case 'final_guardian': {
+                ctx.fillStyle = '#ff8c00';
+                ctx.beginPath(); ctx.moveTo(px - R * 0.9, py - R * 0.3); ctx.lineTo(px - R * 0.4, py - R * 1.2 - pulse); ctx.lineTo(px, py - R * 0.4); ctx.closePath(); ctx.fill();
+                ctx.beginPath(); ctx.moveTo(px + R * 0.9, py - R * 0.3); ctx.lineTo(px + R * 0.4, py - R * 1.2 - pulse); ctx.lineTo(px, py - R * 0.4); ctx.closePath(); ctx.fill();
+                ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(px, py, R * 0.2, 0, Math.PI * 2); ctx.fill();
+                break;
+            }
+        }
+        ctx.restore();
     }
 
     // Smart steering: tries direct path, then rotated angles to avoid walls
@@ -11579,6 +12577,25 @@ class Boss extends Enemy {
         const d = Math.sqrt(dSq);
         this.abilityCooldown--;
         this.hazardTimer++;
+
+        // Soul drain channel (Devorador de Almas)
+        if(this._drainT > 0) {
+            this._drainT--;
+            const pdx = p.x - this.x, pdy = p.y - this.y;
+            const pdl = Math.hypot(pdx, pdy) || 1;
+            if(pdl < 340 && this._drainT % 7 === 0) {
+                const h = Math.floor(CONFIG.BOSS_ABILITY_PROJECTILE_DAMAGE * 0.9);
+                p.takeDamage(h, m);
+                this.hp = Math.min(this.maxHp, this.hp + Math.floor(h * 0.8));
+                spawnParticles(p.x, p.y, '#ff3b5c', 6, 2);
+                if (typeof DamageNumbers !== 'undefined') DamageNumbers.add(this.x, this.y, '+' + Math.floor(h * 0.8), 'heal');
+            }
+        }
+        // Corrupted regeneration
+        if(this._regen > 0 && this.phase >= 2 && gameTime % 45 === 0) {
+            this.hp = Math.min(this.maxHp, this.hp + this._regen * (this.phase >= 3 ? 2 : 1));
+            spawnParticles(this.x, this.y, '#7fd612', 3, 2);
+        }
         if(this._spiralTimer > 0) { 
             this._spiralTimer--; 
             this._spiralAngle = (this._spiralAngle||0) + 0.18; 
@@ -11723,22 +12740,17 @@ class Boss extends Enemy {
     }
 
     useAbility(p, m) {
-        const abilities = ['projectileBurst', 'targetedBarrage'];
-        if(this.phase >= 2) { abilities.push('charge', 'groundPound'); }
-        if(this.phase >= 3) { abilities.push('spiralBurst', 'charge', 'charge'); }
-        if(this.phase >= 4) { abilities.push('teleport', 'spiralBurst', 'guidedProjectile', 'guidedProjectile'); }
-        if(this.phase >= 5) { abilities.push('teleport', 'teleport', 'spiralBurst', 'guidedProjectile'); }
-
-        // Archetype bias: stack extra copies of favored moves so they come up more often,
-        // without touching any of the existing phase-based move implementations.
-        if(this.archetype === 'arcano' && this.phase >= 2 && this.phase < 4) { abilities.push('guidedProjectile', 'guidedProjectile'); }
-        if(this.archetype === 'brutamontes' && this.phase >= 2) { abilities.push('charge', 'charge', 'groundPound', 'groundPound'); }
-        if(this.archetype === 'arcano' && this.phase >= 3) { abilities.push('spiralBurst', 'spiralBurst', 'teleport'); }
-        if(this.archetype === 'convocador') { abilities.push('targetedBarrage', 'targetedBarrage', 'projectileBurst'); }
-
+        // Move pool comes from the boss blueprint (per-floor identity)
+        const abilities = this._poolForPhase();
         const ability = abilities[Math.floor(Math.random() * abilities.length)];
         const sp = CONFIG.BOSS_ABILITY_PROJECTILE_SPEED;
         const dmg = CONFIG.BOSS_ABILITY_PROJECTILE_DAMAGE;
+
+        // Floor signature abilities are dispatched separately
+        if(this._runSignatureAbility(ability, p, m)) {
+            this.abilityCooldown = CONFIG.BOSS_ABILITY_COOLDOWN - this.phase * 10;
+            return;
+        }
 
         if(ability === 'projectileBurst') {
             // Telegraph: warning circles before burst
@@ -11837,7 +12849,7 @@ class Boss extends Enemy {
     }
 
     trySummonMinions(m) {
-        const summonChance = this.archetype === 'convocador' ? CONFIG.BOSS_ABILITY_SUMMON_CHANCE * 2 : CONFIG.BOSS_ABILITY_SUMMON_CHANCE;
+        const summonChance = this._summonChance || CONFIG.BOSS_ABILITY_SUMMON_CHANCE;
         if(Math.random() < summonChance) {
             for(let i = 0; i < CONFIG.BOSS_ABILITY_SUMMON_COUNT; i++) {
                 const angle = Math.random() * Math.PI * 2;
@@ -11865,8 +12877,9 @@ class Boss extends Enemy {
     draw(ctx, cx, cy) {
         if(!this.alive) return;
 
-        // Boss aura effect - simplified
-        const auraColor = this.phase === 3 ? '#ff0000' : (this.phase === 2 ? '#ff8800' : '#ff00ff');
+        // Boss aura effect - simplified (base tint is the boss identity color)
+        const _glowB = this._bpGlow || '#ff00ff';
+        const auraColor = this.phase >= 3 ? '#ff2200' : (this.phase === 2 ? '#ff8800' : _glowB);
         ctx.globalAlpha = 0.15;
         ctx.fillStyle = auraColor;
         ctx.fillRect(this.x-cx-this.radius-10, this.y-cy-this.radius-10, (this.radius+10)*2, (this.radius+10)*2);
@@ -11882,7 +12895,10 @@ class Boss extends Enemy {
             ctx.fillRect(this.x-cx-this.radius-10, this.y-cy-this.radius-10, (this.radius+10)*2, (this.radius+10)*2);
             ctx.restore();
         }
-        SpriteRenderer.drawEnemy(ctx, this.x-cx, this.y-cy, 'boss', this.walkTimer, this.angle, 2.3, this.ft > 0);
+        SpriteRenderer.drawEnemy(ctx, this.x-cx, this.y-cy, this._sprite || 'boss', this.walkTimer, this.angle, 2.3, this.ft > 0);
+
+        // Per-boss decoration (horns, crowns, wisps, ...)
+        this._drawBossDecor(ctx, this.x-cx, this.y-cy);
 
         // Boss name above
         ctx.fillStyle = '#fff';
@@ -11968,6 +12984,20 @@ class Boss extends Enemy {
             this.vx = (dx / dist) * CONFIG.KNOCKBACK_STRENGTH * kbMult;
             this.vy = (dy / dist) * CONFIG.KNOCKBACK_STRENGTH * kbMult;
         }
+        // Stone armor (Colosso de Pedra / O Guardiao Final): blocks most damage while it holds
+        if(this._armorHp > 0 && a > 0) {
+            const blocked = Math.floor(a * 0.75);
+            a = Math.max(1, a - blocked);
+            this._armorHp -= a;
+            spawnParticles(this.x, this.y, '#d0d0d0', 3, 2);
+            if (typeof DamageNumbers !== 'undefined') DamageNumbers.add(this.x, this.y, 'BLOQUEIO', 'stun');
+            if(this._armorHp <= 0) {
+                this._armorHp = 0;
+                spawnParticles(this.x, this.y, '#e0e0e0', 22, 6);
+                shake = 8;
+                addLog(' ' + this.name + ' perdeu a armadura de pedra!');
+            }
+        }
         super.takeDamage(a, m, source);
 
         // --- Phase 4: Thorn aura in phase 3+  reflect 10% damage to attacker ---
@@ -11999,6 +13029,7 @@ class BossArenaHazard {
         this.damage = CONFIG.BOSS_ARENA_HAZARD_DAMAGE;
         this.warningTimer = 30; // 0.5s warning before appearing
         this.active = false;
+        this.color = '#ff4400'; // hazard accent color (some bosses spawn tinted pools)
     }
     update(p) {
         this.timer--;
@@ -12029,7 +13060,7 @@ class BossArenaHazard {
         // Active hazard
         const alpha = Math.min(1, this.timer / 60);
         ctx.globalAlpha = alpha * 0.5;
-        ctx.fillStyle = '#ff4400';
+        ctx.fillStyle = this.color || '#ff4400';
         ctx.beginPath(); ctx.arc(this.x-cx, this.y-cy, this.radius, 0, Math.PI*2); ctx.fill();
         ctx.globalAlpha = alpha;
         ctx.fillStyle = '#ff8800';
