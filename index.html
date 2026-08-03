@@ -462,6 +462,40 @@ body { background: #08080f !important; }
     to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
+/* Low-end / LOW quality controllers:
+   - `backdrop-filter` re-blurs the whole screen every frame while a panel fades,
+     causing menu open-close stutter. Drop it entirely on low.
+   - The panel fade/slide in/out animations also force the GPU to re-rasterize
+     the panel (large DOM subtree) several times during the transition -> make
+     open/close instant on low. Popups that need the animation keep it on
+     high/medium.
+   Panel backgrounds are already nearly solid, so the visual difference from
+   cutting the blur is negligible. */
+body.gfx-low,
+body.gfx-low * {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+body.gfx-low .fade-in,
+body.gfx-low .fade-out,
+body.gfx-low .fade-in-panel,
+body.gfx-low .fade-out-panel,
+body.gfx-low .glass-panel,
+body.gfx-low #modal-overlay,
+body.gfx-low #settings-panel,
+body.gfx-low #pause-overlay,
+body.gfx-low #pause-overlay.hidden {
+    animation: none !important;
+    transition: none !important;
+}
+/* Hidden stays hidden even without animation (overlay fades are the only
+   switch for visibility for pause/modal overlays) */
+body.gfx-low #pause-overlay.hidden,
+body.gfx-low #modal-overlay.hidden {
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
 
 .panel-btn {
     padding: 10px 14px;
@@ -708,7 +742,7 @@ body { background: #08080f !important; }
 }
 @media (max-width: 360px) {
     #start-screen h1 { font-size: 1.25rem !important; }
-    #minimap-container { width: 56px; height: 56px; min-width: 56px; min-height: 56px; }
+    #minimap-container { width: 88px; height: 88px; min-width: 88px; min-height: 88px; }
 }
 @media (min-width: 768px) {
     .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -1110,7 +1144,7 @@ body { background: #08080f !important; }
         </div>
 
         <!-- MINIMAP (top-right, toggleable with btn) -->
-        <div id="minimap-container" style="position:absolute;top:max(8px,env(safe-area-inset-top,8px));right:max(8px,env(safe-area-inset-right,8px));width:min(72px,16vw);height:min(72px,16vw);min-width:56px;min-height:56px;background:rgba(18,14,28,0.9);border:1.5px solid rgba(224,182,255,0.2);border-radius:min(12px,2.5vw);overflow:hidden;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 3px 12px rgba(0,0,0,0.4);z-index:115;transition:all 0.25s ease;pointer-events:auto;cursor:pointer;" onclick="if(window._toggleExpandedMinimap) _toggleExpandedMinimap();">
+        <div id="minimap-container" style="position:absolute;top:max(8px,env(safe-area-inset-top,8px));right:max(8px,env(safe-area-inset-right,8px));width:min(128px,22vw);height:min(128px,22vw);min-width:88px;min-height:88px;background:rgba(18,14,28,0.9);border:1.5px solid rgba(224,182,255,0.2);border-radius:min(12px,2.5vw);overflow:hidden;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 3px 12px rgba(0,0,0,0.4);z-index:115;transition:all 0.25s ease;pointer-events:auto;cursor:pointer;" onclick="if(window._toggleExpandedMinimap) _toggleExpandedMinimap();">
             <canvas id="minimapCanvas" style="width:100%;height:100%;"></canvas>
         </div>
 
@@ -1158,7 +1192,7 @@ body { background: #08080f !important; }
                 <div style="font-size:0.75rem;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:0.15em;margin-bottom:22px;">Toque para continuar</div>
                 <div style="display:flex;flex-direction:column;gap:10px;width:100%;">
                     <button id="pause-resume" style="width:100%;padding:16px 0;border-radius:12px;color:#fff;font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:0.05em;background:linear-gradient(135deg,#008836,#3ce36a);border:1px solid rgba(60,227,106,0.3);box-shadow:0 4px 20px rgba(0,136,54,0.3);transition:all 0.3s;text-shadow:0 1px 4px rgba(0,0,0,0.4);cursor:pointer;touch-action:manipulation;">Continuar</button>
-                    <button id="pause-quit" style="width:100%;padding:16px 0;border-radius:12px;color:#fff;font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:0.05em;background:linear-gradient(135deg,#b8000f,#e84525);border:1px solid rgba(255,100,80,0.3);box-shadow:0 4px 20px rgba(200,0,15,0.3);transition:all 0.3s;text-shadow:0 1px 4px rgba(0,0,0,0.4);cursor:pointer;touch-action:manipulation;">Sair</button>
+                    <button id="pause-quit" style="width:100%;padding:16px 0;border-radius:12px;color:#fff;font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:0.05em;background:linear-gradient(135deg,#b8000f,#e84525);border:1px solid rgba(255,100,80,0.3);box-shadow:0 4px 20px rgba(200,0,15,0.3);transition:all 0.3s;text-shadow:0 1px 4px rgba(0,0,0,0.4);cursor:pointer;touch-action:manipulation;">Desistir e voltar ao menu inicial</button>
                     <div style="display:flex;gap:8px;width:100%;margin-top:2px;">
                         <button id="pause-export" onclick="if(window.SaveSystem) window._exportSave()" style="flex:1;padding:10px 0;border-radius:10px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;border:1px solid rgba(224,182,255,0.2);color:rgba(224,182,255,0.7);background:rgba(30,22,45,0.6);cursor:pointer;touch-action:manipulation;">Exportar Save</button>
                         <button id="pause-import" onclick="if(window.SaveSystem) window._importSavePrompt()" style="flex:1;padding:10px 0;border-radius:10px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;border:1px solid rgba(224,182,255,0.2);color:rgba(224,182,255,0.7);background:rgba(30,22,45,0.6);cursor:pointer;touch-action:manipulation;">Importar Save</button>
@@ -1606,6 +1640,20 @@ var mCanvas, mctx;
 let minimapExpanded = false;
 let _mmExpandBounds = null;
 
+// Minimap toggle helpers. Defined here at load so the minimap canvas/container
+// are clickable during gameplay (were previously only defined as a side-effect
+// of a mode-tab onclick that never fires while playing -> "not clickable").
+window._toggleMinimap = function() {
+    var mm = document.getElementById('minimap-container');
+    if (!mm) return;
+    mm.classList.toggle('hidden');
+    var btn = document.getElementById('minimap-toggle-btn');
+    if (btn) btn.style.opacity = mm.classList.contains('hidden') ? '0.4' : '1';
+};
+window._toggleExpandedMinimap = function() {
+    if (typeof minimapExpanded !== 'undefined') minimapExpanded = !minimapExpanded;
+};
+
 var gameMode = 'dungeon';
 
 function getFontScale() {
@@ -1618,6 +1666,49 @@ function getFontScale() {
     return 1.0;
 }
 
+// Dynamic resolution scaler - lowers internal resolution when FPS drops so the
+// game keeps a stable framerate on weak devices, then recovers when performance allows.
+let _autoResScale = 1;     // current multiplier (1 = full 0.75x base, min _autoResMin)
+let _autoResMin = 0.6;     // lowest internal resolution multiplier
+let _autoResStable = 0;    // consecutive healthy seconds before scaling back up
+
+// Auto performance mode - when FPS is low, temporarily disables the heaviest
+// effects (particles, screen shake, hitstop) WITHOUT overwriting the user's
+// saved settings; restores them automatically when framerate recovers.
+let _autoPerfActive = false;
+let _autoPerfPrefs = null; // { particlesEnabled, screenShakeEnabled, hitstopEnabled } captured pre-lock
+
+function _setAutoPerf(on) {
+    if (on === _autoPerfActive) return;
+    _autoPerfActive = on;
+    if (!window.GameSettings) return;
+    if (on) {
+        if (!_autoPerfPrefs) {
+            _autoPerfPrefs = {
+                particlesEnabled: GameSettings.particlesEnabled,
+                screenShakeEnabled: GameSettings.screenShakeEnabled,
+                hitstopEnabled: GameSettings.hitstopEnabled
+            };
+        }
+        GameSettings.particlesEnabled = false;
+        GameSettings.screenShakeEnabled = false;
+        GameSettings.hitstopEnabled = false;
+    } else {
+        if (_autoPerfPrefs) {
+            GameSettings.particlesEnabled = _autoPerfPrefs.particlesEnabled;
+            GameSettings.screenShakeEnabled = _autoPerfPrefs.screenShakeEnabled;
+            GameSettings.hitstopEnabled = _autoPerfPrefs.hitstopEnabled;
+            _autoPerfPrefs = null;
+        }
+    }
+    GameSettings.apply();
+    if (window.SettingsUI && SettingsUI._render) SettingsUI._render();
+    // A transient log so the player knows the game auto-tuned itself for smoothness
+    if (typeof addLog === 'function' && gameState === 'PLAYING') {
+        addLog(on ? ' Modo automático de desempenho ativado (efeitos desligados)' : ' Desempenho recuperado - efeitos restaurados');
+    }
+}
+
 function resize() {
     // Only resize if canvas exists
     if (!canvas) {
@@ -1626,8 +1717,9 @@ function resize() {
     }
     // PERF: Force DPR=1 on mobile to avoid 2-3x pixel rendering (huge GPU savings)
     dpr = 1;
-    // Resolution scaling for performance (0.75 = 75% resolution)
-    const scale = 0.75;
+    // Resolution scaling for performance (0.75 = 75% resolution); reduced further
+    // dynamically (_autoResScale) when the device cannot sustain the framerate.
+    const scale = 0.75 * (_autoResScale || 1);
     let winW = window.innerWidth || window.screen.width || 360;
     let winH = window.innerHeight || window.screen.height || 640;
     if (winW === 0) winW = 360;
@@ -3511,13 +3603,9 @@ if(mCanvas) { mCanvas.width = 150; mCanvas.height = 150; }
 if(mCanvas) {
     mCanvas.addEventListener('click', function(e) {
         if(gameState !== 'PLAYING') return;
-        if(!minimapExpanded) minimapExpanded = true;
+        if (typeof window._toggleExpandedMinimap === 'function') window._toggleExpandedMinimap();
         e.stopPropagation();
     });
-    mCanvas.addEventListener('touchstart', function(e) {
-        if(gameState !== 'PLAYING') return;
-        if(!minimapExpanded) { minimapExpanded = true; e.stopPropagation(); }
-    }, { passive: true });
 }
 
 // Performance throttle placeholder
@@ -3573,19 +3661,15 @@ function _drawMinimapDots(c, scaleX, scaleY, dotMult) {
         const py = (player.y/CONFIG.TILE_SIZE)*scaleY;
         const pSize = CONFIG.MINIMAP_PLAYER_DOT * dotMult;
         
-        // Glow
-        c.save();
+        // Glow (alpha halo instead of shadowBlur - far cheaper per frame)
         c.globalAlpha = 0.3;
         c.fillStyle = CONFIG.MINIMAP_PLAYER_COLOR;
         c.beginPath(); c.arc(px, py, pSize * 2.5, 0, 6.28); c.fill();
-        c.restore();
         
         // Core
+        c.globalAlpha = 1;
         c.fillStyle = CONFIG.MINIMAP_PLAYER_COLOR;
-        c.shadowColor = CONFIG.MINIMAP_PLAYER_COLOR;
-        c.shadowBlur = 5;
         c.beginPath(); c.arc(px, py, pSize, 0, 6.28); c.fill();
-        c.shadowBlur = 0;
     }
     
     // Entities
@@ -3605,28 +3689,21 @@ function _drawMinimapDots(c, scaleX, scaleY, dotMult) {
         const ex = (e.x/CONFIG.TILE_SIZE)*scaleX;
         const ey = (e.y/CONFIG.TILE_SIZE)*scaleY;
         
-        // Boss/elite glow
+        // Boss/elite glow (alpha halo, no shadowBlur)
         if (e.isBoss || e.elite) {
-            c.save();
             c.globalAlpha = 0.25;
             c.fillStyle = dotColor;
             c.beginPath(); c.arc(ex, ey, dotSize * 2, 0, 6.28); c.fill();
-            c.restore();
+            c.globalAlpha = 1;
         }
         
         c.fillStyle = dotColor;
-        c.shadowColor = dotColor;
-        c.shadowBlur = e.isBoss ? 6 : 2;
         c.beginPath(); c.arc(ex, ey, dotSize, 0, 6.28); c.fill();
-        c.shadowBlur = 0;
         
         // Pickups on minimap (currency nearby)
         if (e.isTreasureGoblin) {
             c.fillStyle = CONFIG.MINIMAP_GOBLIN_COLOR;
-            c.shadowColor = CONFIG.MINIMAP_GOBLIN_COLOR;
-            c.shadowBlur = 8;
             c.beginPath(); c.arc(ex, ey, dotSize * 1.5, 0, 6.28); c.fill();
-            c.shadowBlur = 0;
         }
     }
     
@@ -3687,14 +3764,11 @@ function drawMinimap() {
         mctx.stroke();
     }
     mctx.restore();
-
-    if(minimapExpanded && ctx && gameState === 'PLAYING') {
-        _drawExpandedMinimap();
-    }
 }
 
 function _drawExpandedMinimap() {
     if (typeof CONFIG === 'undefined' || !CONFIG.MAP_WIDTH) return;
+    if (_mmDirty) _buildMinimapBuffer();
     const mmSize = Math.min(width, height) * 0.82;
     const mmX = Math.floor((width - mmSize) / 2);
     const mmY = Math.floor((height - mmSize) / 2);
@@ -3980,11 +4054,12 @@ function _updateEntitySimulation() {
         if ((i + gameTime) % 2 === 0) particles[i].update();
     }
 
-    // In-place cleanup avoids creating new arrays every frame (reduces GC pressure)
+    // In-place swap-and-pop cleanup (O(1) per removal vs O(n) splice - reduces GC pressure)
     for (let i = bullets.length - 1; i >= 0; i--) {
         if (!bullets[i].alive) {
             if (window.PoolManager) PoolManager.release('Bullet', bullets[i]);
-            bullets.splice(i, 1);
+            bullets[i] = bullets[bullets.length - 1];
+            bullets.pop();
         }
     }    while (bullets.length > (CONFIG.MAX_BULLETS || 60)) {
         const b = bullets.pop();
@@ -3993,7 +4068,8 @@ function _updateEntitySimulation() {
     for (let i = particles.length - 1; i >= 0; i--) { 
         if (particles[i].life <= 0 || !particles[i].alive) {
             if (window.PoolManager) PoolManager.release('Particle', particles[i]);
-            particles.splice(i, 1); 
+            particles[i] = particles[particles.length - 1];
+            particles.pop(); 
         }
     }
     while (particles.length > CONFIG.PARTICLE_CAP) {
@@ -4179,8 +4255,12 @@ function _updatePortalAndFloor() {
 
 function _updateEnemySpawning() {
     if (_transitioning) return;
-    let aliveEnemies = 0;
-    for (let i = 0; i < entities.length; i++) { if (entities[i] !== player && entities[i].alive) aliveEnemies++; }
+    // Only recount alive enemies on spawn ticks (spawning is throttled to gameTime % 60)
+    if (gameTime % 60 === 0) {
+        _cachedAliveEnemies = 0;
+        for (let i = 0; i < entities.length; i++) { if (entities[i] !== player && entities[i].alive) _cachedAliveEnemies++; }
+    }
+    const aliveEnemies = _cachedAliveEnemies;
     const _tutSuppressSpawn = typeof TutorialSystem !== 'undefined' && TutorialSystem.active && TutorialSystem.suppressEnemySpawns;
     if (aliveEnemies < CONFIG.MAX_ENEMIES && gameTime % 60 === 0 && dungeonKills < dungeonKillTarget && !dungeonPortal && !_tutSuppressSpawn) {
         const eSpawn = map.getSafeSpawn(CONFIG.ENEMY_SPAWN_MIN_DIST);
@@ -4385,12 +4465,15 @@ function _drawWorldLayer() {
     }
     
     // PERF: Batch particles by color (reduces state changes by ~80%)
-    const batchByColor = {};
+    // Reuse a module-scope container to avoid per-frame object allocation.
+    const batchByColor = _particleBatch;
+    for (const _pc in batchByColor) delete batchByColor[_pc];
     for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
         if(p.x > vL && p.x < vR && p.y > vT && p.y < vB) {
-            if (!batchByColor[p.color]) batchByColor[p.color] = [];
-            batchByColor[p.color].push(p);
+            let b = batchByColor[p.color];
+            if (!b) { b = []; batchByColor[p.color] = b; }
+            b.push(p);
         }
     }
     for (const color in batchByColor) {
@@ -4413,8 +4496,8 @@ function _drawWorldLayer() {
                 wctx.fillRect(px - s, py - s, s * 2, s * 2);
             }
 
-            const speed = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
-            if (speed > 2) {
+            // Streak trail: squared-magnitude compare avoids Math.sqrt per particle
+            if (p.vx * p.vx + p.vy * p.vy > 4) {
                 wctx.lineWidth = Math.max(s, 1) * 2;
                 wctx.lineCap = 'round';
                 wctx.beginPath();
@@ -4467,6 +4550,8 @@ function _drawWorldLayer() {
 let _lightingThrottle = 0;
 let _cachedLightCanvas = null;
 let _lightingDirty = true;
+let _particleBatch = {};
+let _cachedAliveEnemies = 0;
 function _spawnTorchParticles() {
     if (!player || !player.alive || CONFIG.TORCH_PARTICLE_INTERVAL > 0 && gameTime % CONFIG.TORCH_PARTICLE_INTERVAL !== 0) return;
     if (particles.length >= CONFIG.PARTICLE_CAP - 5) return;
@@ -4495,7 +4580,9 @@ function _drawLightingLayer() {
             ctx.drawImage(_cachedLightCanvas, 0, 0, width, height);
             return;
         }
-        const LS = 16;
+        // Larger cells = fewer pixels touched by the radial-gradient shadows; on LOW
+        // quality this roughly halves the per-recompute cost of the light layer.
+        const LS = (window.GFX !== undefined && window.GFX.chroma === false) ? 24 : 16;
         const lw = Math.ceil(width / LS), lh = Math.ceil(height / LS);
         if (lightCanvas.width !== lw || lightCanvas.height !== lh) { lightCanvas.width = lw; lightCanvas.height = lh; }
         lctx.clearRect(0, 0, lw, lh);
@@ -4597,7 +4684,10 @@ function _drawScreenSpaceHUD() {
     _drawNavArrows(ctx);
     Input.drawJoystick(ctx, Input.left, "left"); Input.drawJoystick(ctx, Input.right, "right");
     if (!_anyPanelOpen()) Debug.time('postfx', () => ScreenEffects.drawPostProcess(ctx, lightCanvas));
-    drawMinimap();
+    // Minimap throttled to every 3rd frame (dots move slowly; static tile buffer is cached)
+    if (gameTime % 3 === 0) drawMinimap();
+    // Expanded minimap overlay drawn every frame (needs to stay stable, not blink)
+    if (minimapExpanded && gameState === 'PLAYING') _drawExpandedMinimap();
     if (typeof NPCInteractionPanel !== 'undefined' && NPCInteractionPanel.visible) NPCInteractionPanel.draw(ctx, width || 800);
 
     
@@ -4682,7 +4772,7 @@ function draw() {
         // Apply screen effects (shake, zoom) before drawing world
         ctx.save();
         
-        if (shake > 0 && gameState === 'PLAYING') {
+        if (shake > 0 && gameState === 'PLAYING' && (window.GameSettings === undefined || GameSettings.screenShakeEnabled) && (window.GFX === undefined || GFX.shake !== false)) {
             ctx.translate((Math.random()-0.5)*shake*2, (Math.random()-0.5)*shake*2);
         }
         
@@ -5271,6 +5361,28 @@ function loop(timestamp) {
                 el.classList.remove('visible');
             }
         }
+        // Adaptive resolution + auto performance: drop internal resolution and
+        // disable heavy effects when FPS is low, recover when stable.
+        if (gameState === 'PLAYING') {
+            if (fps < 45) {
+                _setAutoPerf(true);
+            } else if (fps >= 55) {
+                _setAutoPerf(false);
+            }
+            if (fps < 50 && _autoResScale > _autoResMin) {
+                _autoResScale = Math.max(_autoResMin, Math.round((_autoResScale * 0.9) * 100) / 100);
+                _autoResStable = 0;
+                resize();
+            } else if (fps >= 57 && _autoResScale < 1) {
+                if (++_autoResStable >= 15) {
+                    _autoResScale = Math.min(1, Math.round((_autoResScale / 0.9) * 100) / 100);
+                    _autoResStable = 0;
+                    resize();
+                }
+            } else if (fps < 57) {
+                _autoResStable = 0;
+            }
+        }
         _fpsFrames = 0;
         _fpsTime = 0;
     }
@@ -5330,6 +5442,20 @@ function _initEngine() {
         if(tx < mx || tx > mx + mw || ty < my || ty > my + mh) { minimapExpanded = false; return; }
     });
 
+    // NPC interaction panel click (mouse/desktop)
+    let _npcSuppressClickUntil = 0;
+    canvas.addEventListener('click', (e) => {
+        if(typeof TutorialSystem !== 'undefined' && TutorialSystem.active) return;
+        if(gameState !== 'PLAYING') return;
+        if(typeof NPCSystem === 'undefined' || typeof NPCInteractionPanel === 'undefined' || !NPCInteractionPanel.visible) return;
+        // A touch was already consumed by the NPC panel moments ago -> ignore the synthetic click
+        if(performance.now() < _npcSuppressClickUntil) return;
+        const rect = canvas.getBoundingClientRect();
+        const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+        const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+        NPCSystem.handleTouch(x, y);
+    });
+
     // UI Click Handlers for canvas
     canvas.addEventListener('touchstart', (e) => {
         // During tutorial: only allow skill button tap during action stages
@@ -5368,7 +5494,7 @@ function _initEngine() {
             for(let t of e.changedTouches) {
                 const _npcCx = (t.clientX - _npcRect.left) * (canvas.width / _npcRect.width);
                 const _npcCy = (t.clientY - _npcRect.top) * (canvas.height / _npcRect.height);
-                if(NPCSystem.handleTouch(_npcCx, _npcCy)) return;
+                if(NPCSystem.handleTouch(_npcCx, _npcCy)) { _npcSuppressClickUntil = performance.now() + 400; return; }
             }
         }
 
@@ -8018,11 +8144,15 @@ const ScreenEffects = {
         this.triggerShake(30);
         this.triggerFlash(0.7, '#ffffff');
         this.triggerChromatic(8);
-        this._vignetteAlpha = 0.3;
-        this._vignetteTarget = 0; // fade the vignette back out now that the fight is over
-        this._bloodSplatterAlpha = 0.6;
-        this._bloodSplatterColor = '#ff8800';
-        this._bloodSplatterTimer = 30;
+        // Full-screen vignette gradient + blood surge are expensive on low-end;
+        // skip those two on LOW quality (flash/shake/chroma still read fine).
+        if (window.GFX === undefined || window.GFX.chroma) {
+            this._vignetteAlpha = 0.3;
+            this._vignetteTarget = 0; // fade the vignette back out now that the fight is over
+            this._bloodSplatterAlpha = 0.6;
+            this._bloodSplatterColor = '#ff8800';
+            this._bloodSplatterTimer = 30;
+        }
     },
     
     onEliteDeath() {
@@ -8171,8 +8301,9 @@ const ScreenEffects = {
             ctx.restore();
         }
         
-        // Chromatic aberration - RGB split
-        if (this._chromaIntensity > 1) {
+        // Chromatic aberration - RGB split (disabled on low quality: 3 full-screen
+        // copies per frame while active; heavy on low-end during kills/bosses)
+        if (this._chromaIntensity > 1 && (window.GFX === undefined || window.GFX.chroma)) {
             const shift = Math.min(this._chromaIntensity * 1.5, 10);
             if (!this._chromaCanvas) {
                 this._chromaCanvas = document.createElement('canvas');
@@ -9927,14 +10058,21 @@ class WeaponPickup {
         const rarityColors = { common: '#9ca3af', uncommon: '#4ade80', rare: '#60a5fa', epic: '#c084fc', legendary: '#ffcc00' };
         const rarity = this.weapon.rarity || 'common';
         const borderCol = rarityColors[rarity] || '#9ca3af';
-        ctx.shadowColor = borderCol;
-        ctx.shadowBlur = 20;
+        // Cheap glow (translucent halo) instead of shadowBlur - shadowBlur is the most
+        // expensive canvas op and this runs every frame for every onscreen pickup.
+        if (window.GFX === undefined || window.GFX.glows) {
+            ctx.globalAlpha = 0.35;
+            ctx.fillStyle = borderCol;
+            ctx.beginPath();
+            ctx.arc(px, py, 15, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = 1;
+        }
         ctx.strokeStyle = borderCol;
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.arc(px, py, 12, 0, Math.PI * 2);
         ctx.stroke();
-        ctx.shadowBlur = 0;
         ctx.fillStyle = 'rgba(0,0,0,0.7)';
         ctx.beginPath();
         ctx.arc(px, py, 10, 0, Math.PI * 2);
@@ -10056,28 +10194,38 @@ class Chest {
 class SpatialHash {
     constructor(cellSize = 120) {
         this.cellSize = cellSize;
+        // NOTE: uses a plain object, NOT new Map(). The game declares a global
+        // `class Map` (the dungeon map) that shadows the native Map binding, so
+        // `new Map()` here would construct a dungeon map (no .clear) and crash.
         this.grid = {};
+        this._scratch = [];
     }
     _key(x, y) {
-        return `${Math.floor(x / this.cellSize)},${Math.floor(y / this.cellSize)}`;
+        // Packed numeric key (object keys are strings internally, cheap enough)
+        return Math.floor(x / this.cellSize) * 65536 + Math.floor(y / this.cellSize);
     }
     clear() { this.grid = {}; }
     insert(entity) {
         const key = this._key(entity.x, entity.y);
-        if (!this.grid[key]) this.grid[key] = [];
-        this.grid[key].push(entity);
+        let cell = this.grid[key];
+        if (!cell) { cell = []; this.grid[key] = cell; }
+        cell.push(entity);
     }
     query(x, y, radius) {
-        const results = [];
+        // Reuses a scratch array (caller consumes it synchronously) - avoids
+        // allocating one array per bullet per frame.
+        const results = this._scratch;
+        results.length = 0;
         const xMin = Math.floor((x - radius) / this.cellSize);
         const xMax = Math.floor((x + radius) / this.cellSize);
         const yMin = Math.floor((y - radius) / this.cellSize);
         const yMax = Math.floor((y + radius) / this.cellSize);
         for (let ix = xMin; ix <= xMax; ix++) {
+            const base = ix * 65536;
             for (let iy = yMin; iy <= yMax; iy++) {
-                const cell = this.grid[`${ix},${iy}`];
+                const cell = this.grid[base + iy];
                 if (cell) {
-                    for(let i=0; i<cell.length; i++) results.push(cell[i]);
+                    for (let i = 0; i < cell.length; i++) results.push(cell[i]);
                 }
             }
         }
@@ -10425,6 +10573,8 @@ class Map {
     <script>
 // === js/entities/entity.js ===
 // BASE ENTITY CLASS - Enhanced with flinch, knockback, and better hit feedback
+// Shared collision direction tables (module scope) so Entity.move() allocates nothing.
+const _MOVE_DIRS = [[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[1,-1],[-1,1],[1,1]];
 class Entity {
     constructor(x,y,r,hp,c) { this.x=x; this.y=y; this.radius=r; this.radiusSq=r*r; this.hp=this.maxHp=hp; this.color=c; this.alive=true; this.ft=0; this.lr=0; this.shield=0; this.speedBoost=0; this.frozen=0; this.stealth=0; this.poisonStacks=0; this.poisonTimer=0; this.walkTimer=0; this.angle=0; this.flinchTimer=0; this.flinchVx=0; this.flinchVy=0; this.hitFlashTimer=0; }
     
@@ -10574,14 +10724,20 @@ class Entity {
             if(this.y > mapH - r) this.y = mapH - r;
         }
 
-        // Check 8 points around circle for collision
+        // Check 8 directions first circle-for-wall collision. The direction tables
+        // below are module-level constants so move() never allocates arrays (called for
+        // every entity every tick - a big GC hotspot).
         const _isClear = (px, py) => {
             if(m && m.isWall && m.isWall(px, py)) return false;
             if(!m) return true;
-            const checks = [[-r,0],[r,0],[0,-r],[0,r],[-r,-r],[r,-r],[-r,r],[r,r]];
-            for(let i = 0; i < 8; i++) {
-                if(m.isWall(px + checks[i][0], py + checks[i][1])) return false;
-            }
+            if(m.isWall(px - r, py)) return false;
+            if(m.isWall(px + r, py)) return false;
+            if(m.isWall(px, py - r)) return false;
+            if(m.isWall(px, py + r)) return false;
+            if(m.isWall(px - r, py - r)) return false;
+            if(m.isWall(px + r, py - r)) return false;
+            if(m.isWall(px - r, py + r)) return false;
+            if(m.isWall(px + r, py + r)) return false;
             return true;
         };
 
@@ -10591,23 +10747,20 @@ class Entity {
         // which left entities permanently wedged whenever a spawn/knockback placed them
         // more than shallowly inside geometry.
         const _pushOut = (px, py) => {
-            const unitDirs = [[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[1,-1],[-1,1],[1,1]];
             const tile = (CONFIG && CONFIG.TILE_SIZE) || 48;
-            const distances = [r, r*1.5, r*2, tile, tile*1.5, tile*2];
-            for(let d = 0; d < distances.length; d++) {
-                for(let i = 0; i < unitDirs.length; i++) {
-                    const testX = px + unitDirs[i][0] * distances[d], testY = py + unitDirs[i][1] * distances[d];
-                    if(_isClear(testX, testY)) return { x: testX, y: testY };
+            const dists = [r, r * 1.5, r * 2, tile, tile * 1.5, tile * 2];
+            for (let d = 0; d < 6; d++) {
+                const dist = dists[d];
+                for (let i = 0; i < 8; i++) {
+                    if (_isClear(px + _MOVE_DIRS[i][0] * dist, py + _MOVE_DIRS[i][1] * dist)) {
+                        return { x: px + _MOVE_DIRS[i][0] * dist, y: py + _MOVE_DIRS[i][1] * dist };
+                    }
                 }
             }
             return { x: px, y: py };
         };
 
-        // Safety: if entity is embedded in a wall, push it out immediately. This runs
-        // every frame regardless of whether the entity is actively trying to move, so a
-        // stationary/frozen/idle enemy that ends up wedged in a wall (bad spawn point,
-        // knockback, a boss whose hitbox doesn't fit a corridor) doesn't stay stuck there
-        // forever - the previous version only self-corrected while actively moving.
+        // Safety: if the entity is embedded in a wall, push it out immediately.
         if(!_isClear(this.x, this.y)) {
             const out = _pushOut(this.x, this.y);
             this.x = out.x; this.y = out.y;
@@ -10630,10 +10783,10 @@ class Entity {
         // Corner case: try sliding with small diagonal offset
         {
             const nudge = r * 0.5;
-            const nudges = [[nudge,nudge],[-nudge,nudge],[nudge,-nudge],[-nudge,-nudge],
-                           [nudge,0],[-nudge,0],[0,nudge],[0,-nudge]];
+            const nd = [[nudge,nudge],[-nudge,nudge],[nudge,-nudge],[-nudge,-nudge],
+                       [nudge,0],[-nudge,0],[0,nudge],[0,-nudge]];
             for(let i = 0; i < 8; i++) {
-                const testX = nx + nudges[i][0], testY = ny + nudges[i][1];
+                const testX = nx + nd[i][0], testY = ny + nd[i][1];
                 if(_isClear(testX, testY)) { this.x = testX; this.y = testY; return true; }
             }
             // Last resort: push out from current position
@@ -12996,6 +13149,7 @@ class Player extends Entity {
             }
         }
         if(Input.keys[' ']) this.useSkill();
+        if(Input.keys['Shift'] || Input.keys['shift']) this.dodge();
     }
 
     draw(ctx, cx, cy) {
@@ -13088,8 +13242,10 @@ class Player extends Entity {
             ctx.globalAlpha = shieldAlpha;
             ctx.strokeStyle = '#33ccff';
             ctx.lineWidth = 3;
-            ctx.shadowColor = '#33ccff';
-            ctx.shadowBlur = 12;
+            if (window.GFX === undefined || window.GFX.glows) {
+                ctx.shadowColor = '#33ccff';
+                ctx.shadowBlur = 12;
+            }
             ctx.beginPath();
             ctx.arc(sx, sy, this.radius + 6, 0, Math.PI * 2);
             ctx.stroke();
@@ -13106,8 +13262,10 @@ class Player extends Entity {
             ctx.save();
             ctx.globalAlpha = 0.4;
             ctx.fillStyle = '#33ccff';
-            ctx.shadowColor = '#33ccff';
-            ctx.shadowBlur = 10;
+            if (window.GFX === undefined || window.GFX.glows) {
+                ctx.shadowColor = '#33ccff';
+                ctx.shadowBlur = 10;
+            }
             ctx.beginPath();
             ctx.arc(sx, sy, this.radius + 4, 0, Math.PI * 2);
             ctx.fill();
@@ -13129,8 +13287,10 @@ class Player extends Entity {
         if(this.type === 'warrior' && this.furyStacks > 0) {
             ctx.save();
             ctx.fillStyle = '#ff8800';
-            ctx.shadowColor = '#ff8800';
-            ctx.shadowBlur = 8;
+            if (window.GFX === undefined || window.GFX.glows) {
+                ctx.shadowColor = '#ff8800';
+                ctx.shadowBlur = 8;
+            }
             ctx.font = 'bold 11px ' + COLORS.CANVAS_FONT;
             ctx.textAlign = 'center';
             ctx.fillText('\u26A1' + this.furyStacks, sx, sy - this.radius - 10);
@@ -13153,8 +13313,10 @@ class Player extends Entity {
             const orbGlow = 0.6 + Math.sin(gameTime * 0.15) * 0.3;
             ctx.globalAlpha = orbGlow;
             ctx.fillStyle = COLORS.CLASS_MAGE;
-            ctx.shadowColor = COLORS.CLASS_MAGE;
-            ctx.shadowBlur = 20;
+            if (window.GFX === undefined || window.GFX.glows) {
+                ctx.shadowColor = COLORS.CLASS_MAGE;
+                ctx.shadowBlur = 20;
+            }
             ctx.beginPath();
             ctx.arc(sx, sy, this.radius + 8, 0, Math.PI * 2);
             ctx.fill();
@@ -14337,7 +14499,7 @@ var GameSettings = {
     particlesEnabled: true,
     screenShakeEnabled: true,
     hitstopEnabled: true,
-    graphicsQuality: 'high', // low | medium | high
+    graphicsQuality: 'low', // low | medium | high
     fontSize: 'medium',
 
     load() {
@@ -14354,7 +14516,7 @@ var GameSettings = {
             this.particlesEnabled = data.particlesEnabled !== undefined ? data.particlesEnabled : true;
             this.screenShakeEnabled = data.screenShakeEnabled !== undefined ? data.screenShakeEnabled : true;
             this.hitstopEnabled = data.hitstopEnabled !== undefined ? data.hitstopEnabled : true;
-            this.graphicsQuality = data.graphicsQuality || 'high';
+            this.graphicsQuality = 'low'; // forced low for performance, ignores saved value
             this.fontSize     = data.fontSize     || 'medium';
         } catch(e) { console.error("Settings load error", e); }
     },
@@ -14397,6 +14559,8 @@ var GameSettings = {
         document.body.classList.remove('font-small', 'font-medium', 'font-large');
         document.body.classList.add('font-' + (this.fontSize || 'medium'));
         const q = this.graphicsQuality || 'high';
+        // Tag low quality so CSS can drop expensive compositor effects (backdrop blur)
+        document.body.classList.toggle('gfx-low', q === 'low');
         window.GFX = {
             shadows:   q !== 'low',
             glows:     q !== 'low',
@@ -14405,6 +14569,9 @@ var GameSettings = {
             grain:     q === 'high',
             vignette:  q !== 'low',
             zoom:      q !== 'low',
+            // Chromatic aberration does 3 full-screen canvas copies per frame
+            // (killer on low-end during crits/kills/bosses) - only high/med.
+            chroma:    q !== 'low',
         };
     },
 
@@ -14439,12 +14606,40 @@ var SettingsUI = {
         if (panel) {
             panel.classList.add('fade-out-panel');
             panel.classList.remove('fade-in-panel');
+            // On LOW quality the fade-out animation is disabled, so don't wait
+            // for it - hide immediately for a snappy close.
+            const delay = document.body.classList.contains('gfx-low') ? 0 : 180;
             setTimeout(() => {
                 panel.classList.add('hidden');
                 panel.style.display = 'none';
                 this.open = false;
-            }, 180);
+            }, delay);
         }
+    },
+
+    // "Desistir e retornar ao menu inicial": leaves the current run and goes
+    // back to the start screen WITHOUT deleting any saved progress.
+    _quitToMenu() {
+        if (window.PauseSystem && PauseSystem.active) PauseSystem.resume();
+        // Save where the player stopped so they can continue later
+        try { if (typeof SaveSystem !== 'undefined') SaveSystem.save(); } catch(e) {}
+        // Close whichever panel opened this button: the UIManager modal overlay
+        // (Configuracoes in-game) and/or this SettingsUI panel - both must be
+        // gone so the start screen is not left with an overlay on top.
+        if (window.UIManager && UIManager.closePanel) UIManager.closePanel();
+        const mo = document.getElementById('modal-overlay');
+        if (mo) { mo.classList.add('hidden'); mo.classList.remove('fade-out'); }
+        this.close();
+        gameState = 'START';
+        const us = document.getElementById('start-screen');
+        if (us) { us.classList.remove('hidden'); us.style.opacity = ''; us.style.pointerEvents = ''; }
+        const ug = document.getElementById('game-over-screen');
+        if (ug) ug.classList.add('hidden');
+        ['top-bar', 'actions-right', 'bottom-controls'].forEach(function(id) {
+            const el = document.getElementById(id);
+            if (el) el.classList.add('hidden');
+        });
+        if (window._refreshContinueButton) window._refreshContinueButton();
     },
 
     _render() {
@@ -14890,6 +15085,8 @@ window.SkillTreeUI = SkillTreeUI;
             if (this.overlay) {
                 this.overlay.classList.add('fade-out');
                 if (window.SND && SND.playUI) SND.playUI();
+                // On LOW quality the fade-out is disabled -> close immediately.
+                const delay = document.body.classList.contains('gfx-low') ? 0 : 200;
                 setTimeout(() => {
                     this.overlay.classList.add('hidden');
                     this.overlay.classList.remove('fade-out');
@@ -14900,7 +15097,7 @@ window.SkillTreeUI = SkillTreeUI;
                     }
                     this.currentPanel = null;
                     this._contentEl = null;
-                }, 200);
+                }, delay);
             }
         },
 
@@ -15454,7 +15651,7 @@ window.SkillTreeUI = SkillTreeUI;
         },
 
         renderSettingsContent() {
-            const s = window.GameSettings || { sfxEnabled: true, musicEnabled: true, controlType: 'touch', joystickMode: 'fixed', fontSize: 'medium', graphicsQuality: 'high' };
+            const s = window.GameSettings || { sfxEnabled: true, musicEnabled: true, controlType: 'touch', joystickMode: 'fixed', fontSize: 'medium', graphicsQuality: 'low' };
             const _btnActive = 'background:rgba(224,182,255,0.2);border-color:' + COLORS.PRIMARY + ';color:#fff';
             const _btnInactive = 'background:rgba(255,255,255,0.05);border-color:' + COLORS.BORDER_DIM + ';color:' + COLORS.TEXT_MUTED;
             const btn = (active) => `padding:10px 12px;border-radius:12px;font-size:11px;font-weight:bold;border:1px solid;cursor:pointer;transition:all 0.2s;${active ? _btnActive : _btnInactive}`;
@@ -15516,7 +15713,7 @@ window.SkillTreeUI = SkillTreeUI;
                             <button style="${btn(s.fontSize === 'large')}" onclick="UIManager.setFontSize('large')">G</button>
                         </div>
                     </div>
-                    <button onclick="StorageManager.clearAll(); location.reload();" style="padding:12px;border-radius:12px;font-size:10px;font-weight:bold;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);color:${COLORS.DANGER};cursor:pointer;text-transform:uppercase;letter-spacing:0.1em;transition:transform 0.2s">Apagar Progresso</button>
+                    <button onclick="window.SettingsUI._quitToMenu(); event.stopPropagation();" style="width:100%;margin-top:12px;padding:14px;border-radius:12px;font-size:12px;font-weight:bold;background:linear-gradient(135deg,#b8000f,#e84525);border:1px solid rgba(255,100,80,0.3);color:#fff;cursor:pointer;text-transform:uppercase;letter-spacing:0.08em;transition:transform 0.2s">Desistir e retornar ao menu inicial</button>
                 </div>
             `;
         },
@@ -15866,12 +16063,12 @@ const TutorialSystem = {
             id: 'welcome_quick',
             title: ' Bem-vindo a Krevathorn!',
             lines: [
-                'Tutorial rpido  4 etapas, ~1 minuto.',
+                'Tutorial rapido  4 etapas, ~1 minuto.',
                 '',
-                'ESQUERDO: mover  |  DIREITO: atirar',
-                'BOTO CENTRAL: habilidade de classe',
+                'ESQUERDA: mover   DIREITA: atirar',
+                'BOTAO CENTRAL: habilidade de classe',
                 '',
-                'Os tiros so AUTOMTICOS ao apontar!',
+                'Os tiros sao AUTOMATICOS ao apontar!',
             ],
             waitForTap: true
         },
@@ -15888,11 +16085,23 @@ const TutorialSystem = {
             blocker: true
         },
         {
+            id: 'dash',
+            title: ' Aprenda o Dash!',
+            lines: [
+                'Use o Dash para fugir rapidamente.',
+                '',
+                '> Objetivo: Use o Dash uma vez!'
+            ],
+            condition: sys => sys._dodged,
+            blocker: true,
+            highlightDodge: true
+        },
+        {
             id: 'combat',
             title: ' Combate  Mate o Boneco!',
             lines: [
                 'Aponte o lado DIREITO para mirar e atirar.',
-                'Os tiros so automticos ao apontar.',
+                'Os tiros sao automaticos ao apontar.',
                 '',
                 '> Objetivo: Elimine o boneco de treino!',
             ],
@@ -15904,8 +16113,8 @@ const TutorialSystem = {
             id: 'skill',
             title: ' Use sua Habilidade!',
             lines: [
-                'Toque o BOTO CENTRAL para usar a habilidade.',
-                'Guerreiro: Golpe Ssmico  |  Ladino: Dash',
+                'Toque o BOTAO CENTRAL para usar a habilidade.',
+                'Guerreiro: Golpe Sismico  |  Ladino: Dash',
                 'Mago: Tempestade Arcana',
                 '',
                 '> Objetivo: Use sua habilidade uma vez!',
@@ -15918,13 +16127,14 @@ const TutorialSystem = {
             id: 'complete_quick',
             title: ' Pronto para jogar!',
             lines: [
-                'Voc sabe o essencial. Boa caada!',
+                'Voce sabe o essencial. Boa caca!',
                 '',
-                ' Mate inimigos para XP e subir nvel',
-                ' Entre no portal roxo para avanar',
-                ' Use  Loja para comprar melhorias',
+                'Menu pausa: pausa o jogo, opcoes e sair',
+                'Loja: compre novas armas e melhorias',
+                'Habilidades: especialize seu personagem',
+                'Estatisticas: acompanhe seu progresso',
                 '',
-                ' Bnus: +50 moedas!',
+                'Bonus: +50 moedas!',
             ],
             waitForTap: true,
             isLast: true
@@ -15984,7 +16194,9 @@ const TutorialSystem = {
             if(!TutorialSystem.active) return;
             if(e.key === 'Enter' || e.key === ' ') {
                 const stg = TutorialSystem.currentStage;
-                if(stg && stg.waitForTap && TutorialSystem.stageTimer > 30) TutorialSystem._advanceStage();
+                if(stg && stg.waitForTap && TutorialSystem.stageTimer > 12) TutorialSystem._advanceStage();
+            } else if(e.key === 'Escape') {
+                TutorialSystem._skipInGame();
             }
         });
         // Wire up prompt buttons
@@ -16086,6 +16298,7 @@ const TutorialSystem = {
         this._prevWeapon = null; this._weaponPickedUp = false;
         this._xpSpawned = false; this._weaponDropSpawned = false;
         this._arrowPhase = 0;
+        this._dodged = false;
     },
 
     // ============================================================
@@ -16102,11 +16315,11 @@ const TutorialSystem = {
         }
         var sid = stg.id;
         // Determine which controls to show based on stage
-        var showMovement = sid === 'movement' || sid === 'shooting' || sid === 'combat' || sid === 'pickup' || sid === 'pickup2' || sid === 'levelup' || sid === 'equipment';
+        var showMovement = sid === 'movement' || sid === 'dash' || sid === 'shooting' || sid === 'combat' || sid === 'pickup' || sid === 'pickup2' || sid === 'levelup' || sid === 'equipment';
         var showShooting = sid === 'shooting' || sid === 'combat';
         var showSkill = sid === 'skill';
         var showBottomBar = sid === 'shop' || sid === 'skilltree';
-        var showDodge = sid === 'combat';
+        var showDodge = sid === 'dash' || sid === 'combat';
         
         this._setControlsVisibility(showMovement, showShooting, showSkill, showBottomBar, showDodge);
     },
@@ -16179,7 +16392,7 @@ const TutorialSystem = {
         var stg = this.currentStage;
         if(!stg) return true;
         var sid = stg.id;
-        var needsInput = sid === 'movement' || sid === 'shooting' || sid === 'combat' || sid === 'pickup' || sid === 'pickup2' || sid === 'levelup' || sid === 'equipment' || sid === 'skill';
+        var needsInput = sid === 'movement' || sid === 'dash' || sid === 'shooting' || sid === 'combat' || sid === 'pickup' || sid === 'pickup2' || sid === 'levelup' || sid === 'equipment' || sid === 'skill';
         return !needsInput;
     },
     
@@ -16258,6 +16471,9 @@ const TutorialSystem = {
             this._lastSkillCooldown = player.skillCooldown;
         }
 
+        // Track dash (dodge) usage
+        if(stg.id === 'dash' && player.dodgeAnim > 0) this._dodged = true;
+
         // Track weapon pickup
         if(stg.id === 'equipment' && player.currentWeapon !== this._prevWeapon) {
             this._weaponPickedUp = true;
@@ -16269,21 +16485,105 @@ const TutorialSystem = {
         }
     },
 
+    // Responsive scale: shrink text/panel on narrow or short screens so the
+    // tutorial never overflows or becomes unreadable.
+    _sc() {
+        const w = (typeof width !== 'undefined' && width > 0) ? width : 900;
+        const h = (typeof height !== 'undefined' && height > 0) ? height : 600;
+        return Math.max(0.7, Math.min(1, w / 520, (h - 90) / 420));
+    },
+
+    _skipBtnRect() {
+        const W = width;
+        const sc = this._sc();
+        const sW = 88 * sc, sH = 30 * sc;
+        return { x: W - sW - 14, y: this._panel.pY + 6 * sc, w: sW, h: sH, sc: sc };
+    },
+
+    _continueBtnRect() {
+        const W = width;
+        const sc = this._sc();
+        const p = this._panel;
+        const bW = 240 * sc, bH = 46 * sc;
+        return { x: (W - bW) / 2, y: p.pY + p.pH - bH - 6 * sc, w: bW, h: bH, sc: sc };
+    },
+
+    _isTouch() {
+        const gs = window.GameSettings;
+        if(gs) return gs.controlType === 'touch';
+        return typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0;
+    },
+
+    // Platform-aware stage text: the skill is a touch button on mobile but
+    // SPACE on desktop, so the instruction must match the real input.
+    _stageLines(stg) {
+        if(!stg) return [];
+        const touch = this._isTouch();
+        if(stg.id === 'skill') {
+            const cls = this._pendingClass || 'warrior';
+            const skillName = cls === 'mage' ? 'Tempestade Arcana' : (cls === 'rogue' ? 'Dash' : 'Golpe Ssmico');
+            if(touch) {
+                return [
+                    'Toque o boto de habilidade no canto inferior',
+                    'direito (o boto com icone de fogo).',
+                    '',
+                    '> Objetivo: Use sua habilidade (' + skillName + ')!'
+                ];
+            }
+            return [
+                'Pressione a BARRA DE ESPACO para usar a habilidade.',
+                '(' + skillName + ')',
+                '',
+                '> Objetivo: Use sua habilidade (' + skillName + ')!'
+            ];
+        }
+        if(stg.id === 'movement' && !touch) {
+            return [
+                'Pressione W A S D para se mover.',
+                '',
+                '> Objetivo: Mova-se pelo mapa!'
+            ];
+        }
+        if(stg.id === 'dash') {
+            if(touch) {
+                return [
+                    'Toque o botao do Dash no canto inferior direito',
+                    '(o botao verde de seta).',
+                    '',
+                    '> Objetivo: Use o Dash uma vez!'
+                ];
+            }
+            return [
+                'Pressione a tecla SHIFT para dar o Dash.',
+                'Segure a direcao (W A S D) para onde quer ir.',
+                '',
+                '> Objetivo: Use o Dash uma vez!'
+            ];
+        }
+        return stg.lines;
+    },
+
     // ============================================================
     // TAP DETECTION  called from touch/mousedown listeners
     // ============================================================
     // Panel is anchored to the TOP of the screen so it never covers joysticks
     get _panel() {
-        // Smaller panel during action stages so player can see the game
-        if(this.active) {
-            var stg = this.currentStage;
-            if(stg) {
-                var sid = stg.id;
-                var isAction = sid === 'movement' || sid === 'shooting' || sid === 'combat' || sid === 'skill' || sid === 'pickup' || sid === 'pickup2' || sid === 'levelup' || sid === 'equipment';
-                if(isAction) return { pY: 55, pH: 170 };
-            }
+        const sc = this._sc();
+        var stg = this.currentStage;
+        if(this.active && stg) {
+            var sid = stg.id;
+            // Smaller panel during action stages so player can see the game
+            var isAction = sid === 'movement' || sid === 'dash' || sid === 'shooting' || sid === 'combat' || sid === 'skill' || sid === 'pickup' || sid === 'pickup2' || sid === 'levelup' || sid === 'equipment';
+            if(isAction) return { pY: 55, pH: Math.round(170 * sc) };
+            // Info stages (welcome/complete): size the panel to fit the lines,
+            // the title and the "continue" button instead of a fixed height.
+            var lines = this._stageLines(stg);
+            var rowH = Math.round(22 * sc);
+            var bodyH = lines.length * rowH;
+            var need = Math.round(96 * sc + bodyH + 70 * sc);
+            return { pY: 70, pH: Math.max(Math.round(180 * sc), Math.min(Math.round(280 * sc), need)) };
         }
-        return { pY: 70, pH: 230 };
+        return { pY: 70, pH: Math.round(230 * sc) };
     },
 
     onTap(tx, ty) {
@@ -16295,24 +16595,20 @@ const TutorialSystem = {
             tx = (tx - rect.left) * (cnv.width / rect.width);
             ty = (ty - rect.top) * (cnv.height / rect.height);
         }
-        const { pY, pH } = this._panel;
-        const W = width;
-
         // Skip button (top-right of panel)
-        const sW = 88, sH = 30, sX = W - sW - 14, sY = pY + 6;
-        if(tx >= sX && tx <= sX + sW && ty >= sY && ty <= sY + sH) {
+        const s = this._skipBtnRect();
+        if(tx >= s.x && tx <= s.x + s.w && ty >= s.y && ty <= s.y + s.h) {
             this._skipInGame();
             return true;
         }
 
-        // "Continue" button (bottom-center of panel, waitForTap stages only)
+        // "Continue": on waitForTap stages ANY tap advances (fast flow). The
+        // short guard stops the tap that just showed the stage from advancing
+        // it immediately.
         const stg = this.currentStage;
-        if(stg && stg.waitForTap && this.stageTimer > 30) {
-            const bW = 240, bH = 46, bX = (W - bW) / 2, bY = pY + pH - bH - 6;
-            if(tx >= bX && tx <= bX + bW && ty >= bY && ty <= bY + bH) {
-                this._advanceStage();
-                return true;
-            }
+        if(stg && stg.waitForTap && this.stageTimer > 12) {
+            this._advanceStage();
+            return true;
         }
         return false;
     },
@@ -16481,6 +16777,7 @@ const TutorialSystem = {
         this._drawOverlay(ctx, stg, pY, pH);
         if(stg.highlightButton) this._drawButtonArrow(ctx, stg.highlightButton, pY, pH);
         if(stg.highlightSkill) this._drawSkillArrow(ctx, pY, pH);
+        if(stg.highlightDodge) this._drawDodgeArrow(ctx, pY, pH);
         if(stg.id === 'movement') this._drawProgressBar(ctx, Math.min(1, this._movementAccum / 200), '#33ff99', 'Movimento', pY, pH);
         if(stg.id === 'shooting') this._drawProgressBar(ctx, Math.min(1, this._bulletsShot / 5), '#ff9933', 'Disparos: ' + Math.min(5, this._bulletsShot) + ' / 5', pY, pH);
         if(this._trainingDummy && this._trainingDummy.alive) this._drawDummyLabel(ctx);
@@ -16488,6 +16785,7 @@ const TutorialSystem = {
 
     _drawOverlay(ctx, stg, pY, pH) {
         const W = width;
+        const sc = this._sc();
         ctx.save();
 
         // Panel background
@@ -16510,64 +16808,72 @@ const TutorialSystem = {
 
         // Stage progress (top-left)
         ctx.fillStyle = '#334466';
-        ctx.font = '14px ' + COLORS.CANVAS_FONT;
+        ctx.font = Math.round(14 * sc) + 'px ' + COLORS.CANVAS_FONT;
         ctx.textAlign = 'left';
-        ctx.fillText('Etapa ' + (this.stage + 1) + ' de ' + this.activeStages.length, 20, pY + 17);
+        ctx.fillText('Etapa ' + (this.stage + 1) + ' de ' + this.activeStages.length, 20, pY + Math.round(17 * sc));
 
         // Skip button (top-right of panel)
-        const sW = 88, sH = 30, sX = W - sW - 14, sY = pY + 6;
+        const s = this._skipBtnRect();
         ctx.fillStyle = 'rgba(70, 18, 18, 0.85)';
-        _tutRoundRect(ctx, sX, sY, sW, sH, 5); ctx.fill();
+        _tutRoundRect(ctx, s.x, s.y, s.w, s.h, 5); ctx.fill();
         ctx.strokeStyle = '#553333'; ctx.lineWidth = 1;
-        _tutRoundRect(ctx, sX, sY, sW, sH, 5); ctx.stroke();
-        ctx.fillStyle = '#cc7777'; ctx.font = '14px ' + COLORS.CANVAS_FONT; ctx.textAlign = 'center';
-        ctx.fillText(' Pular', sX + sW / 2, sY + 16);
+        _tutRoundRect(ctx, s.x, s.y, s.w, s.h, 5); ctx.stroke();
+        ctx.fillStyle = '#cc7777'; ctx.font = Math.round(14 * sc) + 'px ' + COLORS.CANVAS_FONT; ctx.textAlign = 'center';
+        ctx.fillText(' Pular', s.x + s.w / 2, s.y + Math.round(16 * sc));
 
         // Title
         ctx.fillStyle = '#ffcc00';
-        ctx.font = 'bold 18px ' + COLORS.CANVAS_FONT;
+        ctx.font = 'bold ' + Math.round(18 * sc) + 'px ' + COLORS.CANVAS_FONT;
         ctx.textAlign = 'left';
-        ctx.fillText(stg.title, 20, pY + 33);
+        ctx.fillText(stg.title, 20, pY + Math.round(33 * sc));
 
         // Thin separator
         ctx.strokeStyle = 'rgba(50, 65, 130, 0.6)';
         ctx.lineWidth = 1;
-        ctx.beginPath(); ctx.moveTo(14, pY + 39); ctx.lineTo(W - 14, pY + 39); ctx.stroke();
+        const sepY = pY + Math.round(39 * sc);
+        ctx.beginPath(); ctx.moveTo(14, sepY); ctx.lineTo(W - 14, sepY); ctx.stroke();
 
-        // Body lines
-        let lY = pY + 52;
-        stg.lines.forEach(function(line) {
-            if(line === '') { lY += 5; return; }
-            if(line.charAt(0) === '>') {
-                ctx.fillStyle = '#ffee66';
-                ctx.font = 'bold 16px ' + COLORS.CANVAS_FONT;
+        // Body lines. Lines that start with '>' are the current objective and
+        // pulse slightly to draw the eye.
+        let lY = pY + Math.round(52 * sc);
+        const lineH = Math.round(22 * sc);
+        const phase = this._arrowPhase;
+        const stageLines = this._stageLines(stg);
+        stageLines.forEach(function(line) {
+            if(line === '') { lY += Math.round(5 * sc); return; }
+            const isObj = line.charAt(0) === '>';
+            const fsize = Math.round(16 * sc);
+            if(isObj) {
+                ctx.fillStyle = 'rgba(255, 238, 102, ' + (0.8 + Math.sin(phase * 3) * 0.2).toFixed(2) + ')';
+                ctx.font = 'bold ' + fsize + 'px ' + COLORS.CANVAS_FONT;
             } else {
                 ctx.fillStyle = '#c8cedf';
-                ctx.font = '16px ' + COLORS.CANVAS_FONT;
+                ctx.font = fsize + 'px ' + COLORS.CANVAS_FONT;
             }
             ctx.textAlign = 'left';
-            // Clip long lines
+            // Clip long lines on narrow screens
             if(ctx.measureText(line).width > W - 40) {
-                ctx.font = '14px ' + COLORS.CANVAS_FONT;
+                ctx.font = (isObj ? 'bold ' : '') + Math.round(13 * sc) + 'px ' + COLORS.CANVAS_FONT;
             }
             ctx.fillText(line, 20, lY);
-            lY += 22;
+            lY += lineH;
         });
 
-        // "Continue" button (waitForTap stages)
+        // "Continue" button (waitForTap stages). Tap anywhere advances now;
+        // the button is just a visual affordance.
         if(stg.waitForTap) {
-            const bW = 240, bH = 46, bX = (W - bW) / 2, bY = pY + pH - bH - 6;
-            const ready = this.stageTimer > 30;
+            const c = this._continueBtnRect();
+            const ready = this.stageTimer > 12;
             ctx.globalAlpha = ready ? (0.85 + Math.sin(this._arrowPhase * 2) * 0.15) : 0.4;
             ctx.fillStyle = ready ? '#1a3399' : '#111525';
-            _tutRoundRect(ctx, bX, bY, bW, bH, 10); ctx.fill();
+            _tutRoundRect(ctx, c.x, c.y, c.w, c.h, 10); ctx.fill();
             ctx.strokeStyle = ready ? '#5588ff' : '#222244'; ctx.lineWidth = 2;
-            _tutRoundRect(ctx, bX, bY, bW, bH, 10); ctx.stroke();
+            _tutRoundRect(ctx, c.x, c.y, c.w, c.h, 10); ctx.stroke();
             ctx.globalAlpha = 1;
             ctx.fillStyle = ready ? '#cce0ff' : '#334455';
-            ctx.font = 'bold 16px ' + COLORS.CANVAS_FONT;
+            ctx.font = 'bold ' + Math.round(16 * sc) + 'px ' + COLORS.CANVAS_FONT;
             ctx.textAlign = 'center';
-            ctx.fillText(ready ? '  Toque para continuar' : '...', W / 2, bY + 28);
+            ctx.fillText(ready ? '  Toque em qualquer lugar' : '...', W / 2, c.y + Math.round(28 * sc));
         }
 
         ctx.restore();
@@ -16575,18 +16881,27 @@ const TutorialSystem = {
 
     _drawProgressBar(ctx, progress, color, label, pY, pH) {
         const W = width;
-        const barY = pY + pH + 4; // just below the panel
+        const sc = this._sc();
+        const barY = pY + pH + Math.round(4 * sc); // just below the panel
+        const bH = Math.round(22 * sc);
         ctx.save();
-        ctx.fillStyle = 'rgba(0, 0, 0, 0)';
-        _tutRoundRect(ctx, 10, barY, W - 20, 22, 6); ctx.fill();
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+        _tutRoundRect(ctx, 10, barY, W - 20, bH, 6); ctx.fill();
         if(progress > 0) {
             ctx.fillStyle = color;
-            _tutRoundRect(ctx, 10, barY, (W - 20) * progress, 22, 6); ctx.fill();
+            _tutRoundRect(ctx, 10, barY, (W - 20) * progress, bH, 6); ctx.fill();
         }
         ctx.strokeStyle = color; ctx.lineWidth = 1;
-        _tutRoundRect(ctx, 10, barY, W - 20, 22, 6); ctx.stroke();
-        ctx.fillStyle = '#ffffff'; ctx.font = 'bold 13px ' + COLORS.CANVAS_FONT; ctx.textAlign = 'center';
-        ctx.fillText(label, W / 2, barY + 17);
+        _tutRoundRect(ctx, 10, barY, W - 20, bH, 6); ctx.stroke();
+        // Glow pulse when the objective is complete
+        if(progress >= 1) {
+            ctx.shadowColor = color; ctx.shadowBlur = 8;
+            ctx.strokeStyle = color; ctx.lineWidth = 2;
+            _tutRoundRect(ctx, 10, barY, W - 20, bH, 6); ctx.stroke();
+            ctx.shadowBlur = 0;
+        }
+        ctx.fillStyle = '#ffffff'; ctx.font = 'bold ' + Math.round(13 * sc) + 'px ' + COLORS.CANVAS_FONT; ctx.textAlign = 'center';
+        ctx.fillText(label, W / 2, barY + Math.round(17 * sc));
         ctx.restore();
     },
 
@@ -16626,33 +16941,112 @@ const TutorialSystem = {
     },
 
     _drawSkillArrow(ctx, pY, pH) {
-        const W = width, H = height;
-        const sX = W / 2, sY = H - 45;
-        const pulse = Math.sin(this._arrowPhase * 2) * 5;
+        const sc = this._sc();
         ctx.save();
+        if(this._isTouch()) {
+            // Touch: point at the REAL skill button (bottom-right of the screen)
+            const btn = document.getElementById('special-btn');
+            const cnv = document.getElementById('gameCanvas');
+            if(!btn || !cnv) { ctx.restore(); return; }
+            const r = btn.getBoundingClientRect();
+            const rect = cnv.getBoundingClientRect();
+            if(!rect.width || !rect.height) { ctx.restore(); return; }
+            const cx = (r.left + r.width / 2 - rect.left) * (cnv.width / rect.width);
+            const cy = (r.top + r.height / 2 - rect.top) * (cnv.height / rect.height);
+            const pulse = Math.sin(this._arrowPhase * 2) * 5;
 
-        // Highlight skill button area
-        ctx.globalAlpha = 0.65 + Math.sin(this._arrowPhase * 2) * 0.3;
-        ctx.strokeStyle = '#ffcc00'; ctx.lineWidth = 3;
-        ctx.strokeRect(sX - 34, sY - 17, 68, 36);
+            // Pulsing ring around the real button
+            ctx.globalAlpha = 0.65 + Math.sin(this._arrowPhase * 2) * 0.3;
+            ctx.strokeStyle = '#ffcc00'; ctx.lineWidth = 3;
+            ctx.beginPath(); ctx.arc(cx, cy, 28 + pulse, 0, Math.PI * 2); ctx.stroke();
 
-        // Dashed arrow from panel bottom down to skill button
-        const aTop = pY + pH + 4;
-        const aBot = sY - 22 + pulse;
-        if(aBot > aTop + 20) {
-            ctx.strokeStyle = '#ffcc00'; ctx.lineWidth = 2; ctx.globalAlpha = 0.8;
-            ctx.setLineDash([7, 5]);
-            ctx.beginPath(); ctx.moveTo(sX, aTop); ctx.lineTo(sX, aBot); ctx.stroke();
-            ctx.setLineDash([]);
-            // Arrowhead pointing down toward skill button
+            // Dashed arrow from panel bottom down to the button
+            const aTop = pY + pH + 4;
+            const aBot = cy - 32 - pulse;
+            if(aBot > aTop + 20) {
+                ctx.strokeStyle = '#ffcc00'; ctx.lineWidth = 2; ctx.globalAlpha = 0.8;
+                ctx.setLineDash([7, 5]);
+                ctx.beginPath(); ctx.moveTo(cx, aTop); ctx.lineTo(cx, aBot); ctx.stroke();
+                ctx.setLineDash([]);
+                ctx.fillStyle = '#ffcc00';
+                ctx.beginPath();
+                ctx.moveTo(cx - 7, aBot - 10);
+                ctx.lineTo(cx, aBot + 2);
+                ctx.lineTo(cx + 7, aBot - 10);
+                ctx.closePath(); ctx.fill();
+            }
+            ctx.globalAlpha = 1;
+        } else {
+            // Desktop: there is no touch button - highlight SPACE below the panel
+            const W = width;
+            const y = pY + pH + Math.round(34 * sc);
+            const pw = Math.round(300 * sc), ph = Math.round(40 * sc);
+            ctx.globalAlpha = 0.9;
+            ctx.fillStyle = '#0a1230';
+            _tutRoundRect(ctx, W / 2 - pw / 2, y - ph, pw, ph, ph / 2); ctx.fill();
+            ctx.strokeStyle = '#ffcc00'; ctx.lineWidth = 2;
+            _tutRoundRect(ctx, W / 2 - pw / 2, y - ph, pw, ph, ph / 2); ctx.stroke();
+            ctx.globalAlpha = 1;
             ctx.fillStyle = '#ffcc00';
-            ctx.beginPath();
-            ctx.moveTo(sX - 7, aBot - 10);
-            ctx.lineTo(sX, aBot + 2);
-            ctx.lineTo(sX + 7, aBot - 10);
-            ctx.closePath(); ctx.fill();
+            ctx.font = 'bold ' + Math.round(18 * sc) + 'px ' + COLORS.CANVAS_FONT;
+            ctx.textAlign = 'center';
+            ctx.fillText('  PRESIONE ESPACO', W / 2, y - Math.round(14 * sc));
         }
-        ctx.globalAlpha = 1;
+        ctx.restore();
+    },
+
+    _drawDodgeArrow(ctx, pY, pH) {
+        const sc = this._sc();
+        ctx.save();
+        if(this._isTouch()) {
+            // Touch: point at the REAL dash button (bottom-right of the screen)
+            const btn = document.getElementById('dodge-btn');
+            const cnv = document.getElementById('gameCanvas');
+            if(!btn || !cnv) { ctx.restore(); return; }
+            const r = btn.getBoundingClientRect();
+            const rect = cnv.getBoundingClientRect();
+            if(!rect.width || !rect.height) { ctx.restore(); return; }
+            const cx = (r.left + r.width / 2 - rect.left) * (cnv.width / rect.width);
+            const cy = (r.top + r.height / 2 - rect.top) * (cnv.height / rect.height);
+            const pulse = Math.sin(this._arrowPhase * 2) * 5;
+
+            // Pulsing ring around the real dash button
+            ctx.globalAlpha = 0.65 + Math.sin(this._arrowPhase * 2) * 0.3;
+            ctx.strokeStyle = '#5cff82'; ctx.lineWidth = 3;
+            ctx.beginPath(); ctx.arc(cx, cy, 26 + pulse, 0, Math.PI * 2); ctx.stroke();
+
+            // Dashed arrow from panel bottom down to the button
+            const aTop = pY + pH + 4;
+            const aBot = cy - 30 - pulse;
+            if(aBot > aTop + 20) {
+                ctx.strokeStyle = '#5cff82'; ctx.lineWidth = 2; ctx.globalAlpha = 0.8;
+                ctx.setLineDash([7, 5]);
+                ctx.beginPath(); ctx.moveTo(cx, aTop); ctx.lineTo(cx, aBot); ctx.stroke();
+                ctx.setLineDash([]);
+                ctx.fillStyle = '#5cff82';
+                ctx.beginPath();
+                ctx.moveTo(cx - 7, aBot - 10);
+                ctx.lineTo(cx, aBot + 2);
+                ctx.lineTo(cx + 7, aBot - 10);
+                ctx.closePath(); ctx.fill();
+            }
+            ctx.globalAlpha = 1;
+        } else {
+            // Desktop: there is no touch button - highlight SHIFT below the panel
+            const W = width;
+            const y = pY + pH + Math.round(34 * sc);
+            const pw = Math.round(300 * sc), ph = Math.round(40 * sc);
+            ctx.globalAlpha = 0.9;
+            ctx.fillStyle = '#062f1a';
+            _tutRoundRect(ctx, W / 2 - pw / 2, y - ph, pw, ph, ph / 2); ctx.fill();
+            ctx.strokeStyle = '#5cff82'; ctx.lineWidth = 2;
+            _tutRoundRect(ctx, W / 2 - pw / 2, y - ph, pw, ph, ph / 2); ctx.stroke();
+            ctx.globalAlpha = 1;
+            ctx.fillStyle = '#5cff82';
+            ctx.font = 'bold ' + Math.round(18 * sc) + 'px ' + COLORS.CANVAS_FONT;
+            ctx.textAlign = 'center';
+            ctx.fillText('  PRESIONE SHIFT', W / 2, y - Math.round(14 * sc));
+        }
         ctx.restore();
     },
 
@@ -16660,17 +17054,42 @@ const TutorialSystem = {
         const dummy = this._trainingDummy;
         if(!dummy || !dummy.alive || typeof camX === 'undefined') return;
         const sx = dummy.x - camX;
-        const sy = dummy.y - camY - 32;
+        const sy = dummy.y - camY - 30;
+        const pulse = Math.sin(this._arrowPhase * 2) * 3;
         ctx.save();
-        // Label
+
+        // Pulsing gold ring around the dummy
+        ctx.globalAlpha = 0.5 + Math.sin(this._arrowPhase * 2) * 0.3;
+        ctx.strokeStyle = '#ffcc00';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(sx, sy + 12, 26 + pulse, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+
+        // Bouncing arrow pointing down at the dummy
+        const ay = sy - 46 - pulse;
+        ctx.fillStyle = '#ffcc00';
+        ctx.beginPath();
+        ctx.moveTo(sx, ay + 12);
+        ctx.lineTo(sx - 9, ay);
+        ctx.lineTo(sx + 9, ay);
+        ctx.closePath();
+        ctx.fill();
+
+        // Label with soft glow
+        ctx.shadowColor = '#00ddaa';
+        ctx.shadowBlur = 8;
         ctx.fillStyle = '#00ddaa';
-        ctx.font = 'bold 13px ' + COLORS.CANVAS_FONT;
+        ctx.font = 'bold 14px ' + COLORS.CANVAS_FONT;
         ctx.textAlign = 'center';
-        ctx.fillText(' BONECO DE TREINO', sx, sy);
+        ctx.fillText(' ALVO: BONECO DE TREINO', sx, sy);
+        ctx.shadowBlur = 0;
+
         // HP bar
         const bW = 60, bH = 5, bX = sx - bW / 2;
-        ctx.fillStyle = 'rgba(0,0,0,0)'; ctx.fillRect(bX, sy + 4, bW, bH);
-        ctx.fillStyle = '#00ddaa'; ctx.fillRect(bX, sy + 4, bW * (dummy.hp / dummy.maxHp), bH);
+        ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(bX - 1, sy + 3, bW + 2, bH + 2);
+        ctx.fillStyle = '#00ddaa'; ctx.fillRect(bX, sy + 4, bW * Math.max(0, dummy.hp / dummy.maxHp), bH);
         ctx.restore();
     }
 };
