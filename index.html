@@ -565,6 +565,26 @@ body.gfx-low #modal-overlay.hidden {
 /* Transitions */
 .transition-all { transition: all 0.2s ease-in-out; }
 
+/* Fase B: proportional UI scaling on body (canvas text handled via getFontScale) */
+body.font-small #hud,   body.font-small #top-bar,
+body.font-small #actions-right,
+body.font-small #bottom-controls, body.font-small #minimap-container,
+body.font-small #combo-display, body.font-small #status-chips,
+body.font-small #boss-hp-container, body.font-small #xp-strip { font-size: 0.88em; }
+body.font-large #hud,   body.font-large #top-bar,
+body.font-large #actions-right,
+body.font-large #bottom-controls, body.font-large #minimap-container,
+body.font-large #combo-display, body.font-large #status-chips,
+body.font-large #boss-hp-container, body.font-large #xp-strip { font-size: 1.12em; }
+
+/* Fase B: accessibility - honor prefers-reduced-motion via toggle class */
+body.reduce-motion, body.reduce-motion * { animation-duration: 0.001s !important; animation-iteration-count: 1 !important; transition-duration: 0.001s !important; }
+
+/* Fase B: colorblind simulation filters (whole page, covers canvas + HTML) */
+body.cb-deutan  { filter: url("#cb-deutan"); }
+body.cb-protan  { filter: url("#cb-protan"); }
+body.cb-tritan  { filter: url("#cb-tritan"); }
+
 /* Panel animations */
 .fade-in-panel { animation: fadeInPanel 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 @keyframes fadeInPanel {
@@ -880,6 +900,11 @@ body.gfx-low #modal-overlay.hidden {
 
 </head>
 <body>
+    <svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
+        <filter id="cb-deutan"><feColorMatrix type="matrix" values="0.625,0.375,0,0,0 0.7,0.3,0,0,0 0,0.3,0.7,0,0 0,0,0,1,0"/></filter>
+        <filter id="cb-protan"><feColorMatrix type="matrix" values="0.567,0.433,0,0,0 0.558,0.442,0,0,0 0,0.242,0.758,0,0 0,0,0,1,0"/></filter>
+        <filter id="cb-tritan"><feColorMatrix type="matrix" values="0.95,0.05,0,0,0 0,0.433,0.567,0,0 0,0.475,0.525,0,0 0,0,0,1,0"/></filter>
+    </svg>
     <!-- SPLASH / LOADING SCREEN -->
     <div id="splash-screen" style="position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(135deg,#0a0a12 0%,#1a1025 50%,#0d0d1a 100%);transition:opacity 0.6s ease;overflow:hidden;">
         <canvas id="splash-particles" style="position:absolute;inset:0;width:100%;height:100%;z-index:0;"></canvas>
@@ -1098,11 +1123,11 @@ body.gfx-low #modal-overlay.hidden {
 
         <!-- RIGHT THUMB ZONE: Action buttons (dodge + special) -->
         <div id="actions-right" class="hidden">
-            <button id="dodge-btn" class="action-btn dodge" ontouchstart="if(window.player && player.dodge) player.dodge();" style="width:min(56px,15vw);height:min(56px,15vw);min-width:48px;min-height:48px;">
+            <button id="dodge-btn" class="action-btn dodge" style="width:min(56px,15vw);height:min(56px,15vw);min-width:48px;min-height:48px;">
                 <svg class="icon-inline" width="22" height="22"><use href="#ic-dodge"/></svg>
                 <span id="dodge-cd" class="cd-badge hidden" style="font-size:13px;">1</span>
             </button>
-            <button id="special-btn" class="action-btn special" ontouchstart="if(window.player && player.useSkill) player.useSkill();" style="width:min(56px,15vw);height:min(56px,15vw);min-width:48px;min-height:48px;">
+            <button id="special-btn" class="action-btn special" style="width:min(56px,15vw);height:min(56px,15vw);min-width:48px;min-height:48px;">
                 <svg class="icon-inline" width="22" height="22"><use href="#ic-fire"/></svg>
                 <span id="special-cd" class="cd-badge hidden" style="font-size:13px;">3</span>
             </button>
@@ -1196,6 +1221,7 @@ body.gfx-low #modal-overlay.hidden {
                     <div style="display:flex;gap:8px;width:100%;margin-top:2px;">
                         <button id="pause-export" onclick="if(window.SaveSystem) window._exportSave()" style="flex:1;padding:10px 0;border-radius:10px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;border:1px solid rgba(224,182,255,0.2);color:rgba(224,182,255,0.7);background:rgba(30,22,45,0.6);cursor:pointer;touch-action:manipulation;">Exportar Save</button>
                         <button id="pause-import" onclick="if(window.SaveSystem) window._importSavePrompt()" style="flex:1;padding:10px 0;border-radius:10px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;border:1px solid rgba(224,182,255,0.2);color:rgba(224,182,255,0.7);background:rgba(30,22,45,0.6);cursor:pointer;touch-action:manipulation;">Importar Save</button>
+                        <button id="pause-settings" onclick="if(window.SettingsUI) { PauseSystem.resume(); SettingsUI.show(); }" style="flex:1;padding:10px 0;border-radius:10px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;border:1px solid rgba(224,182,255,0.2);color:rgba(224,182,255,0.7);background:rgba(30,22,45,0.6);cursor:pointer;touch-action:manipulation;">Ajustes</button>
                     </div>
                 </div>
             </div>
@@ -1580,6 +1606,7 @@ var entities = [], bullets = [], particles = [], pickups = [], hazards = [], che
 var camX = 0, camY = 0, shake = 0, gameTime = 0, bossActive = false, dungeonLevel = 1;
 var camZoomTimer = 0, camZoomMax = 1, camZoomStrength = 0.06;
 function triggerCamZoom(strength, frames) {
+    if (window.GameSettings && GameSettings.reducedMotion) return; // Fase B: prefers-reduced-motion
     camZoomStrength = strength;
     camZoomMax = frames;
     camZoomTimer = frames;
@@ -2445,6 +2472,8 @@ var CONFIG = {
     FREEZE_CHANCE: 0.15,
     FREEZE_DURATION: 120,             // frames (~2s)
     BERSERK_DAMAGE_MULT: 2.0,
+    EXPLOSIVE_RADIUS: 70,
+    EXPLOSIVE_DAMAGE_MULT: 1.4,
     FROZEN_DAMAGE_MULT: 2.0,
     SHIELD_DAMAGE_ABSORB: 1.0,
     ENRAGE_HP_THRESHOLD: 0.5,
@@ -2706,7 +2735,7 @@ var CONFIG = {
     ROGUE_SHADOW_STEP_DISTANCE: 180, // more mobility
     ROGUE_SHADOW_STEP_SHIELD: 50, // less shielding (more fragile)
     ROGUE_SHADOW_STEP_DURATION: 180,
-    ROGUE_ASSASSINATE_DAMAGE: 9999,
+    ROGUE_ASSASSINATE_DAMAGE_PCT: 1.5, // execute: deals % of target max HP (lethal below threshold, bounded)
     ROGUE_ASSASSINATE_THRESHOLD: 0.2,
     MAGE_ARCANE_STORM_PROJECTILES: 20, // more projectiles for area control
     MAGE_ARCANE_STORM_DAMAGE: 35, // higher damage for area
@@ -4284,29 +4313,29 @@ function _updateEnemySpawning() {
             entities.push(boss); SND.playBoss(); SND.startBossMusic(); shake = 20; ScreenEffects.onBossSpawn(); triggerCamZoom(0.10, 40);
             _bossBanner = { name: boss.name, timer: 90 };
         } else {
-            const roll = Math.random();
-            if (DifficultySystem.canSpawnType('mimic') && roll < CONFIG.MIMIC_SPAWN_CHANCE) {
-                entities.push(new MimicEnemy(eSpawn.x, eSpawn.y));
-            } else if (DifficultySystem.canSpawnType('trap') && roll < CONFIG.MIMIC_SPAWN_CHANCE + CONFIG.TRAP_SPAWN_CHANCE) {
-                entities.push(new TrapEnemy(eSpawn.x, eSpawn.y));
-            } else if (DifficultySystem.canSpawnType('elite') && Math.random() < DifficultySystem.getEliteChance()) {
-                const eliteType = Math.random() < CONFIG.ENEMY_RANGED_TYPE_CHANCE ? 'ranged' : 'melee';
-                entities.push(new EliteEnemy(eSpawn.x, eSpawn.y, eliteType));
-            } else if (DifficultySystem.canSpawnType('swarm') && Math.random() < CONFIG.SWARM_CHANCE) {
-                for (let s = 0; s < CONFIG.SWARM_SPAWN_COUNT; s++) {
-                    const sa = (s / CONFIG.SWARM_SPAWN_COUNT) * Math.PI * 2;
-                    const sd = 30 + Math.random() * 30;
-                    entities.push(new SwarmEnemy(eSpawn.x + Math.cos(sa)*sd, eSpawn.y + Math.sin(sa)*sd));
-                }
-            } else if(DifficultySystem.canSpawnType('shielder') && Math.random() < CONFIG.SHIELDER_SPAWN_CHANCE && dungeonLevel >= CONFIG.SHIELDER_SPAWN_DUNGEON) {
-                entities.push(new ShieldEnemy(eSpawn.x, eSpawn.y));
-            } else if(Math.random() < CONFIG.HEALER_SPAWN_CHANCE && dungeonLevel >= 2) {
-                entities.push(new HealerEnemy(eSpawn.x, eSpawn.y));
-            } else if(Math.random() < 0.05 && dungeonLevel >= 3) {
-                entities.push(new SummonerEnemy(eSpawn.x, eSpawn.y));
-            } else {
-                entities.push(new Enemy(eSpawn.x, eSpawn.y, false));
-            }
+            // Central weighted spawn table: single roll makes every type appear reliably
+            const pool = [];
+            const self = this;
+            const push = (type, weight) => { if (weight > 0) pool.push([type, weight]); };
+            if (DifficultySystem.canSpawnType('mimic')) push('mimic', CONFIG.MIMIC_SPAWN_CHANCE);
+            if (DifficultySystem.canSpawnType('trap')) push('trap', CONFIG.TRAP_SPAWN_CHANCE);
+            if (DifficultySystem.canSpawnType('elite')) push('elite', DifficultySystem.getEliteChance());
+            if (DifficultySystem.canSpawnType('swarm')) push('swarm', CONFIG.SWARM_CHANCE);
+            if (DifficultySystem.canSpawnType('shielder') && dungeonLevel >= CONFIG.SHIELDER_SPAWN_DUNGEON) push('shielder', CONFIG.SHIELDER_SPAWN_CHANCE);
+            if (dungeonLevel >= 2) push('healer', CONFIG.HEALER_SPAWN_CHANCE);
+            if (dungeonLevel >= 3) push('summoner', 0.05);
+            push('normal', 1.0);
+            let total = 0; for(const o of pool) total += o[1];
+            let r = Math.random() * total, chosen = 'normal';
+            for(const o of pool) { r -= o[1]; if (r <= 0) { chosen = o[0]; break; } }
+            if (chosen === 'mimic') entities.push(new MimicEnemy(eSpawn.x, eSpawn.y));
+            else if (chosen === 'trap') entities.push(new TrapEnemy(eSpawn.x, eSpawn.y));
+            else if (chosen === 'elite') { const eliteType = Math.random() < CONFIG.ENEMY_RANGED_TYPE_CHANCE ? 'ranged' : 'melee'; entities.push(new EliteEnemy(eSpawn.x, eSpawn.y, eliteType)); }
+            else if (chosen === 'swarm') { for (let s = 0; s < CONFIG.SWARM_SPAWN_COUNT; s++) { const sa = (s / CONFIG.SWARM_SPAWN_COUNT) * Math.PI * 2; const sd = 30 + Math.random() * 30; entities.push(new SwarmEnemy(eSpawn.x + Math.cos(sa)*sd, eSpawn.y + Math.sin(sa)*sd)); } }
+            else if (chosen === 'shielder') entities.push(new ShieldEnemy(eSpawn.x, eSpawn.y));
+            else if (chosen === 'healer') entities.push(new HealerEnemy(eSpawn.x, eSpawn.y));
+            else if (chosen === 'summoner') entities.push(new SummonerEnemy(eSpawn.x, eSpawn.y));
+            else entities.push(new Enemy(eSpawn.x, eSpawn.y, false));
         }
     }
     let bossAlive = false;
@@ -5498,19 +5527,6 @@ function _initEngine() {
             }
         }
 
-        // Check skill button tap (bottom center)
-        if(gameState === 'PLAYING' && player && !merchantActive && !skillTreeOpen && !statsOpen && !achievementsOpen && !NarrativeSystem.uiOpen) {
-            const _skillBtnRect2 = canvas.getBoundingClientRect();
-            for(let t of e.changedTouches) {
-                const _skillBtnCx2 = (t.clientX - _skillBtnRect2.left) * (canvas.width / _skillBtnRect2.width);
-                const _skillBtnCy2 = (t.clientY - _skillBtnRect2.top) * (canvas.height / _skillBtnRect2.height);
-                const skillX = width/2 - 42, skillY = height - 75, skillW = 84, skillH = 50;
-                if(_skillBtnCx2 >= skillX && _skillBtnCx2 <= skillX+skillW && _skillBtnCy2 >= skillY && _skillBtnCy2 <= skillY+skillH) {
-                    player.useSkill();
-                    return;
-                }
-            }
-        }
         // HTML panels handle their own touch events
     }, {passive: false});
 
@@ -8124,6 +8140,7 @@ const ScreenEffects = {
     _bloodSplatterTimer: 0,
     
     triggerShake(intensity) {
+        if (window.GameSettings && GameSettings.reducedMotion) return; // Fase B: prefers-reduced-motion
         this._shake = Math.max(this._shake, intensity);
     },
     
@@ -8133,6 +8150,7 @@ const ScreenEffects = {
     },
     
     triggerChromatic(intensity) {
+        if (window.GameSettings && GameSettings.reducedMotion) return; // Fase B: prefers-reduced-motion
         this._chromaIntensity = Math.max(this._chromaIntensity, intensity);
     },
     
@@ -11325,7 +11343,7 @@ class Entity {
     takeDamage(a, m, source=null) {
         let finalDmg = a; let dmgType = 'normal';
         if(source && source.mutations) { if(source.mutations.vampiric) { const heal = finalDmg * CONFIG.VAMPIRIC_LIFESTEAL; source.hp = Math.min(source.maxHp, source.hp + heal); DamageNumbers.add(source.x, source.y, heal, 'heal'); } if(source.mutations.lightning && Math.random() < CONFIG.LIGHTNING_CHAIN_CHANCE) { dmgType = 'lightning'; finalDmg *= CONFIG.LIGHTNING_DAMAGE_MULT; const chainRangeSq = CONFIG.LIGHTNING_CHAIN_RANGE * CONFIG.LIGHTNING_CHAIN_RANGE; for(let i = 0; i < entities.length; i++) { const e = entities[i]; if(e !== this && e.alive) { const dx = e.x-this.x, dy = e.y-this.y; if(dx*dx + dy*dy < chainRangeSq) { e.takeDamage(finalDmg * 0.5, m, source); spawnParticles(e.x, e.y, '#ffff33', 3, 2); } } } } if(source.mutations.freeze && Math.random() < CONFIG.FREEZE_CHANCE) { this.frozen = CONFIG.FREEZE_DURATION; spawnParticles(this.x, this.y, '#33ccff', 10, 4); } }
-        if(source && source.skills && source.skills.execute && this.hp < this.maxHp * CONFIG.ROGUE_ASSASSINATE_THRESHOLD) { finalDmg = CONFIG.ROGUE_ASSASSINATE_DAMAGE; dmgType = 'crit'; if(typeof DamageNumbers !== 'undefined') DamageNumbers.add(this.x, this.y, 'EXEC!', 'execute'); }
+        if(source && source.skills && source.skills.execute && this.hp < this.maxHp * CONFIG.ROGUE_ASSASSINATE_THRESHOLD) { finalDmg = Math.max(10, this.maxHp * CONFIG.ROGUE_ASSASSINATE_DAMAGE_PCT); dmgType = 'crit'; if(typeof DamageNumbers !== 'undefined') DamageNumbers.add(this.x, this.y, 'EXEC!', 'execute'); }
         if(source && source.skills && source.skills.deathmark && this._deathMarkT > 0) { finalDmg = Math.floor(finalDmg * 1.5); dmgType = 'crit'; }
         if(source && source.skills && source.skills.stun && Math.random() < 0.10) { this.frozen = Math.max(this.frozen || 0, Math.floor(40 * (this.elite ? 0.5 : this.isB ? 0.25 : 1))); spawnParticles(this.x, this.y, '#ffcc00', 6, 3); if(typeof DamageNumbers !== 'undefined') DamageNumbers.add(this.x, this.y, 'STUN!', 'stun'); if(typeof Statistics !== 'undefined' && source === player) Statistics.data.stunsApplied = (Statistics.data.stunsApplied || 0) + 1; }
         if(source && source.skills && source.skills.bleed && Math.random() < 0.12) { this.poisonStacks = (this.poisonStacks || 0) + 2; spawnParticles(this.x, this.y, '#ff2222', 6, 3); if(typeof DamageNumbers !== 'undefined') DamageNumbers.add(this.x, this.y, 'SANGRIA!', 'bleed'); if(typeof Statistics !== 'undefined' && source === player) Statistics.data.bleedsApplied = (Statistics.data.bleedsApplied || 0) + 1; }
@@ -11339,7 +11357,7 @@ class Entity {
                 SND.play(400, 'square', 0.1, 0.2);
             }
         }
-        if(Math.random() < (source && source.critChance ? CONFIG.CRIT_CHANCE_BASE + source.critChance : CONFIG.CRIT_CHANCE_BASE) + (source && source.critBoost > 0 ? 0.10 : 0)) { 
+        if(Math.random() < Math.min(1.0, (source && source.critChance ? CONFIG.CRIT_CHANCE_BASE + source.critChance : CONFIG.CRIT_CHANCE_BASE) + (source && source.critBoost > 0 ? 0.10 : 0))) { 
             finalDmg *= CONFIG.CRIT_MULTIPLIER; dmgType = 'crit'; 
             if(source) { SND.playCrit(); ScreenEffects.onCrit(); }
             if(typeof hitstopFrames !== 'undefined' && this !== player && !(window.GameSettings && GameSettings.hitstopEnabled === false)) hitstopFrames = 3; // crit: extra frame
@@ -11441,6 +11459,25 @@ class Entity {
                     }
                 }
                 if(typeof spawnParticles !== 'undefined') spawnParticles(this.x, this.y, '#33ff88', 25, cloudRadius/2);
+            }
+            
+            // Rogue Poison Explosion / EXPLOSIVE MUTATION: Explode on kill
+            if(source && source.mutations && source.mutations.explosive) {
+                const explR = CONFIG.EXPLOSIVE_RADIUS, explSq = explR * explR, explDmg = Math.max(5, this.maxHp * CONFIG.EXPLOSIVE_DAMAGE_MULT);
+                if(typeof entities !== 'undefined') {
+                    for(let i = 0; i < entities.length; i++) {
+                        const e = entities[i];
+                        if (e !== this && e.alive && (!e.isP || e === player)) {
+                            const dx = e.x - this.x, dy = e.y - this.y;
+                            if(dx * dx + dy * dy < explSq) {
+                                e.takeDamage(explDmg, m, source);
+                                spawnParticles(e.x, e.y, '#ff6600', 6, 4);
+                            }
+                        }
+                    }
+                }
+                if(typeof spawnParticles !== 'undefined') spawnParticles(this.x, this.y, '#ff6600', 20, 18);
+                if(typeof ScreenEffects !== 'undefined') ScreenEffects.onEliteDeath && ScreenEffects.onEliteDeath();
             }
             
             // Haptic feedback on kill
@@ -13493,7 +13530,7 @@ class Bullet {
         this.distTraveled += this.spd;
         if (this.trail) this.trail.addPoint(this.x, this.y);
         if(m.isWall(this.x, this.y)) { this.alive = false; spawnParticles(this.x, this.y, this.color, 5, 2); }
-        if(this.distTraveled > this.range && !this.weapon) { this.alive = false; } // range limit
+        if(this.distTraveled > this.range) { this.alive = false; } // range limit
         // PERF: Use spatial hash for both player and enemy bullets
         const targets = window.spatialHash ? spatialHash.query(this.x, this.y, 25) : ents;
 
@@ -13807,14 +13844,13 @@ class Player extends Entity {
         if(this.xp >= this.lvl * CONFIG.XP_LEVEL_MULTIPLIER) {
             this.xp -= this.lvl * CONFIG.XP_LEVEL_MULTIPLIER; 
             this.lvl++; 
-            this.skillPoints = (this.skillPoints || 0) + 1;
             this.maxHp += CONFIG.XP_LEVEL_HP_GAIN; 
             this.hp = this.maxHp; 
             this.lr += CONFIG.XP_LEVEL_LR_GAIN;
             SND.playLevelUp(); 
             if (typeof ScreenEffects !== "undefined" && ScreenEffects.onLevelUp) ScreenEffects.onLevelUp();
             this.levelUpAnim = 30;
-            addLog(" Nível UP! " + this.lvl + " (+1 Ponto)"); 
+            addLog(" Nível UP! " + this.lvl); 
             spawnParticles(this.x, this.y, '#ffdd00', CONFIG.PARTICLE_SPAWN_LEVELUP, 5);
             DamageNumbers.add(this.x, this.y, 'LEVEL UP!', 'heal');
             if (window.uiLv) {
@@ -13962,7 +13998,7 @@ class Player extends Entity {
                     const e = entities[i];
                     if(e !== this && e.alive) {
                         const edx = e.x - this.x, edy = e.y - this.y;
-                        if(edx*edx + edy*edy < assassRangeSq && e.hp / e.maxHp < threshold) e.takeDamage(CONFIG.ROGUE_ASSASSINATE_DAMAGE, map, this);
+                        if(edx*edx + edy*edy < assassRangeSq && e.hp / e.maxHp < threshold) e.takeDamage(Math.max(10, e.maxHp * CONFIG.ROGUE_ASSASSINATE_DAMAGE_PCT), map, this);
                     }
                 }
             }
@@ -14058,8 +14094,6 @@ class Player extends Entity {
         let dy = Input.left.active ? Input.left.dy : (Input.keys['s']?1:Input.keys['w']?-1:0);
         let currentSpeed = this.speed;
         if(this.speedBoost > 0) currentSpeed *= 1.5;
-        if(this.skills.speed2) currentSpeed *= 1.2;
-        else if(this.skills.speed1) currentSpeed *= 1.1;
         if(typeof WeaponSystem !== 'undefined' && WeaponSystem.getSpeedMult) currentSpeed *= WeaponSystem.getSpeedMult(this);
         if(this._hazardSlowTimer > 0) { currentSpeed *= 0.6; this._hazardSlowTimer--; }
 
@@ -14111,6 +14145,29 @@ class Player extends Entity {
             const invMag = 1 / Math.sqrt(joystickMagSq);
             this.angle = Math.atan2(sy * invMag, sx * invMag);
             this.spriteAngle = this.angle;
+            // Fase B: aim assist - snap toward nearest enemy inside a cone around the manual aim
+            if (window.GameSettings && window.GameSettings.aimAssist) {
+                const aimCone = 0.6, maxRangeSq = 480 * 480;
+                let best = null, bestScore = Infinity, ax = 0, ay = 0;
+                for (let _aa = 0; _aa < entities.length; _aa++) {
+                    const _e = entities[_aa];
+                    if (!_e.alive || _e === this || _e.isP || _e.isBarrier) continue;
+                    const _ex = _e.x - this.x, _ey = _e.y - this.y;
+                    const _dSq = _ex * _ex + _ey * _ey;
+                    if (_dSq > maxRangeSq || _dSq < 1) continue;
+                    let _dAng = Math.atan2(_ey, _ex) - this.angle;
+                    while (_dAng > Math.PI) _dAng -= Math.PI * 2;
+                    while (_dAng < -Math.PI) _dAng += Math.PI * 2;
+                    if (Math.abs(_dAng) > aimCone) continue;
+                    const _score = _dSq + Math.abs(_dAng) * 2500;
+                    if (_score < bestScore) { bestScore = _score; best = _e; ax = _ex; ay = _ey; }
+                }
+                if (best) {
+                    this.angle = Math.atan2(ay, ax);
+                    this.spriteAngle = this.angle;
+                    sx = Math.cos(this.angle); sy = Math.sin(this.angle);
+                }
+            }
 
             if(this.type === 'warrior') {
                 this.walkTimer = 48; // Attack frame
@@ -14194,8 +14251,14 @@ class Player extends Entity {
                         SND.play(660, 'sine', 0.3, 0.15);
                     }
                 }
-                bullets.push(window.PoolManager ? PoolManager.acquire('Bullet', this.x, this.y, sx*bulletSpeed, sy*bulletSpeed, this.color, dmg, true, this.currentWeapon, range) : new Bullet(this.x, this.y, sx*bulletSpeed, sy*bulletSpeed, this.color, dmg, true, this.currentWeapon, range));
-                if(this.type === 'rogue') bullets[bullets.length-1].applyPoison = true;
+                const mainBullet = window.PoolManager ? PoolManager.acquire('Bullet', this.x, this.y, sx*bulletSpeed, sy*bulletSpeed, this.color, dmg, true, this.currentWeapon, range) : new Bullet(this.x, this.y, sx*bulletSpeed, sy*bulletSpeed, this.color, dmg, true, this.currentWeapon, range);
+                bullets.push(mainBullet);
+                if(this.spellEcho) {
+                    const spreadAngle = Math.atan2(sy, sx) + 0.25;
+                    const echo = window.PoolManager ? PoolManager.acquire('Bullet', this.x, this.y, Math.cos(spreadAngle)*bulletSpeed, Math.sin(spreadAngle)*bulletSpeed, this.color, Math.max(1, Math.floor(dmg * 0.6)), true, this.currentWeapon, range) : new Bullet(this.x, this.y, Math.cos(spreadAngle)*bulletSpeed, Math.sin(spreadAngle)*bulletSpeed, this.color, Math.max(1, Math.floor(dmg * 0.6)), true, this.currentWeapon, range);
+                    bullets.push(echo);
+                }
+                if(this.type === 'rogue') { mainBullet.applyPoison = true; if(this.spellEcho) bullets[bullets.length-1].applyPoison = true; }
                 if(this.multiShot) {
                     const baseAngle = Math.atan2(sy, sx);
                     for (let ms = 1; ms <= this.multiShot; ms++) {
@@ -15561,6 +15624,9 @@ var GameSettings = {
     hitstopEnabled: true,
     graphicsQuality: 'low', // low | medium | high
     fontSize: 'medium',
+    aimAssist: false,           // Fase B: auto-aim at nearest enemy when active
+    colorblindMode: 'off',      // Fase B: off | deutan | protan | tritan
+    reducedMotion: false,       // Fase B: honors prefers-reduced-motion on load
 
     load() {
         try {
@@ -15578,6 +15644,10 @@ var GameSettings = {
             this.hitstopEnabled = data.hitstopEnabled !== undefined ? data.hitstopEnabled : true;
             this.graphicsQuality = 'low'; // forced low for performance, ignores saved value
             this.fontSize     = data.fontSize     || 'medium';
+            this.aimAssist    = data.aimAssist    === true;
+            this.colorblindMode = data.colorblindMode || 'off';
+            this.reducedMotion = data.reducedMotion !== undefined ? data.reducedMotion
+                : (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
         } catch(e) { console.error("Settings load error", e); }
     },
 
@@ -15594,6 +15664,9 @@ var GameSettings = {
             hitstopEnabled: this.hitstopEnabled,
             graphicsQuality: this.graphicsQuality,
             fontSize:     this.fontSize,
+            aimAssist:    this.aimAssist,
+            colorblindMode: this.colorblindMode,
+            reducedMotion: this.reducedMotion,
         }));
     },
 
@@ -15618,6 +15691,9 @@ var GameSettings = {
         if (window.SND && SND.applySettings) SND.applySettings(this);
         document.body.classList.remove('font-small', 'font-medium', 'font-large');
         document.body.classList.add('font-' + (this.fontSize || 'medium'));
+        document.body.classList.toggle('reduce-motion', !!this.reducedMotion);
+        document.body.classList.remove('cb-deutan', 'cb-protan', 'cb-tritan');
+        if (this.colorblindMode && this.colorblindMode !== 'off') document.body.classList.add('cb-' + this.colorblindMode);
         const q = this.graphicsQuality || 'high';
         // Tag low quality so CSS can drop expensive compositor effects (backdrop blur)
         document.body.classList.toggle('gfx-low', q === 'low');
@@ -15639,6 +15715,26 @@ var GameSettings = {
         this.fontSize = size;
         this.save();
         this.apply();
+    },
+
+    setAimAssist(v) {
+        this.aimAssist = !!v;
+        this.save();
+        if (window.SettingsUI && window.SettingsUI._render) window.SettingsUI._render();
+    },
+
+    setColorblindMode(mode) {
+        this.colorblindMode = mode;
+        this.save();
+        this.apply();
+        if (window.SettingsUI && window.SettingsUI._render) window.SettingsUI._render();
+    },
+
+    setReducedMotion(v) {
+        this.reducedMotion = !!v;
+        this.save();
+        this.apply();
+        if (window.SettingsUI && window.SettingsUI._render) window.SettingsUI._render();
     }
 };
 
@@ -15823,6 +15919,27 @@ var SettingsUI = {
                         </div>
                     </div>
 
+                    <div class="mb-5">
+                        <div class="text-xs text-secondary font-bold uppercase tracking-widest mb-2 opacity-90">ACESSIBILIDADE</div>
+                        <div class="flex gap-2 mb-2">
+                            ${toggleBtn(GameSettings.aimAssist, 'setAimAssist', 'true')}
+                            ${toggleBtn(!GameSettings.aimAssist, 'setAimAssist', 'false')}
+                            <div class="flex-1 text-center py-3 px-2 text-xs font-bold text-gray-400">MIRA AUTOMÁTICA</div>
+                        </div>
+                        <div class="flex gap-2 mb-2">
+                            ${toggleBtn(GameSettings.reducedMotion, 'setReducedMotion', 'true')}
+                            ${toggleBtn(!GameSettings.reducedMotion, 'setReducedMotion', 'false')}
+                            <div class="flex-1 text-center py-3 px-2 text-xs font-bold text-gray-400">MENOS MOVIMENTO</div>
+                        </div>
+                        <div class="flex gap-2">
+                            ${['off', 'deutan', 'protan', 'tritan'].map(cm => `
+                                <button class="flex-1 py-3 px-2 rounded-xl text-xs font-bold transition-all ${GameSettings.colorblindMode === cm ? 'bg-primary/30 text-primary border border-primary' : 'bg-primary/10 text-gray-300 border border-white/15'}"
+                                    ontouchstart="window.GameSettings.setColorblindMode('${cm}')"
+                                    onclick="window.GameSettings.setColorblindMode('${cm}')">${cm === 'off' ? 'NORMAL' : cm === 'deutan' ? 'DEUTAN' : cm === 'protan' ? 'PROTAN' : 'TRITAN'}</button>
+                            `).join('')}
+                        </div>
+                    </div>
+
                     <div class="mb-2">
                         <div class="text-xs text-secondary font-bold uppercase tracking-widest mb-2 opacity-90" style="color:#f87171">ZONA DE PERIGO</div>
                         <button id="settings-reset-btn" style="width:100%;padding:12px;border-radius:12px;font-size:12px;font-weight:bold;color:#fca5a5;background:rgba(220,38,38,0.1);border:1.5px solid rgba(220,38,38,0.35);cursor:pointer"
@@ -15899,6 +16016,16 @@ var SettingsUI = {
         GameSettings.save();
         this._render();
         if (window.SND && SND.playUI) SND.playUI();
+    },
+
+    setAimAssist(enabled) {
+        if (window.GameSettings.setAimAssist) GameSettings.setAimAssist(enabled);
+        this._render();
+    },
+
+    setReducedMotion(enabled) {
+        if (window.GameSettings.setReducedMotion) GameSettings.setReducedMotion(enabled);
+        this._render();
     },
 
     _resetSave() {
