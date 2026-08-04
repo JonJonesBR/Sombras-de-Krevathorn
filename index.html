@@ -2663,13 +2663,14 @@ var CONFIG = {
     BIOME_FOREST_AMBIENT_CHANCE: 0.025,
 
     // Scaling Difficulty - Enemy stat growth per dungeon level
-    DIFFICULTY_HP_PER_LEVEL: 0.17,     // +17% HP per dungeon level (rebalanced: player procs buffed)
+    DIFFICULTY_HP_PER_LEVEL: 0.19,     // +19% HP per dungeon level (rebalanced: player procs buffed)
     DIFFICULTY_DAMAGE_PER_LEVEL: 0.115, // +11.5% damage per dungeon level
     DIFFICULTY_MAX_SCALING_LEVEL: 50,  // scaling caps at dungeon 50
     DIFFICULTY_ELITE_BONUS_PER_LEVEL: 0.05, // +5% elite bonus per level
 
     // Boss scaling - extra power at high dungeons
-    BOSS_SCALING_HP_PER_LEVEL: 100,    // +100 flat HP per dungeon (existing)
+    BOSS_SCALING_HP_PER_LEVEL: 100,    // legacy flat bonus (kept for compatibility)
+    BOSS_HP_PER_LEVEL: 0.24,           // +24% HP per dungeon level (multiplicative - keeps pace with the player's multiplicative damage growth so bosses stop melting in late floors)
     BOSS_SCALING_PHASE4_THRESHOLD: 10, // phase 4 starts at dungeon 10
     BOSS_SCALING_PHASE4_SPEED_MULT: 1.8,
     BOSS_SCALING_PHASE4_DAMAGE_MULT: 1.8,
@@ -7307,15 +7308,17 @@ _narrativeGlobal.NarrativeSystem = NarrativeSystem;
 
 // ============================================================
 // Player-selectable difficulty presets (chosen on start screen)
-// hpMult  - multiplies enemy/boss HP
-// dmgMult - multiplies damage the player takes
-// xpMult  - multiplies XP rewards (risk vs reward)
+// hpMult      - multiplies enemy/boss HP
+// dmgMult     - multiplies damage the player takes
+// xpMult      - multiplies XP rewards (risk vs reward)
+// bossHpMult  - multiplies BOSS HP specifically, so difficulty has a
+//               stronger impact on boss fights than on regular mobs
 // ============================================================
 const DIFFICULTY_PRESETS = {
-    facil:    { name: 'Fácil',    icon: '🌱', hpMult: 0.70, dmgMult: 0.60, xpMult: 0.80, color: '#5cff82', desc: 'Inimigos mais fracos. Ideal para aprender o jogo.' },
-    normal:   { name: 'Normal',   icon: '⚔️', hpMult: 1.00, dmgMult: 1.00, xpMult: 1.00, color: '#e0b6ff', desc: 'A experiência padrão de Krevathorn.' },
-    dificil:  { name: 'Difícil',  icon: '💀', hpMult: 1.40, dmgMult: 1.35, xpMult: 1.30, color: '#ffaa44', desc: 'Inimigos mais fortes. +30% de XP.' },
-    pesadelo: { name: 'Pesadelo', icon: '🔥', hpMult: 1.90, dmgMult: 1.70, xpMult: 1.60, color: '#ff4444', desc: 'Só para veteranos. +60% de XP.' }
+    facil:    { name: 'Fácil',    icon: '🌱', hpMult: 0.70, bossHpMult: 0.80, dmgMult: 0.60, xpMult: 0.80, color: '#5cff82', desc: 'Inimigos mais fracos. Ideal para aprender o jogo.' },
+    normal:   { name: 'Normal',   icon: '⚔️', hpMult: 1.00, bossHpMult: 1.00, dmgMult: 1.00, xpMult: 1.00, color: '#e0b6ff', desc: 'A experiência padrão de Krevathorn.' },
+    dificil:  { name: 'Difícil',  icon: '💀', hpMult: 1.40, bossHpMult: 1.60, dmgMult: 1.35, xpMult: 1.30, color: '#ffaa44', desc: 'Inimigos mais fortes. +30% de XP.' },
+    pesadelo: { name: 'Pesadelo', icon: '🔥', hpMult: 1.90, bossHpMult: 2.20, dmgMult: 1.70, xpMult: 1.60, color: '#ff4444', desc: 'Só para veteranos. +60% de XP.' }
 };
 
 const DifficultySystem = {
@@ -7364,7 +7367,10 @@ const DifficultySystem = {
         let hp = baseHp;
 
         if (isBoss) {
-            hp += (this.dungeonLevel - 1) * CONFIG.BOSS_SCALING_HP_PER_LEVEL;
+            // Multiplicative boss HP growth: keeps bosses tanky relative to the
+            // player's multiplicative damage scaling. The old flat +100/level
+            // fell behind and made bosses melt faster than common enemies.
+            hp *= 1 + (this.dungeonLevel - 1) * CONFIG.BOSS_HP_PER_LEVEL;
         } else {
             hp *= this.getEnemyHpMult();
         }
@@ -7372,10 +7378,19 @@ const DifficultySystem = {
         // Apply DDA
         hp *= this.ddaMultiplier;
 
-        // Apply player-selected difficulty preset
-        hp *= this.getPreset().hpMult;
+        // Apply player-selected difficulty preset (bosses use bossHpMult so the
+        // chosen difficulty hits boss fights harder than regular mobs)
+        hp *= isBoss ? this.getBossHpMult() : this.getPreset().hpMult;
 
         return Math.max(1, Math.floor(hp));
+    },
+
+    // ============================================================
+    // Boss HP multiplier from the chosen difficulty preset
+    // ============================================================
+    getBossHpMult() {
+        const p = this.getPreset();
+        return p.bossHpMult !== undefined ? p.bossHpMult : p.hpMult;
     },
 
     // ============================================================
@@ -13826,24 +13841,38 @@ class Player extends Entity {
         if (magSq > 0) {
             const dashDist = 120;
             const invMag = 1 / Math.sqrt(magSq);
-            const nx = dx * invMag;
-            const ny = dy * invMag;
+            let nx = dx * invMag;
+            let ny = dy * invMag;
             
-            const targetX = this.x + nx * dashDist;
-            const targetY = this.y + ny * dashDist;
+            let targetX = this.x + nx * dashDist;
+            let targetY = this.y + ny * dashDist;
+            
+            // If the direct dash is blocked by a wall, try nearby angles so the
+            // dodge still fires. Prevents the tutorial dash stage (and normal
+            // play) from softlocking when the player dashes while facing a wall.
+            if(map.isWall(targetX, targetY) && map.isWall) {
+                const baseA = Math.atan2(ny, nx);
+                const am = [0.5, -0.5, 1, -1, 0.785, -0.785, 1.5, -1.5, 2, -2];
+                for(let k = 0; k < am.length; k++) {
+                    const a = baseA + am[k];
+                    const tx = this.x + Math.cos(a) * dashDist;
+                    const ty = this.y + Math.sin(a) * dashDist;
+                    if(!map.isWall(tx, ty)) { nx = Math.cos(a); ny = Math.sin(a); targetX = tx; targetY = ty; break; }
+                }
+            }
             
             if(!map.isWall(targetX, targetY)) {
                 this.x = targetX;
                 this.y = targetY;
-                if (typeof SND !== 'undefined') SND.play(400, 'square', 0.1, 0.1);
-                this.dodgeCooldown = 60;
-                this.dodgeAnim = 15;
-                Vibrate.trigger('dodge');
-                this.stealth = 20;
-                DamageNumbers.add(this.x, this.y, 'DASH!', 'heal');
-                if (typeof spawnParticles !== 'undefined') {
-                    spawnParticles(this.x, this.y, '#55ffaa', 8, 4);
-                }
+            }
+            if (typeof SND !== 'undefined') SND.play(400, 'square', 0.1, 0.1);
+            this.dodgeCooldown = 60;
+            this.dodgeAnim = 15;
+            Vibrate.trigger('dodge');
+            this.stealth = 20;
+            DamageNumbers.add(this.x, this.y, 'DASH!', 'heal');
+            if (typeof spawnParticles !== 'undefined') {
+                spawnParticles(this.x, this.y, '#55ffaa', 8, 4);
             }
         }
     }
