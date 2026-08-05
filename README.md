@@ -58,7 +58,7 @@ Since the game is built with vanilla web technologies, running it is incredibly 
 
 1.  **Clone the repository:**
     ```bash
-    git clone https://github.com/seu-usuario/krevathorn.git
+    git clone https://github.com/jonjonesbr/krevathorn.git
     ```
 2.  **Open the file:**
     Simply open `index.html` in any modern web browser.
@@ -73,21 +73,10 @@ Since the game is built with vanilla web technologies, running it is incredibly 
 
 ---
 
-## 📸 Screenshots
-*(Add your screenshots here)*
-
-<div align="center">
-  <img src="link_to_screenshot_1.png" width="30%" alt="Start Screen">
-  <img src="link_to_screenshot_2.png" width="30%" alt="Gameplay">
-  <img src="link_to_screenshot_3.png" width="30%" alt="Skill Tree">
-</div>
-
----
-
 ## 📄 License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 <div align="center">
-  <i>Developed by Jônatas Ferreira Corrêa - <a href="https://linkedin.com/in/yourprofile">LinkedIn</a> | <a href="https://yourportfolio.com">Portfolio</a></i>
+  <i>Developed by JonJonesBR</i>
 </div>
