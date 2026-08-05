@@ -58,7 +58,7 @@ Since the game is built with vanilla web technologies, running it is incredibly 
 
 1.  **Clone the repository:**
     ```bash
-    git clone https://github.com/jonjonesbr/krevathorn.git
+    git clone https://github.com/JonJonesBR/Sombras-de-Krevathorn.git
     ```
 2.  **Open the file:**
     Simply open `index.html` in any modern web browser.
