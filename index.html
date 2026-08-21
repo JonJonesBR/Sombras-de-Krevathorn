@@ -1082,6 +1082,9 @@ body.cb-tritan  { filter: url("#cb-tritan"); }
                 <button id="tutorial-quick-btn" class="tutorial-opt-btn" style="padding:12px;border-radius:14px;font-size:0.9rem;font-weight:700;background:linear-gradient(135deg,rgba(100,60,200,0.3),rgba(157,78,221,0.2));border:1.5px solid rgba(157,78,221,0.4);color:#c084fc;cursor:pointer;touch-action:manipulation;transition:all 0.2s;" data-i18n="tutorial.promptQuick">
                     ⚡ Tutorial Rápido (~1 min)
                 </button>
+                <button id="tutorial-full-btn" class="tutorial-opt-btn" style="padding:12px;border-radius:14px;font-size:0.9rem;font-weight:700;background:linear-gradient(135deg,rgba(60,140,200,0.3),rgba(80,160,255,0.2));border:1.5px solid rgba(80,140,255,0.4);color:#9ad0ff;cursor:pointer;touch-action:manipulation;transition:all 0.2s;" data-i18n="tutorial.promptFull">
+                    🎓 Tutorial Completo (~3 min)
+                </button>
 
             </div>
             <div style="display:flex;gap:8px;">
@@ -2822,6 +2825,25 @@ const I18n = {
             'tutorial.stage6.line6': 'Estatisticas: acompanhe seu progresso',
             'tutorial.stage6.line7': '',
             'tutorial.stage6.line8': 'Bonus: +50 moedas!',
+            'tutorial.promptFull': '🎓 Tutorial Completo (~3 min)',
+            'tutorial.stage7.title': ' Conheça a Loja',
+            'tutorial.stage7.line1': 'Abra a LOJA para comprar itens com o ouro dos inimigos.',
+            'tutorial.stage7.line2': 'Moedas caem de inimigos e baús.',
+            'tutorial.stage7.line3': '> Objetivo: Abra a loja uma vez.',
+            'tutorial.stage8.title': ' Especialize-se',
+            'tutorial.stage8.line1': 'A ÁRVORE DE SKILLS desbloqueia passivas e habilidades novas.',
+            'tutorial.stage8.line2': 'Cada classe tem 3 ramos distintos.',
+            'tutorial.stage8.line3': '> Objetivo: Abra as Skills uma vez.',
+            'tutorial.stage9.title': ' Equipamento',
+            'tutorial.stage9.line1': 'Alguns inimigos dropam ARMAS e EQUIPAMENTOS.',
+            'tutorial.stage9.line2': 'Passe por cima para pegar e equipar automaticamente.',
+            'tutorial.stage9.line3': 'Equipamentos raros têm afixos únicos.',
+            'tutorial.stage9.line4': '> Objetivo: Pegue a arma que apareceu.',
+            'tutorial.stage10.title': ' Tutorial Completo!',
+            'tutorial.stage10.line1': 'Você dominou os fundamentos — e mais um pouco.',
+            'tutorial.stage10.line2': 'Minimapa no canto: mostra inimigos, baús e o portal.',
+            'tutorial.stage10.line3': 'O Abismo espera. Boa sorte, herói!',
+            'tutorial.stage10.line4': 'Bonus: +100 moedas!',
             'tutorial.skillTouch1': 'Toque o boto de habilidade no canto inferior',
             'tutorial.skillTouch2': 'direito (o boto com icone de fogo).',
             'tutorial.skillTouch3': '',
@@ -3540,6 +3562,14 @@ const I18n = {
             'mode.dungeonDesc': 'Evolua seu personagem em masmorras cada vez mais difíceis até chegar à superfície.',
             'mode.abyssDesc': 'Sem fim e sem superfície. Desça profundezas infinitas: o boss nunca para de evoluir (fase 5 no piso 20, teto no piso 50).',
 
+            // Crafting (forge)
+            'craft.health.name': 'Forjar Poção de Vida',
+            'craft.health.desc': '+50 HP na hora',
+            'craft.shield.name': 'Forjar Poção de Escudo',
+            'craft.shield.desc': '+50 de escudo',
+            'craft.weapon.name': 'Temperar Arma',
+            'craft.weapon.desc': '+1 nível de arma (dano base maior)',
+
             // Static in-game UI
             'ui.questsTitle': '📜 Missões da Profecia',
             'ui.achievementToast': '🏆 Conquista!',
@@ -3739,6 +3769,25 @@ const I18n = {
             'tutorial.stage6.line6': 'Stats: track your progress',
             'tutorial.stage6.line7': '',
             'tutorial.stage6.line8': 'Bonus: +50 coins!',
+            'tutorial.promptFull': '🎓 Full Tutorial (~3 min)',
+            'tutorial.stage7.title': ' Meet the Shop',
+            'tutorial.stage7.line1': 'Open the SHOP to buy items with the gold enemies drop.',
+            'tutorial.stage7.line2': 'Coins drop from enemies and chests.',
+            'tutorial.stage7.line3': '> Goal: Open the shop once.',
+            'tutorial.stage8.title': ' Specialize',
+            'tutorial.stage8.line1': 'The SKILL TREE unlocks passives and new abilities.',
+            'tutorial.stage8.line2': 'Each class has 3 distinct branches.',
+            'tutorial.stage8.line3': '> Goal: Open Skills once.',
+            'tutorial.stage9.title': ' Equipment',
+            'tutorial.stage9.line1': 'Some enemies drop WEAPONS and EQUIPMENT.',
+            'tutorial.stage9.line2': 'Walk over them to pick up and equip automatically.',
+            'tutorial.stage9.line3': 'Rare equipment has unique affixes.',
+            'tutorial.stage9.line4': '> Goal: Grab the weapon that appeared.',
+            'tutorial.stage10.title': ' Tutorial Complete!',
+            'tutorial.stage10.line1': 'You mastered the fundamentals — and a bit more.',
+            'tutorial.stage10.line2': 'Minimap in the corner: shows enemies, chests and the portal.',
+            'tutorial.stage10.line3': 'The Abyss awaits. Good luck, hero!',
+            'tutorial.stage10.line4': 'Bonus: +100 coins!',
             'tutorial.skillTouch1': 'Tap the ability button at the bottom',
             'tutorial.skillTouch2': 'right (the button with the fire icon).',
             'tutorial.skillTouch3': '',
@@ -4457,6 +4506,14 @@ const I18n = {
             'mode.dungeonDesc': 'Evolve your character through ever-harder dungeons until you reach the surface.',
             'mode.abyssDesc': 'No end and no surface. Descend infinite depths: the boss never stops evolving (phase 5 at floor 20, cap at floor 50).',
 
+            // Crafting (forge)
+            'craft.health.name': 'Forge Health Potion',
+            'craft.health.desc': '+50 HP instantly',
+            'craft.shield.name': 'Forge Shield Potion',
+            'craft.shield.desc': '+50 shield',
+            'craft.weapon.name': 'Temper Weapon',
+            'craft.weapon.desc': '+1 weapon level (higher base damage)',
+
             // Static in-game UI
             'ui.questsTitle': '📜 Quests of Prophecy',
             'ui.achievementToast': '🏆 Achievement!',
@@ -4656,6 +4713,25 @@ const I18n = {
             'tutorial.stage6.line6': 'Estadísticas: sigue tu progreso',
             'tutorial.stage6.line7': '',
             'tutorial.stage6.line8': '¡Bonus: +50 monedas!',
+            'tutorial.promptFull': '🎓 Tutorial Completo (~3 min)',
+            'tutorial.stage7.title': ' Conoce la Tienda',
+            'tutorial.stage7.line1': 'Abre la TIENDA para comprar objetos con el oro de los enemigos.',
+            'tutorial.stage7.line2': 'Las monedas caen de enemigos y cofres.',
+            'tutorial.stage7.line3': '> Objetivo: Abre la tienda una vez.',
+            'tutorial.stage8.title': ' Especialízate',
+            'tutorial.stage8.line1': 'El ÁRBOL DE HABILIDADES desbloquea pasivas y habilidades nuevas.',
+            'tutorial.stage8.line2': 'Cada clase tiene 3 ramas distintas.',
+            'tutorial.stage8.line3': '> Objetivo: Abre Habilidades una vez.',
+            'tutorial.stage9.title': ' Equipamiento',
+            'tutorial.stage9.line1': 'Algunos enemigos sueltan ARMAS y EQUIPO.',
+            'tutorial.stage9.line2': 'Pasa por encima para recoger y equipar automáticamente.',
+            'tutorial.stage9.line3': 'El equipo raro tiene afijos únicos.',
+            'tutorial.stage9.line4': '> Objetivo: Recoge el arma que apareció.',
+            'tutorial.stage10.title': ' ¡Tutorial Completo!',
+            'tutorial.stage10.line1': 'Dominaste lo esencial — y un poco más.',
+            'tutorial.stage10.line2': 'Minimapa en la esquina: muestra enemigos, cofres y el portal.',
+            'tutorial.stage10.line3': 'El Abismo espera. ¡Buena suerte, héroe!',
+            'tutorial.stage10.line4': '¡Bonus: +100 monedas!',
             'tutorial.skillTouch1': 'Toca el botón de habilidad en la esquina inferior',
             'tutorial.skillTouch2': 'derecha (el botón con el icono de fuego).',
             'tutorial.skillTouch3': '',
@@ -5371,6 +5447,14 @@ const I18n = {
             'difficulty.pesadelo.desc': 'Solo para veteranos. +60% de XP.',
             'mode.dungeonDesc': 'Evoluciona tu personaje en mazmorras cada vez más difíciles hasta llegar a la superficie.',
             'mode.abyssDesc': 'Sin fin y sin superficie. Desciende profundidades infinitas: el jefe no deja de evolucionar (fase 5 en el piso 20, tope en el piso 50).',
+
+            // Crafting (forge)
+            'craft.health.name': 'Forjar Poción de Vida',
+            'craft.health.desc': '+50 PV al instante',
+            'craft.shield.name': 'Forjar Poción de Escudo',
+            'craft.shield.desc': '+50 de escudo',
+            'craft.weapon.name': 'Templar Arma',
+            'craft.weapon.desc': '+1 nivel de arma (daño base mayor)',
 
             // Static in-game UI
             'ui.questsTitle': '📜 Misiones de la Profecía',
@@ -6541,7 +6625,7 @@ function _cancelContinue() {
 var _essenceRunAwarded = false;
 function _populateGameOverUI() {
     // Premiação de Essência (meta-progressão) — única por run
-    if (window.MetaSystem && !_essenceRunAwarded) {
+    if (window.MetaSystem && !_essenceRunAwarded && !(window._dailyMods && window._dailyMods.noProgress)) {
         _essenceRunAwarded = true;
         var _eRes = MetaSystem.awardEndOfRun({
             win: false, dungeonLevel: dungeonLevel, kills: (player && player.kills) || 0,
@@ -6648,7 +6732,7 @@ function _populateGameOverUI() {
 // ============================================================
 function _triggerWin() {
     // Premiação de Essência (meta-progressão) na vitória
-    if (window.MetaSystem && !_essenceRunAwarded) {
+    if (window.MetaSystem && !_essenceRunAwarded && !(window._dailyMods && window._dailyMods.noProgress)) {
         _essenceRunAwarded = true;
         var _eRes = MetaSystem.awardEndOfRun({
             win: true, dungeonLevel: dungeonLevel, kills: (player && player.kills) || 0,
@@ -7109,6 +7193,13 @@ function _updateWorldSim() {
 }
 
 function _updateWeather() {
+    // Daily challenge 'storm': constant rain (no roll needed)
+    if (!weather && window._dailyMods && window._dailyMods.alwaysRain) {
+        weather = { type: 'rain' };
+        weatherTimer = CONFIG.WEATHER_DURATION;
+        if (window.SND && SND.playWeatherChange) SND.playWeatherChange('rain');
+        addLog(window.I18n ? I18n.t('log.rainStart') : ' Comecou a chover...');
+    }
     if (weather) {
         weatherTimer--;
         if (weatherTimer <= 0) { weather = null; return; }
@@ -7832,6 +7923,8 @@ let _cachedLightCanvas = null;
 let _particleBatch = {};
 let _cachedAliveEnemies = 0;
 function _spawnTorchParticles() {
+    // Daily challenge 'darkness': no torch particles
+    if (window._dailyMods && window._dailyMods.noTorches) return;
     if (!player || !player.alive || CONFIG.TORCH_PARTICLE_INTERVAL > 0 && gameTime % CONFIG.TORCH_PARTICLE_INTERVAL !== 0) return;
     if (particles.length >= CONFIG.PARTICLE_CAP - 5) return;
     const fireColors = ['#ff6600', '#ff8800', '#ffaa00', '#ff4400'];
@@ -7887,7 +7980,8 @@ function _drawLightingLayer() {
         if (player) {
             const flicker = 0.92 + Math.sin(gameTime * 0.08) * 0.05 + Math.sin(gameTime * 0.13) * 0.03;
             const weatherLrMult = (weather && weather.type === 'rain') ? CONFIG.WEATHER_RAIN_LIGHT_MULT : 1;
-            dL(player.x, player.y, player.lr * weatherLrMult, flicker);
+            const _lrMult = (window._dailyMods && window._dailyMods.lightRadius) || 1;
+            dL(player.x, player.y, player.lr * weatherLrMult * _lrMult, flicker);
         }
         const margin = 300;
         for (let i = 0; i < entities.length; i++) {
@@ -9991,7 +10085,8 @@ const ShopSystem = {
         if(this.activeItemsGenDungeon === dungeonLevel && this.activeItems.length === 3) return this.activeItems;
         this.activeItemsGenDungeon = dungeonLevel;
         // Shuffle and pick 3 from base items (exclude reroll and duplicate relic gift)
-        const pool = SHOP_ITEMS.filter(i => i.id !== 'reroll').slice();
+        const _noHeal = window._dailyMods && window._dailyMods.noHealShop;
+        const pool = SHOP_ITEMS.filter(i => i.id !== 'reroll' && !(_noHeal && (i.id === 'healthPotion' || i.id === 'shieldPotion'))).slice();
         for(let i = pool.length - 1; i > 0; i--) {
             const j = Math.floor(SeedSystem.random() * (i + 1));
             [pool[i], pool[j]] = [pool[j], pool[i]];
@@ -10015,7 +10110,8 @@ const ShopSystem = {
     generateFlashOffer(dungeonLevel) {
         if(this.flashOfferDungeon === dungeonLevel) return;
         this.flashOfferDungeon = dungeonLevel;
-        const pool = SHOP_ITEMS.filter(i => i.id !== 'reroll');
+        const _noHealF = window._dailyMods && window._dailyMods.noHealShop;
+        const pool = SHOP_ITEMS.filter(i => i.id !== 'reroll' && !(_noHealF && (i.id === 'healthPotion' || i.id === 'shieldPotion')));
         const base = pool[Math.floor(SeedSystem.random() * pool.length)];
         const baseCost = Math.floor(base.cost * (1 + dungeonLevel * CONFIG.SHOP_PRICE_DUNGEON_SCALE));
         this.flashOffer = {
@@ -10314,7 +10410,8 @@ const CampSystem = {
     },
 
     _rollOffers(floor) {
-        const pool = SHOP_ITEMS.filter(i => i.cat !== 'special' && i.id !== 'reroll');
+        const _noHealR = window._dailyMods && window._dailyMods.noHealShop;
+        const pool = SHOP_ITEMS.filter(i => i.cat !== 'special' && i.id !== 'reroll' && !(_noHealR && (i.id === 'healthPotion' || i.id === 'shieldPotion')));
         const chosen = [];
         const used = new Set();
         let guard = 0;
@@ -11288,7 +11385,8 @@ const DifficultySystem = {
     // ============================================================
     getEnemyHpMult() {
         const lvl = this.getEffectiveLevel();
-        return 1 + (lvl - 1) * CONFIG.DIFFICULTY_HP_PER_LEVEL;
+        const ramp = (window._dailyMods && window._dailyMods.difficultyRamp) || 1;
+        return (1 + (lvl - 1) * CONFIG.DIFFICULTY_HP_PER_LEVEL) * Math.pow(ramp, lvl - 1);
     },
 
     // ============================================================
@@ -11296,7 +11394,8 @@ const DifficultySystem = {
     // ============================================================
     getEnemyDamageMult() {
         const lvl = this.getEffectiveLevel();
-        return 1 + (lvl - 1) * CONFIG.DIFFICULTY_DAMAGE_PER_LEVEL;
+        const ramp = (window._dailyMods && window._dailyMods.difficultyRamp) || 1;
+        return (1 + (lvl - 1) * CONFIG.DIFFICULTY_DAMAGE_PER_LEVEL) * Math.pow(ramp, lvl - 1);
     },
 
     // ============================================================
@@ -11617,6 +11716,35 @@ try {
 
 </script>
     <script>
+// === js/systems/crafting.js ===
+// CRAFTING SYSTEM - minimal forge: convert dropped gold into useful goods
+// (recipes are real, they mutate the player; UI lives in the shop panel).
+const CraftSystem = {
+    RECIPES: [
+        { id: 'forge_health', icon: '🧪', nameKey: 'craft.health.name', name: 'Forjar Poção de Vida', descKey: 'craft.health.desc', desc: '+50 HP na hora', cost: 30, run: (p) => { p.hp = Math.min(p.maxHp, p.hp + 50); } },
+        { id: 'forge_shield', icon: '🛡️', nameKey: 'craft.shield.name', name: 'Forjar Poção de Escudo', descKey: 'craft.shield.desc', desc: '+50 de escudo', cost: 40, run: (p) => { p.shield += 50; } },
+        { id: 'forge_weapon', icon: '⚒️', nameKey: 'craft.weapon.name', name: 'Temperar Arma', descKey: 'craft.weapon.desc', desc: '+1 nível de arma (dano base maior)', cost: 80, run: (p) => { p.weaponLevel = (p.weaponLevel || 1) + 1; } }
+    ],
+
+    craft(id) {
+        if (!player) return false;
+        const r = this.RECIPES.find(x => x.id === id);
+        if (!r) return false;
+        if (player.currency < r.cost) {
+            if (typeof showToast === 'function') showToast(window.I18n ? I18n.t('npc.nocoins') : 'Moedas insuficientes', 'error');
+            return false;
+        }
+        player.currency -= r.cost;
+        try { r.run(player); } catch(e) { player.currency += r.cost; return false; }
+        if (typeof SND !== 'undefined' && SND.playCraft) SND.playCraft();
+        if (typeof addLog === 'function') addLog('⚒️ ' + (window._L ? _L(r.nameKey, r.name) : r.name) + '!');
+        return true;
+    }
+};
+window.CraftSystem = CraftSystem;
+
+</script>
+    <script>
 // === js/systems/quests.js ===
 // QUEST SYSTEM - Light per-run quests tied to lore fragments
 // v=24
@@ -11932,6 +12060,9 @@ const DailyChallenge = {
         
         // Store current challenge for UI
         window._currentDailyChallenge = challenge;
+        
+        // Store active modifiers (consumed by gameplay hooks across the engine)
+        window._dailyMods = mods;
         
         // Apply modifiers
         if(mods.forceClass) {
@@ -15507,6 +15638,10 @@ class Entity {
     
     takeDamage(a, m, source=null) {
         let finalDmg = a; let dmgType = 'normal';
+        // Daily challenge 'oneshot': enemies die in a single hit
+        if (this !== player && window._dailyMods && window._dailyMods.enemyOneHit) {
+            a = this.hp + (this.shield || 0); finalDmg = a;
+        }
         if(source && source.mutations) { if(source.mutations.vampiric) { const heal = finalDmg * CONFIG.VAMPIRIC_LIFESTEAL; source.hp = Math.min(source.maxHp, source.hp + heal); DamageNumbers.add(source.x, source.y, heal, 'heal'); } if(source.mutations.lightning && SeedSystem.random() < CONFIG.LIGHTNING_CHAIN_CHANCE) { dmgType = 'lightning'; finalDmg *= CONFIG.LIGHTNING_DAMAGE_MULT; const chainHeal = finalDmg * 0.03; if(source.hp != null) source.hp = Math.min(source.maxHp, source.hp + chainHeal); const chainRangeSq = CONFIG.LIGHTNING_CHAIN_RANGE * CONFIG.LIGHTNING_CHAIN_RANGE; for(let i = 0; i < entities.length; i++) { const e = entities[i]; if(e !== this && e.alive) { const dx = e.x-this.x, dy = e.y-this.y; if(dx*dx + dy*dy < chainRangeSq) { e.takeDamage(finalDmg * 0.5, m, source); spawnParticles(e.x, e.y, '#ffff33', 3, 2); } } } } if(source.mutations.freeze && SeedSystem.random() < CONFIG.FREEZE_CHANCE) { this.frozen = CONFIG.FREEZE_DURATION; spawnParticles(this.x, this.y, '#33ccff', 10, 4); } }
         if(source && source.skills && source.skills.execute && this.hp < this.maxHp * CONFIG.ROGUE_ASSASSINATE_THRESHOLD) { finalDmg = this.isB ? Math.min(this.maxHp * 0.10, Math.max(10, this.maxHp * CONFIG.ROGUE_ASSASSINATE_DAMAGE_PCT)) : Math.max(10, this.maxHp * CONFIG.ROGUE_ASSASSINATE_DAMAGE_PCT); dmgType = 'crit'; if(typeof DamageNumbers !== 'undefined') DamageNumbers.add(this.x, this.y, 'EXEC!', 'execute'); }
         if(source && source.skills && source.skills.deathmark && this._deathMarkT > 0) { finalDmg = Math.floor(finalDmg * 1.5); dmgType = 'crit'; }
@@ -15674,6 +15809,8 @@ class Entity {
         }
     }
     move(dx, dy, m) {
+        // Daily challenge modifier: enemy movement speed
+        if (window._dailyMods && window._dailyMods.enemySpeed) { dx *= window._dailyMods.enemySpeed; dy *= window._dailyMods.enemySpeed; }
         // Apply flinch knockback
         let fx = dx, fy = dy;
         if (this.flinchTimer > 0) {
@@ -18562,8 +18699,10 @@ class Player extends Entity {
         if(this.goldRushTimer > 0) this.goldRushTimer--;
         if(this.critBoost > 0) this.critBoost--;
         if(this.shopDiscountTimer > 0) this.shopDiscountTimer--;
-        if(this.regenerating && this.hp < this.maxHp) this.hp = Math.min(this.maxHp, this.hp + 1 / 60);
-        if(this.runRegen > 0 && this.hp < this.maxHp) this.hp = Math.min(this.maxHp, this.hp + this.runRegen / 60);
+        // Daily challenge 'noheal': zero passive regen
+        const _noRegen = window._dailyMods && window._dailyMods.healthRegen === 0;
+        if(!_noRegen && this.regenerating && this.hp < this.maxHp) this.hp = Math.min(this.maxHp, this.hp + 1 / 60);
+        if(!_noRegen && this.runRegen > 0 && this.hp < this.maxHp) this.hp = Math.min(this.maxHp, this.hp + this.runRegen / 60);
         if(this.comboTimer > 0) { this.comboTimer--; if(this.comboTimer <= 0) this.comboCount = 0; }
 
         if(this.type === 'warrior') {
@@ -18913,6 +19052,8 @@ class Player extends Entity {
         if(this.type === 'mage' && this.orbShieldReady && a > 0) { this.orbShieldReady = false; this.orbShieldTimer = 0; spawnParticles(this.x, this.y, COLORS.CLASS_MAGE, 15, 4); SND.play(440, 'sine', 0.2, 0.2); DamageNumbers.add(this.x, this.y, 'ORB SHIELD!', 'heal'); return; }
         if(this.type === 'rogue' || this.type === 'mage') this.mageComboCount = 0;
         let dmg = a;
+        // Daily challenge 'oneshot': the player dies in a single hit
+        if (window._dailyMods && window._dailyMods.playerOneHit) dmg = this.hp;
         // Player-selected difficulty preset scales all incoming damage
         if (a > 0 && typeof DifficultySystem !== 'undefined') dmg = a * DifficultySystem.getPlayerDamageTakenMult() * (this.damageTakenMult || 1);
         if(typeof pets !== 'undefined' && pets.length > 0) { const mount = pets.find(p => p.alive && p.mounted); if(mount) dmg = mount.onPlayerHit(dmg); }
@@ -19891,7 +20032,8 @@ const RelicSystem = {
 
         // Regenerao: 2 HP/seg, apenas fora de combate (>4s sem atacar/levar dano)
         const outOfCombat = (player.combatTimer || 0) > 240;
-        if (player.relics.has('regen') && player.hp < player.maxHp && outOfCombat) {
+        const _noRegen = window._dailyMods && window._dailyMods.healthRegen === 0;
+        if (!_noRegen && player.relics.has('regen') && player.hp < player.maxHp && outOfCombat) {
             player.hp = Math.min(player.maxHp, player.hp + 2 / 60);
         }
     },
@@ -21004,6 +21146,20 @@ window.SkillTreeUI = SkillTreeUI;
                         🔄 REROLL (20 💰)
                     </button>
                 </div>
+                <div style="margin-top:16px;padding:12px;border-radius:12px;border:1.5px solid rgba(255,170,68,0.35);background:rgba(255,140,0,0.07)">
+                    <div style="font-weight:bold;font-size:12px;color:#ffaa44;margin-bottom:8px;letter-spacing:0.08em;text-transform:uppercase">⚒️ FORJA</div>
+                    <div style="display:flex;flex-direction:column;gap:8px">
+                        ${window.CraftSystem ? CraftSystem.RECIPES.map(r => {
+                            const canCraft = p.currency >= r.cost;
+                            return `<button style="display:flex;justify-content:space-between;align-items:center;padding:10px;border-radius:10px;border:1.5px solid ${canCraft ? 'rgba(255,170,68,0.5)' : 'rgba(255,255,255,0.1)'};background:${canCraft ? 'rgba(255,170,68,0.1)' : 'rgba(35,28,48,0.5)'};${canCraft ? 'cursor:pointer' : 'opacity:0.6'};transition:all 0.2s"
+                                    onclick="${canCraft ? `UIManager.craftItem('${r.id}')` : ''}">
+                                <span style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:bold;color:${canCraft ? '#ffaa44' : COLORS.TEXT_DIM}">${r.icon} ${window._L ? _L(r.nameKey, r.name) : r.name}</span>
+                                <span style="font-size:10px;color:${COLORS.TEXT_MUTED};margin-top:2px">${window._L ? _L(r.descKey, r.desc) : r.desc}</span>
+                                <span style="font-size:11px;color:${canCraft ? COLORS.GOLD : COLORS.TEXT_MUTED}">💰 ${r.cost}</span>
+                            </button>`;
+                        }).join('') : '<p style="text-align:center;font-size:11px;color:' + COLORS.TEXT_MUTED + '">Forja indisponível</p>'}
+                    </div>
+                </div>
                 ${history}
             `;
         },
@@ -21061,6 +21217,12 @@ window.SkillTreeUI = SkillTreeUI;
                 ShopSystem.recordPurchase({ name: 'Reroll Loja', cost: 20 });
                 this.openPanel('shop');
             }
+        },
+
+        craftItem(id) {
+            if (!window.CraftSystem) return;
+            CraftSystem.craft(id);
+            this.openPanel('shop'); // refresh the panel
         },
 
         renderSkillsContent() {
@@ -21763,6 +21925,11 @@ Debug.info("====== BOOTSTRAP.JS IS EXECUTING ======");
 
 window.GameBootstrap = {
     start(cls) {
+        // Daily challenge may force a class (tank/sniper/glass-cannon challenges)
+        if (window._forcedClass) {
+            cls = window._forcedClass;
+            window._forcedClass = null;
+        }
         Debug.info('[BOOTSTRAP] Starting game with class:', cls);
 
         // Guarda de meta-progressão: classes além do Guerreiro exigem desbloqueio
@@ -21873,6 +22040,14 @@ window.GameBootstrap = {
             if (_mb.hpMult > 1) { player.maxHp = Math.round(player.maxHp * _mb.hpMult); player.hp = player.maxHp; }
             if (_mb.dmgMult > 1) player.damageMult = (player.damageMult || 1) * _mb.dmgMult;
             if (_mb.xpMult > 1) player.xpMult = (player.xpMult || 1) * _mb.xpMult;
+        }
+
+        // Aplica modificadores do desafio diário ao player recém-criado
+        if (window._dailyMods) {
+            const _dm = window._dailyMods;
+            if (_dm.hpMult) { player.maxHp = Math.round(player.maxHp * _dm.hpMult); player.hp = player.maxHp; }
+            if (_dm.dmgMult) player.damageMult = (player.damageMult || 1) * _dm.dmgMult;
+            if (_dm.playerSpeed) player.speed = Math.round(player.speed * _dm.playerSpeed);
         }
         
         if (prestigeLevel > 0) {
@@ -22098,7 +22273,145 @@ const TutorialSystem = {
         }
     ],
 
-    get activeStages() { return this.STAGES_QUICK; },
+    // Full tutorial: quick stages + shop, skill tree, equipment, wrap-up.
+    // Tracking hooks (_shopOpened/_skillTreeOpened/_weaponPickedUp) already
+    // exist in init()/update() — these stages only define the flow.
+    STAGES_FULL: [
+        {
+            id: 'welcome_quick',
+            titleKey: 'tutorial.stage1.title',
+            title: ' Bem-vindo à Krevathorn!',
+            linesKeys: ['tutorial.stage1.line1', 'tutorial.stage1.line2', 'tutorial.stage1.line3', 'tutorial.stage1.line4', 'tutorial.stage1.line5', 'tutorial.stage1.line6'],
+            lines: [
+                'Tutorial rápido — 4 etapas, ~1 minuto.',
+                '',
+                'ESQUERDA: mover — DIREITA: atirar',
+                'BOTÃO CENTRAL: habilidade de classe',
+                '',
+                'Os tiros são AUTOMÁTICOS ao apontar!',
+            ],
+            waitForTap: true
+        },
+        {
+            id: 'movement',
+            titleKey: 'tutorial.stage2.title',
+            title: ' Pratique o Movimento',
+            linesKeys: ['tutorial.stage2.line1', 'tutorial.stage2.line2', 'tutorial.stage2.line3', 'tutorial.stage2.line4'],
+            lines: [
+                'Arraste o lado ESQUERDO para se mover.',
+                '(PC: teclas WASD)',
+                '',
+                '> Objetivo: Mova-se pelo mapa!',
+            ],
+            condition: sys => sys._movementAccum >= 200,
+            blocker: true
+        },
+        {
+            id: 'dash',
+            titleKey: 'tutorial.stage3.title',
+            title: ' Aprenda o Dash!',
+            linesKeys: ['tutorial.stage3.line1', 'tutorial.stage3.line2', 'tutorial.stage3.line3'],
+            lines: [
+                'Use o Dash para fugir rapidamente.',
+                '',
+                '> Objetivo: Use o Dash uma vez!'
+            ],
+            condition: sys => sys._dodged,
+            blocker: true,
+            highlightDodge: true
+        },
+        {
+            id: 'combat',
+            titleKey: 'tutorial.stage4.title',
+            title: ' Combate — Mate o Boneco!',
+            linesKeys: ['tutorial.stage4.line1', 'tutorial.stage4.line2', 'tutorial.stage4.line3', 'tutorial.stage4.line4'],
+            lines: [
+                'Aponte o lado DIREITO para mirar e atirar.',
+                'Os tiros são automáticos ao apontar.',
+                '',
+                '> Objetivo: Elimine o boneco de treino!',
+            ],
+            onEnter: sys => sys._spawnTrainingDummy(),
+            condition: sys => sys._trainingDummyKilled,
+            blocker: true
+        },
+        {
+            id: 'skill',
+            titleKey: 'tutorial.stage5.title',
+            title: ' Use sua Habilidade!',
+            linesKeys: ['tutorial.stage5.line1', 'tutorial.stage5.line2', 'tutorial.stage5.line3', 'tutorial.stage5.line4', 'tutorial.stage5.line5'],
+            lines: [
+                'Toque o BOTÃO CENTRAL para usar a habilidade.',
+                'Guerreiro: Golpe Sísmico  |  Ladino: Dash',
+                'Mago: Tempestade Arcana',
+                '',
+                '> Objetivo: Use sua habilidade uma vez!',
+            ],
+            condition: sys => sys._skillUsed,
+            blocker: true,
+            highlightSkill: true
+        },
+        {
+            id: 'shop',
+            titleKey: 'tutorial.stage7.title',
+            title: ' Conheça a Loja',
+            linesKeys: ['tutorial.stage7.line1', 'tutorial.stage7.line2', 'tutorial.stage7.line3'],
+            lines: [
+                'Abra a LOJA para comprar itens com o ouro dos inimigos.',
+                'Moedas caem de inimigos e baús.',
+                '> Objetivo: Abra a loja uma vez.',
+            ],
+            condition: sys => sys._shopOpened,
+            blocker: true,
+            highlightButton: 'shop'
+        },
+        {
+            id: 'skilltree',
+            titleKey: 'tutorial.stage8.title',
+            title: ' Especialize-se',
+            linesKeys: ['tutorial.stage8.line1', 'tutorial.stage8.line2', 'tutorial.stage8.line3'],
+            lines: [
+                'A ÁRVORE DE SKILLS desbloqueia passivas e habilidades novas.',
+                'Cada classe tem 3 ramos distintos.',
+                '> Objetivo: Abra as Skills uma vez.',
+            ],
+            condition: sys => sys._skillTreeOpened,
+            blocker: true,
+            highlightButton: 'skills'
+        },
+        {
+            id: 'equipment',
+            titleKey: 'tutorial.stage9.title',
+            title: ' Equipamento',
+            linesKeys: ['tutorial.stage9.line1', 'tutorial.stage9.line2', 'tutorial.stage9.line3', 'tutorial.stage9.line4'],
+            lines: [
+                'Alguns inimigos dropam ARMAS e EQUIPAMENTOS.',
+                'Passe por cima para pegar e equipar automaticamente.',
+                'Equipamentos raros têm afixos únicos.',
+                '> Objetivo: Pegue a arma que apareceu.',
+            ],
+            onEnter: sys => { sys._prevWeapon = player.currentWeapon; sys._spawnWeaponDrop(); },
+            condition: sys => sys._weaponPickedUp,
+            blocker: true
+        },
+        {
+            id: 'complete_full',
+            titleKey: 'tutorial.stage10.title',
+            title: ' Tutorial Completo!',
+            linesKeys: ['tutorial.stage10.line1', 'tutorial.stage10.line2', 'tutorial.stage10.line3', 'tutorial.stage10.line4'],
+            lines: [
+                'Você dominou os fundamentos — e mais um pouco.',
+                'Minimapa no canto: mostra inimigos, baús e o portal.',
+                'O Abismo espera. Boa sorte, herói!',
+                'Bonus: +100 moedas!',
+            ],
+            onEnter: sys => { if (player) player.currency += 100; },
+            waitForTap: true,
+            isLast: true
+        }
+    ],
+
+    get activeStages() { return (this.mode === 'full') ? this.STAGES_FULL : this.STAGES_QUICK; },
     get currentStage() { return this.activeStages[this.stage] || null; },
 
     // ============================================================
@@ -22199,7 +22512,7 @@ const TutorialSystem = {
         const ss = document.getElementById('start-screen');
         if(ss) { ss.style.opacity = ''; ss.style.pointerEvents = ''; }
         const cls = (window.MetaSystem && !MetaSystem.isClassUnlocked(this._pendingClass)) ? 'warrior' : this._pendingClass;
-        this.mode = 'quick';
+        this.mode = (mode === 'full') ? 'full' : 'quick';
         this._resetState();
         this.active = true;
         this.stage = 0;
@@ -23138,10 +23451,10 @@ window._showTutorialMenu = function() {
             return;
         }
         try { StorageManager.set('tutorial', { completed:false, skipped:false }); } catch(e) {}
-        TutorialSystem.startTutorial('quick');
+        TutorialSystem.startTutorial(mode === 'full' ? 'full' : 'quick');
     }
     if(quickBtn) quickBtn.onclick = () => _launchFromMenu('quick');
-    if(fullBtn)  fullBtn.onclick  = () => {};
+    if(fullBtn)  fullBtn.onclick  = () => _launchFromMenu('full');
     prompt.style.display = 'flex';
 };
 
