@@ -1952,7 +1952,63 @@ const StorageManager = {
             essenceStreak: 0,
             lastDailyDate: null,
             _migratedAt: null
+        },
+        audio: {
+            _version: 2,
+            music: 0.15,
+            ambient: 0.08,
+            sfx: 0.3,
+            _migratedAt: null
         }
+    },
+
+    // Legacy localStorage keys imported into versioned stores on first read
+    // (storeName -> legacy key). Keeps old saves working while everything
+    // gains versioning + migration.
+    LEGACY_KEYS: {
+        audio: 'audio_settings'
+    },
+
+    // Registered raw (unversioned) keys. These are simple prefs/records that
+    // don't need schema migration, but every key the game touches must live
+    // here so cleanup/migration stays centralized instead of scattered
+    // localStorage.* literals.
+    RAW: {
+        lang: 'aethelgard_lang',
+        vibration: 'vibration_enabled',
+        difficulty: 'krev_difficulty',
+        mode: 'krev_mode',
+        seed: 'krev_seed',
+        daily: 'aethelgard_daily',
+        dailyRankings: 'aethelgard_daily_rankings',
+        bestiary: 'aethelgard_bestiary',
+        settings: 'aethelgard_settings',
+        save: 'aethelgard_save',
+        runStates: 'aethelgard_run_states', // orphaned legacy (RunState removed) - kept for awareness
+        // Dynamic keys (per-day, built at runtime by DailyChallengeSystem):
+        //   'daily_YYYY-MM-DD' -> completion record for a given day
+        //   (storage helpers only accept static names, so these two stay literal)
+    },
+
+    getRaw(name, fallback) {
+        const key = this.RAW[name];
+        if (!key) return fallback;
+        try {
+            const v = localStorage.getItem(key);
+            return v === null ? fallback : v;
+        } catch(e) { return fallback; }
+    },
+
+    setRaw(name, value) {
+        const key = this.RAW[name];
+        if (!key) return;
+        try { localStorage.setItem(key, String(value)); } catch(e) {}
+    },
+
+    removeRaw(name) {
+        const key = this.RAW[name];
+        if (!key) return;
+        try { localStorage.removeItem(key); } catch(e) {}
     },
 
     // Migrations: version -> version+1
@@ -1970,6 +2026,20 @@ const StorageManager = {
     get(storeName) {
         return Debug.safe(() => {
             const key = this._getKey(storeName);
+
+            // First read of a store with a legacy key: import the old data so
+            // existing saves survive and gain versioning from here on.
+            const legacy = this.LEGACY_KEYS[storeName];
+            if (legacy && localStorage.getItem(key) === null) {
+                const legacyRaw = localStorage.getItem(legacy);
+                if (legacyRaw) {
+                    try {
+                        const data = JSON.parse(legacyRaw);
+                        if (typeof data === 'object' && data !== null) this.set(storeName, data);
+                    } catch(e) {}
+                }
+            }
+
             const raw = localStorage.getItem(key);
 
             if (!raw) {
@@ -2076,7 +2146,8 @@ const StorageManager = {
             lore: 'aethelgard_lore',
             tutorial: 'aethelgard_tutorial',
             settings: 'aethelgard_settings',
-            meta: 'aethelgard_meta'
+            meta: 'aethelgard_meta',
+            audio: 'aethelgard_audio'
         };
         return keyMap[storeName] || `aethelgard_${storeName}`;
     },
@@ -2860,7 +2931,7 @@ const I18n = {
     setLang(code) {
         if (!this.STRINGS[code]) return;
         this.lang = code;
-        try { localStorage.setItem('aethelgard_lang', code); } catch(e) {}
+        try { StorageManager.setRaw('lang', code); } catch(e) {}
         // Re-render settings panel if open
         if (window.SettingsUI && SettingsUI.open) SettingsUI._render();
         // Re-apply data-i18n labels (pause panel and any element using the attribute)
@@ -2880,7 +2951,7 @@ const I18n = {
     _autoDetect() {
         // Try saved preference first
         try {
-            const saved = localStorage.getItem('aethelgard_lang');
+            const saved = StorageManager.getRaw('lang');
             if (saved && this.STRINGS[saved]) { this.lang = saved; return; }
         } catch(e) {}
         // Auto-detect from browser
@@ -3828,7 +3899,8 @@ window.toggleLore = function() {
 };
 window.toggleSave = function() {
     if(gameState !== 'PLAYING') return;
-    if(RunState.save()) {
+    const ok = (typeof SaveSystem !== 'undefined') ? SaveSystem.save() : false;
+    if(ok) {
         addLog(' Ponto de save criado!');
     } else {
         addLog('Não é possível salvar agora.');
@@ -5026,7 +5098,7 @@ function update() {
     // only touches storage on unlock) to keep per-frame cost negligible.
     if (gameTime % 30 === 0) Debug.safe(() => checkAchievements(), 'checkAchievements');
     Debug.safe(() => _updateCameraAndHUD(), 'updateCameraAndHUD');
-    if (gameTime % 1200 === 0) { Debug.safe(() => SaveSystem.save(), 'autosaveTimer'); Debug.safe(() => RunState.save(), 'autoSaveRun'); }
+    if (gameTime % 1200 === 0) { Debug.safe(() => SaveSystem.save(), 'autosaveTimer'); }
 }
 
 // ============================================================
@@ -6325,11 +6397,9 @@ window.SND = {
     init() {
         Debug.safe(() => {
             if(this.ctx) return;
-            // Load persistent settings
-            const saved = localStorage.getItem('audio_settings');
-            if(saved) {
-                try { this.settings = JSON.parse(saved); }
-                catch(e) { console.warn('[SND] Corrupted audio_settings, using defaults', e); }
+            // Load persistent settings (versioned store, imports legacy 'audio_settings')
+            if (window.StorageManager) {
+                this.settings = StorageManager.get('audio');
             }
 
             this.ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -7105,11 +7175,11 @@ const Vibrate = {
 
     toggle(state) {
         this.enabled = state;
-        localStorage.setItem('vibration_enabled', state);
+        StorageManager.setRaw('vibration', state);
     },
 
     init() {
-        const saved = localStorage.getItem('vibration_enabled');
+        const saved = StorageManager.getRaw('vibration');
         this.enabled = saved !== null ? saved === 'true' : true;
     }
 };
@@ -8679,18 +8749,7 @@ const NarrativeSystem = {
 // ============================================================
 // Lore journal UI toggle
 // ============================================================
-const _narrativeGlobal = typeof window !== 'undefined' ? window : globalThis;
-
-_narrativeGlobal.toggleLore_original = function() {
-    if (typeof gameState !== 'undefined' && gameState !== 'PLAYING') return;
-    if (NarrativeSystem.uiOpen) {
-        if (window.UIManager) window.UIManager.closePanel();
-    } else {
-        if (window.UIManager) window.UIManager.openPanel('lore');
-    }
-};
-
-_narrativeGlobal.NarrativeSystem = NarrativeSystem;
+window.NarrativeSystem = NarrativeSystem;
 
 
 </script>
@@ -8940,7 +8999,7 @@ const DifficultySystem = {
 window.setDifficulty = function(key) {
     if (!DIFFICULTY_PRESETS[key]) return;
     DifficultySystem.preset = key;
-    try { localStorage.setItem('krev_difficulty', key); } catch(e) {}
+    try { StorageManager.setRaw('difficulty', key); } catch(e) {}
     window._refreshDifficultyUI();
 };
 
@@ -8978,7 +9037,7 @@ window._refreshDifficultyUI = function() {
 
 // Restore saved difficulty preference
 try {
-    var _savedDiff = localStorage.getItem('krev_difficulty');
+    var _savedDiff = StorageManager.getRaw('difficulty');
     if (_savedDiff && DIFFICULTY_PRESETS[_savedDiff]) DifficultySystem.preset = _savedDiff;
 } catch(e) {}
 
@@ -9000,7 +9059,7 @@ window.setMode = function(m) {
     if (m !== 'dungeon' && m !== 'abyss') return;
     window._selectedMode = m;
     if (typeof gameMode !== 'undefined') gameMode = m;
-    try { localStorage.setItem('krev_mode', m); } catch(e) {}
+    try { StorageManager.setRaw('mode', m); } catch(e) {}
     var btns = document.querySelectorAll('.mode-tab');
     for (var i = 0; i < btns.length; i++) {
         var k = btns[i].getAttribute('data-mode');
@@ -9020,7 +9079,7 @@ window.setMode = function(m) {
 };
 // Restore saved mode preference
 try {
-    var _savedMode = localStorage.getItem('krev_mode');
+    var _savedMode = StorageManager.getRaw('mode');
     if (_savedMode === 'dungeon' || _savedMode === 'abyss') { window._selectedMode = _savedMode; if (typeof gameMode !== 'undefined') gameMode = _savedMode; }
 } catch(e) {}
 if (document.readyState === 'loading') {
@@ -9036,7 +9095,7 @@ window.applySeedInput = function() {
     var el = document.getElementById('seed-input');
     if (!el) return;
     var v = (el.value || '').trim();
-    try { localStorage.setItem('krev_seed', v); } catch(e) {}
+    try { StorageManager.setRaw('seed', v); } catch(e) {}
     var status = document.getElementById('seed-status');
     if (window.SeedSystem) {
         if (v) {
@@ -9053,7 +9112,7 @@ window.applySeedInput = function() {
 window.clearSeedInput = function() {
     var el = document.getElementById('seed-input');
     if (el) el.value = '';
-    try { localStorage.removeItem('krev_seed'); } catch(e) {}
+    try { StorageManager.removeRaw('seed'); } catch(e) {}
     if (window.SeedSystem) SeedSystem.clearSeed();
     var status = document.getElementById('seed-status');
     if (status) status.textContent = 'Seed limpa - partidas aleatórias.';
@@ -9061,46 +9120,11 @@ window.clearSeedInput = function() {
 };
 // Restore saved seed preference
 try {
-    var _savedSeed = localStorage.getItem('krev_seed');
+    var _savedSeed = StorageManager.getRaw('seed');
     var _seedEl = document.getElementById('seed-input');
     if (_seedEl) _seedEl.value = _savedSeed || '';
     if (_savedSeed && window.SeedSystem) SeedSystem.setSeedString(_savedSeed);
 } catch(e) {}
-
-
-</script>
-    <script>
-// === js/systems/resources.js ===
-// RESOURCE SYSTEM - Hero's Journey mode resource gathering and inventory
-// v=22
-
-const RESOURCE_TYPES = {
-    herbs:   { name: 'Ervas',    color: '#44ff88', desc: 'Ingrediente para pocoes',   short: 'Erv' },
-    wood:    { name: 'Madeira',  color: '#aa7744', desc: 'Material de construcao',    short: 'Mad' },
-    stone:   { name: 'Pedra',    color: '#888888', desc: 'Mineral basico',            short: 'Ped' },
-    ore:     { name: 'Minério',  color: '#6688cc', desc: 'Metal bruto para forja',    short: 'Min' },
-    crystal: { name: 'Cristal',  color: '#cc88ff', desc: 'Energia mágica pura',       short: 'Cri' }
-};
-
-// Biome -> resource weights: [herbs, wood, stone, ore, crystal]
-const BIOME_RESOURCE_WEIGHTS = {
-    forest:   [0.40, 0.35, 0.10, 0.10, 0.05],
-    dungeon:  [0.05, 0.10, 0.35, 0.35, 0.15],
-    lavaCave: [0.02, 0.05, 0.18, 0.40, 0.35],
-    crypt:    [0.05, 0.10, 0.20, 0.20, 0.45]
-};
-
-
-
-</script>
-    <script>
-// === js/systems/crafting.js ===
-/**
- * CRAFTING SYSTEM
- * Gerencia a conversão de essências em melhorias permanentes ou consumíveis.
- * v=1
- */
-
 
 
 </script>
@@ -9361,129 +9385,7 @@ window.SeedSystem = {
 
 </script>
     <script>
-// === js/systems/run-state.js ===
-// RUN STATE - Save/resume gameplay progress
-const RunState = {
-    MAX_SAVES: 3,
-    
-    _runStates: [], // Array of saved run states
-
-    init() {
-        try {
-            const saved = localStorage.getItem('aethelgard_run_states');
-            if(saved) this._runStates = JSON.parse(saved);
-        } catch(e) {
-            this._runStates = [];
-        }
-    },
-
-    save() {
-        if(!player || gameState !== 'PLAYING') return false;
-        
-        const state = {
-            version: 1, // Current RunState schema version
-            timestamp: Date.now(),
-            class: player.type,
-            level: player.lvl,
-            xp: player.xp || 0,
-            hp: player.hp,
-            maxHp: player.maxHp,
-            currency: player.currency || 0,
-            dungeonLevel: dungeonLevel || 1,
-            kills: player.kills || 0,
-            weaponLevel: player.weaponLevel || 1,
-            hasWeapon: !!player.currentWeapon,
-            unlockedSkills: player.unlockedSkills || [],
-            mutation: player.mutations ? Object.keys(player.mutations).find(k => player.mutations[k]) : null,
-            petType: pets && pets.length > 0 ? pets[0].type : null
-        };
-
-        // If we already have a recent save (within 5 seconds), just replace it
-        if (this._runStates.length > 0 && (Date.now() - this._runStates[0].timestamp) < 5000) {
-            this._runStates[0] = state;
-        } else {
-            this._runStates.unshift(state);
-        }
-
-        // Keep only MAX_SAVES most recent
-        if(this._runStates.length > this.MAX_SAVES) this._runStates.pop();
-        
-        this._persist();
-        return true;
-    },
-
-    load(index) {
-        if(index < 0 || index >= this._runStates.length) return false;
-        
-        const state = this._runStates[index];
-        // Resume state logic will be handled by GameBootstrap
-        return state;
-    },
-
-    getStates() {
-        return this._runStates;
-    },
-
-    clear(index) {
-        if(index !== undefined) {
-            this._runStates.splice(index, 1);
-        } else {
-            this._runStates = [];
-        }
-        this._persist();
-    },
-
-    _persist() {
-        try {
-            localStorage.setItem('aethelgard_run_states', JSON.stringify(this._runStates));
-        } catch(e) {}
-    },
-
-    getDisplayString(state) {
-        if(!state) return '';
-        const mins = Math.floor((Date.now() - state.timestamp) / 60000);
-        const timeStr = mins < 1 ? 'agora' : (mins < 60 ? mins + 'min atrás' : Math.floor(mins/60) + 'h atrás');
-        return `${state.class.toUpperCase()} | Nv${state.level} | D${state.dungeonLevel} | ${state.currency} (${timeStr})`;
-    }
-};
-
-// Hook into engine update
-window.RunState = RunState;
-
-
-</script>
-    <script>
-// === js/systems/event-bus.js ===
-/**
- * EVENT BUS
- * Sistema simples de publicação/assinatura para desacoplar as relíquias da lógica do jogo.
- */
-
-const EventBus = {
-    listeners: {},
-
-    subscribe(event, callback) {
-        if (!this.listeners[event]) this.listeners[event] = [];
-        this.listeners[event].push(callback);
-    },
-
-    publish(event, data) {
-        if (!this.listeners[event]) return;
-        this.listeners[event].forEach(cb => cb(data));
-    }
-};
-
-window.EventBus = EventBus;
-
-
-</script>
-    <script>
-// === js/systems/leaderboard.js ===
-// LEADERBOARD SYSTEM - Local rankings by class
-
-
-</script>
-    <script>
+// === js/systems/quests.js ===
 // === js/systems/daily-challenge.js ===
 // DAILY CHALLENGE SYSTEM
 const DailyChallenge = {
@@ -9506,7 +9408,7 @@ const DailyChallenge = {
     init() {
         this._updateDate();
         try {
-            const saved = localStorage.getItem('aethelgard_daily');
+            const saved = StorageManager.getRaw('daily');
             if(saved) {
                 const data = JSON.parse(saved);
                 this._lastPlayedDate = data.date;
@@ -9583,14 +9485,14 @@ const DailyChallenge = {
                 timeSeconds: timeSeconds
             });
             rankings.sort((a, b) => b.score - a.score);
-            localStorage.setItem('aethelgard_daily_rankings', JSON.stringify(rankings.slice(0, 10)));
+            StorageManager.setRaw('dailyRankings', JSON.stringify(rankings.slice(0, 10)));
         } catch(e) {}
         
         this._completedToday = true;
         this._lastPlayedDate = this._todayDate;
         
         try {
-            localStorage.setItem('aethelgard_daily', JSON.stringify({
+            StorageManager.setRaw('daily', JSON.stringify({
                 date: this._todayDate,
                 completed: true
             }));
@@ -9625,7 +9527,7 @@ const DailyChallenge = {
 
     getTop10() {
         try {
-            const raw = localStorage.getItem('aethelgard_daily_rankings');
+            const raw = StorageManager.getRaw('dailyRankings');
             if (raw) return JSON.parse(raw) || [];
         } catch(e) {}
         return [];
@@ -9696,7 +9598,7 @@ const Bestiary = {
 
     init() {
         try {
-            const saved = localStorage.getItem('aethelgard_bestiary');
+            const saved = StorageManager.getRaw('bestiary');
             if(saved) this._entries = JSON.parse(saved);
         } catch(e) {
             this._entries = {};
@@ -9755,7 +9657,7 @@ const Bestiary = {
 
     _persist() {
         try {
-            localStorage.setItem('aethelgard_bestiary', JSON.stringify(this._entries));
+            StorageManager.setRaw('bestiary', JSON.stringify(this._entries));
         } catch(e) {}
     }
 };
@@ -9763,8 +9665,6 @@ const Bestiary = {
 Bestiary.init();
 window.Bestiary = Bestiary;
 
-// Hook into enemy kill tracking
-const _originalEnemyDeath = null; // Will be set by engine
 
 
 </script>
@@ -12131,8 +12031,6 @@ class Particle {
     }
 }
 
-const PARTICLE_CAP = 100;
-
 function spawnParticles(x,y,c,n=8,size=3) {
     if (window.GameSettings && GameSettings.particlesEnabled === false) return;
     var pc = CONFIG.PARTICLE_CAP || 100;
@@ -13155,11 +13053,6 @@ class Entity {
         if (source === player && typeof Statistics !== 'undefined') Statistics.data.totalDamageDealt = (Statistics.data.totalDamageDealt || 0) + finalDmg;
         if(this.shield > 0) { this.shield -= finalDmg; if(this.shield < 0) { this.hp += this.shield; this.shield = 0; } } else { this.hp -= finalDmg; if(source === player || (source && source.owner === player)) DamageNumbers.add(this.x, this.y, finalDmg, dmgType); }
         
-        // EventBus hook
-        if (typeof EventBus !== 'undefined') {
-            EventBus.publish('onHit', { target: this, source: source, dmg: finalDmg });
-        }
-
         // Hit effects: flash, particles, shake
         this.ft = 5;
         this.hitFlashTimer = 4;
@@ -13224,11 +13117,6 @@ class Entity {
                     player.takeDamage(Math.max(5, this.maxHp * 0.1), m, this);
                 }
                 if(typeof spawnParticles !== 'undefined') spawnParticles(this.x, this.y, '#ff4400', 15, 30);
-            }
-
-            // EventBus hook on kill
-            if (typeof EventBus !== 'undefined' && source) {
-                EventBus.publish('onKill', { target: this, source: source });
             }
 
             // Rogue Poison Explosion
@@ -17723,7 +17611,7 @@ var GameSettings = {
 
     load() {
         try {
-            const data = JSON.parse(localStorage.getItem('aethelgard_settings') || '{}');
+            const data = JSON.parse(StorageManager.getRaw('settings') || '{}');
             const hasTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
             this.controlType     = data.controlType     || (hasTouch ? 'touch' : 'mouse');
             // Missing/undefined (older saves, or never manually changed) -> keep auto-adapting
@@ -17748,7 +17636,7 @@ var GameSettings = {
     },
 
     save() {
-        localStorage.setItem('aethelgard_settings', JSON.stringify({
+        StorageManager.setRaw('settings', JSON.stringify({
             controlType:     this.controlType,
             controlTypeAuto: this.controlTypeAuto,
             joystickMode: this.joystickMode,
@@ -19579,11 +19467,10 @@ window.GameBootstrap = {
     }
 };
 
-// Thin wrapper for HTML buttons
-if (!window.startGame || window.startGame.toString().includes('warn')) {
+// Thin wrapper for HTML buttons. TutorialSystem (loaded later) may replace
+// startGame with its first-time wrapper; this is only a fallback.
+if (!window.startGame) {
     window.startGame = function(cls) { window.GameBootstrap.start(cls); };
-} else {
-    window._startGameInternal = function(cls) { window.GameBootstrap.start(cls); };
 }
 window.continueGame = function() { window.GameBootstrap.continueGame(); };
 
