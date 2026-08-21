@@ -5535,6 +5535,13 @@ function _L(key, fallback) {
 
 // Initialize
 I18n._autoDetect();
+// Apply translations to [data-i18n] elements (script runs at end of body,
+// so the DOM is ready; guard for robustness anyway).
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => I18n.apply());
+} else {
+    I18n.apply();
+}
 window.I18n = I18n;
 
 
@@ -21925,6 +21932,12 @@ Debug.info("====== BOOTSTRAP.JS IS EXECUTING ======");
 
 window.GameBootstrap = {
     start(cls) {
+        // Resolve the daily challenge BEFORE the class-force check below
+        // (applyChallenge also runs in _resetState for continues; idempotent).
+        if (window.DailyChallenge) {
+            var _dc = DailyChallenge.getTodayChallenge();
+            if (_dc) DailyChallenge.applyChallenge(_dc);
+        }
         // Daily challenge may force a class (tank/sniper/glass-cannon challenges)
         if (window._forcedClass) {
             cls = window._forcedClass;
@@ -21932,8 +21945,9 @@ window.GameBootstrap = {
         }
         Debug.info('[BOOTSTRAP] Starting game with class:', cls);
 
-        // Guarda de meta-progressão: classes além do Guerreiro exigem desbloqueio
-        if (window.MetaSystem && !MetaSystem.isClassUnlocked(cls)) {
+        // Guarda de meta-progressão: classes além do Guerreiro exigem desbloqueio.
+        // Desafios diários com classe forçada concedem a classe (bypass).
+        if (window.MetaSystem && !MetaSystem.isClassUnlocked(cls) && !(window._dailyMods && window._dailyMods.forceClass)) {
             if (typeof showToast === 'function') showToast(window.I18n ? I18n.t('toast.classLocked') : 'Classe bloqueada — desbloqueie na MetaLoja com Essência.', 'error');
             return;
         }
