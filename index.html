@@ -1634,7 +1634,6 @@ const COLORS = {
 // Minimap buffer - must be declared BEFORE _initCanvas uses it
 // For backward compatibility, also set as var (will be overwritten by _initCanvas)
 var canvas, ctx, lightCanvas, lctx, worldCanvas, wctx;
-var _worldDirty = true; // dirty flag for world redraw
 var _mmBuffer, _mmCtx;
 
 // Initial dimensions - LOW RES MODE FOR FPS
@@ -1885,7 +1884,6 @@ function resize() {
         worldCanvas.height = bufH;
     }
     _mmDirty = true;
-    _worldDirty = true;
 }
 
 window.addEventListener('resize', resize);
@@ -2996,7 +2994,6 @@ var CONFIG = {
     PARTICLE_CAP: 60,
     MAX_BULLETS: 45,
     LIGHTING_THROTTLE: 15,          // skip frames
-    WORLD_REDRAW_THROTTLE: 5,      // skip frames
     AMBIENT_PARTICLE_INTERVAL: 12,  // frames
     TORCH_PARTICLE_INTERVAL: 5,    // frames
     CD_UPDATE_INTERVAL: 20,        // frames
@@ -4704,7 +4701,9 @@ function _handlePlayerDeath() {
 }
 
 function _updateEntitySimulation() {
-    if (window.spatialHash) {
+    // Lazy rebuild: the hash is only queried by projectile collision
+    // (Bullet.update), so skip the O(n) rebuild when no projectiles exist.
+    if (window.spatialHash && bullets.length > 0) {
         spatialHash.clear();
         for (let i = 0; i < entities.length; i++) { if (entities[i].alive) spatialHash.insert(entities[i]); }
     }
@@ -5053,15 +5052,9 @@ function _updateEnemySpawning() {
     }
 }
 
-let _lastCamX = 0, _lastCamY = 0;
 function _updateCameraAndHUD() {
     const tx = player ? player.x - width/2 : 0, ty = player ? player.y - height/2 : 0;
     camX += (tx - camX) * CONFIG.CAMERA_LERP; camY += (ty - camY) * CONFIG.CAMERA_LERP;
-    // Mark world dirty if camera moved more than 2 pixels
-    if (Math.abs(camX - _lastCamX) > 2 || Math.abs(camY - _lastCamY) > 2) {
-        _worldDirty = true;
-        _lastCamX = camX; _lastCamY = camY;
-    }
     // Reduced shake for feedback (50% of original)
     if (shake > 0) shake *= CONFIG.SHAKE_DECAY; if (shake < CONFIG.SHAKE_THRESHOLD) shake = 0;
     // ── HUD and UI updates ───────────────────────────────────────────
@@ -5149,6 +5142,12 @@ function drawGlow(ctx2, px, py, r, color, intensity = 0.35) {
     ctx2.globalAlpha = 1;
 }
 
+// NOTE on static-layer caching (README claim): tiles are cached in Map.buffer
+// (one drawImage per frame), lighting in lightCanvas (recomputed every
+// LIGHTING_THROTTLE frames), the minimap in _mmBuffer. THIS function is a full
+// dynamic composition (entities, bullets, particles, effects) and is
+// intentionally redrawn every frame: a camera-based dirty flag cannot skip it
+// because the player and live enemies always occupy the viewport.
 function _drawWorldLayer() {
     if (gameState === 'WORLD_MAP') {
         if (typeof WorldMap !== 'undefined') WorldMap.draw(ctx);
@@ -6147,17 +6146,8 @@ window._toggleSound = function() {
 // GAME LOOP
 // ============================================================
 let _lastTime = 0, _fpsFrames = 0, _fpsTime = 0;
-let _prevEntitiesLen = 0, _prevBulletsLen = 0, _prevParticlesLen = 0;
 function loop(timestamp) {
     if (!_lastTime) _lastTime = timestamp;
-    
-    // Check if entity lists changed -> mark world dirty
-    if (entities.length !== _prevEntitiesLen || bullets.length !== _prevBulletsLen || particles.length !== _prevParticlesLen) {
-        _worldDirty = true;
-        _prevEntitiesLen = entities.length;
-        _prevBulletsLen = bullets.length;
-        _prevParticlesLen = particles.length;
-    }
     
     // Single, efficient FPS calculation for all displays
     const dt = timestamp - _lastTime;
@@ -6166,7 +6156,7 @@ function loop(timestamp) {
     _fpsFrames++;
     _fpsTime += dt;
     
-    if (_fpsTime >= 1000) {
+    if (_fpsTime >= 500) {
         const fps = Math.round((_fpsFrames * 1000) / _fpsTime);
         const el = document.getElementById('fps-counter');
         if (el) {
@@ -6189,7 +6179,13 @@ function loop(timestamp) {
                 _setAutoPerf(false);
             }
             _autoQualityStep(fps);
-            if (fps < 50 && _autoResScale > _autoResMin) {
+            // Two-tier drop: hard dips (fps < 40) jump a full tier (x0.75) so
+            // the game recovers fast on weak devices; mild dips crawl x0.9.
+            if (fps < 40 && _autoResScale > _autoResMin) {
+                _autoResScale = Math.max(_autoResMin, Math.round((_autoResScale * 0.75) * 100) / 100);
+                _autoResStable = 0;
+                resize();
+            } else if (fps < 50 && _autoResScale > _autoResMin) {
                 _autoResScale = Math.max(_autoResMin, Math.round((_autoResScale * 0.9) * 100) / 100);
                 _autoResStable = 0;
                 resize();
