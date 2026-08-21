@@ -4988,7 +4988,6 @@ function _updateCameraAndHUD() {
     // Mark world dirty if camera moved more than 2 pixels
     if (Math.abs(camX - _lastCamX) > 2 || Math.abs(camY - _lastCamY) > 2) {
         _worldDirty = true;
-        _lightingDirty = true;
         _lastCamX = camX; _lastCamY = camY;
     }
     // Reduced shake for feedback (50% of original)
@@ -5270,7 +5269,6 @@ function _drawAmbientMotes(ctx) {
 
 let _lightingThrottle = 0;
 let _cachedLightCanvas = null;
-let _lightingDirty = true;
 let _particleBatch = {};
 let _cachedAliveEnemies = 0;
 function _spawnTorchParticles() {
@@ -5600,7 +5598,7 @@ function draw() {
                 }
             } else if (_fadeState.phase === 'mid' && !_anyPanelOpen()) {
                 try {
-                _cachedLightCanvas = null; _lightingThrottle = 0; _lightingDirty = true;
+                _cachedLightCanvas = null; _lightingThrottle = 0;
                 if ((gameMode === 'abyss' || dungeonLevel < 10) && typeof BiomeSystem !== 'undefined' && BiomeSystem.onDungeonComplete) {
                     BiomeSystem.onDungeonComplete(); // a cada 3 pisos o cenário muda de bioma
                 }
@@ -6313,12 +6311,9 @@ if (document.readyState === 'loading') {
 // === js/core/audio.js ===
 // AUDIO SYSTEM - Procedural Web Audio with Sound Variety and Ambient
 window.SND = {
-    ctx: null, musicGain: null, sfxGain: null, ambientTimer: null, ambientNodes: [],
+    ctx: null, musicGain: null, sfxGain: null, ambientTimer: null,
     // Sound variation state
     lastDeathPitch: 0, lastHitPitch: 0, _step: 0,
-    // Audio Object Pool
-    _nodePool: { oscillators: [], gains: [] },
-    _POOL_SIZE: 10,
     // Ambient sounds control
     _ambientInterval: null,
     _ambientGain: null,
@@ -6367,11 +6362,15 @@ window.SND = {
             this.sfxGain.gain.value = this.settings.sfx;
             this.sfxGain.connect(this.ctx.destination);
 
-            // Pre-fill pool
-            for(let i=0; i<this._POOL_SIZE; i++) {
-                this._nodePool.oscillators.push(this.ctx.createOscillator());
-                this._nodePool.gains.push(this.ctx.createGain());
-            }
+            // Suspend the audio graph when the tab is hidden (battery + avoids
+            // playing over other apps), resume when it becomes visible again.
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'hidden') {
+                    if (this.ctx && this.ctx.state === 'running') this.ctx.suspend().catch(() => {});
+                } else if (document.visibilityState === 'visible') {
+                    if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
+                }
+            });
         }, 'audioInit');
     },
 
@@ -6397,8 +6396,9 @@ window.SND = {
 
         const dest = target === 'music' ? this.musicGain : this.sfxGain;
         
+        let panner = null;
         if (pan !== 0 && this.ctx.createStereoPanner) {
-            const panner = this.ctx.createStereoPanner();
+            panner = this.ctx.createStereoPanner();
             panner.pan.value = pan;
             osc.connect(gain);
             gain.connect(panner);
@@ -6410,6 +6410,14 @@ window.SND = {
         
         osc.start();
         osc.stop(this.ctx.currentTime + dur);
+        // Free the graph as soon as the note ends so GC can reclaim the nodes
+        // (OscillatorNodes are single-use; without this, nodes stay connected
+        // and accumulate in combat-heavy sessions).
+        osc.onended = () => {
+            try { osc.disconnect(); } catch(e) {}
+            try { gain.disconnect(); } catch(e) {}
+            if (panner) { try { panner.disconnect(); } catch(e) {} }
+        };
     },
 
     playNoise(vol, dur, freq, filterType, x = null, y = null) {
@@ -6437,8 +6445,9 @@ window.SND = {
         noise.connect(filter);
         filter.connect(gain);
 
+        let panner = null;
         if (pan !== 0 && this.ctx.createStereoPanner) {
-            const panner = this.ctx.createStereoPanner();
+            panner = this.ctx.createStereoPanner();
             panner.pan.value = pan;
             gain.connect(panner);
             panner.connect(this.sfxGain);
@@ -6447,6 +6456,12 @@ window.SND = {
         }
 
         noise.start();
+        noise.onended = () => {
+            try { noise.disconnect(); } catch(e) {}
+            try { filter.disconnect(); } catch(e) {}
+            try { gain.disconnect(); } catch(e) {}
+            if (panner) { try { panner.disconnect(); } catch(e) {} }
+        };
     },
 
     _noiseBuffer(dur) {
@@ -6719,6 +6734,11 @@ window.SND = {
         
         osc.start();
         osc.stop(this.ctx.currentTime + dur);
+        osc.onended = () => {
+            try { osc.disconnect(); } catch(e) {}
+            try { filter.disconnect(); } catch(e) {}
+            try { gain.disconnect(); } catch(e) {}
+        };
     },
 
     // Crossfade ambient sounds
@@ -6892,6 +6912,8 @@ window.SND = {
         layer.gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + fadeTime);
         this.schedule(() => {
             try { layer.osc.stop(); } catch(e) {}
+            try { layer.osc.disconnect(); } catch(e) {}
+            try { layer.gain.disconnect(); } catch(e) {}
             delete this._layerNodes[name];
         }, (fadeTime + 0.2) * 1000);
     },
@@ -12121,19 +12143,6 @@ function spawnParticles(x,y,c,n=8,size=3) {
             particles.push(PoolManager.acquire('Particle', x, y, c, size));
         } else {
             particles.push(new Particle(x,y,c,size));
-        }
-    }
-}
-
-// Recycle dead particles back to pool each frame (called in update loop)
-function recycleParticles() {
-    if (!window.PoolManager) return;
-    for (let i = particles.length - 1; i >= 0; i--) {
-        if (!particles[i].alive) {
-            PoolManager.release('Particle', particles[i]);
-            // Fast removal by swapping with last element
-            particles[i] = particles[particles.length - 1];
-            particles.pop();
         }
     }
 }
@@ -21177,7 +21186,12 @@ Input.init();
             });
         }
         function anim() {
-            if (!document.getElementById('start-screen')) return;
+            // Zero-cost when hidden: stop the loop while gameplay/menus cover
+            // the start screen; a MutationObserver restarts it when shown.
+            if (startScreen.classList.contains('hidden')) {
+                running = false;
+                return;
+            }
             sctx.clearRect(0, 0, sW, sH);
             for (var j = 0; j < sParticles.length; j++) {
                 var p = sParticles[j];
@@ -21191,9 +21205,19 @@ Input.init();
                 sctx.fillStyle = 'rgba(' + p.color + ',' + (p.a * flick) + ')';
                 sctx.fill();
             }
-            requestAnimationFrame(anim);
+            rafId = requestAnimationFrame(anim);
         }
-        anim();
+        var rafId = null, running = false;
+        function ensureRunning() {
+            if (!running && !startScreen.classList.contains('hidden')) {
+                running = true;
+                rafId = requestAnimationFrame(anim);
+            }
+        }
+        ensureRunning();
+        if (window.MutationObserver) {
+            new MutationObserver(ensureRunning).observe(startScreen, { attributes: true, attributeFilter: ['class'] });
+        }
     })();
     </script>
         <script>
