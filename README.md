@@ -30,10 +30,13 @@ This project demonstrates strong capabilities in **state management, performance
 - **⚙️ Custom Game Engine:** Built from scratch featuring an entity-component style architecture, collision detection (Spatial Hash), and dynamic lighting.
 - **📈 Dynamic Difficulty Adjustment (DDA):** The game adapts to the player's performance in real-time.
 - **🎒 Deep RPG Mechanics:** 
-  - Skill Tree with specialized branches.
+  - Skill Tree with specialized branches (52 nodes).
   - Equipment system with rarities (Common to Mythic) and unique affixes.
   - Prestige system for infinite replayability.
-  - Lore and Achievement tracking.
+  - Lore and Achievement tracking (55 lore fragments, 25 achievements).
+- **🌌 Two Game Modes:** 10-floor Dungeon run and the infinite Abyss.
+- **🏕️ Camp & Events:** In-floor events, camp events, and 3 NPCs (Guide, Merchant, Oracle).
+- **⛩️ MetaLoja & Relics:** Meta-progression shop (essence economy), 13 relics, pets, and daily challenges.
 - **🔊 Procedural Audio (Web Audio API):** Synthesized sound effects and dynamic adaptive music that changes based on the biome and combat state.
 
 ---
@@ -62,14 +65,14 @@ Since the game is built with vanilla web technologies, running it is incredibly 
     ```
 2.  **Open the file:**
     Simply open `index.html` in any modern web browser.
-3.  *(Optional)* For the best experience, serve it through a local development server (e.g., VSCode Live Server or Python's `http.server`) to ensure PWA service workers function correctly.
+3.  *(Optional)* For the best experience, serve it through a local development server (e.g., VSCode Live Server or Python's `http.server`). This enables PWA install and the offline service worker — both require `http(s)://` (opening the file directly always works, just without them).
 
 ---
 
 ## 🎮 Controls
 
 *   **Mobile:** On-screen virtual joysticks (configurable in settings as fixed or floating) and dedicated action buttons.
-*   **Desktop:** (If applicable) WASD/Arrows to move, Mouse to aim/shoot, Space/Keys for abilities. *(Note: Primarily touch-optimized).*
+*   **Desktop:** WASD/Arrows to move, Mouse to aim/shoot (hold to fire), Space for abilities, gamepad support. Input mode auto-adapts between touch, mouse, and gamepad.
 
 ---
 
