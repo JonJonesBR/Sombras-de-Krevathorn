@@ -24014,5 +24014,19 @@ Input.init();
         });
     })();
     </script>
+
+    <script>
+    /* === PWA: OFFLINE SERVICE WORKER (sw.js) === */
+    // Registers the stale-while-revalidate cache worker. Requires http(s) —
+    // opening index.html directly from disk skips registration and the game
+    // still works (just without offline caching).
+    if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.protocol === 'http:')) {
+        window.addEventListener('load', function() {
+            navigator.serviceWorker.register('./sw.js').catch(function(err) {
+                console.warn('[PWA] Service worker registration failed:', err);
+            });
+        });
+    }
+    </script>
 </body>
 </html>
