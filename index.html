@@ -955,7 +955,7 @@ body.cb-tritan  { filter: url("#cb-tritan"); }
                 </svg>
                 <div>
                     <h1 class="font-headline-xl" style="font-size:clamp(1.5rem,6vw,2.2rem);color:#f0e0ff;text-shadow:0 0 20px rgba(224,182,255,0.4);letter-spacing:-0.02em;">Krevathorn</h1>
-                    <p class="text-center" style="font-size:clamp(0.6rem,2.2vw,0.8rem);letter-spacing:0.3em;text-transform:uppercase;color:rgba(224,182,255,0.4);margin-top:-2px;">O Abismo Aguarda</p>
+                    <p class="text-center" style="font-size:clamp(0.6rem,2.2vw,0.8rem);letter-spacing:0.3em;text-transform:uppercase;color:rgba(224,182,255,0.4);margin-top:-2px;" data-i18n="start.tagline">O Abismo Aguarda</p>
                 </div>
             </div>
         </header>
@@ -966,10 +966,10 @@ body.cb-tritan  { filter: url("#cb-tritan"); }
             <!-- Mode Tabs (pill-style) -->
             <div style="display:flex;gap:6px;justify-content:center;margin-bottom:8px;">
                 <button data-mode="dungeon" onclick="window.setMode('dungeon')" class="mode-tab" style="padding:6px 18px;border-radius:999px;font-size:clamp(0.75rem,3vw,0.95rem);font-weight:700;border:1.5px solid rgba(224,182,255,0.5);background:rgba(224,182,255,0.15);color:#f0e0ff;text-transform:uppercase;letter-spacing:0.08em;transition:all 0.25s;touch-action:manipulation;">
-                    <svg class="icon-inline" width="14" height="14" style="margin-right:4px;"><use href="#ic-swords"/></svg> Masmorra
+                    <svg class="icon-inline" width="14" height="14" style="margin-right:4px;"><use href="#ic-swords"/></svg> <span data-i18n="start.modeDungeon">Masmorra</span>
                 </button>
                 <button data-mode="abyss" onclick="window.setMode('abyss')" class="mode-tab" style="padding:6px 18px;border-radius:999px;font-size:clamp(0.75rem,3vw,0.95rem);font-weight:700;border:1.5px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:0.08em;transition:all 0.25s;touch-action:manipulation;">
-                    <svg class="icon-inline" width="14" height="14" style="margin-right:4px;"><use href="#ic-dodge"/></svg> Abismo
+                    <svg class="icon-inline" width="14" height="14" style="margin-right:4px;"><use href="#ic-dodge"/></svg> <span data-i18n="start.modeAbyss">Abismo</span>
                 </button>
             </div>
             
@@ -1167,7 +1167,7 @@ body.cb-tritan  { filter: url("#cb-tritan"); }
             <!-- Left: Currency -->
             <div id="currency-display" style="pointer-events:none;">
                 <div style="display:flex;align-items:center;gap:3px;background:rgba(0,0,0,0.55);padding:4px 8px;border-radius:10px;border:1px solid rgba(255,215,0,0.15);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);">
-                    <span style="font-size:10px;">\u{1FA99}</span>
+                    <span style="font-size:10px;">🪙</span>
                     <span id="currency-amount" style="font-size:10px;font-weight:700;color:#ffcc00;">0</span>
                 </div>
             </div>
@@ -2716,6 +2716,67 @@ const I18n = {
             'settings.musicOn': 'Ligada',
             'settings.musicOff': 'Desligada',
             'settings.close': 'Fechar',
+            'settings.audio': 'Áudio',
+            'settings.visuals': 'Visuais',
+            'settings.graphicsQuality': 'Qualidade Gráfica',
+            'settings.fontSize': 'Tamanho da Fonte',
+            'settings.accessibility': 'Acessibilidade',
+            'settings.dangerZone': 'Zona de Perigo',
+            'settings.joystick': 'Modo Joystick',
+            'settings.sensitivity': 'Sensibilidade',
+            'settings.on': 'LIG',
+            'settings.off': 'DES',
+            'settings.particles': 'Partículas',
+            'settings.shake': 'Treme-Treme',
+            'settings.hitstop': 'Hitstop',
+            'settings.aimAssist': 'Mira Automática',
+            'settings.reducedMotion': 'Menos Movimento',
+            'settings.low': 'Baixa',
+            'settings.medium': 'Média',
+            'settings.high': 'Alta',
+            'settings.resetSave': '🗑 Resetar Save Completo',
+            'panel.shop': 'Mercador',
+            'panel.camp': 'Acampamento do Mercador',
+            'panel.skills': 'Habilidades',
+            'panel.stats': 'Estatísticas',
+            'panel.settings': 'Configurações',
+            'panel.achievements': 'Conquistas',
+            'panel.lore': 'Grimório de Krevathorn',
+            'panel.daily': 'Desafio Diário',
+            'panel.meta': 'MetaLoja',
+            'shop.yourGold': 'SEU OURO',
+            'shop.purchases': 'COMPRAS',
+            'shop.perFloor': 'por andar',
+            'shop.merchantActive': '| MERCADOR −20% ATIVO',
+            'shop.limitReached': '⛔ Limite de compras deste andar atingido. Volte no próximo andar!',
+            'shop.reroll': 'REROLL',
+            'shop.forge': 'FORJA',
+            'shop.tabConsumable': 'Consumíveis',
+            'shop.tabUpgrade': 'Melhorias',
+            'shop.tabPets': 'Pets',
+            'shop.goldRush': '| FOME DE OURO ATIVA',
+            'skills.damage': 'DANO',
+            'skills.crit': 'CRÍTICO',
+            'skills.speed': 'VEL.',
+            'skills.unlock': '⚡ DESBLOQUEAR',
+            'skills.unlocked': 'DESBLOQUEADO',
+            'skills.ability': 'HABILIDADE',
+            'skills.requires': 'Requer: ',
+            'skills.copyBuild': '📋 Copiar código do build',
+            'skills.tapHint': 'Toque em um nó para ver detalhes e desbloquear.',
+            'skills.speedLimit': '⛔ Limite de velocidade atingido (',
+            'daily.today': 'Desafio de hoje',
+            'daily.next': 'Próximo desafio em ',
+            'daily.streak': '🔥 Streak: ',
+            'daily.days': 'dia(s) consecutivo(s)',
+            'daily.done': '✓ Concluído hoje: ',
+            'daily.playHint': 'Pode jogar uma vez por dia — bata o desafio e pontue!',
+            'daily.ranking': 'Ranking local (Top 10)',
+            'daily.empty': 'Nenhuma pontuação ainda — seja o primeiro!',
+            'meta.acquired': 'Acumulado',
+            'meta.earnHint': 'Ganhe Essência ao completar runs (vitórias rendem mais). Invista para desbloquear classes, biomas e melhorias permanentes.',
+            'meta.passives': 'Melhorias permanentes',
+            'meta.unlocks': 'Desbloqueios',
 
             // Menu button tooltips
             'btn.shop': 'Loja',
@@ -2808,7 +2869,7 @@ const I18n = {
             'tutorial.skillNameRogue': 'Dash',
             'tutorial.skillNameMage': 'Tempestade Arcana',
             'tutorial.stage1.title': ' Bem-vindo à Krevathorn!',
-            'tutorial.stage1.line1': 'Tutorial rápido — 4 etapas, ~1 minuto.',
+            'tutorial.stage1.line1': 'Tutorial rápido — 6 etapas, ~1 minuto.',
             'tutorial.stage1.line2': '',
             'tutorial.stage1.line3': 'ESQUERDA: mover — DIREITA: atirar',
             'tutorial.stage1.line4': 'BOTÃO CENTRAL: habilidade de classe',
@@ -3543,9 +3604,13 @@ const I18n = {
             'toast.classLocked': 'Classe bloqueada — desbloqueie na MetaLoja com Essência.',
             'toast.guardianReward': '🏆 Recompensa do Guardião: ',
             'toast.objectiveComplete': '🎯 Objetivo concluído: ',
+            'toast.dailyForced': 'classe forçada: ',
 
             // Start screen (static labels)
             'start.modeDesc': 'Evolua seu personagem em masmorras cada vez mais difíceis.',
+            'start.tagline': 'O Abismo Aguarda',
+            'start.modeDungeon': 'Masmorra',
+            'start.modeAbyss': 'Abismo',
             'start.difficultyLabel': 'Dificuldade',
             'start.diff.facil': '🌱 Fácil',
             'start.diff.normal': '⚔️ Normal',
@@ -3670,6 +3735,67 @@ const I18n = {
             'settings.musicOn': 'On',
             'settings.musicOff': 'Off',
             'settings.close': 'Close',
+            'settings.audio': 'Audio',
+            'settings.visuals': 'Visuals',
+            'settings.graphicsQuality': 'Graphics Quality',
+            'settings.fontSize': 'Font Size',
+            'settings.accessibility': 'Accessibility',
+            'settings.dangerZone': 'Danger Zone',
+            'settings.joystick': 'Joystick Mode',
+            'settings.sensitivity': 'Sensitivity',
+            'settings.on': 'ON',
+            'settings.off': 'OFF',
+            'settings.particles': 'Particles',
+            'settings.shake': 'Screen Shake',
+            'settings.hitstop': 'Hitstop',
+            'settings.aimAssist': 'Aim Assist',
+            'settings.reducedMotion': 'Reduced Motion',
+            'settings.low': 'Low',
+            'settings.medium': 'Medium',
+            'settings.high': 'High',
+            'settings.resetSave': '🗑 Full Save Reset',
+            'panel.shop': 'Merchant',
+            'panel.camp': 'Merchant Camp',
+            'panel.skills': 'Skills',
+            'panel.stats': 'Stats',
+            'panel.settings': 'Settings',
+            'panel.achievements': 'Achievements',
+            'panel.lore': 'Krevathorn Grimoire',
+            'panel.daily': 'Daily Challenge',
+            'panel.meta': 'Meta Shop',
+            'shop.yourGold': 'YOUR GOLD',
+            'shop.purchases': 'PURCHASES',
+            'shop.perFloor': 'per floor',
+            'shop.merchantActive': '| MERCHANT −20% ACTIVE',
+            'shop.limitReached': '⛔ Purchase limit reached for this floor. Come back next floor!',
+            'shop.reroll': 'REROLL',
+            'shop.forge': 'FORGE',
+            'shop.tabConsumable': 'Consumables',
+            'shop.tabUpgrade': 'Upgrades',
+            'shop.tabPets': 'Pets',
+            'shop.goldRush': '| GOLD RUSH ACTIVE',
+            'skills.damage': 'DMG',
+            'skills.crit': 'CRIT',
+            'skills.speed': 'SPD',
+            'skills.unlock': '⚡ UNLOCK',
+            'skills.unlocked': 'UNLOCKED',
+            'skills.ability': 'ABILITY',
+            'skills.requires': 'Requires: ',
+            'skills.copyBuild': '📋 Copy build code',
+            'skills.tapHint': 'Tap a node to see details and unlock it.',
+            'skills.speedLimit': '⛔ Speed limit reached (',
+            'daily.today': "Today's Challenge",
+            'daily.next': 'Next challenge in ',
+            'daily.streak': '🔥 Streak: ',
+            'daily.days': 'consecutive day(s)',
+            'daily.done': '✓ Completed today: ',
+            'daily.playHint': 'You can play once per day — beat the challenge and score!',
+            'daily.ranking': 'Local ranking (Top 10)',
+            'daily.empty': 'No scores yet — be the first!',
+            'meta.acquired': 'TOTAL EARNED',
+            'meta.earnHint': 'Earn Essence by completing runs (wins pay more). Invest to unlock classes, biomes and permanent upgrades.',
+            'meta.passives': 'Permanent upgrades',
+            'meta.unlocks': 'Unlocks',
 
             // Menu button tooltips
             'btn.shop': 'Shop',
@@ -3762,7 +3888,7 @@ const I18n = {
             'tutorial.skillNameRogue': 'Dash',
             'tutorial.skillNameMage': 'Arcane Storm',
             'tutorial.stage1.title': ' Welcome to Krevathorn!',
-            'tutorial.stage1.line1': 'Quick tutorial — 4 steps, ~1 minute.',
+            'tutorial.stage1.line1': 'Quick tutorial — 6 steps, ~1 minute.',
             'tutorial.stage1.line2': '',
             'tutorial.stage1.line3': 'LEFT: move — RIGHT: shoot',
             'tutorial.stage1.line4': 'CENTER BUTTON: class ability',
@@ -4497,9 +4623,13 @@ const I18n = {
             'toast.classLocked': 'Class locked — unlock it in the Meta Shop with Essence.',
             'toast.guardianReward': '🏆 Guardian Reward: ',
             'toast.objectiveComplete': '🎯 Objective complete: ',
+            'toast.dailyForced': 'forced class: ',
 
             // Start screen (static labels)
             'start.modeDesc': 'Evolve your character through ever-harder dungeons.',
+            'start.tagline': 'The Abyss Awaits',
+            'start.modeDungeon': 'Dungeon',
+            'start.modeAbyss': 'Abyss',
             'start.difficultyLabel': 'Difficulty',
             'start.diff.facil': '🌱 Easy',
             'start.diff.normal': '⚔️ Normal',
@@ -4624,6 +4754,67 @@ const I18n = {
             'settings.musicOn': 'Activada',
             'settings.musicOff': 'Desactivada',
             'settings.close': 'Cerrar',
+            'settings.audio': 'Audio',
+            'settings.visuals': 'Visuales',
+            'settings.graphicsQuality': 'Calidad Gráfica',
+            'settings.fontSize': 'Tamaño de Fuente',
+            'settings.accessibility': 'Accesibilidad',
+            'settings.dangerZone': 'Zona de Peligro',
+            'settings.joystick': 'Modo Joystick',
+            'settings.sensitivity': 'Sensibilidad',
+            'settings.on': 'SÍ',
+            'settings.off': 'NO',
+            'settings.particles': 'Partículas',
+            'settings.shake': 'Sacudida',
+            'settings.hitstop': 'Hitstop',
+            'settings.aimAssist': 'Mira Automática',
+            'settings.reducedMotion': 'Menos Movimiento',
+            'settings.low': 'Baja',
+            'settings.medium': 'Media',
+            'settings.high': 'Alta',
+            'settings.resetSave': '🗑 Reiniciar Guardado Completo',
+            'panel.shop': 'Mercader',
+            'panel.camp': 'Campamento del Mercader',
+            'panel.skills': 'Habilidades',
+            'panel.stats': 'Estadísticas',
+            'panel.settings': 'Configuración',
+            'panel.achievements': 'Logros',
+            'panel.lore': 'Grimorio de Krevathorn',
+            'panel.daily': 'Desafío Diario',
+            'panel.meta': 'Tienda Meta',
+            'shop.yourGold': 'TU ORO',
+            'shop.purchases': 'COMPRAS',
+            'shop.perFloor': 'por piso',
+            'shop.merchantActive': '| MERCADER −20% ACTIVO',
+            'shop.limitReached': '⛔ Límite de compras de este piso alcanzado. ¡Vuelve al próximo piso!',
+            'shop.reroll': 'REROLL',
+            'shop.forge': 'FORJA',
+            'shop.tabConsumable': 'Consumibles',
+            'shop.tabUpgrade': 'Mejoras',
+            'shop.tabPets': 'Mascotas',
+            'shop.goldRush': '| FIEBRE DEL ORO ACTIVA',
+            'skills.damage': 'DAÑO',
+            'skills.crit': 'CRÍTICO',
+            'skills.speed': 'VEL.',
+            'skills.unlock': '⚡ DESBLOQUEAR',
+            'skills.unlocked': 'DESBLOQUEADO',
+            'skills.ability': 'HABILIDAD',
+            'skills.requires': 'Requiere: ',
+            'skills.copyBuild': '📋 Copiar código de build',
+            'skills.tapHint': 'Toca un nodo para ver detalles y desbloquearlo.',
+            'skills.speedLimit': '⛔ Límite de velocidad alcanzado (',
+            'daily.today': 'Desafío de hoy',
+            'daily.next': 'Próximo desafío en ',
+            'daily.streak': '🔥 Racha: ',
+            'daily.days': 'día(s) consecutivo(s)',
+            'daily.done': '✓ Completado hoy: ',
+            'daily.playHint': 'Puedes jugar una vez al día: ¡supera el desafío y puntúa!',
+            'daily.ranking': 'Ranking local (Top 10)',
+            'daily.empty': 'Aún no hay puntuaciones: ¡sé el primero!',
+            'meta.acquired': 'ACUMULADO',
+            'meta.earnHint': 'Gana Esencia al completar runs (las victorias rinden más). Invierte para desbloquear clases, biomas y mejoras permanentes.',
+            'meta.passives': 'Mejoras permanentes',
+            'meta.unlocks': 'Desbloqueos',
 
             // Menu button tooltips
             'btn.shop': 'Tienda',
@@ -4716,7 +4907,7 @@ const I18n = {
             'tutorial.skillNameRogue': 'Dash',
             'tutorial.skillNameMage': 'Tormenta Arcana',
             'tutorial.stage1.title': ' ¡Bienvenido a Krevathorn!',
-            'tutorial.stage1.line1': 'Tutorial rápido — 4 pasos, ~1 minuto.',
+            'tutorial.stage1.line1': 'Tutorial rápido — 6 pasos, ~1 minuto.',
             'tutorial.stage1.line2': '',
             'tutorial.stage1.line3': 'IZQUIERDA: mover — DERECHA: disparar',
             'tutorial.stage1.line4': 'BOTÓN CENTRAL: habilidad de clase',
@@ -5449,9 +5640,13 @@ const I18n = {
             'toast.classLocked': 'Clase bloqueada: desbloquéala en la MetaTienda con Esencia.',
             'toast.guardianReward': '🏆 Recompensa del Guardián: ',
             'toast.objectiveComplete': '🎯 Objetivo completado: ',
+            'toast.dailyForced': 'clase forzada: ',
 
             // Start screen (static labels)
             'start.modeDesc': 'Evoluciona tu personaje en mazmorras cada vez más difíciles.',
+            'start.tagline': 'El Abismo Aguarda',
+            'start.modeDungeon': 'Masmorra',
+            'start.modeAbyss': 'Abismo',
             'start.difficultyLabel': 'Dificultad',
             'start.diff.facil': '🌱 Fácil',
             'start.diff.normal': '⚔️ Normal',
@@ -6681,6 +6876,9 @@ function _cancelContinue() {
     gameState = 'GAME_OVER';
     uiG.classList.remove('hidden'); uiG.classList.add('fade-in');
     _populateGameOverUI();
+    // A run the player gave up on is over: wipe the save so the menu does
+    // not offer to resume a forfeited run (same behavior as dying outright).
+    if (typeof SaveSystem !== 'undefined') Debug.safe(() => SaveSystem.clear(), 'clearSaveOnGiveUp');
     Statistics.save();
     NarrativeSystem.save();
     StorageManager.set('prestige', { prestigeLevel, totalGamesPlayed });
@@ -6699,6 +6897,10 @@ function _populateGameOverUI() {
             playerLvl: (player && player.lvl) || 1, mode: gameMode
         });
         if (_eRes.essence > 0 && typeof showToast === 'function') showToast('+' + _eRes.essence + ' ' + (window.I18n ? I18n.t('meta.essence') : 'Essência'), 'success');
+    }
+    // Daily challenge: record the run result (first completion of the day wins).
+    if (window.DailyChallenge && window._currentDailyChallenge) {
+        Debug.safe(() => DailyChallenge.complete(dungeonLevel, Math.floor(gameTime)), 'dailyCompleteOnGameOver');
     }
     var thisKills = player.kills || 0;
     var elapsed = Math.floor(gameTime / 60);
@@ -6806,6 +7008,10 @@ function _triggerWin() {
             playerLvl: (player && player.lvl) || 1, mode: gameMode
         });
         if (_eRes.essence > 0 && typeof showToast === 'function') showToast('+' + _eRes.essence + ' ' + (window.I18n ? I18n.t('meta.essence') : 'Essência'), 'success');
+    }
+    // Daily challenge: record the run result (first completion of the day wins).
+    if (window.DailyChallenge && window._currentDailyChallenge) {
+        Debug.safe(() => DailyChallenge.complete(dungeonLevel, Math.floor(gameTime)), 'dailyCompleteOnWin');
     }
     gameState = 'WIN';
     Statistics.save();
@@ -8662,6 +8868,34 @@ const PauseSystem = {
     }
 };
 window.PauseSystem = PauseSystem;
+// --- TOAST SYSTEM ---
+// Generic player feedback toasts (success/error/info). Every showToast(...)
+// call in the engine used to be a silent no-op because this function was
+// never defined anywhere — lockouts, rewards and errors went unseen.
+const ToastSystem = {
+    container: null,
+    init() {
+        if (this.container) return;
+        this.container = document.createElement('div');
+        this.container.style.cssText = 'position:fixed;top:max(12px,env(safe-area-inset-top,12px));left:50%;transform:translateX(-50%);z-index:99990;display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none;width:min(88vw,360px);';
+        document.body.appendChild(this.container);
+    },
+    show(message, type) {
+        if (!message) return;
+        this.init();
+        const el = document.createElement('div');
+        const colors = { success: 'rgba(0,136,54,0.92)', error: 'rgba(180,0,15,0.92)', info: 'rgba(60,40,110,0.94)' };
+        el.style.cssText = 'background:' + (colors[type] || colors.info) + ';color:#fff;padding:10px 16px;border-radius:14px;font-size:12px;font-weight:600;line-height:1.35;text-align:center;max-width:100%;box-shadow:0 4px 18px rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.15);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);opacity:0;transform:translateY(-8px);transition:opacity 0.25s ease, transform 0.25s ease;';
+        el.textContent = message;
+        this.container.appendChild(el);
+        requestAnimationFrame(() => { el.style.opacity = '1'; el.style.transform = 'translateY(0)'; });
+        setTimeout(() => {
+            el.style.opacity = '0'; el.style.transform = 'translateY(-8px)';
+            setTimeout(() => { if (el.parentNode) el.remove(); }, 300);
+        }, 2600);
+    }
+};
+window.showToast = function (message, type) { ToastSystem.show(message, type); };
 
 // --- ACHIEVEMENT TOAST ---
 const AchievementToast = {
@@ -8758,8 +8992,6 @@ const LootCard = {
 var _soundMuted = false;
 window._toggleSound = function() {
     _soundMuted = !_soundMuted;
-    var icon = document.getElementById('sound-icon');
-    if (icon) icon.textContent = _soundMuted ? '\u{1F507}' : '\u{1F50A}';
     if (typeof SND !== 'undefined') {
         if (SND.setVolume) SND.setVolume('sfx', _soundMuted ? 0 : 0.3);
         if (SND.setVolume) SND.setVolume('music', _soundMuted ? 0 : 0.15);
@@ -12193,6 +12425,9 @@ const DailyChallenge = {
 
     complete(dungeonLevel, timeSeconds) {
         this._updateDate();
+        // Once per day: the panel advertises "pode jogar uma vez por dia" and
+        // the leaderboard is meant to hold one entry per day per player.
+        if (!this.canPlay()) return null;
         
         // Calculate score
         const baseScore = dungeonLevel * 500;
@@ -20903,6 +21138,15 @@ var SettingsUI = {
 
         // Use a function string that is guaranteed to be in global scope
         const call = (method, val) => `window.SettingsUI.${method}(${val}); event.stopPropagation();`;
+        // Localized label helper (translated string or PT fallback; never a raw key)
+        const T = (k, fb) => (typeof _L === 'function') ? _L(k, fb) : fb;
+        const curLang = (window.I18n && I18n.lang) || 'pt';
+
+        const langBtn = (code, label) => `
+            <button class="flex-1 py-3 px-2 rounded-xl text-xs font-bold transition-all ${curLang === code ? 'bg-primary/30 text-primary border border-primary' : 'bg-primary/10 text-gray-300 border border-white/15'}"
+                ontouchstart="window.I18n.setLang('${code}'); window.SettingsUI._render(); event.stopPropagation();"
+                onclick="window.I18n.setLang('${code}'); window.SettingsUI._render(); event.stopPropagation();">${label}</button>
+        `;
 
         // Preserve scroll position across re-renders (toggles reset the panel HTML)
         const scrollContent = panel.querySelector('.settings-content');
@@ -20911,16 +21155,24 @@ var SettingsUI = {
         const toggleBtn = (on, m, v) => `
             <button class="flex-1 py-3 px-2 rounded-xl text-xs font-bold transition-all ${on ? 'bg-primary/30 text-primary border border-primary' : 'bg-primary/10 text-gray-300 border border-white/15'}"
                 ontouchstart="${call(m, v)}"
-                onclick="${call(m, v)}">${on ? 'LIG' : 'DES'}</button>
+                onclick="${call(m, v)}">${on ? T('settings.on', 'LIG') : T('settings.off', 'DES')}</button>
         `;
 
         panel.innerHTML = `
             <div class="settings-box glass-panel" style="pointer-events:auto; position:relative; z-index:2000; display:flex; flex-direction:column; background:rgba(30, 22, 40, 0.97); border:1.5px solid rgba(224, 182, 255, 0.3); box-shadow: 0 10px 40px rgba(0,0,0,0.7), 0 0 30px rgba(100, 50, 160, 0.15); border-radius:28px; padding:24px; width:90vw; max-width:400px; max-height:80vh;">
-                <h2 class="text-2xl text-center text-primary font-bold mb-4 font-headline-xl epic-glow-text" style="border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:15px;">CONFIGURAÇÕES</h2>
+                <h2 class="text-2xl text-center text-primary font-bold mb-4 font-headline-xl epic-glow-text" style="border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:15px;">${T('settings.title', 'CONFIGURAÇÕES')}</h2>
+                <div class="mb-5">
+                    <div class="text-xs text-secondary font-bold uppercase tracking-widest mb-2 opacity-90">${T('settings.language', 'IDIOMA')}</div>
+                    <div class="flex gap-2">
+                        ${langBtn('pt', '🇧🇷 Português')}
+                        ${langBtn('en', '🇺🇸 English')}
+                        ${langBtn('es', '🇪🇸 Español')}
+                    </div>
+                </div>
 
                 <div class="overflow-y-auto settings-content" style="flex:1; min-height:0; -webkit-overflow-scrolling:touch; touch-action:pan-y;">
                     <div class="mb-5">
-                        <div class="text-xs text-secondary font-bold uppercase tracking-widest mb-2 opacity-90">CONTROLES</div>
+                        <div class="text-xs text-secondary font-bold uppercase tracking-widest mb-2 opacity-90">${T('settings.controls', 'CONTROLES')}</div>
                         <div class="flex gap-2">
                             <button class="flex-1 py-3 px-2 rounded-xl text-xs font-bold transition-all ${isTouch ? 'bg-primary/30 text-primary border border-primary' : 'bg-primary/10 text-gray-300 border border-white/15'}"
                                 ontouchstart="${call('_setControl', "'touch'")}"
@@ -20934,27 +21186,27 @@ var SettingsUI = {
                     </div>
 
                     <div class="mb-5" style="${isTouch ? '' : 'opacity:0.4;pointer-events:none;'}">
-                        <div class="text-xs text-secondary font-bold uppercase tracking-widest mb-2 opacity-90">MODO JOYSTICK</div>
+                        <div class="text-xs text-secondary font-bold uppercase tracking-widest mb-2 opacity-90">${T('settings.joystick', 'MODO JOYSTICK')}</div>
                         <div class="flex gap-2">
                             <button class="flex-1 py-3 px-2 rounded-xl text-xs font-bold transition-all ${isFixed ? 'bg-primary/30 text-primary border border-primary' : 'bg-primary/10 text-gray-300 border border-white/15'}" 
                                 ontouchstart="${call('_setJoyMode', "'fixed'")}"
-                                onclick="${call('_setJoyMode', "'fixed'")}">FIXO</button>
+                                onclick="${call('_setJoyMode', "'fixed'")}">${T('settings.fixed', 'FIXO').toUpperCase()}</button>
                             <button class="flex-1 py-3 px-2 rounded-xl text-xs font-bold transition-all ${!isFixed ? 'bg-primary/30 text-primary border border-primary' : 'bg-primary/10 text-gray-300 border border-white/15'}" 
                                 ontouchstart="${call('_setJoyMode', "'anywhere'")}"
-                                onclick="${call('_setJoyMode', "'anywhere'")}">QUALQUER</button>
+                                onclick="${call('_setJoyMode', "'anywhere'")}">${T('settings.anywhere', 'QUALQUER').toUpperCase()}</button>
                         </div>
-                        <div class="text-xs text-secondary font-bold uppercase tracking-widest mt-3 mb-2 opacity-90">SENSIBILIDADE</div>
+                        <div class="text-xs text-secondary font-bold uppercase tracking-widest mt-3 mb-2 opacity-90">${T('settings.sensitivity', 'SENSIBILIDADE')}</div>
                         <div class="flex gap-2">
                             ${[0.75, 1, 1.4].map(v => `
                                 <button class="flex-1 py-2 px-2 rounded-xl text-xs font-bold transition-all ${sens === v ? 'bg-primary/30 text-primary border border-primary' : 'bg-primary/10 text-gray-300 border border-white/15'}"
                                     ontouchstart="${call('_setSens', v)}"
-                                    onclick="${call('_setSens', v)}">${v === 0.75 ? 'BAIXA' : v === 1 ? 'MÉDIA' : 'ALTA'}</button>
+                                    onclick="${call('_setSens', v)}">${v === 0.75 ? T('settings.low', 'BAIXA').toUpperCase() : v === 1 ? T('settings.medium', 'MÉDIA').toUpperCase() : T('settings.high', 'ALTA').toUpperCase()}</button>
                             `).join('')}
                         </div>
                     </div>
 
                     <div class="mb-5">
-                        <div class="text-xs text-secondary font-bold uppercase tracking-widest mb-2 opacity-90">ÁUDIO</div>
+                        <div class="text-xs text-secondary font-bold uppercase tracking-widest mb-2 opacity-90">${T('settings.audio', 'ÁUDIO')}</div>
                         <div class="flex gap-2 mb-2">
                             ${toggleBtn(sfxOn, '_setSfx', 'true')}
                             ${toggleBtn(!sfxOn, '_setSfx', 'false')}
@@ -20966,34 +21218,34 @@ var SettingsUI = {
                     </div>
 
                     <div class="mb-5">
-                        <div class="text-xs text-secondary font-bold uppercase tracking-widest mb-2 opacity-90">VISUAIS</div>
+                        <div class="text-xs text-secondary font-bold uppercase tracking-widest mb-2 opacity-90">${T('settings.visuals', 'VISUAIS')}</div>
                         <div class="flex gap-2 mb-2">
                             ${toggleBtn(partsOn, '_setParticles', 'true')}
                             ${toggleBtn(!partsOn, '_setParticles', 'false')}
-                            <div class="flex-1 text-center py-3 px-2 text-xs font-bold text-gray-400">PARTÍCULAS</div>
+                            <div class="flex-1 text-center py-3 px-2 text-xs font-bold text-gray-400">${T('settings.particles', 'PARTÍCULAS')}</div>
                         </div>
                         <div class="flex gap-2">
                             ${toggleBtn(shakeOn, '_setShake', 'true')}
                             ${toggleBtn(!shakeOn, '_setShake', 'false')}
-                            <div class="flex-1 text-center py-3 px-2 text-xs font-bold text-gray-400">TREME-TREME</div>
+                            <div class="flex-1 text-center py-3 px-2 text-xs font-bold text-gray-400">${T('settings.shake', 'TREME-TREME')}</div>
                         </div>
                         <div class="flex gap-2">
                             ${toggleBtn(GameSettings.hitstopEnabled, '_setHitstop', 'true')}
                             ${toggleBtn(!GameSettings.hitstopEnabled, '_setHitstop', 'false')}
-                            <div class="flex-1 text-center py-3 px-2 text-xs font-bold text-gray-400">HITSTOP</div>
+                            <div class="flex-1 text-center py-3 px-2 text-xs font-bold text-gray-400">${T('settings.hitstop', 'HITSTOP')}</div>
                         </div>
-                        <div class="text-xs text-secondary font-bold uppercase tracking-widest mt-3 mb-2 opacity-90">QUALIDADE GRÁFICA</div>
+                        <div class="text-xs text-secondary font-bold uppercase tracking-widest mt-3 mb-2 opacity-90">${T('settings.graphicsQuality', 'QUALIDADE GRÁFICA')}</div>
                         <div class="flex gap-2">
                             ${['low', 'medium', 'high'].map(q => `
                                 <button class="flex-1 py-2 px-2 rounded-xl text-xs font-bold transition-all ${GameSettings.graphicsQuality === q ? 'bg-primary/30 text-primary border border-primary' : 'bg-primary/10 text-gray-300 border border-white/15'}"
                                     ontouchstart="window.GameSettings.setGraphicsQuality('${q}')"
-                                    onclick="window.GameSettings.setGraphicsQuality('${q}')">${q === 'low' ? 'BAIXA' : q === 'medium' ? 'MÉDIA' : 'ALTA'}</button>
+                                    onclick="window.GameSettings.setGraphicsQuality('${q}')">${q === 'low' ? T('settings.low', 'BAIXA').toUpperCase() : q === 'medium' ? T('settings.medium', 'MÉDIA').toUpperCase() : T('settings.high', 'ALTA').toUpperCase()}</button>
                             `).join('')}
                         </div>
                     </div>
 
                     <div class="mb-5">
-                        <div class="text-xs text-secondary font-bold uppercase tracking-widest mb-2 opacity-90">TAMANHO DA FONTE</div>
+                        <div class="text-xs text-secondary font-bold uppercase tracking-widest mb-2 opacity-90">${T('settings.fontSize', 'TAMANHO DA FONTE')}</div>
                         <div class="flex gap-2">
                             <button class="flex-1 py-3 px-2 rounded-xl text-xs font-bold transition-all ${fontSize === 'small' ? 'bg-primary/30 text-primary border border-primary' : 'bg-primary/10 text-gray-300 border border-white/15'}" 
                                 ontouchstart="window.GameSettings.setFontSize('small'); window.SettingsUI._render()"
@@ -21008,16 +21260,16 @@ var SettingsUI = {
                     </div>
 
                     <div class="mb-5">
-                        <div class="text-xs text-secondary font-bold uppercase tracking-widest mb-2 opacity-90">ACESSIBILIDADE</div>
+                        <div class="text-xs text-secondary font-bold uppercase tracking-widest mb-2 opacity-90">${T('settings.accessibility', 'ACESSIBILIDADE')}</div>
                         <div class="flex gap-2 mb-2">
                             ${toggleBtn(GameSettings.aimAssist, 'setAimAssist', 'true')}
                             ${toggleBtn(!GameSettings.aimAssist, 'setAimAssist', 'false')}
-                            <div class="flex-1 text-center py-3 px-2 text-xs font-bold text-gray-400">MIRA AUTOMÁTICA</div>
+                            <div class="flex-1 text-center py-3 px-2 text-xs font-bold text-gray-400">${T('settings.aimAssist', 'MIRA AUTOMÁTICA')}</div>
                         </div>
                         <div class="flex gap-2 mb-2">
                             ${toggleBtn(GameSettings.reducedMotion, 'setReducedMotion', 'true')}
                             ${toggleBtn(!GameSettings.reducedMotion, 'setReducedMotion', 'false')}
-                            <div class="flex-1 text-center py-3 px-2 text-xs font-bold text-gray-400">MENOS MOVIMENTO</div>
+                            <div class="flex-1 text-center py-3 px-2 text-xs font-bold text-gray-400">${T('settings.reducedMotion', 'MENOS MOVIMENTO')}</div>
                         </div>
                         <div class="flex gap-2">
                             ${['off', 'deutan', 'protan', 'tritan'].map(cm => `
@@ -21029,16 +21281,16 @@ var SettingsUI = {
                     </div>
 
                     <div class="mb-2">
-                        <div class="text-xs text-secondary font-bold uppercase tracking-widest mb-2 opacity-90" style="color:#f87171">ZONA DE PERIGO</div>
+                        <div class="text-xs text-secondary font-bold uppercase tracking-widest mb-2 opacity-90" style="color:#f87171">${T('settings.dangerZone', 'ZONA DE PERIGO')}</div>
                         <button id="settings-reset-btn" style="width:100%;padding:12px;border-radius:12px;font-size:12px;font-weight:bold;color:#fca5a5;background:rgba(220,38,38,0.1);border:1.5px solid rgba(220,38,38,0.35);cursor:pointer"
                             ontouchstart="window.SettingsUI._resetSave(); event.preventDefault();"
-                            onclick="window.SettingsUI._resetSave(); event.preventDefault();">🗑 RESETAR SAVE COMPLETO</button>
+                            onclick="window.SettingsUI._resetSave(); event.preventDefault();">${T('settings.resetSave', '🗑 RESETAR SAVE COMPLETO')}</button>
                     </div>
                 </div>
 
                 <button class="w-full mt-4 py-4 rounded-xl text-white font-bold text-sm" style="background:linear-gradient(90deg, #93000a, #d9381e);"
                     ontouchstart="window.SettingsUI.close(); event.preventDefault();"
-                    onclick="window.SettingsUI.close(); event.preventDefault();">FECHAR</button>
+                    onclick="window.SettingsUI.close(); event.preventDefault();">${T('settings.close', 'FECHAR').toUpperCase()}</button>
             </div>
         `;
         // Restore scroll position (toggles rebuild the panel HTML)
@@ -21341,15 +21593,15 @@ window.SkillTreeUI = SkillTreeUI;
              if (window.SND && SND.playUI) SND.playUI();
 
              switch(panelId) {
-                 case 'shop': title = 'Mercador'; contentHtml = this.renderShopContent(); break;
-                 case 'camp': title = 'Acampamento do Mercador'; contentHtml = this.renderCampContent(); break;
-                 case 'skills': title = 'Habilidades'; contentHtml = this.renderSkillsContent(); break;
-                 case 'stats': title = 'Estatísticas'; contentHtml = this.renderStatsContent(); break;
-                 case 'settings': title = 'Configurações'; contentHtml = this.renderSettingsContent(); break;
-                 case 'achievements': title = 'Conquistas'; contentHtml = this.renderAchievementsContent ? this.renderAchievementsContent() : 'Em breve'; break;
-                 case 'lore': title = 'Grimório de Krevathorn'; contentHtml = this.renderLoreContent(); break;
-                 case 'daily': title = 'Desafio Diário'; contentHtml = this.renderDailyContent(); break;
-                 case 'meta': title = 'MetaLoja'; contentHtml = this.renderMetaContent(); break;
+                 case 'shop': title = _L('panel.shop', 'Mercador'); contentHtml = this.renderShopContent(); break;
+                 case 'camp': title = _L('panel.camp', 'Acampamento do Mercador'); contentHtml = this.renderCampContent(); break;
+                 case 'skills': title = _L('panel.skills', 'Habilidades'); contentHtml = this.renderSkillsContent(); break;
+                 case 'stats': title = _L('panel.stats', 'Estatísticas'); contentHtml = this.renderStatsContent(); break;
+                 case 'settings': title = _L('panel.settings', 'Configurações'); contentHtml = this.renderSettingsContent(); break;
+                 case 'achievements': title = _L('panel.achievements', 'Conquistas'); contentHtml = this.renderAchievementsContent ? this.renderAchievementsContent() : 'Em breve'; break;
+                 case 'lore': title = _L('panel.lore', 'Grimório de Krevathorn'); contentHtml = this.renderLoreContent(); break;
+                 case 'daily': title = _L('panel.daily', 'Desafio Diário'); contentHtml = this.renderDailyContent(); break;
+                 case 'meta': title = _L('panel.meta', 'MetaLoja'); contentHtml = this.renderMetaContent(); break;
              }
 
               const contentEl = document.createElement('div');
@@ -21523,9 +21775,9 @@ window.SkillTreeUI = SkillTreeUI;
             const limitReached = ShopSystem.floorPurchaseCount >= ShopSystem.FLOOR_PURCHASE_LIMIT;
 
             const tabs = [
-                { key: 'consumable', label: 'Consumíveis' },
-                { key: 'upgrade', label: 'Melhorias' },
-                { key: 'pet', label: 'Pets' }
+                { key: 'consumable', label: _L('shop.tabConsumable', 'Consumíveis') },
+                { key: 'upgrade', label: _L('shop.tabUpgrade', 'Melhorias') },
+                { key: 'pet', label: _L('shop.tabPets', 'Pets') }
             ].map(t => `
                 <button style="flex:1;padding:8px 4px;border-radius:10px;font-size:11px;font-weight:bold;border:1.5px solid ${tab === t.key ? COLORS.PRIMARY : 'rgba(255,255,255,0.12)'};background:${tab === t.key ? 'rgba(224,182,255,0.18)' : 'rgba(255,255,255,0.04)'};color:${tab === t.key ? COLORS.PRIMARY : COLORS.TEXT_DIM};cursor:pointer;transition:all 0.2s"
                     onclick="UIManager.setShopTab('${t.key}')">${t.label}</button>
@@ -21587,13 +21839,13 @@ window.SkillTreeUI = SkillTreeUI;
 
             return `
                 <div style="text-align:center;margin-bottom:12px;color:${COLORS.GOLD};font-weight:bold;letter-spacing:0.1em;font-size:13px;background:rgba(40,30,20,0.6);padding:8px 0;border-radius:12px;border:1.5px solid rgba(250,204,21,0.35);box-shadow:0 0 10px rgba(255,204,0,0.1)">
-                    💰 SEU OURO: ${p.currency} ${p.goldRushTimer > 0 ? '<span style="font-size:10px;color:#ffcc00">| FOME DE OURO ATIVA</span>' : ''}
+                    💰 ${_L('shop.yourGold', 'SEU OURO')}: ${p.currency} ${p.goldRushTimer > 0 ? '<span style="font-size:10px;color:#ffcc00">' + _L('shop.goldRush', '| FOME DE OURO ATIVA') + '</span>' : ''}
                 </div>
                 <div style="text-align:center;margin-bottom:10px;font-size:11px;font-weight:bold;color:${limitReached ? '#f87171' : COLORS.TEXT_DIM}">
-                    COMPRAS: ${ShopSystem.floorPurchaseCount}/${ShopSystem.FLOOR_PURCHASE_LIMIT} por andar
-                    ${merchantOn ? '<span style="color:#4ade80"> | MERCADOR −20% ATIVO</span>' : ''}
+                    ${_L('shop.purchases', 'COMPRAS')}: ${ShopSystem.floorPurchaseCount}/${ShopSystem.FLOOR_PURCHASE_LIMIT} ${_L('shop.perFloor', 'por andar')}
+                    ${merchantOn ? '<span style="color:#4ade80"> ' + _L('shop.merchantActive', '| MERCADOR −20% ATIVO') + '</span>' : ''}
                 </div>
-                ${limitReached ? `<div style="text-align:center;margin-bottom:10px;font-size:11px;color:#f87171;background:rgba(220,38,38,0.12);border:1px solid rgba(220,38,38,0.3);padding:8px;border-radius:10px">⛔ Limite de compras deste andar atingido. Volte no próximo andar!</div>` : ''}
+                ${limitReached ? `<div style="text-align:center;margin-bottom:10px;font-size:11px;color:#f87171;background:rgba(220,38,38,0.12);border:1px solid rgba(220,38,38,0.3);padding:8px;border-radius:10px">${_L('shop.limitReached', '⛔ Limite de compras deste andar atingido. Volte no próximo andar!')}</div>` : ''}
                 <div style="display:flex;gap:6px;margin-bottom:14px">
                     ${tabs}
                 </div>
@@ -21603,11 +21855,11 @@ window.SkillTreeUI = SkillTreeUI;
                 </div>
                 <div style="margin-top:16px;text-align:center">
                     <button style="background:rgba(35,28,48,0.7);border:1.5px solid rgba(224,182,255,0.3);color:${COLORS.TEXT};font-size:12px;font-weight:bold;padding:12px 24px;border-radius:12px;cursor:pointer;transition:transform 0.2s" onclick="UIManager.rerollShop()">
-                        🔄 REROLL (20 💰)
+                        🔄 ${_L('shop.reroll', 'REROLL')} (20 💰)
                     </button>
                 </div>
                 <div style="margin-top:16px;padding:12px;border-radius:12px;border:1.5px solid rgba(255,170,68,0.35);background:rgba(255,140,0,0.07)">
-                    <div style="font-weight:bold;font-size:12px;color:#ffaa44;margin-bottom:8px;letter-spacing:0.08em;text-transform:uppercase">⚒️ FORJA</div>
+                    <div style="font-weight:bold;font-size:12px;color:#ffaa44;margin-bottom:8px;letter-spacing:0.08em;text-transform:uppercase">⚒️ ${_L('shop.forge', 'FORJA')}</div>
                     <div style="display:flex;flex-direction:column;gap:8px">
                         ${window.CraftSystem ? CraftSystem.RECIPES.map(r => {
                             const canCraft = p.currency >= r.cost;
@@ -21746,15 +21998,15 @@ window.SkillTreeUI = SkillTreeUI;
                         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
                             <div style="font-weight:bold;font-size:13px;color:${isUnlocked ? '#e9d5ff' : (canUnlock ? COLORS.GOLD : COLORS.TEXT_DIM)}">${s.name} ${isUnlocked ? '✓' : ''}</div>
                             <div style="display:flex;gap:4px;align-items:center">
-                                ${isAbility ? '<span style="font-size:9px;padding:2px 8px;border-radius:999px;background:rgba(250,204,21,0.2);color:' + COLORS.GOLD + ';font-weight:bold">HABILIDADE</span>' : ''}
+                                ${isAbility ? '<span style="font-size:9px;padding:2px 8px;border-radius:999px;background:rgba(250,204,21,0.2);color:' + COLORS.GOLD + ';font-weight:bold">' + _L('skills.ability', 'HABILIDADE') + '</span>' : ''}
                                 ${s.cat === 'speed' ? '<span style="font-size:8px;padding:2px 8px;border-radius:999px;background:rgba(96,165,250,0.2);color:#60a5fa;font-weight:bold">VEL</span>' : ''}
                                 ${limitBadge}
                             </div>
                         </div>
                         <div style="font-size:10px;color:${COLORS.TEXT_DIM};line-height:1.3">${s.desc}</div>
                         <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
-                            <div style="font-size:9px;color:${COLORS.TEXT_MUTED}">${s.requires ? 'Requer: ' + (byId[s.requires] ? byId[s.requires].name : '?') : 'Tier ' + (s.tier || 1)}</div>
-                            <div style="font-size:11px;font-weight:bold;color:${isUnlocked ? '#4ade80' : (canUnlock ? COLORS.GOLD : COLORS.TEXT_MUTED)}">${isUnlocked ? 'DESBLOQUEADO' : (speedLocked ? 'LIMITE' : (locked ? '🔒 ' + s.cost + ' 💰' : s.cost + ' 💰'))}</div>
+                            <div style="font-size:9px;color:${COLORS.TEXT_MUTED}">${s.requires ? _L('skills.requires', 'Requer: ') + (byId[s.requires] ? byId[s.requires].name : '?') : 'Tier ' + (s.tier || 1)}</div>
+                            <div style="font-size:11px;font-weight:bold;color:${isUnlocked ? '#4ade80' : (canUnlock ? COLORS.GOLD : COLORS.TEXT_MUTED)}">${isUnlocked ? _L('skills.unlocked', 'DESBLOQUEADO') : (speedLocked ? 'LIMITE' : (locked ? '🔒 ' + s.cost + ' 💰' : s.cost + ' 💰'))}</div>
                         </div>
                     </div>
                 `;
@@ -21774,15 +22026,15 @@ window.SkillTreeUI = SkillTreeUI;
                 </div>
                 <div style="display:flex;gap:6px;margin-bottom:14px">
                     ${statChip('HP', p.maxHp, '#4ade80')}
-                    ${statChip('DANO', dmg, '#f87171')}
-                    ${statChip('CRÍTICO', Math.round((CONFIG.CRIT_CHANCE_BASE + (p.critChance || 0)) * 100) + '%', '#fbbf24')}
-                    ${statChip('VEL.', p.speed.toFixed(1), '#60a5fa')}
+                    ${statChip(_L('skills.damage', 'DANO'), dmg, '#f87171')}
+                    ${statChip(_L('skills.crit', 'CRÍTICO'), Math.round((CONFIG.CRIT_CHANCE_BASE + (p.critChance || 0)) * 100) + '%', '#fbbf24')}
+                    ${statChip(_L('skills.speed', 'VEL.'), p.speed.toFixed(1), '#60a5fa')}
                 </div>
                 <div style="display:flex;flex-direction:column;gap:10px">
                     ${groupHtml}
                 </div>
-                <button onclick="window._copyCurrentBuild()" style="width:100%;margin-top:12px;padding:10px;border-radius:12px;font-size:11px;font-weight:bold;text-transform:uppercase;letter-spacing:0.06em;border:1.5px solid rgba(224,182,255,0.35);background:rgba(224,182,255,0.12);color:#e0b6ff;cursor:pointer;touch-action:manipulation;">📋 Copiar código do build</button>
-                <p style="text-align:center;font-size:10px;color:${COLORS.TEXT_MUTED};margin-top:12px">Toque em um nó para ver detalhes e desbloquear.</p>
+                <button onclick="window._copyCurrentBuild()" style="width:100%;margin-top:12px;padding:10px;border-radius:12px;font-size:11px;font-weight:bold;text-transform:uppercase;letter-spacing:0.06em;border:1.5px solid rgba(224,182,255,0.35);background:rgba(224,182,255,0.12);color:#e0b6ff;cursor:pointer;touch-action:manipulation;">${_L('skills.copyBuild', '📋 Copiar código do build')}</button>
+                <p style="text-align:center;font-size:10px;color:${COLORS.TEXT_MUTED};margin-top:12px">${_L('skills.tapHint', 'Toque em um nó para ver detalhes e desbloquear.')}</p>
             `;
         },
 
@@ -21817,7 +22069,7 @@ window.SkillTreeUI = SkillTreeUI;
                     ? `<div style="text-align:center;color:#f87171;font-weight:bold;font-size:12px;padding:10px;border-radius:10px;background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3)">⛔ Limite de velocidade atingido (${speedCount}/${speedLimit}) — o ladino já é naturalmente veloz!</div>`
                     : canUnlock
                         ? `<button style="width:100%;padding:14px;border-radius:12px;font-weight:bold;font-size:14px;color:#1a0e00;background:linear-gradient(90deg,#ffdd00,#ffb800);cursor:pointer;border:none;transition:transform 0.15s"
-                            onclick="UIManager.unlockSkill('${s.id}')">⚡ DESBLOQUEAR (${s.cost} 💰)</button>`
+                            onclick="UIManager.unlockSkill('${s.id}')">${_L('skills.unlock', '⚡ DESBLOQUEAR')} (${s.cost} 💰)</button>`
                         : `<div style="text-align:center;color:${COLORS.TEXT_MUTED};font-size:12px">Moedas insuficientes (faltam ${Math.max(0, s.cost - p.currency)} 💰)</div>`;
 
             return `
@@ -22066,16 +22318,16 @@ window.SkillTreeUI = SkillTreeUI;
             return `
                 <div style="display:flex;flex-direction:column;gap:12px">
                     <div style="padding:14px;border-radius:14px;background:rgba(224,182,255,0.06);border:1px solid rgba(224,182,255,0.2)">
-                        <div style="font-size:10px;color:${COLORS.TEXT_MUTED};font-weight:bold;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px">Desafio de hoje</div>
+                        <div style="font-size:10px;color:${COLORS.TEXT_MUTED};font-weight:bold;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px">${_L('daily.today', 'Desafio de hoje')}</div>
                         <div style="font-size:18px;font-weight:800;color:${color(ch.id)}">${ch.name}</div>
                         <div style="font-size:12px;color:${COLORS.TEXT_DIM};margin-top:4px">${ch.desc}</div>
-                        <div style="font-size:11px;color:${COLORS.TEXT_MUTED};margin-top:8px">Próximo desafio em <strong style="color:#e0b6ff">${dc.getTimeUntilNext()}</strong></div>
-                        <div style="font-size:11px;margin-top:6px;color:#ffcc00;font-weight:800">🔥 Streak: ${dc.getStreak()} dia(s) consecutivo(s)</div>
-                        ${stats ? `<div style="font-size:11px;margin-top:6px;color:#4ade80;font-weight:700">✓ Concluído hoje: ${stats.score} pts (Piso ${stats.dungeonLevel})</div>` : `<div style="font-size:11px;margin-top:6px;color:#ffcc00">Pode jogar uma vez por dia — bata o desafio e pontue!</div>`}
+                        <div style="font-size:11px;color:${COLORS.TEXT_MUTED};margin-top:8px">${_L('daily.next', 'Próximo desafio em ')}  <strong style="color:#e0b6ff">${dc.getTimeUntilNext()}</strong></div>
+                        <div style="font-size:11px;margin-top:6px;color:#ffcc00;font-weight:800">${_L('daily.streak', '🔥 Streak: ')}${dc.getStreak()} ${_L('daily.days', 'dia(s) consecutivo(s)')}</div>
+                        ${stats ? `<div style="font-size:11px;margin-top:6px;color:#4ade80;font-weight:700">${_L('daily.done', '✓ Concluído hoje: ')}${stats.score} pts (Piso ${stats.dungeonLevel})</div>` : `<div style="font-size:11px;margin-top:6px;color:#ffcc00">${_L('daily.playHint', 'Pode jogar uma vez por dia — bata o desafio e pontue!')}</div>`}
                     </div>
                     <div>
-                        <div style="font-size:10px;color:${COLORS.TEXT_MUTED};font-weight:bold;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px">Ranking local (Top 10)</div>
-                        ${rankings.length ? rows : '<div style="padding:12px;text-align:center;font-size:11px;color:' + COLORS.TEXT_MUTED + ';border:1px dashed rgba(255,255,255,0.15);border-radius:12px">Nenhuma pontuação ainda — seja o primeiro!</div>'}
+                        <div style="font-size:10px;color:${COLORS.TEXT_MUTED};font-weight:bold;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px">${_L('daily.ranking', 'Ranking local (Top 10)')}</div>
+                        ${rankings.length ? rows : '<div style="padding:12px;text-align:center;font-size:11px;color:' + COLORS.TEXT_MUTED + ';border:1px dashed rgba(255,255,255,0.15);border-radius:12px">' + _L('daily.empty', 'Nenhuma pontuação ainda — seja o primeiro!') + '</div>'}
                     </div>
                 </div>
             `;
@@ -22128,24 +22380,24 @@ window.SkillTreeUI = SkillTreeUI;
                     <div style="padding:14px;border-radius:14px;background:linear-gradient(135deg,rgba(255,204,0,0.12),rgba(255,140,0,0.08));border:1px solid rgba(255,204,0,0.3)">
                         <div style="display:flex;justify-content:space-between;align-items:center">
                             <div>
-                                <div style="font-size:10px;color:${COLORS.TEXT_MUTED};font-weight:bold;text-transform:uppercase;letter-spacing:0.1em">Essência</div>
+                                <div style="font-size:10px;color:${COLORS.TEXT_MUTED};font-weight:bold;text-transform:uppercase;letter-spacing:0.1em">${_L('meta.essence', 'Essência')}</div>
                                 <div style="font-size:26px;font-weight:900;color:#ffcc00;text-shadow:0 0 14px rgba(255,204,0,0.4)">${ess} ✨</div>
                             </div>
                             <div style="text-align:right">
-                                <div style="font-size:10px;color:${COLORS.TEXT_MUTED};font-weight:bold;text-transform:uppercase;letter-spacing:0.1em">Acumulado</div>
+                                <div style="font-size:10px;color:${COLORS.TEXT_MUTED};font-weight:bold;text-transform:uppercase;letter-spacing:0.1em">${_L('meta.acquired', 'Acumulado')}</div>
                                 <div style="font-size:14px;font-weight:800;color:${COLORS.TEXT_DIM}">${profile.totalEarned}</div>
                             </div>
                         </div>
-                        <div style="font-size:10px;color:${COLORS.TEXT_MUTED};margin-top:8px;line-height:1.4">Ganhe Essência ao completar runs (vitórias rendem mais). Invista para desbloquear classes, biomas e melhorias permanentes.</div>
+                        <div style="font-size:10px;color:${COLORS.TEXT_MUTED};margin-top:8px;line-height:1.4">${_L('meta.earnHint', 'Ganhe Essência ao completar runs (vitórias rendem mais). Invista para desbloquear classes, biomas e melhorias permanentes.')}</div>
                     </div>
 
                     <div>
-                        <div style="font-size:10px;color:${COLORS.TEXT_MUTED};font-weight:bold;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px">Melhorias permanentes</div>
+                        <div style="font-size:10px;color:${COLORS.TEXT_MUTED};font-weight:bold;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px">${_L('meta.passives', 'Melhorias permanentes')}</div>
                         <div style="display:flex;flex-direction:column;gap:8px">${passiveCards}</div>
                     </div>
 
                     <div>
-                        <div style="font-size:10px;color:${COLORS.TEXT_MUTED};font-weight:bold;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px">Desbloqueios</div>
+                        <div style="font-size:10px;color:${COLORS.TEXT_MUTED};font-weight:bold;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px">${_L('meta.unlocks', 'Desbloqueios')}</div>
                         <div style="display:flex;flex-direction:column;gap:8px">${unlockCards}</div>
                     </div>
                 </div>
@@ -22397,6 +22649,18 @@ window.GameBootstrap = {
             window._forcedClass = null;
         }
         Debug.info('[BOOTSTRAP] Starting game with class:', cls);
+        // Tell the player the daily challenge is running — it silently overrides
+        // their class pick and build otherwise, which reads as a broken choice.
+        if (window._dailyMods && window._currentDailyChallenge) {
+            const _dc = window._currentDailyChallenge;
+            const _dn = (window._L && _dc.nameKey) ? _L(_dc.nameKey, _dc.name) : _dc.name;
+            const _ck = { warrior: 'start.classWarrior', rogue: 'start.classRogue', mage: 'start.classMage', elf: 'start.classElf' }[cls];
+            const _cn = (window._L && _ck) ? _L(_ck, cls) : cls;
+            let _m = _dn;
+            if (window._dailyMods.forceClass) _m += ' — ' + (window.I18n ? I18n.t('toast.dailyForced') : 'classe forçada: ') + _cn;
+            if (typeof showToast === 'function') showToast(_m, 'info');
+            if (typeof addLog === 'function') addLog(' ' + _m);
+        }
 
         // Guarda de meta-progressão: classes além do Guerreiro exigem desbloqueio.
         // Desafios diários com classe forçada concedem a classe (bypass).
@@ -22652,7 +22916,7 @@ const TutorialSystem = {
             title: ' Bem-vindo à Krevathorn!',
             linesKeys: ['tutorial.stage1.line1', 'tutorial.stage1.line2', 'tutorial.stage1.line3', 'tutorial.stage1.line4', 'tutorial.stage1.line5', 'tutorial.stage1.line6'],
             lines: [
-                'Tutorial rápido — 4 etapas, ~1 minuto.',
+                'Tutorial rápido — 6 etapas, ~1 minuto.',
                 '',
                 'ESQUERDA: mover — DIREITA: atirar',
                 'BOTÃO CENTRAL: habilidade de classe',
@@ -22750,7 +23014,7 @@ const TutorialSystem = {
             title: ' Bem-vindo à Krevathorn!',
             linesKeys: ['tutorial.stage1.line1', 'tutorial.stage1.line2', 'tutorial.stage1.line3', 'tutorial.stage1.line4', 'tutorial.stage1.line5', 'tutorial.stage1.line6'],
             lines: [
-                'Tutorial rápido — 4 etapas, ~1 minuto.',
+                'Tutorial rápido — 6 etapas, ~1 minuto.',
                 '',
                 'ESQUERDA: mover — DIREITA: atirar',
                 'BOTÃO CENTRAL: habilidade de classe',
