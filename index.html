@@ -656,6 +656,7 @@ body.cb-tritan  { filter: url("#cb-tritan"); }
 .class-mini-card.warrior:active { border-color: rgba(250,204,21,0.5); background: rgba(250,204,21,0.15); }
 .class-mini-card.rogue:active { border-color: rgba(92,255,130,0.5); background: rgba(92,255,130,0.12); }
 .class-mini-card.mage:active { border-color: rgba(153,102,255,0.5); background: rgba(153,102,255,0.12); }
+.class-mini-card.elf:active { border-color: rgba(88,224,138,0.5); background: rgba(88,224,138,0.12); }
 
 .mode-tab:active { transform: scale(0.94); }
 
@@ -720,6 +721,7 @@ body.cb-tritan  { filter: url("#cb-tritan"); }
 .class-card.warrior { border-color: rgba(255, 200, 0, 0.35); }
 .class-card.rogue { border-color: rgba(50, 227, 106, 0.35); }
 .class-card.mage { border-color: rgba(224, 182, 255, 0.35); }
+.class-card.elf { border-color: rgba(88, 224, 138, 0.35); }
 .class-card h3 { text-shadow: 0 0 10px currentColor; }
 .class-card p { color: rgba(255, 255, 255, 0.55); font-size: 0.8rem; line-height: 1.5; }
 
@@ -892,6 +894,7 @@ body.cb-tritan  { filter: url("#cb-tritan"); }
 .class-card.warrior:active { border-color: rgba(250,204,21,0.6); box-shadow: 0 0 20px rgba(250,204,21,0.2); }
 .class-card.rogue:active { border-color: rgba(92,255,130,0.6); box-shadow: 0 0 20px rgba(92,255,130,0.2); }
 .class-card.mage:active { border-color: rgba(240,214,255,0.6); box-shadow: 0 0 20px rgba(224,182,255,0.2); }
+.class-card.elf:active { border-color: rgba(88,224,138,0.6); box-shadow: 0 0 20px rgba(88,224,138,0.2); }
 
 </style>
 
@@ -1032,6 +1035,15 @@ body.cb-tritan  { filter: url("#cb-tritan"); }
                         <span class="stat-dot" style="width:6px;height:6px;border-radius:50%;background:#b388ff;box-shadow:0 0 4px #b388ff;"></span>
                     </div>
                 </div>
+                <div onclick="window._tryStartClass('elf')" class="class-mini-card elf" style="flex:1;padding:10px 6px;border-radius:16px;border:1.5px solid rgba(88,224,138,0.2);background:rgba(88,224,138,0.06);text-align:center;cursor:pointer;transition:all 0.2s;touch-action:manipulation;">
+                    <div style="font-size:clamp(1.5rem,5vw,2rem);margin-bottom:2px;">🏹</div>
+                    <div data-i18n="start.classElf" style="font-size:clamp(0.7rem,2.5vw,0.85rem);font-weight:800;text-transform:uppercase;color:#58e08a;letter-spacing:0.06em;text-shadow:0 0 8px rgba(88,224,138,0.3);">Elfa</div>
+                    <div style="display:flex;gap:3px;justify-content:center;margin-top:4px;">
+                        <span class="stat-dot" style="width:6px;height:6px;border-radius:50%;background:#58e08a;box-shadow:0 0 4px #58e08a;"></span>
+                        <span class="stat-dot" style="width:4px;height:6px;border-radius:2px;background:rgba(255,255,255,0.15);"></span>
+                        <span class="stat-dot" style="width:4px;height:6px;border-radius:2px;background:rgba(255,255,255,0.15);"></span>
+                    </div>
+                </div>
             </div>
 
             <!-- Action Buttons Row -->
@@ -1064,6 +1076,8 @@ body.cb-tritan  { filter: url("#cb-tritan"); }
                 <button onclick="window._applyArchetype('rogue_sombra')" data-i18n="start.arch.sombra" style="flex:1;min-width:78px;padding:6px 4px;border-radius:10px;font-size:clamp(0.62rem,2vw,0.72rem);font-weight:700;border:1.5px solid rgba(92,255,130,0.25);background:rgba(92,255,130,0.07);color:#5cff82;cursor:pointer;touch-action:manipulation;">🌑 Sombra</button>
                 <button onclick="window._applyArchetype('mage_arcano')" data-i18n="start.arch.arcano" style="flex:1;min-width:78px;padding:6px 4px;border-radius:10px;font-size:clamp(0.62rem,2vw,0.72rem);font-weight:700;border:1.5px solid rgba(153,102,255,0.25);background:rgba(153,102,255,0.07);color:#9966ff;cursor:pointer;touch-action:manipulation;">🔮 Arcano</button>
                 <button onclick="window._applyArchetype('mage_gelo')" data-i18n="start.arch.gelo" style="flex:1;min-width:78px;padding:6px 4px;border-radius:10px;font-size:clamp(0.62rem,2vw,0.72rem);font-weight:700;border:1.5px solid rgba(102,204,255,0.25);background:rgba(102,204,255,0.07);color:#66ccff;cursor:pointer;touch-action:manipulation;">❄️ Gelo</button>
+                <button onclick="window._applyArchetype('elf_vento')" data-i18n="start.arch.vento" style="flex:1;min-width:78px;padding:6px 4px;border-radius:10px;font-size:clamp(0.62rem,2vw,0.72rem);font-weight:700;border:1.5px solid rgba(127,255,212,0.25);background:rgba(127,255,212,0.07);color:#7fffd4;cursor:pointer;touch-action:manipulation;">💨 Vento</button>
+                <button onclick="window._applyArchetype('elf_natureza')" data-i18n="start.arch.natureza" style="flex:1;min-width:78px;padding:6px 4px;border-radius:10px;font-size:clamp(0.62rem,2vw,0.72rem);font-weight:700;border:1.5px solid rgba(88,224,138,0.25);background:rgba(88,224,138,0.07);color:#58e08a;cursor:pointer;touch-action:manipulation;">🌿 Natureza</button>
             </div>
             <div id="build-status" style="text-align:center;font-size:clamp(0.55rem,2vw,0.65rem);color:rgba(255,255,255,0.4);margin-top:3px;min-height:1.1em;"></div>
 
@@ -1548,6 +1562,7 @@ const COLORS = {
     CLASS_WARRIOR: '#ffcc00',
     CLASS_ROGUE: '#33ff33',
     CLASS_MAGE: '#9966ff',
+    CLASS_ELF: '#58e08a',
 
     // Damage number colors
     DMG_NORMAL: '#ffffff',
@@ -2409,6 +2424,7 @@ const MetaSystem = {
     UNLOCKS: {
         'class_rogue':   { kind: 'class',   cls: 'rogue',    nameKey: 'meta.unlock.class_rogue.name',   name: 'Ladino',          icon: '🗡️', cost: 250, descKey: 'meta.unlock.class_rogue.desc',   desc: 'Venenoso, veloz e crítico. Habilita a classe Ladino.' },
         'class_mage':    { kind: 'class',   cls: 'mage',     nameKey: 'meta.unlock.class_mage.name',    name: 'Mago',            icon: '🔮', cost: 350, descKey: 'meta.unlock.class_mage.desc',    desc: 'Poder arcano e projéteis certeiros. Habilita a classe Mago.' },
+        'class_elf':     { kind: 'class',   cls: 'elf',      nameKey: 'meta.unlock.class_elf.name',     name: 'Elfa',            icon: '🏹', cost: 300, descKey: 'meta.unlock.class_elf.desc',     desc: 'Vento e natureza, arco e flecha. Habilita a classe Elfa.' },
         'biome_lavaCave':{ kind: 'biome',   biome: 'lavaCave', nameKey: 'meta.unlock.biome_lavaCave.name', name: 'Caverna de Lava', icon: '🌋', cost: 180, descKey: 'meta.unlock.biome_lavaCave.desc', desc: 'Habilita o bioma Caverna de Lava nas trocas de cenário.' },
         'biome_crypt':   { kind: 'biome',   biome: 'crypt',  nameKey: 'meta.unlock.biome_crypt.name',   name: 'Cripta',          icon: '💀', cost: 220, descKey: 'meta.unlock.biome_crypt.desc',   desc: 'Habilita o bioma Cripta nas trocas de cenário.' },
         'biome_forest':  { kind: 'biome',   biome: 'forest', nameKey: 'meta.unlock.biome_forest.name',  name: 'Floresta Sombria', icon: '🌲', cost: 200, descKey: 'meta.unlock.biome_forest.desc',  desc: 'Habilita o bioma Floresta Sombria nas trocas de cenário.' },
@@ -2529,7 +2545,7 @@ const MetaSystem = {
     refreshClassCards() {
         this._ensure();
         if (typeof document === 'undefined') return;
-        var classes = ['warrior', 'rogue', 'mage'];
+        var classes = ['warrior', 'rogue', 'mage', 'elf'];
         for (var i = 0; i < classes.length; i++) {
             var cls = classes[i];
             var el = document.querySelector('.class-mini-card.' + cls);
@@ -2657,11 +2673,13 @@ const I18n = {
             'class.warrior': 'GUERREIRO',
             'class.rogue': 'LADINO',
             'class.mage': 'MAGO',
+            'class.elf': 'ELFA',
 
             // Class descriptions
             'class.warrior.desc': 'Muita vida, dano pesado.',
             'class.rogue.desc': 'Rápido, disparos velozes.',
             'class.mage.desc': 'Pouca vida, tiros arcanos.',
+            'class.elf.desc': 'Vento e natureza, arco e flecha.',
 
             // HUD labels
             'hud.level': 'Nível',
@@ -2824,7 +2842,7 @@ const I18n = {
             'tutorial.stage6.line5': 'Habilidades: especialize seu personagem',
             'tutorial.stage6.line6': 'Estatisticas: acompanhe seu progresso',
             'tutorial.stage6.line7': '',
-            'tutorial.stage6.line8': 'Bonus: +50 moedas!',
+            'tutorial.stage6.line8': 'Bonus: +25 moedas!',
             'tutorial.promptFull': '🎓 Tutorial Completo (~3 min)',
             'tutorial.stage7.title': ' Conheça a Loja',
             'tutorial.stage7.line1': 'Abra a LOJA para comprar itens com o ouro dos inimigos.',
@@ -2843,7 +2861,7 @@ const I18n = {
             'tutorial.stage10.line1': 'Você dominou os fundamentos — e mais um pouco.',
             'tutorial.stage10.line2': 'Minimapa no canto: mostra inimigos, baús e o portal.',
             'tutorial.stage10.line3': 'O Abismo espera. Boa sorte, herói!',
-            'tutorial.stage10.line4': 'Bonus: +100 moedas!',
+            'tutorial.stage10.line4': 'Bonus: +50 moedas!',
             'tutorial.skillTouch1': 'Toque o boto de habilidade no canto inferior',
             'tutorial.skillTouch2': 'direito (o boto com icone de fogo).',
             'tutorial.skillTouch3': '',
@@ -3273,6 +3291,8 @@ const I18n = {
             'meta.unlock.class_rogue.desc': 'Venenoso, veloz e crítico. Habilita a classe Ladino.',
             'meta.unlock.class_mage.name': 'Mago',
             'meta.unlock.class_mage.desc': 'Poder arcano e projéteis certeiros. Habilita a classe Mago.',
+            'meta.unlock.class_elf.name': 'Elfa',
+            'meta.unlock.class_elf.desc': 'Vento e natureza, arco e flecha. Habilita a classe Elfa.',
             'meta.unlock.biome_lavaCave.name': 'Caverna de Lava',
             'meta.unlock.biome_lavaCave.desc': 'Habilita o bioma Caverna de Lava nas trocas de cenário.',
             'meta.unlock.biome_crypt.name': 'Cripta',
@@ -3477,6 +3497,9 @@ const I18n = {
             'log.meteor': ' METEOR!',
             'log.arcaneStorm': ' ARCANE STORM!',
             'log.iceBarrier': ' BARREIRA GLACIAL!',
+            'log.windGust': ' TEMPESTADE DE VENTO!',
+            'log.natureFury': ' FÚRIA DA NATUREZA!',
+            'log.warriorShield': ' Escudo erguido!',
             'log.arcaneBarrier': ' BARREIRA ARCADA!',
             'log.arcaneShieldReady': ' Escudo Arcano pronto!',
             'log.travelerSpawned': 'Um viajante misterioso apareceu!',
@@ -3538,6 +3561,7 @@ const I18n = {
             'start.classWarrior': 'Guerreiro',
             'start.classRogue': 'Ladino',
             'start.classMage': 'Mago',
+            'start.classElf': 'Elfa',
             'start.btnTutorial': '🎮 Tutorial',
             'start.btnDaily': '🏆 Diário',
             'start.btnMeta': '✨ MetaLoja',
@@ -3549,6 +3573,8 @@ const I18n = {
             'start.arch.sombra': '🌑 Sombra',
             'start.arch.arcano': '🔮 Arcano',
             'start.arch.gelo': '❄️ Gelo',
+            'start.arch.vento': '💨 Vento',
+            'start.arch.natureza': '🌿 Natureza',
 
             // Difficulty presets (names/descs)
             'difficulty.facil.name': 'Fácil',
@@ -3601,11 +3627,13 @@ const I18n = {
             'class.warrior': 'WARRIOR',
             'class.rogue': 'ROGUE',
             'class.mage': 'MAGE',
+            'class.elf': 'ELF',
 
             // Class descriptions
             'class.warrior.desc': 'High HP, heavy damage.',
             'class.rogue.desc': 'Fast, rapid fire.',
             'class.mage.desc': 'Low HP, arcane shots.',
+            'class.elf.desc': 'Wind and nature, bow and arrow.',
 
             // HUD labels
             'hud.level': 'Level',
@@ -3768,7 +3796,7 @@ const I18n = {
             'tutorial.stage6.line5': 'Skills: specialize your character',
             'tutorial.stage6.line6': 'Stats: track your progress',
             'tutorial.stage6.line7': '',
-            'tutorial.stage6.line8': 'Bonus: +50 coins!',
+            'tutorial.stage6.line8': 'Bonus: +25 coins!',
             'tutorial.promptFull': '🎓 Full Tutorial (~3 min)',
             'tutorial.stage7.title': ' Meet the Shop',
             'tutorial.stage7.line1': 'Open the SHOP to buy items with the gold enemies drop.',
@@ -3787,7 +3815,7 @@ const I18n = {
             'tutorial.stage10.line1': 'You mastered the fundamentals — and a bit more.',
             'tutorial.stage10.line2': 'Minimap in the corner: shows enemies, chests and the portal.',
             'tutorial.stage10.line3': 'The Abyss awaits. Good luck, hero!',
-            'tutorial.stage10.line4': 'Bonus: +100 coins!',
+            'tutorial.stage10.line4': 'Bonus: +50 coins!',
             'tutorial.skillTouch1': 'Tap the ability button at the bottom',
             'tutorial.skillTouch2': 'right (the button with the fire icon).',
             'tutorial.skillTouch3': '',
@@ -4217,6 +4245,8 @@ const I18n = {
             'meta.unlock.class_rogue.desc': 'Poisonous, fast and critical. Unlocks the Rogue class.',
             'meta.unlock.class_mage.name': 'Mage',
             'meta.unlock.class_mage.desc': 'Arcane power and accurate projectiles. Unlocks the Mage class.',
+            'meta.unlock.class_elf.name': 'Elf',
+            'meta.unlock.class_elf.desc': 'Wind and nature, bow and arrow. Unlocks the Elf class.',
             'meta.unlock.biome_lavaCave.name': 'Lava Cave',
             'meta.unlock.biome_lavaCave.desc': 'Unlocks the Lava Cave biome in scenery changes.',
             'meta.unlock.biome_crypt.name': 'Crypt',
@@ -4421,6 +4451,9 @@ const I18n = {
             'log.meteor': ' METEOR!',
             'log.arcaneStorm': ' ARCANE STORM!',
             'log.iceBarrier': ' GLACIAL BARRIER!',
+            'log.windGust': ' WIND GUST!',
+            'log.natureFury': ' NATURE\u2019S FURY!',
+            'log.warriorShield': ' Shield raised!',
             'log.arcaneBarrier': ' ARCANE BARRIER!',
             'log.arcaneShieldReady': ' Arcane Shield ready!',
             'log.travelerSpawned': 'A mysterious traveler appeared!',
@@ -4482,6 +4515,7 @@ const I18n = {
             'start.classWarrior': 'Warrior',
             'start.classRogue': 'Rogue',
             'start.classMage': 'Mage',
+            'start.classElf': 'Elf',
             'start.btnTutorial': '🎮 Tutorial',
             'start.btnDaily': '🏆 Daily',
             'start.btnMeta': '✨ MetaShop',
@@ -4493,6 +4527,8 @@ const I18n = {
             'start.arch.sombra': '🌑 Shadow',
             'start.arch.arcano': '🔮 Arcane',
             'start.arch.gelo': '❄️ Frost',
+            'start.arch.vento': '💨 Wind',
+            'start.arch.natureza': '🌿 Nature',
 
             // Difficulty presets (names/descs)
             'difficulty.facil.name': 'Easy',
@@ -4545,11 +4581,13 @@ const I18n = {
             'class.warrior': 'GUERRERO',
             'class.rogue': 'LADRON',
             'class.mage': 'MAGO',
+            'class.elf': 'ELFA',
 
             // Class descriptions
             'class.warrior.desc': 'Mucha vida, daño pesado.',
             'class.rogue.desc': 'Rápido, disparos veloces.',
             'class.mage.desc': 'Poca vida, tiros arcanos.',
+            'class.elf.desc': 'Viento y naturaleza, arco y flecha.',
 
             // HUD labels
             'hud.level': 'Nivel',
@@ -4712,7 +4750,7 @@ const I18n = {
             'tutorial.stage6.line5': 'Habilidades: especializa a tu personaje',
             'tutorial.stage6.line6': 'Estadísticas: sigue tu progreso',
             'tutorial.stage6.line7': '',
-            'tutorial.stage6.line8': '¡Bonus: +50 monedas!',
+            'tutorial.stage6.line8': '¡Bonus: +25 monedas!',
             'tutorial.promptFull': '🎓 Tutorial Completo (~3 min)',
             'tutorial.stage7.title': ' Conoce la Tienda',
             'tutorial.stage7.line1': 'Abre la TIENDA para comprar objetos con el oro de los enemigos.',
@@ -4731,7 +4769,7 @@ const I18n = {
             'tutorial.stage10.line1': 'Dominaste lo esencial — y un poco más.',
             'tutorial.stage10.line2': 'Minimapa en la esquina: muestra enemigos, cofres y el portal.',
             'tutorial.stage10.line3': 'El Abismo espera. ¡Buena suerte, héroe!',
-            'tutorial.stage10.line4': '¡Bonus: +100 monedas!',
+            'tutorial.stage10.line4': '¡Bonus: +50 monedas!',
             'tutorial.skillTouch1': 'Toca el botón de habilidad en la esquina inferior',
             'tutorial.skillTouch2': 'derecha (el botón con el icono de fuego).',
             'tutorial.skillTouch3': '',
@@ -5161,6 +5199,8 @@ const I18n = {
             'meta.unlock.class_rogue.desc': 'Venenoso, veloz y crítico. Habilita la clase Ladrón.',
             'meta.unlock.class_mage.name': 'Mago',
             'meta.unlock.class_mage.desc': 'Poder arcano y proyectiles certeros. Habilita la clase Mago.',
+            'meta.unlock.class_elf.name': 'Elfa',
+            'meta.unlock.class_elf.desc': 'Viento y naturaleza, arco y flecha. Habilita la clase Elfa.',
             'meta.unlock.biome_lavaCave.name': 'Cueva de Lava',
             'meta.unlock.biome_lavaCave.desc': 'Habilita el bioma Cueva de Lava en los cambios de escenario.',
             'meta.unlock.biome_crypt.name': 'Cripta',
@@ -5365,6 +5405,9 @@ const I18n = {
             'log.meteor': ' ¡METEORITO!',
             'log.arcaneStorm': ' ¡TORMENTA ARCANO!',
             'log.iceBarrier': ' ¡BARRERA GLACIAL!',
+            'log.windGust': ' ¡RÁFAGA DE VIENTO!',
+            'log.natureFury': ' ¡FURIA DE LA NATURALEZA!',
+            'log.warriorShield': ' ¡Escudo levantado!',
             'log.arcaneBarrier': ' ¡BARRERA ARCADA!',
             'log.arcaneShieldReady': ' ¡Escudo Arcano listo!',
             'log.travelerSpawned': '¡Apareció un viajero misterioso!',
@@ -5424,6 +5467,7 @@ const I18n = {
             'start.classWarrior': 'Guerrero',
             'start.classRogue': 'Ladrón',
             'start.classMage': 'Mago',
+            'start.classElf': 'Elfa',
             'start.btnTutorial': '🎮 Tutorial',
             'start.btnDaily': '🏆 Diario',
             'start.btnMeta': '✨ MetaTienda',
@@ -5435,6 +5479,8 @@ const I18n = {
             'start.arch.sombra': '🌑 Sombra',
             'start.arch.arcano': '🔮 Arcano',
             'start.arch.gelo': '❄️ Hielo',
+            'start.arch.vento': '💨 Viento',
+            'start.arch.natureza': '🌿 Naturaleza',
 
             // Difficulty presets (names/descs)
             'difficulty.facil.name': 'Fácil',
@@ -5568,7 +5614,7 @@ var CONFIG = {
     MAP_SPAWN_MAX_ATTEMPTS: 100,
 
     // Game State
-    MAX_ENEMIES: 9,
+    MAX_ENEMIES: 11,
 
     // Performance Tuning
     PARTICLE_CAP: 60,
@@ -5579,7 +5625,7 @@ var CONFIG = {
     CD_UPDATE_INTERVAL: 20,        // frames
     PERFORMANCE_MODE: false,        // true = aggressive throttling
     ENEMY_INITIAL_COUNT: 4,
-    ENEMY_INITIAL_COUNT_DUNGEON_RAMP: [3, 5, 7, 8], // B1=3, B2=5, B3=7, B4+=8
+    ENEMY_INITIAL_COUNT_DUNGEON_RAMP: [4, 6, 8, 9], // B1=3, B2=5, B3=7, B4+=8
     ENEMY_SPAWN_MIN_DIST: 300,
     HAZARD_SPAWN_INTERVAL: 300,      // frames (~5s at 60fps)
     HAZARD_MAX_COUNT: 5,
@@ -5626,8 +5672,8 @@ var CONFIG = {
     FROZEN_DAMAGE_MULT: 2.0,
     SHIELD_DAMAGE_ABSORB: 1.0,
     ENRAGE_HP_THRESHOLD: 0.5,
-    TREASURE_GOBLIN_CURRENCY_DROP: 15,
-    ENEMY_CURRENCY_DROP_CHANCE: 0.5,
+    TREASURE_GOBLIN_CURRENCY_DROP: 8,
+    ENEMY_CURRENCY_DROP_CHANCE: 0.3,
 
     // Loot Drop Weights (must sum to ~1.0)
     LOOT_DROP_CHANCE: 0.4,
@@ -5636,7 +5682,7 @@ var CONFIG = {
     LOOT_WEIGHT_SHIELD: 0.10,
     LOOT_WEIGHT_SPEED: 0.05,
     LOOT_WEIGHT_ESSENCE: 0.20, // Nova categoria
-    LOOT_MUTATION_CHANCE: 0.10,
+    LOOT_MUTATION_CHANCE: 0.06,
 
     // Experience & Leveling
     XP_BASE_REQUIREMENT: 100,
@@ -5652,9 +5698,15 @@ var CONFIG = {
     PLAYER: {
         warrior: { color: '#ffcc00', hp: 180, speed: 2.5, radius: 14, lightRadius: 200, baseDmg: 22, fireRate: 10 }, // tank: more HP, melee dmg, slower
         rogue:   { color: '#33ff33', hp: 85,  speed: 6, radius: 12, lightRadius: 200, baseDmg: 12, fireRate: 8, bulletSpeed: 14, critChance: 0.12 }, // mobile: faster, more crit, fragile
-        mage:    { color: '#9966ff', hp: 60,  speed: 3.5, radius: 12, lightRadius: 250, baseDmg: 14, fireRate: 8 } // area control: faster fire rate for spells
+        mage:    { color: '#9966ff', hp: 60,  speed: 3.5, radius: 12, lightRadius: 250, baseDmg: 14, fireRate: 8 }, // area control: faster fire rate for spells
+        elf:     { color: '#58e08a', hp: 100, speed: 4.5, radius: 12, lightRadius: 230, baseDmg: 13, fireRate: 7, bulletSpeed: 13, critChance: 0.08 } // wind/nature: ranged arrows, balanced
     },
     BULLET_SPEED_DEFAULT: 10,
+    ELF_GUST_COOLDOWN: 480,          // frames (~8s) rajada de vento / fúria da natureza
+    ELF_WIND_RANGE: 260,             // alcance da rajada de vento
+    ELF_WIND_DAMAGE: 34,             // dano base da rajada
+    ELF_NATURE_STORM_ARROWS: 14,     // flechas da tempestade da natureza
+    ELF_NATURE_STORM_DAMAGE: 18,
 
     // Enemy Base Stats
     ENEMY_HP: 30,
@@ -5674,8 +5726,8 @@ var CONFIG = {
     ENEMY_RANGED_STRAFE_MULT: 0.55, // velocidade do strafe lateral dos atiradores
 
     // Elite Enemies (random stat bonuses)
-    ELITE_HP_MULT: 2.0,
-    ELITE_DAMAGE_MULT: 1.5,
+    ELITE_HP_MULT: 1.35,
+    ELITE_DAMAGE_MULT: 1.3,
     ELITE_SPEED_MULT: 1.2,
     ELITE_RADIUS_MULT: 1.3,
     ELITE_XP_MULT: 3.0,
@@ -5731,7 +5783,7 @@ var CONFIG = {
 
     // Boss Base Stats
     BOSS_HP: 3400,
-    BOSS_RADIUS: 30,
+    BOSS_RADIUS: 26,
     BOSS_LIGHT_RADIUS: 250,
     BOSS_SPEED: 1.5,
     BOSS_ENRAGE_SPEED: 2.0,
@@ -5762,6 +5814,11 @@ var CONFIG = {
     BOSS_ABILITY_CHARGE_DAMAGE: 45,
     BOSS_CHARGE_RANGE: 400,
     BOSS_ABILITY_CHARGE_RANGE: 250,
+    // Dash: investida rápida disponível para TODOS os chefes (fase 2+)
+    BOSS_DASH_SPEED: 9,
+    BOSS_DASH_DURATION: 22,          // frames da investida
+    BOSS_DASH_COOLDOWN: 90,          // frames entre dashs
+    BOSS_DASH_DAMAGE: 18,
 
     // Boss Arena Hazards
     BOSS_ARENA_HAZARD_INTERVAL: 240, // frames (~4s)
@@ -5785,7 +5842,7 @@ var CONFIG = {
     // Boss Death
     BOSS_DEATH_EXPLOSION_PARTICLES: 50,
     BOSS_DEATH_EXPLOSION_RADIUS: 80,
-    BOSS_LOOT_MULTIPLIER: 5.0, // currency drops
+    BOSS_LOOT_MULTIPLIER: 3.0, // currency drops
     BOSS_XP_BONUS: 300, // extra XP on top of base
 
     // Death Animations
@@ -5929,7 +5986,9 @@ var CONFIG = {
     // Attack Heat (overheat on rapid fire) - applies to all classes
     HEAT_MAX: 100,
     HEAT_PER_SHOT: 16,             // ~6 attacks (~0.8-1s of sustained action) to overheat
-    HEAT_DECAY_RATE: 0.5,          // heat lost per frame when not attacking
+    HEAT_DECAY_RATE: 0.65,          // heat lost per frame when not attacking
+    // Escudo de superaquecimento do Guerreiro: escudo concedido ao superaquecer
+    WARRIOR_OVERHEAT_SHIELD: 45,
     HEAT_RESUME_THRESHOLD: 35,     // must cool to this % before fast attacks resume
     OVERHEAT_FIRERATE_MULT: 2.5,   // fire/attack interval multiplier while overheated (slower)
 
@@ -5969,6 +6028,7 @@ var CONFIG = {
     // Economy
     SHOP_FLASH_DISCOUNT: 0.40,          // 40% off flash offer
     SHOP_PRICE_DUNGEON_SCALE: 0.08,     // +8% per dungeon level
+    SHOP_COST_MULT: 1.35,               // preços base da loja mais altos (economia apertada)
     PICKUP_MAGNET_RADIUS: 40,           // passive currency attraction
 
     // Damage Buffs
@@ -6069,7 +6129,7 @@ var CONFIG = {
     PICKUP_XP_VALUE: 50,
     PICKUP_SHIELD_VALUE: 50,
     PICKUP_SPEED_VALUE: 3,
-    PICKUP_CURRENCY_VALUE: 15, // increased from 10
+    PICKUP_CURRENCY_VALUE: 8, // increased from 10
     PICKUP_RADIUS_GLOW: 12,
     PICKUP_RADIUS_CORE: 8,
 
@@ -6180,7 +6240,7 @@ var CONFIG = {
 
     // Prestige starting items
     PRESTIGE_STARTING_SHIELD: [0, 0, 25, 50, 75, 100, 125, 150, 200, 250], // starting shield
-    PRESTIGE_STARTING_CURRENCY: [15, 35, 60, 90, 125, 175, 225, 325, 500, 750], // starting currency (increased early game)
+    PRESTIGE_STARTING_CURRENCY: [10, 25, 40, 60, 85, 120, 155, 225, 350, 525], // starting currency (increased early game)
 
     // Audio System
     AUDIO_MASTER_MUSIC_VOLUME: 0.15,
@@ -6647,7 +6707,7 @@ function _populateGameOverUI() {
     var timeStr = mins > 0 ? mins + 'm ' + secs + 's' : secs + 's';
 
     // Header info
-    var classNames = { warrior: 'Guerreiro', rogue: 'Ladino', mage: 'Mago' };
+    var classNames = { warrior: 'Guerreiro', rogue: 'Ladino', mage: 'Mago', elf: 'Elfa' };
     var classEl = document.getElementById('go-class');
     var timeEl = document.getElementById('go-time');
     var floorEl = document.getElementById('go-floor');
@@ -6673,7 +6733,7 @@ function _populateGameOverUI() {
     var shareBtn = document.getElementById('go-share-btn');
     if (shareBtn) {
         shareBtn.onclick = function() {
-            var classNames2 = { warrior: 'Guerreiro', rogue: 'Ladino', mage: 'Mago' };
+            var classNames2 = { warrior: 'Guerreiro', rogue: 'Ladino', mage: 'Mago', elf: 'Elfa' };
             var text = 'Krevathorn - ' + (classNames2[player.type] || player.type)
                 + ' | Piso ' + dungeonLevel + ' | ' + timeStr
                 + ' | Pontos: ' + runScore + ' | Abates: ' + thisKills + ' | Combo: ' + (Statistics.data.maxCombo || 0) + 'x';
@@ -7600,6 +7660,7 @@ function _updateEnemySpawning() {
             if (DifficultySystem.canSpawnType('shielder') && dungeonLevel >= CONFIG.SHIELDER_SPAWN_DUNGEON) push('shielder', CONFIG.SHIELDER_SPAWN_CHANCE);
             if (dungeonLevel >= 2) push('healer', CONFIG.HEALER_SPAWN_CHANCE);
             if (dungeonLevel >= 3) push('summoner', 0.05);
+            if (typeof BiomeSystem !== 'undefined' && BiomeSystem.currentBiome === 'crypt') push('skeleton', 0.35);
             push('normal', 1.0);
             let total = 0; for(const o of pool) total += o[1];
             let r = SeedSystem.random() * total, chosen = 'normal';
@@ -7610,7 +7671,7 @@ function _updateEnemySpawning() {
             else if (chosen === 'swarm') { for (let s = 0; s < CONFIG.SWARM_SPAWN_COUNT; s++) { const sa = (s / CONFIG.SWARM_SPAWN_COUNT) * Math.PI * 2; const sd = 30 + SeedSystem.random() * 30; entities.push(new SwarmEnemy(eSpawn.x + Math.cos(sa)*sd, eSpawn.y + Math.sin(sa)*sd)); } }
             else if (chosen === 'shielder') entities.push(new ShieldEnemy(eSpawn.x, eSpawn.y));
             else if (chosen === 'healer') entities.push(new HealerEnemy(eSpawn.x, eSpawn.y));
-            else if (chosen === 'summoner') entities.push(new SummonerEnemy(eSpawn.x, eSpawn.y));
+            else if (chosen === 'skeleton') entities.push(new SkeletonEnemy(eSpawn.x, eSpawn.y));
             else { const _ne = new Enemy(eSpawn.x, eSpawn.y, false); if (typeof BiomeSystem !== 'undefined' && BiomeSystem.applyEnemyVariant) BiomeSystem.applyEnemyVariant(_ne); entities.push(_ne); }
         }
     }
@@ -8109,6 +8170,7 @@ function _drawScreenSpaceHUD() {
         if (specialBtn) {
             const maxCD = player.type === 'warrior' ? CONFIG.WARRIOR_SLAM_COOLDOWN : 
                          player.type === 'rogue' ? CONFIG.ROGUE_SHADOW_STEP_COOLDOWN : 
+                         player.type === 'elf' ? CONFIG.ELF_GUST_COOLDOWN :
                          CONFIG.MAGE_ARCANE_STORM_COOLDOWN;
             // Badge
             if (specCd) {
@@ -8260,8 +8322,12 @@ function draw() {
             } else if (_fadeState.phase === 'mid' && !_anyPanelOpen()) {
                 try {
                 _cachedLightCanvas = null; _lightingThrottle = 0;
-                if ((gameMode === 'abyss' || dungeonLevel < 10) && typeof BiomeSystem !== 'undefined' && BiomeSystem.onDungeonComplete) {
+                if ((gameMode === 'abyss' || dungeonLevel <= 10) && typeof BiomeSystem !== 'undefined' && BiomeSystem.onDungeonComplete) {
                     BiomeSystem.onDungeonComplete(); // a cada 3 pisos o cenário muda de bioma
+                    // Último piso (Piso B1): bioma SEMPRE diferente dos anteriores
+                    if (gameMode === 'dungeon' && dungeonLevel === 10 && typeof BiomeSystem.forceDifferentBiome === 'function') {
+                        BiomeSystem.forceDifferentBiome();
+                    }
                 }
                 if (window.SeedSystem && SeedSystem.isSeeded()) SeedSystem.reseedForFloor(dungeonLevel);
                 map = new Map(); _mmDirty = true;
@@ -9419,6 +9485,12 @@ window.SND = {
                 this.play(1200 + pitchVar, 'square', 0.03, 0.08);
                 this.playNoise(0.08, 0.04, 2000, 'highpass');
                 break;
+            case 'elf':
+                // Som de arco: estalo de corda + assobio da flecha
+                this.play(900 + pitchVar, 'sine', 0.06, 0.14);
+                this.schedule(() => this.play(1400 + pitchVar, 'sine', 0.06, 0.08), 70);
+                this.playNoise(0.06, 0.05, 3000, 'highpass');
+                break;
             case 'warrior':
                 this.play(110 + pitchVar, 'sawtooth', 0.15, 0.2);
                 this.playNoise(0.12, 0.06, 400, 'lowpass');
@@ -9778,31 +9850,31 @@ window.Vibrate = Vibrate;
 // === js/systems/achievements.js ===
 // ACHIEVEMENTS SYSTEM
 const ACHIEVEMENTS = [
-    { id: 'firstBlood', nameKey: 'ach.firstBlood.name', name: ' Primeiro Sangue', descKey: 'ach.firstBlood.desc', desc: 'Mate seu primeiro inimigo', reward: { currency: 20 }, check: (s) => s.totalKills >= 1 },
+    { id: 'firstBlood', nameKey: 'ach.firstBlood.name', name: ' Primeiro Sangue', descKey: 'ach.firstBlood.desc', desc: 'Mate seu primeiro inimigo', reward: { currency: 12 }, check: (s) => s.totalKills >= 1 },
     { id: 'kill100', nameKey: 'ach.kill100.name', name: ' Caçador', descKey: 'ach.kill100.desc', desc: 'Mate 100 inimigos', reward: { dmgMult: 0.05 }, check: (s) => s.totalKills >= 100 },
     { id: 'kill1000', nameKey: 'ach.kill1000.name', name: ' Exterminador', descKey: 'ach.kill1000.desc', desc: 'Mate 1000 inimigos', reward: { dmgMult: 0.1 }, check: (s) => s.totalKills >= 1000 },
     { id: 'level5', nameKey: 'ach.level5.name', name: ' Sobrevivente', descKey: 'ach.level5.desc', desc: 'Alcance nível 5', reward: { maxHp: 10 }, check: (s) => s.maxLevel >= 5 },
     { id: 'level10', nameKey: 'ach.level10.name', name: ' Veterano', descKey: 'ach.level10.desc', desc: 'Alcance nível 10', reward: { maxHp: 20 }, check: (s) => s.maxLevel >= 10 },
     { id: 'level20', nameKey: 'ach.level20.name', name: ' Lenda', descKey: 'ach.level20.desc', desc: 'Alcance nível 20', reward: { maxHp: 50 }, check: (s) => s.maxLevel >= 20 },
-    { id: 'bossKill', nameKey: 'ach.bossKill.name', name: ' Matador de Bosses', descKey: 'ach.bossKill.desc', desc: 'Derrote um boss', reward: { currency: 50 }, check: (s) => s.bossKills >= 1 },
+    { id: 'bossKill', nameKey: 'ach.bossKill.name', name: ' Matador de Bosses', descKey: 'ach.bossKill.desc', desc: 'Derrote um boss', reward: { currency: 30 }, check: (s) => s.bossKills >= 1 },
     { id: 'boss10', nameKey: 'ach.boss10.name', name: ' Flagelo de Bosses', descKey: 'ach.boss10.desc', desc: 'Derrote 10 bosses', reward: { critChance: 0.05 }, check: (s) => s.bossKills >= 10 },
     { id: 'combo5', nameKey: 'ach.combo5.name', name: ' Combo Master', descKey: 'ach.combo5.desc', desc: 'Faa 5x combo', reward: { speedMult: 0.05 }, check: (s) => s.maxCombo >= 5 },
     { id: 'combo10', nameKey: 'ach.combo10.name', name: ' Combo Insano', descKey: 'ach.combo10.desc', desc: 'Faa 10x combo', reward: { speedMult: 0.1 }, check: (s) => s.maxCombo >= 10 },
-    { id: 'dungeon3', nameKey: 'ach.dungeon3.name', name: ' Explorador', descKey: 'ach.dungeon3.desc', desc: 'Complete 3 dungeons', reward: { currency: 30 }, check: (s) => s.dungeonsCompleted >= 3 },
-    { id: 'dungeon10', nameKey: 'ach.dungeon10.name', name: ' Mestre de Dungeons', descKey: 'ach.dungeon10.desc', desc: 'Complete 10 dungeons', reward: { currency: 100 }, check: (s) => s.dungeonsCompleted >= 10 },
+    { id: 'dungeon3', nameKey: 'ach.dungeon3.name', name: ' Explorador', descKey: 'ach.dungeon3.desc', desc: 'Complete 3 dungeons', reward: { currency: 18 }, check: (s) => s.dungeonsCompleted >= 3 },
+    { id: 'dungeon10', nameKey: 'ach.dungeon10.name', name: ' Mestre de Dungeons', descKey: 'ach.dungeon10.desc', desc: 'Complete 10 dungeons', reward: { currency: 60 }, check: (s) => s.dungeonsCompleted >= 10 },
     { id: 'prestige1', nameKey: 'ach.prestige1.name', name: ' Renascimento', descKey: 'ach.prestige1.desc', desc: 'Faa seu primeiro prestige', reward: { prestigeBonus: 0.1 }, check: (s) => s.totalPrestiges >= 1 },
     { id: 'currency1000', nameKey: 'ach.currency1000.name', name: ' Rico', descKey: 'ach.currency1000.desc', desc: 'Acumule 1000 moedas totais', reward: { shopDiscount: 0.1 }, check: (s) => s.totalCurrencyEarned >= 1000 },
     { id: 'playTime', nameKey: 'ach.playTime.name', name: ' Dedicado', descKey: 'ach.playTime.desc', desc: 'Jogue por 30 minutos', reward: { maxHp: 30 }, check: (s) => s.totalPlayTime >= 1800 },
-    { id: 'skills10', nameKey: 'ach.skills10.name', name: ' Estudioso', descKey: 'ach.skills10.desc', desc: 'Compre 10 habilidades na árvore', reward: { currency: 40 }, check: (s) => s.skillsUnlocked >= 10 },
+    { id: 'skills10', nameKey: 'ach.skills10.name', name: ' Estudioso', descKey: 'ach.skills10.desc', desc: 'Compre 10 habilidades na árvore', reward: { currency: 25 }, check: (s) => s.skillsUnlocked >= 10 },
     { id: 'skills25', nameKey: 'ach.skills25.name', name: ' Mestre da Árvore', descKey: 'ach.skills25.desc', desc: 'Compre 25 habilidades na árvore', reward: { maxHp: 25 }, check: (s) => s.skillsUnlocked >= 25 },
     { id: 'dmg50k', nameKey: 'ach.dmg50k.name', name: ' Fora da Lei', descKey: 'ach.dmg50k.desc', desc: 'Cause 50.000 de dano acumulado', reward: { critChance: 0.03 }, check: (s) => s.totalDamageDealt >= 50000 },
-    { id: 'game5', nameKey: 'ach.game5.name', name: ' Jornada Recorrente', descKey: 'ach.game5.desc', desc: 'Jogue 5 partidas', reward: { currency: 50 }, check: (s) => s.gamesPlayed >= 5 },
+    { id: 'game5', nameKey: 'ach.game5.name', name: ' Jornada Recorrente', descKey: 'ach.game5.desc', desc: 'Jogue 5 partidas', reward: { currency: 30 }, check: (s) => s.gamesPlayed >= 5 },
     { id: 'floor5', nameKey: 'ach.floor5.name', name: ' Desbravador', descKey: 'ach.floor5.desc', desc: 'Chegue ao Piso 5', reward: { maxHp: 15 }, check: (s) => (s.maxFloor || 0) >= 5 },
     { id: 'floor10', nameKey: 'ach.floor10.name', name: ' Abismo Profundo', descKey: 'ach.floor10.desc', desc: 'Chegue ao Piso 10', reward: { dmgMult: 0.05 }, check: (s) => (s.maxFloor || 0) >= 10 },
-    { id: 'stun50', nameKey: 'ach.stun50.name', name: ' Atordoante', descKey: 'ach.stun50.desc', desc: 'Atordoe 50 inimigos', reward: { currency: 60 }, check: (s) => (s.stunsApplied || 0) >= 50 },
+    { id: 'stun50', nameKey: 'ach.stun50.name', name: ' Atordoante', descKey: 'ach.stun50.desc', desc: 'Atordoe 50 inimigos', reward: { currency: 35 }, check: (s) => (s.stunsApplied || 0) >= 50 },
     { id: 'bleed50', nameKey: 'ach.bleed50.name', name: ' Sangria', descKey: 'ach.bleed50.desc', desc: 'Cause sangramento 50 vezes', reward: { critChance: 0.03 }, check: (s) => (s.bleedsApplied || 0) >= 50 },
     { id: 'frost50', nameKey: 'ach.frost50.name', name: ' Mestre do Gelo', descKey: 'ach.frost50.desc', desc: 'Congele 50 inimigos', reward: { maxHp: 20 }, check: (s) => (s.frostsApplied || 0) >= 50 },
-    { id: 'shop50', nameKey: 'ach.shop50.name', name: ' Cliente Fiel', descKey: 'ach.shop50.desc', desc: 'Compre 50 itens na loja', reward: { currency: 80 }, check: (s) => (s.shopPurchases || 0) >= 50 }
+    { id: 'shop50', nameKey: 'ach.shop50.name', name: ' Cliente Fiel', descKey: 'ach.shop50.desc', desc: 'Compre 50 itens na loja', reward: { currency: 50 }, check: (s) => (s.shopPurchases || 0) >= 50 }
 ];
 window.ACHIEVEMENTS = ACHIEVEMENTS;
 
@@ -10080,7 +10152,7 @@ const ShopSystem = {
     activeTab: 'consumable', // loja: consumable | upgrade | pet
     purchaseHistory: [],   // últimas compras {name, cost, at}
     floorPurchaseCount: 0, // compras feitas neste andar
-    FLOOR_PURCHASE_LIMIT: 4, // teto de itens comprados por andar
+    FLOOR_PURCHASE_LIMIT: 3, // teto de itens comprados por andar
     _floorSeen: -1,       // andar em que o contador foi zerado
 
     // Generate (or reuse) the 3 regular items for this dungeon
@@ -10100,7 +10172,7 @@ const ShopSystem = {
         }
         this.activeItems = pool.slice(0, 3).map(item => ({
             ...item,
-            cost: Math.floor(item.cost * (1 + dungeonLevel * CONFIG.SHOP_PRICE_DUNGEON_SCALE)),
+            cost: Math.floor(item.cost * CONFIG.SHOP_COST_MULT * (1 + dungeonLevel * CONFIG.SHOP_PRICE_DUNGEON_SCALE)),
             stock: item.maxStock || 1
         }));
         return this.activeItems;
@@ -10120,7 +10192,7 @@ const ShopSystem = {
         const _noHealF = window._dailyMods && window._dailyMods.noHealShop;
         const pool = SHOP_ITEMS.filter(i => i.id !== 'reroll' && !(_noHealF && (i.id === 'healthPotion' || i.id === 'shieldPotion')));
         const base = pool[Math.floor(SeedSystem.random() * pool.length)];
-        const baseCost = Math.floor(base.cost * (1 + dungeonLevel * CONFIG.SHOP_PRICE_DUNGEON_SCALE));
+        const baseCost = Math.floor(base.cost * CONFIG.SHOP_COST_MULT * (1 + dungeonLevel * CONFIG.SHOP_PRICE_DUNGEON_SCALE));
         this.flashOffer = {
             ...base,
             cost: Math.floor(baseCost * (1 - CONFIG.SHOP_FLASH_DISCOUNT)),
@@ -10169,7 +10241,7 @@ const ShopSystem = {
 const SkillTree = {
     // Limite de compras de habilidades de velocidade por classe
     // (o ladino já é muito rápido naturalmente; mago/guerreiro até 3 níveis)
-    SPEED_LIMIT: { warrior: 3, rogue: 1, mage: 3 },
+    SPEED_LIMIT: { warrior: 3, rogue: 1, mage: 3, elf: 2 },
 
     // Definição da árvore por classe (tier 1 = base, tier 3 = topo)
     trees: {
@@ -10231,6 +10303,24 @@ const SkillTree = {
             { id: 'overload', name: 'Sobrecarga Arcana', desc: '+20% dano', cost: 90, tier: 2, dmgMult: 0.20, requires: 'dmg2' },
             { id: 'manaSpring2', name: 'Mana Spring II', desc: '+3 mana/sec', cost: 100, tier: 3, manaRegen: 3, requires: 'regen' },
             { id: 'barrier', name: 'Arcane Barrier', desc: 'Habilidade: escudo +75 e onda de dano', cost: 130, tier: 3, ability: 'barrier', requires: 'meteor' }
+        ],
+        elf: [
+            { id: 'aim1', name: 'Mira Precisa I', desc: '+10% crítico', cost: 40, tier: 1, critChance: 0.10 },
+            { id: 'aim2', name: 'Mira Precisa II', desc: '+15% crítico', cost: 65, tier: 2, critChance: 0.15, requires: 'aim1' },
+            { id: 'gale1', name: 'Vento Cortante I', desc: '+15% dano', cost: 35, tier: 1, dmgMult: 0.15 },
+            { id: 'gale2', name: 'Vento Cortante II', desc: '+25% dano', cost: 60, tier: 2, dmgMult: 0.25, requires: 'gale1' },
+            { id: 'gale3', name: 'Vento Cortante III', desc: '+35% dano', cost: 95, tier: 3, dmgMult: 0.35, requires: 'gale2' },
+            { id: 'seed1', name: 'Sementes Venenosas', desc: 'Veneno em flechas', cost: 45, tier: 1, poison: 0.05 },
+            { id: 'seed2', name: 'Sementes Venenosas II', desc: '+10% veneno', cost: 70, tier: 2, poison: 0.10, requires: 'seed1' },
+            { id: 'multi', name: 'Chuva de Flechas', desc: '+1 projétil', cost: 75, tier: 2, multiShot: 1 },
+            { id: 'multi2', name: 'Chuva de Flechas II', desc: '+1 projétil', cost: 95, tier: 3, multiShot: 1, requires: 'multi' },
+            { id: 'bark', name: 'Casca de Árvore', desc: '+40 de escudo', cost: 45, tier: 1, shield: 40 },
+            { id: 'swift', name: 'Passos Leves', desc: '10% de esquiva', cost: 50, tier: 1, dodge: 0.10 },
+            { id: 'wind1', name: 'Vento Veloz I', desc: '+8% velocidade', cost: 40, tier: 1, cat: 'speed', speedMult: 0.08 },
+            { id: 'wind2', name: 'Vento Veloz II', desc: '+10% velocidade', cost: 70, tier: 2, cat: 'speed', speedMult: 0.10, requires: 'wind1' },
+            { id: 'roots', name: 'Raízes da Natureza', desc: '15% de chance de enraizar no golpe', cost: 75, tier: 2, rootTouch: true, requires: 'seed1' },
+            { id: 'tempest', name: 'Tempestade de Vento', desc: 'Habilidade: rajada que empurra inimigos', cost: 110, tier: 2, ability: 'tempest', requires: 'gale2' },
+            { id: 'naturesFury', name: 'Fúria da Natureza', desc: 'Habilidade: flechas que enraízam e envenenam', cost: 140, tier: 3, ability: 'naturesFury', requires: 'tempest' }
         ]
     },
 
@@ -10239,11 +10329,26 @@ const SkillTree = {
         return this.trees[cls] || [];
     },
 
-    unlock(player, skillId) {
+    // Teto de habilidades compradas por andar: reduz a quantidade de poderes
+    // acumulados entre níveis (economia de progressão).
+    FLOOR_PURCHASE_LIMIT: 2,
+    _floorSeen: -1,
+    floorPurchaseCount: 0,
+
+    unlock(player, skillId, bypassLimit) {
         if (player.unlockedSkills.includes(skillId)) return false; // Já tem
         const cls = player.type;
         const skill = this.getNodes(cls).find(s => s.id === skillId);
         if (!skill) return false;
+
+        // Teto por andar (arquétipos/build-codes ignoram para aplicar o preset inteiro)
+        if (!bypassLimit) {
+            if (typeof dungeonLevel !== 'undefined' && dungeonLevel !== this._floorSeen) {
+                this._floorSeen = dungeonLevel;
+                this.floorPurchaseCount = 0;
+            }
+            if (this.floorPurchaseCount >= this.FLOOR_PURCHASE_LIMIT) return false;
+        }
 
         // Limite de habilidades de velocidade por classe (ex.: ladino máx 1x)
         if (skill.cat === 'speed') {
@@ -10276,14 +10381,18 @@ const SkillTree = {
             if (skill.stun) player.skills.stun = true;
             if (skill.bleed) player.skills.bleed = true;
             if (skill.frostTouch) player.skills.frostTouch = true;
+            if (skill.rootTouch) player.skills.rootTouch = true;
             // Ability nodes unlock the advanced ultimate variants in useSkill()
             if (skill.ability === 'slam') { player.skills.aoe1 = true; player.skills.ult1 = true; }
             if (skill.ability === 'shadow' || skill.ability === 'meteor') player.skills.ult1 = true;
             if (skill.ability === 'berserk') { player.skills.berserk = true; player.skills.ult1 = true; }
             if (skill.ability === 'deathmark') { player.skills.deathmark = true; player.skills.ult1 = true; }
             if (skill.ability === 'barrier') { player.skills.barrier = true; player.skills.ult1 = true; }
+            if (skill.ability === 'tempest') { player.skills.tempest = true; }
+            if (skill.ability === 'naturesFury') { player.skills.naturesFury = true; player.skills.ult1 = true; }
 
             player.unlockedSkills.push(skillId);
+            if (!bypassLimit) this.floorPurchaseCount++;
             return true;
         }
         return false;
@@ -10307,7 +10416,9 @@ const BuildSystem = {
         rogue_assassino: { name: 'Assassino', icon: '🗡️', cls: 'rogue',   skills: ['crit1', 'crit2', 'poison', 'poison2', 'bleed', 'evasion'] },
         rogue_sombra:    { name: 'Sombra',    icon: '🌑', cls: 'rogue',   skills: ['speed1', 'shadow', 'deathmark', 'evasion', 'crit1', 'multi'] },
         mage_arcano:     { name: 'Arcano',    icon: '🔮', cls: 'mage',    skills: ['mana1', 'dmg1', 'dmg2', 'overload', 'meteor', 'regen'] },
-        mage_gelo:       { name: 'Gelo',      icon: '❄️', cls: 'mage',    skills: ['freeze', 'frostTouch', 'mana1', 'regen', 'dmg1', 'ward'] }
+        mage_gelo:       { name: 'Gelo',      icon: '❄️', cls: 'mage',    skills: ['freeze', 'frostTouch', 'mana1', 'regen', 'dmg1', 'ward'] },
+        elf_vento:       { name: 'Vento',     icon: '💨', cls: 'elf',     skills: ['gale1', 'gale2', 'tempest', 'wind1', 'aim1', 'bark'] },
+        elf_natureza:    { name: 'Natureza',  icon: '🌿', cls: 'elf',     skills: ['seed1', 'seed2', 'roots', 'multi', 'gale1', 'naturesFury'] }
     },
 
     _b64encode(s) { try { return btoa(unescape(encodeURIComponent(s))); } catch (e) { return ''; } },
@@ -10345,7 +10456,7 @@ const BuildSystem = {
                 var node = SkillTree.getNodes(player.type).find(function (s) { return s.id === ids[i]; });
                 if (!node) continue;
                 if (node.requires && player.unlockedSkills.indexOf(node.requires) === -1) continue;
-                if (SkillTree.unlock(player, node.id)) { granted++; ids.splice(i, 1); i--; any = true; }
+                if (SkillTree.unlock(player, node.id, true)) { granted++; ids.splice(i, 1); i--; any = true; }
             }
             if (!any) break;
         }
@@ -10429,7 +10540,7 @@ const CampSystem = {
             used.add(it.id);
             const weight = it.cat === 'pet' ? 0.35 : (it.cat === 'consumable' ? 1.4 : 1);
             if (SeedSystem.random() <= weight) {
-                chosen.push({ id: it.id, name: it.name, desc: it.desc, cost: Math.max(1, Math.floor(it.cost * 0.85)), cat: it.cat, effect: it.effect });
+                chosen.push({ id: it.id, name: it.name, desc: it.desc, cost: Math.max(1, Math.floor(it.cost * CONFIG.SHOP_COST_MULT * 0.85)), cat: it.cat, effect: it.effect });
             }
         }
         return chosen;
@@ -10689,13 +10800,13 @@ window.RunEventSystem = RunEventSystem;
 // === js/systems/runobjective.js ===
 // OBJETIVO DA RUN - meta central sorteada a cada partida (Fase C)
 const RUN_OBJECTIVES = [
-    { id: 'executioner', icon: '⚔️', nameKey: 'obj.executioner.name', name: 'Executor Sombrio', descKey: 'obj.executioner.desc', desc: 'Derrote 150 inimigos', metric: 'kills', target: 150, reward: 400 },
-    { id: 'ceifador',    icon: '💀', nameKey: 'obj.ceifador.name', name: 'Ceifador',          descKey: 'obj.ceifador.desc', desc: 'Derrote 250 inimigos', metric: 'kills', target: 250, reward: 600 },
-    { id: 'boss_hunter', icon: '👑', nameKey: 'obj.boss_hunter.name', name: 'Caçador de Chefes', descKey: 'obj.boss_hunter.desc', desc: 'Abata 2 chefes de piso', metric: 'bossKills', target: 2, reward: 800 },
-    { id: 'gold_seeker', icon: '💰', nameKey: 'obj.gold_seeker.name', name: 'Colecionador',      descKey: 'obj.gold_seeker.desc', desc: 'Acumule 1.200 moedas na run', metric: 'gold', target: 1200, reward: 500 },
-    { id: 'explorer',    icon: '🧭', nameKey: 'obj.explorer.name', name: 'Explorador',        descKey: 'obj.explorer.desc', desc: 'Chegue ao Piso 6', metric: 'floor', target: 6, reward: 450 },
-    { id: 'speedster',   icon: '⏱️', nameKey: 'obj.speedster.name', name: 'Veloz',             descKey: 'obj.speedster.desc', desc: 'Chegue ao Piso 5 em até 8 min', metric: 'floor', target: 5, reward: 600, timeLimit: 480 },
-    { id: 'immaculate',  icon: '🛡️', nameKey: 'obj.immaculate.name', name: 'Impecável',         descKey: 'obj.immaculate.desc', desc: 'Dano sofrido menor que 300 até o Piso 4', metric: 'damage', target: 300, floor: 4, reward: 550 }
+    { id: 'executioner', icon: '⚔️', nameKey: 'obj.executioner.name', name: 'Executor Sombrio', descKey: 'obj.executioner.desc', desc: 'Derrote 150 inimigos', metric: 'kills', target: 150, reward: 250 },
+    { id: 'ceifador',    icon: '💀', nameKey: 'obj.ceifador.name', name: 'Ceifador',          descKey: 'obj.ceifador.desc', desc: 'Derrote 250 inimigos', metric: 'kills', target: 250, reward: 380 },
+    { id: 'boss_hunter', icon: '👑', nameKey: 'obj.boss_hunter.name', name: 'Caçador de Chefes', descKey: 'obj.boss_hunter.desc', desc: 'Abata 2 chefes de piso', metric: 'bossKills', target: 2, reward: 500 },
+    { id: 'gold_seeker', icon: '💰', nameKey: 'obj.gold_seeker.name', name: 'Colecionador',      descKey: 'obj.gold_seeker.desc', desc: 'Acumule 1.200 moedas na run', metric: 'gold', target: 800, reward: 320 },
+    { id: 'explorer',    icon: '🧭', nameKey: 'obj.explorer.name', name: 'Explorador',        descKey: 'obj.explorer.desc', desc: 'Chegue ao Piso 6', metric: 'floor', target: 6, reward: 280 },
+    { id: 'speedster',   icon: '⏱️', nameKey: 'obj.speedster.name', name: 'Veloz',             descKey: 'obj.speedster.desc', desc: 'Chegue ao Piso 5 em até 8 min', metric: 'floor', target: 5, reward: 380, timeLimit: 480 },
+    { id: 'immaculate',  icon: '🛡️', nameKey: 'obj.immaculate.name', name: 'Impecável',         descKey: 'obj.immaculate.desc', desc: 'Dano sofrido menor que 300 até o Piso 4', metric: 'damage', target: 300, floor: 4, reward: 350 }
 ];
 
 const RunObjectiveSystem = {
@@ -10965,7 +11076,7 @@ class ActiveEvent {
 const WeaponSystem = {
     // Get weapon list for a class
     getWeaponsForClass(cls) {
-        const map = { warrior: CONFIG.WEAPONS_WARRIOR, rogue: CONFIG.WEAPONS_ROGUE, mage: CONFIG.WEAPONS_MAGE };
+        const map = { warrior: CONFIG.WEAPONS_WARRIOR, rogue: CONFIG.WEAPONS_ROGUE, mage: CONFIG.WEAPONS_MAGE, elf: CONFIG.WEAPONS_ROGUE };
         return map[cls] || CONFIG.WEAPONS_WARRIOR;
     },
 
@@ -12621,6 +12732,7 @@ const SpriteManager = {
         warrior:  ['#000', '#f1c27d', '#c0392b', '#f39c12', '#7f8c8d', '#fff', '#7b241c', '#ffaa00', '#e74c3c'],
         rogue:    ['#000', '#f1c27d', '#27ae60', '#145a32', '#95a5a6', '#fff', '#0e6251', '#2ecc71', '#58d68d'],
         mage:     ['#000', '#f1c27d', '#8e44ad', '#5b2c6f', '#e67e22', '#fff', '#4a235a', '#bb8fce', '#d2b4de'],
+        elf:      ['#000', '#f1c27d', '#2e8b57', '#14532d', '#8a6d3b', '#fff', '#0b3d1e', '#58e08a', '#a7f3d0'],
         melee:    ['#000', '#e74c3c', '#922b21', '#641e16', '#34495e', '#f1c40f', '#440000', '#ff0000', '#ff4d4d'],
         ranged:   ['#000', '#e67e22', '#a04000', '#5e3307', '#5d6d7e', '#f1c40f', '#331111', '#ff8c00', '#ffb347'],
         swarm:    ['#000', '#2c3e50', '#1c2833', '#000', '#000', '#e74c3c', '#000', '#34495e', '#566573'],
@@ -12641,7 +12753,8 @@ const SpriteManager = {
         trap:     ['#000', '#7f8c8d', '#c0392b', '#e74c3c', '#f39c12', '#fff', '#641e16', '#ec7063', '#f1948a'],
         mimic:    ['#000', '#f1c27d', '#8B4513', '#D2691E', '#CD853F', '#f1c40f', '#3e1f00', '#a04000', '#ba4a00'],
         healer:   ['#000', '#f1c27d', '#ffffff', '#81ecec', '#55efc4', '#fff', '#00b894', '#d1f2eb', '#e8f8f5'],
-        shielder: ['#000', '#e74c3c', '#2980b9', '#1a5276', '#85c1e9', '#fff', '#1b4f72', '#5dade2', '#a9cce3']
+        shielder: ['#000', '#e74c3c', '#2980b9', '#1a5276', '#85c1e9', '#fff', '#1b4f72', '#5dade2', '#a9cce3'],
+        skeleton: ['#000', '#f2e6d0', '#d9c9a8', '#9c8a66', '#6e5c3e', '#ffdd57', '#2e271a', '#fff3d6', '#ffe8c2']
     },
 
     patterns: {
@@ -12863,6 +12976,30 @@ const SpriteManager = {
             "3334444444444333", "3334455555544333", "0134555555554345", "0133455555434345",
             "0013333333331345", "0017331111337145", "0173310001337145", "0111000000111100"
         ],
+        skeleton_idle: [
+            "0000017117100000", "0000173333710000", "0001733333371000", "0017322222237100",
+            "0017326226237100", "0017322222237100", "0117333333337110", "1333333333333331",
+            "3334444444444333", "3334455555544333", "0134555555554310", "0133455555433310",
+            "0013333333331000", "0017331111337100", "0173310001337100", "0111000000111000"
+        ],
+        skeleton_walk1: [
+            "0000017117100000", "0000173333710000", "0001733333371000", "0017322222237100",
+            "0017326226237100", "0017322222237100", "0117333333337110", "1333333333333331",
+            "3334444444444333", "3334455555544333", "0134555555554310", "0133455555433310",
+            "0013333333310000", "0017331117330000", "0173310001110000", "0111000000000000"
+        ],
+        skeleton_walk2: [
+            "0000017117100000", "0000173333710000", "0001733333371000", "0017322222237100",
+            "0017326226237100", "0017322222237100", "0117333333337110", "1333333333333331",
+            "3334444444444333", "3334455555544333", "0134555555554310", "0133455555433310",
+            "0013333333330000", "0017333337110000", "0011110001370000", "0000000001110000"
+        ],
+        skeleton_attack: [
+            "0000017117100000", "0000173333710000", "0001733333371000", "0017322222237100",
+            "0017326226237100", "0017322222237100", "0117333333337110", "1333333333333331",
+            "3334444444444333", "3334455555544345", "0134555555554345", "0133455555434345",
+            "0013333333331345", "0017331111337145", "0173310001337145", "0111000000111100"
+        ],
         rogue_cast: [
             "0000001111000000", "0000113333310000", "0001133333331000", "0001733333371000",
             "0001726226237000", "0001722222237000", "0000172222710000", "0000133333310000",
@@ -12890,6 +13027,30 @@ const SpriteManager = {
         ranged_walk3: ["0000001111000000", "0000013331100000", "0000133333310000", "0000133333310000", "0001311111130000", "0001352222231000", "0001322222231000", "0001333333331000", "0013344444433000", "0113333333333044", "0133444444433044", "0133344444433044", "0001333333331004", "0077111777710000", "0011100001117000", "0000000000111100"],
         ranged_walk4: ["0000001111000000", "0000013331100000", "0000133333310000", "0000133333310000", "0001311111130000", "0001352222231000", "0001322222231000", "0001333333331000", "0013344444433000", "0113333333333044", "0133444444433044", "0133344444433044", "0001333333330000", "0007771177710000", "0000771000111100", "0000011110000000"],
         ranged_attack: [
+            "0000001111000000", "0000013331100000", "0000133333310000", "0000133333310000",
+            "0001311111130000", "0001352222231000", "0001322222231000", "0001333333331000",
+            "0013344444431000", "0113333333333344", "0133444444433344", "0133344444433344",
+            "0013333333333344", "0001771111771100", "0017771001777000", "0011110000111000"
+        ],
+        elf_idle: [
+            "0000001111000000", "0000013331100000", "0000133333310000", "0000133333310000",
+            "0001311111130000", "0001352222231000", "0001322222231000", "0001333333331000",
+            "0013344444433000", "0113333333333044", "0133444444433044", "0133344444433044",
+            "0013333333331004", "0001771111771004", "0017771001777000", "0011110000111000"
+        ],
+        elf_walk1: [
+            "0000001111000000", "0000013331100000", "0000133333310000", "0000133333310000",
+            "0001311111130000", "0001352222231000", "0001322222231000", "0001333333331000",
+            "0013344444433000", "0113333333333044", "0133444444433044", "0133344444433044",
+            "0013333333310004", "0001777711177000", "0017771000111000", "0011110000000000"
+        ],
+        elf_walk2: [
+            "0000001111000000", "0000013331100000", "0000133333310000", "0000133333310000",
+            "0001311111130000", "0001352222231000", "0001322222231000", "0001333333331000",
+            "0013344444433000", "0113333333333044", "0133444444433044", "0133344444433044",
+            "0013333333330000", "0001771177770000", "0011100017770000", "0000000011110000"
+        ],
+        elf_attack: [
             "0000001111000000", "0000013331100000", "0000133333310000", "0000133333310000",
             "0001311111130000", "0001352222231000", "0001322222231000", "0001333333331000",
             "0013344444431000", "0113333333333344", "0133444444433344", "0133344444433344",
@@ -13826,6 +13987,7 @@ const BiomeSystem = {
     currentBiome: CONFIG.BIOME_DEFAULT,
     dungeonsCompleted: 0,
     currentVariant: null,
+    biomeHistory: [], // biomas visitados nesta run (para o último piso sempre diferir)
 
     // Biome variants with exclusive rules
     _variants: {
@@ -13870,8 +14032,7 @@ const BiomeSystem = {
         return this._variants[this.currentVariant];
     },
 
-    // Aplica uma variação de bioma em inimigos comuns (estatísticas + visual)
-    // Dungeon: neutro | lavaCave: brasa (+dano) | crypt: espectro (+HP, -vel) | forest: espinho (+vel/dano)
+    // Aplica uma variação de bioma em inimigos comuns (estatísticas + visual + elemento)
     applyEnemyVariant(e) {
         if (!e || e.isB || !this.currentBiome) return;
         const b = this.currentBiome;
@@ -13883,12 +14044,14 @@ const BiomeSystem = {
             e.scaledDamage = Math.floor(e.scaledDamage * 1.2);
             e.variantColor = '#ff8833'; e.variantAura = 'rgba(255,136,51,0.32)';
             e.color = '#ff8833';
+            e.element = 'fire';
         } else if (b === 'crypt' && r < chance) {
             e._variant = 'wraith';
             e.maxHp = Math.max(1, Math.floor(e.maxHp * 1.3)); e.hp = e.maxHp;
             e.s = (e.s || 0) * 0.88;
             e.variantColor = '#9fb4ff'; e.variantAura = 'rgba(150,180,255,0.28)';
             e.color = '#9fb4ff';
+            e.element = 'ice';
         } else if (b === 'forest' && r < chance) {
             e._variant = 'thorn';
             e.maxHp = Math.max(1, Math.floor(e.maxHp * 0.9)); e.hp = e.maxHp;
@@ -13896,6 +14059,21 @@ const BiomeSystem = {
             e.scaledDamage = Math.floor(e.scaledDamage * 1.15);
             e.variantColor = '#5dff8a'; e.variantAura = 'rgba(93,255,138,0.28)';
             e.color = '#5dff8a';
+            e.element = 'poison';
+        } else if (b === 'dungeon' && r < chance) {
+            // Terreno: esqueleto de pedra resistente (+HP, -vel)
+            e._variant = 'rocky';
+            e.maxHp = Math.max(1, Math.floor(e.maxHp * 1.2)); e.hp = e.maxHp;
+            e.s = (e.s || 0) * 0.9;
+            e.variantColor = '#b8b8c8'; e.variantAura = 'rgba(180,180,200,0.25)';
+            e.color = '#b8b8c8';
+        }
+        // Elemento do bioma em qualquer inimigo comum (elementos variados por cenário)
+        if (!e.element && Math.random() < 0.2) {
+            if (b === 'lavaCave') e.element = 'fire';
+            else if (b === 'crypt') e.element = 'ice';
+            else if (b === 'forest') e.element = 'poison';
+            else if (b === 'dungeon') e.element = 'lightning';
         }
     },
 
@@ -14066,10 +14244,33 @@ const BiomeSystem = {
         const prev = this.currentBiome;
         this.currentBiome = available[Math.floor(SeedSystem.random() * available.length)];
         if (this.currentBiome !== prev) {
+            this.biomeHistory.push(this.currentBiome);
+            if (this.biomeHistory.length > 10) this.biomeHistory.shift();
             if (typeof SND !== 'undefined' && SND.playBiomeChange) SND.playBiomeChange();
             if (typeof addLog === 'function') addLog((window.I18n ? I18n.t('log.biomeChange') : ' A paisagem se transforma: entrando em ') + this.getDisplayName() + '!');
         }
         if (typeof map !== 'undefined' && map) map.needsRedraw = true;
+    },
+
+    // Força um bioma diferente de TODOS os já visitados (usado no piso final)
+    forceDifferentBiome() {
+        let available = CONFIG.BIOME_NAMES.filter(b => this.biomeHistory.indexOf(b) === -1);
+        if (window.MetaSystem) available = available.filter(b => MetaSystem.isBiomeUnlocked(b));
+        if (available.length === 0) {
+            // Todos visitados: cai para "diferente do atual"
+            available = CONFIG.BIOME_NAMES.filter(b => b !== this.currentBiome);
+            if (window.MetaSystem) available = available.filter(b => MetaSystem.isBiomeUnlocked(b));
+        }
+        if (available.length === 0) return false;
+        const prev = this.currentBiome;
+        this.currentBiome = available[Math.floor(SeedSystem.random() * available.length)];
+        if (this.currentBiome !== prev) {
+            this.biomeHistory.push(this.currentBiome);
+            if (typeof SND !== 'undefined' && SND.playBiomeChange) SND.playBiomeChange();
+            if (typeof addLog === 'function') addLog((window.I18n ? I18n.t('log.biomeChange') : ' A paisagem se transforma: entrando em ') + this.getDisplayName() + '!');
+        }
+        if (typeof map !== 'undefined' && map) map.needsRedraw = true;
+        return true;
     },
 
     // Force a specific biome (used for testing or events)
@@ -14084,6 +14285,7 @@ const BiomeSystem = {
     reset() {
         this.currentBiome = CONFIG.BIOME_DEFAULT;
         this.dungeonsCompleted = 0;
+        this.biomeHistory = [CONFIG.BIOME_DEFAULT];
         if (typeof map !== 'undefined' && map) map.needsRedraw = true;
     },
 
@@ -15655,6 +15857,8 @@ class Entity {
         if(source && source.skills && source.skills.stun && SeedSystem.random() < 0.10) { this.frozen = Math.max(this.frozen || 0, Math.floor(40 * (this.elite ? 0.5 : this.isB ? 0.25 : 1))); spawnParticles(this.x, this.y, '#ffcc00', 6, 3); if(typeof DamageNumbers !== 'undefined') DamageNumbers.add(this.x, this.y, 'STUN!', 'stun'); if(typeof Statistics !== 'undefined' && source === player) Statistics.data.stunsApplied = (Statistics.data.stunsApplied || 0) + 1; }
         if(source && source.skills && source.skills.bleed && SeedSystem.random() < 0.12) { this.poisonStacks = (this.poisonStacks || 0) + 2; spawnParticles(this.x, this.y, '#ff2222', 6, 3); if(typeof DamageNumbers !== 'undefined') DamageNumbers.add(this.x, this.y, 'SANGRIA!', 'bleed'); if(typeof Statistics !== 'undefined' && source === player) Statistics.data.bleedsApplied = (Statistics.data.bleedsApplied || 0) + 1; }
         if(source && source.skills && source.skills.frostTouch && SeedSystem.random() < 0.15) { this.frozen = Math.max(this.frozen || 0, Math.floor(60 * (this.elite ? 0.5 : this.isB ? 0.25 : 1))); spawnParticles(this.x, this.y, '#66ccff', 8, 4); if(typeof DamageNumbers !== 'undefined') DamageNumbers.add(this.x, this.y, 'GEADA!', 'frost'); if(typeof Statistics !== 'undefined' && source === player) Statistics.data.frostsApplied = (Statistics.data.frostsApplied || 0) + 1; }
+        // Elfa: raízes da natureza enraízam inimigos no golpe (mesma mecânica do gelo, visual verde)
+        if(source && source.skills && source.skills.rootTouch && SeedSystem.random() < 0.15) { this.frozen = Math.max(this.frozen || 0, Math.floor(60 * (this.elite ? 0.5 : this.isB ? 0.25 : 1))); spawnParticles(this.x, this.y, '#58e08a', 8, 4); if(typeof DamageNumbers !== 'undefined') DamageNumbers.add(this.x, this.y, 'RAÍZES!', 'frost'); if(typeof Statistics !== 'undefined' && source === player) Statistics.data.frostsApplied = (Statistics.data.frostsApplied || 0) + 1; }
         if(this.frozen > 0) { 
             finalDmg *= CONFIG.FROZEN_DAMAGE_MULT; 
             dmgType = 'crit'; 
@@ -16017,9 +16221,13 @@ class Enemy extends Entity {
                 const bvx = aim.x * CONFIG.ENEMY_RANGED_BULLET_SPEED;
                 const bvy = aim.y * CONFIG.ENEMY_RANGED_BULLET_SPEED;
                 if (window.PoolManager) {
-                    bullets.push(PoolManager.acquire('Bullet', this.x, this.y, bvx, bvy, '#ff6666', DifficultySystem.getScaledDamage(CONFIG.ENEMY_RANGED_BULLET_DAMAGE), false));
+                    const _eb = PoolManager.acquire('Bullet', this.x, this.y, bvx, bvy, '#ff6666', DifficultySystem.getScaledDamage(CONFIG.ENEMY_RANGED_BULLET_DAMAGE), false);
+                    if(this.element) _eb.element = this.element;
+                    bullets.push(_eb);
                 } else {
-                    bullets.push(new Bullet(this.x, this.y, bvx, bvy, '#ff6666', DifficultySystem.getScaledDamage(CONFIG.ENEMY_RANGED_BULLET_DAMAGE), false));
+                    const _eb2 = new Bullet(this.x, this.y, bvx, bvy, '#ff6666', DifficultySystem.getScaledDamage(CONFIG.ENEMY_RANGED_BULLET_DAMAGE), false);
+                    if(this.element) _eb2.element = this.element;
+                    bullets.push(_eb2);
                 }
             }
         } else {
@@ -16035,7 +16243,11 @@ class Enemy extends Entity {
                 this.move(vx, vy, m);
             }
             const meleeDmg = this._berserkerDmgMult ? this.scaledDamage * this._berserkerDmgMult : this.scaledDamage;
-            if(d < p.radius + this.radius) p.takeDamage(meleeDmg, m);
+            if(d < p.radius + this.radius) {
+                p.takeDamage(meleeDmg, m);
+                // Elemento do bioma aplicado no contato (fogo/gelo/veneno/raio)
+                if(this.element && typeof ElementalSystem !== 'undefined') ElementalSystem.applyStatus(p, this.element, 1, 120, this);
+            }
         }
     }
     draw(ctx, cx, cy) {
@@ -16718,21 +16930,55 @@ class TreasureGoblin extends Enemy {
     }
 }
 
+// SKELETON ENEMY - Esqueleto resistente do bioma Cripta (elemento gelo)
+class SkeletonEnemy extends Enemy {
+    constructor(x, y) {
+        super(x, y, false, 'melee');
+        this.hp = Math.floor(DifficultySystem.getScaledHp(CONFIG.ENEMY_HP * 1.5, false));
+        this.maxHp = this.hp;
+        this.color = '#f2e6d0';
+        this.xpReward = 18;
+        this.enemyType = 'skeleton';
+        this.element = 'ice';
+    }
+    update(p, m) {
+        if(this.frozen > 0) return;
+        const dx = p.x - this.x, dy = p.y - this.y;
+        const dSq = dx * dx + dy * dy;
+        const d = Math.sqrt(dSq);
+        let speedMult = player && player.skills.slow ? (1 - player.skills.slow) : 1;
+        const chaseRangeSq = CONFIG.ENEMY_CHASE_RANGE * CONFIG.ENEMY_CHASE_RANGE;
+        if(dSq > 0 && dSq < chaseRangeSq) {
+            this.move((dx/d)*this.s*speedMult, (dy/d)*this.s*speedMult, m);
+        }
+        const contactSq = (p.radius + this.radius) * (p.radius + this.radius);
+        if(dSq < contactSq) {
+            p.takeDamage(this.scaledDamage, m);
+            if(typeof ElementalSystem !== 'undefined') ElementalSystem.applyStatus(p, 'ice', 1, 120, this);
+        }
+    }
+    draw(ctx, cx, cy) {
+        if(!this.alive) return;
+        SpriteRenderer.drawEnemy(ctx, this.x-cx, this.y-cy, this.enemyType, this.walkTimer, this.angle, 1.3, this.ft > 0);
+        if(this.ft > 0) this.ft--;
+    }
+}
+
 // BOSS CLASS - Multi-phase boss with abilities and arena hazards
 // Per-floor boss identities: sprite, palette, stats, move pool per phase.
 const BOSS_BLUEPRINTS = [
-    { key:'shadow_warden', nameKey:'boss.shadow_warden.name', name:'Guarda das Sombras', sprite:'shadow', glow:'#8b66ff', hpMult:0.85, speed:1.9, radiusMult:0.95, moves:{1:['shadowStrike','targetedBarrage'],2:['shadowStrike','charge','projectileBurst'],3:['shadowStrike','teleport','projectileBurst'],4:['shadowStrike','guidedProjectile','teleport'],5:['shadowStrike','spiralBurst','teleport']} },
+    { key:'shadow_warden', nameKey:'boss.shadow_warden.name', name:'Guarda das Sombras', sprite:'shadow', glow:'#8b66ff', hpMult:0.85, speed:1.9, radiusMult:0.9, moves:{1:['shadowStrike','targetedBarrage'],2:['shadowStrike','charge','projectileBurst'],3:['shadowStrike','teleport','projectileBurst'],4:['shadowStrike','guidedProjectile','teleport'],5:['shadowStrike','spiralBurst','teleport']} },
     { key:'dark_lord', nameKey:'boss.dark_lord.name', name:'Senhor das Trevas', sprite:'dark', glow:'#b45bff', hpMult:1.0, speed:1.3, summonChance:0.5, moves:{1:['darkNova','targetedBarrage'],2:['darkNova','teleport','projectileBurst'],3:['darkNova','spiralBurst','targetedBarrage'],4:['darkNova','guidedProjectile','teleport'],5:['spiralBurst','darkNova','guidedProjectile']} },
     { key:'death_herald', nameKey:'boss.death_herald.name', name:'Arauto da Morte', sprite:'death', glow:'#ff8a8a', hpMult:1.15, speed:1.5, dmgMult:1.1, moves:{1:['deathScythe','projectileBurst'],2:['deathScythe','charge','groundPound'],3:['deathScythe','spiralBurst','groundPound'],4:['deathScythe','teleport','guidedProjectile'],5:['spiralBurst','deathScythe','charge']} },
-    { key:'stone_colossus', nameKey:'boss.stone_colossus.name', name:'Colosso de Pedra', sprite:'stone', glow:'#d0d0d0', hpMult:1.5, speed:0.9, radiusMult:1.45, dmgMult:1.15, armor:0.45, moves:{1:['rockThrow','groundPound'],2:['rockThrow','charge','groundPound'],3:['rockThrow','spiralBurst','charge'],4:['rockThrow','groundPound','teleport'],5:['spiralBurst','rockThrow','charge']} },
-    { key:'specter', nameKey:'boss.specter.name', name:'Espectro Ancestral', sprite:'specter', glow:'#7ff3ff', hpMult:0.9, speed:1.7, radiusMult:0.95, moves:{1:['chillWave','teleport'],2:['teleport','chillWave','projectileBurst'],3:['chillWave','teleport','spiralBurst'],4:['teleport','guidedProjectile','chillWave'],5:['spiralBurst','teleport','chillWave']} },
+    { key:'stone_colossus', nameKey:'boss.stone_colossus.name', name:'Colosso de Pedra', sprite:'stone', glow:'#d0d0d0', hpMult:1.5, speed:0.9, radiusMult:1.1, dmgMult:1.15, armor:0.45, moves:{1:['rockThrow','groundPound'],2:['rockThrow','charge','groundPound'],3:['rockThrow','spiralBurst','charge'],4:['rockThrow','groundPound','teleport'],5:['spiralBurst','rockThrow','charge']} },
+    { key:'specter', nameKey:'boss.specter.name', name:'Espectro Ancestral', sprite:'specter', glow:'#7ff3ff', hpMult:0.9, speed:1.7, radiusMult:0.9, moves:{1:['chillWave','teleport'],2:['teleport','chillWave','projectileBurst'],3:['chillWave','teleport','spiralBurst'],4:['teleport','guidedProjectile','chillWave'],5:['spiralBurst','teleport','chillWave']} },
     { key:'soul_devourer', nameKey:'boss.soul_devourer.name', name:'Devorador de Almas', sprite:'devour', glow:'#ff5e7d', hpMult:1.05, speed:1.35, moves:{1:['soulDrain','targetedBarrage'],2:['soulDrain','charge','projectileBurst'],3:['soulDrain','spiralBurst','charge'],4:['soulDrain','teleport','guidedProjectile'],5:['spiralBurst','soulDrain','charge']} },
     { key:'bone_lord', nameKey:'boss.bone_lord.name', name:'Senhor dos Ossos', sprite:'bone', glow:'#fff3d6', hpMult:1.1, speed:1.2, summonChance:0.6, moves:{1:['boneVolley','projectileBurst'],2:['boneVolley','charge','projectileBurst'],3:['boneVolley','spiralBurst','charge'],4:['boneVolley','guidedProjectile','teleport'],5:['spiralBurst','boneVolley','guidedProjectile']} },
     { key:'deep_demon', nameKey:'boss.deep_demon.name', name:'Demônio das Profundezas', sprite:'demon', glow:'#ff7a3c', hpMult:1.2, speed:1.45, dmgMult:1.1, summonChance:0.25, moves:{1:['fireWall','projectileBurst'],2:['fireWall','charge','groundPound'],3:['fireWall','spiralBurst','charge'],4:['fireWall','teleport','guidedProjectile'],5:['spiralBurst','fireWall','charge']} },
     { key:'corrupted', nameKey:'boss.corrupted.name', name:'O Corrompido', sprite:'corrupt', glow:'#7fd612', hpMult:1.1, speed:1.25, regen:2, summonChance:0.2, moves:{1:['corruptionPool','targetedBarrage'],2:['corruptionPool','projectileBurst','charge'],3:['corruptionPool','spiralBurst','charge'],4:['corruptionPool','guidedProjectile','teleport'],5:['spiralBurst','corruptionPool','guidedProjectile']} },
-    { key:'final_guardian', nameKey:'boss.final_guardian.name', name:'O Guardião Final', sprite:'final', glow:'#ff8c00', hpMult:1.6, speed:1.55, radiusMult:1.15, dmgMult:1.2, armor:0.3, summonChance:0.4, moves:{1:['finalBurst','darkNova','targetedBarrage'],2:['finalBurst','charge','groundPound'],3:['spiralBurst','finalBurst','deathScythe'],4:['teleport','guidedProjectile','finalBurst'],5:['spiralBurst','fireWall','finalBurst','soulDrain']} },
-    { key:'magma_titan', nameKey:'boss.magma_titan.name', name:'Titã de Magma', sprite:'magma', glow:'#ffb347', hpMult:1.45, speed:0.95, radiusMult:1.4, dmgMult:1.15, armor:0.35, moves:{1:['rockThrow','groundPound'],2:['rockThrow','fireWall','charge'],3:['fireWall','spiralBurst','charge'],4:['fireWall','teleport','rockThrow'],5:['spiralBurst','fireWall','charge']} },
-    { key:'thorn_king', nameKey:'boss.thorn_king.name', name:'Rei dos Espinhos', sprite:'thorn', glow:'#7fd612', hpMult:1.25, speed:1.5, radiusMult:1.15, dmgMult:1.1, regen:1, summonChance:0.3, moves:{1:['corruptionPool','charge'],2:['corruptionPool','projectileBurst','charge'],3:['corruptionPool','spiralBurst','charge'],4:['teleport','guidedProjectile','corruptionPool'],5:['spiralBurst','corruptionPool','charge']} }
+    { key:'final_guardian', nameKey:'boss.final_guardian.name', name:'O Guardião Final', sprite:'final', glow:'#ff8c00', hpMult:1.6, speed:1.55, radiusMult:1.0, dmgMult:1.2, armor:0.3, summonChance:0.4, moves:{1:['finalBurst','darkNova','targetedBarrage'],2:['finalBurst','charge','groundPound'],3:['spiralBurst','finalBurst','deathScythe'],4:['teleport','guidedProjectile','finalBurst'],5:['spiralBurst','fireWall','finalBurst','soulDrain']} },
+    { key:'magma_titan', nameKey:'boss.magma_titan.name', name:'Titã de Magma', sprite:'magma', glow:'#ffb347', hpMult:1.45, speed:0.95, radiusMult:1.1, dmgMult:1.15, armor:0.35, moves:{1:['rockThrow','groundPound'],2:['rockThrow','fireWall','charge'],3:['fireWall','spiralBurst','charge'],4:['fireWall','teleport','rockThrow'],5:['spiralBurst','fireWall','charge']} },
+    { key:'thorn_king', nameKey:'boss.thorn_king.name', name:'Rei dos Espinhos', sprite:'thorn', glow:'#7fd612', hpMult:1.25, speed:1.5, radiusMult:1.0, dmgMult:1.1, regen:1, summonChance:0.3, moves:{1:['corruptionPool','charge'],2:['corruptionPool','projectileBurst','charge'],3:['corruptionPool','spiralBurst','charge'],4:['teleport','guidedProjectile','corruptionPool'],5:['spiralBurst','corruptionPool','charge']} }
 ];
 
 class Boss extends Enemy {
@@ -16840,6 +17086,7 @@ class Boss extends Enemy {
             if(this.phase >= 3) { a.push('spiralBurst', 'charge', 'charge'); }
             if(this.phase >= 4) { a.push('teleport', 'spiralBurst', 'guidedProjectile', 'guidedProjectile'); }
             if(this.phase >= 5) { a.push('teleport', 'teleport', 'spiralBurst', 'guidedProjectile'); }
+            if(this.phase >= 2) { a.push('dash', 'dash'); }
             return a;
         }
         const stage = Math.max(1, Math.min(5, this.phase));
@@ -16847,6 +17094,8 @@ class Boss extends Enemy {
         for(let key in bp.moves) {
             if(parseInt(key, 10) <= stage) pool = pool.concat(bp.moves[key]);
         }
+        // Dash universal: todos os chefes avançam em investida para alcançar o jogador
+        if(this.phase >= 2) { pool.push('dash', 'dash'); }
         return pool.length ? pool : ['projectileBurst'];
     }
 
@@ -17083,6 +17332,8 @@ class Boss extends Enemy {
         const dx = tx - this.x, dy = ty - this.y;
         const dSq = dx * dx + dy * dy;
         if(dSq < 1) return;
+        // Sem linha de visão (jogador atrás de paredes): navega corredores via BFS
+        if(typeof hasLineOfSight === 'function' && !hasLineOfSight(m, this.x, this.y, tx, ty) && this._followPath(m, tx, ty)) return;
         const invD = 1 / Math.sqrt(dSq);
         const nx = dx * invD, ny = dy * invD;
         if(this.move(nx * this.s, ny * this.s, m)) { this._stuckFrames = 0; return; }
@@ -17093,6 +17344,8 @@ class Boss extends Enemy {
             if(this.move((nx*c - ny*s2)*this.s, (nx*s2 + ny*c)*this.s, m)) { this._stuckFrames = 0; return; }
         }
         this._stuckFrames = (this._stuckFrames || 0) + 1;
+        // Caminho por BFS: chefe navega corredores/portas para alcançar o jogador
+        if(this._stuckFrames > 6 && this._followPath(m, tx, ty)) { this._stuckFrames = 0; return; }
         if(this._stuckFrames > 20) {
             this._stuckFrames = 0;
             const pushX = (SeedSystem.random() - 0.5) * CONFIG.TILE_SIZE * 4;
@@ -17104,6 +17357,64 @@ class Boss extends Enemy {
                 this.x += pushX; this.y += pushY;
             }
         }
+    }
+
+    // Segue uma rota pré-calculada de tiles (recalculada a cada 20 frames quando ativo)
+    _followPath(m, tx, ty) {
+        if(!m || !m.tiles || !CONFIG.TILE_SIZE) return false;
+        if(this._pathTimer === undefined) this._pathTimer = 0;
+        if(this._pathTimer > 0) {
+            this._pathTimer--;
+        } else {
+            this._pathTimer = 20;
+            this._path = this._bfsPath(m,
+                Math.floor(this.x / CONFIG.TILE_SIZE), Math.floor(this.y / CONFIG.TILE_SIZE),
+                Math.floor(tx / CONFIG.TILE_SIZE), Math.floor(ty / CONFIG.TILE_SIZE));
+        }
+        if(!this._path || this._path.length < 2) return false;
+        const next = this._path[0];
+        const wx = next.x * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2;
+        const wy = next.y * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2;
+        const pdx = wx - this.x, pdy = wy - this.y;
+        const pl = Math.hypot(pdx, pdy) || 1;
+        const moved = this.move((pdx / pl) * this.s, (pdy / pl) * this.s, m);
+        if(moved && pl < this.s + 3) this._path.shift();
+        return moved;
+    }
+
+    // BFS 4-direções sobre os tiles do mapa (25x25 = 625 tiles, barato)
+    _bfsPath(m, sx, sy, ex, ey) {
+        const W = m.width, H = m.height;
+        if(sx < 0 || sx >= W || sy < 0 || sy >= H) return null;
+        if(m.tiles[sx][sy].t !== 0) return null;
+        if(ex < 0 || ex >= W || ey < 0 || ey >= H) return null;
+        if(sx === ex && sy === ey) return null;
+        const prev = new Int16Array(W * H).fill(-2);
+        const q = [sx * H + sy];
+        prev[sx * H + sy] = -1;
+        let found = false;
+        while(q.length) {
+            const idx = q.shift(), x = (idx / H) | 0, y = idx % H;
+            if(x === ex && y === ey) { found = true; break; }
+            for(let d = 0; d < 4; d++) {
+                const nx2 = x + (d === 1 ? 1 : d === 3 ? -1 : 0), ny2 = y + (d === 2 ? 1 : d === 0 ? -1 : 0);
+                if(nx2 < 0 || nx2 >= W || ny2 < 0 || ny2 >= H) continue;
+                const ni = nx2 * H + ny2;
+                if(prev[ni] !== -2) continue;
+                if(m.tiles[nx2][ny2].t !== 0) continue;
+                prev[ni] = idx; q.push(ni);
+            }
+        }
+        if(!found) return null;
+        const path = [];
+        let cur = ex * H + ey;
+        while(cur !== -1) {
+            const x = (cur / H) | 0, y = cur % H;
+            path.unshift({ x: x, y: y });
+            cur = prev[cur];
+        }
+        path.shift(); // remove o tile atual (já estamos nele)
+        return path;
     }
 
     update(p, m) {
@@ -17121,7 +17432,8 @@ class Boss extends Enemy {
             this._drainT--;
             const pdx = p.x - this.x, pdy = p.y - this.y;
             const pdl = Math.hypot(pdx, pdy) || 1;
-            if(pdl < 340 && this._drainT % 7 === 0) {
+            // Dreno exige linha de visão: paredes entre o jogador e o chefe bloqueiam o dano
+            if(pdl < 340 && hasLineOfSight(m, this.x, this.y, p.x, p.y) && this._drainT % 7 === 0) {
                 const h = Math.floor(CONFIG.BOSS_ABILITY_PROJECTILE_DAMAGE * 0.9);
                 p.takeDamage(h, m);
                 this.hp = Math.min(this.maxHp, this.hp + Math.floor(h * 0.8));
@@ -17273,7 +17585,21 @@ class Boss extends Enemy {
                 const savedS = this.s;
             this.s *= speedMult;
             const chaseRangeSq = CONFIG.ENEMY_CHASE_RANGE * CONFIG.ENEMY_CHASE_RANGE;
-            if(dSq > 0 && dSq < chaseRangeSq) {
+            // Dash universal: investida rápida em direção ao jogador
+            if(this._dashT > 0) {
+                this._dashT--;
+                const _dm = this.move(this._dashVx * speedMult, this._dashVy * speedMult, m);
+                if(!_dm) this._dashT = 0;
+                this.angle = Math.atan2(this._dashVy, this._dashVx);
+                const dcsq = (p.radius + this.radius + 8) * (p.radius + this.radius + 8);
+                const dpx = p.x - this.x, dpy = p.y - this.y;
+                if(dpx*dpx + dpy*dpy < dcsq) {
+                    p.takeDamage(this._dashDmg || CONFIG.BOSS_DASH_DAMAGE, m);
+                    spawnParticles(p.x, p.y, '#ff5555', 8, 4);
+                    shake = 10;
+                    this._dashT = 0;
+                }
+            } else if(dSq > 0 && dSq < chaseRangeSq) {
                 this._steer(p.x, p.y, m);
                 const dmgMult = (this.phase >= 3 ? CONFIG.BOSS_PHASE_3_DAMAGE_MULT : (this.phase === 2 ? CONFIG.BOSS_PHASE_2_DAMAGE_MULT : 1)) * (this._archDamageMult || 1);
                 const contactSq = (p.radius + this.radius) * (p.radius + this.radius);
@@ -17325,11 +17651,14 @@ class Boss extends Enemy {
             this._spiralTimer = 120; this._spiralAngle = 0;
             spawnParticles(this.x, this.y, '#ffaa00', 12, 4);
 
-        } else if(ability === 'charge') {
-            this._chargeWindupTimer = CONFIG.BOSS_CHARGE_WINDUP_FRAMES;
-            this._chargeWindupTarget = { x: p.x, y: p.y };
-            spawnParticles(this.x, this.y, '#ff4400', 20, 6);
-            addLog(' ' + this.name + (window.I18n ? I18n.t('log.bossCharge') : ' vai carregar! CUIDADO!'));
+        } else if(ability === 'dash') {
+            // Investida rápida (dash): todo chefe avança na direção do jogador
+            const dpa = Math.atan2(p.y - this.y, p.x - this.x);
+            this._dashT = CONFIG.BOSS_DASH_DURATION;
+            this._dashVx = Math.cos(dpa) * CONFIG.BOSS_DASH_SPEED;
+            this._dashVy = Math.sin(dpa) * CONFIG.BOSS_DASH_SPEED;
+            this._dashDmg = CONFIG.BOSS_DASH_DAMAGE * (this._abyssalDmgMult || 1) * (this._archDamageMult || 1);
+            spawnParticles(this.x, this.y, this._bpGlow || '#ffffff', 12, 5);
 
         } else if(ability === 'groundPound') {
             const pdx = p.x - this.x, pdy = p.y - this.y;
@@ -18129,17 +18458,18 @@ function awardKillRewards(player, target, source) {
         const r = target.elite ? (SeedSystem.random() < 0.4 ? 'epico' : 'raro') : 'comum';
         chests.push(new Chest(target.x, target.y, r));
     }
-    // Explosao relic effect
+        // Explosao relic effect
     if(window.RelicSystem) RelicSystem.onKill(target, source);
 }
 // BULLET CLASS
 class Bullet {
-    constructor(x,y,vx,vy,c,dmg,isP,weapon=null, range=400) {
-        this.init(x,y,vx,vy,c,dmg,isP,weapon,range);
+    constructor(x,y,vx,vy,c,dmg,isP,weapon=null, range=400, projType=null) {
+        this.init(x,y,vx,vy,c,dmg,isP,weapon,range,projType);
     }
-    init(x,y,vx,vy,c,dmg,isP,weapon=null, range=400) {
+    init(x,y,vx,vy,c,dmg,isP,weapon=null, range=400, projType=null) {
         this.x=x; this.y=y; this.vx=vx; this.vy=vy; this.color=c; this.dmg=dmg; this.isP=isP; this.alive=true;
         this.weapon = weapon; this.range = range || 400; this.distTraveled = 0;
+        this.projType = projType || null;
         this.spd = Math.sqrt(vx * vx + vy * vy);
         this.poisonDmg = weapon && weapon.poison ? Math.floor(dmg * 0.3) : 0;
         this.hitCount = 0;
@@ -18191,7 +18521,8 @@ class Bullet {
                         spawnParticles(e.x, e.y, '#ff8800', 8, 3);
                         addLog(window.I18n ? I18n.t('log.shieldBroken') : ' Escudo quebrado!');
                     }
-                    e.takeDamage(this.dmg, m, source); this.hitCount++;
+                    // Elemento do bioma no projétil inimigo atinge o jogador
+                    if(!this.isP && this.element && typeof ElementalSystem !== 'undefined') ElementalSystem.applyStatus(e, this.element, 1, 120, source || this);
                     // Apply elemental status from weapon
                     if(this.weapon && typeof ElementalSystem !== 'undefined') {
                         const element = ElementalSystem.rollRandomElement(this.weapon);
@@ -18319,16 +18650,64 @@ class Bullet {
         const tier = (this.weapon && this.weapon.tier != null) ? this.weapon.tier : 0;
         const r = this.isP ? (5 + tier) : 4;
         const sx = this.x-cx, sy = this.y-cy;
+        const vAng = Math.atan2(this.vy, this.vx);
 
-        // Core bullet as rect (faster than arc)
-        ctx.fillStyle = drawColor;
-        ctx.fillRect(sx - r, sy - r, r * 2, r * 2);
-        // Glow halo as rect
-        ctx.globalAlpha = 0.35;
-        ctx.fillStyle = drawColor;
-        const glow = this.isP ? (8 + tier) : 6;
-        ctx.fillRect(sx - glow, sy - glow, glow * 2, glow * 2);
-        ctx.globalAlpha = 1;
+        if (this.projType === 'arrow') {
+            // Flecha: haste na direção do voo + ponta + penas
+            ctx.save();
+            ctx.translate(sx, sy);
+            ctx.rotate(vAng);
+            ctx.globalAlpha = 0.35;
+            ctx.fillStyle = drawColor;
+            ctx.fillRect(-11, -4, 22, 8);
+            ctx.globalAlpha = 1;
+            ctx.fillStyle = '#c8a06a';
+            ctx.fillRect(-9, -1, 15, 2);
+            ctx.fillStyle = '#e8e8e8';
+            ctx.beginPath(); ctx.moveTo(6, -2); ctx.lineTo(13, 0); ctx.lineTo(6, 2); ctx.closePath(); ctx.fill();
+            ctx.fillStyle = '#58e08a';
+            ctx.fillRect(-13, -3, 4, 2);
+            ctx.fillRect(-13, 1, 4, 2);
+            ctx.restore();
+        } else if (this.projType === 'knife') {
+            // Faca: lâmina alongada prateada + cabo verde
+            ctx.save();
+            ctx.translate(sx, sy);
+            ctx.rotate(vAng);
+            ctx.globalAlpha = 0.35;
+            ctx.fillStyle = drawColor;
+            ctx.fillRect(-7, -3, 14, 6);
+            ctx.globalAlpha = 1;
+            ctx.fillStyle = '#d0d8e0';
+            ctx.beginPath(); ctx.moveTo(-9, 0); ctx.lineTo(3, -2); ctx.lineTo(8, 0); ctx.lineTo(3, 2); ctx.closePath(); ctx.fill();
+            ctx.fillStyle = '#5cff82';
+            ctx.fillRect(-9, -1, 4, 2);
+            ctx.restore();
+        } else if (this.projType === 'magic') {
+            // Magia: orbe brilhante com núcleo branco
+            ctx.globalAlpha = 0.45;
+            ctx.fillStyle = drawColor;
+            ctx.fillRect(sx - r - 3, sy - r - 3, (r + 3) * 2, (r + 3) * 2);
+            ctx.globalAlpha = 1;
+            ctx.fillStyle = drawColor;
+            ctx.fillRect(sx - r, sy - r, r * 2, r * 2);
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(sx - r * 0.4, sy - r * 0.4, r * 0.8, r * 0.8);
+            ctx.globalAlpha = 0.6;
+            ctx.fillStyle = drawColor;
+            ctx.fillRect(sx - r * 0.7, sy - r * 0.7, r * 1.4, r * 1.4);
+            ctx.globalAlpha = 1;
+        } else {
+            // Core bullet as rect (faster than arc)
+            ctx.fillStyle = drawColor;
+            ctx.fillRect(sx - r, sy - r, r * 2, r * 2);
+            // Glow halo as rect
+            ctx.globalAlpha = 0.35;
+            ctx.fillStyle = drawColor;
+            const glow = this.isP ? (8 + tier) : 6;
+            ctx.fillRect(sx - glow, sy - glow, glow * 2, glow * 2);
+            ctx.globalAlpha = 1;
+        }
 
         // Special weapon effects
         if(this.weapon && this.weapon.poison) {
@@ -18404,6 +18783,7 @@ class Player extends Entity {
         this.mageComboCount = 0;
         this.attackHeat = 0;
         this.overheated = false;
+        this._overheatShieldGranted = false;
         this._hazardSlowTimer = 0;
         this.invincibleTimer = 0;
         
@@ -18675,6 +19055,67 @@ class Player extends Entity {
                 SND.play(200, 'sine', 0.35, 0.3);
                 addLog(I18n.t('log.arcaneBarrier'));
             }
+        } else if(this.type === 'elf') {
+            this.skillCooldown = Math.floor(CONFIG.ELF_GUST_COOLDOWN * Math.max(0.5, 1 - (this.cdrMult || 0)));
+            if(this.skills.ult1) {
+                // Fúria da Natureza: flechas de vento que enraízam e envenenam
+                SND.play(700, 'sine', 0.2, 0.2);
+                ScreenEffects.triggerFlash(0.25, '#58e08a', 12);
+                spawnParticles(this.x, this.y, '#58e08a', 25, 8);
+                spawnParticles(this.x, this.y, '#ffffff', 15, 5);
+                ScreenEffects.triggerShake(8);
+                const n = CONFIG.ELF_NATURE_STORM_ARROWS;
+                const spd = CONFIG.PLAYER.elf.bulletSpeed || 13;
+                const arrowDmg = Math.floor(CONFIG.ELF_NATURE_STORM_DAMAGE * this.weaponLevel * this.weaponDamageMult * (this.damageMult || 1));
+                for(let i = 0; i < n; i++) {
+                    const sa = (i / n) * Math.PI * 2 + i * 0.3;
+                    const b = window.PoolManager ? PoolManager.acquire('Bullet', this.x, this.y, Math.cos(sa)*spd, Math.sin(sa)*spd, '#58e08a', arrowDmg, true, null, 400, 'arrow') : new Bullet(this.x, this.y, Math.cos(sa)*spd, Math.sin(sa)*spd, '#58e08a', arrowDmg, true, null, 400, 'arrow');
+                    b.applyPoison = true;
+                    bullets.push(b);
+                }
+                const rootSq = 240 * 240;
+                for(let i = 0; i < entities.length; i++) {
+                    const e = entities[i];
+                    if(e !== this && e.alive && typeof Enemy !== 'undefined' && (e instanceof Enemy || e.isEnemy)) {
+                        const edx = e.x - this.x, edy = e.y - this.y;
+                        if(edx*edx + edy*edy < rootSq) {
+                            e.frozen = Math.max(e.frozen || 0, 90);
+                            e.poisonStacks = (e.poisonStacks || 0) + 2;
+                            spawnParticles(e.x, e.y, '#58e08a', 8, 4);
+                        }
+                    }
+                }
+                addLog(I18n.t('log.natureFury'));
+            } else {
+                // Tempestade de Vento: empurra inimigos e dispara flechas cortantes
+                SND.play(300, 'sine', 0.3, 0.25);
+                ScreenEffects.triggerFlash(0.2, '#7fffd4', 10);
+                ScreenEffects.triggerShake(10);
+                spawnParticles(this.x, this.y, '#7fffd4', 20, 8);
+                const gustRangeSq = CONFIG.ELF_WIND_RANGE * CONFIG.ELF_WIND_RANGE;
+                for(let i = 0; i < entities.length; i++) {
+                    const e = entities[i];
+                    if(e !== this && e.alive && typeof Enemy !== 'undefined' && (e instanceof Enemy || e.isEnemy)) {
+                        const edx = e.x - this.x, edy = e.y - this.y;
+                        const dSq = edx*edx + edy*edy;
+                        if(dSq < gustRangeSq) {
+                            e.takeDamage(Math.floor(CONFIG.ELF_WIND_DAMAGE * this.weaponLevel * this.weaponDamageMult * (this.damageMult || 1)), map, this);
+                            // Knockback: empurra para longe
+                            const d = Math.sqrt(dSq) || 1;
+                            const kbx = (edx / d) * 9, kby = (edy / d) * 9;
+                            if(!map.isWall(e.x + kbx, e.y + kby)) { e.x += kbx; e.y += kby; }
+                            spawnParticles(e.x, e.y, '#7fffd4', 6, 4);
+                        }
+                    }
+                }
+                const wSpd = CONFIG.PLAYER.elf.bulletSpeed || 13;
+                for(let i = 0; i < 8; i++) {
+                    const a = (i / 8) * Math.PI * 2;
+                    const b = window.PoolManager ? PoolManager.acquire('Bullet', this.x, this.y, Math.cos(a)*wSpd, Math.sin(a)*wSpd, '#7fffd4', Math.floor(CONFIG.ELF_WIND_DAMAGE * 0.7 * this.weaponLevel * this.weaponDamageMult * (this.damageMult || 1)), true, null, 320, 'arrow') : new Bullet(this.x, this.y, Math.cos(a)*wSpd, Math.sin(a)*wSpd, '#7fffd4', Math.floor(CONFIG.ELF_WIND_DAMAGE * 0.7 * this.weaponLevel * this.weaponDamageMult * (this.damageMult || 1)), true, null, 320, 'arrow');
+                    bullets.push(b);
+                }
+                shake = CONFIG.SHAKE_STORM; addLog(I18n.t('log.windGust'));
+            }
         }
     }
 
@@ -18721,7 +19162,10 @@ class Player extends Entity {
             if(this.orbShieldTimer >= CONFIG.MAGE_ORB_SHIELD_COOLDOWN && !this.orbShieldReady) { this.orbShieldReady = true; this.orbShieldTimer = 0; addLog(I18n.t('log.arcaneShieldReady')); spawnParticles(this.x, this.y, COLORS.CLASS_MAGE, 10, 3); }
         }
         if(this.attackHeat > 0) this.attackHeat = Math.max(0, this.attackHeat - (CONFIG.HEAT_DECAY_RATE + (this.heatDecayBonus || 0)));
-        if(this.overheated && this.attackHeat <= CONFIG.HEAT_RESUME_THRESHOLD) this.overheated = false;
+        if(this.overheated && this.attackHeat <= 0) {
+            this.overheated = false;
+            this._overheatShieldGranted = false;
+        }
         if(this.critZoomTimer > 0) this.critZoomTimer--;
 
         // Mutations are temporary buffs; tick them each frame so they expire.
@@ -18733,7 +19177,7 @@ class Player extends Entity {
 
         const joystickMagSq = sx*sx + sy*sy;
         const deadzoneSq = CONFIG.JOYSTICK_DEADZONE * CONFIG.JOYSTICK_DEADZONE;
-        if(joystickMagSq > deadzoneSq && this.scd <= 0) {
+        if(joystickMagSq > deadzoneSq && this.scd <= 0 && !this.overheated) {
             this.combatTimer = 0; this.shootAnim = 12;
             const cls = CONFIG.PLAYER[this.type];
             const effectiveHeatMax = CONFIG.HEAT_MAX + (this.heatMaxBonus || 0);
@@ -18742,6 +19186,13 @@ class Player extends Entity {
                 this.overheated = true;
                 SND.play(180, 'sawtooth', 0.2, 0.15);
                 DamageNumbers.add(this.x, this.y, 'SUPERAQUECIDO!', 'normal');
+                // Guerreiro: ao superaquecer, ergue o escudo (absorve dano até esfriar)
+                if(this.type === 'warrior' && !this._overheatShieldGranted) {
+                    this._overheatShieldGranted = true;
+                    this.shield = (this.shield || 0) + CONFIG.WARRIOR_OVERHEAT_SHIELD;
+                    spawnParticles(this.x, this.y, '#33ccff', 16, 5);
+                    if(typeof addLog === 'function') addLog(window.I18n ? I18n.t('log.warriorShield') : ' Escudo erguido!');
+                }
             }
             const invMag = 1 / Math.sqrt(joystickMagSq);
             this.angle = Math.atan2(sy * invMag, sx * invMag);
@@ -18830,7 +19281,7 @@ class Player extends Entity {
                 if(this.mutations.berserk) dmg *= CONFIG.BERSERK_DAMAGE_MULT;
                 if(this.damageBoost > 0) { dmg *= CONFIG.DAMAGE_BOOST_MULTIPLIER; ScreenEffects.triggerChromatic(2); }
                 if(window.RelicSystem) { dmg = Math.floor(dmg * RelicSystem.berserkerMult(this)); dmg = Math.floor(RelicSystem.furiaShot(this, dmg)); }
-                const bulletSpeed = this.type === 'rogue' ? CONFIG.PLAYER.rogue.bulletSpeed : CONFIG.BULLET_SPEED_DEFAULT, baseRange = WeaponSystem.getEffectiveRange(this), range = window.RelicSystem ? baseRange * RelicSystem.rangeMult(this) : baseRange;
+                const bulletSpeed = (this.type === 'rogue' || this.type === 'elf') ? CONFIG.PLAYER[this.type].bulletSpeed : CONFIG.BULLET_SPEED_DEFAULT, baseRange = WeaponSystem.getEffectiveRange(this), range = window.RelicSystem ? baseRange * RelicSystem.rangeMult(this) : baseRange;
                 if(this.type === 'mage') {
                     this.mageComboCount++;
                     if(this.mageComboCount >= CONFIG.MAGE_SPELL_COMBO_REQ) {
@@ -18855,19 +19306,21 @@ class Player extends Entity {
                         SND.play(660, 'sine', 0.3, 0.15);
                     }
                 }
-                const mainBullet = window.PoolManager ? PoolManager.acquire('Bullet', this.x, this.y, sx*bulletSpeed, sy*bulletSpeed, this.color, dmg, true, this.currentWeapon, range) : new Bullet(this.x, this.y, sx*bulletSpeed, sy*bulletSpeed, this.color, dmg, true, this.currentWeapon, range);
+                const projType = this.type === 'elf' ? 'arrow' : this.type === 'rogue' ? 'knife' : this.type === 'mage' ? 'magic' : null;
+                const mainBullet = window.PoolManager ? PoolManager.acquire('Bullet', this.x, this.y, sx*bulletSpeed, sy*bulletSpeed, this.color, dmg, true, this.currentWeapon, range, projType) : new Bullet(this.x, this.y, sx*bulletSpeed, sy*bulletSpeed, this.color, dmg, true, this.currentWeapon, range, projType);
                 bullets.push(mainBullet);
                 if(this.spellEcho) {
                     const spreadAngle = Math.atan2(sy, sx) + 0.25;
-                    const echo = window.PoolManager ? PoolManager.acquire('Bullet', this.x, this.y, Math.cos(spreadAngle)*bulletSpeed, Math.sin(spreadAngle)*bulletSpeed, this.color, Math.max(1, Math.floor(dmg * 0.6)), true, this.currentWeapon, range) : new Bullet(this.x, this.y, Math.cos(spreadAngle)*bulletSpeed, Math.sin(spreadAngle)*bulletSpeed, this.color, Math.max(1, Math.floor(dmg * 0.6)), true, this.currentWeapon, range);
+                    const echo = window.PoolManager ? PoolManager.acquire('Bullet', this.x, this.y, Math.cos(spreadAngle)*bulletSpeed, Math.sin(spreadAngle)*bulletSpeed, this.color, Math.max(1, Math.floor(dmg * 0.6)), true, this.currentWeapon, range, projType) : new Bullet(this.x, this.y, Math.cos(spreadAngle)*bulletSpeed, Math.sin(spreadAngle)*bulletSpeed, this.color, Math.max(1, Math.floor(dmg * 0.6)), true, this.currentWeapon, range, projType);
                     bullets.push(echo);
                 }
                 if(this.type === 'rogue') { mainBullet.applyPoison = true; if(this.spellEcho) bullets[bullets.length-1].applyPoison = true; }
+                if(this.type === 'elf' && this.skills.poison) { mainBullet.applyPoison = true; if(this.spellEcho) bullets[bullets.length-1].applyPoison = true; }
                 if(this.multiShot) {
                     const baseAngle = Math.atan2(sy, sx);
                     for (let ms = 1; ms <= this.multiShot; ms++) {
                         const spreadAngle = baseAngle + 0.15 * ms * (ms % 2 === 0 ? 1 : -1);
-                        const extraBullet = window.PoolManager ? PoolManager.acquire('Bullet', this.x, this.y, Math.cos(spreadAngle)*bulletSpeed, Math.sin(spreadAngle)*bulletSpeed, this.color, dmg, true, this.currentWeapon, range) : new Bullet(this.x, this.y, Math.cos(spreadAngle)*bulletSpeed, Math.sin(spreadAngle)*bulletSpeed, this.color, dmg, true, this.currentWeapon, range);
+                        const extraBullet = window.PoolManager ? PoolManager.acquire('Bullet', this.x, this.y, Math.cos(spreadAngle)*bulletSpeed, Math.sin(spreadAngle)*bulletSpeed, this.color, dmg, true, this.currentWeapon, range, projType) : new Bullet(this.x, this.y, Math.cos(spreadAngle)*bulletSpeed, Math.sin(spreadAngle)*bulletSpeed, this.color, dmg, true, this.currentWeapon, range, projType);
                         if(this.type === 'rogue') extraBullet.applyPoison = true;
                         bullets.push(extraBullet);
                     }
@@ -20137,7 +20590,7 @@ const RelicSystem = {
         let msg = '';
 
         // Currency bonus
-        const currencyBonus = { comum: 15, raro: 30, epico: 50, lendario: 100 }[r] || 15;
+        const currencyBonus = { comum: 8, raro: 18, epico: 30, lendario: 60 }[r] || 15;
         player.currency += currencyBonus;
         Statistics.data.totalCurrencyEarned = (Statistics.data.totalCurrencyEarned || 0) + currencyBonus;
 
@@ -22419,7 +22872,7 @@ const TutorialSystem = {
                 'O Abismo espera. Boa sorte, herói!',
                 'Bonus: +100 moedas!',
             ],
-            onEnter: sys => { if (player) player.currency += 100; },
+            onEnter: sys => { if (player) player.currency += 50; },
             waitForTap: true,
             isLast: true
         }
@@ -22930,7 +23383,7 @@ const TutorialSystem = {
         this.suppressEnemySpawns = false;
         this._showControls(true);
         try { StorageManager.set('tutorial', { completed: true, completedAt: Date.now(), skipped: false }); } catch(e) {}
-        const bonus = 50;
+        const bonus = 25;
         if(typeof player !== 'undefined' && player) {
             player.currency += bonus;
             if(typeof DamageNumbers !== 'undefined') {
@@ -23427,7 +23880,7 @@ window._showTutorialMenu = function() {
         const picker = document.createElement('div');
         picker.id = 'tutorial-class-picker';
         picker.style.cssText = 'display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap;';
-        [['warrior','#ffcc00','Guerreiro'],['rogue','#33ff33','Ladino'],['mage',COLORS.CLASS_MAGE,'Mago']].forEach(function(c) {
+        [['warrior','#ffcc00','Guerreiro'],['rogue','#33ff33','Ladino'],['mage',COLORS.CLASS_MAGE,'Mago'],['elf','#58e08a','Elfa']].forEach(function(c) {
             const b = document.createElement('button');
             b.textContent = c[2];
             const locked = window.MetaSystem && !MetaSystem.isClassUnlocked(c[0]);
