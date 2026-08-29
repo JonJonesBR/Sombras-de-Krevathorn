@@ -22311,7 +22311,7 @@ window.SkillTreeUI = SkillTreeUI;
             const rows = rankings.map((r, i) => `
                 <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:10px;background:rgba(255,255,255,0.03);border:1px solid ${i === 0 ? 'rgba(255,215,0,0.4)' : 'rgba(255,255,255,0.08)'}">
                     <span style="width:22px;text-align:center;font-weight:800;color:${i === 0 ? '#ffcc00' : i === 1 ? '#c0c0c0' : i === 2 ? '#cd7f32' : COLORS.TEXT_MUTED}">${i + 1}</span>
-                    <span style="flex:1;font-size:11px;color:${color(r.challenge)};font-weight:700">${(dc._challenges.find(x => x.id === r.challenge) || {}).name || r.challenge || '?'}</span>
+                    <span style="flex:1;font-size:11px;color:${color(r.challenge)};font-weight:700">${(() => { const c = dc._challenges.find(x => x.id === r.challenge); return c ? (c.nameKey ? _L(c.nameKey, c.name) : c.name) : (r.challenge || '?'); })()}</span>
                     <span style="font-size:10px;color:${COLORS.TEXT_MUTED}">P${r.dungeonLevel}</span>
                     <span style="font-size:11px;font-weight:800;color:#9ad0ff">${r.score} pts</span>
                 </div>`).join('');
@@ -22319,9 +22319,9 @@ window.SkillTreeUI = SkillTreeUI;
                 <div style="display:flex;flex-direction:column;gap:12px">
                     <div style="padding:14px;border-radius:14px;background:rgba(224,182,255,0.06);border:1px solid rgba(224,182,255,0.2)">
                         <div style="font-size:10px;color:${COLORS.TEXT_MUTED};font-weight:bold;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px">${_L('daily.today', 'Desafio de hoje')}</div>
-                        <div style="font-size:18px;font-weight:800;color:${color(ch.id)}">${ch.name}</div>
-                        <div style="font-size:12px;color:${COLORS.TEXT_DIM};margin-top:4px">${ch.desc}</div>
-                        <div style="font-size:11px;color:${COLORS.TEXT_MUTED};margin-top:8px">${_L('daily.next', 'Próximo desafio em ')}  <strong style="color:#e0b6ff">${dc.getTimeUntilNext()}</strong></div>
+                        <div style="font-size:18px;font-weight:800;color:${color(ch.id)}">${ch.nameKey ? _L(ch.nameKey, ch.name) : ch.name}</div>
+                        <div style="font-size:12px;color:${COLORS.TEXT_DIM};margin-top:4px">${ch.descKey ? _L(ch.descKey, ch.desc) : ch.desc}</div>
+                        <div style="font-size:11px;color:${COLORS.TEXT_MUTED};margin-top:8px">${_L('daily.next', 'Próximo desafio em ')}<strong style="color:#e0b6ff">${dc.getTimeUntilNext()}</strong></div>
                         <div style="font-size:11px;margin-top:6px;color:#ffcc00;font-weight:800">${_L('daily.streak', '🔥 Streak: ')}${dc.getStreak()} ${_L('daily.days', 'dia(s) consecutivo(s)')}</div>
                         ${stats ? `<div style="font-size:11px;margin-top:6px;color:#4ade80;font-weight:700">${_L('daily.done', '✓ Concluído hoje: ')}${stats.score} pts (Piso ${stats.dungeonLevel})</div>` : `<div style="font-size:11px;margin-top:6px;color:#ffcc00">${_L('daily.playHint', 'Pode jogar uma vez por dia — bata o desafio e pontue!')}</div>`}
                     </div>
