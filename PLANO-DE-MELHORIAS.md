@@ -199,5 +199,6 @@ Recomendação: **B** — é o maior ganho de manutenibilidade para um arquivo d
 - Settings do menu sem seletor de idioma e labels hardcoded — seletor pt/en/es + chaves `settings.*` + contraste OFF melhorado.
 - Mojibake pt (daily/bestiary/NPC/lore/biomas/raridades) — ~30 strings corrigidas.
 - Desafio diário sem indicação na tela inicial — badge "⚡ Desafio de hoje ativo: {nome} — {desc}".
+- Crash de render quando o Oráculo revela marcadores: `s is not defined` em `drawMinimap` (referência a variável inexistente) — escala convertida com `(coord / TILE_SIZE) * scale`, igual aos dots.
 
 **Observações (não-bugs):** +60 moedas ao continuar (provável chest lendário auto-aberto no spawn; determinístico); rolagem da loja pode sortear itens de uma só categoria (RNG); "Pular Tutorial" não persiste (por design).
