@@ -7270,8 +7270,8 @@ function drawMinimap() {
         mctx.shadowBlur = 4;
         for (let i = 0; i < NPCSystem._oracleMarkers.length; i++) {
             const mk = NPCSystem._oracleMarkers[i];
-            const mx = mk.x * s;
-            const my = mk.y * s;
+            const mx = (mk.x / CONFIG.TILE_SIZE) * sx;
+            const my = (mk.y / CONFIG.TILE_SIZE) * sy;
             mctx.shadowColor = mk.color || '#cc88ff';
             mctx.fillStyle = mk.color || '#cc88ff';
             mctx.beginPath();
