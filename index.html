@@ -977,6 +977,8 @@ body.cb-tritan  { filter: url("#cb-tritan"); }
             <div id="mode-desc" data-i18n="start.modeDesc" style="text-align:center;font-size:clamp(0.65rem,2.2vw,0.8rem);color:rgba(255,255,255,0.45);margin-bottom:10px;min-height:2.2em;line-height:1.4;padding:0 8px;">
                 Evolua seu personagem em masmorras cada vez mais difíceis.
             </div>
+            <!-- Daily challenge badge: shows today's active challenge before starting -->
+            <div id="daily-badge" style="display:none;text-align:center;font-size:clamp(0.58rem,2vw,0.7rem);color:#9ad0ff;background:rgba(80,140,255,0.1);border:1.5px solid rgba(80,140,255,0.25);border-radius:10px;padding:5px 10px;margin-bottom:8px;line-height:1.35;"></div>
 
             <!-- Difficulty Selection -->
             <div style="margin-bottom:8px;">
@@ -2901,9 +2903,9 @@ const I18n = {
             'tutorial.stage6.line3': 'Menu pausa: pausa o jogo, opções e sair',
             'tutorial.stage6.line4': 'Loja: compre novas armas e melhorias',
             'tutorial.stage6.line5': 'Habilidades: especialize seu personagem',
-            'tutorial.stage6.line6': 'Estatisticas: acompanhe seu progresso',
+            'tutorial.stage6.line6': 'Estatísticas: acompanhe seu progresso',
             'tutorial.stage6.line7': '',
-            'tutorial.stage6.line8': 'Bonus: +25 moedas!',
+            'tutorial.stage6.line8': 'Bônus: +25 moedas!',
             'tutorial.promptFull': '🎓 Tutorial Completo (~3 min)',
             'tutorial.stage7.title': ' Conheça a Loja',
             'tutorial.stage7.line1': 'Abra a LOJA para comprar itens com o ouro dos inimigos.',
@@ -2922,9 +2924,9 @@ const I18n = {
             'tutorial.stage10.line1': 'Você dominou os fundamentos — e mais um pouco.',
             'tutorial.stage10.line2': 'Minimapa no canto: mostra inimigos, baús e o portal.',
             'tutorial.stage10.line3': 'O Abismo espera. Boa sorte, herói!',
-            'tutorial.stage10.line4': 'Bonus: +50 moedas!',
-            'tutorial.skillTouch1': 'Toque o boto de habilidade no canto inferior',
-            'tutorial.skillTouch2': 'direito (o boto com icone de fogo).',
+            'tutorial.stage10.line4': 'Bônus: +50 moedas!',
+            'tutorial.skillTouch1': 'Toque o botão de habilidade no canto inferior',
+            'tutorial.skillTouch2': 'direito (o botão com ícone de fogo).',
             'tutorial.skillTouch3': '',
             'tutorial.skillTouch4': '> Objetivo: Use sua habilidade (',
             'tutorial.skillTouch5': ')!',
@@ -3224,17 +3226,17 @@ const I18n = {
             // Bestiary
             // ============================================================
             'best.melee.name': 'Soldado Esqueleto',
-            'best.melee.desc': 'Inimigo bsico da masmorra. Ataca corpo a corpo.',
+            'best.melee.desc': 'Inimigo básico da masmorra. Ataca corpo a corpo.',
             'best.ranged.name': 'Arqueiro Esqueleto',
             'best.ranged.desc': 'Atira flechas à distância. Cuidado!',
             'best.elite_melee.name': 'Guerreiro Elite',
-            'best.elite_melee.desc': 'Verso mais forte dos soldados. Mais HP e dano.',
+            'best.elite_melee.desc': 'Versão mais forte dos soldados. Mais HP e dano.',
             'best.elite_ranged.name': 'Arqueiro Elite',
             'best.elite_ranged.desc': 'Elite com ataques à distância. Atira mais rápido.',
             'best.swarm.name': 'Enxame de Ossos',
-            'best.swarm.desc': 'Mltiplos skeletons pequenos. Derrotam em nmero.',
+            'best.swarm.desc': 'Múltiplos esqueletos pequenos. Derrotam em número.',
             'best.trap.name': 'Armadilha',
-            'best.trap.desc': 'Ativa quando voc se aproxima. Causa dano fixo.',
+            'best.trap.desc': 'Ativa quando você se aproxima. Causa dano fixo.',
             'best.mimic.name': 'Mímico',
             'best.mimic.desc': 'Parece um baú de ouro, mas é uma armadilha!',
             'best.boss.name': 'Guardião Esqueleto',
@@ -3309,19 +3311,19 @@ const I18n = {
             'npc.classtip.mage1': 'Mage: 3 feitiços seguidos ativam AoE automático. Não interrompa a sequência.',
             'npc.classtip.mage2': 'Mage: o Orbe Protetor absorve 1 golpe após 8 segundos. Planeje com ele.',
             'npc.classtip.mage3': 'Mage: Tempestade Arcana usa espiral. Mantenha inimigos agrupados no centro.',
-            'npc.tip.forest': 'A floresta tem ervas. Colete-as para poes!',
-            'npc.tip.dungeon': 'Cavernas tm minrio. Derrote inimigos para loot!',
+            'npc.tip.forest': 'A floresta tem ervas. Colete-as para poções!',
+            'npc.tip.dungeon': 'Cavernas têm minério. Derrote inimigos para loot!',
             'npc.tip.lavaCave': 'Cuidado: lava causa dano constante!',
-            'npc.tip.crypt': 'Criptas tm cristais mgicos.',
-            'npc.tip.boss': 'Chefes so fortes. Cuidado com carga!',
-            'npc.tip.lowHp': 'HP baixo! Procure poo ou use crafting.',
+            'npc.tip.crypt': 'Criptas têm cristais mágicos.',
+            'npc.tip.boss': 'Chefes são fortes. Cuidado com carga!',
+            'npc.tip.lowHp': 'HP baixo! Procure poção ou use crafting.',
             'npc.tip.currency': 'Moedas! Use na loja (B) para equipamentos.',
-            'npc.tip.skill': 'Habilidade pronta! Use ESPAO para ativar.',
-            'npc.oracle.portalNorth': 'O portal esta ao Norte-Leste. ',
+            'npc.tip.skill': 'Habilidade pronta! Use ESPAÇO para ativar.',
+            'npc.oracle.portalNorth': 'O portal está ao Norte-Leste. ',
             'npc.oracle.portalHint': 'Elimine os inimigos para abrir o portal. ',
             'npc.oracle.treasures': 'Há tesouros escondidos neste nível.',
             'npc.oracle.revealed': 'Revelado no minimapa!',
-            'npc.oracle.alreadyRevealed': 'Ja revelado!',
+            'npc.oracle.alreadyRevealed': 'Já revelado!',
             'npc.merchant.item1.name': 'Poção de Vida',
             'npc.merchant.item1.desc': 'Restaura 50 HP',
             'npc.merchant.item2.name': 'Impulso de Velocidade',
@@ -3334,7 +3336,7 @@ const I18n = {
             'npc.merchant.item5.desc': 'Cura Completa',
             'npc.merchant.coins': ' moedas',
             'npc.merchant.prev': '\n[< Anterior]',
-            'npc.merchant.next': '\n[Proximo >]',
+            'npc.merchant.next': '\n[Próximo >]',
 
             // ============================================================
             // Meta system
@@ -3381,9 +3383,9 @@ const I18n = {
             'daily.speedrun.name': 'Speed Run',
             'daily.speedrun.desc': 'Chegue ao Piso 5 no menor tempo',
             'daily.noheal.name': 'Sofrimento',
-            'daily.noheal.desc': 'Sem poes de cura na loja',
+            'daily.noheal.desc': 'Sem poções de cura na loja',
             'daily.oneshot.name': 'Glass Cannon',
-            'daily.oneshot.desc': 'Inimigos morrem em 1 hit, voc tambm',
+            'daily.oneshot.desc': 'Inimigos morrem em 1 hit, você também',
             'daily.darkness.name': 'Escuridão',
             'daily.darkness.desc': 'Luz limitada, não use tochas',
             'daily.tank.name': 'Tanque',
@@ -3393,7 +3395,7 @@ const I18n = {
             'daily.storm.name': 'Tempestade',
             'daily.storm.desc': 'Chuva constante, visibilidade baixa',
             'daily.endless.name': 'Infinito',
-            'daily.endless.desc': 'Sobreviva o mximo possvel sem progresso',
+            'daily.endless.desc': 'Sobreviva o máximo possível sem progresso',
 
             // ============================================================
             // Biomes / pets
@@ -3489,7 +3491,7 @@ const I18n = {
             'log.bossPre5': 'Uma sombra se move. Prepare-se.',
             'log.guardianAbyssPre': 'O Guardião do Abismo (Profundidade ',
             'log.guardianAbyssPost': ') desponta entre as sombras!',
-            'log.guardianFloorPre': 'O guardiao do Piso B',
+            'log.guardianFloorPre': 'O guardião do Piso B',
             'log.guardianFloorPost': ' bloqueia sua passagem!',
             'log.bossApproaching': 'CHEFE APROXIMANDO: ',
             'log.bossDefeated': 'Chefe abatido!',
@@ -3504,7 +3506,7 @@ const I18n = {
             'log.soldPrefix': 'Vendeu por ',
             'log.coins': 'moedas',
             'log.prestige': ' PRESTIGE ',
-            'log.prestigeBonus': 'Bonus: ',
+            'log.prestigeBonus': 'Bônus: ',
             'log.prestigeHp': ' HP permanente',
             'log.prestigeDmg': '% dano permanente',
             'log.prestigeWeapon': ' Arma inicial desbloqueada!',
@@ -3608,6 +3610,7 @@ const I18n = {
 
             // Start screen (static labels)
             'start.modeDesc': 'Evolua seu personagem em masmorras cada vez mais difíceis.',
+            'start.dailyActive': '⚡ Desafio de hoje ativo: ',
             'start.tagline': 'O Abismo Aguarda',
             'start.modeDungeon': 'Masmorra',
             'start.modeAbyss': 'Abismo',
@@ -4627,6 +4630,7 @@ const I18n = {
 
             // Start screen (static labels)
             'start.modeDesc': 'Evolve your character through ever-harder dungeons.',
+            'start.dailyActive': '⚡ Today\'s challenge active: ',
             'start.tagline': 'The Abyss Awaits',
             'start.modeDungeon': 'Dungeon',
             'start.modeAbyss': 'Abyss',
@@ -5644,6 +5648,7 @@ const I18n = {
 
             // Start screen (static labels)
             'start.modeDesc': 'Evoluciona tu personaje en mazmorras cada vez más difíciles.',
+            'start.dailyActive': '⚡ Desafío de hoy activo: ',
             'start.tagline': 'El Abismo Aguarda',
             'start.modeDungeon': 'Masmorra',
             'start.modeAbyss': 'Abismo',
@@ -5732,6 +5737,7 @@ const I18n = {
         if (window.SettingsUI && SettingsUI.open) SettingsUI._render();
         // Re-apply data-i18n labels (pause panel and any element using the attribute)
         this.apply();
+        if (typeof _refreshDailyBadge === 'function') _refreshDailyBadge();
     },
 
     // Re-apply translations to every element carrying a data-i18n key
@@ -6472,7 +6478,7 @@ var CONFIG = {
         { id: 'lore_006', category: 'monsters', title: 'Mímicos', text: 'Mímicos eram baús de tesouro encantados por magos paranóicos. Com o tempo, desenvolveram consciência e fome.', rarity: 'common' },
         { id: 'lore_007', category: 'monsters', title: 'A Praga dos Enxames', text: 'Criaturas do enxame surgiram quando o Véu corrompeu colônias de insetos gigantes. Agora se multiplicam sem parar.', rarity: 'uncommon' },
         { id: 'lore_008', category: 'artifacts', title: 'A Lâmina do Crepúsculo', text: 'Forjada na fronteira entre luz e sombra, esta espada pode cortar até o Véu. Seu paradeiro atual é desconhecido.', rarity: 'rare' },
-        { id: 'lore_009', category: 'artifacts', title: 'O Orbe de Cristal', text: 'Um artefato dos magos antigos que permite canalizar energia arcana pura. Fragmentos dele aparecem como armas mgicas.', rarity: 'uncommon' },
+        { id: 'lore_009', category: 'artifacts', title: 'O Orbe de Cristal', text: 'Um artefato dos magos antigos que permite canalizar energia arcana pura. Fragmentos dele aparecem como armas mágicas.', rarity: 'uncommon' },
         { id: 'lore_010', category: 'artifacts', title: 'Armadura do Último Guardião', text: 'A armadura encantada do último protetor de Krevathorn. Dizem que concede proteção contra as sombras.', rarity: 'rare' },
         { id: 'lore_011', category: 'npcs', title: 'O Mercador Misterioso', text: 'Ninguém sabe de onde vem o mercador. Ele aparece e desaparece sem explicação, sempre com mercadorias raras.', rarity: 'common' },
         { id: 'lore_012', category: 'npcs', title: 'Os Prestigiadores', text: 'Guerreiros que morreram e retornaram mais fortes. O ritual de prestígio é antigo e perigoso — poucos sobrevivem.', rarity: 'uncommon' },
@@ -6500,7 +6506,7 @@ var CONFIG = {
         { id: 'lore_031', category: 'artifacts', title: 'A Fúria do Guerreiro', text: 'Guerreiros antigos descobriram que raiva controlada amplifica a força física. Cada golpe bem-sucedido acumula energia — o segredo está em não desperdiçar.', rarity: 'uncommon' },
         { id: 'lore_032', category: 'artifacts', title: 'O Veneno do Assassino', text: 'A Guilda dos Rogues destilou o próprio Véu em um veneno que corre as sombras. Paradoxalmente, funciona melhor contra criaturas criadas pelo Véu.', rarity: 'uncommon' },
         { id: 'lore_033', category: 'artifacts', title: 'O Orbe Protetor', text: 'Magos descobriram que concentrar energia arcana ao redor do corpo absorve um impacto. O segredo foi esquecido — até agora.', rarity: 'rare' },
-        { id: 'lore_034', category: 'artifacts', title: 'A Tempestade Arcana', text: 'Quando um mago lança três feitiços em sequência perfeita, a ressonância arcana cria uma explosão espontânea. Os magos de Krevathorn chamavam isso de Trade.', rarity: 'rare' },
+        { id: 'lore_034', category: 'artifacts', title: 'A Tempestade Arcana', text: 'Quando um mago lança três feitiços em sequência perfeita, a ressonância arcana cria uma explosão espontânea. Os magos de Krevathorn chamavam isso de Troca.', rarity: 'rare' },
         { id: 'lore_035', category: 'artifacts', title: 'O Relicário do Dragão', text: 'Uma armadura incompleta cujos fragmentos estão espalhados pelas masmorras. Diz-se que quem reunir todas as peças receberá a bênção do último dragão de Krevathorn.', rarity: 'rare' },
         // --- NPCs: personagens expandidos ---
         { id: 'lore_036', category: 'npcs', title: 'Dorian, o Mercador', text: 'Dorian não vende por lucro — ele testa cada viajante. Quem demonstra determinação recebe seus melhores preços. Quem hesita paga mais caro.', rarity: 'common' },
@@ -7848,7 +7854,7 @@ function _updateEnemySpawning() {
                 if (_preBossLines.length > 0) addLog(window.I18n ? I18n.t(_preBossLines[Math.floor(Math.random() * _preBossLines.length)]) : _preBossLines[Math.floor(Math.random() * _preBossLines.length)]);
                 addLog(gameMode === 'abyss'
                     ? (window.I18n ? I18n.t('log.guardianAbyssPre') : 'O Guardião do Abismo (Profundidade ') + dungeonLevel + (window.I18n ? I18n.t('log.guardianAbyssPost') : ') desponta entre as sombras!')
-                    : (window.I18n ? I18n.t('log.guardianFloorPre') : 'O guardiao do Piso B') + depth + (window.I18n ? I18n.t('log.guardianFloorPost') : ' bloqueia sua passagem!'));
+                    : (window.I18n ? I18n.t('log.guardianFloorPre') : 'O guardião do Piso B') + depth + (window.I18n ? I18n.t('log.guardianFloorPost') : ' bloqueia sua passagem!'));
             } else {
                 boss.applyArchetype(BOSS_ARCHETYPES[Math.floor(SeedSystem.random() * BOSS_ARCHETYPES.length)]);
                 addLog((window.I18n ? I18n.t('log.bossApproaching') : 'CHEFE APROXIMANDO: ') + boss.name + '!');
@@ -10445,7 +10451,7 @@ const ShopSystem = {
     },
 
     recordPurchase(item) {
-        this.purchaseHistory.unshift({ name: item.name.replace(/\s+/g, ' '), cost: item.cost, at: Date.now() });
+        this.purchaseHistory.unshift({ name: item.name.replace(/\s+/g, ' '), nameKey: item.nameKey || null, cost: item.cost, at: Date.now() });
         if (this.purchaseHistory.length > 6) this.purchaseHistory.pop();
     },
 
@@ -10772,7 +10778,7 @@ const CampSystem = {
             used.add(it.id);
             const weight = it.cat === 'pet' ? 0.35 : (it.cat === 'consumable' ? 1.4 : 1);
             if (SeedSystem.random() <= weight) {
-                chosen.push({ id: it.id, name: it.name, desc: it.desc, cost: Math.max(1, Math.floor(it.cost * CONFIG.SHOP_COST_MULT * 0.85)), cat: it.cat, effect: it.effect });
+                chosen.push({ id: it.id, name: it.name, nameKey: it.nameKey || null, desc: it.desc, descKey: it.descKey || null, cost: Math.max(1, Math.floor(it.cost * CONFIG.SHOP_COST_MULT * 0.85)), cat: it.cat, effect: it.effect });
             }
         }
         return chosen;
@@ -12362,13 +12368,13 @@ const DailyChallenge = {
     // Challenges rotate daily
     _challenges: [
         { id: 'speedrun', nameKey: 'daily.speedrun.name', name: 'Speed Run', descKey: 'daily.speedrun.desc', desc: 'Chegue ao Piso 5 no menor tempo', modifiers: { enemySpeed: 1.5, playerSpeed: 1.2 } },
-        { id: 'noheal', nameKey: 'daily.noheal.name', name: 'Sofrimento', descKey: 'daily.noheal.desc', desc: 'Sem poes de cura na loja', modifiers: { noHealShop: true, healthRegen: 0 } },
-        { id: 'oneshot', nameKey: 'daily.oneshot.name', name: 'Glass Cannon', descKey: 'daily.oneshot.desc', desc: 'Inimigos morrem em 1 hit, voc tambm', modifiers: { playerOneHit: true, enemyOneHit: true } },
+        { id: 'noheal', nameKey: 'daily.noheal.name', name: 'Sofrimento', descKey: 'daily.noheal.desc', desc: 'Sem poções de cura na loja', modifiers: { noHealShop: true, healthRegen: 0 } },
+        { id: 'oneshot', nameKey: 'daily.oneshot.name', name: 'Glass Cannon', descKey: 'daily.oneshot.desc', desc: 'Inimigos morrem em 1 hit, você também', modifiers: { playerOneHit: true, enemyOneHit: true } },
         { id: 'darkness', nameKey: 'daily.darkness.name', name: 'Escuridão', descKey: 'daily.darkness.desc', desc: 'Luz limitada, não use tochas', modifiers: { lightRadius: 0.25, noTorches: true } },
         { id: 'tank', nameKey: 'daily.tank.name', name: 'Tanque', descKey: 'daily.tank.desc', desc: 'Apenas guerreiro, vida dupla', modifiers: { forceClass: 'warrior', hpMult: 2 } },
         { id: 'sniper', nameKey: 'daily.sniper.name', name: 'Atirador', descKey: 'daily.sniper.desc', desc: 'Apenas mago, dano duplo', modifiers: { forceClass: 'mage', dmgMult: 2 } },
         { id: 'storm', nameKey: 'daily.storm.name', name: 'Tempestade', descKey: 'daily.storm.desc', desc: 'Chuva constante, visibilidade baixa', modifiers: { alwaysRain: true, enemySpeed: 1.3 } },
-        { id: 'endless', nameKey: 'daily.endless.name', name: 'Infinito', descKey: 'daily.endless.desc', desc: 'Sobreviva o mximo possvel sem progresso', modifiers: { noProgress: true, difficultyRamp: 1.1 } }
+        { id: 'endless', nameKey: 'daily.endless.name', name: 'Infinito', descKey: 'daily.endless.desc', desc: 'Sobreviva o máximo possível sem progresso', modifiers: { noProgress: true, difficultyRamp: 1.1 } }
     ],
 
     init() {
@@ -12553,12 +12559,12 @@ const Bestiary = {
     // Monster definitions
     _monsters: {
         // Basic enemies
-        'melee': { nameKey: 'best.melee.name', name: 'Soldado Esqueleto', category: 'basic', descKey: 'best.melee.desc', desc: 'Inimigo bsico da masmorra. Ataca corpo a corpo.', difficulty: 1 },
+        'melee': { nameKey: 'best.melee.name', name: 'Soldado Esqueleto', category: 'basic', descKey: 'best.melee.desc', desc: 'Inimigo básico da masmorra. Ataca corpo a corpo.', difficulty: 1 },
         'ranged': { nameKey: 'best.ranged.name', name: 'Arqueiro Esqueleto', category: 'basic', descKey: 'best.ranged.desc', desc: 'Atira flechas à distância. Cuidado!', difficulty: 2 },
-        'elite_melee': { nameKey: 'best.elite_melee.name', name: 'Guerreiro Elite', category: 'elite', descKey: 'best.elite_melee.desc', desc: 'Verso mais forte dos soldados. Mais HP e dano.', difficulty: 4 },
+        'elite_melee': { nameKey: 'best.elite_melee.name', name: 'Guerreiro Elite', category: 'elite', descKey: 'best.elite_melee.desc', desc: 'Versão mais forte dos soldados. Mais HP e dano.', difficulty: 4 },
         'elite_ranged': { nameKey: 'best.elite_ranged.name', name: 'Arqueiro Elite', category: 'elite', descKey: 'best.elite_ranged.desc', desc: 'Elite com ataques à distância. Atira mais rápido.', difficulty: 5 },
-        'swarm': { nameKey: 'best.swarm.name', name: 'Enxame de Ossos', category: 'swarm', descKey: 'best.swarm.desc', desc: 'Mltiplos skeletons pequenos. Derrotam em nmero.', difficulty: 3 },
-        'trap': { nameKey: 'best.trap.name', name: 'Armadilha', category: 'hazard', descKey: 'best.trap.desc', desc: 'Ativa quando voc se aproxima. Causa dano fixo.', difficulty: 2 },
+        'swarm': { nameKey: 'best.swarm.name', name: 'Enxame de Ossos', category: 'swarm', descKey: 'best.swarm.desc', desc: 'Múltiplos esqueletos pequenos. Derrotam em número.', difficulty: 3 },
+        'trap': { nameKey: 'best.trap.name', name: 'Armadilha', category: 'hazard', descKey: 'best.trap.desc', desc: 'Ativa quando você se aproxima. Causa dano fixo.', difficulty: 2 },
         'mimic': { nameKey: 'best.mimic.name', name: 'Mímico', category: 'special', descKey: 'best.mimic.desc', desc: 'Parece um baú de ouro, mas é uma armadilha!', difficulty: 4 },
         'boss': { nameKey: 'best.boss.name', name: 'Guardião Esqueleto', category: 'boss', descKey: 'best.boss.desc', desc: 'O chefão de cada piso. Muito forte!', difficulty: 10 },
         'treasure_goblin': { nameKey: 'best.treasure_goblin.name', name: 'Goblin Tesoureiro', category: 'special', descKey: 'best.treasure_goblin.desc', desc: 'Foge rapidamente e larga muito ouro!', difficulty: 3 },
@@ -20141,7 +20147,7 @@ class NPC {
         const itemDesc = window._L ? _L(item.descKey, item.desc) : item.desc;
         const coinsLabel = window.I18n ? I18n.t('npc.merchant.coins') : ' moedas';
         const prevLabel = window.I18n ? I18n.t('npc.merchant.prev') : '\n[< Anterior]';
-        const nextLabel = window.I18n ? I18n.t('npc.merchant.next') : '\n[Proximo >]';
+        const nextLabel = window.I18n ? I18n.t('npc.merchant.next') : '\n[Próximo >]';
         const self = this;
         const msg = itemName + ' - ' + item.cost + coinsLabel + '\n' + itemDesc +
             (idx > 0 ? prevLabel : '') + (idx < self._merchantItems.length - 1 ? nextLabel : '');
@@ -20199,7 +20205,7 @@ class NPC {
                         NPCInteractionPanel.showFeedback(window.I18n ? I18n.t('npc.oracle.revealed') : 'Revelado no minimapa!');
                         if (window.SND) SND.playAchievement && SND.playAchievement();
                     } else {
-                        NPCInteractionPanel.showFeedback(window.I18n ? I18n.t('npc.oracle.alreadyRevealed') : 'Ja revelado!');
+                        NPCInteractionPanel.showFeedback(window.I18n ? I18n.t('npc.oracle.alreadyRevealed') : 'Já revelado!');
                     }
                 }
             },
@@ -21647,8 +21653,8 @@ window.SkillTreeUI = SkillTreeUI;
                     return `
                         <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px;border-radius:12px;border:1.5px solid ${canBuy ? 'rgba(250,204,21,0.4)' : 'rgba(255,255,255,0.1)'};background:rgba(250,204,21,0.06);margin-bottom:8px">
                             <div style="flex:1;min-width:0">
-                                <div style="font-weight:bold;font-size:13px;color:${COLORS.GOLD}">${it.name}</div>
-                                <div style="font-size:10px;color:${COLORS.TEXT_DIM};line-height:1.3">${it.desc}</div>
+                                <div style="font-weight:bold;font-size:13px;color:${COLORS.GOLD}">${(window._L ? _L(it.nameKey, it.name) : it.name)}</div>
+                                <div style="font-size:10px;color:${COLORS.TEXT_DIM};line-height:1.3">${(window._L ? _L(it.descKey, it.desc) : it.desc)}</div>
                             </div>
                             <button onclick="window.UIManager.campBuy(${i})" style="flex-shrink:0;padding:8px 12px;border-radius:10px;font-weight:bold;font-size:12px;border:1.5px solid ${canBuy ? 'rgba(250,204,21,0.6)' : 'rgba(255,255,255,0.15)'};background:${canBuy ? 'rgba(250,204,21,0.18)' : 'rgba(255,255,255,0.05)'};color:${canBuy ? COLORS.GOLD : COLORS.TEXT_MUTED};cursor:pointer;touch-action:manipulation">
                                 ${it.cost} 💰
@@ -21787,7 +21793,7 @@ window.SkillTreeUI = SkillTreeUI;
                 ? `<div style="margin-top:10px;padding:8px 10px;border-radius:10px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.08)">
                     <div style="font-size:9px;color:${COLORS.TEXT_MUTED};font-weight:bold;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px">Compras recentes</div>
                     <div style="display:flex;flex-wrap:wrap;gap:4px">
-                        ${ShopSystem.purchaseHistory.map(h => `<span style="font-size:9px;padding:2px 8px;border-radius:999px;background:rgba(250,204,21,0.12);color:${COLORS.GOLD}">${h.name} ${h.cost}💰</span>`).join('')}
+                        ${ShopSystem.purchaseHistory.map(h => `<span style="font-size:9px;padding:2px 8px;border-radius:999px;background:rgba(250,204,21,0.12);color:${COLORS.GOLD}">${(window._L && h.nameKey ? _L(h.nameKey, h.name) : h.name)} ${h.cost}💰</span>`).join('')}
                     </div>
                 </div>` : '';
 
@@ -21820,14 +21826,14 @@ window.SkillTreeUI = SkillTreeUI;
                     <div style="padding:12px;border-radius:12px;border:1.5px solid ${opts.flash ? '#ffcc00' : (canBuy ? COLORS.PRIMARY : 'rgba(255,255,255,0.1)')};background:${opts.flash ? 'linear-gradient(135deg, rgba(255,200,0,0.14), rgba(255,120,0,0.10))' : (canBuy ? 'rgba(224,182,255,0.1)' : 'rgba(35,28,48,0.5)')};${canBuy ? 'cursor:pointer' : 'opacity:0.6'};transition:all 0.2s;box-shadow:${opts.flash ? '0 0 18px rgba(255,200,0,0.15)' : 'none'}"
                          onclick="${canBuy ? `UIManager.buyItem('${item.id}', 1, ${opts.flash ? 'true' : 'false'})` : ''}">
                         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-                            <div style="font-weight:bold;font-size:14px;color:${opts.flash ? '#ffcc00' : (canBuy ? COLORS.PRIMARY : COLORS.TEXT_DIM)}">${item.name}</div>
+                            <div style="font-weight:bold;font-size:14px;color:${opts.flash ? '#ffcc00' : (canBuy ? COLORS.PRIMARY : COLORS.TEXT_DIM)}">${(window._L ? _L(item.nameKey, item.name) : item.name)}</div>
                             <div style="display:flex;align-items:center;gap:6px">
                                 ${badge}
                                 ${stockBadge}
                                 ${priceHtml}
                             </div>
                         </div>
-                        <div style="font-size:12px;color:${COLORS.TEXT_DIM};line-height:1.3">${item.desc}</div>
+                        <div style="font-size:12px;color:${COLORS.TEXT_DIM};line-height:1.3">${(window._L ? _L(item.descKey, item.desc) : item.desc)}</div>
                         ${!soldOut && !opts.flash ? `<div style="font-size:9px;color:${COLORS.TEXT_MUTED};margin-top:5px">Estoque: ${item.stock}x</div>` : ''}
                         ${multi}
                     </div>
@@ -22432,28 +22438,38 @@ window.SkillTreeUI = SkillTreeUI;
 
         renderSettingsContent() {
             const _btnActive = 'background:rgba(224,182,255,0.2);border-color:' + COLORS.PRIMARY + ';color:#fff';
-            const _btnInactive = 'background:rgba(255,255,255,0.05);border-color:' + COLORS.BORDER_DIM + ';color:' + COLORS.TEXT_MUTED;
+            const _btnInactive = 'background:rgba(255,255,255,0.08);border-color:rgba(255,255,255,0.16);color:' + COLORS.TEXT_DIM;
             const btn = (active) => `padding:10px 12px;border-radius:12px;font-size:11px;font-weight:bold;border:1px solid;cursor:pointer;transition:all 0.2s;${active ? _btnActive : _btnInactive}`;
             const s = window.GameSettings || {};
+            const _curLang = window.I18n ? I18n.lang : 'pt';
+            const _langBtn = (code, label) => `<button style="${btn(_curLang === code)}" onclick="I18n.setLang('${code}'); UIManager.openPanel('settings')">${label}</button>`;
             return `
                 <div style="display:flex;flex-direction:column;gap:20px">
                     <div>
-                        <h3 style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:${COLORS.TEXT_MUTED};font-weight:bold;margin-bottom:8px">Controles</h3>
-                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-                            <button style="${btn(s.controlType === 'touch')}" onclick="UIManager.setSetting('controlType', 'touch')">TOUCH</button>
-                            <button style="${btn(s.controlType === 'mouse')}" onclick="UIManager.setSetting('controlType', 'mouse')">MOUSE</button>
-                            <button style="${btn(s.controlType === 'gamepad')}" onclick="UIManager.setSetting('controlType', 'gamepad')">GAMEPAD</button>
-                        </div>
-                    </div>
-                    <div style="${s.controlType === 'touch' ? '' : 'opacity:0.4;pointer-events:none'}">
-                        <h3 style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:${COLORS.TEXT_MUTED};font-weight:bold;margin-bottom:8px">Joystick</h3>
-                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-                            <button style="${btn(s.joystickMode === 'fixed')}" onclick="UIManager.setSetting('joystickMode', 'fixed')">FIXO</button>
-                            <button style="${btn(s.joystickMode === 'anywhere')}" onclick="UIManager.setSetting('joystickMode', 'anywhere')">QUALQUER</button>
+                        <h3 style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:${COLORS.TEXT_MUTED};font-weight:bold;margin-bottom:8px">${_L('settings.language', 'Idioma')}</h3>
+                        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
+                            ${_langBtn('pt', '🇧🇷 Português')}
+                            ${_langBtn('en', '🇺🇸 English')}
+                            ${_langBtn('es', '🇪🇸 Español')}
                         </div>
                     </div>
                     <div>
-                        <h3 style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:${COLORS.TEXT_MUTED};font-weight:bold;margin-bottom:8px">Áudio</h3>
+                        <h3 style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:${COLORS.TEXT_MUTED};font-weight:bold;margin-bottom:8px">${_L('settings.controls', 'Controles')}</h3>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+                            <button style="${btn(s.controlType === 'touch')}" onclick="UIManager.setSetting('controlType', 'touch')">${_L('settings.touchBtn', 'TOUCH')}</button>
+                            <button style="${btn(s.controlType === 'mouse')}" onclick="UIManager.setSetting('controlType', 'mouse')">${_L('settings.mouseBtn', 'MOUSE')}</button>
+                            <button style="${btn(s.controlType === 'gamepad')}" onclick="UIManager.setSetting('controlType', 'gamepad')">${_L('settings.gamepadBtn', 'GAMEPAD')}</button>
+                        </div>
+                    </div>
+                    <div style="${s.controlType === 'touch' ? '' : 'opacity:0.4;pointer-events:none'}">
+                        <h3 style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:${COLORS.TEXT_MUTED};font-weight:bold;margin-bottom:8px">${_L('settings.joystick', 'Modo Joystick')}</h3>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+                            <button style="${btn(s.joystickMode === 'fixed')}" onclick="UIManager.setSetting('joystickMode', 'fixed')">${_L('settings.fixedBtn', 'FIXO')}</button>
+                            <button style="${btn(s.joystickMode === 'anywhere')}" onclick="UIManager.setSetting('joystickMode', 'anywhere')">${_L('settings.anywhereBtn', 'QUALQUER')}</button>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:${COLORS.TEXT_MUTED};font-weight:bold;margin-bottom:8px">${_L('settings.audio', 'Áudio')}</h3>
                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">
                             <button style="${btn(s.sfxEnabled)}" onclick="UIManager.setSetting('sfxEnabled', true)">SFX ON</button>
                             <button style="${btn(!s.sfxEnabled)}" onclick="UIManager.setSetting('sfxEnabled', false)">SFX OFF</button>
@@ -22464,7 +22480,7 @@ window.SkillTreeUI = SkillTreeUI;
                         </div>
                     </div>
                     <div>
-                        <h3 style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:${COLORS.TEXT_MUTED};font-weight:bold;margin-bottom:8px">Feedback</h3>
+                        <h3 style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:${COLORS.TEXT_MUTED};font-weight:bold;margin-bottom:8px">${_L('settings.visuals', 'Visuais')}</h3>
                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">
                             <button style="${btn(s.particlesEnabled)}" onclick="UIManager.setSetting('particlesEnabled', true)">PART ON</button>
                             <button style="${btn(!s.particlesEnabled)}" onclick="UIManager.setSetting('particlesEnabled', false)">PART OFF</button>
@@ -22478,23 +22494,23 @@ window.SkillTreeUI = SkillTreeUI;
                             <button style="${btn(!s.hitstopEnabled)}" onclick="UIManager.setSetting('hitstopEnabled', false)">HITSTOP OFF</button>
                         </div>
                         <div style="margin-top:10px">
-                            <h3 style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:${COLORS.TEXT_MUTED};font-weight:bold;margin-bottom:8px">Qualidade Gráfica</h3>
+                            <h3 style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:${COLORS.TEXT_MUTED};font-weight:bold;margin-bottom:8px">${_L('settings.graphicsQuality', 'Qualidade Gráfica')}</h3>
                             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
-                                <button style="${btn(s.graphicsQuality === 'low')}" onclick="UIManager.setSetting('graphicsQuality', 'low')">BAIXA</button>
-                                <button style="${btn(s.graphicsQuality === 'medium')}" onclick="UIManager.setSetting('graphicsQuality', 'medium')">MÉDIA</button>
-                                <button style="${btn(s.graphicsQuality === 'high')}" onclick="UIManager.setSetting('graphicsQuality', 'high')">ALTA</button>
+                                <button style="${btn(s.graphicsQuality === 'low')}" onclick="UIManager.setSetting('graphicsQuality', 'low')">${_L('settings.low', 'BAIXA')}</button>
+                                <button style="${btn(s.graphicsQuality === 'medium')}" onclick="UIManager.setSetting('graphicsQuality', 'medium')">${_L('settings.medium', 'MÉDIA')}</button>
+                                <button style="${btn(s.graphicsQuality === 'high')}" onclick="UIManager.setSetting('graphicsQuality', 'high')">${_L('settings.high', 'ALTA')}</button>
                             </div>
                         </div>
                     </div>
                     <div>
-                        <h3 style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:${COLORS.TEXT_MUTED};font-weight:bold;margin-bottom:8px">Fonte</h3>
+                        <h3 style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:${COLORS.TEXT_MUTED};font-weight:bold;margin-bottom:8px">${_L('settings.fontSize', 'Tamanho da Fonte')}</h3>
                         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
                             <button style="${btn(s.fontSize === 'small')}" onclick="UIManager.setFontSize('small')">P</button>
                             <button style="${btn(s.fontSize === 'medium')}" onclick="UIManager.setFontSize('medium')">M</button>
                             <button style="${btn(s.fontSize === 'large')}" onclick="UIManager.setFontSize('large')">G</button>
                         </div>
                     </div>
-                    <button onclick="window.SettingsUI._quitToMenu(); event.stopPropagation();" style="width:100%;margin-top:12px;padding:14px;border-radius:12px;font-size:12px;font-weight:bold;background:linear-gradient(135deg,#b8000f,#e84525);border:1px solid rgba(255,100,80,0.3);color:#fff;cursor:pointer;text-transform:uppercase;letter-spacing:0.08em;transition:transform 0.2s">Desistir e retornar ao menu inicial</button>
+                    <button onclick="window.SettingsUI._quitToMenu(); event.stopPropagation();" style="width:100%;margin-top:12px;padding:14px;border-radius:12px;font-size:12px;font-weight:bold;background:linear-gradient(135deg,#b8000f,#e84525);border:1px solid rgba(255,100,80,0.3);color:#fff;cursor:pointer;text-transform:uppercase;letter-spacing:0.08em;transition:transform 0.2s">${_L('panel.quitToMenu', 'Desistir e retornar ao menu inicial')}</button>
                 </div>
             `;
         },
@@ -22583,6 +22599,10 @@ window.SkillTreeUI = SkillTreeUI;
                 }
             }
             if (window.RunObjectiveSystem) RunObjectiveSystem.syncHUD();
+            // Boss HP bar: updateHUD() is the per-frame gameplay HUD path; the
+            // BossHPBar.update() call was missing, so the bar never appeared in
+            // boss fights (it hides itself when no boss is alive).
+            if (typeof BossHPBar !== 'undefined') BossHPBar.update();
             
             // Active status chips (buffs with timers)
             if (this._statusEl || (this._statusEl = document.getElementById('status-chips'))) {
@@ -22995,9 +23015,9 @@ const TutorialSystem = {
                 'Menu pausa: pausa o jogo, opções e sair',
                 'Loja: compre novas armas e melhorias',
                 'Habilidades: especialize seu personagem',
-                'Estatisticas: acompanhe seu progresso',
+                'Estatísticas: acompanhe seu progresso',
                 '',
-                'Bonus: +50 moedas!',
+                'Bônus: +50 moedas!',
             ],
             waitForTap: true,
             isLast: true
@@ -23134,7 +23154,7 @@ const TutorialSystem = {
                 'Você dominou os fundamentos — e mais um pouco.',
                 'Minimapa no canto: mostra inimigos, baús e o portal.',
                 'O Abismo espera. Boa sorte, herói!',
-                'Bonus: +100 moedas!',
+                'Bônus: +100 moedas!',
             ],
             onEnter: sys => { if (player) player.currency += 50; },
             waitForTap: true,
@@ -24548,6 +24568,24 @@ Input.init();
         }
         _refreshContinueButton();
         window._refreshContinueButton = _refreshContinueButton;
+        // Daily challenge is applied to every run (see GameBootstrap.start);
+        // surface today's active challenge on the start screen so the player
+        // is never surprised by its modifiers after the run begins.
+        function _refreshDailyBadge() {
+            var el = document.getElementById('daily-badge');
+            if (!el) return;
+            var dc = window.DailyChallenge, I18n = window.I18n;
+            if (!dc) { el.style.display = 'none'; return; }
+            var ch = dc.getTodayChallenge();
+            if (!ch) { el.style.display = 'none'; return; }
+            var name = (window._L && ch.nameKey) ? _L(ch.nameKey, ch.name) : ch.name;
+            var desc = (window._L && ch.descKey) ? _L(ch.descKey, ch.desc) : ch.desc;
+            var prefix = I18n ? I18n.t('start.dailyActive') : '⚡ Desafio de hoje ativo: ';
+            el.textContent = prefix + name + ' — ' + desc;
+            el.style.display = 'block';
+        }
+        _refreshDailyBadge();
+        window._refreshDailyBadge = _refreshDailyBadge;
 
         // Request wake lock when game starts
         document.addEventListener('visibilitychange', function() {
