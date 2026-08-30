@@ -203,3 +203,14 @@ Recomendação: **B** — é o maior ganho de manutenibilidade para um arquivo d
 - Crash fatal no loop: `ElementalSystem.applyStatus is not a function` em `Enemy.update` (contato com inimigo de bioma) — `applyStatus` nunca foi definido no objeto `ElementalSystem` (introduzido em c74eb35 com os call sites, sem o método); implementado com pilha (cap 3 = limiar de interação), refresh de timer, guarda de entidade morta e init de `elementalStatuses`.
 
 **Observações (não-bugs):** +60 moedas ao continuar (provável chest lendário auto-aberto no spawn; determinístico); rolagem da loja pode sortear itens de uma só categoria (RNG); "Pular Tutorial" não persiste (por design).
+
+## Rodada 2026-08-30 (2ª auditoria "not defined")
+
+**Método:** análise estática com parser (acorn) — escopo por script, chamadas `X.method()` vs. chaves reais dos objetos, handlers inline; validação runtime headless (boot, 8 painéis, tutorial quick/full, 12 chefes, 6 pets, 3 NPCs, 6 eventos, 7 mutações, 21 itens de loja, 12 boons, acampamento, daily, abismo, save/continue/game-over) — zero erros de console/Debug.
+
+**Corrigido:**
+- `toggleLore` lançava `NarrativeSystem.toggleUI is not a function` (tecla L / journal de lore inacessível) — agora abre o painel `lore` via `UIManager.openPanel('lore')`.
+- `ScreenEffects.onCriticalHit` chamado mas nunca definido (o método real é `onCrit()`) — efeito de crit do ladino nunca disparava; call site apontado para `onCrit()`.
+- `WeaponSystem.getSpeedMult` chamado em `Player.update` mas nunca definido — trade-offs de velocidade das armas ("-10% speed" etc.) eram cosméticos; implementado `getSpeedMult()` + stat `speed` nas 4 armas que anunciam (Espada Longa 0.9, Machado 0.75, Besta 0.85, Cetro 1.05).
+
+**Verificados como não-bugs (guardas seguras):** `NarrativeSystem.triggerBossCutscene` (stub com `typeof`; banner de chefe já cobre o piso 10), `WorldMap`/`AchievementSystem`/`ACHIEVEMENTS_LIST`/`EntitySystem` (referências mortas guardadas, nunca disparam), painel de diálogo de NPC (modal por design, botões clicáveis em touch e desktop).
