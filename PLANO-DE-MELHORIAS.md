@@ -200,5 +200,6 @@ Recomendação: **B** — é o maior ganho de manutenibilidade para um arquivo d
 - Mojibake pt (daily/bestiary/NPC/lore/biomas/raridades) — ~30 strings corrigidas.
 - Desafio diário sem indicação na tela inicial — badge "⚡ Desafio de hoje ativo: {nome} — {desc}".
 - Crash de render quando o Oráculo revela marcadores: `s is not defined` em `drawMinimap` (referência a variável inexistente) — escala convertida com `(coord / TILE_SIZE) * scale`, igual aos dots.
+- Crash fatal no loop: `ElementalSystem.applyStatus is not a function` em `Enemy.update` (contato com inimigo de bioma) — `applyStatus` nunca foi definido no objeto `ElementalSystem` (introduzido em c74eb35 com os call sites, sem o método); implementado com pilha (cap 3 = limiar de interação), refresh de timer, guarda de entidade morta e init de `elementalStatuses`.
 
 **Observações (não-bugs):** +60 moedas ao continuar (provável chest lendário auto-aberto no spawn; determinístico); rolagem da loja pode sortear itens de uma só categoria (RNG); "Pular Tutorial" não persiste (por design).

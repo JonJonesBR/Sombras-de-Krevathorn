@@ -15039,6 +15039,27 @@ const ElementalSystem = {
         const types = Array.isArray(weapon.element) ? weapon.element : [weapon.element];
         const idx = Math.floor(SeedSystem.random() * types.length);
         return types[idx];
+    },
+    
+    // Apply a status effect to an entity
+    applyStatus(entity, type, stacks, duration, source) {
+        if (!entity || entity.alive === false) return;
+        if (!entity.elementalStatuses) entity.elementalStatuses = [];
+        
+        const existing = entity.elementalStatuses.find(s => s.type === type);
+        if (existing) {
+            // Refresh timer, stack up to 3 (interaction threshold)
+            existing.stacks = Math.min(3, (existing.stacks || 0) + stacks);
+            existing.timer = Math.max(existing.timer || 0, duration);
+            existing.source = source || existing.source;
+        } else {
+            entity.elementalStatuses.push({
+                type,
+                stacks: Math.max(1, stacks || 1),
+                timer: duration || 60,
+                source
+            });
+        }
     }
 };
 
