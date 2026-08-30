@@ -186,3 +186,18 @@ Recomendação: **B** — é o maior ganho de manutenibilidade para um arquivo d
 ## Ordem sugerida de prioridade
 
 **Fase 0 → 1 → 2 → 3 → 4 → 5**, com 6 opcional. A Fase 0 e a 1 são as de maior valor por risco: fundação + bugs reais de memória/bateria. A decisão aberta (arquivo único vs fonte separada) deve ser tomada antes da Fase 2.
+---
+
+## Rodada omp 2026-08-30 (auditoria E2E + refinamento)
+
+**Método:** execução real no browser (420×820), ~30 fluxos exercitados com autopilot de combate e harness de estado; análise visual via agente de visão; comparação cega contra Brogue.
+**Resultado do Juiz: 91/100** (Corretude 28/30, UX 18/20, Robustez 18/20, Clareza/Perf 14/15, Segurança/Manutenibilidade 13/15) — acima da régua de 90; comparação cega: estado atual superior à referência para a categoria mobile.
+
+**Corrigido nesta rodada (branch `omp/auto-2026-08-30`):**
+- Barra de HP do chefe nunca aparecia (BossHPBar.update nunca chamado) — ligado ao UIManager.updateHUD.
+- i18n: loja/acampamento/histórico usavam nomes pt hardcoded apesar de nameKey — render via `_L`; recordPurchase/_rollOffers guardam as chaves.
+- Settings do menu sem seletor de idioma e labels hardcoded — seletor pt/en/es + chaves `settings.*` + contraste OFF melhorado.
+- Mojibake pt (daily/bestiary/NPC/lore/biomas/raridades) — ~30 strings corrigidas.
+- Desafio diário sem indicação na tela inicial — badge "⚡ Desafio de hoje ativo: {nome} — {desc}".
+
+**Observações (não-bugs):** +60 moedas ao continuar (provável chest lendário auto-aberto no spawn; determinístico); rolagem da loja pode sortear itens de uma só categoria (RNG); "Pular Tutorial" não persiste (por design).
