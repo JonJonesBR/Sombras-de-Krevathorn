@@ -18811,6 +18811,10 @@ class Bullet {
                         spawnParticles(e.x, e.y, '#ff8800', 8, 3);
                         addLog(window.I18n ? I18n.t('log.shieldBroken') : ' Escudo quebrado!');
                     }
+                    // Main damage: projéteis do jogador danificam inimigos; projéteis
+                    // inimigos danificam o jogador. (source=null no lado inimigo para
+                    // não inflar dano recebido com damageMult/damageBoost do jogador.)
+                    e.takeDamage(this.dmg, m, this.isP ? source : null); this.hitCount++;
                     // Elemento do bioma no projétil inimigo atinge o jogador
                     if(!this.isP && this.element && typeof ElementalSystem !== 'undefined') ElementalSystem.applyStatus(e, this.element, 1, 120, source || this);
                     // Apply elemental status from weapon
@@ -19245,7 +19249,7 @@ class Player extends Entity {
                 if(!map.isWall(nx, ny)) { this.x = nx; this.y = ny; }
             }
             const arrowCount = this.skills.ult1 ? 20 : 12;
-            const cls = CONFIG.PLAYER[this.type], arrowDmg = Math.floor(cls.baseDmg * this.weaponLevel * this.weaponDamageMult * (this.damageMult || 1) * 2), spd = CONFIG.PLAYER.rogue.bulletSpeed || 12;
+            const cls = CONFIG.PLAYER[this.type], arrowDmg = Math.floor(cls.baseDmg * this.weaponLevel * this.weaponDamageMult * 2), spd = CONFIG.PLAYER.rogue.bulletSpeed || 12;
             for(let i = 0; i < arrowCount; i++) {
                 const angle = (i / arrowCount) * Math.PI * 2;
                 bullets.push(window.PoolManager ? PoolManager.acquire('Bullet', this.x, this.y, Math.cos(angle)*spd, Math.sin(angle)*spd, '#33ff33', arrowDmg, true, null, 380) : new Bullet(this.x, this.y, Math.cos(angle)*spd, Math.sin(angle)*spd, '#33ff33', arrowDmg, true, null, 380));
@@ -19386,7 +19390,7 @@ class Player extends Entity {
                         const edx = e.x - this.x, edy = e.y - this.y;
                         const dSq = edx*edx + edy*edy;
                         if(dSq < gustRangeSq) {
-                            e.takeDamage(Math.floor(CONFIG.ELF_WIND_DAMAGE * this.weaponLevel * this.weaponDamageMult * (this.damageMult || 1)), map, this);
+                            e.takeDamage(Math.floor(CONFIG.ELF_WIND_DAMAGE * this.weaponLevel * this.weaponDamageMult), map, this);
                             // Knockback: empurra para longe
                             const d = Math.sqrt(dSq) || 1;
                             const kbx = (edx / d) * 9, kby = (edy / d) * 9;
@@ -19526,9 +19530,7 @@ class Player extends Entity {
                 const furyMult = 1 + this.furyStacks * CONFIG.WARRIOR_FURY_DMG_PER_STACK;
                 let dmg = Math.floor(cls.baseDmg * this.weaponLevel * this.weaponDamageMult * furyMult);
                 if(this.mutations.berserk) dmg *= CONFIG.BERSERK_DAMAGE_MULT;
-                if(this.damageBoost > 0) dmg *= CONFIG.DAMAGE_BOOST_MULTIPLIER;
                 if(window.RelicSystem) dmg = Math.floor(dmg * RelicSystem.berserkerMult(this));
-                if(this.damageMult > 1) dmg = Math.floor(dmg * this.damageMult);
                 let hitAny = false;
                 if (this.fireTrail && typeof hazards !== 'undefined') { const fx = this.x + Math.cos(attackAngle) * 40, fy = this.y + Math.sin(attackAngle) * 40; if (!m.isWall(fx, fy)) hazards.push(new Hazard(fx, fy, 'fire', true)); }
                 const meleeRangeSq = CONFIG.WARRIOR_MELEE_RANGE * CONFIG.WARRIOR_MELEE_RANGE;
@@ -19563,7 +19565,7 @@ class Player extends Entity {
                 this.walkTimer = 60;
                 let dmg = Math.floor(cls.baseDmg * this.weaponLevel * this.weaponDamageMult);
                 if(this.mutations.berserk) dmg *= CONFIG.BERSERK_DAMAGE_MULT;
-                if(this.damageBoost > 0) { dmg *= CONFIG.DAMAGE_BOOST_MULTIPLIER; ScreenEffects.triggerChromatic(2); }
+                if(this.damageBoost > 0) { ScreenEffects.triggerChromatic(2); }
                 if(window.RelicSystem) { dmg = Math.floor(dmg * RelicSystem.berserkerMult(this)); dmg = Math.floor(RelicSystem.furiaShot(this, dmg)); }
                 const bulletSpeed = (this.type === 'rogue' || this.type === 'elf') ? CONFIG.PLAYER[this.type].bulletSpeed : CONFIG.BULLET_SPEED_DEFAULT, baseRange = WeaponSystem.getEffectiveRange(this), range = window.RelicSystem ? baseRange * RelicSystem.rangeMult(this) : baseRange;
                 if(this.type === 'mage') {
