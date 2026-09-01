@@ -1,0 +1,16 @@
+name: CI - syntax validation
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check-js:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Validar sintaxe dos scripts inline
+        run: node .github/check-js.js index.html

@@ -974,7 +974,7 @@ body.cb-tritan  { filter: url("#cb-tritan"); }
             </div>
             
             <!-- Mode description (dynamic) -->
-            <div id="mode-desc" data-i18n="start.modeDesc" style="text-align:center;font-size:clamp(0.65rem,2.2vw,0.8rem);color:rgba(255,255,255,0.45);margin-bottom:10px;min-height:2.2em;line-height:1.4;padding:0 8px;">
+            <div id="mode-desc" data-i18n="start.modeDesc" style="text-align:center;font-size:clamp(0.65rem,2.2vw,0.8rem);color:rgba(255,255,255,0.62);margin-bottom:10px;min-height:2.2em;line-height:1.4;padding:0 8px;">
                 Evolua seu personagem em masmorras cada vez mais difíceis.
             </div>
             <!-- Daily challenge badge: shows today's active challenge before starting -->
@@ -982,26 +982,31 @@ body.cb-tritan  { filter: url("#cb-tritan"); }
 
             <!-- Difficulty Selection -->
             <div style="margin-bottom:8px;">
-                <div data-i18n="start.difficultyLabel" style="text-align:center;font-size:clamp(0.55rem,2vw,0.68rem);letter-spacing:0.25em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:5px;">Dificuldade</div>
+                <div data-i18n="start.difficultyLabel" style="text-align:center;font-size:clamp(0.55rem,2vw,0.68rem);letter-spacing:0.25em;text-transform:uppercase;color:rgba(255,255,255,0.6);margin-bottom:5px;">Dificuldade</div>
                 <div style="display:flex;gap:5px;">
                     <button class="diff-btn" data-diff="facil" onclick="window.setDifficulty('facil')" style="flex:1;padding:8px 2px;border-radius:12px;font-size:clamp(0.6rem,2.4vw,0.78rem);font-weight:600;border:1.5px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.45);cursor:pointer;transition:all 0.2s;touch-action:manipulation;" data-i18n="start.diff.facil">🌱 Fácil</button>
                     <button class="diff-btn" data-diff="normal" onclick="window.setDifficulty('normal')" style="flex:1;padding:8px 2px;border-radius:12px;font-size:clamp(0.6rem,2.4vw,0.78rem);font-weight:600;border:1.5px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.45);cursor:pointer;transition:all 0.2s;touch-action:manipulation;" data-i18n="start.diff.normal">⚔️ Normal</button>
                     <button class="diff-btn" data-diff="dificil" onclick="window.setDifficulty('dificil')" style="flex:1;padding:8px 2px;border-radius:12px;font-size:clamp(0.6rem,2.4vw,0.78rem);font-weight:600;border:1.5px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.45);cursor:pointer;transition:all 0.2s;touch-action:manipulation;" data-i18n="start.diff.dificil">💀 Difícil</button>
                     <button class="diff-btn" data-diff="pesadelo" onclick="window.setDifficulty('pesadelo')" style="flex:1;padding:8px 2px;border-radius:12px;font-size:clamp(0.6rem,2.4vw,0.78rem);font-weight:600;border:1.5px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.45);cursor:pointer;transition:all 0.2s;touch-action:manipulation;" data-i18n="start.diff.pesadelo">🔥 Pesadelo</button>
                 </div>
-                <div id="difficulty-desc" data-i18n="start.difficultyDesc" style="text-align:center;font-size:clamp(0.58rem,2vw,0.7rem);color:rgba(255,255,255,0.4);margin-top:4px;min-height:1.2em;line-height:1.3;">A experiência padrão de Krevathorn.</div>
+                <div id="difficulty-desc" data-i18n="start.difficultyDesc" style="text-align:center;font-size:clamp(0.58rem,2vw,0.7rem);color:rgba(255,255,255,0.62);margin-top:4px;min-height:1.2em;line-height:1.3;">A experiência padrão de Krevathorn.</div>
             </div>
 
-            <!-- Seed (reproducible runs) -->
-            <div style="margin-bottom:8px;">
-                <div data-i18n="start.seedLabel" style="text-align:center;font-size:clamp(0.55rem,2vw,0.68rem);letter-spacing:0.25em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:5px;">Seed (execuções reprodutíveis)</div>
-                <div style="display:flex;gap:5px;">
-                    <input id="seed-input" type="text" maxlength="40" placeholder="vazio = aleatório" data-i18n-placeholder="start.seedPlaceholder" style="flex:1;min-width:0;padding:8px 10px;border-radius:12px;font-size:clamp(0.6rem,2.4vw,0.78rem);background:rgba(255,255,255,0.05);border:1.5px solid rgba(255,255,255,0.12);color:#e0e0e0;outline:none;">
-                    <button onclick="window.applySeedInput()" data-i18n="start.seedApply" style="padding:8px 12px;border-radius:12px;font-size:clamp(0.6rem,2.4vw,0.78rem);font-weight:700;border:1.5px solid rgba(224,182,255,0.4);background:rgba(224,182,255,0.12);color:#e0b6ff;cursor:pointer;touch-action:manipulation;">Aplicar</button>
-                    <button onclick="window.clearSeedInput()" data-i18n="start.seedRandom" style="padding:8px 10px;border-radius:12px;font-size:clamp(0.6rem,2.4vw,0.78rem);font-weight:700;border:1.5px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.45);cursor:pointer;touch-action:manipulation;">Aleatório</button>
+            <!-- Seed (reproducible runs) — colapsável para reduzir a densidade da primeira dobra -->
+            <details id="start-options-seed">
+                <summary style="cursor:pointer;padding:8px 10px;border-radius:12px;border:1.5px solid rgba(224,182,255,0.22);background:rgba(224,182,255,0.06);color:rgba(224,182,255,0.9);font-size:clamp(0.65rem,2.4vw,0.8rem);font-weight:700;text-align:center;letter-spacing:0.05em;text-transform:uppercase;touch-action:manipulation;user-select:none;">⚙️ Opções — Seed</summary>
+                <div style="margin:6px 0 8px;padding:8px 10px;border-radius:14px;border:1.5px solid rgba(224,182,255,0.12);background:rgba(255,255,255,0.02);">
+                <div style="margin-bottom:8px;">
+                    <div data-i18n="start.seedLabel" style="text-align:center;font-size:clamp(0.55rem,2vw,0.68rem);letter-spacing:0.25em;text-transform:uppercase;color:rgba(255,255,255,0.6);margin-bottom:5px;">Seed (execuções reprodutíveis)</div>
+                    <div style="display:flex;gap:5px;">
+                        <input id="seed-input" type="text" maxlength="40" placeholder="vazio = aleatório" data-i18n-placeholder="start.seedPlaceholder" style="flex:1;min-width:0;padding:8px 10px;border-radius:12px;font-size:clamp(0.6rem,2.4vw,0.78rem);background:rgba(255,255,255,0.05);border:1.5px solid rgba(255,255,255,0.12);color:#e0e0e0;outline:none;">
+                        <button onclick="window.applySeedInput()" data-i18n="start.seedApply" style="padding:8px 12px;border-radius:12px;font-size:clamp(0.6rem,2.4vw,0.78rem);font-weight:700;border:1.5px solid rgba(224,182,255,0.4);background:rgba(224,182,255,0.12);color:#e0b6ff;cursor:pointer;touch-action:manipulation;">Aplicar</button>
+                        <button onclick="window.clearSeedInput()" data-i18n="start.seedRandom" style="padding:8px 10px;border-radius:12px;font-size:clamp(0.6rem,2.4vw,0.78rem);font-weight:700;border:1.5px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.45);cursor:pointer;touch-action:manipulation;">Aleatório</button>
+                    </div>
+                    <div id="seed-status" data-i18n="start.seedStatus" style="text-align:center;font-size:clamp(0.55rem,2vw,0.65rem);color:rgba(255,255,255,0.55);margin-top:4px;min-height:1.1em;">Mesmo seed + mesmo piso = mesmo mapa e mesmos encontros.</div>
                 </div>
-                <div id="seed-status" data-i18n="start.seedStatus" style="text-align:center;font-size:clamp(0.55rem,2vw,0.65rem);color:rgba(255,255,255,0.35);margin-top:4px;min-height:1.1em;">Mesmo seed + mesmo piso = mesmo mapa e mesmos encontros.</div>
-            </div>
+                </div>
+            </details>
 
             <!-- Continue (shown only if a saved run exists) -->
             <button id="continue-run-btn" data-i18n="start.continueRun" onclick="window.continueGame()" style="display:none;width:100%;padding:12px;margin-bottom:8px;border-radius:16px;font-size:clamp(0.85rem,3vw,1rem);font-weight:800;border:1.5px solid rgba(60,227,106,0.4);background:linear-gradient(135deg,rgba(0,136,54,0.25),rgba(60,227,106,0.15));color:#3ce36a;text-transform:uppercase;letter-spacing:0.06em;transition:all 0.2s;touch-action:manipulation;">
@@ -1064,14 +1069,17 @@ body.cb-tritan  { filter: url("#cb-tritan"); }
                 </button>
             </div>
 
-            <!-- Build (arquétipos + build-code) -->
-            <div id="build-row" style="display:flex;gap:6px;margin-top:6px;align-items:center;">
-                <input id="build-code-input" type="text" placeholder="Código de build" data-i18n-placeholder="start.buildPlaceholder" autocomplete="off"
-                       style="flex:1;min-width:0;padding:8px 10px;border-radius:12px;font-size:clamp(0.7rem,2.4vw,0.82rem);color:#fff;background:rgba(0,0,0,0.35);border:1.5px solid rgba(224,182,255,0.2);outline:none;">
-                <button id="build-apply-btn" data-i18n="start.buildApply" onclick="window._applyBuildCode()" style="padding:8px 12px;border-radius:12px;font-size:clamp(0.7rem,2.4vw,0.82rem);font-weight:700;border:1.5px solid rgba(224,182,255,0.35);background:rgba(224,182,255,0.12);color:#e0b6ff;text-transform:uppercase;letter-spacing:0.05em;cursor:pointer;touch-action:manipulation;">Aplicar</button>
-                <button id="build-clear-btn" onclick="window._clearPendingBuild()" style="padding:8px 10px;border-radius:12px;font-size:clamp(0.7rem,2.4vw,0.82rem);font-weight:700;border:1.5px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.55);cursor:pointer;touch-action:manipulation;">✕</button>
-            </div>
-            <div id="build-archetype-row" style="display:flex;gap:5px;flex-wrap:wrap;margin-top:5px;">
+            <!-- Build (arquétipos + build-code) — colapsável (opção avançada) -->
+            <details id="start-options-build">
+                <summary style="cursor:pointer;padding:8px 10px;border-radius:12px;border:1.5px solid rgba(224,182,255,0.22);background:rgba(224,182,255,0.06);color:rgba(224,182,255,0.9);font-size:clamp(0.65rem,2.4vw,0.8rem);font-weight:700;text-align:center;letter-spacing:0.05em;text-transform:uppercase;touch-action:manipulation;user-select:none;">🛠️ Opções — Build (código e arquétipos)</summary>
+                <div style="margin:6px 0 8px;padding:8px 10px;border-radius:14px;border:1.5px solid rgba(224,182,255,0.12);background:rgba(255,255,255,0.02);">
+                <div id="build-row" style="display:flex;gap:6px;margin-top:6px;align-items:center;">
+                    <input id="build-code-input" type="text" placeholder="Código de build" data-i18n-placeholder="start.buildPlaceholder" autocomplete="off"
+                           style="flex:1;min-width:0;padding:8px 10px;border-radius:12px;font-size:clamp(0.7rem,2.4vw,0.82rem);color:#fff;background:rgba(0,0,0,0.35);border:1.5px solid rgba(224,182,255,0.2);outline:none;">
+                    <button id="build-apply-btn" data-i18n="start.buildApply" onclick="window._applyBuildCode()" style="padding:8px 12px;border-radius:12px;font-size:clamp(0.7rem,2.4vw,0.82rem);font-weight:700;border:1.5px solid rgba(224,182,255,0.35);background:rgba(224,182,255,0.12);color:#e0b6ff;text-transform:uppercase;letter-spacing:0.05em;cursor:pointer;touch-action:manipulation;">Aplicar</button>
+                    <button id="build-clear-btn" onclick="window._clearPendingBuild()" style="padding:8px 10px;border-radius:12px;font-size:clamp(0.7rem,2.4vw,0.82rem);font-weight:700;border:1.5px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.55);cursor:pointer;touch-action:manipulation;">✕</button>
+                </div>
+                <div id="build-archetype-row" style="display:flex;gap:5px;flex-wrap:wrap;margin-top:5px;">
                 <button onclick="window._applyArchetype('warrior_muralha')" data-i18n="start.arch.muralha" style="flex:1;min-width:78px;padding:6px 4px;border-radius:10px;font-size:clamp(0.62rem,2vw,0.72rem);font-weight:700;border:1.5px solid rgba(250,204,21,0.25);background:rgba(250,204,21,0.07);color:#facc15;cursor:pointer;touch-action:manipulation;">🛡️ Muralha</button>
                 <button onclick="window._applyArchetype('warrior_furia')" data-i18n="start.arch.furia" style="flex:1;min-width:78px;padding:6px 4px;border-radius:10px;font-size:clamp(0.62rem,2vw,0.72rem);font-weight:700;border:1.5px solid rgba(255,120,0,0.25);background:rgba(255,120,0,0.07);color:#ff8800;cursor:pointer;touch-action:manipulation;">⚔️ Fúria</button>
                 <button onclick="window._applyArchetype('rogue_assassino')" data-i18n="start.arch.assassino" style="flex:1;min-width:78px;padding:6px 4px;border-radius:10px;font-size:clamp(0.62rem,2vw,0.72rem);font-weight:700;border:1.5px solid rgba(92,255,130,0.25);background:rgba(92,255,130,0.07);color:#5cff82;cursor:pointer;touch-action:manipulation;">🗡️ Assassino</button>
@@ -1080,8 +1088,10 @@ body.cb-tritan  { filter: url("#cb-tritan"); }
                 <button onclick="window._applyArchetype('mage_gelo')" data-i18n="start.arch.gelo" style="flex:1;min-width:78px;padding:6px 4px;border-radius:10px;font-size:clamp(0.62rem,2vw,0.72rem);font-weight:700;border:1.5px solid rgba(102,204,255,0.25);background:rgba(102,204,255,0.07);color:#66ccff;cursor:pointer;touch-action:manipulation;">❄️ Gelo</button>
                 <button onclick="window._applyArchetype('elf_vento')" data-i18n="start.arch.vento" style="flex:1;min-width:78px;padding:6px 4px;border-radius:10px;font-size:clamp(0.62rem,2vw,0.72rem);font-weight:700;border:1.5px solid rgba(127,255,212,0.25);background:rgba(127,255,212,0.07);color:#7fffd4;cursor:pointer;touch-action:manipulation;">💨 Vento</button>
                 <button onclick="window._applyArchetype('elf_natureza')" data-i18n="start.arch.natureza" style="flex:1;min-width:78px;padding:6px 4px;border-radius:10px;font-size:clamp(0.62rem,2vw,0.72rem);font-weight:700;border:1.5px solid rgba(88,224,138,0.25);background:rgba(88,224,138,0.07);color:#58e08a;cursor:pointer;touch-action:manipulation;">🌿 Natureza</button>
-            </div>
-            <div id="build-status" style="text-align:center;font-size:clamp(0.55rem,2vw,0.65rem);color:rgba(255,255,255,0.4);margin-top:3px;min-height:1.1em;"></div>
+                </div>
+                <div id="build-status" style="text-align:center;font-size:clamp(0.55rem,2vw,0.65rem);color:rgba(255,255,255,0.6);margin-top:3px;min-height:1.1em;"></div>
+                </div>
+            </details>
 
             <div style="text-align:center;margin-top:auto;padding:6px 0 4px;font-size:0.6rem;color:rgba(255,255,255,0.2);letter-spacing:0.1em;">v2.0 PREMIUM</div>
         </div>
@@ -16208,11 +16218,19 @@ class Entity {
         
         if(this === player) { shake = CONFIG.SHAKE_HIT; SND.playHit(); Statistics.data.totalDamageTaken += finalDmg; if (window.RunObjectiveSystem) RunObjectiveSystem.onDamage(finalDmg); ScreenEffects.onHitEnemy(finalDmg, source ? source.x : 0, source ? source.y : 0, this.x, this.y); this.combatTimer = 0; }
         
-        // Relic: Espinhos de Escudo
+                // Relic: Espinhos de Escudo
         if(window.RelicSystem && this === player) RelicSystem.espinhosReflect(this, source, finalDmg);
         
         if(this.hp <= 0) {
             this.alive = false; if (this === player) this.hp = 0; DeathAnimations.createDeathAnimation(this); if(this.onDeath) this.onDeath(source, m);
+            // Centralized kill rewards (XP, abates, combo, loot): toda morte por
+            // dano do jogador (projéteis, melee, habilidades, ticks elementais,
+            // pets) premia exatamente uma vez. Antes só projéteis e melee
+            // premiavam; kills de habilidade (slam/meteor/vento/etc.) davam
+            // zero XP/abates/loot e deixavam "Abates" zerado nas telas finais.
+            if (this !== player && !this.isB && source === player) {
+                awardKillRewards(player, this, source);
+            }
             // Hitstop on kill
             if(typeof hitstopFrames !== 'undefined') {
                 if(this.isB) hitstopFrames = CONFIG.HITSTOP_BOSS;
@@ -16288,7 +16306,7 @@ class Entity {
             // Haptic feedback on kill
             if(this.isB) Vibrate.trigger('bossKill');
             else if(this.elite) Vibrate.trigger('eliteKill');
-            if(this.isB) { Statistics.data.bossKills++; DifficultySystem.trackKill(); SND.playEnemyDeath('boss'); NarrativeSystem.tryDropLore(null, true); } else if(source === player) { Statistics.data.totalKills++; DifficultySystem.trackKill(); SND.playEnemyDeath(this.elite ? 'elite' : (this.enemyType === 'swarm' ? 'swarm' : (this.enemyType === 'trap' ? 'trap' : (this.enemyType === 'mimic' ? 'mimic' : 'normal')))); NarrativeSystem.tryDropLore(this.elite ? 'elite' : 'normal', false); if(this.elite) ScreenEffects.onEliteDeath(); } if(this.isB) { Statistics.data.totalDamageDealt += CONFIG.BOSS_DAMAGE_DEALT_STAT; } if(source && source.skills && source.skills.stealth) source.stealth = CONFIG.STEALTH_DURATION; if(source === player && (this.isB || SeedSystem.random() < CONFIG.ENEMY_CURRENCY_DROP_CHANCE)) { const _mult = this.isB ? CONFIG.BOSS_LOOT_MULTIPLIER : 1; for(let _ci = 0; _ci < Math.ceil(_mult); _ci++) pickups.push(new Pickup(this.x + (Math.random()-0.5)*30, this.y + (Math.random()-0.5)*30, 'currency')); }
+            if(this.isB) { Statistics.data.bossKills++; DifficultySystem.trackKill(); SND.playEnemyDeath('boss'); NarrativeSystem.tryDropLore(null, true); } else if(source === player) { DifficultySystem.trackKill(); SND.playEnemyDeath(this.elite ? 'elite' : (this.enemyType === 'swarm' ? 'swarm' : (this.enemyType === 'trap' ? 'trap' : (this.enemyType === 'mimic' ? 'mimic' : 'normal')))); NarrativeSystem.tryDropLore(this.elite ? 'elite' : 'normal', false); if(this.elite) ScreenEffects.onEliteDeath(); } if(this.isB) { Statistics.data.totalDamageDealt += CONFIG.BOSS_DAMAGE_DEALT_STAT; } if(source && source.skills && source.skills.stealth) source.stealth = CONFIG.STEALTH_DURATION; if(source === player && (this.isB || SeedSystem.random() < CONFIG.ENEMY_CURRENCY_DROP_CHANCE)) { const _mult = this.isB ? CONFIG.BOSS_LOOT_MULTIPLIER : 1; for(let _ci = 0; _ci < Math.ceil(_mult); _ci++) pickups.push(new Pickup(this.x + (Math.random()-0.5)*30, this.y + (Math.random()-0.5)*30, 'currency')); }
         }
     }
     move(dx, dy, m) {
@@ -18688,7 +18706,8 @@ function hasLineOfSight(m, x1, y1, x2, y2) {
     return true;
 }
 
-// Shared kill rewards (XP, combo, loot drops) — used by bullets and melee attacks
+// Shared kill rewards (XP, combo, loot drops) — called from Entity.takeDamage
+// on every player-source kill (bullets, melee, skills, pets, elemental ticks)
 function awardKillRewards(player, target, source) {
     const xpReward = target.xpReward || (target.isB ? CONFIG.XP_BOSS_REWARD : CONFIG.XP_ENEMY_REWARD);
     player.gainXP(xpReward); player.kills++; player.comboCount++; player.comboTimer = CONFIG.COMBO_DECAY_TIME;
@@ -18775,7 +18794,6 @@ class Bullet {
                     const edx = e.x-this.x, edy = e.y-this.y;
                     const hitDist = e.radius + 5;
                     if(edx * edx + edy * edy < hitDist * hitDist) {
-                        const wasAlive = e.alive;
 
                     // --- Phase 4: ShieldEnemy blocks frontal hits ---
                     if(this.isP && typeof ShieldEnemy !== 'undefined' && e instanceof ShieldEnemy && e.shieldActive) {
@@ -18901,10 +18919,6 @@ class Bullet {
                         const minSpeed = (e._baseSpeed || e.s) * 0.3;
                         e._baseSpeed = e._baseSpeed || e.s;
                         e.s = Math.max(minSpeed, e.s * 0.85);
-                    }
-                    // Per-kill rewards  fire when this bullet killed the enemy (regardless of pierce)
-                    if(wasAlive && !e.alive && this.isP) {
-                        awardKillRewards(player, e, source);
                     }
                     // Bullet alive state  pierce continues up to 3 hits
                     if(!(this.weapon && this.weapon.pierce && this.hitCount < 3)) {
@@ -19528,7 +19542,6 @@ class Player extends Entity {
                             let diff = Math.abs(angleToEnemy - attackAngle);
                             if(diff > Math.PI) diff = Math.PI * 2 - diff;
                             if(diff <= arcHalf) {
-                                const wasAlive = e.alive;
                                 e.takeDamage(dmg, m, this); hitAny = true;
                                 // VIBRATION FEEDBACK
                                 if(window.Vibrate) Vibrate.trigger('normalHit');
@@ -19541,8 +19554,6 @@ class Player extends Entity {
                                 const kbMult = (e.elite || e.isB) ? CONFIG.KNOCKBACK_HEAVY_MULT : 1.0;
                                 const kbx = (edx/ed) * (CONFIG.KNOCKBACK_STRENGTH * 1.5) * kbMult, kby = (edy/ed) * (CONFIG.KNOCKBACK_STRENGTH * 1.5) * kbMult;
                                 if(!m.isWall(e.x + kbx, e.y + kby)) { e.x += kbx; e.y += kby; }
-                                // Kills corpo a corpo também dão XP, abates e combo (igual aos projéteis)
-                                if(wasAlive && !e.alive) awardKillRewards(player, e, this);
                             }
                         }
                     }
@@ -21705,11 +21716,16 @@ window.SkillTreeUI = SkillTreeUI;
                         </div>`;
                 }
                 const chosen = st.shrinePicked !== null;
+                // Bênção esgotada: o jogador já tem 2 cópias (cap do RunBoons) —
+                // mostra o estado em vez de um botão que não faz nada em silêncio.
+                const exhausted = !chosen && p && p.runBoons && p.runBoons.filter(x => x === b.id).length >= 2;
                 return `
-                    <div style="padding:10px;border-radius:12px;border:1.5px solid ${chosen ? 'rgba(255,255,255,0.08)' : 'rgba(255,216,107,0.35)'};background:${chosen ? 'rgba(255,255,255,0.03)' : 'rgba(255,216,107,0.07)'};margin-bottom:8px;opacity:${chosen ? 0.5 : 1}">
-                        <div style="font-weight:bold;font-size:13px;color:${chosen ? COLORS.TEXT_DIM : '#ffd86b'}">${b.icon} ${b.name}</div>
+                    <div style="padding:10px;border-radius:12px;border:1.5px solid ${chosen ? 'rgba(255,255,255,0.08)' : (exhausted ? 'rgba(255,255,255,0.1)' : 'rgba(255,216,107,0.35)')};background:${chosen ? 'rgba(255,255,255,0.03)' : (exhausted ? 'rgba(255,255,255,0.02)' : 'rgba(255,216,107,0.07)')};margin-bottom:8px;opacity:${chosen ? 0.5 : (exhausted ? 0.45 : 1)}">
+                        <div style="font-weight:bold;font-size:13px;color:${chosen ? COLORS.TEXT_DIM : (exhausted ? COLORS.TEXT_MUTED : '#ffd86b')}">${b.icon} ${b.name}</div>
                         <div style="font-size:10px;color:${COLORS.TEXT_DIM};line-height:1.3;margin-bottom:6px">${b.desc}</div>
-                        ${chosen ? '' : `<button onclick="window.UIManager.campShrine(${i})" style="width:100%;padding:7px;border-radius:9px;font-weight:bold;font-size:11px;border:1.5px solid rgba(255,216,107,0.5);background:rgba(255,216,107,0.15);color:#ffd86b;cursor:pointer;touch-action:manipulation">ESCOLHER BÊNÇÃO</button>`}
+                        ${chosen ? '' : (exhausted
+                            ? `<div style="width:100%;padding:7px;border-radius:9px;text-align:center;font-weight:bold;font-size:11px;border:1.5px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.03);color:${COLORS.TEXT_MUTED}">BÊNÇÃO ESGOTADA (máx. 2)</div>`
+                            : `<button onclick="window.UIManager.campShrine(${i})" style="width:100%;padding:7px;border-radius:9px;font-weight:bold;font-size:11px;border:1.5px solid rgba(255,216,107,0.5);background:rgba(255,216,107,0.15);color:#ffd86b;cursor:pointer;touch-action:manipulation">ESCOLHER BÊNÇÃO</button>`)}
                     </div>`;
             }).join('');
 

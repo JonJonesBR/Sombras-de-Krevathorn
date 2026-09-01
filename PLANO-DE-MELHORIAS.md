@@ -214,3 +214,20 @@ Recomendação: **B** — é o maior ganho de manutenibilidade para um arquivo d
 - `WeaponSystem.getSpeedMult` chamado em `Player.update` mas nunca definido — trade-offs de velocidade das armas ("-10% speed" etc.) eram cosméticos; implementado `getSpeedMult()` + stat `speed` nas 4 armas que anunciam (Espada Longa 0.9, Machado 0.75, Besta 0.85, Cetro 1.05).
 
 **Verificados como não-bugs (guardas seguras):** `NarrativeSystem.triggerBossCutscene` (stub com `typeof`; banner de chefe já cobre o piso 10), `WorldMap`/`AchievementSystem`/`ACHIEVEMENTS_LIST`/`EntitySystem` (referências mortas guardadas, nunca disparam), painel de diálogo de NPC (modal por design, botões clicáveis em touch e desktop).
+
+---
+
+## Rodada omp 2026-09-01 (auditoria E2E completa + fix de kill rewards)
+
+**Método:** execução real no browser (420×820) com harness de aceleração (rAF override, update-only fast-forward, autopilot de combate, driver de camp/continue); comparação cega contra Shattered Pixel Dungeon (gameplay real); análise visual via agente de visão (Gemini).
+
+**Corrigido (bugs reais):**
+- **Kills por habilidade sem recompensa:** `awardKillRewards` (XP, abates, combo, loot) só era chamado por balas e melee — kills via habilidades (slam/meteor/vento), ticks elementais e pets não davam NADA, e as telas finais mostravam "Abates 0" mesmo com dezenas de kills. Fix: award centralizado no `Entity.takeDamage` (quando `source === player`, excluindo player e boss), removendo os 2 call sites duplicados (bala/melee). Verificado: melee→1, slam→1 (antes 0), takeDamage direto→1, sem duplicação; tutorial full completo após o fix; 0 erros de console.
+- **Santuário com bênçãos esgotadas:** com todas as bênçãos oferecidas no cap (2 cópias), o botão "ESCOLHER BÊNÇÃO" ficava ativo mas era no-op silencioso. Fix: estado "BÊNÇÃO ESGOTADA (máx. 2)" + botão oculto.
+- **Contraste da start screen:** textos secundários (seed-status, difficulty-desc, build-status) com alpha 0.35-0.4 (difíceis de ler). Fix: elevado para 0.55-0.62.
+
+**Cobertura E2E sem erro de console:** boot; start screen (dificuldade/seed/build-code/classes travadas com toast+MetaLoja); tutorial quick (6 estágios) e full (10 estágios); run completa até WIN (piso 10, gold 4711, stars 2/3); morte→CONTINUE→revive 30% HP→continues 3→2; desistir limpa save; GAME_OVER trilingual; daily challenge (darkness: lightRadius 0.25) aplicado e completado (score/ranking/streak, bloqueio pós-completar); Abismo (endless, progressão de pisos); painéis shop/skills/stats/lore/achievements/daily/meta/camp; eventos (bloodMoon, doubleXP, secretPortal); camps (rest/shrine/evento/descend); NPCs; save corrompido → boot limpo; i18n pt/en/es; resize 420×820; PWA offline (SW cache com servidor parado).
+
+**Comparação cega vs Shattered Pixel Dungeon:** Krevathorn perdeu nos 3 eixos — UX 65 vs 75, UI 50 vs 80, Gráficos 60 vs 70. Lacunas: containers/margens do HUD, tipografia de labels, assets mais simples. **Backlog de refinamento visual** (próximas rodadas): containers consistentes no HUD, organização do canto do minimapa, refinamento dos labels de botão.
+
+**Não-bugs verificados (artefatos de teste):** `closePanel`/`SettingsUI.close` são assíncronos (fade 180-200ms) — leitura imediata dá falso "não fechou"; daily "sobrescrito" foi `localStorage.clear()` do teste; NPC panel/camp pausam a sim por design (driver precisa fechá-los); escuridão da screenshot de gameplay era o mod daily (lightRadius 0.25).
