@@ -231,3 +231,25 @@ Recomendação: **B** — é o maior ganho de manutenibilidade para um arquivo d
 **Comparação cega vs Shattered Pixel Dungeon:** Krevathorn perdeu nos 3 eixos — UX 65 vs 75, UI 50 vs 80, Gráficos 60 vs 70. Lacunas: containers/margens do HUD, tipografia de labels, assets mais simples. **Backlog de refinamento visual** (próximas rodadas): containers consistentes no HUD, organização do canto do minimapa, refinamento dos labels de botão.
 
 **Não-bugs verificados (artefatos de teste):** `closePanel`/`SettingsUI.close` são assíncronos (fade 180-200ms) — leitura imediata dá falso "não fechou"; daily "sobrescrito" foi `localStorage.clear()` do teste; NPC panel/camp pausam a sim por design (driver precisa fechá-los); escuridão da screenshot de gameplay era o mod daily (lightRadius 0.25).
+
+---
+
+## Rodada omp 2026-09-03 (auditoria geral + melhorias Gate B)
+
+**Método:** runtime no browser (420×820, harness rAF congelado + pump de update; autopilot de combate); análise visual via screenshots reais + agente de visão; regressão E2E ampla delegada a subagente (fluxos F01-F34); review de engenharia do diff por subagente.
+
+**Re-verificação dos 4 commits pós-ledger (PASS):** dano do guerreiro 22→44 com damageMult 2 = **1×** aplicação central (sem duplicação do fix b16dcac); damageBoost 1×1.25; projétil inimigo (source=null) não infla com damageMult 5 do jogador; kill rewards +1 exato (sem duplicação pós-60 ticks); daily força-classe (888743c): mage→run normal sem mods, warrior→hpMult 2 (360 HP), re-apply em continue descarta/restaura corretamente.
+
+**Regressão E2E ampla:** 20/22 fluxos PASS com evidência, 0 FAIL, 0 erros de console (boot, tutorial quick 6/6, combate, HUD, painéis, loja, camp, morte/continue, save/load, save corrompido, daily badge, meta shop, i18n pt/en/es sem mojibake, seed vazia, resize 360/768, cliques rápidos, PWA/SW, boon). 2 UNVERIFIED por limite de harness (eventos aleatórios não disparáveis; bestiary = no-op guardado).
+
+**Corrigido (bugs reais):**
+- **Rotação do desafio diário quebrada por data sem zero-padding:** `_updateDate()` gerava "2026-9-3" → `parseInt` = 202693 (dígitos perdidos). Datas reais colidiam (2026-01-13 == 2026-11-03 → mesmo desafio) e a rotação divergia do calendário (runtime 03/09 dava 'sniper'; correto 20260903%8 = 'endless'). Fix: `YYYY-MM-DD` com padding em `_updateDate()` **e** `_dateStr()` (streak compara a string; sem o 2º, o streak resetaria todo dia — P1 do review). Verificado: rotação sem colisões; streak 1→2→2.
+- **Start screen misturava idiomas:** labels dos `<details>` de seed/build hardcoded em pt com o jogo em en/es. Fix: chaves `start.seedOptions`/`start.buildOptions` (pt/en/es) + `data-i18n` nos summaries.
+- **HUD: badges sobrepunham o minimapa** (canto superior direito; interceptavam toques). Fix: chips com margem dinâmica (`max(88px, min(128px,22vw)) + 12px`), retorno à borda com minimapa oculto (`body.mm-hidden`). Verificado em 420px e 320px.
+
+**Melhorias implementadas:**
+- Contraste dos 5 botões utilitários do HUD (skills/loja/stats/pausa/quest) + feedback `:active` preservado — visão: legíveis.
+
+**Docs:** `NÃO COMMITAR.md` e `PLANO_MELHORIAS_PROGRESSO.md` criados (convenção do AGENTS.md — estavam ausentes).
+
+**Gate:** review de engenharia encontrou 1 P1 (streak `_dateStr`), 1 P2 (`:active` do util-btn sem `!important`), 2 P3 (margem vs min-width do minimapa; referência a arquivo externo no doc) — todos corrigidos e reverificados. Gate B segue abaixo da régua 90: backlog visual (escala tipográfica, ícones SVG no lugar de emojis) aguardando rodada de evolução dedicada.
