@@ -6,7 +6,7 @@
  *   - offline: cache serves the game.
  * Bump CACHE_VERSION when you publish a release you want to force-refresh.
  */
-const CACHE_VERSION = 'krevathorn-v4';
+const CACHE_VERSION = 'krevathorn-v5';
 const CACHE_NAME = CACHE_VERSION;
 const APP_SHELL = ['./', './index.html'];
 
