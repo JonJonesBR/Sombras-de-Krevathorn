@@ -3616,7 +3616,6 @@ const I18n = {
             'toast.classLocked': 'Classe bloqueada — desbloqueie na MetaLoja com Essência.',
             'toast.guardianReward': '🏆 Recompensa do Guardião: ',
             'toast.objectiveComplete': '🎯 Objetivo concluído: ',
-            'toast.dailyForced': 'classe forçada: ',
 
             // Start screen (static labels)
             'start.modeDesc': 'Evolua seu personagem em masmorras cada vez mais difíceis.',
@@ -4636,7 +4635,6 @@ const I18n = {
             'toast.classLocked': 'Class locked — unlock it in the Meta Shop with Essence.',
             'toast.guardianReward': '🏆 Guardian Reward: ',
             'toast.objectiveComplete': '🎯 Objective complete: ',
-            'toast.dailyForced': 'forced class: ',
 
             // Start screen (static labels)
             'start.modeDesc': 'Evolve your character through ever-harder dungeons.',
@@ -5654,7 +5652,6 @@ const I18n = {
             'toast.classLocked': 'Clase bloqueada: desbloquéala en la MetaTienda con Esencia.',
             'toast.guardianReward': '🏆 Recompensa del Guardián: ',
             'toast.objectiveComplete': '🎯 Objetivo completado: ',
-            'toast.dailyForced': 'clase forzada: ',
 
             // Start screen (static labels)
             'start.modeDesc': 'Evoluciona tu personaje en mazmorras cada vez más difíciles.',
@@ -12439,12 +12436,6 @@ const DailyChallenge = {
         
         // Store active modifiers (consumed by gameplay hooks across the engine)
         window._dailyMods = mods;
-        
-        // Apply modifiers
-        if(mods.forceClass) {
-            // Force class selection or auto-select
-            window._forcedClass = mods.forceClass;
-        }
         
         Debug.info('[Daily Challenge] Active:', challenge.name, '-', challenge.desc);
     },
@@ -22707,29 +22698,19 @@ Debug.info("====== BOOTSTRAP.JS IS EXECUTING ======");
 
 window.GameBootstrap = {
     start(cls) {
-        // Resolve the daily challenge BEFORE the class-force check below
-        // (applyChallenge also runs in _resetState for continues; idempotent).
-        if (window.DailyChallenge) {
-            var _dc = DailyChallenge.getTodayChallenge();
-            if (_dc) DailyChallenge.applyChallenge(_dc);
-        }
-        // Daily challenge may force a class (tank/sniper/glass-cannon challenges)
-        if (window._forcedClass) {
-            cls = window._forcedClass;
-            window._forcedClass = null;
-        }
+        // Desafios diários que exigem uma classe (Tanque=guerreiro,
+        // Atirador=mago) só valem quando o jogador escolhe exatamente a
+        // classe exigida. Escolher outra classe inicia uma run normal — sem
+        // mods do dia e sem pontuação — pois a seleção de classe nunca pode
+        // ser substituída silenciosamente.
+        this._applyDailyIfEligible(cls);
         Debug.info('[BOOTSTRAP] Starting game with class:', cls);
-        // Tell the player the daily challenge is running — it silently overrides
-        // their class pick and build otherwise, which reads as a broken choice.
+        // Avisa que a run está sob o desafio diário ativo.
         if (window._dailyMods && window._currentDailyChallenge) {
             const _dc = window._currentDailyChallenge;
             const _dn = (window._L && _dc.nameKey) ? _L(_dc.nameKey, _dc.name) : _dc.name;
-            const _ck = { warrior: 'start.classWarrior', rogue: 'start.classRogue', mage: 'start.classMage', elf: 'start.classElf' }[cls];
-            const _cn = (window._L && _ck) ? _L(_ck, cls) : cls;
-            let _m = _dn;
-            if (window._dailyMods.forceClass) _m += ' — ' + (window.I18n ? I18n.t('toast.dailyForced') : 'classe forçada: ') + _cn;
-            if (typeof showToast === 'function') showToast(_m, 'info');
-            if (typeof addLog === 'function') addLog(' ' + _m);
+            if (typeof showToast === 'function') showToast(_dn, 'info');
+            if (typeof addLog === 'function') addLog(' ' + _dn);
         }
 
         // Guarda de meta-progressão: classes além do Guerreiro exigem desbloqueio.
@@ -22755,6 +22736,22 @@ window.GameBootstrap = {
             Debug.info('[BOOTSTRAP] player=' + (player ? 'YES' : 'NO') + ', map=' + (map ? 'YES' : 'NO') + ', gameState=' + gameState);
             if (typeof SaveSystem !== 'undefined') Debug.safe(() => SaveSystem.save(), 'autosaveNewGame');
         }, 'startGame');
+    },
+
+    // Aplica o desafio diário de hoje apenas quando ele não restringe a
+    // classe ou quando a classe escolhida é exatamente a exigida. Fora isso
+    // a run é normal: descarta desafios residuais de runs anteriores.
+    _applyDailyIfEligible(cls) {
+        if (!window.DailyChallenge) return;
+        var _dc = DailyChallenge.getTodayChallenge();
+        if (!_dc) return;
+        var _fc = _dc.modifiers && _dc.modifiers.forceClass;
+        if (_fc && _fc !== cls) {
+            window._currentDailyChallenge = null;
+            window._dailyMods = null;
+            return;
+        }
+        DailyChallenge.applyChallenge(_dc);
     },
 
     // Resume a previously saved run: rebuilds a fresh floor at the saved
@@ -22794,7 +22791,8 @@ window.GameBootstrap = {
         if (!SeedSystem.isSeeded()) { SeedSystem.clearSeed(); }
         _essenceRunAwarded = false;
         if (window.QuestSystem) QuestSystem.startRun();
-        if (window.DailyChallenge) { var _dc = DailyChallenge.getTodayChallenge(); if (_dc) DailyChallenge.applyChallenge(_dc); }
+        // (também roda em start(); idempotente — aqui cobre continues)
+        this._applyDailyIfEligible(cls);
         SND.init();
         if (window.GameSettings) GameSettings.apply();
         if (window.SpatialHash) { spatialHash = new SpatialHash(); }
