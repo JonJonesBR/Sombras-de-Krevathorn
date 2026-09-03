@@ -91,6 +91,18 @@ body { background: #08080f !important; }
 }
 #top-bar > * { pointer-events: auto; }
 
+/* Chips de dificuldade/nível à direita: reservam espaço do minimapa (que fica
+   no mesmo canto) para nunca sobreporem o canvas dele. Com minimapa oculto
+   (body.mm-hidden) voltam para a borda. */
+#top-bar .top-right-chips {
+    /* O minimapa usa width:min(128px,22vw) com min-width:88px — a margem
+       precisa do mesmo piso (max), senão em telas < ~345px os chips ainda
+       encostariam no canvas. */
+    margin-right: calc(max(88px, min(128px, 22vw)) + 12px);
+    flex-shrink: 0;
+}
+body.mm-hidden #top-bar .top-right-chips { margin-right: 0; }
+
 /* ── HUD Left (HP + XP) ── */
 #hud-left {
     flex: 1;
@@ -337,6 +349,21 @@ body { background: #08080f !important; }
     color: #fff;
     filter: drop-shadow(0 0 8px rgba(224, 182, 255, 0.5));
 }
+/* Contraste elevado (borda/fundo/ícone) sobre o chão escuro — sobrepõe os
+   estilos inline equivalentes dos botões da util bar. */
+.util-btn {
+    border-color: rgba(224, 182, 255, 0.30) !important;
+    background: rgba(30, 22, 45, 0.88) !important;
+}
+.util-btn .icon-inline, .util-btn span { color: #e2cdf9 !important; }
+/* As regras base acima usam !important para vencer os estilos inline dos
+   botões; sem equivalente !important nos estados :active, o pressionar
+   perderia o feedback (fundo/borda/ícone não clareariam). */
+.util-btn:active {
+    background: rgba(80, 55, 130, 0.65) !important;
+    border-color: rgba(224, 182, 255, 0.55) !important;
+}
+.util-btn:active .icon-inline, .util-btn:active span { color: #ffffff !important; }
 
 /* ============================================================
    TOAST / LOGS
@@ -994,7 +1021,7 @@ body.cb-tritan  { filter: url("#cb-tritan"); }
 
             <!-- Seed (reproducible runs) — colapsável para reduzir a densidade da primeira dobra -->
             <details id="start-options-seed">
-                <summary style="cursor:pointer;padding:8px 10px;border-radius:12px;border:1.5px solid rgba(224,182,255,0.22);background:rgba(224,182,255,0.06);color:rgba(224,182,255,0.9);font-size:clamp(0.65rem,2.4vw,0.8rem);font-weight:700;text-align:center;letter-spacing:0.05em;text-transform:uppercase;touch-action:manipulation;user-select:none;">⚙️ Opções — Seed</summary>
+                <summary data-i18n="start.seedOptions" style="cursor:pointer;padding:8px 10px;border-radius:12px;border:1.5px solid rgba(224,182,255,0.22);background:rgba(224,182,255,0.06);color:rgba(224,182,255,0.9);font-size:clamp(0.65rem,2.4vw,0.8rem);font-weight:700;text-align:center;letter-spacing:0.05em;text-transform:uppercase;touch-action:manipulation;user-select:none;">⚙️ Opções — Seed</summary>
                 <div style="margin:6px 0 8px;padding:8px 10px;border-radius:14px;border:1.5px solid rgba(224,182,255,0.12);background:rgba(255,255,255,0.02);">
                 <div style="margin-bottom:8px;">
                     <div data-i18n="start.seedLabel" style="text-align:center;font-size:clamp(0.55rem,2vw,0.68rem);letter-spacing:0.25em;text-transform:uppercase;color:rgba(255,255,255,0.6);margin-bottom:5px;">Seed (execuções reprodutíveis)</div>
@@ -1071,7 +1098,7 @@ body.cb-tritan  { filter: url("#cb-tritan"); }
 
             <!-- Build (arquétipos + build-code) — colapsável (opção avançada) -->
             <details id="start-options-build">
-                <summary style="cursor:pointer;padding:8px 10px;border-radius:12px;border:1.5px solid rgba(224,182,255,0.22);background:rgba(224,182,255,0.06);color:rgba(224,182,255,0.9);font-size:clamp(0.65rem,2.4vw,0.8rem);font-weight:700;text-align:center;letter-spacing:0.05em;text-transform:uppercase;touch-action:manipulation;user-select:none;">🛠️ Opções — Build (código e arquétipos)</summary>
+                <summary data-i18n="start.buildOptions" style="cursor:pointer;padding:8px 10px;border-radius:12px;border:1.5px solid rgba(224,182,255,0.22);background:rgba(224,182,255,0.06);color:rgba(224,182,255,0.9);font-size:clamp(0.65rem,2.4vw,0.8rem);font-weight:700;text-align:center;letter-spacing:0.05em;text-transform:uppercase;touch-action:manipulation;user-select:none;">🛠️ Opções — Build (código e arquétipos)</summary>
                 <div style="margin:6px 0 8px;padding:8px 10px;border-radius:14px;border:1.5px solid rgba(224,182,255,0.12);background:rgba(255,255,255,0.02);">
                 <div id="build-row" style="display:flex;gap:6px;margin-top:6px;align-items:center;">
                     <input id="build-code-input" type="text" placeholder="Código de build" data-i18n-placeholder="start.buildPlaceholder" autocomplete="off"
@@ -1137,7 +1164,7 @@ body.cb-tritan  { filter: url("#cb-tritan"); }
                     <div id="heat-bar"></div>
                 </div>
             </div>
-            <div style="display:flex;gap:4px;align-items:center;">
+            <div class="top-right-chips" style="display:flex;gap:4px;align-items:center;">
                 <span id="difficulty-badge" class="lv-text" style="font-size:9px;padding:2px 8px;background:rgba(224,182,255,0.08);border-radius:999px;border:1px solid rgba(224,182,255,0.25);">⚔️ Normal</span>
                 <div id="level-badge" class="lv-text" style="font-size:9px;padding:2px 10px;background:rgba(224,182,255,0.1);border-radius:999px;border:1px solid rgba(224,182,255,0.15);">N1</div>
             </div>
@@ -1751,6 +1778,9 @@ window._toggleMinimap = function() {
     var mm = document.getElementById('minimap-container');
     if (!mm) return;
     mm.classList.toggle('hidden');
+    // body.mm-hidden deixa os chips do top-bar ocuparem a borda direita
+    // quando o minimapa está oculto (sem espaço morto).
+    document.body.classList.toggle('mm-hidden', mm.classList.contains('hidden'));
     var btn = document.getElementById('minimap-toggle-btn');
     if (btn) btn.style.opacity = mm.classList.contains('hidden') ? '0.4' : '1';
 };
@@ -2680,6 +2710,8 @@ const I18n = {
             'start.tapToStart': 'Toque na classe para iniciar',
             'start.tutorial': 'Como Jogar / Tutorial',
             'start.settings': 'Configurações',
+            'start.seedOptions': '⚙️ Opções — Seed',
+            'start.buildOptions': '🛠️ Opções — Build (código e arquétipos)',
 
             // Class names
             'class.warrior': 'GUERREIRO',
@@ -3699,6 +3731,8 @@ const I18n = {
             'start.tapToStart': 'Tap a class to start',
             'start.tutorial': 'How to Play / Tutorial',
             'start.settings': 'Settings',
+            'start.seedOptions': '⚙️ Options — Seed',
+            'start.buildOptions': '🛠️ Options — Build (code & archetypes)',
 
             // Class names
             'class.warrior': 'WARRIOR',
@@ -4718,6 +4752,8 @@ const I18n = {
             'start.tapToStart': 'Toca una clase para empezar',
             'start.tutorial': 'Cómo Jugar / Tutorial',
             'start.settings': 'Configuración',
+            'start.seedOptions': '⚙️ Opciones — Semilla',
+            'start.buildOptions': '🛠️ Opciones — Build (código y arquetipos)',
 
             // Class names
             'class.warrior': 'GUERRERO',
@@ -12408,7 +12444,12 @@ const DailyChallenge = {
 
     _updateDate() {
         const now = new Date();
-        this._todayDate = now.getFullYear() + '-' + (now.getMonth()+1) + '-' + now.getDate();
+        // Zero-padding (YYYY-MM-DD): sem ele, "2026-9-3" vira o número 202693
+        // e o parseInt perde dígitos — datas com dia/mês < 10 colidiam entre si
+        // (ex.: 2026-01-13 == 2026-11-03) e quebravam a rotação diária.
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const dd = String(now.getDate()).padStart(2, '0');
+        this._todayDate = now.getFullYear() + '-' + mm + '-' + dd;
     },
 
     getTodayChallenge() {
@@ -12523,8 +12564,11 @@ const DailyChallenge = {
     },
 
     // ------- Daily streak (dias consecutivos) -------
+    // Mesmo zero-padding de _updateDate(): o streak compara esta string com
+    // _todayDate gravado ("YYYY-MM-DD") — formato diferente nunca casaria e o
+    // streak seria resetado para 1 todo dia.
     _dateStr(d) {
-        return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
     },
 
     // Incrementa o streak ao completar o desafio de hoje
