@@ -680,10 +680,10 @@ body.cb-tritan  { filter: url("#cb-tritan"); }
 }
 
 .class-mini-card:active { transform: scale(0.94); }
-.class-mini-card.warrior:active { border-color: rgba(250,204,21,0.5); background: rgba(250,204,21,0.15); }
-.class-mini-card.rogue:active { border-color: rgba(92,255,130,0.5); background: rgba(92,255,130,0.12); }
-.class-mini-card.mage:active { border-color: rgba(153,102,255,0.5); background: rgba(153,102,255,0.12); }
-.class-mini-card.elf:active { border-color: rgba(88,224,138,0.5); background: rgba(88,224,138,0.12); }
+.class-mini-card.warrior:active { border-color: rgba(201,162,39,0.65); background: rgba(90,130,165,0.22); box-shadow: inset 0 0 0 1px rgba(219,181,92,0.55); }
+.class-mini-card.rogue:active { border-color: rgba(224,90,69,0.7); background: rgba(120,45,38,0.32); box-shadow: inset 0 0 0 1px rgba(224,106,82,0.6); }
+.class-mini-card.mage:active { border-color: rgba(168,124,230,0.7); background: rgba(132,76,180,0.3); box-shadow: inset 0 0 0 1px rgba(58,208,255,0.5); }
+.class-mini-card.elf:active { border-color: rgba(219,181,92,0.65); background: rgba(110,140,70,0.26); box-shadow: inset 0 0 0 1px rgba(219,181,92,0.5); }
 
 .mode-tab:active { transform: scale(0.94); }
 
@@ -923,6 +923,108 @@ body.cb-tritan  { filter: url("#cb-tritan"); }
 .class-card.mage:active { border-color: rgba(240,214,255,0.6); box-shadow: 0 0 20px rgba(224,182,255,0.2); }
 .class-card.elf:active { border-color: rgba(88,224,138,0.6); box-shadow: 0 0 20px rgba(88,224,138,0.2); }
 
+/* ============================================================
+   R3 — dark-fantasy pixel-frame UI cohesion (visual only)
+   ============================================================ */
+/* Archetype chips: tiny colored square instead of the stripped emoji glyphs.
+   Color follows the chip's own family color (currentColor = button color). */
+#build-archetype-row button::before {
+    content: '';
+    display: inline-block;
+    width: 5px;
+    height: 5px;
+    border-radius: 1px;
+    background: currentColor;
+    box-shadow: 0 0 5px currentColor;
+    margin-right: 5px;
+    vertical-align: 1px;
+    opacity: 0.9;
+}
+
+/* Pixel frame: 1px inset top light + bottom inner shadow + stronger border.
+   Positions/sizes/touch areas are untouched — border/radius/shadow only. */
+#difficulty-badge,
+#level-badge {
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.10), inset 0 -2px 3px rgba(0,0,0,0.28);
+}
+#currency-display > div {
+    border-color: rgba(255,215,0,0.28) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.10), inset 0 -2px 3px rgba(0,0,0,0.28), 0 2px 6px rgba(0,0,0,0.35) !important;
+}
+#run-objective > div:first-child {
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.10), inset 0 -2px 3px rgba(0,0,0,0.28), 0 2px 6px rgba(0,0,0,0.3);
+}
+#minimap-container {
+    border-radius: 8px !important;
+    border-color: rgba(224,182,255,0.34) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.10), inset 0 -2px 6px rgba(0,0,0,0.35), 0 3px 12px rgba(0,0,0,0.45), 0 0 8px rgba(100,50,160,0.12) !important;
+}
+.util-btn {
+    border-radius: 8px !important;
+    background: rgba(23,16,38,0.94) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.09), inset 0 -2px 4px rgba(0,0,0,0.32), 0 2px 5px rgba(0,0,0,0.35) !important;
+}
+#quest-panel {
+    border-radius: 8px !important;
+    border-color: rgba(224,182,255,0.3) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.10), inset 0 -2px 5px rgba(0,0,0,0.32), 0 4px 16px rgba(0,0,0,0.45) !important;
+}
+#dungeon-progress > div {
+    border-color: rgba(224,182,255,0.22) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.10), inset 0 -2px 3px rgba(0,0,0,0.3);
+}
+#boss-hp-container > div:nth-child(2) {
+    border-color: rgba(255,68,68,0.35) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -2px 3px rgba(0,0,0,0.4) !important;
+}
+
+/* ============================================================
+   R3 — start screen depth (pure CSS; reduced-motion aware)
+   ============================================================ */
+/* Two slow radial glow orbs (purple + cyan, alpha < 0.13) drifting behind
+   the menu content. Cheap: one composited layer, no DOM element added. */
+#start-screen::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background:
+        radial-gradient(closest-side, rgba(157,78,221,0.12), transparent 72%),
+        radial-gradient(closest-side, rgba(58,208,255,0.07), transparent 72%);
+    background-size: 58% 58%, 44% 44%;
+    background-position: 8% 12%, 88% 78%;
+    background-repeat: no-repeat;
+    opacity: 0.6;
+    animation: orbDrift 14s ease-in-out infinite alternate;
+}
+@keyframes orbDrift {
+    0%   { opacity: 0.45; transform: translate3d(0, 0, 0) scale(1); }
+    50%  { opacity: 0.75; }
+    100% { opacity: 0.6;  transform: translate3d(2%, -2.5%, 0) scale(1.06); }
+}
+@media (prefers-reduced-motion: reduce) {
+    #start-screen::after { animation: none; opacity: 0.5; }
+}
+body.gfx-low #start-screen::after { animation: none !important; opacity: 0.5 !important; }
+
+/* Title: extra slow, very subtle breathing glow layered over the existing
+   shimmer (animates filter, so it can coexist with titleShimmer's shadow). */
+@media (prefers-reduced-motion: no-preference) {
+    #start-screen h1 {
+        animation: titleShimmer 4s ease-in-out infinite, titleGlowPulse 3.2s ease-in-out infinite;
+    }
+}
+@keyframes titleGlowPulse {
+    0%, 100% { filter: brightness(1); }
+    50%      { filter: brightness(1.09); }
+}
+
+/* Seed/build <summary> now show a centered svg+label — drop the browser
+   disclosure triangle so the row stays symmetric. */
+#start-options-seed summary::-webkit-details-marker,
+#start-options-build summary::-webkit-details-marker { display: none; }
+
 </style>
 
 </head>
@@ -966,6 +1068,25 @@ body.cb-tritan  { filter: url("#cb-tritan"); }
       <symbol id="ic-bar-chart" viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
       <symbol id="ic-dodge" viewBox="0 0 24 24"><path d="M13.5 5.5c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zM9.8 8.9L7 23h2.1l1.8-8 2.1 2v6h2v-7.5l-2.1-2 .6-3C14.8 12 16.8 13 19 13v-2c-1.9 0-3.5-1-4.3-2.4l-1-1.6c-.4-.6-1-1-1.7-1-.3 0-.5.1-.8.1L6 8.3V13h2V9.6l1.8-.7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
       <symbol id="ic-fire" viewBox="0 0 24 24"><path d="M12 23c-3.6 0-8-3.12-8-8 0-3.87 3.36-7.06 5-8.56 1.32 1.62 2.26 2.56 3 2.56.74 0 1.68-.94 3-2.56C16.64 7.94 20 11.13 20 15c0 4.88-4.4 8-8 8z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <!-- R3 dark-fantasy UI icon set (24x24, stroke currentColor 1.6, round caps) -->
+      <symbol id="ic-pause" viewBox="0 0 24 24"><path d="M9 5.5v13M15 5.5v13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="ic-scroll" viewBox="0 0 24 24"><path d="M14 3.5H6.7A1.3 1.3 0 0 0 5.4 4.8v14.4a1.3 1.3 0 0 0 1.3 1.3h10.6a1.3 1.3 0 0 0 1.3-1.3V8.2z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 3.5v4.7h4.6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M7.8 12.8h8M7.8 16h5.4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="ic-map" viewBox="0 0 24 24"><path d="M3.5 5.6 9 3.6l6 2.8 5.5-2v13.2L15 19.6l-6-2.8-5.5 2z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 3.6v13.2M15 6.4v13.2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="ic-coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
+      <symbol id="ic-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="4.6" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/></symbol>
+      <symbol id="ic-gear" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
+      <symbol id="ic-wrench" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="ic-crown" viewBox="0 0 24 24"><path d="M4.6 18.6v-8.5l3.9 4.5 3.5-5.7 3.5 5.7 3.9-4.5v8.5z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="ic-star" viewBox="0 0 24 24"><path d="M12 3.2 14.2 8.9l6.3.3-4.9 3.9 1.6 6.1L12 15.9l-5.2 3.3 1.6-6.1-4.9-3.9 6.3-.3z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="ic-play" viewBox="0 0 24 24"><path d="M9 6.5l9.6 5.5L9 17.5z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="ic-book" viewBox="0 0 24 24"><path d="M2 3.5h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M22 3.5h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="ic-skull" viewBox="0 0 24 24"><path d="M12 3.4c3.8 0 6.6 2.9 6.6 6.2 0 2-.8 3.5-1.4 4.7-.6 1.2-1 2.3-1 3.3v1.5a1.6 1.6 0 0 1-1.6 1.6H9.4a1.6 1.6 0 0 1-1.6-1.6v-1.5c0-1-.4-2.1-1-3.3C6.2 13.1 5.4 11.6 5.4 9.6c0-3.3 2.8-6.2 6.6-6.2z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9.3" cy="11.4" r="1.5" fill="currentColor" stroke="none"/><circle cx="14.7" cy="11.4" r="1.5" fill="currentColor" stroke="none"/><circle cx="12" cy="14.5" r="0.6" fill="currentColor" stroke="none"/><path d="M9.6 17.2v1.5M12 17.2v1.5M14.4 17.2v1.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="ic-leaf" viewBox="0 0 24 24"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="ic-flame-alt" viewBox="0 0 24 24"><path d="M12 3.4c2 2.4 5.4 5.6 5.4 9.8a5.4 5.4 0 1 1-10.8 0C6.6 9 10 5.8 12 3.4z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 10.4c.9 1.1 2 2.6 2 3.9a2 2 0 1 1-4 0c0-1.3 1.1-2.8 2-3.9z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="ic-shield-sword" viewBox="0 0 24 24"><path d="M9.4 15.6 14.6 10.4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M10.5 11.5l3 3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8.6" cy="16.4" r="1.1" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 3.6 18.4 5.8v4.6c0 4.1-2.6 7.8-6.4 9.9-3.8-2.1-6.4-5.8-6.4-9.9V5.8z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="ic-daggers" viewBox="0 0 24 24"><g transform="rotate(38 12 12)"><path d="M12 3.2l2.3 5.6H9.7z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.5 9.9h7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M10.9 9.9v3.5M13.1 9.9v3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="14.5" r="1.15" fill="none" stroke="currentColor" stroke-width="1.6"/></g><g transform="rotate(-38 12 12)"><path d="M12 3.2l2.3 5.6H9.7z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.5 9.9h7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M10.9 9.9v3.5M13.1 9.9v3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="14.5" r="1.15" fill="none" stroke="currentColor" stroke-width="1.6"/></g></symbol>
+      <symbol id="ic-staff-orb" viewBox="0 0 24 24"><path d="M7.6 20.6 18.2 9.4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="18.2" cy="9.4" r="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="18.2" cy="9.4" r="0.9" fill="currentColor" stroke="none"/><path d="M18.2 4.5v1.9M17.3 5.4h1.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="ic-bow" viewBox="0 0 24 24"><path d="M6.2 4.4C14.6 5.4 14.6 18.6 6.2 19.6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M6.2 4.4v15.2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.2 12h12.4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M17.6 12l2.3-1.3M17.6 12l2.3 1.3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
     </svg>
 
     <div id="start-screen">
@@ -1011,17 +1132,17 @@ body.cb-tritan  { filter: url("#cb-tritan"); }
             <div style="margin-bottom:8px;">
                 <div data-i18n="start.difficultyLabel" style="text-align:center;font-size:clamp(0.55rem,2vw,0.68rem);letter-spacing:0.25em;text-transform:uppercase;color:rgba(255,255,255,0.6);margin-bottom:5px;">Dificuldade</div>
                 <div style="display:flex;gap:5px;">
-                    <button class="diff-btn" data-diff="facil" onclick="window.setDifficulty('facil')" style="flex:1;padding:8px 2px;border-radius:12px;font-size:clamp(0.6rem,2.4vw,0.78rem);font-weight:600;border:1.5px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.45);cursor:pointer;transition:all 0.2s;touch-action:manipulation;" data-i18n="start.diff.facil">🌱 Fácil</button>
-                    <button class="diff-btn" data-diff="normal" onclick="window.setDifficulty('normal')" style="flex:1;padding:8px 2px;border-radius:12px;font-size:clamp(0.6rem,2.4vw,0.78rem);font-weight:600;border:1.5px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.45);cursor:pointer;transition:all 0.2s;touch-action:manipulation;" data-i18n="start.diff.normal">⚔️ Normal</button>
-                    <button class="diff-btn" data-diff="dificil" onclick="window.setDifficulty('dificil')" style="flex:1;padding:8px 2px;border-radius:12px;font-size:clamp(0.6rem,2.4vw,0.78rem);font-weight:600;border:1.5px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.45);cursor:pointer;transition:all 0.2s;touch-action:manipulation;" data-i18n="start.diff.dificil">💀 Difícil</button>
-                    <button class="diff-btn" data-diff="pesadelo" onclick="window.setDifficulty('pesadelo')" style="flex:1;padding:8px 2px;border-radius:12px;font-size:clamp(0.6rem,2.4vw,0.78rem);font-weight:600;border:1.5px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.45);cursor:pointer;transition:all 0.2s;touch-action:manipulation;" data-i18n="start.diff.pesadelo">🔥 Pesadelo</button>
+                    <button class="diff-btn" data-diff="facil" onclick="window.setDifficulty('facil')" style="flex:1;padding:8px 2px;border-radius:12px;font-size:clamp(0.6rem,2.4vw,0.78rem);font-weight:600;border:1.5px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.45);cursor:pointer;transition:all 0.2s;touch-action:manipulation;display:inline-flex;align-items:center;justify-content:center;gap:4px;"><svg class="icon-inline" style="width:13px;height:13px;flex:none;"><use href="#ic-leaf"/></svg><span data-i18n="start.diff.facil">Fácil</span></button>
+                    <button class="diff-btn" data-diff="normal" onclick="window.setDifficulty('normal')" style="flex:1;padding:8px 2px;border-radius:12px;font-size:clamp(0.6rem,2.4vw,0.78rem);font-weight:600;border:1.5px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.45);cursor:pointer;transition:all 0.2s;touch-action:manipulation;display:inline-flex;align-items:center;justify-content:center;gap:4px;"><svg class="icon-inline" style="width:13px;height:13px;flex:none;"><use href="#ic-swords"/></svg><span data-i18n="start.diff.normal">Normal</span></button>
+                    <button class="diff-btn" data-diff="dificil" onclick="window.setDifficulty('dificil')" style="flex:1;padding:8px 2px;border-radius:12px;font-size:clamp(0.6rem,2.4vw,0.78rem);font-weight:600;border:1.5px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.45);cursor:pointer;transition:all 0.2s;touch-action:manipulation;display:inline-flex;align-items:center;justify-content:center;gap:4px;"><svg class="icon-inline" style="width:13px;height:13px;flex:none;"><use href="#ic-skull"/></svg><span data-i18n="start.diff.dificil">Difícil</span></button>
+                    <button class="diff-btn" data-diff="pesadelo" onclick="window.setDifficulty('pesadelo')" style="flex:1;padding:8px 2px;border-radius:12px;font-size:clamp(0.6rem,2.4vw,0.78rem);font-weight:600;border:1.5px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.45);cursor:pointer;transition:all 0.2s;touch-action:manipulation;display:inline-flex;align-items:center;justify-content:center;gap:4px;"><svg class="icon-inline" style="width:13px;height:13px;flex:none;"><use href="#ic-flame-alt"/></svg><span data-i18n="start.diff.pesadelo">Pesadelo</span></button>
                 </div>
                 <div id="difficulty-desc" data-i18n="start.difficultyDesc" style="text-align:center;font-size:clamp(0.58rem,2vw,0.7rem);color:rgba(255,255,255,0.62);margin-top:4px;min-height:1.2em;line-height:1.3;">A experiência padrão de Krevathorn.</div>
             </div>
 
             <!-- Seed (reproducible runs) — colapsável para reduzir a densidade da primeira dobra -->
             <details id="start-options-seed">
-                <summary data-i18n="start.seedOptions" style="cursor:pointer;padding:8px 10px;border-radius:12px;border:1.5px solid rgba(224,182,255,0.22);background:rgba(224,182,255,0.06);color:rgba(224,182,255,0.9);font-size:clamp(0.65rem,2.4vw,0.8rem);font-weight:700;text-align:center;letter-spacing:0.05em;text-transform:uppercase;touch-action:manipulation;user-select:none;">⚙️ Opções — Seed</summary>
+                <summary style="cursor:pointer;padding:8px 10px;border-radius:12px;border:1.5px solid rgba(224,182,255,0.22);background:rgba(224,182,255,0.06);color:rgba(224,182,255,0.9);font-size:clamp(0.65rem,2.4vw,0.8rem);font-weight:700;text-align:center;letter-spacing:0.05em;text-transform:uppercase;touch-action:manipulation;user-select:none;list-style:none;"><span style="display:inline-flex;align-items:center;justify-content:center;gap:5px;"><svg class="icon-inline" style="width:14px;height:14px;flex:none;"><use href="#ic-gear"/></svg><span data-i18n="start.seedOptions">Opções — Seed</span></span></summary>
                 <div style="margin:6px 0 8px;padding:8px 10px;border-radius:14px;border:1.5px solid rgba(224,182,255,0.12);background:rgba(255,255,255,0.02);">
                 <div style="margin-bottom:8px;">
                     <div data-i18n="start.seedLabel" style="text-align:center;font-size:clamp(0.55rem,2vw,0.68rem);letter-spacing:0.25em;text-transform:uppercase;color:rgba(255,255,255,0.6);margin-bottom:5px;">Seed (execuções reprodutíveis)</div>
@@ -1036,44 +1157,44 @@ body.cb-tritan  { filter: url("#cb-tritan"); }
             </details>
 
             <!-- Continue (shown only if a saved run exists) -->
-            <button id="continue-run-btn" data-i18n="start.continueRun" onclick="window.continueGame()" style="display:none;width:100%;padding:12px;margin-bottom:8px;border-radius:16px;font-size:clamp(0.85rem,3vw,1rem);font-weight:800;border:1.5px solid rgba(60,227,106,0.4);background:linear-gradient(135deg,rgba(0,136,54,0.25),rgba(60,227,106,0.15));color:#3ce36a;text-transform:uppercase;letter-spacing:0.06em;transition:all 0.2s;touch-action:manipulation;">
-                ▶ Continuar Jogo
+            <button id="continue-run-btn" onclick="window.continueGame()" style="display:none;width:100%;padding:12px;margin-bottom:8px;border-radius:16px;font-size:clamp(0.85rem,3vw,1rem);font-weight:800;border:1.5px solid rgba(60,227,106,0.4);background:linear-gradient(135deg,rgba(0,136,54,0.25),rgba(60,227,106,0.15));color:#3ce36a;text-transform:uppercase;letter-spacing:0.06em;transition:all 0.2s;touch-action:manipulation;">
+                <span style="display:inline-flex;align-items:center;justify-content:center;gap:6px;"><svg class="icon-inline" style="width:15px;height:15px;flex:none;filter:drop-shadow(0 0 4px rgba(60,227,106,0.4));"><use href="#ic-play"/></svg><span data-i18n="start.continueRun">Continuar Jogo</span></span>
             </button>
 
             <!-- Class Selection (inline, no back/forth) -->
             <div style="display:flex;gap:6px;margin-bottom:6px;">
-                <div onclick="window._tryStartClass('warrior')" class="class-mini-card warrior" style="flex:1;padding:10px 6px;border-radius:16px;border:1.5px solid rgba(250,204,21,0.25);background:rgba(250,204,21,0.08);text-align:center;cursor:pointer;transition:all 0.2s;touch-action:manipulation;">
-                    <div style="font-size:clamp(1.5rem,5vw,2rem);margin-bottom:2px;">⚔️</div>
-                    <div data-i18n="start.classWarrior" style="font-size:clamp(0.7rem,2.5vw,0.85rem);font-weight:800;text-transform:uppercase;color:#facc15;letter-spacing:0.06em;text-shadow:0 0 8px rgba(250,204,21,0.3);">Guerreiro</div>
+                <div onclick="window._tryStartClass('warrior')" class="class-mini-card warrior" style="flex:1;padding:10px 6px;border-radius:16px;border:1.5px solid rgba(201,162,39,0.38);background:rgba(70,110,142,0.15);text-align:center;cursor:pointer;transition:all 0.2s;touch-action:manipulation;">
+                    <div style="display:flex;justify-content:center;align-items:center;height:30px;margin-bottom:3px;"><svg class="icon-inline" style="width:28px;height:28px;color:#7fa8d0;filter:drop-shadow(0 0 5px rgba(127,168,208,0.5));"><use href="#ic-shield-sword"/></svg></div>
+                    <div data-i18n="start.classWarrior" style="font-size:clamp(0.7rem,2.5vw,0.85rem);font-weight:800;text-transform:uppercase;color:#facc15;letter-spacing:0.06em;text-shadow:0 0 8px rgba(201,162,39,0.35);">Guerreiro</div>
                     <div style="display:flex;gap:3px;justify-content:center;margin-top:4px;">
-                        <span class="stat-dot" style="width:6px;height:6px;border-radius:50%;background:#ff8800;box-shadow:0 0 4px #ff8800;"></span>
+                        <span class="stat-dot" style="width:6px;height:6px;border-radius:50%;background:#dbb55c;box-shadow:0 0 4px #dbb55c;"></span>
                         <span class="stat-dot" style="width:4px;height:6px;border-radius:2px;background:rgba(255,255,255,0.15);"></span>
                         <span class="stat-dot" style="width:4px;height:6px;border-radius:2px;background:rgba(255,255,255,0.15);"></span>
                     </div>
                 </div>
-                <div onclick="window._tryStartClass('rogue')" class="class-mini-card rogue" style="flex:1;padding:10px 6px;border-radius:16px;border:1.5px solid rgba(92,255,130,0.2);background:rgba(92,255,130,0.06);text-align:center;cursor:pointer;transition:all 0.2s;touch-action:manipulation;">
-                    <div style="font-size:clamp(1.5rem,5vw,2rem);margin-bottom:2px;">🗡️</div>
-                    <div data-i18n="start.classRogue" style="font-size:clamp(0.7rem,2.5vw,0.85rem);font-weight:800;text-transform:uppercase;color:#5cff82;letter-spacing:0.06em;text-shadow:0 0 8px rgba(92,255,130,0.3);">Ladino</div>
+                <div onclick="window._tryStartClass('rogue')" class="class-mini-card rogue" style="flex:1;padding:10px 6px;border-radius:16px;border:1.5px solid rgba(224,90,69,0.4);background:rgba(58,24,22,0.5);text-align:center;cursor:pointer;transition:all 0.2s;touch-action:manipulation;">
+                    <div style="display:flex;justify-content:center;align-items:center;height:30px;margin-bottom:3px;"><svg class="icon-inline" style="width:28px;height:28px;color:#e0604c;filter:drop-shadow(0 0 5px rgba(224,90,69,0.55));"><use href="#ic-daggers"/></svg></div>
+                    <div data-i18n="start.classRogue" style="font-size:clamp(0.7rem,2.5vw,0.85rem);font-weight:800;text-transform:uppercase;color:#e8816a;letter-spacing:0.06em;text-shadow:0 0 8px rgba(224,90,69,0.35);">Ladino</div>
                     <div style="display:flex;gap:3px;justify-content:center;margin-top:4px;">
                         <span class="stat-dot" style="width:4px;height:6px;border-radius:2px;background:rgba(255,255,255,0.15);"></span>
-                        <span class="stat-dot" style="width:6px;height:6px;border-radius:50%;background:#33ff33;box-shadow:0 0 4px #33ff33;"></span>
+                        <span class="stat-dot" style="width:6px;height:6px;border-radius:50%;background:#e0563e;box-shadow:0 0 4px #e0563e;"></span>
                         <span class="stat-dot" style="width:4px;height:6px;border-radius:2px;background:rgba(255,255,255,0.15);"></span>
                     </div>
                 </div>
-                <div onclick="window._tryStartClass('mage')" class="class-mini-card mage" style="flex:1;padding:10px 6px;border-radius:16px;border:1.5px solid rgba(153,102,255,0.2);background:rgba(153,102,255,0.06);text-align:center;cursor:pointer;transition:all 0.2s;touch-action:manipulation;">
-                    <div style="font-size:clamp(1.5rem,5vw,2rem);margin-bottom:2px;">🔮</div>
-                    <div data-i18n="start.classMage" style="font-size:clamp(0.7rem,2.5vw,0.85rem);font-weight:800;text-transform:uppercase;color:#9966ff;letter-spacing:0.06em;text-shadow:0 0 8px rgba(153,102,255,0.3);">Mago</div>
+                <div onclick="window._tryStartClass('mage')" class="class-mini-card mage" style="flex:1;padding:10px 6px;border-radius:16px;border:1.5px solid rgba(140,100,205,0.45);background:rgba(106,61,145,0.17);text-align:center;cursor:pointer;transition:all 0.2s;touch-action:manipulation;">
+                    <div style="display:flex;justify-content:center;align-items:center;height:30px;margin-bottom:3px;"><svg class="icon-inline" style="width:28px;height:28px;color:#3ad0ff;filter:drop-shadow(0 0 5px rgba(58,208,255,0.5));"><use href="#ic-staff-orb"/></svg></div>
+                    <div data-i18n="start.classMage" style="font-size:clamp(0.7rem,2.5vw,0.85rem);font-weight:800;text-transform:uppercase;color:#b78be8;letter-spacing:0.06em;text-shadow:0 0 8px rgba(106,61,145,0.5);">Mago</div>
                     <div style="display:flex;gap:3px;justify-content:center;margin-top:4px;">
                         <span class="stat-dot" style="width:4px;height:6px;border-radius:2px;background:rgba(255,255,255,0.15);"></span>
                         <span class="stat-dot" style="width:4px;height:6px;border-radius:2px;background:rgba(255,255,255,0.15);"></span>
-                        <span class="stat-dot" style="width:6px;height:6px;border-radius:50%;background:#b388ff;box-shadow:0 0 4px #b388ff;"></span>
+                        <span class="stat-dot" style="width:6px;height:6px;border-radius:50%;background:#3ad0ff;box-shadow:0 0 4px #3ad0ff;"></span>
                     </div>
                 </div>
-                <div onclick="window._tryStartClass('elf')" class="class-mini-card elf" style="flex:1;padding:10px 6px;border-radius:16px;border:1.5px solid rgba(88,224,138,0.2);background:rgba(88,224,138,0.06);text-align:center;cursor:pointer;transition:all 0.2s;touch-action:manipulation;">
-                    <div style="font-size:clamp(1.5rem,5vw,2rem);margin-bottom:2px;">🏹</div>
-                    <div data-i18n="start.classElf" style="font-size:clamp(0.7rem,2.5vw,0.85rem);font-weight:800;text-transform:uppercase;color:#58e08a;letter-spacing:0.06em;text-shadow:0 0 8px rgba(88,224,138,0.3);">Elfa</div>
+                <div onclick="window._tryStartClass('elf')" class="class-mini-card elf" style="flex:1;padding:10px 6px;border-radius:16px;border:1.5px solid rgba(219,181,92,0.35);background:rgba(78,110,49,0.16);text-align:center;cursor:pointer;transition:all 0.2s;touch-action:manipulation;">
+                    <div style="display:flex;justify-content:center;align-items:center;height:30px;margin-bottom:3px;"><svg class="icon-inline" style="width:28px;height:28px;color:#dbb55c;filter:drop-shadow(0 0 5px rgba(219,181,92,0.5));"><use href="#ic-bow"/></svg></div>
+                    <div data-i18n="start.classElf" style="font-size:clamp(0.7rem,2.5vw,0.85rem);font-weight:800;text-transform:uppercase;color:#a5cf6e;letter-spacing:0.06em;text-shadow:0 0 8px rgba(165,207,110,0.35);">Elfa</div>
                     <div style="display:flex;gap:3px;justify-content:center;margin-top:4px;">
-                        <span class="stat-dot" style="width:6px;height:6px;border-radius:50%;background:#58e08a;box-shadow:0 0 4px #58e08a;"></span>
+                        <span class="stat-dot" style="width:6px;height:6px;border-radius:50%;background:#dbb55c;box-shadow:0 0 4px #dbb55c;"></span>
                         <span class="stat-dot" style="width:4px;height:6px;border-radius:2px;background:rgba(255,255,255,0.15);"></span>
                         <span class="stat-dot" style="width:4px;height:6px;border-radius:2px;background:rgba(255,255,255,0.15);"></span>
                     </div>
@@ -1082,23 +1203,23 @@ body.cb-tritan  { filter: url("#cb-tritan"); }
 
             <!-- Action Buttons Row -->
             <div style="display:flex;gap:6px;margin-top:4px;">
-                <button id="tutorial-btn-start" data-i18n="start.btnTutorial" onclick="window._showTutorialMenu()" style="flex:1;padding:10px;border-radius:14px;font-size:clamp(0.75rem,2.8vw,0.9rem);font-weight:700;border:1.5px solid rgba(255,204,0,0.3);background:rgba(255,204,0,0.1);color:#ffcc00;text-transform:uppercase;letter-spacing:0.06em;transition:all 0.2s;touch-action:manipulation;">
-                    🎮 Tutorial
+                <button id="tutorial-btn-start" onclick="window._showTutorialMenu()" style="flex:1;padding:10px;border-radius:14px;font-size:clamp(0.75rem,2.8vw,0.9rem);font-weight:700;border:1.5px solid rgba(255,204,0,0.3);background:rgba(255,204,0,0.1);color:#ffcc00;text-transform:uppercase;letter-spacing:0.06em;transition:all 0.2s;touch-action:manipulation;display:inline-flex;align-items:center;justify-content:center;gap:5px;">
+                    <svg class="icon-inline" style="width:15px;height:15px;flex:none;"><use href="#ic-book"/></svg><span data-i18n="start.btnTutorial">Tutorial</span>
                 </button>
-                <button id="daily-btn-start" data-i18n="start.btnDaily" onclick="if(window.UIManager) window.UIManager.openPanel('daily')" style="flex:1;padding:10px;border-radius:14px;font-size:clamp(0.75rem,2.8vw,0.9rem);font-weight:700;border:1.5px solid rgba(80,140,255,0.3);background:rgba(80,140,255,0.1);color:#9ad0ff;text-transform:uppercase;letter-spacing:0.06em;transition:all 0.2s;touch-action:manipulation;">
-                    🏆 Diário
+                <button id="daily-btn-start" onclick="if(window.UIManager) window.UIManager.openPanel('daily')" style="flex:1;padding:10px;border-radius:14px;font-size:clamp(0.75rem,2.8vw,0.9rem);font-weight:700;border:1.5px solid rgba(80,140,255,0.3);background:rgba(80,140,255,0.1);color:#9ad0ff;text-transform:uppercase;letter-spacing:0.06em;transition:all 0.2s;touch-action:manipulation;display:inline-flex;align-items:center;justify-content:center;gap:5px;">
+                    <svg class="icon-inline" style="width:15px;height:15px;flex:none;"><use href="#ic-crown"/></svg><span data-i18n="start.btnDaily">Diário</span>
                 </button>
-                <button id="meta-btn-start" data-i18n="start.btnMeta" onclick="if(window.UIManager) window.UIManager.openPanel('meta')" style="flex:1;padding:10px;border-radius:14px;font-size:clamp(0.75rem,2.8vw,0.9rem);font-weight:700;border:1.5px solid rgba(255,204,0,0.3);background:rgba(255,204,0,0.1);color:#ffcc00;text-transform:uppercase;letter-spacing:0.06em;transition:all 0.2s;touch-action:manipulation;">
-                    ✨ MetaLoja
+                <button id="meta-btn-start" onclick="if(window.UIManager) window.UIManager.openPanel('meta')" style="flex:1;padding:10px;border-radius:14px;font-size:clamp(0.75rem,2.8vw,0.9rem);font-weight:700;border:1.5px solid rgba(255,204,0,0.3);background:rgba(255,204,0,0.1);color:#ffcc00;text-transform:uppercase;letter-spacing:0.06em;transition:all 0.2s;touch-action:manipulation;display:inline-flex;align-items:center;justify-content:center;gap:5px;">
+                    <svg class="icon-inline" style="width:15px;height:15px;flex:none;"><use href="#ic-star"/></svg><span data-i18n="start.btnMeta">MetaLoja</span>
                 </button>
-                <button id="settings-btn-start" onclick="window.toggleSettings()" style="padding:10px 14px;border-radius:14px;font-size:clamp(0.75rem,2.8vw,0.9rem);font-weight:700;border:1.5px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.5);transition:all 0.2s;touch-action:manipulation;">
-                    ⚙️
+                <button id="settings-btn-start" onclick="window.toggleSettings()" style="padding:10px 14px;border-radius:14px;font-size:clamp(0.75rem,2.8vw,0.9rem);font-weight:700;border:1.5px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.5);transition:all 0.2s;touch-action:manipulation;display:inline-flex;align-items:center;justify-content:center;">
+                    <svg class="icon-inline" style="width:18px;height:18px;"><use href="#ic-gear"/></svg>
                 </button>
             </div>
 
             <!-- Build (arquétipos + build-code) — colapsável (opção avançada) -->
             <details id="start-options-build">
-                <summary data-i18n="start.buildOptions" style="cursor:pointer;padding:8px 10px;border-radius:12px;border:1.5px solid rgba(224,182,255,0.22);background:rgba(224,182,255,0.06);color:rgba(224,182,255,0.9);font-size:clamp(0.65rem,2.4vw,0.8rem);font-weight:700;text-align:center;letter-spacing:0.05em;text-transform:uppercase;touch-action:manipulation;user-select:none;">🛠️ Opções — Build (código e arquétipos)</summary>
+                <summary style="cursor:pointer;padding:8px 10px;border-radius:12px;border:1.5px solid rgba(224,182,255,0.22);background:rgba(224,182,255,0.06);color:rgba(224,182,255,0.9);font-size:clamp(0.65rem,2.4vw,0.8rem);font-weight:700;text-align:center;letter-spacing:0.05em;text-transform:uppercase;touch-action:manipulation;user-select:none;list-style:none;"><span style="display:inline-flex;align-items:center;justify-content:center;gap:5px;"><svg class="icon-inline" style="width:14px;height:14px;flex:none;"><use href="#ic-wrench"/></svg><span data-i18n="start.buildOptions">Opções — Build (código e arquétipos)</span></span></summary>
                 <div style="margin:6px 0 8px;padding:8px 10px;border-radius:14px;border:1.5px solid rgba(224,182,255,0.12);background:rgba(255,255,255,0.02);">
                 <div id="build-row" style="display:flex;gap:6px;margin-top:6px;align-items:center;">
                     <input id="build-code-input" type="text" placeholder="Código de build" data-i18n-placeholder="start.buildPlaceholder" autocomplete="off"
@@ -1107,14 +1228,14 @@ body.cb-tritan  { filter: url("#cb-tritan"); }
                     <button id="build-clear-btn" onclick="window._clearPendingBuild()" style="padding:8px 10px;border-radius:12px;font-size:clamp(0.7rem,2.4vw,0.82rem);font-weight:700;border:1.5px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.55);cursor:pointer;touch-action:manipulation;">✕</button>
                 </div>
                 <div id="build-archetype-row" style="display:flex;gap:5px;flex-wrap:wrap;margin-top:5px;">
-                <button onclick="window._applyArchetype('warrior_muralha')" data-i18n="start.arch.muralha" style="flex:1;min-width:78px;padding:6px 4px;border-radius:10px;font-size:clamp(0.62rem,2vw,0.72rem);font-weight:700;border:1.5px solid rgba(250,204,21,0.25);background:rgba(250,204,21,0.07);color:#facc15;cursor:pointer;touch-action:manipulation;">🛡️ Muralha</button>
-                <button onclick="window._applyArchetype('warrior_furia')" data-i18n="start.arch.furia" style="flex:1;min-width:78px;padding:6px 4px;border-radius:10px;font-size:clamp(0.62rem,2vw,0.72rem);font-weight:700;border:1.5px solid rgba(255,120,0,0.25);background:rgba(255,120,0,0.07);color:#ff8800;cursor:pointer;touch-action:manipulation;">⚔️ Fúria</button>
-                <button onclick="window._applyArchetype('rogue_assassino')" data-i18n="start.arch.assassino" style="flex:1;min-width:78px;padding:6px 4px;border-radius:10px;font-size:clamp(0.62rem,2vw,0.72rem);font-weight:700;border:1.5px solid rgba(92,255,130,0.25);background:rgba(92,255,130,0.07);color:#5cff82;cursor:pointer;touch-action:manipulation;">🗡️ Assassino</button>
-                <button onclick="window._applyArchetype('rogue_sombra')" data-i18n="start.arch.sombra" style="flex:1;min-width:78px;padding:6px 4px;border-radius:10px;font-size:clamp(0.62rem,2vw,0.72rem);font-weight:700;border:1.5px solid rgba(92,255,130,0.25);background:rgba(92,255,130,0.07);color:#5cff82;cursor:pointer;touch-action:manipulation;">🌑 Sombra</button>
-                <button onclick="window._applyArchetype('mage_arcano')" data-i18n="start.arch.arcano" style="flex:1;min-width:78px;padding:6px 4px;border-radius:10px;font-size:clamp(0.62rem,2vw,0.72rem);font-weight:700;border:1.5px solid rgba(153,102,255,0.25);background:rgba(153,102,255,0.07);color:#9966ff;cursor:pointer;touch-action:manipulation;">🔮 Arcano</button>
-                <button onclick="window._applyArchetype('mage_gelo')" data-i18n="start.arch.gelo" style="flex:1;min-width:78px;padding:6px 4px;border-radius:10px;font-size:clamp(0.62rem,2vw,0.72rem);font-weight:700;border:1.5px solid rgba(102,204,255,0.25);background:rgba(102,204,255,0.07);color:#66ccff;cursor:pointer;touch-action:manipulation;">❄️ Gelo</button>
-                <button onclick="window._applyArchetype('elf_vento')" data-i18n="start.arch.vento" style="flex:1;min-width:78px;padding:6px 4px;border-radius:10px;font-size:clamp(0.62rem,2vw,0.72rem);font-weight:700;border:1.5px solid rgba(127,255,212,0.25);background:rgba(127,255,212,0.07);color:#7fffd4;cursor:pointer;touch-action:manipulation;">💨 Vento</button>
-                <button onclick="window._applyArchetype('elf_natureza')" data-i18n="start.arch.natureza" style="flex:1;min-width:78px;padding:6px 4px;border-radius:10px;font-size:clamp(0.62rem,2vw,0.72rem);font-weight:700;border:1.5px solid rgba(88,224,138,0.25);background:rgba(88,224,138,0.07);color:#58e08a;cursor:pointer;touch-action:manipulation;">🌿 Natureza</button>
+                <button onclick="window._applyArchetype('warrior_muralha')" data-i18n="start.arch.muralha" style="flex:1;min-width:78px;padding:6px 4px;border-radius:10px;font-size:clamp(0.62rem,2vw,0.72rem);font-weight:700;border:1.5px solid rgba(250,204,21,0.25);background:rgba(250,204,21,0.07);color:#facc15;cursor:pointer;touch-action:manipulation;">Muralha</button>
+                <button onclick="window._applyArchetype('warrior_furia')" data-i18n="start.arch.furia" style="flex:1;min-width:78px;padding:6px 4px;border-radius:10px;font-size:clamp(0.62rem,2vw,0.72rem);font-weight:700;border:1.5px solid rgba(255,120,0,0.25);background:rgba(255,120,0,0.07);color:#ff8800;cursor:pointer;touch-action:manipulation;">Fúria</button>
+                <button onclick="window._applyArchetype('rogue_assassino')" data-i18n="start.arch.assassino" style="flex:1;min-width:78px;padding:6px 4px;border-radius:10px;font-size:clamp(0.62rem,2vw,0.72rem);font-weight:700;border:1.5px solid rgba(92,255,130,0.25);background:rgba(92,255,130,0.07);color:#5cff82;cursor:pointer;touch-action:manipulation;">Assassino</button>
+                <button onclick="window._applyArchetype('rogue_sombra')" data-i18n="start.arch.sombra" style="flex:1;min-width:78px;padding:6px 4px;border-radius:10px;font-size:clamp(0.62rem,2vw,0.72rem);font-weight:700;border:1.5px solid rgba(92,255,130,0.25);background:rgba(92,255,130,0.07);color:#5cff82;cursor:pointer;touch-action:manipulation;">Sombra</button>
+                <button onclick="window._applyArchetype('mage_arcano')" data-i18n="start.arch.arcano" style="flex:1;min-width:78px;padding:6px 4px;border-radius:10px;font-size:clamp(0.62rem,2vw,0.72rem);font-weight:700;border:1.5px solid rgba(153,102,255,0.25);background:rgba(153,102,255,0.07);color:#9966ff;cursor:pointer;touch-action:manipulation;">Arcano</button>
+                <button onclick="window._applyArchetype('mage_gelo')" data-i18n="start.arch.gelo" style="flex:1;min-width:78px;padding:6px 4px;border-radius:10px;font-size:clamp(0.62rem,2vw,0.72rem);font-weight:700;border:1.5px solid rgba(102,204,255,0.25);background:rgba(102,204,255,0.07);color:#66ccff;cursor:pointer;touch-action:manipulation;">Gelo</button>
+                <button onclick="window._applyArchetype('elf_vento')" data-i18n="start.arch.vento" style="flex:1;min-width:78px;padding:6px 4px;border-radius:10px;font-size:clamp(0.62rem,2vw,0.72rem);font-weight:700;border:1.5px solid rgba(127,255,212,0.25);background:rgba(127,255,212,0.07);color:#7fffd4;cursor:pointer;touch-action:manipulation;">Vento</button>
+                <button onclick="window._applyArchetype('elf_natureza')" data-i18n="start.arch.natureza" style="flex:1;min-width:78px;padding:6px 4px;border-radius:10px;font-size:clamp(0.62rem,2vw,0.72rem);font-weight:700;border:1.5px solid rgba(88,224,138,0.25);background:rgba(88,224,138,0.07);color:#58e08a;cursor:pointer;touch-action:manipulation;">Natureza</button>
                 </div>
                 <div id="build-status" style="text-align:center;font-size:clamp(0.55rem,2vw,0.65rem);color:rgba(255,255,255,0.6);margin-top:3px;min-height:1.1em;"></div>
                 </div>
@@ -1126,17 +1247,17 @@ body.cb-tritan  { filter: url("#cb-tritan"); }
     <!-- TUTORIAL PROMPT (shown on first game start) -->
     <div id="tutorial-prompt" style="display:none;position:fixed;inset:0;z-index:100;flex-direction:column;align-items:center;justify-content:center;background:rgba(4,2,8,0.85);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);padding:20px;">
         <div style="background:rgba(22,17,32,0.98);border:1.5px solid rgba(224,182,255,0.3);border-radius:24px;padding:24px;max-width:340px;width:100%;box-shadow:0 10px 50px rgba(0,0,0,0.6);text-align:center;">
-            <div style="font-size:1.2rem;font-weight:800;color:#e0b6ff;margin-bottom:6px;" data-i18n="tutorial.promptTitle">🎮 Tutorial</div>
+            <div style="font-size:1.2rem;font-weight:800;color:#e0b6ff;margin-bottom:6px;" data-i18n="tutorial.promptTitle">Tutorial</div>
             <h2 style="font-size:1.5rem;font-weight:900;color:#f0e0ff;margin-bottom:10px;line-height:1.3;" data-i18n="tutorial.promptHeading">Aprenda a Jogar?</h2>
             <p style="font-size:0.85rem;color:rgba(255,255,255,0.6);margin-bottom:18px;line-height:1.5;" data-i18n="tutorial.promptText">
                 Domine os controles e mecânicas em um ambiente seguro antes de encarar o abismo.
             </p>
             <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;">
                 <button id="tutorial-quick-btn" class="tutorial-opt-btn" style="padding:12px;border-radius:14px;font-size:0.9rem;font-weight:700;background:linear-gradient(135deg,rgba(100,60,200,0.3),rgba(157,78,221,0.2));border:1.5px solid rgba(157,78,221,0.4);color:#c084fc;cursor:pointer;touch-action:manipulation;transition:all 0.2s;" data-i18n="tutorial.promptQuick">
-                    ⚡ Tutorial Rápido (~1 min)
+                    Tutorial Rápido (~1 min)
                 </button>
                 <button id="tutorial-full-btn" class="tutorial-opt-btn" style="padding:12px;border-radius:14px;font-size:0.9rem;font-weight:700;background:linear-gradient(135deg,rgba(60,140,200,0.3),rgba(80,160,255,0.2));border:1.5px solid rgba(80,140,255,0.4);color:#9ad0ff;cursor:pointer;touch-action:manipulation;transition:all 0.2s;" data-i18n="tutorial.promptFull">
-                    🎓 Tutorial Completo (~3 min)
+                    Tutorial Completo (~3 min)
                 </button>
 
             </div>
@@ -1165,13 +1286,13 @@ body.cb-tritan  { filter: url("#cb-tritan"); }
                 </div>
             </div>
             <div class="top-right-chips" style="display:flex;gap:4px;align-items:center;">
-                <span id="difficulty-badge" class="lv-text" style="font-size:9px;padding:2px 8px;background:rgba(224,182,255,0.08);border-radius:999px;border:1px solid rgba(224,182,255,0.25);">⚔️ Normal</span>
+                <span id="difficulty-badge" class="lv-text" style="font-size:9px;padding:2px 8px;background:rgba(224,182,255,0.08);border-radius:999px;border:1px solid rgba(224,182,255,0.25);display:inline-flex;align-items:center;gap:3px;"><svg class="icon-inline" width="11" height="11"><use href="#ic-swords"/></svg>Normal</span>
                 <div id="level-badge" class="lv-text" style="font-size:9px;padding:2px 10px;background:rgba(224,182,255,0.1);border-radius:999px;border:1px solid rgba(224,182,255,0.15);">N1</div>
             </div>
         </div>
 
         <!-- DUNGEON PROGRESS (top center, during dungeons) -->
-        <div class="hidden" style="position:absolute;top:max(36px,calc(env(safe-area-inset-top,36px) + 8px));left:50%;transform:translateX(-50%);z-index:115;pointer-events:none;text-align:center;">
+        <div id="dungeon-progress" class="hidden" style="position:absolute;top:max(36px,calc(env(safe-area-inset-top,36px) + 8px));left:50%;transform:translateX(-50%);z-index:115;pointer-events:none;text-align:center;">
             <div style="display:flex;align-items:center;gap:6px;background:rgba(0,0,0,0.5);padding:2px 10px;border-radius:999px;border:1px solid rgba(224,182,255,0.1);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);">
                 <span style="font-size:8px;color:rgba(224,182,255,0.5);font-weight:600;">Piso 1</span>
                 <span style="font-size:7px;color:rgba(255,255,255,0.2);">|</span>
@@ -1206,7 +1327,7 @@ body.cb-tritan  { filter: url("#cb-tritan"); }
             <!-- Left: Currency -->
             <div id="currency-display" style="pointer-events:none;">
                 <div style="display:flex;align-items:center;gap:3px;background:rgba(0,0,0,0.55);padding:4px 8px;border-radius:10px;border:1px solid rgba(255,215,0,0.15);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);">
-                    <span style="font-size:10px;">🪙</span>
+                    <svg class="icon-inline" width="11" height="11" style="color:#ffcc00;filter:drop-shadow(0 0 3px rgba(255,204,0,0.4));"><use href="#ic-coin"/></svg>
                     <span id="currency-amount" style="font-size:10px;font-weight:700;color:#ffcc00;">0</span>
                 </div>
             </div>
@@ -1223,17 +1344,17 @@ body.cb-tritan  { filter: url("#cb-tritan"); }
                     <svg class="icon-inline" width="18" height="18" style="color:#c4a8dd;"><use href="#ic-bar-chart"/></svg>
                 </button>
                 <button id="pause-btn-bar" class="util-btn" onclick="if(window.PauseSystem) PauseSystem.toggle()" style="width:38px;height:38px;border-radius:10px;background:rgba(30,22,45,0.7);border:1px solid rgba(224,182,255,0.12);display:flex;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation;transition:all 0.2s;">
-                    <span style="font-size:14px;color:#c4a8dd;">⏸</span>
+                    <svg class="icon-inline" width="16" height="16"><use href="#ic-pause"/></svg>
                 </button>
                 <button id="quest-btn-bar" class="util-btn" onclick="if(window.QuestSystem) QuestSystem.toggle()" style="width:38px;height:38px;border-radius:10px;background:rgba(30,22,45,0.7);border:1px solid rgba(224,182,255,0.12);display:flex;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation;transition:all 0.2s;">
-                    <span style="font-size:14px;color:#e0b6ff;">📜</span>
+                    <svg class="icon-inline" width="16" height="16"><use href="#ic-scroll"/></svg>
                 </button>
             </div>
 
             <!-- Right: Minimap toggle (small) -->
             <div style="display:flex;gap:3px;pointer-events:auto;">
                 <button id="minimap-toggle-btn" onclick="window._toggleMinimap()" style="width:32px;height:32px;border-radius:8px;background:rgba(30,22,45,0.6);border:1px solid rgba(224,182,255,0.1);display:flex;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation;transition:all 0.2s;">
-                    <span style="font-size:12px;color:rgba(224,182,255,0.5);">🗺</span>
+                    <svg class="icon-inline" width="14" height="14" style="color:rgba(224,182,255,0.6);"><use href="#ic-map"/></svg>
                 </button>
             </div>
         </div>
@@ -1241,7 +1362,7 @@ body.cb-tritan  { filter: url("#cb-tritan"); }
         <!-- RUN OBJECTIVE (bottom-center, above controls) -->
         <div id="run-objective" class="hidden" style="position:absolute;bottom:calc(env(safe-area-inset-bottom,12px) + 84px);left:50%;transform:translateX(-50%);z-index:110;pointer-events:none;width:min(248px,66vw);">
             <div style="display:flex;align-items:center;gap:6px;justify-content:center;background:rgba(0,0,0,0.55);padding:3px 12px;border-radius:999px;border:1px solid rgba(224,182,255,0.18);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);">
-                <span id="ro-icon" style="font-size:10px;">🎯</span>
+                <span id="ro-icon" style="display:inline-flex;align-items:center;font-size:10px;"><svg class="icon-inline" width="11" height="11"><use href="#ic-target"/></svg></span>
                 <span id="ro-title" style="font-size:9px;font-weight:700;color:#e0b6ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Objetivo</span>
                 <span id="ro-progress" style="font-size:9px;font-weight:700;color:#ffd86b;white-space:nowrap;">0</span>
             </div>
@@ -2710,8 +2831,8 @@ const I18n = {
             'start.tapToStart': 'Toque na classe para iniciar',
             'start.tutorial': 'Como Jogar / Tutorial',
             'start.settings': 'Configurações',
-            'start.seedOptions': '⚙️ Opções — Seed',
-            'start.buildOptions': '🛠️ Opções — Build (código e arquétipos)',
+            'start.seedOptions': 'Opções — Seed',
+            'start.buildOptions': 'Opções — Build (código e arquétipos)',
 
             // Class names
             'class.warrior': 'GUERREIRO',
@@ -2899,10 +3020,10 @@ const I18n = {
             // ============================================================
             // Tutorial
             // ============================================================
-            'tutorial.promptTitle': '🎮 Tutorial',
+            'tutorial.promptTitle': 'Tutorial',
             'tutorial.promptHeading': 'Aprenda a Jogar?',
             'tutorial.promptText': 'Domine os controles e mecânicas em um ambiente seguro antes de encarar o abismo.',
-            'tutorial.promptQuick': '⚡ Tutorial Rápido (~1 min)',
+            'tutorial.promptQuick': 'Tutorial Rápido (~1 min)',
             'tutorial.promptSkip': 'Pular Tutorial',
             'tutorial.promptNever': 'Nunca Mostrar',
             'tutorial.stageProgress': 'Etapa ',
@@ -2948,7 +3069,7 @@ const I18n = {
             'tutorial.stage6.line6': 'Estatísticas: acompanhe seu progresso',
             'tutorial.stage6.line7': '',
             'tutorial.stage6.line8': 'Bônus: +25 moedas!',
-            'tutorial.promptFull': '🎓 Tutorial Completo (~3 min)',
+            'tutorial.promptFull': 'Tutorial Completo (~3 min)',
             'tutorial.stage7.title': ' Conheça a Loja',
             'tutorial.stage7.line1': 'Abra a LOJA para comprar itens com o ouro dos inimigos.',
             'tutorial.stage7.line2': 'Moedas caem de inimigos e baús.',
@@ -3656,34 +3777,34 @@ const I18n = {
             'start.modeDungeon': 'Masmorra',
             'start.modeAbyss': 'Abismo',
             'start.difficultyLabel': 'Dificuldade',
-            'start.diff.facil': '🌱 Fácil',
-            'start.diff.normal': '⚔️ Normal',
-            'start.diff.dificil': '💀 Difícil',
-            'start.diff.pesadelo': '🔥 Pesadelo',
+            'start.diff.facil': 'Fácil',
+            'start.diff.normal': 'Normal',
+            'start.diff.dificil': 'Difícil',
+            'start.diff.pesadelo': 'Pesadelo',
             'start.difficultyDesc': 'A experiência padrão de Krevathorn.',
             'start.seedLabel': 'Seed (execuções reprodutíveis)',
             'start.seedPlaceholder': 'vazio = aleatório',
             'start.seedApply': 'Aplicar',
             'start.seedRandom': 'Aleatório',
             'start.seedStatus': 'Mesmo seed + mesmo piso = mesmo mapa e mesmos encontros.',
-            'start.continueRun': '▶ Continuar Jogo',
+            'start.continueRun': 'Continuar Jogo',
             'start.classWarrior': 'Guerreiro',
             'start.classRogue': 'Ladino',
             'start.classMage': 'Mago',
             'start.classElf': 'Elfa',
-            'start.btnTutorial': '🎮 Tutorial',
-            'start.btnDaily': '🏆 Diário',
-            'start.btnMeta': '✨ MetaLoja',
+            'start.btnTutorial': 'Tutorial',
+            'start.btnDaily': 'Diário',
+            'start.btnMeta': 'MetaLoja',
             'start.buildPlaceholder': 'Código de build',
             'start.buildApply': 'Aplicar',
-            'start.arch.muralha': '🛡️ Muralha',
-            'start.arch.furia': '⚔️ Fúria',
-            'start.arch.assassino': '🗡️ Assassino',
-            'start.arch.sombra': '🌑 Sombra',
-            'start.arch.arcano': '🔮 Arcano',
-            'start.arch.gelo': '❄️ Gelo',
-            'start.arch.vento': '💨 Vento',
-            'start.arch.natureza': '🌿 Natureza',
+            'start.arch.muralha': 'Muralha',
+            'start.arch.furia': 'Fúria',
+            'start.arch.assassino': 'Assassino',
+            'start.arch.sombra': 'Sombra',
+            'start.arch.arcano': 'Arcano',
+            'start.arch.gelo': 'Gelo',
+            'start.arch.vento': 'Vento',
+            'start.arch.natureza': 'Natureza',
 
             // Difficulty presets (names/descs)
             'difficulty.facil.name': 'Fácil',
@@ -3731,8 +3852,8 @@ const I18n = {
             'start.tapToStart': 'Tap a class to start',
             'start.tutorial': 'How to Play / Tutorial',
             'start.settings': 'Settings',
-            'start.seedOptions': '⚙️ Options — Seed',
-            'start.buildOptions': '🛠️ Options — Build (code & archetypes)',
+            'start.seedOptions': 'Options — Seed',
+            'start.buildOptions': 'Options — Build (code & archetypes)',
 
             // Class names
             'class.warrior': 'WARRIOR',
@@ -3920,10 +4041,10 @@ const I18n = {
             // ============================================================
             // Tutorial
             // ============================================================
-            'tutorial.promptTitle': '🎮 Tutorial',
+            'tutorial.promptTitle': 'Tutorial',
             'tutorial.promptHeading': 'Learn How to Play?',
             'tutorial.promptText': 'Master the controls and mechanics in a safe environment before facing the abyss.',
-            'tutorial.promptQuick': '⚡ Quick Tutorial (~1 min)',
+            'tutorial.promptQuick': 'Quick Tutorial (~1 min)',
             'tutorial.promptSkip': 'Skip Tutorial',
             'tutorial.promptNever': 'Never Show',
             'tutorial.stageProgress': 'Step ',
@@ -3969,7 +4090,7 @@ const I18n = {
             'tutorial.stage6.line6': 'Stats: track your progress',
             'tutorial.stage6.line7': '',
             'tutorial.stage6.line8': 'Bonus: +25 coins!',
-            'tutorial.promptFull': '🎓 Full Tutorial (~3 min)',
+            'tutorial.promptFull': 'Full Tutorial (~3 min)',
             'tutorial.stage7.title': ' Meet the Shop',
             'tutorial.stage7.line1': 'Open the SHOP to buy items with the gold enemies drop.',
             'tutorial.stage7.line2': 'Coins drop from enemies and chests.',
@@ -4677,34 +4798,34 @@ const I18n = {
             'start.modeDungeon': 'Dungeon',
             'start.modeAbyss': 'Abyss',
             'start.difficultyLabel': 'Difficulty',
-            'start.diff.facil': '🌱 Easy',
-            'start.diff.normal': '⚔️ Normal',
-            'start.diff.dificil': '💀 Hard',
-            'start.diff.pesadelo': '🔥 Nightmare',
+            'start.diff.facil': 'Easy',
+            'start.diff.normal': 'Normal',
+            'start.diff.dificil': 'Hard',
+            'start.diff.pesadelo': 'Nightmare',
             'start.difficultyDesc': 'The standard Krevathorn experience.',
             'start.seedLabel': 'Seed (reproducible runs)',
             'start.seedPlaceholder': 'empty = random',
             'start.seedApply': 'Apply',
             'start.seedRandom': 'Random',
             'start.seedStatus': 'Same seed + same floor = same map and encounters.',
-            'start.continueRun': '▶ Continue Run',
+            'start.continueRun': 'Continue Run',
             'start.classWarrior': 'Warrior',
             'start.classRogue': 'Rogue',
             'start.classMage': 'Mage',
             'start.classElf': 'Elf',
-            'start.btnTutorial': '🎮 Tutorial',
-            'start.btnDaily': '🏆 Daily',
-            'start.btnMeta': '✨ MetaShop',
+            'start.btnTutorial': 'Tutorial',
+            'start.btnDaily': 'Daily',
+            'start.btnMeta': 'MetaShop',
             'start.buildPlaceholder': 'Build code',
             'start.buildApply': 'Apply',
-            'start.arch.muralha': '🛡️ Bulwark',
-            'start.arch.furia': '⚔️ Fury',
-            'start.arch.assassino': '🗡️ Assassin',
-            'start.arch.sombra': '🌑 Shadow',
-            'start.arch.arcano': '🔮 Arcane',
-            'start.arch.gelo': '❄️ Frost',
-            'start.arch.vento': '💨 Wind',
-            'start.arch.natureza': '🌿 Nature',
+            'start.arch.muralha': 'Bulwark',
+            'start.arch.furia': 'Fury',
+            'start.arch.assassino': 'Assassin',
+            'start.arch.sombra': 'Shadow',
+            'start.arch.arcano': 'Arcane',
+            'start.arch.gelo': 'Frost',
+            'start.arch.vento': 'Wind',
+            'start.arch.natureza': 'Nature',
 
             // Difficulty presets (names/descs)
             'difficulty.facil.name': 'Easy',
@@ -4752,8 +4873,8 @@ const I18n = {
             'start.tapToStart': 'Toca una clase para empezar',
             'start.tutorial': 'Cómo Jugar / Tutorial',
             'start.settings': 'Configuración',
-            'start.seedOptions': '⚙️ Opciones — Semilla',
-            'start.buildOptions': '🛠️ Opciones — Build (código y arquetipos)',
+            'start.seedOptions': 'Opciones — Semilla',
+            'start.buildOptions': 'Opciones — Build (código y arquetipos)',
 
             // Class names
             'class.warrior': 'GUERRERO',
@@ -4941,10 +5062,10 @@ const I18n = {
             // ============================================================
             // Tutorial
             // ============================================================
-            'tutorial.promptTitle': '🎮 Tutorial',
+            'tutorial.promptTitle': 'Tutorial',
             'tutorial.promptHeading': '¿Aprender a Jugar?',
             'tutorial.promptText': 'Domina los controles y mecánicas en un entorno seguro antes de enfrentarte al abismo.',
-            'tutorial.promptQuick': '⚡ Tutorial Rápido (~1 min)',
+            'tutorial.promptQuick': 'Tutorial Rápido (~1 min)',
             'tutorial.promptSkip': 'Saltar Tutorial',
             'tutorial.promptNever': 'No Mostrar Nunca',
             'tutorial.stageProgress': 'Paso ',
@@ -4990,7 +5111,7 @@ const I18n = {
             'tutorial.stage6.line6': 'Estadísticas: sigue tu progreso',
             'tutorial.stage6.line7': '',
             'tutorial.stage6.line8': '¡Bonus: +25 monedas!',
-            'tutorial.promptFull': '🎓 Tutorial Completo (~3 min)',
+            'tutorial.promptFull': 'Tutorial Completo (~3 min)',
             'tutorial.stage7.title': ' Conoce la Tienda',
             'tutorial.stage7.line1': 'Abre la TIENDA para comprar objetos con el oro de los enemigos.',
             'tutorial.stage7.line2': 'Las monedas caen de enemigos y cofres.',
@@ -5696,34 +5817,34 @@ const I18n = {
             'start.modeDungeon': 'Masmorra',
             'start.modeAbyss': 'Abismo',
             'start.difficultyLabel': 'Dificultad',
-            'start.diff.facil': '🌱 Fácil',
-            'start.diff.normal': '⚔️ Normal',
-            'start.diff.dificil': '💀 Difícil',
-            'start.diff.pesadelo': '🔥 Pesadilla',
+            'start.diff.facil': 'Fácil',
+            'start.diff.normal': 'Normal',
+            'start.diff.dificil': 'Difícil',
+            'start.diff.pesadelo': 'Pesadilla',
             'start.difficultyDesc': 'La experiencia estándar de Krevathorn.',
             'start.seedLabel': 'Semilla (partidas reproducibles)',
             'start.seedPlaceholder': 'vacío = aleatorio',
             'start.seedApply': 'Aplicar',
             'start.seedRandom': 'Aleatorio',
             'start.seedStatus': 'Misma semilla + mismo piso = mismo mapa y encuentros.',
-            'start.continueRun': '▶ Continuar Partida',
+            'start.continueRun': 'Continuar Partida',
             'start.classWarrior': 'Guerrero',
             'start.classRogue': 'Ladrón',
             'start.classMage': 'Mago',
             'start.classElf': 'Elfa',
-            'start.btnTutorial': '🎮 Tutorial',
-            'start.btnDaily': '🏆 Diario',
-            'start.btnMeta': '✨ MetaTienda',
+            'start.btnTutorial': 'Tutorial',
+            'start.btnDaily': 'Diario',
+            'start.btnMeta': 'MetaTienda',
             'start.buildPlaceholder': 'Código de build',
             'start.buildApply': 'Aplicar',
-            'start.arch.muralha': '🛡️ Muralla',
-            'start.arch.furia': '⚔️ Furia',
-            'start.arch.assassino': '🗡️ Asesino',
-            'start.arch.sombra': '🌑 Sombra',
-            'start.arch.arcano': '🔮 Arcano',
-            'start.arch.gelo': '❄️ Hielo',
-            'start.arch.vento': '💨 Viento',
-            'start.arch.natureza': '🌿 Naturaleza',
+            'start.arch.muralha': 'Muralla',
+            'start.arch.furia': 'Furia',
+            'start.arch.assassino': 'Asesino',
+            'start.arch.sombra': 'Sombra',
+            'start.arch.arcano': 'Arcano',
+            'start.arch.gelo': 'Hielo',
+            'start.arch.vento': 'Viento',
+            'start.arch.natureza': 'Naturaleza',
 
             // Difficulty presets (names/descs)
             'difficulty.facil.name': 'Fácil',
@@ -5844,8 +5965,8 @@ var CONFIG = {
     CANVAS_DEFAULT_HEIGHT: 600,
     TARGET_FPS: 60,
     TILE_SIZE: 48,
-    WALL_COLOR: '#1a1a22',
-    FLOOR_COLOR: '#080810',
+    WALL_COLOR: '#22242f',
+    FLOOR_COLOR: '#0d1018',
 
      // Map Generation
     MAP_WIDTH: 25,
@@ -6115,32 +6236,32 @@ var CONFIG = {
     BIOME_NAMES: ['dungeon', 'lavaCave', 'crypt', 'forest'],
 
     // Biome: Dungeon (default)
-    BIOME_DUNGEON_WALL_COLOR: '#3a3a4a',
-    BIOME_DUNGEON_FLOOR_COLOR: '#121218',
+    BIOME_DUNGEON_WALL_COLOR: '#3b4156',
+    BIOME_DUNGEON_FLOOR_COLOR: '#151a26',
     BIOME_DUNGEON_HAZARD_TYPES: ['fire', 'spikes', 'ice'],
     BIOME_DUNGEON_HAZARD_WEIGHTS: [0.45, 0.4, 0.15],
     BIOME_DUNGEON_AMBIENT_COLOR: null,
     BIOME_DUNGEON_AMBIENT_CHANCE: 0,
 
     // Biome: Lava Cave
-    BIOME_LAVA_WALL_COLOR: '#40241a',
-    BIOME_LAVA_FLOOR_COLOR: '#170a08',
+    BIOME_LAVA_WALL_COLOR: '#4a2c1d',
+    BIOME_LAVA_FLOOR_COLOR: '#1d0e0a',
     BIOME_LAVA_HAZARD_TYPES: ['fire', 'fire', 'spikes', 'poison'], // more fire
     BIOME_LAVA_HAZARD_WEIGHTS: [0.66, 0.66, 0.34, 0.2],
     BIOME_LAVA_AMBIENT_COLOR: '#ff4400',
     BIOME_LAVA_AMBIENT_CHANCE: 0.03,
 
     // Biome: Crypt
-    BIOME_CRYPT_WALL_COLOR: '#38385c',
-    BIOME_CRYPT_FLOOR_COLOR: '#14141f',
+    BIOME_CRYPT_WALL_COLOR: '#4a4a78',
+    BIOME_CRYPT_FLOOR_COLOR: '#1a1c30',
     BIOME_CRYPT_HAZARD_TYPES: ['spikes', 'spikes', 'fire', 'ice'], // more spikes
     BIOME_CRYPT_HAZARD_WEIGHTS: [0.66, 0.66, 0.34, 0.2],
     BIOME_CRYPT_AMBIENT_COLOR: '#6666aa',
     BIOME_CRYPT_AMBIENT_CHANCE: 0.02,
 
     // Biome: Forest
-    BIOME_FOREST_WALL_COLOR: '#234a23',
-    BIOME_FOREST_FLOOR_COLOR: '#0f1f0f',
+    BIOME_FOREST_WALL_COLOR: '#2e4a28',
+    BIOME_FOREST_FLOOR_COLOR: '#162814',
     BIOME_FOREST_HAZARD_TYPES: ['spikes', 'fire', 'poison'],
     BIOME_FOREST_HAZARD_WEIGHTS: [0.6, 0.4, 0.25],
     BIOME_FOREST_AMBIENT_COLOR: '#33ff33',
@@ -8321,7 +8442,7 @@ function _drawLightingLayer() {
                 const lp = map.litProps[i];
                 if (lp.x < camX - 400 || lp.x > camX + width + 400 || lp.y < camY - 400 || lp.y > camY + height + 400) continue;
                 const flicker = 0.78 + Math.sin(gameTime * 0.09 + i * 1.7) * 0.11 + Math.sin(gameTime * 0.23 + i * 3.1) * 0.06;
-                dL(lp.x, lp.y, 150, flicker);
+                dL(lp.x, lp.y, 180, flicker);
             }
         }
         lctx.globalCompositeOperation = 'source-over';
@@ -8350,6 +8471,23 @@ function _drawLightingLayer() {
                 ctx.fillRect(0, 0, width, height);
                 ctx.restore();
             }
+            // Soft colored "air": ONE cheap fullscreen radial 'lighter' gradient
+            // in the biome's light color, so even unlit rooms keep a faint
+            // colored atmosphere (single gradient + fill per recompose, gated
+            // exactly like the tint pass above).
+            const lc = BiomeSystem.getLightColor();
+            const lr_ = parseInt(lc.slice(1, 3), 16), lg_ = parseInt(lc.slice(3, 5), 16), lb_ = parseInt(lc.slice(5, 7), 16);
+            const airCx = width * 0.5, airCy = height * 0.5;
+            const airR = Math.sqrt(airCx * airCx + airCy * airCy);
+            const agrad = ctx.createRadialGradient(airCx, airCy, 0, airCx, airCy, airR);
+            agrad.addColorStop(0, `rgba(${lr_},${lg_},${lb_},0.07)`);
+            agrad.addColorStop(0.45, `rgba(${lr_},${lg_},${lb_},0.02)`);
+            agrad.addColorStop(1, `rgba(${lr_},${lg_},${lb_},0)`);
+            ctx.save();
+            ctx.globalCompositeOperation = 'lighter';
+            ctx.fillStyle = agrad;
+            ctx.fillRect(0, 0, width, height);
+            ctx.restore();
         }
         
         // Light rays emanating from the player in dark biomes (volumetric feel)
@@ -11091,6 +11229,11 @@ const RUN_OBJECTIVES = [
     { id: 'speedster',   icon: '⏱️', nameKey: 'obj.speedster.name', name: 'Veloz',             descKey: 'obj.speedster.desc', desc: 'Chegue ao Piso 5 em até 8 min', metric: 'floor', target: 5, reward: 380, timeLimit: 480 },
     { id: 'immaculate',  icon: '🛡️', nameKey: 'obj.immaculate.name', name: 'Impecável',         descKey: 'obj.immaculate.desc', desc: 'Dano sofrido menor que 300 até o Piso 4', metric: 'damage', target: 300, floor: 4, reward: 350 }
 ];
+// R3: SVG emblem per run-objective id (replaces emoji glyphs in the HUD pill)
+const _RUN_OBJECTIVE_SYMBOLS = {
+    executioner: 'ic-swords', ceifador: 'ic-skull', boss_hunter: 'ic-crown',
+    gold_seeker: 'ic-coin', explorer: 'ic-map', speedster: 'ic-target', immaculate: 'ic-shield-sword'
+};
 
 const RunObjectiveSystem = {
     current: null,
@@ -11223,7 +11366,8 @@ const RunObjectiveSystem = {
         if (render === this._lastRender) return;
         this._lastRender = render;
         this._el.classList.remove('hidden');
-        this._iconEl.textContent = this.completed ? '✅' : (this.failed ? '❌' : o.icon);
+        this._iconEl.innerHTML = '<svg class="icon-inline" width="11" height="11"><use href="#' + (_RUN_OBJECTIVE_SYMBOLS[o.id] || 'ic-target') + '"/></svg>';
+        this._iconEl.style.color = this.completed ? '#4ade80' : (this.failed ? '#f87171' : '');
         this._titleEl.textContent = this.completed ? o.name + ' — concluído' : (this.failed ? o.name + ' — falhou' : o.name);
         this._titleEl.style.color = this.completed ? '#4ade80' : (this.failed ? '#f87171' : '#e0b6ff');
         this._progEl.textContent = progText;
@@ -11760,10 +11904,10 @@ window.NarrativeSystem = NarrativeSystem;
 //               stronger impact on boss fights than on regular mobs
 // ============================================================
 const DIFFICULTY_PRESETS = {
-    facil:    { name: 'Fácil',    nameKey: 'difficulty.facil.name', descKey: 'difficulty.facil.desc', icon: '🌱', hpMult: 0.70, bossHpMult: 1.50, dmgMult: 0.60, xpMult: 0.80, color: '#5cff82', desc: 'Inimigos mais fracos. Ideal para aprender o jogo.' },
-    normal:   { name: 'Normal',   nameKey: 'difficulty.normal.name', descKey: 'difficulty.normal.desc', icon: '⚔️', hpMult: 1.00, bossHpMult: 1.85, dmgMult: 1.00, xpMult: 1.00, color: '#e0b6ff', desc: 'A experiência padrão de Krevathorn.' },
-    dificil:  { name: 'Difícil',  nameKey: 'difficulty.dificil.name', descKey: 'difficulty.dificil.desc', icon: '💀', hpMult: 1.40, bossHpMult: 2.25, dmgMult: 1.35, xpMult: 1.30, color: '#ffaa44', desc: 'Inimigos mais fortes. +30% de XP.' },
-    pesadelo: { name: 'Pesadelo', nameKey: 'difficulty.pesadelo.name', descKey: 'difficulty.pesadelo.desc', icon: '🔥', hpMult: 1.90, bossHpMult: 3.00, dmgMult: 1.70, xpMult: 1.60, color: '#ff4444', desc: 'Só para veteranos. +60% de XP.' }
+    facil:    { name: 'Fácil',    nameKey: 'difficulty.facil.name', descKey: 'difficulty.facil.desc', icon: 'ic-leaf', hpMult: 0.70, bossHpMult: 1.50, dmgMult: 0.60, xpMult: 0.80, color: '#6fce85', desc: 'Inimigos mais fracos. Ideal para aprender o jogo.' },
+    normal:   { name: 'Normal',   nameKey: 'difficulty.normal.name', descKey: 'difficulty.normal.desc', icon: 'ic-swords', hpMult: 1.00, bossHpMult: 1.85, dmgMult: 1.00, xpMult: 1.00, color: '#e0b6ff', desc: 'A experiência padrão de Krevathorn.' },
+    dificil:  { name: 'Difícil',  nameKey: 'difficulty.dificil.name', descKey: 'difficulty.dificil.desc', icon: 'ic-skull', hpMult: 1.40, bossHpMult: 2.25, dmgMult: 1.35, xpMult: 1.30, color: '#eea55c', desc: 'Inimigos mais fortes. +30% de XP.' },
+    pesadelo: { name: 'Pesadelo', nameKey: 'difficulty.pesadelo.name', descKey: 'difficulty.pesadelo.desc', icon: 'ic-flame-alt', hpMult: 1.90, bossHpMult: 3.00, dmgMult: 1.70, xpMult: 1.60, color: '#e05246', desc: 'Só para veteranos. +60% de XP.' }
 };
 
 const DifficultySystem = {
@@ -12024,7 +12168,9 @@ window._refreshDifficultyUI = function() {
     // HUD badge
     var badge = document.getElementById('difficulty-badge');
     if (badge) {
-        badge.textContent = preset.icon + ' ' + ((window._L && preset.nameKey) ? _L(preset.nameKey, preset.name) : preset.name);
+        var diffName = (window._L && preset.nameKey) ? _L(preset.nameKey, preset.name) : preset.name;
+        badge.innerHTML = '<svg class="icon-inline" style="width:11px;height:11px;flex:none;" aria-hidden="true"><use href="#' + (preset.icon || 'ic-swords') + '"/></svg>';
+        badge.appendChild(document.createTextNode(diffName));
         badge.style.color = preset.color;
         badge.style.borderColor = preset.color + '66';
         badge.style.background = preset.color + '14';
@@ -12893,7 +13039,7 @@ const ScreenEffects = {
             const vx = width / 2, vy = height / 2;
             const vrad = Math.sqrt(vx * vx + vy * vy) * 1.2;
             let vAlpha = this._vignetteAlpha;
-            if (vAlpha <= 0.01) vAlpha = 0.16;
+            if (vAlpha <= 0.01) vAlpha = 0.13;
             const grad = ctx.createRadialGradient(vx, vy, vrad * 0.4, vx, vy, vrad);
             grad.addColorStop(0, 'rgba(0,0,0,0)');
             grad.addColorStop(0.6, 'rgba(0,0,0,0)');
@@ -13025,12 +13171,12 @@ const SpriteManager = {
 
     // Define pixel art palettes: [0=outline, 1=skin, 2=main, 3=accent, 4=weapon, 5=eye, 6=shadow, 7=glow, 8=highlight]
     palettes: {
-        warrior:  ['#000', '#f1c27d', '#c0392b', '#f39c12', '#7f8c8d', '#fff', '#7b241c', '#ffaa00', '#e74c3c'],
-        rogue:    ['#000', '#f1c27d', '#27ae60', '#145a32', '#95a5a6', '#fff', '#0e6251', '#2ecc71', '#58d68d'],
-        mage:     ['#000', '#f1c27d', '#8e44ad', '#5b2c6f', '#e67e22', '#fff', '#4a235a', '#bb8fce', '#d2b4de'],
-        elf:      ['#000', '#f1c27d', '#2e8b57', '#14532d', '#8a6d3b', '#fff', '#0b3d1e', '#58e08a', '#a7f3d0'],
-        melee:    ['#000', '#e74c3c', '#922b21', '#641e16', '#34495e', '#f1c40f', '#440000', '#ff0000', '#ff4d4d'],
-        ranged:   ['#000', '#e67e22', '#a04000', '#5e3307', '#5d6d7e', '#f1c40f', '#331111', '#ff8c00', '#ffb347'],
+        warrior:  ['#000', '#f1c27d', '#466e8e', '#c9a227', '#869dab', '#fff', '#3a2e26', '#7fb4d0', '#e74c3c'],
+        rogue:    ['#000', '#f1c27d', '#262b31', '#6b2b1f', '#8a9198', '#fff', '#14161a', '#ff4d4d', '#565c66'],
+        mage:     ['#000', '#f1c27d', '#6a3d91', '#845ec2', '#3ad0ff', '#fff', '#4a235a', '#3ad0ff', '#d2b4de'],
+        elf:      ['#000', '#f1c27d', '#4e6e31', '#7d8c2f', '#dbb55c', '#fff', '#0b3d1e', '#58e08a', '#9fd98a'],
+        melee:    ['#000', '#e74c3c', '#7a2c2c', '#641e16', '#34495e', '#f1c40f', '#440000', '#ff0000', '#ff4d4d'],
+        ranged:   ['#000', '#e67e22', '#8c4414', '#5e3307', '#5d6d7e', '#f1c40f', '#331111', '#ff8c00', '#ffb347'],
         swarm:    ['#000', '#2c3e50', '#1c2833', '#000', '#000', '#e74c3c', '#000', '#34495e', '#566573'],
         boss:     ['#000', '#8e44ad', '#4a235a', '#2c3e50', '#1c2833', '#e74c3c', '#000', '#9b59b6', '#c39bd3'],
         shadow: ["#000","#6a4cff","#3a1f8c","#1b0f3a","#2b1650","#ffec9e","#12082e","#8b66ff","#c2b2ff"],
@@ -14404,7 +14550,7 @@ const BiomeSystem = {
             ambientChance: CONFIG.BIOME_DUNGEON_AMBIENT_CHANCE,
             wallDetail: true,
             floorDetail: true,
-            lightAlpha: 0.52  // moderately lit
+            lightAlpha: 0.44  // moderately lit
         },
         lavaCave: {
             nameKey: 'biome.lavaCave.name',
@@ -14417,7 +14563,7 @@ const BiomeSystem = {
             ambientChance: CONFIG.BIOME_LAVA_AMBIENT_CHANCE,
             wallDetail: true,
             floorDetail: true,
-            lightAlpha: 0.44  // lava glow = brighter
+            lightAlpha: 0.38  // lava glow = brighter
         },
         crypt: {
             nameKey: 'biome.crypt.name',
@@ -14430,7 +14576,7 @@ const BiomeSystem = {
             ambientChance: CONFIG.BIOME_CRYPT_AMBIENT_CHANCE,
             wallDetail: true,
             floorDetail: true,
-            lightAlpha: 0.53  // crypts are moody but still readable
+            lightAlpha: 0.46  // crypts are moody but still readable
         },
         forest: {
             nameKey: 'biome.forest.name',
@@ -14443,7 +14589,7 @@ const BiomeSystem = {
             ambientChance: CONFIG.BIOME_FOREST_AMBIENT_CHANCE,
             wallDetail: true,
             floorDetail: true,
-            lightAlpha: 0.50  // forest canopy = medium dark, still readable
+            lightAlpha: 0.42  // forest canopy = medium dark, still readable
         }
     },
 
@@ -14458,10 +14604,10 @@ const BiomeSystem = {
     // Ambient color tint over the whole scene, per biome
     getAmbientTint() {
         const b = this.getBiome();
-        if (this.currentBiome === 'lavaCave') return { color: '#ff5522', alpha: 0.10 };
-        if (this.currentBiome === 'crypt') return { color: '#7766cc', alpha: 0.12 };
-        if (this.currentBiome === 'forest') return { color: '#33cc66', alpha: 0.10 };
-        return { color: '#334466', alpha: 0.08 };
+        if (this.currentBiome === 'lavaCave') return { color: '#ff6633', alpha: 0.11 };
+        if (this.currentBiome === 'crypt') return { color: '#7b6fd6', alpha: 0.13 };
+        if (this.currentBiome === 'forest') return { color: '#3ecf6e', alpha: 0.11 };
+        return { color: '#44629e', alpha: 0.10 };
     },
 
     // ============================================================
@@ -14757,7 +14903,7 @@ const BiomeSystem = {
                 ctx.stroke();
             } else if (h % 100 < 14) {
                 ctx.globalAlpha = 0.18;
-                ctx.fillStyle = '#2f5c2f';
+                ctx.fillStyle = '#35604f';
                 ctx.beginPath();
                 ctx.arc(px + ts * 0.7, py + ts * 0.3, 2 + (h >> 10) % 3, 0, Math.PI * 2);
                 ctx.fill();
@@ -15827,7 +15973,7 @@ class Map {
             for(let x=1; x<W-1; x++) {
                 if (this.tiles[x][y].t !== 0) continue;
                 const h3 = (x * 374761393 + y * 668265263) & 0xFFFF;
-                if ((h3 % 100) >= 7) continue;
+                if ((h3 % 100) >= 20) continue;
                 // Needs open neighbors so the light reads as a clear focal point
                 let clear = true;
                 for (let dx=-1; dx<=1 && clear; dx++) {
@@ -15841,7 +15987,7 @@ class Map {
                 let nearLight = false;
                 for (let i=0; i<this.litProps.length; i++) {
                     const lp=this.litProps[i];
-                    if (Math.abs(lp.tx-x)+Math.abs(lp.ty-y) < 6) { nearLight = true; break; }
+                    if (Math.abs(lp.tx-x)+Math.abs(lp.ty-y) < 4) { nearLight = true; break; }
                 }
                 if (nearLight) continue;
                 this.tiles[x][y].lit = true;
@@ -15885,19 +16031,35 @@ class Map {
     // Light prop art baked into the world buffer (once per floor)
     _drawLightProp(bctx, px, py, ts, x, y) {
         const b = (typeof BiomeSystem !== 'undefined' && BiomeSystem.currentBiome) || 'dungeon';
-        const pal = this._lightPalette();
+        let pal = this._lightPalette();
+        const h3 = (x * 374761393 + y * 668265263) & 0xFF;
+        // Dungeon: ~2 in 5 light props become a cyan crystal cluster instead
+        // of a flame (deterministic per tile hash — the same hash that placed
+        // the prop), echoing the emissive cyan crystals of the target palette.
+        const crystalProp = (b === 'crypt') || (b === 'dungeon' && (h3 % 2) === 0);
+        if (b === 'dungeon' && crystalProp) pal = { flame:'#9ff0ff', core:'#eaffff', outer:'#3fc8f0', body:'#3d4655', glow:'rgba(120,215,255,' };
         const cx3 = px + ts/2, by3 = py + ts - 7;
-        // Baked glow pool on the floor around the light
-        const glow = bctx.createRadialGradient(cx3, py + ts*0.5, 2, cx3, py + ts*0.5, ts*1.4);
-        glow.addColorStop(0, pal.glow + '0.30)');
-        glow.addColorStop(1, pal.glow + '0)');
-        bctx.fillStyle = glow;
-        bctx.fillRect(px - ts*0.4, py - ts*0.4, ts*1.8, ts*1.8);
+        // Baked colored halo on the floor around the prop: a soft additive
+        // ('lighter') radial in the prop's glow color, baked once into the
+        // tile buffer (no per-frame cost, no shadowBlur). Radius ~2.2x the
+        // tile body, peak alpha ~0.18 so a generous ring of adjacent floor
+        // is visibly tinted in the prop's color.
+        if (window.GFX === undefined || window.GFX.glows !== false) {
+            const haloR = ts * 2.4;
+            const glow = bctx.createRadialGradient(cx3, py + ts*0.5, 2, cx3, py + ts*0.5, haloR);
+            glow.addColorStop(0, pal.glow + '0.18)');
+            glow.addColorStop(0.55, pal.glow + '0.06)');
+            glow.addColorStop(1, pal.glow + '0)');
+            bctx.save();
+            bctx.globalCompositeOperation = 'lighter';
+            bctx.fillStyle = glow;
+            bctx.fillRect(px - ts*2.3, py - ts*2.3, ts*5.6, ts*5.6);
+            bctx.restore();
+        }
         // Soft highlight under the prop
         bctx.fillStyle = 'rgba(255,255,255,0.05)';
         bctx.beginPath(); bctx.ellipse(cx3, by3, ts*0.28, ts*0.1, 0, 0, Math.PI*2); bctx.fill();
-        const h3 = (x * 374761393 + y * 668265263) & 0xFF;
-        if (b === 'crypt') {
+        if (crystalProp) {
             // Crystal cluster: tapered shards with bright cores
             bctx.fillStyle = 'rgba(0,0,0,0.28)';
             bctx.beginPath(); bctx.ellipse(cx3, by3, ts*0.3, ts*0.09, 0, 0, Math.PI*2); bctx.fill();
@@ -16067,12 +16229,12 @@ class Map {
                     const ptone = (p2 % 9) - 4;
                     if (ptone > 0) { bctx.fillStyle = 'rgba(255,255,255,' + (ptone * 0.006) + ')'; bctx.fillRect(px, py, ts, ts); }
                     else if (ptone < 0) { bctx.fillStyle = 'rgba(0,0,0,' + (-ptone * 0.007) + ')'; bctx.fillRect(px, py, ts, ts); }
-                    if (h1 % 100 < 16) {
-                        bctx.fillStyle = (h1 % 2 === 0) ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.06)';
+                    if (h1 % 100 < 26) {
+                        bctx.fillStyle = (h1 % 2 === 0) ? 'rgba(255,255,255,0.036)' : 'rgba(0,0,0,0.072)';
                         const sx2 = px + (h1 % ts), sy2 = py + ((h1 >> 4) % ts);
                         bctx.beginPath(); bctx.arc(sx2, sy2, 1 + (h1 >> 8) % 2, 0, Math.PI * 2); bctx.fill();
                     }
-                    if (h1 % 100 < 7) {
+                    if (h1 % 100 < 12) {
                         // Small rubble/pebble cluster
                         bctx.fillStyle = 'rgba(255,255,255,0.04)';
                         const rx0 = px + (h1 % (ts - 8)), ry0 = py + ((h1 >> 4) % (ts - 8));
@@ -16081,14 +16243,23 @@ class Map {
                         bctx.fillStyle = 'rgba(0,0,0,0.10)';
                         bctx.fillRect(rx0 + 1, ry0 + 2, 2, 2);
                     }
-                    if (h1 % 100 < 4) {
-                        // Rare crack line
+                    if (h1 % 100 < 8) {
+                        // Crack line
                         bctx.strokeStyle = 'rgba(0,0,0,0.12)';
                         bctx.lineWidth = 1;
                         bctx.beginPath();
                         bctx.moveTo(px + ts * 0.2, py + ts * (0.2 + (h1 >> 3) % 5 * 0.1));
                         bctx.lineTo(px + ts * 0.85, py + ts * (0.6 + (h1 >> 6) % 4 * 0.08));
                         bctx.stroke();
+                    }
+
+                    // Worn slab bevel: hash-selected tiles get a faint 1px
+                    // top-left light catch, so the floor reads as chamfered
+                    // stone plates instead of a uniform matte fill.
+                    if (((h1 >> 4) % 100) < 40) {
+                        bctx.fillStyle = 'rgba(255,255,255,0.05)';
+                        bctx.fillRect(px, py, ts, 1);
+                        bctx.fillRect(px, py, 1, ts);
                     }
 
                     // Wall-adjacent shadow bands (AO): darken the exact edge
@@ -16100,7 +16271,7 @@ class Map {
                     if (x < this.width-1 && this.tiles[x+1][y].t === 1) wallE = true;
                     const wallCount = (wallN?1:0)+(wallS?1:0)+(wallW?1:0)+(wallE?1:0);
                     if (wallCount > 0) {
-                        bctx.fillStyle = 'rgba(0,0,0,0.10)';
+                        bctx.fillStyle = 'rgba(0,0,0,0.13)';
                         if (wallN) { bctx.fillRect(px, py, ts, 6); bctx.fillRect(px, py + 6, ts, 2); }
                         if (wallS) { bctx.fillRect(px, py + ts - 6, ts, 6); bctx.fillRect(px, py + ts - 8, ts, 2); }
                         if (wallW) { bctx.fillRect(px, py, 6, ts); bctx.fillRect(px + 6, py, 2, ts); }
@@ -16131,12 +16302,12 @@ class Map {
                         bctx.fillStyle = 'rgba(0,0,0,0.3)';
                         bctx.beginPath(); bctx.ellipse(cx2, cy2 + r*0.3, r*0.9, r*0.3, 0, 0, Math.PI*2); bctx.fill();
                         // Body
-                        bctx.fillStyle = '#3a3a44';
+                        bctx.fillStyle = '#41445c';
                         bctx.beginPath(); bctx.arc(cx2, cy2, r, 0, Math.PI*2); bctx.fill();
                         // Edge highlight
-                        bctx.fillStyle = '#555560';
+                        bctx.fillStyle = '#5a5e74';
                         bctx.beginPath(); bctx.arc(cx2 - r*0.15, cy2 - r*0.15, r*0.6, 0, Math.PI*2); bctx.fill();
-                        bctx.fillStyle = '#6a6a78';
+                        bctx.fillStyle = '#70748c';
                         bctx.beginPath(); bctx.arc(cx2 - r*0.2, cy2 - r*0.2, r*0.3, 0, Math.PI*2); bctx.fill();
                     }
 
