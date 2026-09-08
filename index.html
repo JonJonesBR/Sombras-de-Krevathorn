@@ -341,7 +341,7 @@ body.mm-hidden #top-bar .top-right-chips { margin-right: 0; }
     box-shadow: 0 0 12px rgba(157, 78, 221, 0.2);
 }
 .util-btn .icon-inline {
-    color: #c4a8dd;
+    color: #e2cff5;
     filter: drop-shadow(0 0 4px rgba(224, 182, 255, 0.2));
     transition: all 0.2s ease;
 }
@@ -355,15 +355,31 @@ body.mm-hidden #top-bar .top-right-chips { margin-right: 0; }
     border-color: rgba(224, 182, 255, 0.30) !important;
     background: rgba(30, 22, 45, 0.88) !important;
 }
-.util-btn .icon-inline, .util-btn span { color: #e2cdf9 !important; }
+.util-btn .icon-inline, .util-btn span { color: #e2cff5 !important; }
+/* Ícones maiores e nítidos: a regra .icon-inline (width/height:1em) venceria
+   os atributos dos <svg>, então o tamanho é fixado com !important aqui. */
+.util-btn .icon-inline {
+    width: 22px !important;
+    height: 22px !important;
+}
 /* As regras base acima usam !important para vencer os estilos inline dos
    botões; sem equivalente !important nos estados :active, o pressionar
    perderia o feedback (fundo/borda/ícone não clareariam). */
 .util-btn:active {
     background: rgba(80, 55, 130, 0.65) !important;
-    border-color: rgba(224, 182, 255, 0.55) !important;
+    border-color: rgba(157, 78, 221, 0.85) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.14), 0 0 14px rgba(157,78,221,0.55), 0 0 0 1px rgba(157,78,221,0.6) !important;
 }
 .util-btn:active .icon-inline, .util-btn:active span { color: #ffffff !important; }
+/* Minimap toggle: same legibility pass — explicit 16px (else .icon-inline's
+   1em sizing + inherited font wins over the svg attributes) + brighter tint. */
+#minimap-toggle-btn .icon-inline {
+    width: 16px !important;
+    height: 16px !important;
+    color: rgba(226, 207, 245, 0.9) !important;
+    filter: drop-shadow(0 0 4px rgba(224, 182, 255, 0.25));
+}
+#minimap-toggle-btn:active .icon-inline { color: #ffffff !important; }
 
 /* ============================================================
    TOAST / LOGS
@@ -1025,6 +1041,51 @@ body.gfx-low #start-screen::after { animation: none !important; opacity: 0.5 !im
 #start-options-seed summary::-webkit-details-marker,
 #start-options-build summary::-webkit-details-marker { display: none; }
 
+/* ============================================================
+   G2 — skill tree: explicit node states (visual only)
+   ============================================================ */
+.skill-node .sk-name { font-weight: bold; font-size: 13px; }
+.skill-node .sk-status { font-size: 11px; font-weight: bold; }
+.skill-node .sk-check { font-weight: bold; }
+.skill-node.state-bought {
+    border: 1.5px solid rgba(74, 222, 128, 0.5);
+    background: linear-gradient(135deg, rgba(74, 222, 128, 0.14), rgba(74, 222, 128, 0.05));
+    box-shadow: 0 0 10px rgba(74, 222, 128, 0.12);
+}
+.skill-node.state-bought .sk-name,
+.skill-node.state-bought .sk-check,
+.skill-node.state-bought .sk-status { color: #4ade80; }
+.skill-node.state-affordable {
+    border: 1.5px solid rgba(250, 204, 21, 0.5);
+    background: rgba(250, 204, 21, 0.07);
+    box-shadow: 0 0 12px rgba(250, 204, 21, 0.18);
+}
+.skill-node.state-affordable .sk-name,
+.skill-node.state-affordable .sk-status { color: #ffcc00; }
+.skill-node.state-locked-req,
+.skill-node.state-locked-funds,
+.skill-node.state-speed-locked {
+    border: 1.5px solid rgba(255, 255, 255, 0.08);
+    background: rgba(20, 15, 30, 0.6);
+    opacity: 0.6;
+}
+.skill-node.state-locked-req .sk-name,
+.skill-node.state-locked-funds .sk-name,
+.skill-node.state-speed-locked .sk-name { color: #9ca3af; }
+.skill-node.state-locked-req .sk-status,
+.skill-node.state-locked-funds .sk-status,
+.skill-node.state-speed-locked .sk-status { color: #6b7280; }
+
+/* ============================================================
+   G2 — util bar: bolder stroke + per-button bottom-edge accent
+   ============================================================ */
+.util-btn svg * { stroke-width: 2; }
+#skills-btn-bar { border-bottom-color: #9d6ef0 !important; }
+#shop-btn-bar { border-bottom-color: #e0b84e !important; }
+#stats-btn-bar { border-bottom-color: #6ec6f0 !important; }
+#pause-btn-bar { border-bottom-color: rgba(224, 182, 255, 0.35) !important; }
+#quest-btn-bar { border-bottom-color: #7fd08a !important; }
+
 </style>
 
 </head>
@@ -1335,26 +1396,26 @@ body.gfx-low #start-screen::after { animation: none !important; opacity: 0.5 !im
             <!-- Center: Utility tab bar (thumb-reachable) -->
             <div style="display:flex;gap:3px;pointer-events:auto;">
                 <button id="skills-btn-bar" class="util-btn" onclick="if(window.toggleSkillTree) toggleSkillTree()" style="width:38px;height:38px;border-radius:10px;background:rgba(30,22,45,0.7);border:1px solid rgba(224,182,255,0.12);display:flex;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation;transition:all 0.2s;">
-                    <svg class="icon-inline" width="18" height="18" style="color:#c4a8dd;"><use href="#ic-tree"/></svg>
+                    <svg class="icon-inline" width="20" height="20" style="color:#e2cff5;"><use href="#ic-tree"/></svg>
                 </button>
                 <button id="shop-btn-bar" class="util-btn" onclick="if(window.toggleShop) toggleShop()" style="width:38px;height:38px;border-radius:10px;background:rgba(30,22,45,0.7);border:1px solid rgba(224,182,255,0.12);display:flex;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation;transition:all 0.2s;">
-                    <svg class="icon-inline" width="18" height="18" style="color:#c4a8dd;"><use href="#ic-store"/></svg>
+                    <svg class="icon-inline" width="20" height="20" style="color:#e2cff5;"><use href="#ic-store"/></svg>
                 </button>
                 <button id="stats-btn-bar" class="util-btn" onclick="if(window.toggleStats) toggleStats()" style="width:38px;height:38px;border-radius:10px;background:rgba(30,22,45,0.7);border:1px solid rgba(224,182,255,0.12);display:flex;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation;transition:all 0.2s;">
-                    <svg class="icon-inline" width="18" height="18" style="color:#c4a8dd;"><use href="#ic-bar-chart"/></svg>
+                    <svg class="icon-inline" width="20" height="20" style="color:#e2cff5;"><use href="#ic-bar-chart"/></svg>
                 </button>
                 <button id="pause-btn-bar" class="util-btn" onclick="if(window.PauseSystem) PauseSystem.toggle()" style="width:38px;height:38px;border-radius:10px;background:rgba(30,22,45,0.7);border:1px solid rgba(224,182,255,0.12);display:flex;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation;transition:all 0.2s;">
-                    <svg class="icon-inline" width="16" height="16"><use href="#ic-pause"/></svg>
+                    <svg class="icon-inline" width="20" height="20"><use href="#ic-pause"/></svg>
                 </button>
                 <button id="quest-btn-bar" class="util-btn" onclick="if(window.QuestSystem) QuestSystem.toggle()" style="width:38px;height:38px;border-radius:10px;background:rgba(30,22,45,0.7);border:1px solid rgba(224,182,255,0.12);display:flex;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation;transition:all 0.2s;">
-                    <svg class="icon-inline" width="16" height="16"><use href="#ic-scroll"/></svg>
+                    <svg class="icon-inline" width="20" height="20"><use href="#ic-scroll"/></svg>
                 </button>
             </div>
 
             <!-- Right: Minimap toggle (small) -->
             <div style="display:flex;gap:3px;pointer-events:auto;">
                 <button id="minimap-toggle-btn" onclick="window._toggleMinimap()" style="width:32px;height:32px;border-radius:8px;background:rgba(30,22,45,0.6);border:1px solid rgba(224,182,255,0.1);display:flex;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation;transition:all 0.2s;">
-                    <svg class="icon-inline" width="14" height="14" style="color:rgba(224,182,255,0.6);"><use href="#ic-map"/></svg>
+                    <svg class="icon-inline" width="16" height="16" style="color:rgba(226,207,245,0.9);"><use href="#ic-map"/></svg>
                 </button>
             </div>
         </div>
@@ -1378,7 +1439,12 @@ body.gfx-low #start-screen::after { animation: none !important; opacity: 0.5 !im
 
         <!-- QUESTS PANEL (light, tied to lore) -->
         <div id="quest-panel" class="hidden" style="position:absolute;top:calc(env(safe-area-inset-top,8px) + 148px);right:max(8px,env(safe-area-inset-right,8px));width:min(240px,44vw);z-index:116;pointer-events:auto;background:rgba(18,14,28,0.92);border:1.5px solid rgba(224,182,255,0.22);border-radius:12px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 4px 16px rgba(0,0,0,0.45);padding:8px 10px;">
-            <div data-i18n="ui.questsTitle" style="font-size:8px;letter-spacing:0.18em;text-transform:uppercase;color:rgba(224,182,255,0.55);margin-bottom:6px;">📜 Missões da Profecia</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:6px;">
+                <div data-i18n="ui.questsTitle" style="font-size:8px;letter-spacing:0.18em;text-transform:uppercase;color:rgba(224,182,255,0.55);">📜 Missões da Profecia</div>
+                <button id="quest-panel-close" onclick="if(window.QuestSystem) QuestSystem.toggle()" style="flex:none;width:18px;height:18px;border-radius:6px;border:1px solid rgba(224,182,255,0.2);background:rgba(224,182,255,0.08);color:rgba(224,182,255,0.7);display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer;touch-action:manipulation;" aria-label="Fechar missões">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                </button>
+            </div>
             <div id="quest-list" style="display:flex;flex-direction:column;gap:8px;font-size:10px;color:#e5d9f5;"></div>
         </div>
 
@@ -13041,9 +13107,9 @@ const ScreenEffects = {
             let vAlpha = this._vignetteAlpha;
             if (vAlpha <= 0.01) vAlpha = 0.13;
             const grad = ctx.createRadialGradient(vx, vy, vrad * 0.4, vx, vy, vrad);
-            grad.addColorStop(0, 'rgba(0,0,0,0)');
-            grad.addColorStop(0.6, 'rgba(0,0,0,0)');
-            grad.addColorStop(1, `rgba(0,0,0,${vAlpha})`);
+            grad.addColorStop(0, 'rgba(9,7,18,0)');
+            grad.addColorStop(0.6, 'rgba(9,7,18,0)');
+            grad.addColorStop(1, `rgba(9,7,18,${vAlpha})`);
             ctx.save();
             ctx.fillStyle = grad;
             ctx.fillRect(0, 0, width, height);
@@ -14255,7 +14321,7 @@ class DamageNumber {
         this.vy = -3 - Math.random() * 2; 
         this.vx = (Math.random()-0.5)*2;
         this.gravity = 0.15;
-        this.baseSize = type === 'crit' ? 18 : (type === 'heal' ? 14 : (type === 'stun' || type === 'bleed' || type === 'frost' || type === 'execute' ? 13 : 12));
+        this.baseSize = type === 'crit' ? 20 : (type === 'heal' ? 15 : (type === 'stun' || type === 'bleed' || type === 'frost' || type === 'execute' ? 14 : 13));
         this.scale = type === 'crit' ? 1.8 : 1.4;
         this.alive = true;
         return this;
@@ -14354,7 +14420,7 @@ class Trail {
 const DamageNumbers = {
     numbers: [],
     slashes: [],
-    MAX_NUMBERS: 15,
+    MAX_NUMBERS: 20,
     addSlash(x, y, angle, radius, color) {
         if (this.slashes.length > 5) return;
         let s;
@@ -15728,11 +15794,15 @@ class Chest {
         ctx.fillStyle = '#111';
         ctx.beginPath(); ctx.arc(sx, sy + bob - 2, 2, 0, Math.PI * 2); ctx.fill();
 
-        // Label
-        ctx.globalAlpha = 0.9; ctx.fillStyle = this.color;
-        ctx.font = 'bold 9px ' + COLORS.CANVAS_FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText(this.label, sx, sy + bob - 34);
-        ctx.globalAlpha = 1;
+        // Label — only when it fits on screen: skip within ~40px of either
+        // side edge (or near top/bottom) so the text never clips at the
+        // viewport boundary. The chest itself is always drawn.
+        if (sx > 40 && sx < width - 40 && (sy + bob) > 44 && (sy + bob) < height - 16) {
+            ctx.globalAlpha = 0.9; ctx.fillStyle = this.color;
+            ctx.font = 'bold 9px ' + COLORS.CANVAS_FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText(this.label, sx, sy + bob - 34);
+            ctx.globalAlpha = 1;
+        }
     }
 }
 
@@ -16253,6 +16323,18 @@ class Map {
                         bctx.stroke();
                     }
 
+                    // Broad mottled patches (independent hash slices): ~12% of
+                    // tiles get a faint dark wash, ~7% a faint light one, so big
+                    // open floor areas breathe instead of reading as one flat
+                    // slab. Baked once into the tile buffer — no per-frame cost.
+                    if ((h1 % 17) < 2) {
+                        bctx.fillStyle = 'rgba(0,0,0,0.05)';
+                        bctx.fillRect(px, py, ts, ts);
+                    } else if ((h1 % 13) === 0) {
+                        bctx.fillStyle = 'rgba(255,255,255,0.03)';
+                        bctx.fillRect(px, py, ts, ts);
+                    }
+
                     // Worn slab bevel: hash-selected tiles get a faint 1px
                     // top-left light catch, so the floor reads as chamfered
                     // stone plates instead of a uniform matte fill.
@@ -16754,6 +16836,14 @@ class Enemy extends Entity {
         const distToCamSq = (this.x - cx - width/2) * (this.x - cx - width/2) + (this.y - cy - height/2) * (this.y - cy - height/2);
         const isNear = distToCamSq < 250000;
         
+        // Soft additive pool in the enemy's identity color (screen-space px/py):
+        // lifts dark-on-dark sprites out of the penumbra without touching the
+        // lighting sim. drawGlow self-gates on GFX.glows. Skipped for
+        // elites/bosses — they already carry their own additive glow.
+        if(!this.elite && !this.isB && isNear) {
+            drawGlow(ctx, px, py, this.radius * 2, this.variantColor || this.color || '#f33', 0.1);
+        }
+        
         // Elite glow + boss aura
         if((this.elite || this.isB) && isNear) {
             const pulse = Math.sin(gameTime * 0.1) * 0.15;
@@ -16911,9 +17001,21 @@ class Enemy extends Entity {
             ctx.lineTo(px, py - this.radius - 12 - Math.sin(gameTime * 0.2) * 2);
             ctx.lineTo(px + cw * 0.5, py - this.radius - 5);
             ctx.closePath();
-            ctx.fill();
+            ctx.fill(); 
             ctx.globalAlpha = 1;
             this.frozen--; 
+        }
+        
+        // Small HP bar for damaged enemies (legibility feedback). Mirrors the
+        // elite bar colors; drawn last so nothing overlaps it. Full-HP enemies,
+        // elites/bosses (own bars) and the dead (early return) never show one.
+        if(!this.elite && !this.isB && isNear && this.hp < this.maxHp) {
+            const barW = 26, barH = 4;
+            const barX = px - barW / 2, barY = py - 37;
+            ctx.fillStyle = 'rgba(0,0,0,0.7)';
+            ctx.fillRect(barX - 1, barY - 1, barW + 2, barH + 2);
+            ctx.fillStyle = '#ff8800';
+            ctx.fillRect(barX, barY, barW * Math.max(0, Math.min(1, this.hp / this.maxHp)), barH);
         }
     }
 }
@@ -22247,18 +22349,26 @@ window.SkillTreeUI = SkillTreeUI;
             const renderNode = (s) => {
                 const isUnlocked = p.unlockedSkills.includes(s.id);
                 const speedLocked = s.cat === 'speed' && !isUnlocked && speedBought >= speedLimit;
-                const canUnlock = !isUnlocked && !speedLocked && p.currency >= s.cost && (!s.requires || p.unlockedSkills.includes(s.requires));
+                const reqOk = !s.requires || p.unlockedSkills.includes(s.requires);
+                const fundsOk = p.currency >= s.cost;
+                // Estado explícito do nó (G2): state-bought | state-affordable |
+                // state-locked-req | state-locked-funds | state-speed-locked
+                const state = isUnlocked ? 'state-bought'
+                    : speedLocked ? 'state-speed-locked'
+                    : !reqOk ? 'state-locked-req'
+                    : fundsOk ? 'state-affordable'
+                    : 'state-locked-funds';
+                const canUnlock = !isUnlocked && !speedLocked && reqOk && fundsOk;
                 const locked = !isUnlocked && !canUnlock;
                 const isAbility = !!s.ability;
-                const nodeColor = isUnlocked ? '#a78bfa' : (canUnlock ? COLORS.GOLD : 'rgba(255,255,255,0.25)');
                 const limitBadge = speedLocked
                     ? `<span style="font-size:8px;padding:2px 8px;border-radius:999px;background:rgba(248,113,113,0.15);color:#f87171;font-weight:bold">LIMITE ${speedBought}/${speedLimit}</span>`
                     : '';
                 return `
-                    <div style="width:100%;padding:10px;border-radius:12px;border:1.5px solid ${isUnlocked ? 'rgba(167,139,250,0.6)' : (canUnlock ? 'rgba(250,204,21,0.5)' : 'rgba(255,255,255,0.1)')};background:${isUnlocked ? 'linear-gradient(135deg, rgba(167,139,250,0.25), rgba(120,80,220,0.2))' : (canUnlock ? 'rgba(250,204,21,0.08)' : 'rgba(20,15,30,0.6)')};cursor:pointer;transition:all 0.2s;${locked ? 'opacity:0.65' : ''}"
+                    <div class="skill-node ${state}" style="width:100%;padding:10px;border-radius:12px;cursor:pointer;transition:all 0.2s"
                          onclick="UIManager.showSkillDetail('${s.id}')">
                         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-                            <div style="font-weight:bold;font-size:13px;color:${isUnlocked ? '#e9d5ff' : (canUnlock ? COLORS.GOLD : COLORS.TEXT_DIM)}">${s.name} ${isUnlocked ? '✓' : ''}</div>
+                            <div class="sk-name">${s.name} ${isUnlocked ? '<span class="sk-check">✓</span>' : ''}</div>
                             <div style="display:flex;gap:4px;align-items:center">
                                 ${isAbility ? '<span style="font-size:9px;padding:2px 8px;border-radius:999px;background:rgba(250,204,21,0.2);color:' + COLORS.GOLD + ';font-weight:bold">' + _L('skills.ability', 'HABILIDADE') + '</span>' : ''}
                                 ${s.cat === 'speed' ? '<span style="font-size:8px;padding:2px 8px;border-radius:999px;background:rgba(96,165,250,0.2);color:#60a5fa;font-weight:bold">VEL</span>' : ''}
@@ -22268,7 +22378,7 @@ window.SkillTreeUI = SkillTreeUI;
                         <div style="font-size:10px;color:${COLORS.TEXT_DIM};line-height:1.3">${s.desc}</div>
                         <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
                             <div style="font-size:9px;color:${COLORS.TEXT_MUTED}">${s.requires ? _L('skills.requires', 'Requer: ') + (byId[s.requires] ? byId[s.requires].name : '?') : 'Tier ' + (s.tier || 1)}</div>
-                            <div style="font-size:11px;font-weight:bold;color:${isUnlocked ? '#4ade80' : (canUnlock ? COLORS.GOLD : COLORS.TEXT_MUTED)}">${isUnlocked ? _L('skills.unlocked', 'DESBLOQUEADO') : (speedLocked ? 'LIMITE' : (locked ? '🔒 ' + s.cost + ' 💰' : s.cost + ' 💰'))}</div>
+                            <div class="sk-status">${isUnlocked ? _L('skills.unlocked', 'DESBLOQUEADO') : (speedLocked ? 'LIMITE' : (locked ? '🔒 ' + s.cost + ' 💰' : s.cost + ' 💰'))}</div>
                         </div>
                     </div>
                 `;
