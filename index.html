@@ -31,6 +31,13 @@
    ============================================================ */
 
 /* ── Reset & Base ── */
+:root {
+    /* Two-family system: display serif reserved for the brand logo only,
+       one system-ui stack everywhere else (DOM + canvas share it). */
+    --font-body: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --font-display: Georgia, 'Times New Roman', serif;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -44,7 +51,7 @@ body, html {
     width: 100%;
     height: 100%;
     overflow: hidden;
-    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-family: var(--font-body);
     color: #eee;
     background: #08080f;
     touch-action: none;
@@ -52,6 +59,10 @@ body, html {
 
 html { position: fixed; overflow: hidden; width: 100%; height: 100%; }
 body { background: #08080f !important; }
+
+/* Form controls & HUD surfaces inherit the same system-ui stack (buttons do
+   not inherit font-family by default). Logo serif stays untouched. */
+button, input, select, textarea { font-family: var(--font-body); }
 
 /* ── Canvas ── */
 #gameCanvas {
@@ -600,7 +611,7 @@ body.gfx-low #modal-overlay.hidden {
 .rounded-xl { border-radius: 12px; }
 
 /* Headline font */
-.font-headline-xl { font-family: Georgia, "Times New Roman", serif; letter-spacing: 0.03em; }
+.font-headline-xl { font-family: var(--font-display); letter-spacing: 0.03em; }
 
 /* Transitions */
 .transition-all { transition: all 0.2s ease-in-out; }
@@ -722,7 +733,7 @@ body.cb-tritan  { filter: url("#cb-tritan"); }
 }
 
 #start-screen h1 {
-    font-family: Georgia, 'Times New Roman', serif;
+    font-family: var(--font-display);
     animation: titleShimmer 4s ease-in-out infinite;
     text-shadow: 0 0 25px rgba(224, 182, 255, 0.5), 0 0 50px rgba(157, 78, 221, 0.2);
     position: relative;
@@ -822,6 +833,15 @@ body.cb-tritan  { filter: url("#cb-tritan"); }
 .custom-scrollbar::-webkit-scrollbar { width: 4px; }
 .custom-scrollbar::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 2px; }
 .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(224,182,255,0.3); border-radius: 2px; }
+/* Skill tree scroll area: guaranteed scroll region (deep tier-3 chains stay
+   reachable on short screens) + wider themed scrollbar. */
+.skills-scroll { min-height: 240px; }
+.skills-scroll::-webkit-scrollbar { width: 8px; }
+.skills-scroll::-webkit-scrollbar-track { background: rgba(0,0,0,0.25); border-radius: 4px; }
+.skills-scroll::-webkit-scrollbar-thumb { background: rgba(224,182,255,0.35); border-radius: 4px; }
+.skills-scroll::-webkit-scrollbar-thumb:hover { background: rgba(224,182,255,0.6); }
+/* Inline sprite icons in the skill tree sit on the text baseline */
+.coin-s, .lock-s { vertical-align: -1px; }
 
 #gameCanvas, #ui-layer, #top-bar, #actions-right, #bottom-controls, #minimap-container {
     -webkit-user-select: none;
@@ -985,6 +1005,13 @@ body.cb-tritan  { filter: url("#cb-tritan"); }
     border-color: rgba(224,182,255,0.3) !important;
     box-shadow: inset 0 1px 0 rgba(255,255,255,0.10), inset 0 -2px 5px rgba(0,0,0,0.32), 0 4px 16px rgba(0,0,0,0.45) !important;
 }
+/* Quest list open: visually dim the minimap underneath (layout untouched) so
+   the panel reads clearly; pointer-events off so it can't eat taps. */
+body.quest-open #minimap-container {
+    opacity: 0.08;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
 #dungeon-progress > div {
     border-color: rgba(224,182,255,0.22) !important;
     box-shadow: inset 0 1px 0 rgba(255,255,255,0.10), inset 0 -2px 3px rgba(0,0,0,0.3);
@@ -1086,6 +1113,47 @@ body.gfx-low #start-screen::after { animation: none !important; opacity: 0.5 !im
 #pause-btn-bar { border-bottom-color: rgba(224, 182, 255, 0.35) !important; }
 #quest-btn-bar { border-bottom-color: #7fd08a !important; }
 
+/* ============================================================
+   G3 — util bar: icon + micro label stacked (keeps ≤40px width,
+   ≤40px height; touch target unchanged ≥38px)
+   ============================================================ */
+.util-btn { flex-direction: column; gap: 2px; }
+.util-btn .icon-inline { width: 20px !important; height: 20px !important; }
+.util-btn .util-label {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 6.5px;
+    line-height: 1;
+    letter-spacing: 0.02em;
+    font-weight: 600;
+    color: rgba(226, 207, 245, 0.85) !important;
+}
+.util-btn:active .util-label { color: #ffffff !important; }
+@media (max-width: 359px) {
+    .util-btn .util-label { display: none; }
+}
+
+/* ============================================================
+   G3 — class cards: pixel-art hero portrait (canvas replaces the
+   old svg insignia; sprite drawn via SpriteRenderer.drawCharacter)
+   ============================================================ */
+.hero-canvas {
+    display: block;
+    width: 44px;
+    height: 46px;
+    image-rendering: pixelated;
+    pointer-events: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+.class-mini-card.warrior .hero-canvas { filter: drop-shadow(0 0 6px rgba(127, 168, 208, 0.45)); }
+.class-mini-card.rogue .hero-canvas { filter: drop-shadow(0 0 6px rgba(224, 90, 69, 0.5)); }
+.class-mini-card.mage .hero-canvas { filter: drop-shadow(0 0 6px rgba(58, 208, 255, 0.45)); }
+.class-mini-card.elf .hero-canvas { filter: drop-shadow(0 0 6px rgba(219, 181, 92, 0.45)); }
+
 </style>
 
 </head>
@@ -1139,6 +1207,9 @@ body.gfx-low #start-screen::after { animation: none !important; opacity: 0.5 !im
       <symbol id="ic-wrench" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
       <symbol id="ic-crown" viewBox="0 0 24 24"><path d="M4.6 18.6v-8.5l3.9 4.5 3.5-5.7 3.5 5.7 3.9-4.5v8.5z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
       <symbol id="ic-star" viewBox="0 0 24 24"><path d="M12 3.2 14.2 8.9l6.3.3-4.9 3.9 1.6 6.1L12 15.9l-5.2 3.3 1.6-6.1-4.9-3.9 6.3-.3z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="ic-lock" viewBox="0 0 24 24"><rect x="5" y="10.6" width="14" height="9.4" rx="2.2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.2 10.6V8.2a3.8 3.8 0 0 1 7.6 0v2.4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="12" cy="15.2" r="1.5" fill="currentColor" stroke="none"/></symbol>
+      <symbol id="ic-bolt" viewBox="0 0 24 24"><path d="M13.2 2.6 4.8 13.4h5.4L10.8 21.4l8.4-10.8h-5.4z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="ic-wind" viewBox="0 0 24 24"><path d="M3.4 8.2h8.2a2.4 2.4 0 1 0-2.4-2.4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M2.8 12.4h11.2a2.6 2.6 0 1 1-2.6 2.6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M4.6 16.6h6.6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
       <symbol id="ic-play" viewBox="0 0 24 24"><path d="M9 6.5l9.6 5.5L9 17.5z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
       <symbol id="ic-book" viewBox="0 0 24 24"><path d="M2 3.5h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M22 3.5h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
       <symbol id="ic-skull" viewBox="0 0 24 24"><path d="M12 3.4c3.8 0 6.6 2.9 6.6 6.2 0 2-.8 3.5-1.4 4.7-.6 1.2-1 2.3-1 3.3v1.5a1.6 1.6 0 0 1-1.6 1.6H9.4a1.6 1.6 0 0 1-1.6-1.6v-1.5c0-1-.4-2.1-1-3.3C6.2 13.1 5.4 11.6 5.4 9.6c0-3.3 2.8-6.2 6.6-6.2z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9.3" cy="11.4" r="1.5" fill="currentColor" stroke="none"/><circle cx="14.7" cy="11.4" r="1.5" fill="currentColor" stroke="none"/><circle cx="12" cy="14.5" r="0.6" fill="currentColor" stroke="none"/><path d="M9.6 17.2v1.5M12 17.2v1.5M14.4 17.2v1.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
@@ -1225,7 +1296,7 @@ body.gfx-low #start-screen::after { animation: none !important; opacity: 0.5 !im
             <!-- Class Selection (inline, no back/forth) -->
             <div style="display:flex;gap:6px;margin-bottom:6px;">
                 <div onclick="window._tryStartClass('warrior')" class="class-mini-card warrior" style="flex:1;padding:10px 6px;border-radius:16px;border:1.5px solid rgba(201,162,39,0.38);background:rgba(70,110,142,0.15);text-align:center;cursor:pointer;transition:all 0.2s;touch-action:manipulation;">
-                    <div style="display:flex;justify-content:center;align-items:center;height:30px;margin-bottom:3px;"><svg class="icon-inline" style="width:28px;height:28px;color:#7fa8d0;filter:drop-shadow(0 0 5px rgba(127,168,208,0.5));"><use href="#ic-shield-sword"/></svg></div>
+                    <div style="display:flex;justify-content:center;align-items:flex-end;height:46px;margin-bottom:3px;"><canvas class="hero-canvas" data-class="warrior" width="44" height="46" aria-hidden="true"></canvas></div>
                     <div data-i18n="start.classWarrior" style="font-size:clamp(0.7rem,2.5vw,0.85rem);font-weight:800;text-transform:uppercase;color:#facc15;letter-spacing:0.06em;text-shadow:0 0 8px rgba(201,162,39,0.35);">Guerreiro</div>
                     <div style="display:flex;gap:3px;justify-content:center;margin-top:4px;">
                         <span class="stat-dot" style="width:6px;height:6px;border-radius:50%;background:#dbb55c;box-shadow:0 0 4px #dbb55c;"></span>
@@ -1234,7 +1305,7 @@ body.gfx-low #start-screen::after { animation: none !important; opacity: 0.5 !im
                     </div>
                 </div>
                 <div onclick="window._tryStartClass('rogue')" class="class-mini-card rogue" style="flex:1;padding:10px 6px;border-radius:16px;border:1.5px solid rgba(224,90,69,0.4);background:rgba(58,24,22,0.5);text-align:center;cursor:pointer;transition:all 0.2s;touch-action:manipulation;">
-                    <div style="display:flex;justify-content:center;align-items:center;height:30px;margin-bottom:3px;"><svg class="icon-inline" style="width:28px;height:28px;color:#e0604c;filter:drop-shadow(0 0 5px rgba(224,90,69,0.55));"><use href="#ic-daggers"/></svg></div>
+                    <div style="display:flex;justify-content:center;align-items:flex-end;height:46px;margin-bottom:3px;"><canvas class="hero-canvas" data-class="rogue" width="44" height="46" aria-hidden="true"></canvas></div>
                     <div data-i18n="start.classRogue" style="font-size:clamp(0.7rem,2.5vw,0.85rem);font-weight:800;text-transform:uppercase;color:#e8816a;letter-spacing:0.06em;text-shadow:0 0 8px rgba(224,90,69,0.35);">Ladino</div>
                     <div style="display:flex;gap:3px;justify-content:center;margin-top:4px;">
                         <span class="stat-dot" style="width:4px;height:6px;border-radius:2px;background:rgba(255,255,255,0.15);"></span>
@@ -1243,7 +1314,7 @@ body.gfx-low #start-screen::after { animation: none !important; opacity: 0.5 !im
                     </div>
                 </div>
                 <div onclick="window._tryStartClass('mage')" class="class-mini-card mage" style="flex:1;padding:10px 6px;border-radius:16px;border:1.5px solid rgba(140,100,205,0.45);background:rgba(106,61,145,0.17);text-align:center;cursor:pointer;transition:all 0.2s;touch-action:manipulation;">
-                    <div style="display:flex;justify-content:center;align-items:center;height:30px;margin-bottom:3px;"><svg class="icon-inline" style="width:28px;height:28px;color:#3ad0ff;filter:drop-shadow(0 0 5px rgba(58,208,255,0.5));"><use href="#ic-staff-orb"/></svg></div>
+                    <div style="display:flex;justify-content:center;align-items:flex-end;height:46px;margin-bottom:3px;"><canvas class="hero-canvas" data-class="mage" width="44" height="46" aria-hidden="true"></canvas></div>
                     <div data-i18n="start.classMage" style="font-size:clamp(0.7rem,2.5vw,0.85rem);font-weight:800;text-transform:uppercase;color:#b78be8;letter-spacing:0.06em;text-shadow:0 0 8px rgba(106,61,145,0.5);">Mago</div>
                     <div style="display:flex;gap:3px;justify-content:center;margin-top:4px;">
                         <span class="stat-dot" style="width:4px;height:6px;border-radius:2px;background:rgba(255,255,255,0.15);"></span>
@@ -1252,7 +1323,7 @@ body.gfx-low #start-screen::after { animation: none !important; opacity: 0.5 !im
                     </div>
                 </div>
                 <div onclick="window._tryStartClass('elf')" class="class-mini-card elf" style="flex:1;padding:10px 6px;border-radius:16px;border:1.5px solid rgba(219,181,92,0.35);background:rgba(78,110,49,0.16);text-align:center;cursor:pointer;transition:all 0.2s;touch-action:manipulation;">
-                    <div style="display:flex;justify-content:center;align-items:center;height:30px;margin-bottom:3px;"><svg class="icon-inline" style="width:28px;height:28px;color:#dbb55c;filter:drop-shadow(0 0 5px rgba(219,181,92,0.5));"><use href="#ic-bow"/></svg></div>
+                    <div style="display:flex;justify-content:center;align-items:flex-end;height:46px;margin-bottom:3px;"><canvas class="hero-canvas" data-class="elf" width="44" height="46" aria-hidden="true"></canvas></div>
                     <div data-i18n="start.classElf" style="font-size:clamp(0.7rem,2.5vw,0.85rem);font-weight:800;text-transform:uppercase;color:#a5cf6e;letter-spacing:0.06em;text-shadow:0 0 8px rgba(165,207,110,0.35);">Elfa</div>
                     <div style="display:flex;gap:3px;justify-content:center;margin-top:4px;">
                         <span class="stat-dot" style="width:6px;height:6px;border-radius:50%;background:#dbb55c;box-shadow:0 0 4px #dbb55c;"></span>
@@ -1396,19 +1467,19 @@ body.gfx-low #start-screen::after { animation: none !important; opacity: 0.5 !im
             <!-- Center: Utility tab bar (thumb-reachable) -->
             <div style="display:flex;gap:3px;pointer-events:auto;">
                 <button id="skills-btn-bar" class="util-btn" onclick="if(window.toggleSkillTree) toggleSkillTree()" style="width:38px;height:38px;border-radius:10px;background:rgba(30,22,45,0.7);border:1px solid rgba(224,182,255,0.12);display:flex;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation;transition:all 0.2s;">
-                    <svg class="icon-inline" width="20" height="20" style="color:#e2cff5;"><use href="#ic-tree"/></svg>
+                    <svg class="icon-inline" width="20" height="20" style="color:#e2cff5;"><use href="#ic-tree"/></svg><span class="util-label" data-i18n="ui.util.skills">Habilidades</span>
                 </button>
                 <button id="shop-btn-bar" class="util-btn" onclick="if(window.toggleShop) toggleShop()" style="width:38px;height:38px;border-radius:10px;background:rgba(30,22,45,0.7);border:1px solid rgba(224,182,255,0.12);display:flex;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation;transition:all 0.2s;">
-                    <svg class="icon-inline" width="20" height="20" style="color:#e2cff5;"><use href="#ic-store"/></svg>
+                    <svg class="icon-inline" width="20" height="20" style="color:#e2cff5;"><use href="#ic-store"/></svg><span class="util-label" data-i18n="ui.util.shop">Loja</span>
                 </button>
                 <button id="stats-btn-bar" class="util-btn" onclick="if(window.toggleStats) toggleStats()" style="width:38px;height:38px;border-radius:10px;background:rgba(30,22,45,0.7);border:1px solid rgba(224,182,255,0.12);display:flex;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation;transition:all 0.2s;">
-                    <svg class="icon-inline" width="20" height="20" style="color:#e2cff5;"><use href="#ic-bar-chart"/></svg>
+                    <svg class="icon-inline" width="20" height="20" style="color:#e2cff5;"><use href="#ic-bar-chart"/></svg><span class="util-label" data-i18n="ui.util.stats">Status</span>
                 </button>
                 <button id="pause-btn-bar" class="util-btn" onclick="if(window.PauseSystem) PauseSystem.toggle()" style="width:38px;height:38px;border-radius:10px;background:rgba(30,22,45,0.7);border:1px solid rgba(224,182,255,0.12);display:flex;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation;transition:all 0.2s;">
-                    <svg class="icon-inline" width="20" height="20"><use href="#ic-pause"/></svg>
+                    <svg class="icon-inline" width="20" height="20"><use href="#ic-pause"/></svg><span class="util-label" data-i18n="ui.util.pause">Pausa</span>
                 </button>
                 <button id="quest-btn-bar" class="util-btn" onclick="if(window.QuestSystem) QuestSystem.toggle()" style="width:38px;height:38px;border-radius:10px;background:rgba(30,22,45,0.7);border:1px solid rgba(224,182,255,0.12);display:flex;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation;transition:all 0.2s;">
-                    <svg class="icon-inline" width="20" height="20"><use href="#ic-scroll"/></svg>
+                    <svg class="icon-inline" width="20" height="20"><use href="#ic-scroll"/></svg><span class="util-label" data-i18n="ui.util.quest">Missões</span>
                 </button>
             </div>
 
@@ -1438,7 +1509,7 @@ body.gfx-low #start-screen::after { animation: none !important; opacity: 0.5 !im
         </div>
 
         <!-- QUESTS PANEL (light, tied to lore) -->
-        <div id="quest-panel" class="hidden" style="position:absolute;top:calc(env(safe-area-inset-top,8px) + 148px);right:max(8px,env(safe-area-inset-right,8px));width:min(240px,44vw);z-index:116;pointer-events:auto;background:rgba(18,14,28,0.92);border:1.5px solid rgba(224,182,255,0.22);border-radius:12px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 4px 16px rgba(0,0,0,0.45);padding:8px 10px;">
+        <div id="quest-panel" class="hidden" style="position:absolute;top:calc(env(safe-area-inset-top,8px) + 148px);right:max(8px,env(safe-area-inset-right,8px));width:min(240px,44vw);z-index:180;pointer-events:auto;background:rgba(18,14,28,0.92);border:1.5px solid rgba(224,182,255,0.22);border-radius:12px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 4px 16px rgba(0,0,0,0.45);padding:8px 10px;">
             <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:6px;">
                 <div data-i18n="ui.questsTitle" style="font-size:8px;letter-spacing:0.18em;text-transform:uppercase;color:rgba(224,182,255,0.55);">📜 Missões da Profecia</div>
                 <button id="quest-panel-close" onclick="if(window.QuestSystem) QuestSystem.toggle()" style="flex:none;width:18px;height:18px;border-radius:6px;border:1px solid rgba(224,182,255,0.2);background:rgba(224,182,255,0.08);color:rgba(224,182,255,0.7);display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer;touch-action:manipulation;" aria-label="Fechar missões">
@@ -1494,8 +1565,8 @@ body.gfx-low #start-screen::after { animation: none !important; opacity: 0.5 !im
                     <button id="pause-resume" data-i18n="pause.resume" style="width:100%;padding:16px 0;border-radius:12px;color:#fff;font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:0.05em;background:linear-gradient(135deg,#008836,#3ce36a);border:1px solid rgba(60,227,106,0.3);box-shadow:0 4px 20px rgba(0,136,54,0.3);transition:all 0.3s;text-shadow:0 1px 4px rgba(0,0,0,0.4);cursor:pointer;touch-action:manipulation;">Continuar</button>
                     <button id="pause-quit" data-i18n="pause.quit" style="width:100%;padding:16px 0;border-radius:12px;color:#fff;font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:0.05em;background:linear-gradient(135deg,#b8000f,#e84525);border:1px solid rgba(255,100,80,0.3);box-shadow:0 4px 20px rgba(200,0,15,0.3);transition:all 0.3s;text-shadow:0 1px 4px rgba(0,0,0,0.4);cursor:pointer;touch-action:manipulation;">Desistir e voltar ao menu inicial</button>
                     <div style="display:flex;gap:8px;width:100%;margin-top:2px;">
-                        <button id="pause-export" data-i18n="pause.export" onclick="if(window.SaveSystem) window._exportSave()" style="flex:1;padding:10px 0;border-radius:10px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;border:1px solid rgba(224,182,255,0.2);color:rgba(224,182,255,0.7);background:rgba(30,22,45,0.6);cursor:pointer;touch-action:manipulation;">Exportar Save</button>
-                        <button id="pause-import" data-i18n="pause.import" onclick="if(window.SaveSystem) window._importSavePrompt()" style="flex:1;padding:10px 0;border-radius:10px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;border:1px solid rgba(224,182,255,0.2);color:rgba(224,182,255,0.7);background:rgba(30,22,45,0.6);cursor:pointer;touch-action:manipulation;">Importar Save</button>
+                        <button id="pause-export" data-i18n="ui.exportSave" onclick="if(window.SaveSystem) window._exportSave()" style="flex:1;padding:10px 0;border-radius:10px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;border:1px solid rgba(224,182,255,0.2);color:rgba(224,182,255,0.7);background:rgba(30,22,45,0.6);cursor:pointer;touch-action:manipulation;">Exportar Save</button>
+                        <button id="pause-import" data-i18n="ui.importSave" onclick="if(window.SaveSystem) window._importSavePrompt()" style="flex:1;padding:10px 0;border-radius:10px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;border:1px solid rgba(224,182,255,0.2);color:rgba(224,182,255,0.7);background:rgba(30,22,45,0.6);cursor:pointer;touch-action:manipulation;">Importar Save</button>
                         <button id="pause-settings" data-i18n="pause.settings" onclick="if(window.SettingsUI) { PauseSystem.resume(); SettingsUI.show(); }" style="flex:1;padding:10px 0;border-radius:10px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;border:1px solid rgba(224,182,255,0.2);color:rgba(224,182,255,0.7);background:rgba(30,22,45,0.6);cursor:pointer;touch-action:manipulation;">Ajustes</button>
                     </div>
                 </div>
@@ -1843,7 +1914,7 @@ const COLORS = {
     FPS_BAD: '#f00',
 
     // Typography (Canvas font rendering)
-    CANVAS_FONT: "'Space Grotesk', Arial, sans-serif",
+    CANVAS_FONT: "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
     CANVAS_FONT_MONO: "monospace",
 };
 
@@ -2006,6 +2077,9 @@ window._setResScale = function(s) {
 // effects (particles, screen shake, hitstop) WITHOUT overwriting the user's
 // saved settings; restores them automatically when framerate recovers.
 let _autoPerfActive = false;
+// Auto-perf OFF->ON notice: fired at most once per session so FPS flapping
+// around the threshold doesn't spam repeated center banners mid-run.
+let _perfNotifiedOnce = false;
 let _autoPerfPrefs = null; // { particlesEnabled, screenShakeEnabled, hitstopEnabled } captured pre-lock
 // Auto GFX tier: sustained low FPS steps the visual tier down (high->medium->low),
 // and sustained healthy FPS restores the detected tier. Only when the player has
@@ -2073,9 +2147,18 @@ function _setAutoPerf(on) {
     }
     GameSettings.apply();
     if (window.SettingsUI && SettingsUI._render) SettingsUI._render();
-    // A transient log so the player knows the game auto-tuned itself for smoothness
-    if (typeof addLog === 'function' && gameState === 'PLAYING') {
-        addLog(on ? (window.I18n ? I18n.t('log.autoPerfOn') : ' Modo automático de desempenho ativado (efeitos desligados)') : (window.I18n ? I18n.t('log.autoPerfOff') : ' Desempenho recuperado - efeitos restaurados'));
+    // Discreet auto-perf notice: a single honest ON banner per session at most.
+    // Repeated mid-run center banners are noise, so OFF toggles never log and
+    // a player-locked quality preset (userSetQuality) stays fully silent.
+    if (on && !_perfNotifiedOnce && typeof addLog === 'function' && gameState === 'PLAYING' && (!window.GameSettings || !GameSettings.userSetQuality)) {
+        _perfNotifiedOnce = true;
+        addLog(window.I18n ? I18n.t('log.autoPerfOn') : ' Modo automático de desempenho ativado (efeitos desligados)');
+        // The notice must never linger over gameplay: fade it out after 3.5s.
+        const _perfLogEl = document.getElementById('logs');
+        if (_perfLogEl) {
+            setTimeout(() => { if (_perfLogEl && _perfLogEl.classList) _perfLogEl.classList.add('fade-out'); }, 3500);
+            setTimeout(() => { if (_perfLogEl && _perfLogEl.classList) _perfLogEl.classList.remove('fade-out'); }, 6500);
+        }
     }
 }
 
@@ -2993,9 +3076,150 @@ const I18n = {
             'skills.unlocked': 'DESBLOQUEADO',
             'skills.ability': 'HABILIDADE',
             'skills.requires': 'Requer: ',
+            'skills.tier': 'Grau ',
             'skills.copyBuild': '📋 Copiar código do build',
             'skills.tapHint': 'Toque em um nó para ver detalhes e desbloquear.',
             'skills.speedLimit': '⛔ Limite de velocidade atingido (',
+            // Skill tree nodes (per-class keys — some ids repeat across class
+            // trees, so the class prefix keeps each node's label correct)
+            'skill.warrior.tank1.name': 'Pele de Ferro I',
+            'skill.warrior.tank1.desc': '+20 HP',
+            'skill.warrior.tank2.name': 'Pele de Ferro II',
+            'skill.warrior.tank2.desc': '+40 HP',
+            'skill.warrior.tank3.name': 'Pele de Ferro III',
+            'skill.warrior.tank3.desc': '+80 HP',
+            'skill.warrior.dmg1.name': 'Golpe Pesado I',
+            'skill.warrior.dmg1.desc': '+15% dano',
+            'skill.warrior.dmg2.name': 'Golpe Pesado II',
+            'skill.warrior.dmg2.desc': '+25% dano',
+            'skill.warrior.dmg3.name': 'Golpe Pesado III',
+            'skill.warrior.dmg3.desc': '+35% dano',
+            'skill.warrior.slam.name': 'Impacto Sísmico',
+            'skill.warrior.slam.desc': 'Repulsão em área (AoE)',
+            'skill.warrior.vamp1.name': 'Vampirismo I',
+            'skill.warrior.vamp1.desc': '+5% roubo de vida',
+            'skill.warrior.vamp2.name': 'Vampirismo II',
+            'skill.warrior.vamp2.desc': '+10% roubo de vida',
+            'skill.warrior.static.name': 'Aura Estática',
+            'skill.warrior.static.desc': 'Reflete 10% do dano',
+            'skill.warrior.march1.name': 'Marcha de Guerra I',
+            'skill.warrior.march1.desc': '+8% velocidade',
+            'skill.warrior.march2.name': 'Marcha de Guerra II',
+            'skill.warrior.march2.desc': '+10% velocidade',
+            'skill.warrior.march3.name': 'Marcha de Guerra III',
+            'skill.warrior.march3.desc': '+12% velocidade',
+            'skill.warrior.guard.name': 'Escudo de Guarda',
+            'skill.warrior.guard.desc': '+40 de escudo',
+            'skill.warrior.greed.name': 'Ganância',
+            'skill.warrior.greed.desc': '+15% de ouro coletado',
+            'skill.warrior.stun.name': 'Impacto Atordoante',
+            'skill.warrior.stun.desc': '10% de chance de atordoar no golpe',
+            'skill.warrior.finisher.name': 'Golpe Final',
+            'skill.warrior.finisher.desc': 'Executa inimigos abaixo de 20% de HP',
+            'skill.warrior.berserk.name': 'Fúria Berserker',
+            'skill.warrior.berserk.desc': 'Habilidade: fúria (+50% dano, +30% vel., 15s)',
+            'skill.rogue.speed1.name': 'Veloz I',
+            'skill.rogue.speed1.desc': '+10% velocidade',
+            'skill.rogue.speed2.name': 'Veloz II',
+            'skill.rogue.speed2.desc': '+20% velocidade',
+            'skill.rogue.speed3.name': 'Veloz III',
+            'skill.rogue.speed3.desc': '+30% velocidade',
+            'skill.rogue.crit1.name': 'Precisão I',
+            'skill.rogue.crit1.desc': '+10% crítico',
+            'skill.rogue.crit2.name': 'Precisão II',
+            'skill.rogue.crit2.desc': '+15% crítico',
+            'skill.rogue.crit3.name': 'Precisão III',
+            'skill.rogue.crit3.desc': '+20% crítico',
+            'skill.rogue.shadow.name': 'Passo das Sombras',
+            'skill.rogue.shadow.desc': 'Teleporte + invisibilidade',
+            'skill.rogue.poison.name': 'Lâminas Tóxicas',
+            'skill.rogue.poison.desc': 'Veneno (dano contínuo)',
+            'skill.rogue.poison2.name': 'Lâminas Tóxicas II',
+            'skill.rogue.poison2.desc': '+10% veneno',
+            'skill.rogue.multi.name': 'Tiro Múltiplo',
+            'skill.rogue.multi.desc': '+1 projétil',
+            'skill.rogue.multi2.name': 'Arco Duplo',
+            'skill.rogue.multi2.desc': '+1 projétil',
+            'skill.rogue.evasion.name': 'Evasão',
+            'skill.rogue.evasion.desc': '10% de esquiva',
+            'skill.rogue.evasion2.name': 'Mestre da Esquiva II',
+            'skill.rogue.evasion2.desc': '+10% de esquiva',
+            'skill.rogue.sharpshooter.name': 'Atirador de Elite',
+            'skill.rogue.sharpshooter.desc': '+15% dano',
+            'skill.rogue.bleed.name': 'Sangramento',
+            'skill.rogue.bleed.desc': '12% de chance de sangrar no golpe',
+            'skill.rogue.deathmark.name': 'Marca da Morte',
+            'skill.rogue.deathmark.desc': 'Habilidade: alvos marcados tomam +50% dano',
+            'skill.mage.mana1.name': 'Foco Arcano I',
+            'skill.mage.mana1.desc': '+20 de mana',
+            'skill.mage.mana2.name': 'Foco Arcano II',
+            'skill.mage.mana2.desc': '+40 de mana',
+            'skill.mage.mana3.name': 'Foco Arcano III',
+            'skill.mage.mana3.desc': '+60 de mana',
+            'skill.mage.dmg1.name': 'Poder Arcano I',
+            'skill.mage.dmg1.desc': '+15% dano de feitiço',
+            'skill.mage.dmg2.name': 'Poder Arcano II',
+            'skill.mage.dmg2.desc': '+25% dano de feitiço',
+            'skill.mage.dmg3.name': 'Poder Arcano III',
+            'skill.mage.dmg3.desc': '+35% dano de feitiço',
+            'skill.mage.meteor.name': 'Meteoro',
+            'skill.mage.meteor.desc': 'Dano de fogo em área (AoE)',
+            'skill.mage.orb.name': 'Orbe Arcano',
+            'skill.mage.orb.desc': 'Projétil teleguiado',
+            'skill.mage.freeze.name': 'Armadura de Gelo',
+            'skill.mage.freeze.desc': 'Lentidão nos inimigos',
+            'skill.mage.regen.name': 'Fonte de Mana',
+            'skill.mage.regen.desc': '+2 de mana/s',
+            'skill.mage.haste1.name': 'Velocidade Arcana I',
+            'skill.mage.haste1.desc': '+8% velocidade',
+            'skill.mage.haste2.name': 'Velocidade Arcana II',
+            'skill.mage.haste2.desc': '+10% velocidade',
+            'skill.mage.haste3.name': 'Velocidade Arcana III',
+            'skill.mage.haste3.desc': '+12% velocidade',
+            'skill.mage.ward.name': 'Proteção Arcana',
+            'skill.mage.ward.desc': '+40 de escudo',
+            'skill.mage.siphon.name': 'Dreno Arcano',
+            'skill.mage.siphon.desc': '+5% roubo de vida',
+            'skill.mage.frostTouch.name': 'Toque Gélido',
+            'skill.mage.frostTouch.desc': '15% de chance de congelar no golpe',
+            'skill.mage.overload.name': 'Sobrecarga Arcana',
+            'skill.mage.overload.desc': '+20% dano',
+            'skill.mage.manaSpring2.name': 'Fonte de Mana II',
+            'skill.mage.manaSpring2.desc': '+3 de mana/s',
+            'skill.mage.barrier.name': 'Barreira Arcana',
+            'skill.mage.barrier.desc': 'Habilidade: escudo +75 e onda de dano',
+            'skill.elf.aim1.name': 'Mira Precisa I',
+            'skill.elf.aim1.desc': '+10% crítico',
+            'skill.elf.aim2.name': 'Mira Precisa II',
+            'skill.elf.aim2.desc': '+15% crítico',
+            'skill.elf.gale1.name': 'Vento Cortante I',
+            'skill.elf.gale1.desc': '+15% dano',
+            'skill.elf.gale2.name': 'Vento Cortante II',
+            'skill.elf.gale2.desc': '+25% dano',
+            'skill.elf.gale3.name': 'Vento Cortante III',
+            'skill.elf.gale3.desc': '+35% dano',
+            'skill.elf.seed1.name': 'Sementes Venenosas',
+            'skill.elf.seed1.desc': 'Veneno em flechas',
+            'skill.elf.seed2.name': 'Sementes Venenosas II',
+            'skill.elf.seed2.desc': '+10% veneno',
+            'skill.elf.multi.name': 'Chuva de Flechas',
+            'skill.elf.multi.desc': '+1 projétil',
+            'skill.elf.multi2.name': 'Chuva de Flechas II',
+            'skill.elf.multi2.desc': '+1 projétil',
+            'skill.elf.bark.name': 'Casca de Árvore',
+            'skill.elf.bark.desc': '+40 de escudo',
+            'skill.elf.swift.name': 'Passos Leves',
+            'skill.elf.swift.desc': '10% de esquiva',
+            'skill.elf.wind1.name': 'Vento Veloz I',
+            'skill.elf.wind1.desc': '+8% velocidade',
+            'skill.elf.wind2.name': 'Vento Veloz II',
+            'skill.elf.wind2.desc': '+10% velocidade',
+            'skill.elf.roots.name': 'Raízes da Natureza',
+            'skill.elf.roots.desc': '15% de chance de enraizar no golpe',
+            'skill.elf.tempest.name': 'Tempestade de Vento',
+            'skill.elf.tempest.desc': 'Habilidade: rajada que empurra inimigos',
+            'skill.elf.naturesFury.name': 'Fúria da Natureza',
+            'skill.elf.naturesFury.desc': 'Habilidade: flechas que enraízam e envenenam',
             'daily.today': 'Desafio de hoje',
             'daily.next': 'Próximo desafio em ',
             'daily.streak': '🔥 Streak: ',
@@ -3043,6 +3267,8 @@ const I18n = {
             'pause.export': 'Exportar Save',
             'pause.import': 'Importar Save',
             'pause.settings': 'Ajustes',
+            'ui.exportSave': 'Exportar Jogo',
+            'ui.importSave': 'Importar Jogo',
 
             // ============================================================
             // Settings UI labels
@@ -3894,6 +4120,11 @@ const I18n = {
 
             // Static in-game UI
             'ui.questsTitle': '📜 Missões da Profecia',
+            'ui.util.skills': 'Habilidades',
+            'ui.util.shop': 'Loja',
+            'ui.util.stats': 'Status',
+            'ui.util.pause': 'Pausa',
+            'ui.util.quest': 'Missões',
             'ui.achievementToast': '🏆 Conquista!',
             'ui.lootCommon': 'COMUM',
             'ui.lootWeapon': 'Arma',
@@ -4014,9 +4245,150 @@ const I18n = {
             'skills.unlocked': 'UNLOCKED',
             'skills.ability': 'ABILITY',
             'skills.requires': 'Requires: ',
+            'skills.tier': 'Tier ',
             'skills.copyBuild': '📋 Copy build code',
             'skills.tapHint': 'Tap a node to see details and unlock it.',
             'skills.speedLimit': '⛔ Speed limit reached (',
+            // Skill tree nodes (per-class keys — some ids repeat across class
+            // trees, so the class prefix keeps each node's label correct)
+            'skill.warrior.tank1.name': 'Iron Skin I',
+            'skill.warrior.tank1.desc': '+20 HP',
+            'skill.warrior.tank2.name': 'Iron Skin II',
+            'skill.warrior.tank2.desc': '+40 HP',
+            'skill.warrior.tank3.name': 'Iron Skin III',
+            'skill.warrior.tank3.desc': '+80 HP',
+            'skill.warrior.dmg1.name': 'Heavy Hit I',
+            'skill.warrior.dmg1.desc': '+15% dmg',
+            'skill.warrior.dmg2.name': 'Heavy Hit II',
+            'skill.warrior.dmg2.desc': '+25% dmg',
+            'skill.warrior.dmg3.name': 'Heavy Hit III',
+            'skill.warrior.dmg3.desc': '+35% dmg',
+            'skill.warrior.slam.name': 'Ground Slam',
+            'skill.warrior.slam.desc': 'AoE knockback',
+            'skill.warrior.vamp1.name': 'Vampirism I',
+            'skill.warrior.vamp1.desc': '+5% lifesteal',
+            'skill.warrior.vamp2.name': 'Vampirism II',
+            'skill.warrior.vamp2.desc': '+10% lifesteal',
+            'skill.warrior.static.name': 'Static Aura',
+            'skill.warrior.static.desc': 'Reflect 10% dmg',
+            'skill.warrior.march1.name': 'War March I',
+            'skill.warrior.march1.desc': '+8% speed',
+            'skill.warrior.march2.name': 'War March II',
+            'skill.warrior.march2.desc': '+10% speed',
+            'skill.warrior.march3.name': 'War March III',
+            'skill.warrior.march3.desc': '+12% speed',
+            'skill.warrior.guard.name': 'Guard Shield',
+            'skill.warrior.guard.desc': '+40 shield',
+            'skill.warrior.greed.name': 'Greed',
+            'skill.warrior.greed.desc': '+15% gold collected',
+            'skill.warrior.stun.name': 'Stunning Impact',
+            'skill.warrior.stun.desc': '10% chance to stun on hit',
+            'skill.warrior.finisher.name': 'Finisher',
+            'skill.warrior.finisher.desc': 'Executes enemies below 20% HP',
+            'skill.warrior.berserk.name': 'Berserker Rage',
+            'skill.warrior.berserk.desc': 'Ability: rage (+50% dmg, +30% speed, 15s)',
+            'skill.rogue.speed1.name': 'Swift I',
+            'skill.rogue.speed1.desc': '+10% speed',
+            'skill.rogue.speed2.name': 'Swift II',
+            'skill.rogue.speed2.desc': '+20% speed',
+            'skill.rogue.speed3.name': 'Swift III',
+            'skill.rogue.speed3.desc': '+30% speed',
+            'skill.rogue.crit1.name': 'Precision I',
+            'skill.rogue.crit1.desc': '+10% crit',
+            'skill.rogue.crit2.name': 'Precision II',
+            'skill.rogue.crit2.desc': '+15% crit',
+            'skill.rogue.crit3.name': 'Precision III',
+            'skill.rogue.crit3.desc': '+20% crit',
+            'skill.rogue.shadow.name': 'Shadow Step',
+            'skill.rogue.shadow.desc': 'Teleport + invis',
+            'skill.rogue.poison.name': 'Toxic Blades',
+            'skill.rogue.poison.desc': 'Poison DOT',
+            'skill.rogue.poison2.name': 'Toxic Blades II',
+            'skill.rogue.poison2.desc': '+10% poison',
+            'skill.rogue.multi.name': 'Multi-shot',
+            'skill.rogue.multi.desc': '+1 projectile',
+            'skill.rogue.multi2.name': 'Twin Bow',
+            'skill.rogue.multi2.desc': '+1 projectile',
+            'skill.rogue.evasion.name': 'Evasion',
+            'skill.rogue.evasion.desc': '10% dodge',
+            'skill.rogue.evasion2.name': 'Dodge Master II',
+            'skill.rogue.evasion2.desc': '+10% dodge',
+            'skill.rogue.sharpshooter.name': 'Sharpshooter',
+            'skill.rogue.sharpshooter.desc': '+15% dmg',
+            'skill.rogue.bleed.name': 'Bleed',
+            'skill.rogue.bleed.desc': '12% chance to bleed on hit',
+            'skill.rogue.deathmark.name': 'Death Mark',
+            'skill.rogue.deathmark.desc': 'Ability: marked targets take +50% dmg',
+            'skill.mage.mana1.name': 'Arcane Focus I',
+            'skill.mage.mana1.desc': '+20 mana',
+            'skill.mage.mana2.name': 'Arcane Focus II',
+            'skill.mage.mana2.desc': '+40 mana',
+            'skill.mage.mana3.name': 'Arcane Focus III',
+            'skill.mage.mana3.desc': '+60 mana',
+            'skill.mage.dmg1.name': 'Spell Power I',
+            'skill.mage.dmg1.desc': '+15% spell dmg',
+            'skill.mage.dmg2.name': 'Spell Power II',
+            'skill.mage.dmg2.desc': '+25% spell dmg',
+            'skill.mage.dmg3.name': 'Spell Power III',
+            'skill.mage.dmg3.desc': '+35% spell dmg',
+            'skill.mage.meteor.name': 'Meteor',
+            'skill.mage.meteor.desc': 'AoE fire dmg',
+            'skill.mage.orb.name': 'Arcane Orb',
+            'skill.mage.orb.desc': 'Homing proj.',
+            'skill.mage.freeze.name': 'Frost Armor',
+            'skill.mage.freeze.desc': 'Slow enemies',
+            'skill.mage.regen.name': 'Mana Spring',
+            'skill.mage.regen.desc': '+2 mana/sec',
+            'skill.mage.haste1.name': 'Arcane Haste I',
+            'skill.mage.haste1.desc': '+8% speed',
+            'skill.mage.haste2.name': 'Arcane Haste II',
+            'skill.mage.haste2.desc': '+10% speed',
+            'skill.mage.haste3.name': 'Arcane Haste III',
+            'skill.mage.haste3.desc': '+12% speed',
+            'skill.mage.ward.name': 'Arcane Ward',
+            'skill.mage.ward.desc': '+40 shield',
+            'skill.mage.siphon.name': 'Arcane Siphon',
+            'skill.mage.siphon.desc': '+5% lifesteal',
+            'skill.mage.frostTouch.name': 'Frost Touch',
+            'skill.mage.frostTouch.desc': '15% chance to freeze on hit',
+            'skill.mage.overload.name': 'Arcane Overload',
+            'skill.mage.overload.desc': '+20% dmg',
+            'skill.mage.manaSpring2.name': 'Mana Spring II',
+            'skill.mage.manaSpring2.desc': '+3 mana/sec',
+            'skill.mage.barrier.name': 'Arcane Barrier',
+            'skill.mage.barrier.desc': 'Ability: +75 shield and damage wave',
+            'skill.elf.aim1.name': 'Precise Aim I',
+            'skill.elf.aim1.desc': '+10% crit',
+            'skill.elf.aim2.name': 'Precise Aim II',
+            'skill.elf.aim2.desc': '+15% crit',
+            'skill.elf.gale1.name': 'Cutting Wind I',
+            'skill.elf.gale1.desc': '+15% dmg',
+            'skill.elf.gale2.name': 'Cutting Wind II',
+            'skill.elf.gale2.desc': '+25% dmg',
+            'skill.elf.gale3.name': 'Cutting Wind III',
+            'skill.elf.gale3.desc': '+35% dmg',
+            'skill.elf.seed1.name': 'Poison Seeds',
+            'skill.elf.seed1.desc': 'Poison on arrows',
+            'skill.elf.seed2.name': 'Poison Seeds II',
+            'skill.elf.seed2.desc': '+10% poison',
+            'skill.elf.multi.name': 'Arrow Rain',
+            'skill.elf.multi.desc': '+1 projectile',
+            'skill.elf.multi2.name': 'Arrow Rain II',
+            'skill.elf.multi2.desc': '+1 projectile',
+            'skill.elf.bark.name': 'Tree Bark',
+            'skill.elf.bark.desc': '+40 shield',
+            'skill.elf.swift.name': 'Light Steps',
+            'skill.elf.swift.desc': '10% dodge',
+            'skill.elf.wind1.name': 'Swift Wind I',
+            'skill.elf.wind1.desc': '+8% speed',
+            'skill.elf.wind2.name': 'Swift Wind II',
+            'skill.elf.wind2.desc': '+10% speed',
+            'skill.elf.roots.name': 'Nature Roots',
+            'skill.elf.roots.desc': '15% chance to root on hit',
+            'skill.elf.tempest.name': 'Wind Tempest',
+            'skill.elf.tempest.desc': 'Ability: gust that pushes enemies',
+            'skill.elf.naturesFury.name': 'Nature\'s Fury',
+            'skill.elf.naturesFury.desc': 'Ability: arrows that root and poison',
             'daily.today': "Today's Challenge",
             'daily.next': 'Next challenge in ',
             'daily.streak': '🔥 Streak: ',
@@ -4064,6 +4436,8 @@ const I18n = {
             'pause.export': 'Export Save',
             'pause.import': 'Import Save',
             'pause.settings': 'Settings',
+            'ui.exportSave': 'Export Save',
+            'ui.importSave': 'Import Save',
 
             // ============================================================
             // Settings UI labels
@@ -4915,6 +5289,11 @@ const I18n = {
 
             // Static in-game UI
             'ui.questsTitle': '📜 Quests of Prophecy',
+            'ui.util.skills': 'Skills',
+            'ui.util.shop': 'Shop',
+            'ui.util.stats': 'Stats',
+            'ui.util.pause': 'Pause',
+            'ui.util.quest': 'Quests',
             'ui.achievementToast': '🏆 Achievement!',
             'ui.lootCommon': 'COMMON',
             'ui.lootWeapon': 'Weapon',
@@ -5035,9 +5414,150 @@ const I18n = {
             'skills.unlocked': 'DESBLOQUEADO',
             'skills.ability': 'HABILIDAD',
             'skills.requires': 'Requiere: ',
+            'skills.tier': 'Grado ',
             'skills.copyBuild': '📋 Copiar código de build',
             'skills.tapHint': 'Toca un nodo para ver detalles y desbloquearlo.',
             'skills.speedLimit': '⛔ Límite de velocidad alcanzado (',
+            // Skill tree nodes (per-class keys — some ids repeat across class
+            // trees, so the class prefix keeps each node's label correct)
+            'skill.warrior.tank1.name': 'Piel de Hierro I',
+            'skill.warrior.tank1.desc': '+20 HP',
+            'skill.warrior.tank2.name': 'Piel de Hierro II',
+            'skill.warrior.tank2.desc': '+40 HP',
+            'skill.warrior.tank3.name': 'Piel de Hierro III',
+            'skill.warrior.tank3.desc': '+80 HP',
+            'skill.warrior.dmg1.name': 'Golpe Pesado I',
+            'skill.warrior.dmg1.desc': '+15% daño',
+            'skill.warrior.dmg2.name': 'Golpe Pesado II',
+            'skill.warrior.dmg2.desc': '+25% daño',
+            'skill.warrior.dmg3.name': 'Golpe Pesado III',
+            'skill.warrior.dmg3.desc': '+35% daño',
+            'skill.warrior.slam.name': 'Golpe Sísmico',
+            'skill.warrior.slam.desc': 'Empuje en área (AoE)',
+            'skill.warrior.vamp1.name': 'Vampirismo I',
+            'skill.warrior.vamp1.desc': '+5% robo de vida',
+            'skill.warrior.vamp2.name': 'Vampirismo II',
+            'skill.warrior.vamp2.desc': '+10% robo de vida',
+            'skill.warrior.static.name': 'Aura Estática',
+            'skill.warrior.static.desc': 'Refleja 10% del daño',
+            'skill.warrior.march1.name': 'Marcha de Guerra I',
+            'skill.warrior.march1.desc': '+8% velocidad',
+            'skill.warrior.march2.name': 'Marcha de Guerra II',
+            'skill.warrior.march2.desc': '+10% velocidad',
+            'skill.warrior.march3.name': 'Marcha de Guerra III',
+            'skill.warrior.march3.desc': '+12% velocidad',
+            'skill.warrior.guard.name': 'Escudo de Guardia',
+            'skill.warrior.guard.desc': '+40 de escudo',
+            'skill.warrior.greed.name': 'Codicia',
+            'skill.warrior.greed.desc': '+15% de oro recolectado',
+            'skill.warrior.stun.name': 'Impacto Aturdidor',
+            'skill.warrior.stun.desc': '10% de probabilidad de aturdir al golpear',
+            'skill.warrior.finisher.name': 'Golpe Final',
+            'skill.warrior.finisher.desc': 'Ejecuta enemigos por debajo del 20% de HP',
+            'skill.warrior.berserk.name': 'Furia Berserker',
+            'skill.warrior.berserk.desc': 'Habilidad: furia (+50% daño, +30% vel., 15s)',
+            'skill.rogue.speed1.name': 'Veloz I',
+            'skill.rogue.speed1.desc': '+10% velocidad',
+            'skill.rogue.speed2.name': 'Veloz II',
+            'skill.rogue.speed2.desc': '+20% velocidad',
+            'skill.rogue.speed3.name': 'Veloz III',
+            'skill.rogue.speed3.desc': '+30% velocidad',
+            'skill.rogue.crit1.name': 'Precisión I',
+            'skill.rogue.crit1.desc': '+10% crítico',
+            'skill.rogue.crit2.name': 'Precisión II',
+            'skill.rogue.crit2.desc': '+15% crítico',
+            'skill.rogue.crit3.name': 'Precisión III',
+            'skill.rogue.crit3.desc': '+20% crítico',
+            'skill.rogue.shadow.name': 'Paso Sombrío',
+            'skill.rogue.shadow.desc': 'Teletransporte + invisibilidad',
+            'skill.rogue.poison.name': 'Hojas Tóxicas',
+            'skill.rogue.poison.desc': 'Veneno (daño en el tiempo)',
+            'skill.rogue.poison2.name': 'Hojas Tóxicas II',
+            'skill.rogue.poison2.desc': '+10% veneno',
+            'skill.rogue.multi.name': 'Disparo Múltiple',
+            'skill.rogue.multi.desc': '+1 proyectil',
+            'skill.rogue.multi2.name': 'Arco Doble',
+            'skill.rogue.multi2.desc': '+1 proyectil',
+            'skill.rogue.evasion.name': 'Evasión',
+            'skill.rogue.evasion.desc': '10% de esquiva',
+            'skill.rogue.evasion2.name': 'Maestro de la Esquiva II',
+            'skill.rogue.evasion2.desc': '+10% de esquiva',
+            'skill.rogue.sharpshooter.name': 'Tirador de Élite',
+            'skill.rogue.sharpshooter.desc': '+15% daño',
+            'skill.rogue.bleed.name': 'Sangrado',
+            'skill.rogue.bleed.desc': '12% de probabilidad de sangrar al golpear',
+            'skill.rogue.deathmark.name': 'Marca de la Muerte',
+            'skill.rogue.deathmark.desc': 'Habilidad: los objetivos marcados reciben +50% daño',
+            'skill.mage.mana1.name': 'Enfoque Arcano I',
+            'skill.mage.mana1.desc': '+20 de maná',
+            'skill.mage.mana2.name': 'Enfoque Arcano II',
+            'skill.mage.mana2.desc': '+40 de maná',
+            'skill.mage.mana3.name': 'Enfoque Arcano III',
+            'skill.mage.mana3.desc': '+60 de maná',
+            'skill.mage.dmg1.name': 'Poder de Hechizo I',
+            'skill.mage.dmg1.desc': '+15% daño de hechizo',
+            'skill.mage.dmg2.name': 'Poder de Hechizo II',
+            'skill.mage.dmg2.desc': '+25% daño de hechizo',
+            'skill.mage.dmg3.name': 'Poder de Hechizo III',
+            'skill.mage.dmg3.desc': '+35% daño de hechizo',
+            'skill.mage.meteor.name': 'Meteoro',
+            'skill.mage.meteor.desc': 'Daño de fuego en área (AoE)',
+            'skill.mage.orb.name': 'Orbe Arcano',
+            'skill.mage.orb.desc': 'Proyectil guiado',
+            'skill.mage.freeze.name': 'Armadura de Escarcha',
+            'skill.mage.freeze.desc': 'Ralentiza enemigos',
+            'skill.mage.regen.name': 'Manantial de Maná',
+            'skill.mage.regen.desc': '+2 de maná/s',
+            'skill.mage.haste1.name': 'Velocidad Arcana I',
+            'skill.mage.haste1.desc': '+8% velocidad',
+            'skill.mage.haste2.name': 'Velocidad Arcana II',
+            'skill.mage.haste2.desc': '+10% velocidad',
+            'skill.mage.haste3.name': 'Velocidad Arcana III',
+            'skill.mage.haste3.desc': '+12% velocidad',
+            'skill.mage.ward.name': 'Protección Arcana',
+            'skill.mage.ward.desc': '+40 de escudo',
+            'skill.mage.siphon.name': 'Drenaje Arcano',
+            'skill.mage.siphon.desc': '+5% robo de vida',
+            'skill.mage.frostTouch.name': 'Toque Helado',
+            'skill.mage.frostTouch.desc': '15% de probabilidad de congelar al golpear',
+            'skill.mage.overload.name': 'Sobrecarga Arcana',
+            'skill.mage.overload.desc': '+20% daño',
+            'skill.mage.manaSpring2.name': 'Manantial de Maná II',
+            'skill.mage.manaSpring2.desc': '+3 de maná/s',
+            'skill.mage.barrier.name': 'Barrera Arcana',
+            'skill.mage.barrier.desc': 'Habilidad: escudo +75 y onda de daño',
+            'skill.elf.aim1.name': 'Mira Precisa I',
+            'skill.elf.aim1.desc': '+10% crítico',
+            'skill.elf.aim2.name': 'Mira Precisa II',
+            'skill.elf.aim2.desc': '+15% crítico',
+            'skill.elf.gale1.name': 'Viento Cortante I',
+            'skill.elf.gale1.desc': '+15% daño',
+            'skill.elf.gale2.name': 'Viento Cortante II',
+            'skill.elf.gale2.desc': '+25% daño',
+            'skill.elf.gale3.name': 'Viento Cortante III',
+            'skill.elf.gale3.desc': '+35% daño',
+            'skill.elf.seed1.name': 'Semillas Venenosas',
+            'skill.elf.seed1.desc': 'Veneno en flechas',
+            'skill.elf.seed2.name': 'Semillas Venenosas II',
+            'skill.elf.seed2.desc': '+10% veneno',
+            'skill.elf.multi.name': 'Lluvia de Flechas',
+            'skill.elf.multi.desc': '+1 proyectil',
+            'skill.elf.multi2.name': 'Lluvia de Flechas II',
+            'skill.elf.multi2.desc': '+1 proyectil',
+            'skill.elf.bark.name': 'Corteza de Árbol',
+            'skill.elf.bark.desc': '+40 de escudo',
+            'skill.elf.swift.name': 'Pasos Ligeros',
+            'skill.elf.swift.desc': '10% de esquiva',
+            'skill.elf.wind1.name': 'Viento Veloz I',
+            'skill.elf.wind1.desc': '+8% velocidad',
+            'skill.elf.wind2.name': 'Viento Veloz II',
+            'skill.elf.wind2.desc': '+10% velocidad',
+            'skill.elf.roots.name': 'Raíces de la Naturaleza',
+            'skill.elf.roots.desc': '15% de probabilidad de enraizar al golpear',
+            'skill.elf.tempest.name': 'Tempestad de Viento',
+            'skill.elf.tempest.desc': 'Habilidad: ráfaga que empuja enemigos',
+            'skill.elf.naturesFury.name': 'Furia de la Naturaleza',
+            'skill.elf.naturesFury.desc': 'Habilidad: flechas que enraízan y envenenan',
             'daily.today': 'Desafío de hoy',
             'daily.next': 'Próximo desafío en ',
             'daily.streak': '🔥 Racha: ',
@@ -5085,6 +5605,8 @@ const I18n = {
             'pause.export': 'Exportar Partida',
             'pause.import': 'Importar Partida',
             'pause.settings': 'Ajustes',
+            'ui.exportSave': 'Exportar partida',
+            'ui.importSave': 'Importar partida',
 
             // ============================================================
             // Settings UI labels
@@ -5934,6 +6456,11 @@ const I18n = {
 
             // Static in-game UI
             'ui.questsTitle': '📜 Misiones de la Profecía',
+            'ui.util.skills': 'Habilidades',
+            'ui.util.shop': 'Tienda',
+            'ui.util.stats': 'Estado',
+            'ui.util.pause': 'Pausa',
+            'ui.util.quest': 'Misiones',
             'ui.achievementToast': '🏆 ¡Logro!',
             'ui.lootCommon': 'COMÚN',
             'ui.lootWeapon': 'Arma',
@@ -6306,8 +6833,8 @@ var CONFIG = {
     BIOME_DUNGEON_FLOOR_COLOR: '#151a26',
     BIOME_DUNGEON_HAZARD_TYPES: ['fire', 'spikes', 'ice'],
     BIOME_DUNGEON_HAZARD_WEIGHTS: [0.45, 0.4, 0.15],
-    BIOME_DUNGEON_AMBIENT_COLOR: null,
-    BIOME_DUNGEON_AMBIENT_CHANCE: 0,
+    BIOME_DUNGEON_AMBIENT_COLOR: '#ffd9a0', // warm ember motes (ambient particles only)
+    BIOME_DUNGEON_AMBIENT_CHANCE: 0.008,    // rare: keeps dungeon rooms from feeling dead
 
     // Biome: Lava Cave
     BIOME_LAVA_WALL_COLOR: '#4a2c1d',
@@ -7000,6 +7527,15 @@ let _logTimeout = null;
 function addLog(msg) {
     const logs = document.getElementById('logs');
     if (!logs) return;
+    // Boss fights have their own banners and telegraphs — keep the center log
+    // completely clear while a boss is alive or bossActive is set: the boss
+    // communicates exclusively through its own HUD/banners, and routine world
+    // chatter (objectives, travelers, NPCs, quests, floors, coins, xp, levels,
+    // damage) would only bury them. Detects both the bossActive flag and a
+    // living boss entity so the suppression holds even if the flag desyncs.
+    const _bossNow = (typeof bossActive !== 'undefined' && bossActive) ||
+                     (typeof entities !== 'undefined' && entities.some(function(e){ return e && e.isBoss && e.alive; }));
+    if (_bossNow && gameState === 'PLAYING') return;
     clearTimeout(_logTimeout);
     logs.innerText = msg;
     logs.classList.remove('slide-in', 'visible');
@@ -8546,8 +9082,8 @@ function _drawLightingLayer() {
             const airCx = width * 0.5, airCy = height * 0.5;
             const airR = Math.sqrt(airCx * airCx + airCy * airCy);
             const agrad = ctx.createRadialGradient(airCx, airCy, 0, airCx, airCy, airR);
-            agrad.addColorStop(0, `rgba(${lr_},${lg_},${lb_},0.07)`);
-            agrad.addColorStop(0.45, `rgba(${lr_},${lg_},${lb_},0.02)`);
+            agrad.addColorStop(0, `rgba(${lr_},${lg_},${lb_},0.08)`);
+            agrad.addColorStop(0.45, `rgba(${lr_},${lg_},${lb_},0.03)`);
             agrad.addColorStop(1, `rgba(${lr_},${lg_},${lb_},0)`);
             ctx.save();
             ctx.globalCompositeOperation = 'lighter';
@@ -8562,8 +9098,12 @@ function _drawLightingLayer() {
             if (pxc > -200 && pxc < width + 200 && pyc > -200 && pyc < height + 200) {
                 ctx.save();
                 ctx.globalCompositeOperation = 'lighter';
-                ctx.globalAlpha = 0.028;
-                ctx.fillStyle = '#ffe8b0';
+                // Rays take the biome's light color (amber dungeon, warm lava,
+                // cool crypt blue, soft forest green) instead of a fixed white.
+                const rayBiome = (typeof BiomeSystem !== 'undefined' && BiomeSystem.currentBiome) || '';
+                ctx.globalAlpha = (rayBiome === 'crypt' || rayBiome === 'forest') ? 0.026 : 0.028;
+                const rayCol = (typeof BiomeSystem !== 'undefined' && BiomeSystem.getLightColor) ? BiomeSystem.getLightColor() : '#ffe8b0';
+                ctx.fillStyle = rayCol;
                 const rayCount = 5;
                 for (let ri = 0; ri < rayCount; ri++) {
                     const ang = (ri / rayCount) * Math.PI * 2 + gameTime * 0.0004;
@@ -9129,14 +9669,16 @@ window.PauseSystem = PauseSystem;
 // never defined anywhere — lockouts, rewards and errors went unseen.
 const ToastSystem = {
     container: null,
+    pending: [],      // toasts deferred during boss fights (max 3)
+    _bossTimer: null, // drain timer (8s fallback)
     init() {
         if (this.container) return;
         this.container = document.createElement('div');
         this.container.style.cssText = 'position:fixed;top:max(12px,env(safe-area-inset-top,12px));left:50%;transform:translateX(-50%);z-index:99990;display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none;width:min(88vw,360px);';
         document.body.appendChild(this.container);
     },
-    show(message, type) {
-        if (!message) return;
+    // Show the real toast element (shared by show() and _drainPending()).
+    _spawn(message, type) {
         this.init();
         const el = document.createElement('div');
         const colors = { success: 'rgba(0,136,54,0.92)', error: 'rgba(180,0,15,0.92)', info: 'rgba(60,40,110,0.94)' };
@@ -9148,6 +9690,40 @@ const ToastSystem = {
             el.style.opacity = '0'; el.style.transform = 'translateY(-8px)';
             setTimeout(() => { if (el.parentNode) el.remove(); }, 300);
         }, 2600);
+    },
+    _drainPending() {
+        if (!this.pending.length) return;
+        const q = this.pending.splice(0, this.pending.length);
+        if (this._bossTimer) { clearTimeout(this._bossTimer); this._bossTimer = null; }
+        for (let i = 0; i < q.length; i++) this._spawn(q[i].message, q[i].type);
+    },
+    show(message, type) {
+        if (!message) return;
+        // Robust boss detection: bossActive flag OR a living boss entity (covers
+        // the brief window where the flag clears before the entity dies, and any
+        // desync between the two). Suppression only applies while actually
+        // playing — errors and guardian-reward lines still pass, everything else
+        // queues and drains when the fight ends (or after 8s).
+        const bossNow = (typeof bossActive !== 'undefined' && bossActive) ||
+                        (typeof entities !== 'undefined' && entities.some(function(e){ return e && e.isBoss && e.alive; }));
+        const bossOn = gameState === 'PLAYING' && bossNow;
+        if (bossOn) {
+            // Boss scene: suppress routine toasts so they don't clutter the fight.
+            // Errors and boss reward lines are important enough to show at once;
+            // everything else waits in a small queue drained when the fight ends
+            // (or after 8s, whichever comes first).
+            const urgent = type === 'error' || /[Rr]ecompensa|[Gg]uardian/.test(String(message));
+            if (!urgent) {
+                if (this.pending.length < 3) this.pending.push({ message: message, type: type });
+                if (!this._bossTimer) {
+                    const self = this;
+                    this._bossTimer = setTimeout(() => { self._drainPending(); }, 8000);
+                }
+                return;
+            }
+        }
+        if (this.pending.length && !bossOn) this._drainPending();
+        this._spawn(message, type);
     }
 };
 window.showToast = function (message, type) { ToastSystem.show(message, type); };
@@ -11376,7 +11952,8 @@ const RunObjectiveSystem = {
         const o = this.current;
         const reward = o ? (o.reward || 0) : 0;
         if (o && typeof player !== 'undefined' && player) player.currency += reward;
-        if (typeof addLog === 'function') addLog((window.I18n ? I18n.t('log.objectiveComplete') : ' 🎯 Objetivo concluído: ') + (o ? (window._L ? _L(o.nameKey, o.name) : o.name) : '') + '! +' + reward + ' ' + (window.I18n ? I18n.t('log.coins') : 'moedas') + '.');
+        // Single feedback channel: the toast already announces the objective;
+        // a simultaneous center log would duplicate it (visual duplication).
         if (typeof showToast === 'function') showToast((window.I18n ? I18n.t('toast.objectiveComplete') : '🎯 Objetivo concluído: ') + (o ? (window._L ? _L(o.nameKey, o.name) : o.name) : '') + ' +' + reward + ' 💰', 'success');
         if (typeof SND !== 'undefined' && SND.playAchievement) SND.playAchievement();
         if (typeof spawnParticles !== 'undefined' && player) spawnParticles(player.x, player.y, '#ffd86b', 24, 5);
@@ -12394,6 +12971,9 @@ const QuestSystem = {
         this.granted = {};
         this.uiOpen = false;
         this.tick = 0;
+        // A fresh run must never inherit a stale quest-open dim (panel may have
+        // been left open when the previous run ended).
+        if (typeof document !== 'undefined' && document.body) document.body.classList.remove('quest-open');
         this.baselines.kills = (typeof player !== 'undefined' && player) ? (player.kills || 0) : 0;
         const S = (typeof Statistics !== 'undefined' && Statistics.data) ? Statistics.data : null;
         this.baselines.gold = S ? (S.totalCurrencyEarned || 0) : 0;
@@ -12491,6 +13071,8 @@ const QuestSystem = {
         this.uiOpen = !this.uiOpen;
         if (this.uiOpen) { panel.classList.remove('hidden'); this.render(); }
         else panel.classList.add('hidden');
+        // Body hook: while the quest list is open, dim the minimap below it.
+        if (typeof document !== 'undefined' && document.body) document.body.classList.toggle('quest-open', this.uiOpen);
     }
 };
 window.QuestSystem = QuestSystem;
@@ -14912,6 +15494,35 @@ const BiomeSystem = {
                 ctx.fillRect(px + ts * 0.2, py + ts * 0.6, ts * 0.18, ts * 0.05);
                 ctx.fillRect(px + ts * 0.42, py + ts * 0.52, ts * 0.14, ts * 0.04);
             }
+            // Occasional cobweb draped from an upper corner (~35% of wall
+            // tiles): 3 faint concentric quarter-arcs (r 10-16), with a 1px
+            // spider dot on ~30% of the webs. Subtle vs the glowing runes.
+            if (((h >> 5) % 100) < 35) {
+                const webRight = ((h >> 13) & 1) === 1;
+                const wxc = webRight ? px + ts - 1 : px + 1;
+                const wyc = py + 1;
+                const a0 = webRight ? Math.PI * 0.5 : 0;
+                ctx.globalAlpha = 1;
+                ctx.strokeStyle = 'rgba(224,224,255,0.22)';
+                ctx.lineWidth = 1;
+                for (let wr = 10; wr <= 16; wr += 3) {
+                    ctx.beginPath();
+                    ctx.arc(wxc, wyc, wr, a0, a0 + Math.PI * 0.5);
+                    ctx.stroke();
+                }
+                // Two radial guide threads so the web reads as a web, not noise
+                for (const aT of [0.35, 0.75]) {
+                    ctx.beginPath();
+                    ctx.moveTo(wxc, wyc);
+                    ctx.lineTo(wxc + Math.cos(a0 + Math.PI * 0.5 * aT) * 16, wyc + Math.sin(a0 + Math.PI * 0.5 * aT) * 16);
+                    ctx.stroke();
+                }
+                if (((h >> 9) % 100) < 30) {
+                    const aMid = a0 + Math.PI * 0.25;
+                    ctx.fillStyle = 'rgba(25,25,40,0.9)';
+                    ctx.fillRect(Math.round(wxc + Math.cos(aMid) * 12.5), Math.round(wyc + Math.sin(aMid) * 12.5), 1, 1);
+                }
+            }
         } else if (this.currentBiome === 'forest') {
             // Vines hanging from walls with more detail
             ctx.globalAlpha = 0.35;
@@ -14997,6 +15608,20 @@ const BiomeSystem = {
             ctx.stroke();
             ctx.shadowBlur = 0;
         } else if (this.currentBiome === 'crypt') {
+            // Cobblestone paralelepípedo joints: dark 24px cell seams at the
+            // tile mid AND far edge, so adjacent 48px tiles tile up into a
+            // uniform small-block grid. Drawn after the base floor, before
+            // any decor — crypt only.
+            ctx.globalAlpha = 1;
+            ctx.strokeStyle = 'rgba(0,0,0,0.12)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(px + ts * 0.5, py); ctx.lineTo(px + ts * 0.5, py + ts);
+            ctx.moveTo(px + ts - 0.5, py); ctx.lineTo(px + ts - 0.5, py + ts);
+            ctx.moveTo(px, py + ts * 0.5); ctx.lineTo(px + ts, py + ts * 0.5);
+            ctx.moveTo(px, py + ts - 0.5); ctx.lineTo(px + ts, py + ts - 0.5);
+            ctx.stroke();
+
             // Bone fragments and skull patterns on floor
             ctx.globalAlpha = 0.12;
             ctx.fillStyle = '#666688';
@@ -15276,7 +15901,7 @@ const ElementalSystem = {
         ctx.save();
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.font = '12px sans-serif';
+        ctx.font = '12px ' + COLORS.CANVAS_FONT;
         
         for (const status of entity.elementalStatuses) {
             const icon = icons[status.type] || '?';
@@ -15287,11 +15912,11 @@ const ElementalSystem = {
             
             // Stack count
             if (status.stacks > 1) {
-                ctx.font = '8px sans-serif';
+                ctx.font = '8px ' + COLORS.CANVAS_FONT;
                 ctx.fillStyle = '#fff';
                 ctx.globalAlpha = 0.6;
                 ctx.fillText(status.stacks, entity.x - cx + xOff + 6, entity.y - cy + yOff + 4);
-                ctx.font = '12px sans-serif';
+                ctx.font = '12px ' + COLORS.CANVAS_FONT;
             }
             
             xOff += 16;
@@ -15692,7 +16317,7 @@ class WeaponPickup {
         ctx.arc(px, py, 10, 0, Math.PI * 2);
         ctx.fill();
         ctx.fillStyle = borderCol;
-        ctx.font = 'bold 14px sans-serif';
+        ctx.font = 'bold 14px ' + COLORS.CANVAS_FONT;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText('W', px, py);
@@ -15723,7 +16348,7 @@ class EquipmentPickup {
         ctx.arc(px, py, 10, 0, Math.PI * 2);
         ctx.fill();
         ctx.fillStyle = rarityColors[rarity] || '#9ca3af';
-        ctx.font = 'bold 14px sans-serif';
+        ctx.font = 'bold 14px ' + COLORS.CANVAS_FONT;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText('E', px, py);
@@ -16129,10 +16754,13 @@ class Map {
         // Soft highlight under the prop
         bctx.fillStyle = 'rgba(255,255,255,0.05)';
         bctx.beginPath(); bctx.ellipse(cx3, by3, ts*0.28, ts*0.1, 0, 0, Math.PI*2); bctx.fill();
+        // Dark ground-contact ellipse at the prop base (all variants): grounds
+        // the prop in its tile instead of floating on the halo. Baked once,
+        // mirrors the entity ground-shadow look.
+        bctx.fillStyle = 'rgba(0,0,0,0.25)';
+        bctx.beginPath(); bctx.ellipse(cx3, by3, ts*0.3, ts*0.09, 0, 0, Math.PI*2); bctx.fill();
         if (crystalProp) {
             // Crystal cluster: tapered shards with bright cores
-            bctx.fillStyle = 'rgba(0,0,0,0.28)';
-            bctx.beginPath(); bctx.ellipse(cx3, by3, ts*0.3, ts*0.09, 0, 0, Math.PI*2); bctx.fill();
             const shards = [[-ts*0.16, ts*0.14, ts*0.13, 0.9], [0, ts*0.20, ts*0.18, 1.15], [ts*0.17, ts*0.12, ts*0.11, 0.75]];
             for (let si = 0; si < shards.length; si++) {
                 const sx4 = cx3 + shards[si][0], sw = shards[si][2], sh2 = shards[si][1], sk = shards[si][3];
@@ -16151,8 +16779,6 @@ class Map {
             }
         } else if (b === 'forest') {
             // Glowing mushroom pair
-            bctx.fillStyle = 'rgba(0,0,0,0.25)';
-            bctx.beginPath(); bctx.ellipse(cx3 - ts*0.04, by3, ts*0.26, ts*0.08, 0, 0, Math.PI*2); bctx.fill();
             const shroom = [[-ts*0.10, ts*0.20, ts*0.16], [ts*0.14, ts*0.27, ts*0.12]];
             for (let si = 0; si < shroom.length; si++) {
                 const st = shroom[si];
@@ -16165,8 +16791,6 @@ class Map {
             }
         } else if (b === 'lavaCave') {
             // Brazier: stone bowl over a pedestal with a tall flame
-            bctx.fillStyle = 'rgba(0,0,0,0.3)';
-            bctx.beginPath(); bctx.ellipse(cx3, by3, ts*0.3, ts*0.1, 0, 0, Math.PI*2); bctx.fill();
             bctx.fillStyle = pal.body;
             bctx.fillRect(cx3 - ts*0.08, by3 - ts*0.22, ts*0.16, ts*0.22);
             bctx.fillRect(cx3 - ts*0.16, by3 - ts*0.16, ts*0.32, ts*0.1);
@@ -16185,8 +16809,6 @@ class Map {
             }
         } else {
             // Wall torch: wooden post + warm flame
-            bctx.fillStyle = 'rgba(0,0,0,0.22)';
-            bctx.beginPath(); bctx.ellipse(cx3, by3, ts*0.11, ts*0.05, 0, 0, Math.PI*2); bctx.fill();
             bctx.fillStyle = pal.body;
             bctx.fillRect(cx3 - ts*0.045, by3 - ts*0.30, ts*0.09, ts*0.32);
             // Metal collar
@@ -16205,6 +16827,195 @@ class Map {
     }
 
     spawnHazard() { const pos = this.getSafeSpawn(CONFIG.HAZARD_MAX_DIST); const hType = BiomeSystem.getHazardType(); hazards.push(new Hazard(pos.x, pos.y, hType)); }
+
+    // Ambient floor decor baked into the world buffer (once per floor):
+    // subtle, non-blocking biome clutter on open floor tiles at least one
+    // tile away from any wall (clear of the baked wall AO) and carrying no
+    // light prop. All choices are deterministic slices of the same per-tile
+    // hash (h1) the bake loop already computes — a floor never changes
+    // between redraws, and there is zero per-frame cost.
+    _drawFloorDecor(bctx, px, py, ts, x, y, h1) {
+        // Reject tiles touching a wall orthogonally (same test as the AO
+        // pass) or diagonally, so decor keeps fully open floor around it.
+        if ((x > 0 && this.tiles[x-1][y].t === 1) || (x < this.width - 1 && this.tiles[x+1][y].t === 1) ||
+            (y > 0 && this.tiles[x][y-1].t === 1) || (y < this.height - 1 && this.tiles[x][y+1].t === 1) ||
+            (x > 0 && y > 0 && this.tiles[x-1][y-1].t === 1) || (x < this.width - 1 && y > 0 && this.tiles[x+1][y-1].t === 1) ||
+            (x > 0 && y < this.height - 1 && this.tiles[x-1][y+1].t === 1) || (x < this.width - 1 && y < this.height - 1 && this.tiles[x+1][y+1].t === 1)) return;
+        const b = (typeof BiomeSystem !== 'undefined' && BiomeSystem.currentBiome) || 'dungeon';
+        let hq = h1;
+        if (b === 'dungeon') {
+            // Rubble: 2-4 small gray pebbles clustered near a tile corner
+            // (~10%) + one lighter highlight stone so the cluster reads at 1x.
+            if ((h1 % 100) < 10) {
+                const n = 2 + ((h1 >> 9) % 3);
+                for (let i = 0; i < n; i++) {
+                    hq = (hq * 1103515245 + 12345) & 0x7FFFFFFF;
+                    const cI = (hq >> 5) % 4; // corner: 0 TL, 1 TR, 2 BL, 3 BR
+                    const jx = 3 + ((hq >> 2) % 9);
+                    const jy = 3 + ((hq >> 11) % 9);
+                    const gx = px + (cI === 1 || cI === 3 ? ts - jx : jx);
+                    const gy = py + (cI >= 2 ? ts - jy : jy);
+                    bctx.globalAlpha = 0.5;
+                    bctx.fillStyle = (hq & 4) ? '#3a3f4e' : '#3f4453';
+                    bctx.beginPath(); bctx.arc(gx, gy, 1 + ((hq >> 16) & 1), 0, Math.PI * 2); bctx.fill();
+                    // Occasional darker 1px chip beside a pebble
+                    if ((hq & 32) === 0) {
+                        hq = (hq * 1103515245 + 12345) & 0x7FFFFFFF;
+                        bctx.fillStyle = '#2e3342';
+                        bctx.fillRect(gx + ((hq >> 3) % 5) - 2, gy + ((hq >> 8) % 5) - 2, 1, 1);
+                    }
+                }
+                // Lighter highlight pebble (alpha 0.25) mixed into the cluster
+                hq = (hq * 1103515245 + 12345) & 0x7FFFFFFF;
+                const cI2 = (hq >> 5) % 4;
+                const jx2 = 3 + ((hq >> 2) % 9);
+                const jy2 = 3 + ((hq >> 11) % 9);
+                const gx2 = px + (cI2 === 1 || cI2 === 3 ? ts - jx2 : jx2);
+                const gy2 = py + (cI2 >= 2 ? ts - jy2 : jy2);
+                bctx.globalAlpha = 1;
+                bctx.fillStyle = 'rgba(200,205,230,0.25)';
+                bctx.beginPath(); bctx.arc(gx2, gy2, 1 + ((hq >> 16) & 1), 0, Math.PI * 2); bctx.fill();
+            }
+            return;
+        }
+        if (b === 'crypt') {
+            if ((h1 % 100) >= 8) return;
+            // 5-way slice of the decor hash: bone/urn/web-corner each 20%,
+            // candle 40% (kinds 3 and 4) so a warm point almost always reads
+            // in a decorated crypt tile. Deterministic per tile.
+            const kind = (h1 >> 10) % 5;
+            if (kind === 0) {
+                // Bone shards: two thin crossed lines
+                bctx.strokeStyle = 'rgba(139,147,184,0.5)';
+                bctx.lineWidth = 1;
+                const bx = px + 8 + ((h1 >> 3) % (ts - 16)), by = py + 8 + ((h1 >> 7) % (ts - 16));
+                hq = (hq * 1103515245 + 12345) & 0x7FFFFFFF;
+                const a1 = (hq % 628) / 100;
+                const a2 = a1 + 1.15;
+                const ln = 6 + ((hq >> 8) % 5);
+                bctx.beginPath();
+                bctx.moveTo(bx, by);
+                bctx.lineTo(bx + Math.cos(a1) * ln, by + Math.sin(a1) * ln);
+                bctx.moveTo(bx, by);
+                bctx.lineTo(bx + Math.cos(a2) * ln * 0.7, by + Math.sin(a2) * ln * 0.7);
+                bctx.stroke();
+            } else if (kind === 1) {
+                // Small urn silhouette: rounded body + lid
+                const ux = px + 10 + ((h1 >> 4) % (ts - 20)), uy = py + 12 + ((h1 >> 8) % (ts - 22));
+                bctx.globalAlpha = 0.5;
+                bctx.fillStyle = '#4a4a5e';
+                bctx.fillRect(ux, uy - 6, 6, 10);
+                bctx.fillRect(ux - 2, uy + 1, 10, 4);
+                // Lid
+                bctx.fillRect(ux - 1, uy - 9, 8, 3);
+                bctx.fillRect(ux + 1, uy - 10, 4, 1);
+                bctx.globalAlpha = 1;
+            } else if (kind === 2) {
+                // Web corner: 3 faint concentric quarter-arcs in a tile corner
+                const q = (h1 >> 5) & 3;
+                const wx = px + (q === 1 || q === 3 ? ts - 10 : 10);
+                const wy = py + (q >= 2 ? ts - 10 : 10);
+                const a0 = q === 0 ? Math.PI : (q === 1 ? Math.PI * 1.5 : (q === 2 ? Math.PI * 0.5 : 0));
+                bctx.strokeStyle = 'rgba(200,200,255,0.10)';
+                bctx.lineWidth = 0.6;
+                for (let r = 3; r <= 9; r += 3) {
+                    bctx.beginPath();
+                    bctx.arc(wx, wy, r, a0, a0 + Math.PI * 0.5);
+                    bctx.stroke();
+                }
+            } else {
+                // Rare candle: warm 2x3 flame over a wax stub — a subtle warm
+                // point against the cold blue crypt stone (~40% of decor slots).
+                const cx = px + 8 + ((h1 >> 4) % (ts - 18));
+                const cy = py + 10 + ((h1 >> 8) % (ts - 18));
+                bctx.fillStyle = 'rgba(230,225,210,0.5)'; // wax stub
+                bctx.fillRect(cx - 1, cy - 1, 4, 2);
+                bctx.fillStyle = 'rgba(255,190,90,0.85)'; // flame 2x3
+                bctx.fillRect(cx, cy - 4, 2, 3);
+            }
+            return;
+        }
+        if (b === 'forest') {
+            if ((h1 % 100) >= 9) return;
+            const kind = (h1 >> 10) % 3;
+            if (kind === 0) {
+                // Root curl: short brown curve hugging the floor
+                const rx0 = px + 6 + ((h1 >> 3) % (ts - 14)), ry0 = py + 8 + ((h1 >> 8) % (ts - 16));
+                bctx.strokeStyle = 'rgba(74,59,40,0.55)';
+                bctx.lineWidth = 1;
+                bctx.beginPath();
+                bctx.moveTo(rx0, ry0);
+                bctx.quadraticCurveTo(rx0 + 3 + ((h1 >> 5) % 6), ry0 - 6 + ((h1 >> 6) % 5), rx0 + 8 + ((h1 >> 11) % 6), ry0 + 1);
+                bctx.stroke();
+            } else if (kind === 1) {
+                // Moss tuft: 3-4 1px green specks
+                const mx = px + 4 + ((h1 >> 3) % (ts - 8)), my = py + 4 + ((h1 >> 9) % (ts - 8));
+                bctx.globalAlpha = 0.5;
+                bctx.fillStyle = '#2f5e35';
+                const mn = 3 + ((h1 >> 13) & 1);
+                for (let i = 0; i < mn; i++) {
+                    hq = (hq * 1103515245 + 12345) & 0x7FFFFFFF;
+                    bctx.fillRect(mx + ((hq >> 2) % 4), my + ((hq >> 7) % 4), 1, 1);
+                }
+                bctx.globalAlpha = 1;
+            } else {
+                // Fallen leaf: tiny rotated rect
+                const lx = px + 8 + ((h1 >> 3) % (ts - 18)), ly = py + 8 + ((h1 >> 8) % (ts - 18));
+                bctx.save();
+                bctx.translate(lx, ly);
+                bctx.rotate(((h1 >> 12) % 628) / 100);
+                bctx.globalAlpha = 0.5;
+                bctx.fillStyle = '#6a7a35';
+                bctx.fillRect(-3, -1, 6, 2);
+                bctx.restore();
+            }
+            return;
+        }
+        if (b === 'lavaCave') {
+            if ((h1 % 100) >= 7) return;
+            const kind = (h1 >> 10) & 3;
+            if (kind === 3) {
+                // Lava crack decal: thin glowing polyline crossing this tile,
+                // extending a second tile into the west neighbour when that is
+                // open floor (already baked, so the overhang stays visible).
+                const yc = py + ts * (0.22 + (((h1 >> 4) % 45) / 100));
+                const x0 = (x > 0 && this.tiles[x-1][y].t === 0 && !this.tiles[x-1][y].lit) ? px - ts : px;
+                const jog = ((h1 >> 11) % 5) - 2;
+                bctx.beginPath();
+                bctx.moveTo(x0 + 6, yc);
+                bctx.lineTo(px + ts * 0.38, yc + jog);
+                bctx.lineTo(px + ts * 0.68, yc - jog);
+                bctx.lineTo(px + ts - 6, yc);
+                bctx.strokeStyle = 'rgba(255,85,0,0.10)';
+                bctx.lineWidth = 2.5;
+                bctx.stroke();
+                bctx.strokeStyle = 'rgba(255,85,0,0.45)';
+                bctx.lineWidth = 0.8;
+                bctx.stroke();
+                return;
+            }
+            // Ash rock cluster (2-4 blobs) + occasional ember speck
+            const ax = px + 8 + ((h1 >> 3) % (ts - 16)), ay = py + 8 + ((h1 >> 8) % (ts - 16));
+            const an = 2 + ((h1 >> 13) % 3);
+            bctx.globalAlpha = 0.5;
+            bctx.fillStyle = '#3d3330';
+            for (let i = 0; i < an; i++) {
+                hq = (hq * 1103515245 + 12345) & 0x7FFFFFFF;
+                bctx.beginPath();
+                bctx.arc(ax + ((hq >> 2) % 9) - 4, ay + ((hq >> 8) % 9) - 4, 1 + ((hq >> 16) & 1), 0, Math.PI * 2);
+                bctx.fill();
+            }
+            if (((h1 >> 15) % 100) < 30) {
+                // Ember speck still warm in the ash
+                bctx.globalAlpha = 0.8;
+                bctx.fillStyle = '#ff7a3c';
+                bctx.fillRect(ax + ((h1 >> 6) % 7) - 3, ay + ((h1 >> 11) % 7) - 3, 1, 1);
+            }
+            bctx.globalAlpha = 1;
+            return;
+        }
+    }
+
     draw(ctx, cx, cy) {
         if (this.needsRedraw) {
             this.bufferCtx.clearRect(0, 0, this.buffer.width, this.buffer.height);
@@ -16221,6 +17032,18 @@ class Map {
                     bctx.fillStyle=wallColor;
                     bctx.fillRect(px,py,ts,ts);
                     
+                    // Full-tile value wash FIRST (dark ~9% @0.06, light ~5%),
+                    // so the per-tile tone variation, grime streaks and brick
+                    // detail that follow always paint OVER it and are never
+                    // flattened. Baked once into the tile buffer — zero cost.
+                    if ((h1 % 100) < 9) {
+                        bctx.fillStyle = 'rgba(0,0,0,0.06)';
+                        bctx.fillRect(px, py, ts, ts);
+                    } else if ((h1 % 100) < 14) {
+                        bctx.fillStyle = 'rgba(255,255,255,0.03)';
+                        bctx.fillRect(px, py, ts, ts);
+                    }
+
                     // Per-tile tone variation (hash) — breaks the flat wall look
                     const wtone = (h1 % 14) - 7;
                     if (wtone > 0) { bctx.fillStyle = 'rgba(255,255,255,' + (wtone * 0.006) + ')'; bctx.fillRect(px, py, ts, ts); }
@@ -16281,6 +17104,17 @@ class Map {
                         bctx.lineTo(px + ts*0.7, py + ts*0.65);
                         bctx.lineTo(px + ts*0.82, py + ts*0.9);
                         bctx.stroke();
+                    }
+
+                    // ~12%: short vertical grime/moisture streak running down from
+                    // the block top (2-3px wide, 12-20px tall) — reads as water
+                    // staining on the masonry. Deterministic, baked once.
+                    if (((hash >> 7) % 100) < 12) {
+                        const stW = 2 + ((hash >> 11) % 2);
+                        const stH = 12 + ((hash >> 9) % 9);
+                        const stX = px + 3 + ((hash >> 3) % (ts - stW - 6));
+                        bctx.fillStyle = 'rgba(0,0,0,0.09)';
+                        bctx.fillRect(stX, py + 2, stW, stH);
                     }
                     
                     try { BiomeSystem.drawWallDetail(bctx, px, py, ts, x, y); } catch(e) {}
@@ -16353,12 +17187,21 @@ class Map {
                     if (x < this.width-1 && this.tiles[x+1][y].t === 1) wallE = true;
                     const wallCount = (wallN?1:0)+(wallS?1:0)+(wallW?1:0)+(wallE?1:0);
                     if (wallCount > 0) {
+                        // Immediate 6px contact band against the wall — raised to
+                        // 0.15 so room perimeters read as grounded against walls.
+                        bctx.fillStyle = 'rgba(0,0,0,0.15)';
+                        if (wallN) { bctx.fillRect(px, py, ts, 6); }
+                        if (wallS) { bctx.fillRect(px, py + ts - 6, ts, 6); }
+                        if (wallW) { bctx.fillRect(px, py, 6, ts); }
+                        if (wallE) { bctx.fillRect(px + ts - 6, py, 6, ts); }
+                        // Soft falloff extension just past the band (unchanged)
                         bctx.fillStyle = 'rgba(0,0,0,0.13)';
-                        if (wallN) { bctx.fillRect(px, py, ts, 6); bctx.fillRect(px, py + 6, ts, 2); }
-                        if (wallS) { bctx.fillRect(px, py + ts - 6, ts, 6); bctx.fillRect(px, py + ts - 8, ts, 2); }
-                        if (wallW) { bctx.fillRect(px, py, 6, ts); bctx.fillRect(px + 6, py, 2, ts); }
-                        if (wallE) { bctx.fillRect(px + ts - 6, py, 6, ts); bctx.fillRect(px + ts - 8, py, 2, ts); }
+                        if (wallN) { bctx.fillRect(px, py + 6, ts, 2); }
+                        if (wallS) { bctx.fillRect(px, py + ts - 8, ts, 2); }
+                        if (wallW) { bctx.fillRect(px + 6, py, 2, ts); }
+                        if (wallE) { bctx.fillRect(px + ts - 8, py, 2, ts); }
                         if (wallCount >= 2) {
+                            // Inner corner/shared fill — unchanged
                             bctx.fillStyle = 'rgba(0,0,0,0.08)';
                             bctx.fillRect(px + 4, py + 4, ts - 8, ts - 8);
                         }
@@ -16395,6 +17238,10 @@ class Map {
 
                     if (this.tiles[x][y].lit) {
                         this._drawLightProp(bctx, px, py, ts, x, y);
+                    } else if (this.tiles[x][y].t === 0) {
+                        // Ambient biome decor on open floor — baked once into
+                        // the tile buffer, zero per-frame cost.
+                        this._drawFloorDecor(bctx, px, py, ts, x, y, h1);
                     }
                 }
             }
@@ -16505,6 +17352,14 @@ class Entity {
         }
         
         if(this === player) { shake = CONFIG.SHAKE_HIT; SND.playHit(); Statistics.data.totalDamageTaken += finalDmg; if (window.RunObjectiveSystem) RunObjectiveSystem.onDamage(finalDmg); ScreenEffects.onHitEnemy(finalDmg, source ? source.x : 0, source ? source.y : 0, this.x, this.y); this.combatTimer = 0; }
+
+        // Screen juice when the player lands a hit on an enemy (shake/blood
+        // splatter/chroma are capped internally by ScreenEffects.onHitEnemy and
+        // only scale with damage). Player-body hits are handled above; pets and
+        // projectiles never reach this branch as damage targets.
+        if (source === player && this !== player && !this.isP && typeof ScreenEffects !== 'undefined') {
+            ScreenEffects.onHitEnemy(finalDmg, source.x, source.y, this.x, this.y);
+        }
         
                 // Relic: Espinhos de Escudo
         if(window.RelicSystem && this === player) RelicSystem.espinhosReflect(this, source, finalDmg);
@@ -17603,6 +18458,7 @@ class Boss extends Enemy {
         this._archDamageMult = 1.0;
         this._blueprint = null;
         this._sprite = 'boss';
+        this._spriteScale = 2.3; // base sprite draw scale; applyFloorBlueprint grows it with identity radius
         this._bpGlow = '#ff00ff';
         this._drainT = 0;
         this._armorHp = 0;
@@ -17644,6 +18500,9 @@ class Boss extends Enemy {
         this.hp = this.maxHp;
         this.s = bp.speed || CONFIG.BOSS_SPEED;
         this.radius = Math.max(20, Math.floor(CONFIG.BOSS_RADIUS * (bp.radiusMult || 1)));
+        // Identity-based sprite scale: big-radius bosses (magma_titan,
+        // stone_colossus) read BIG on screen; base bosses keep ~2.2-2.3.
+        this._spriteScale = Math.min(4.0, 2.2 + Math.max(0, this.radius - CONFIG.BOSS_RADIUS) * 0.11);
         this._archDamageMult = bp.dmgMult || 1.0;
         this._armorHp = bp.armor ? Math.floor(this.maxHp * bp.armor) : 0;
         this._regen = bp.regen || 0;
@@ -18373,15 +19232,18 @@ class Boss extends Enemy {
             ctx.fillRect(this.x-cx-this.radius-10, this.y-cy-this.radius-10, (this.radius+10)*2, (this.radius+10)*2);
             ctx.restore();
         }
-        SpriteRenderer.drawEnemy(ctx, this.x-cx, this.y-cy, this._sprite || 'boss', this.walkTimer, this.angle, 2.3, this.ft > 0);
+        SpriteRenderer.drawEnemy(ctx, this.x-cx, this.y-cy, this._sprite || 'boss', this.walkTimer, this.angle, this._spriteScale || 2.3, this.ft > 0);
 
         // Per-boss decoration (horns, crowns, wisps, ...)
         this._drawBossDecor(ctx, this.x-cx, this.y-cy);
 
         // Boss name above
         ctx.fillStyle = '#fff';
-        ctx.font = 'bold 10px ' + COLORS.CANVAS_FONT;
+        ctx.font = 'bold 12px ' + COLORS.CANVAS_FONT;
         ctx.textAlign = 'center';
+        ctx.strokeStyle = 'rgba(0,0,0,0.9)';
+        ctx.lineWidth = 3;
+        ctx.strokeText(this.name, this.x-cx, this.y-cy-this.radius-25);
         ctx.fillText(this.name, this.x-cx, this.y-cy-this.radius-25);
 
         // HP bar
@@ -21964,7 +22826,7 @@ window.SkillTreeUI = SkillTreeUI;
              }
 
               const contentEl = document.createElement('div');
-             contentEl.className = 'custom-scrollbar';
+             contentEl.className = 'custom-scrollbar' + (panelId === 'skills' ? ' skills-scroll' : '');
              contentEl.style.cssText = 'flex:1;min-height:0;overflow-y:auto;padding-right:4px;-webkit-overflow-scrolling:touch;touch-action:pan-y';
              contentEl.innerHTML = contentHtml;
              this._contentEl = contentEl;
@@ -22368,17 +23230,17 @@ window.SkillTreeUI = SkillTreeUI;
                     <div class="skill-node ${state}" style="width:100%;padding:10px;border-radius:12px;cursor:pointer;transition:all 0.2s"
                          onclick="UIManager.showSkillDetail('${s.id}')">
                         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-                            <div class="sk-name">${s.name} ${isUnlocked ? '<span class="sk-check">✓</span>' : ''}</div>
+                            <div class="sk-name">${_L('skill.' + p.type + '.' + s.id + '.name', s.name)} ${isUnlocked ? '<span class="sk-check">✓</span>' : ''}</div>
                             <div style="display:flex;gap:4px;align-items:center">
                                 ${isAbility ? '<span style="font-size:9px;padding:2px 8px;border-radius:999px;background:rgba(250,204,21,0.2);color:' + COLORS.GOLD + ';font-weight:bold">' + _L('skills.ability', 'HABILIDADE') + '</span>' : ''}
                                 ${s.cat === 'speed' ? '<span style="font-size:8px;padding:2px 8px;border-radius:999px;background:rgba(96,165,250,0.2);color:#60a5fa;font-weight:bold">VEL</span>' : ''}
                                 ${limitBadge}
                             </div>
                         </div>
-                        <div style="font-size:10px;color:${COLORS.TEXT_DIM};line-height:1.3">${s.desc}</div>
+                        <div style="font-size:10px;color:${COLORS.TEXT_DIM};line-height:1.3">${_L('skill.' + p.type + '.' + s.id + '.desc', s.desc)}</div>
                         <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
-                            <div style="font-size:9px;color:${COLORS.TEXT_MUTED}">${s.requires ? _L('skills.requires', 'Requer: ') + (byId[s.requires] ? byId[s.requires].name : '?') : 'Tier ' + (s.tier || 1)}</div>
-                            <div class="sk-status">${isUnlocked ? _L('skills.unlocked', 'DESBLOQUEADO') : (speedLocked ? 'LIMITE' : (locked ? '🔒 ' + s.cost + ' 💰' : s.cost + ' 💰'))}</div>
+                            <div style="font-size:9px;color:${COLORS.TEXT_MUTED}">${s.requires ? _L('skills.requires', 'Requer: ') + (byId[s.requires] ? _L('skill.' + p.type + '.' + byId[s.requires].id + '.name', byId[s.requires].name) : '?') : _L('skills.tier', 'Tier ') + (s.tier || 1)}</div>
+                            <div class="sk-status">${isUnlocked ? _L('skills.unlocked', 'DESBLOQUEADO') : (speedLocked ? 'LIMITE' : (locked ? '<svg class="lock-s" width="10" height="10" style="color:#9ca3af;flex:none"><use href="#ic-lock"/></svg> ' + s.cost + ' <svg class="coin-s" width="10" height="10" style="color:#ffcc00;flex:none"><use href="#ic-coin"/></svg>' : s.cost + ' <svg class="coin-s" width="10" height="10" style="color:#ffcc00;flex:none"><use href="#ic-coin"/></svg>'))}</div>
                         </div>
                     </div>
                 `;
@@ -22394,7 +23256,7 @@ window.SkillTreeUI = SkillTreeUI;
 
             return `
                 <div style="text-align:center;margin-bottom:12px;color:${COLORS.GOLD};font-weight:bold;letter-spacing:0.1em;font-size:13px;background:rgba(40,30,20,0.6);padding:8px 0;border-radius:12px;border:1.5px solid rgba(250,204,21,0.35);box-shadow:0 0 10px rgba(255,204,0,0.1)">
-                    💰 SEU OURO: ${p.currency}
+                    <svg class="coin-s" width="12" height="12" style="color:#ffcc00;vertical-align:-1px;margin-right:4px"><use href="#ic-coin"/></svg> SEU OURO: ${p.currency}
                 </div>
                 <div style="display:flex;gap:6px;margin-bottom:14px">
                     ${statChip('HP', p.maxHp, '#4ade80')}
@@ -22441,21 +23303,21 @@ window.SkillTreeUI = SkillTreeUI;
                     ? `<div style="text-align:center;color:#f87171;font-weight:bold;font-size:12px;padding:10px;border-radius:10px;background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3)">⛔ Limite de velocidade atingido (${speedCount}/${speedLimit}) — o ladino já é naturalmente veloz!</div>`
                     : canUnlock
                         ? `<button style="width:100%;padding:14px;border-radius:12px;font-weight:bold;font-size:14px;color:#1a0e00;background:linear-gradient(90deg,#ffdd00,#ffb800);cursor:pointer;border:none;transition:transform 0.15s"
-                            onclick="UIManager.unlockSkill('${s.id}')">${_L('skills.unlock', '⚡ DESBLOQUEAR')} (${s.cost} 💰)</button>`
-                        : `<div style="text-align:center;color:${COLORS.TEXT_MUTED};font-size:12px">Moedas insuficientes (faltam ${Math.max(0, s.cost - p.currency)} 💰)</div>`;
+                            onclick="UIManager.unlockSkill('${s.id}')">${_L('skills.unlock', '⚡ DESBLOQUEAR')} (${s.cost} <svg class="coin-s" width="11" height="11" style="color:#7a5200;vertical-align:-1px"><use href="#ic-coin"/></svg>)</button>`
+                        : `<div style="text-align:center;color:${COLORS.TEXT_MUTED};font-size:12px">Moedas insuficientes (faltam ${Math.max(0, s.cost - p.currency)} <svg class="coin-s" width="10" height="10" style="color:#9ca3af;vertical-align:-1px"><use href="#ic-coin"/></svg>)</div>`;
 
             return `
                 <div style="display:flex;flex-direction:column;gap:14px">
                     <div style="padding:18px;border-radius:16px;border:1.5px solid ${isUnlocked ? 'rgba(167,139,250,0.6)' : (canUnlock ? 'rgba(250,204,21,0.5)' : 'rgba(255,255,255,0.1)')};background:${isUnlocked ? 'linear-gradient(135deg, rgba(167,139,250,0.25), rgba(120,80,220,0.2))' : 'rgba(255,255,255,0.04)'};text-align:center">
-                        <div style="font-size:30px;margin-bottom:6px">${isAbility ? '⚡' : (s.cat === 'speed' ? '💨' : '✦')}</div>
-                        <div style="font-size:18px;font-weight:bold;color:#fff">${s.name}</div>
+                        <div style="height:30px;display:flex;align-items:center;justify-content:center;margin-bottom:6px">${isAbility ? '<svg width="26" height="26" style="color:#ffd86b"><use href="#ic-bolt"/></svg>' : (s.cat === 'speed' ? '<svg width="26" height="26" style="color:#60a5fa"><use href="#ic-wind"/></svg>' : '<svg width="26" height="26" style="color:#e0b6ff"><use href="#ic-star"/></svg>')}</div>
+                        <div style="font-size:18px;font-weight:bold;color:#fff">${_L('skill.' + p.type + '.' + s.id + '.name', s.name)}</div>
                         ${isAbility ? '<div style="font-size:10px;margin-top:4px;color:' + COLORS.GOLD + ';font-weight:bold;text-transform:uppercase;letter-spacing:0.1em">Habilidade especial</div>' : ''}
                         ${s.cat === 'speed' ? `<div style="font-size:10px;margin-top:4px;color:#60a5fa;font-weight:bold;text-transform:uppercase;letter-spacing:0.1em">Velocidade (máx ${speedLimit}x por run)</div>` : ''}
-                        <p style="font-size:13px;color:${COLORS.TEXT_DIM};line-height:1.5;margin-top:8px">${s.desc}</p>
+                        <p style="font-size:13px;color:${COLORS.TEXT_DIM};line-height:1.5;margin-top:8px">${_L('skill.' + p.type + '.' + s.id + '.desc', s.desc)}</p>
                     </div>
                     <div style="display:flex;justify-content:space-between;font-size:12px;color:${COLORS.TEXT_DIM};padding:0 4px">
-                        <span>Custo: <b style="color:${COLORS.GOLD}">${s.cost} 💰</b></span>
-                        <span>Tier: <b>${s.tier || 1}</b></span>
+                        <span>Custo: <b style="color:${COLORS.GOLD}">${s.cost} <svg class="coin-s" width="10" height="10" style="color:#ffcc00;vertical-align:-1px"><use href="#ic-coin"/></svg></b></span>
+                        <span>${_L('skills.tier', 'Tier ').trim()}: <b>${s.tier || 1}</b></span>
                     </div>
                     ${s.requires ? `<div style="font-size:11px;color:${reqOk ? '#4ade80' : '#f87171'};text-align:center;padding:8px;border-radius:10px;background:rgba(255,255,255,0.04)">Requer: ${s.requires} (${reqOk ? 'desbloqueado' : 'bloqueado'})</div>` : ''}
                     ${!reqOk ? `<div style="font-size:11px;color:#f87171;text-align:center">Desbloqueie a habilidade anterior primeiro.</div>` : ''}
@@ -25169,6 +26031,91 @@ Input.init();
             });
         });
     }
+    </script>
+
+    <script>
+    /* === G3 — START SCREEN: pixel-art heroes on the class cards ===
+       Draws the real class sprite (SpriteRenderer.drawCharacter — same
+       sheets/palettes the player uses in-game) into each .class-mini-card
+       canvas and slowly advances the idle cycle while the start screen is
+       visible. Follows the particle field's zero-cost pattern: the rAF loop
+       stops when the screen is hidden (or reduced motion is on) and a
+       MutationObserver restarts it when it is shown again. Locked classes
+       keep their existing look — MetaSystem.refreshClassCards grays the whole
+       card (canvas included) via the card-level filter. */
+    (function () {
+        var SM = window.SpriteManager, SR = window.SpriteRenderer;
+        if (!SM || !SR || typeof document === 'undefined') return;
+        var startScreen = document.getElementById('start-screen');
+        if (!startScreen) return;
+        var canvases = document.querySelectorAll('.class-mini-card .hero-canvas');
+        if (!canvases.length) return;
+
+        var mql = (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)')) || null;
+        function prefersReduced() {
+            if (window.GameSettings && GameSettings.reducedMotion) return true;
+            if (document.body && document.body.classList.contains('reduce-motion')) return true;
+            return !!(mql && mql.matches);
+        }
+
+        var heroes = [];
+        for (var i = 0; i < canvases.length; i++) {
+            var cv = canvases[i];
+            var cctx = cv.getContext('2d');
+            if (!cctx) continue;
+            heroes.push({
+                cv: cv,
+                ctx: cctx,
+                cls: cv.getAttribute('data-class') || 'warrior',
+                time: i * 9 // stagger each hero's idle pose
+            });
+        }
+        if (!heroes.length) return;
+
+        function paintHero(h) {
+            var ctx = h.ctx, cv = h.cv;
+            ctx.clearRect(0, 0, cv.width, cv.height);
+            // Anchor the feet near the canvas bottom (same anchor used in-game).
+            SR.drawCharacter(ctx, Math.round(cv.width / 2), cv.height - 20, h.cls,
+                { state: 'idle', time: h.time, angle: 0 }, 0);
+        }
+
+        // First paint also builds the sprite sheets (SpriteManager.init) — this
+        // runs during parse, still covered by the splash overlay, so the menu
+        // itself never hitches on sheet construction.
+        for (var k = 0; k < heroes.length; k++) paintHero(heroes[k]);
+
+        var rafId = null, running = false, tick = 0;
+        function anim() {
+            // Zero-cost when hidden: stop while gameplay/menus cover the start
+            // screen; the MutationObserver restarts the loop when shown.
+            if (startScreen.classList.contains('hidden') || prefersReduced()) {
+                running = false; rafId = null;
+                return; // static frame already painted
+            }
+            tick++;
+            if (tick % 3 === 0) { // advance the idle cycle every ~3 rAF ticks
+                for (var a = 0; a < heroes.length; a++) heroes[a].time += 1;
+            }
+            for (var b = 0; b < heroes.length; b++) paintHero(heroes[b]);
+            rafId = requestAnimationFrame(anim);
+        }
+        function ensureRunning() {
+            if (!running && !startScreen.classList.contains('hidden') && !prefersReduced()) {
+                running = true;
+                rafId = requestAnimationFrame(anim);
+            }
+        }
+        ensureRunning();
+        if (window.MutationObserver) {
+            // Watch #start-screen visibility (classList) and the body reduced-
+            // motion class so the loop starts/stops with either change.
+            new MutationObserver(ensureRunning).observe(startScreen, { attributes: true, attributeFilter: ['class'] });
+            if (document.body) {
+                new MutationObserver(ensureRunning).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+            }
+        }
+    })();
     </script>
 </body>
 </html>
