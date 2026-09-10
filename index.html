@@ -23790,9 +23790,9 @@ window.SkillTreeUI = SkillTreeUI;
                 special: document.getElementById('special-btn')
             };
 
-            if(btns.shop) btns.shop.onclick = () => this.openPanel('shop');
-            if(btns.skills) btns.skills.onclick = () => this.openPanel('skills');
-            if(btns.stats) btns.stats.onclick = () => this.openPanel('stats');
+            if(btns.shop) btns.shop.onclick = () => window.toggleShop ? window.toggleShop() : this.openPanel('shop');
+            if(btns.skills) btns.skills.onclick = () => window.toggleSkillTree ? window.toggleSkillTree() : this.openPanel('skills');
+            if(btns.stats) btns.stats.onclick = () => window.toggleStats ? window.toggleStats() : this.openPanel('stats');
 
             if(btns.dodge) {
                 const fire = () => { if(window.player && player.dodge) player.dodge(); };
@@ -26590,7 +26590,12 @@ const Input = {
         // ---- TOUCH ----
         window.addEventListener('touchstart', e => {
             if (window.GameSettings) window.GameSettings.adaptTo('touch');
-            if (typeof TutorialSystem !== 'undefined' && TutorialSystem.active && TutorialSystem._allControlsHidden()) { e.preventDefault(); return; }
+            if (typeof TutorialSystem !== 'undefined' && TutorialSystem.active && TutorialSystem._allControlsHidden()) {
+                // Real buttons (shop/skills/stats bar, tutorial UI) must stay
+                // reachable even during info-only stages; only block bare
+                // canvas/joystick touches on the game surface.
+                if (!(e.target && e.target.closest && e.target.closest('button'))) { e.preventDefault(); return; }
+            }
             if (gameState === 'WORLD_MAP' && window.WorldMap) {
                 const rect = canvas.getBoundingClientRect();
                 if (!e.changedTouches || !e.changedTouches.length) return;
