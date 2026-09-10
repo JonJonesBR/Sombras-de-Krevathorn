@@ -2310,6 +2310,7 @@ const StorageManager = {
         daily: 'aethelgard_daily',
         dailyRankings: 'aethelgard_daily_rankings',
         bestiary: 'aethelgard_bestiary',
+        updateLog: 'aethelgard_updateLog', // last-seen release version (update notifier)
         settings: 'aethelgard_settings',
         save: 'aethelgard_save',
         runStates: 'aethelgard_run_states', // orphaned legacy (RunState removed) - kept for awareness
@@ -3402,6 +3403,17 @@ const I18n = {
             'tutorial.dashDesktop2': 'Segure a direcao (W A S D) para onde quer ir.',
             'tutorial.dashDesktop3': '',
             'tutorial.dashDesktop4': '> Objetivo: Use o Dash uma vez!',
+
+            // Update log (Novidades) - shown once per new release
+            'update.title': '✨ Novidades',
+            'update.newVersion': 'Nova versão instalada!',
+            'update.close': 'Entendi',
+            'update.entry.v9.title': 'v9 — Tutorial destravado',
+            'update.entry.v9.l1': 'A etapa "abrir a loja" do tutorial completo agora funciona (a loja abre e o tutorial avança).',
+            'update.entry.v10.title': 'v10 — Atualizações automáticas',
+            'update.entry.v10.l1': 'O jogo agora detecta novas versões sozinho e limpa o cache antigo automaticamente.',
+            'update.entry.v10.l2': 'Seus saves e progresso são preservados.',
+            'update.entry.v10.l3': 'Estas notas aparecem uma única vez a cada nova versão.',
 
             // ============================================================
             // Quests
@@ -4572,6 +4584,17 @@ const I18n = {
             'tutorial.dashDesktop3': '',
             'tutorial.dashDesktop4': '> Goal: Use the Dash once!',
 
+            // Update log (What's New) - shown once per new release
+            'update.title': '✨ What\'s New',
+            'update.newVersion': 'New version installed!',
+            'update.close': 'Got it',
+            'update.entry.v9.title': 'v9 — Tutorial unblocked',
+            'update.entry.v9.l1': 'The "open the shop" step of the full tutorial now works (the shop opens and the tutorial advances).',
+            'update.entry.v10.title': 'v10 — Automatic updates',
+            'update.entry.v10.l1': 'The game now detects new versions on its own and cleans the old cache automatically.',
+            'update.entry.v10.l2': 'Your saves and progress are preserved.',
+            'update.entry.v10.l3': 'These notes appear once per new version.',
+
             // ============================================================
             // Quests
             // ============================================================
@@ -5740,6 +5763,17 @@ const I18n = {
             'tutorial.dashDesktop2': 'Mantén la dirección (W A S D) hacia donde quieras ir.',
             'tutorial.dashDesktop3': '',
             'tutorial.dashDesktop4': '> Objetivo: ¡Usa el Dash una vez!',
+
+            // Update log (Novedades) - shown once per new release
+            'update.title': '✨ Novedades',
+            'update.newVersion': '¡Nueva versión instalada!',
+            'update.close': 'Entendido',
+            'update.entry.v9.title': 'v9 — Tutorial destrabado',
+            'update.entry.v9.l1': 'El paso "abrir la tienda" del tutorial completo ahora funciona (la tienda se abre y el tutorial avanza).',
+            'update.entry.v10.title': 'v10 — Actualizaciones automáticas',
+            'update.entry.v10.l1': 'El juego ahora detecta nuevas versiones solo y limpia la caché antigua automáticamente.',
+            'update.entry.v10.l2': 'Tus partidas y progreso se conservan.',
+            'update.entry.v10.l3': 'Estas notas aparecen una sola vez por cada versión nueva.',
 
             // ============================================================
             // Quests
@@ -27072,14 +27106,134 @@ Input.init();
     </script>
 
     <script>
+    /* === UPDATE LOG ("Novidades") ===
+       Per-release changelog baked into the game. The notifier below shows it
+       ONCE per new release (persisted last-seen in localStorage via
+       StorageManager RAW key 'updateLog'). Fresh users (no last-seen) are
+       recorded silently: only returning users get the announcement.
+       current MUST stay in sync with the SW CACHE_VERSION suffix (sw.js).
+    */
+    window.UPDATE_LOG = {
+        current: 'v10',
+        entries: [
+            { v: 'v9', date: '2026-09-10', titleKey: 'update.entry.v9.title', title: 'v9 — Tutorial destravado',
+              linesKeys: ['update.entry.v9.l1'],
+              lines: ['A etapa "abrir a loja" do tutorial completo agora funciona (a loja abre e o tutorial avança).'] },
+            { v: 'v10', date: '2026-09-10', titleKey: 'update.entry.v10.title', title: 'v10 — Atualizações automáticas',
+              linesKeys: ['update.entry.v10.l1', 'update.entry.v10.l2', 'update.entry.v10.l3'],
+              lines: ['O jogo agora detecta novas versões sozinho e limpa o cache antigo automaticamente.',
+                      'Seus saves e progresso são preservados.',
+                      'Estas notas aparecem uma única vez a cada nova versão.'] }
+        ]
+    };
+
+    window.UpdateNotifier = {
+        _cachePrefix: 'krevathorn-',
+        check() {
+            const ug = window.UPDATE_LOG;
+            if (!ug || !ug.current || typeof StorageManager === 'undefined' || typeof document === 'undefined') return;
+            let lastSeen = null;
+            try { const raw = StorageManager.getRaw('updateLog'); if (raw) lastSeen = raw; } catch (e) {}
+            if (lastSeen === ug.current) return;
+            // Fresh player: nothing to announce yet — record silently.
+            if (!lastSeen) {
+                try { StorageManager.setRaw('updateLog', ug.current); } catch (e) {}
+                return;
+            }
+            const num = (v) => { const m = /v(\d+)/i.exec(String(v)); return m ? parseInt(m[1], 10) : 0; };
+            const shown = (ug.entries || [])
+                .filter((e) => num(e.v) > num(lastSeen))
+                .slice(-6).reverse();
+            if (!shown.length) {
+                try { StorageManager.setRaw('updateLog', ug.current); } catch (e) {}
+                return;
+            }
+            this._show(shown);
+        },
+        _show(entries) {
+            const L = (k, f) => (window._L ? _L(k, f) : f);
+            const rows = entries.map((e) => {
+                const ls = (e.linesKeys && e.linesKeys.length)
+                    ? e.linesKeys.map((k, i) => L(k, (e.lines && e.lines[i]) || ''))
+                    : (e.lines || []);
+                return '<div style="margin-bottom:12px">' +
+                    '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px">' +
+                        '<span style="font-weight:800;color:#e0b6ff;font-size:13px">' + L(e.titleKey, e.title) + '</span>' +
+                        '<span style="font-size:10px;color:rgba(255,255,255,0.4);white-space:nowrap">' + (e.date || '') + '</span>' +
+                    '</div>' +
+                    ls.map((t) => t ? '<div style="font-size:12px;color:#c8cedf;line-height:1.5;padding-left:10px;border-left:2px solid rgba(255,204,0,0.35);margin-bottom:3px">' + t + '</div>' : '').join('') +
+                '</div>';
+            }).join('');
+            const ov = document.createElement('div');
+            ov.id = 'update-overlay';
+            ov.style.cssText = 'position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;background:rgba(4,2,8,0.85);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);padding:20px;';
+            ov.innerHTML = '<div style="background:rgba(22,17,32,0.98);border:1.5px solid rgba(224,182,255,0.3);border-radius:24px;padding:22px 20px;max-width:360px;width:100%;box-shadow:0 10px 50px rgba(0,0,0,0.6);text-align:left;">' +
+                '<div style="text-align:center;margin-bottom:4px;">' +
+                    '<div style="font-size:1.15rem;font-weight:900;color:#ffcc00;margin-bottom:2px;">' + L('update.title', '✨ Novidades') + '</div>' +
+                    '<div style="font-size:11px;color:rgba(255,255,255,0.55);">' + L('update.newVersion', 'Nova versão instalada!') + '</div>' +
+                '</div>' +
+                '<div style="margin:12px 0 14px;height:1px;background:linear-gradient(90deg,transparent,rgba(255,204,0,0.5),transparent);"></div>' +
+                '<div style="max-height:52vh;overflow-y:auto;padding-right:2px;">' + rows + '</div>' +
+                '<button id="update-close-btn" style="width:100%;margin-top:14px;padding:12px;border-radius:14px;font-size:0.85rem;font-weight:800;letter-spacing:0.05em;text-transform:uppercase;background:linear-gradient(135deg,rgba(100,60,200,0.35),rgba(157,78,221,0.22));border:1.5px solid rgba(157,78,221,0.45);color:#c084fc;cursor:pointer;touch-action:manipulation;">' + L('update.close', 'Entendi') + '</button>' +
+            '</div>';
+            document.body.appendChild(ov);
+            const btn = ov.querySelector('#update-close-btn');
+            if (btn) btn.onclick = () => {
+                try { StorageManager.setRaw('updateLog', window.UPDATE_LOG.current); } catch (e) {}
+                ov.remove();
+            };
+        }
+    };
+
+    // Run once, after the DOM is ready (I18n already applied by its own hook).
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() { window.UpdateNotifier.check(); });
+    } else {
+        window.UpdateNotifier.check();
+    }
+    </script>
+
+    <script>
     /* === PWA: OFFLINE SERVICE WORKER (sw.js) === */
-    // Registers the stale-while-revalidate cache worker. Requires http(s) —
-    // opening index.html directly from disk skips registration and the game
-    // still works (just without offline caching).
+    // Registers the cache worker. Requires http(s) — opening index.html
+    // directly from disk skips registration and the game still works (just
+    // without offline caching).
+    // updateViaCache:'none' makes the browser re-validate sw.js from the
+    // network on every load, so a new release's worker is picked up fast.
+    // When a new worker takes over (skipWaiting + clients.claim), we reload
+    // the page once so the freshly-activated network-first worker serves the
+    // new HTML immediately (guarded to avoid reload loops, session-scoped).
+    // We also sweep leftover app caches from the page side (saves live in
+    // localStorage and are never touched).
     if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.protocol === 'http:')) {
         window.addEventListener('load', function() {
-            navigator.serviceWorker.register('./sw.js').catch(function(err) {
-                console.warn('[PWA] Service worker registration failed:', err);
+            var hadController = !!navigator.serviceWorker.controller;
+            navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' })
+                .then(function() {
+                    // Defensive cache sweep: remove krevathorn-* entries that
+                    // are STRICTLY OLDER than the page's current release.
+                    // (Newer/equal names are never deleted here — a just-
+                    // activated worker may still rely on its own cache; the
+                    // worker's activate handler is the authoritative janitor.)
+                    if (window.caches && window.UPDATE_LOG && window.UPDATE_LOG.current) {
+                        var m = /v(\d+)/i.exec(window.UPDATE_LOG.current);
+                        var curNum = m ? parseInt(m[1], 10) : 0;
+                        var num = function(k) { var mm = /krevathorn-v(\d+)/i.exec(k); return mm ? parseInt(mm[1], 10) : -1; };
+                        caches.keys().then(function(keys) {
+                            return Promise.all(keys
+                                .filter(function(k) { return k.indexOf('krevathorn-') === 0 && num(k) < curNum; })
+                                .map(function(k) { return caches.delete(k); }));
+                        }).catch(function() {});
+                    }
+                })
+                .catch(function(err) {
+                    console.warn('[PWA] Service worker registration failed:', err);
+                });
+            navigator.serviceWorker.addEventListener('controllerchange', function() {
+                if (hadController && !sessionStorage.getItem('krev-sw-refresh')) {
+                    sessionStorage.setItem('krev-sw-refresh', '1');
+                    location.reload();
+                }
             });
         });
     }
