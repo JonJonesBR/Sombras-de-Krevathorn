@@ -32,7 +32,7 @@ Complementa `PLANO_MELHORIAS.md` (backlog/estado) e `.omp/orchestration-state.md
    - `index.html`: `window.UPDATE_LOG.current = 'vN'`
 2. **Adicione uma entrada** em `window.UPDATE_LOG.entries` (campo `v`) + as chaves `update.entry.vN.*` nos 3 dicionários (pt/en/es) — é isso que o jogador vê uma única vez na primeira execução da nova versão.
 3. O resto é automático: `index.html` registra o SW com `updateViaCache:'none'` (revalida o sw.js na rede a cada load), `skipWaiting`+`clients.claim` ativam o worker novo e a página **recarrega uma vez** (guard `sessionStorage 'krev-sw-refresh'` evita loop). Navegação é network-first → o HTML novo chega imediatamente; caches antigos `krevathorn-v*` são removidos no `activate` do worker (e, defensivamente, pela página para versões estritamente mais velhas). **Saves ficam em localStorage e NUNCA são tocados.**
-4. Versão atual do painel: `v10` (atualizações automáticas).
+4. Versão atual do painel: `v11` (textos nítidos sob resolução dinâmica).
 - **Controle 'mouse' automático no desktop**: `Input.pollMouse()` zera o joystick direito a cada frame sem `mouse.down`. Em harness programático, setar `GameSettings.controlType = 'touch'` e dirigir `Input.right`/`Input.keys`.
 - **`Player.takeDamage` tem override**: `invincibleTimer` (15 ticks pós-hit) e escala por `DifficultySystem.getPlayerDamageTakenMult()`. Testes de dano direto precisam zerar `player.invincibleTimer`.
 - **Desafio diário**: roda por data (`YYYYMMDD % 8` sobre a lista de desafios). Só `tank` (warrior) e `sniper` (mage) forçam classe; o desafio só vale quando o jogador escolhe exatamente a classe exigida (`_applyDailyIfEligible`).
