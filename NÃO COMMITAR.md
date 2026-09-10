@@ -23,7 +23,16 @@ Complementa `PLANO_MELHORIAS.md` (backlog/estado) e `.omp/orchestration-state.md
 ## Armadilhas conhecidas do ambiente
 
 - **Pasta sincronizada (Google Drive "Meu Drive")**: scans nativos (`read`/`glob`) falham ou crasham (access violation), e git pode travar. Gate obrigatório: clonar para `%LOCALAPPDATA%\omp-workspaces\<projeto>` e operar a rodada ali; copiar `.omp/` e planos de/para a pasta original no início/fim.
-- **Service worker cacheia**: `sw.js` usa stale-while-revalidate com `CACHE_VERSION` (`krevathorn-v4`). Ao publicar mudança de jogo, **bump da versão** — senão usuários recebem versão velha. Em teste local, limpar `caches` + `unregister()` antes de recarregar para ver o arquivo novo.
+- **Service worker cacheia**: `sw.js` usa stale-while-revalidate com `CACHE_VERSION` (`krevathorn-v10`). Ao publicar mudança de jogo, siga o **procedimento de release** abaixo — senão usuários recebem versão velha.
+
+## Procedimento de release (mantém as atualizações automáticas funcionando)
+
+1. **Bump sincronizado da versão em DOIS lugares** (precisam bater — o painel "Novidades" e o sweep de cache usam o mesmo número):
+   - `sw.js`: `CACHE_VERSION = 'krevathorn-vN'`
+   - `index.html`: `window.UPDATE_LOG.current = 'vN'`
+2. **Adicione uma entrada** em `window.UPDATE_LOG.entries` (campo `v`) + as chaves `update.entry.vN.*` nos 3 dicionários (pt/en/es) — é isso que o jogador vê uma única vez na primeira execução da nova versão.
+3. O resto é automático: `index.html` registra o SW com `updateViaCache:'none'` (revalida o sw.js na rede a cada load), `skipWaiting`+`clients.claim` ativam o worker novo e a página **recarrega uma vez** (guard `sessionStorage 'krev-sw-refresh'` evita loop). Navegação é network-first → o HTML novo chega imediatamente; caches antigos `krevathorn-v*` são removidos no `activate` do worker (e, defensivamente, pela página para versões estritamente mais velhas). **Saves ficam em localStorage e NUNCA são tocados.**
+4. Versão atual do painel: `v10` (atualizações automáticas).
 - **Controle 'mouse' automático no desktop**: `Input.pollMouse()` zera o joystick direito a cada frame sem `mouse.down`. Em harness programático, setar `GameSettings.controlType = 'touch'` e dirigir `Input.right`/`Input.keys`.
 - **`Player.takeDamage` tem override**: `invincibleTimer` (15 ticks pós-hit) e escala por `DifficultySystem.getPlayerDamageTakenMult()`. Testes de dano direto precisam zerar `player.invincibleTimer`.
 - **Desafio diário**: roda por data (`YYYYMMDD % 8` sobre a lista de desafios). Só `tank` (warrior) e `sniper` (mage) forçam classe; o desafio só vale quando o jogador escolhe exatamente a classe exigida (`_applyDailyIfEligible`).
