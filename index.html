@@ -3433,6 +3433,9 @@ const I18n = {
             'update.entry.v11.title': 'v11 — Textos nítidos',
             'update.entry.v11.l1': 'Os textos dentro do jogo agora ficam nítidos e legíveis mesmo com a resolução dinâmica ativa.',
             'update.entry.v11.l2': 'A redução automática de resolução agora afeta só o mundo; o texto é renderizado em resolução cheia.',
+            'update.entry.v12.title': 'v12 — Cenário com volume',
+            'update.entry.v12.l1': 'As masmorras ganharam profundidade: paredes com luz direcional e curso de alvenaria, chão com lajes rebaixadas.',
+            'update.entry.v12.l2': 'Só o visual do cenário mudou — jogabilidade, dano e saves continuam intactos.',
 
             // ============================================================
             // Quests
@@ -4616,6 +4619,9 @@ const I18n = {
             'update.entry.v11.title': 'v11 — Crisp text',
             'update.entry.v11.l1': 'In-game text is now sharp and legible even with dynamic resolution active.',
             'update.entry.v11.l2': 'The automatic resolution reduction now only affects the world; text renders at full resolution.',
+            'update.entry.v12.title': 'v12 — Scenery with depth',
+            'update.entry.v12.l1': 'Dungeons gained depth: walls with directional light and masonry courses, floors with recessed flagstones.',
+            'update.entry.v12.l2': 'Only the scenery visuals changed — gameplay, damage and saves stay intact.',
 
             // ============================================================
             // Quests
@@ -5799,6 +5805,9 @@ const I18n = {
             'update.entry.v11.title': 'v11 — Textos nítidos',
             'update.entry.v11.l1': 'Los textos del juego ahora se ven nítidos y legibles incluso con la resolución dinámica activa.',
             'update.entry.v11.l2': 'La reducción automática de resolución ahora solo afecta al mundo; el texto se renderiza a resolución completa.',
+            'update.entry.v12.title': 'v12 — Escenario con volumen',
+            'update.entry.v12.l1': 'Las mazmorras ganaron profundidad: muros con luz direccional y hiladas de sillería, suelo con losas hundidas.',
+            'update.entry.v12.l2': 'Solo cambió lo visual del escenario — jugabilidad, daño y partidas siguen intactos.',
 
             // ============================================================
             // Quests
@@ -18165,18 +18174,30 @@ class Map {
                         bctx.fillRect(gx, gy, gs, gs);
                     }
 
-                    // Top edge lit (top-down light feel) - stronger band
-                    bctx.fillStyle = 'rgba(255,255,255,0.09)';
-                    bctx.fillRect(px, py, ts, 4);
+                    // Directional top-light: a smooth vertical falloff so the
+                    // block reads as lit from above — bright face near the top,
+                    // shaded base. This replaces the old flat top/bottom bands
+                    // that left the wall looking like a uniform slab (and even
+                    // lighting the base brighter than the top, the inverted
+                    // signal measured in the tile buffer). Baked once, zero cost.
+                    const wallGrad = bctx.createLinearGradient(px, py, px, py + ts);
+                    wallGrad.addColorStop(0.0, 'rgba(255,255,255,0.11)');
+                    wallGrad.addColorStop(0.32, 'rgba(255,255,255,0.035)');
+                    wallGrad.addColorStop(0.6, 'rgba(0,0,0,0.02)');
+                    wallGrad.addColorStop(1.0, 'rgba(0,0,0,0.14)');
+                    bctx.fillStyle = wallGrad;
+                    bctx.fillRect(px, py, ts, ts);
 
-                    // Bottom of the block falls into shadow (volume)
-                    bctx.fillStyle = 'rgba(0,0,0,0.14)';
-                    bctx.fillRect(px, py + ts - 4, ts, 4);
-                    
-                    // Subtle stone block lines
+                    // Subtle stone block lines (staggered course joint so the
+                    // masonry reads as offset courses, not aligned mortar)
                     bctx.strokeStyle = 'rgba(0,0,0,0.38)';
                     bctx.lineWidth = 1;
                     bctx.strokeRect(px+2, py+2, ts-4, ts-4);
+                    // Staggered horizontal head-joint (running bond feel)
+                    bctx.beginPath();
+                    bctx.moveTo(px + (x % 2 === 0 ? ts*0.35 : ts*0.65), py + ts*0.5);
+                    bctx.lineTo(px + (x % 2 === 0 ? ts*0.65 : ts*0.35), py + ts*0.5);
+                    bctx.stroke();
 
                     // Bright outer edge so walls read clearly against the floor
                     bctx.strokeStyle = 'rgba(255,255,255,0.22)';
@@ -18313,14 +18334,33 @@ class Map {
                         }
                     }
                     
-                    // Subtle grid cross pattern
+                    // Recessed flagstone joint: 2x2 slab groups with a subtle
+                    // chamfer — each slab carries a faint top-light bevel and a
+                    // darker recessed seam, so the floor reads as stone plates
+                    // laid in a staggered grid (consistent light direction with
+                    // the walls above). Baked once, zero cost.
+                    const slabX = x & ~1, slabY = y & ~1;
+                    const sh = (slabX * 374761393 + slabY * 668265263) & 0xFFFF;
+                    const isNewSlabRow = ((x & 1) === 0) && ((y & 1) === 0);
+                    // Seam is drawn on the top/left edge of each even slab cell
+                    bctx.strokeStyle = 'rgba(0,0,0,0.05)';
+                    bctx.lineWidth = 1;
+                    if ((x & 1) === 0) { bctx.beginPath(); bctx.moveTo(px+0.5, py); bctx.lineTo(px+0.5, py+ts); bctx.stroke(); }
+                    if ((y & 1) === 0) { bctx.beginPath(); bctx.moveTo(px, py+0.5); bctx.lineTo(px+ts, py+0.5); bctx.stroke(); }
+                    // Subtle top-lit sheen on the slab centre (breaks flatness)
+                    if (isNewSlabRow && ((sh % 5) < 2)) {
+                        bctx.fillStyle = 'rgba(255,255,255,0.02)';
+                        bctx.fillRect(px+1, py+1, ts-1, ts-1);
+                    }
+
+                    // Legacy drawn signal: a faint directional wipe so the whole
+                    // floor trends lighter toward the top of the screen (matches
+                    // the wall top-light). Was the near-invisible flat cross.
                     bctx.strokeStyle = 'rgba(255,255,255,0.02)';
                     bctx.lineWidth = 0.5;
                     bctx.beginPath();
                     bctx.moveTo(px + ts*0.5, py);
                     bctx.lineTo(px + ts*0.5, py + ts);
-                    bctx.moveTo(px, py + ts*0.5);
-                    bctx.lineTo(px + ts, py + ts*0.5);
                     bctx.stroke();
                     
                     try { BiomeSystem.drawFloorDetail(bctx, px, py, ts, x, y); } catch(e) {}
@@ -27139,7 +27179,7 @@ Input.init();
        current MUST stay in sync with the SW CACHE_VERSION suffix (sw.js).
     */
     window.UPDATE_LOG = {
-        current: 'v11',
+        current: 'v12',
         entries: [
             { v: 'v9', date: '2026-09-10', titleKey: 'update.entry.v9.title', title: 'v9 — Tutorial destravado',
               linesKeys: ['update.entry.v9.l1'],
@@ -27152,7 +27192,11 @@ Input.init();
             { v: 'v11', date: '2026-09-10', titleKey: 'update.entry.v11.title', title: 'v11 — Textos nítidos',
               linesKeys: ['update.entry.v11.l1', 'update.entry.v11.l2'],
               lines: ['Os textos dentro do jogo agora ficam nítidos e legíveis mesmo com a resolução dinâmica ativa.',
-                      'A redução automática de resolução agora afeta só o mundo; o texto é renderizado em resolução cheia.'] }
+                      'A redução automática de resolução agora afeta só o mundo; o texto é renderizado em resolução cheia.'] },
+            { v: 'v12', date: '2026-09-10', titleKey: 'update.entry.v12.title', title: 'v12 — Cenário com volume',
+              linesKeys: ['update.entry.v12.l1', 'update.entry.v12.l2'],
+              lines: ['As masmorras ganharam profundidade: paredes com luz direcional e curso de alvenaria, chão com lajes rebaixadas.',
+                      'Só o visual do cenário mudou — jogabilidade, dano e saves continuam intactos.'] }
         ]
     };
 
