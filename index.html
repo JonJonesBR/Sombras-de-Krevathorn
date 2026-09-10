@@ -2063,6 +2063,10 @@ function getFontScale() {
 let _autoResScale = 1;     // current multiplier (1 = full 0.75x base, min _autoResMin)
 let _autoResMin = 0.6;     // lowest internal resolution multiplier
 let _autoResStable = 0;    // consecutive healthy seconds before scaling back up
+// Logical -> physical scale for the MAIN canvas. The main canvas always runs
+// at full window resolution (so canvas text stays crisp even when auto-res
+// shrinks the world buffers); this maps logical coords (width/height) onto it.
+let _cssScale = 1;
 
 // DEBUG TOOL (temporary): force the internal resolution multiplier and resize,
 // so you can eyeball joystick/HUD/FOV at the extremes without waiting for low FPS.
@@ -2168,8 +2172,11 @@ function resize() {
         Debug.info('[Resize] Canvas not ready yet, skipping');
         return;
     }
-    // PERF: Force DPR=1 on mobile to avoid 2-3x pixel rendering (huge GPU savings)
-    dpr = 1;
+    // PERF: force DPR=1 for the WORLD buffers (guarded inside _autoResScale via
+    // resize), but the MAIN canvas backing runs at native device pixels (capped
+    // at 2x) so canvas text is crisp on phones — the browser would otherwise
+    // nearest-neighbor-upscale the smaller backing to device pixels and every
+    // glyph turns blocky ("quadriculado").
     // LOGICAL space: fixed at 0.75 * window size regardless of _autoResScale.
     // The camera, joysticks, HUD, minimap and input mapping all work in this
     // space, so the field of view and on-screen controls keep an identical size
@@ -2182,29 +2189,38 @@ function resize() {
     width = Math.floor(winW * 0.75);
     height = Math.floor(winH * 0.75);
 
-    // PHYSICAL buffer: same logical space scaled by _autoResScale. CSS size stays
-    // at full window size, so the browser stretches the (possibly smaller) buffer
-    // back to the display - only sharpness drops under sustained low FPS.
+    // World/light buffers: logical space scaled by _autoResScale (dynamic
+    // resolution). Only these shrink under sustained low FPS.
     const res = Math.max(0.01, _autoResScale || 1);
     const bufW = Math.max(1, Math.round(width * res));
     const bufH = Math.max(1, Math.round(height * res));
-    canvas.width = bufW;
-    canvas.height = bufH;
-    canvas.style.width = window.innerWidth + 'px';
-    canvas.style.height = window.innerHeight + 'px';
-    canvas.style.imageRendering = 'pixelated'; // for pixel art
+
+    // PHYSICAL MAIN BUFFER: full window resolution at native device pixels
+    // (capped at 2x for perf). Dynamic resolution (autoRes) shrinks only the
+    // world/light buffers; text and screen-space HUD drawn on the main context
+    // are rasterized at full resolution and stay crisp/legible even at low
+    // autoRes. (Previously the main buffer itself shrank and was
+    // nearest-neighbor-upscaled to the CSS size, making every canvas glyph
+    // blocky. At DPR 1 the old "0.75x backing upscaled" path also blocked text.)
+    const _devScale = Math.min(2, window.devicePixelRatio || 1);
+    canvas.width = Math.max(1, Math.round(winW * _devScale));
+    canvas.height = Math.max(1, Math.round(winH * _devScale));
+    canvas.style.width = winW + 'px';
+    canvas.style.height = winH + 'px';
+    canvas.style.imageRendering = 'pixelated'; // for pixel art (inert at 1:1)
+    _cssScale = (width > 0) ? (canvas.width / width) : 1;
     if (ctx) {
-        Debug.info(`[Resize] Logical ${width}x${height} buffer ${bufW}x${bufH} (autoRes ${res})`);
-        // Map the logical coordinate space into the (possibly smaller) physical
+        Debug.info(`[Resize] Logical ${width}x${height} main ${canvas.width}x${canvas.height} (cssScale ${_cssScale.toFixed(3)}, dev ${_devScale.toFixed(2)}), world res ${res}`);
+        // Map the logical coordinate space into the full-resolution physical
         // buffer. Resizing the canvas resets the context transform to identity,
         // so this must be applied here on every resize; draw() also re-applies
         // it at the start of each frame for safety.
-        ctx.setTransform(res, 0, 0, res, 0, 0);
+        ctx.setTransform(_cssScale, 0, 0, _cssScale, 0, 0);
     }
     
-    // Offscreen world/light buffers follow the same physical scale. The drawImage
-    // composition steps already stretch worldCanvas/lightCanvas back to the
-    // logical destination, so their internal drawing code stays unchanged.
+    // Offscreen world/light buffers follow the dynamic resolution. The drawImage
+    // composition steps stretch worldCanvas/lightCanvas back to the logical
+    // destination, so their internal drawing code stays unchanged.
     if (lightCanvas) {
         lightCanvas.width = bufW;
         lightCanvas.height = bufH;
@@ -3414,6 +3430,9 @@ const I18n = {
             'update.entry.v10.l1': 'O jogo agora detecta novas versões sozinho e limpa o cache antigo automaticamente.',
             'update.entry.v10.l2': 'Seus saves e progresso são preservados.',
             'update.entry.v10.l3': 'Estas notas aparecem uma única vez a cada nova versão.',
+            'update.entry.v11.title': 'v11 — Textos nítidos',
+            'update.entry.v11.l1': 'Os textos dentro do jogo agora ficam nítidos e legíveis mesmo com a resolução dinâmica ativa.',
+            'update.entry.v11.l2': 'A redução automática de resolução agora afeta só o mundo; o texto é renderizado em resolução cheia.',
 
             // ============================================================
             // Quests
@@ -4594,6 +4613,9 @@ const I18n = {
             'update.entry.v10.l1': 'The game now detects new versions on its own and cleans the old cache automatically.',
             'update.entry.v10.l2': 'Your saves and progress are preserved.',
             'update.entry.v10.l3': 'These notes appear once per new version.',
+            'update.entry.v11.title': 'v11 — Crisp text',
+            'update.entry.v11.l1': 'In-game text is now sharp and legible even with dynamic resolution active.',
+            'update.entry.v11.l2': 'The automatic resolution reduction now only affects the world; text renders at full resolution.',
 
             // ============================================================
             // Quests
@@ -5774,6 +5796,9 @@ const I18n = {
             'update.entry.v10.l1': 'El juego ahora detecta nuevas versiones solo y limpia la caché antigua automáticamente.',
             'update.entry.v10.l2': 'Tus partidas y progreso se conservan.',
             'update.entry.v10.l3': 'Estas notas aparecen una sola vez por cada versión nueva.',
+            'update.entry.v11.title': 'v11 — Textos nítidos',
+            'update.entry.v11.l1': 'Los textos del juego ahora se ven nítidos y legibles incluso con la resolución dinámica activa.',
+            'update.entry.v11.l2': 'La reducción automática de resolución ahora solo afecta al mundo; el texto se renderiza a resolución completa.',
 
             // ============================================================
             // Quests
@@ -9261,7 +9286,7 @@ function draw() {
         // Map logical coordinates into the (possibly scaled) physical buffer.
         // Canvas only resets its transform when the buffer is resized, but this
         // makes the frame self-contained regardless of when resize() last ran.
-        ctx.setTransform(_autoResScale || 1, 0, 0, _autoResScale || 1, 0, 0);
+        ctx.setTransform(_cssScale || 1, 0, 0, _cssScale || 1, 0, 0);
         // Prevent stale pixels from previous frame (fixes ghosting after shake).
         // +2 covers the buffer rounding so the far edge is always cleared.
         ctx.clearRect(0, 0, width + 2, height + 2);
@@ -13753,9 +13778,9 @@ const ScreenEffects = {
             // Resizing a canvas clears its backing store even when set to the
             // same value, so only touch width/height when they actually changed
             // (this runs on nearly every frame during combat, so it matters)
-            if (this._chromaCanvas.width !== width || this._chromaCanvas.height !== height) {
-                this._chromaCanvas.width = width;
-                this._chromaCanvas.height = height;
+            if (this._chromaCanvas.width !== ctx.canvas.width || this._chromaCanvas.height !== ctx.canvas.height) {
+                this._chromaCanvas.width = ctx.canvas.width;
+                this._chromaCanvas.height = ctx.canvas.height;
             }
             this._chromaCtx.drawImage(ctx.canvas, 0, 0);
             ctx.save();
@@ -27114,7 +27139,7 @@ Input.init();
        current MUST stay in sync with the SW CACHE_VERSION suffix (sw.js).
     */
     window.UPDATE_LOG = {
-        current: 'v10',
+        current: 'v11',
         entries: [
             { v: 'v9', date: '2026-09-10', titleKey: 'update.entry.v9.title', title: 'v9 — Tutorial destravado',
               linesKeys: ['update.entry.v9.l1'],
@@ -27123,7 +27148,11 @@ Input.init();
               linesKeys: ['update.entry.v10.l1', 'update.entry.v10.l2', 'update.entry.v10.l3'],
               lines: ['O jogo agora detecta novas versões sozinho e limpa o cache antigo automaticamente.',
                       'Seus saves e progresso são preservados.',
-                      'Estas notas aparecem uma única vez a cada nova versão.'] }
+                      'Estas notas aparecem uma única vez a cada nova versão.'] },
+            { v: 'v11', date: '2026-09-10', titleKey: 'update.entry.v11.title', title: 'v11 — Textos nítidos',
+              linesKeys: ['update.entry.v11.l1', 'update.entry.v11.l2'],
+              lines: ['Os textos dentro do jogo agora ficam nítidos e legíveis mesmo com a resolução dinâmica ativa.',
+                      'A redução automática de resolução agora afeta só o mundo; o texto é renderizado em resolução cheia.'] }
         ]
     };
 
