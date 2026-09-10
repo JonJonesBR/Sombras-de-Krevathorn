@@ -32,7 +32,7 @@ Complementa `PLANO_MELHORIAS.md` (backlog/estado) e `.omp/orchestration-state.md
 
 ## Comportamento da rodada
 
-1. Ler na ordem: regras do `.omp/AGENTS.md` (contrato do repositório) → este arquivo → `PLANO_MELHORIAS.md` → `PLANO_MELHORIAS_PROGRESSO.md` (→ ledger `.omp/orchestration-state.md`).
+1. Ler na ordem: regras do `AGENTS.md` (contrato do repositório) → este arquivo → `PLANO_MELHORIAS.md` → `PLANO_MELHORIAS_PROGRESSO.md` (→ ledger `.omp/orchestration-state.md`).
 2. Auditoria conservadora (não mexer no que está aprovado); evolução só com orçamento explícito (3-5 baixo risco + 1 médio por rodada).
 3. Verificação com evidência real (browser/console/estado), nunca "deve funcionar".
 4. Commits atômicos: `fix:` para correção, `feat:`/`melhoria:` para evolução — separados. Atualizar ledger e planos a cada rodada.
