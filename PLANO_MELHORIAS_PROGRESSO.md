@@ -67,3 +67,14 @@ Verificação: `check-js` 53 scripts, **0 erros**; no `SpriteManager` ao vivo (b
 Autorado por subagente con validación estructural (24 filas × 24 chars, charset [0-9], 1 componente BFS en TODAS las poses). Verificado: `check-js` 0 errores; smoke warrior ⇒ PLAYING, melee/ranged spawnean sin error de console; `SpriteManager.draw` de los 6 tipos en 8 direcciones × 3 estados = 0 errores. `CACHE_VERSION` v7→v8. Commit `bfece12`. Evidencias: `.omp/referencias/enemies_baseline.png` / `enemies_after.png`.
 
 **Pendiente (próxima ronda):** jefes (12 formas únicas) y enemigos esporádicos (shielder/healer/mimic/trap/merchant) siguen en 16x16 upscaled. Elevar chefes a 24x24 nativos daría el mayor impacto visual restante.
+
+## Rodada 2026-09-10 (2ª) — corrección: tutorial completo destrabado (etapa "abrir la loja")
+
+Usuario reportó tutorial roto, en especial la etapa de abrir la tienda. Reproducido en browser real (harness CDP main-world): tutorial quedaba **atascado en la etapa 7 'shop'** — clic/toque en el botón de tienda no abría la tienda ni avanzaba. Dos causas encadenadas en `index.html`:
+
+1. **`UIManager.setupButtons()` (DOMContentLoaded) sobrescribía el `onclick` de loja/habilidades/status** con `() => this.openPanel(...)`, en lugar del inline `if(window.toggleShop) toggleShop()`. Como `TutorialSystem.init()` hookea exactamente `window.toggleShop`/`window.toggleSkillTree` (para marcar `_shopOpened`/`_skillTreeOpened`), el bypass hacía que la misión objetivo **nunca se registrara** → la etapa no avanzaba aunque la tienda se abriera. Raíz: `setupButtons` corre después del hook y reasigna el handler saltándose los wrappers.
+2. **En táctil, `Input` `touchstart` llamaba `e.preventDefault()` siempre que `_allControlsHidden()` fuera true** (etapas sin acción: shop/skilltree). Eso ocurría **antes** del check `e.target.closest('button')` (que ya existe para dejar pasar botones) → en mobile el toque en loja/habilidades era engullido por completo → botón muerto.
+
+**Fix:** (1) botones de loja/habilidades/status rutados por los wrappers (`window.toggleShop/toggleSkillTree/toggleStats`, con fallback a `openPanel`); (2) el gate de tutorial en `touchstart` ahora solo bloquea canvas/joystick — si el target es un `button`, el toque pasa (que es lo que el `return` posterior ya pretendía). Comportamiento original preservado: toque en el mundo sigue bloqueado en etapas info (`canvasPrevented=true` verificado).
+
+**Verificación (browser real, harness):** clic real en `#shop-btn-bar` → `_shopOpened=true`, panel abre, tutorial avanza a 'skilltree'; clic en skills → avanza a 'equipment'; pickup → 'complete'; tutorial cierra con `completed=true` + bônus moedas. Gate táctil: `buttonPrevented=false` / `canvasPrevented=true`. `check-js` 53/53 scripts, 0 errores. `CACHE_VERSION` v8→v9. Commit `ed0626e` (pushed → Pages redeploy).
