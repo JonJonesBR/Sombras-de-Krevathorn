@@ -53,3 +53,17 @@ Sem visão disponível (cota do key `?q=` estourou esta sessão), pulido dirigid
 - **Guerreiro (7 poses):** espada fundida ao corpo e **sem escudo** (classe tanque; direção de arte e commit `3408d65` pedem "escudo redondo"). Fix: escudo redondo aço `#466e8e` + anel dourado `#c9a227` + rebite highlight no antebraço direito (centro por pose; (16,14) idle/walk, (15,15) attack/cast). Resultado: 7/7 poses = 1 componente.
 
 Verificação: `check-js` 53 scripts, **0 erros**; no `SpriteManager` ao vivo (browser), **56/56 células** (7 poses × 8 direções) de cada uma das 3 classes = **1 componente conexo**; smoke test runtime: `_originalStartGame('warrior'|'mage'|'elf')` ⇒ `gameState=PLAYING`, `player` presente, **0 erros de console**. Diff do `index.html` tocado apenas nas 21 linhas de padrão dos sprites (nenhuma regressão fora do bloco). `CACHE_VERSION` bumpeado `v6→v7` (SW stale). Evidências: `.omp/referencias/hero3_baseline.png` (antes) e `hero3_final.png` (depois).
+
+## Rodada 2026-09-10 — merge em main + enemigos comuns a 24x24 nativos
+
+**(A) Merge:** `graficos-melhores` mergeado en `main` (fast-forward `6e77398..b6977e9`, sin conflicto — main no había avanzado desde el punto de ramificación). Push a GitHub → GitHub Pages redeploy automático. Los 5 commits visuales de la branch (R1/R2/R3 + sheets heroes + Gate B 95) ahora están en producción.
+
+**(B) Enemigos a 24x24:** los heróis ya eran 24x24 nativos (sprites hi-bit); los enemigos comunes estaban en 16x16 upscaled (cada pixel estirado → se veían "gordos"/borrosos vs heróis nítidos). Elevados a 24x24 nativos con paletas ricas, preservando identidad y 1 componente conexo por pose:
+- **melee** (soldado robado del esqueleto): 6 poses (idle/walk1-4/attack), máscara roja + hoja azul-acero.
+- **ranged** (arquero): capucha + arco curvo CONECTADO al brazo (antes era un graveto de 1px suelto). 6 poses.
+- **swarm** (enjambre): criatura pequeña ~mitad de alto, cuerpo azul-oscuro, 4 ojos rojos. 6 poses.
+- **skeleton**: reusa la forma numérica del nuevo melee_* (el motor aplica su paleta hueso); se agregan skeleton_walk3/4 inexistentes (copias de melee_walk3/4).
+
+Autorado por subagente con validación estructural (24 filas × 24 chars, charset [0-9], 1 componente BFS en TODAS las poses). Verificado: `check-js` 0 errores; smoke warrior ⇒ PLAYING, melee/ranged spawnean sin error de console; `SpriteManager.draw` de los 6 tipos en 8 direcciones × 3 estados = 0 errores. `CACHE_VERSION` v7→v8. Commit `bfece12`. Evidencias: `.omp/referencias/enemies_baseline.png` / `enemies_after.png`.
+
+**Pendiente (próxima ronda):** jefes (12 formas únicas) y enemigos esporádicos (shielder/healer/mimic/trap/merchant) siguen en 16x16 upscaled. Elevar chefes a 24x24 nativos daría el mayor impacto visual restante.
