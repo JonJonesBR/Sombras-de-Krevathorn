@@ -3436,6 +3436,9 @@ const I18n = {
             'update.entry.v12.title': 'v12 — Cenário com volume',
             'update.entry.v12.l1': 'As masmorras ganharam profundidade: paredes com luz direcional e curso de alvenaria, chão com lajes rebaixadas.',
             'update.entry.v12.l2': 'Só o visual do cenário mudou — jogabilidade, dano e saves continuam intactos.',
+            'update.entry.v13.title': 'v13 — Dano confiável',
+            'update.entry.v13.l1': 'Correção: o jogador podia ficar sem tomar dano (imortal) quando o contador de invencibilidade não rodava ou o dano chegava corrompido (NaN).',
+            'update.entry.v13.l2': 'Dano corrompido agora é ignorado com segurança, e a invencibilidade sempre expira — mesmo quando a renderização pula frames.',
 
             // ============================================================
             // Quests
@@ -4622,6 +4625,9 @@ const I18n = {
             'update.entry.v12.title': 'v12 — Scenery with depth',
             'update.entry.v12.l1': 'Dungeons gained depth: walls with directional light and masonry courses, floors with recessed flagstones.',
             'update.entry.v12.l2': 'Only the scenery visuals changed — gameplay, damage and saves stay intact.',
+            'update.entry.v13.title': 'v13 — Reliable damage',
+            'update.entry.v13.l1': 'Fixed: the player could become effectively immune to damage (immortal) when the invincibility timer never ticked or damage arrived corrupted (NaN).',
+            'update.entry.v13.l2': 'Corrupted damage is now safely ignored, and invincibility always expires — even when rendering skips frames.',
 
             // ============================================================
             // Quests
@@ -5808,6 +5814,9 @@ const I18n = {
             'update.entry.v12.title': 'v12 — Escenario con volumen',
             'update.entry.v12.l1': 'Las mazmorras ganaron profundidad: muros con luz direccional y hiladas de sillería, suelo con losas hundidas.',
             'update.entry.v12.l2': 'Solo cambió lo visual del escenario — jugabilidad, daño y partidas siguen intactos.',
+            'update.entry.v13.title': 'v13 — Daño confiable',
+            'update.entry.v13.l1': 'Corrección: el jugador podía quedar sin recibir daño (inmortal) cuando el contador de invencibilidad no corría o el daño llegaba corrupto (NaN).',
+            'update.entry.v13.l2': 'El daño corrupto ahora se ignora con seguridad y la invencibilidad siempre expira, aunque el renderizado salte frames.',
 
             // ============================================================
             // Quests
@@ -18409,6 +18418,7 @@ class Entity {
     constructor(x,y,r,hp,c) { this.x=x; this.y=y; this.radius=r; this.radiusSq=r*r; this.hp=this.maxHp=hp; this.color=c; this.alive=true; this.ft=0; this.lr=0; this.shield=0; this.speedBoost=0; this.frozen=0; this.stealth=0; this.poisonStacks=0; this.poisonTimer=0; this.walkTimer=0; this.angle=0; this.flinchTimer=0; this.flinchVx=0; this.flinchVy=0; this.hitFlashTimer=0; }
     
     takeDamage(a, m, source=null) {
+        if (!Number.isFinite(a)) return; // dano corrompido (NaN/undefined) nunca pode virar HP NaN
         let finalDmg = a; let dmgType = 'normal';
         // Daily challenge 'oneshot': enemies die in a single hit
         if (this !== player && window._dailyMods && window._dailyMods.enemyOneHit) {
@@ -21754,6 +21764,7 @@ class Player extends Entity {
         if(this.goldRushTimer > 0) this.goldRushTimer--;
         if(this.critBoost > 0) this.critBoost--;
         if(this.shopDiscountTimer > 0) this.shopDiscountTimer--;
+        if(this.invincibleTimer > 0) this.invincibleTimer--;
         // Daily challenge 'noheal': zero passive regen
         const _noRegen = window._dailyMods && window._dailyMods.healthRegen === 0;
         if(!_noRegen && this.regenerating && this.hp < this.maxHp) this.hp = Math.min(this.maxHp, this.hp + 1 / 60);
@@ -21988,7 +21999,7 @@ class Player extends Entity {
         if (shooting) { this.shootAnim--; ctx.translate(Math.random()*4 - 2, Math.random()*4 - 2); }
         if (dodging) this.dodgeAnim--;
         if (this.levelUpAnim > 0) { this.levelUpAnim--; const sc = 1 + Math.sin(this.levelUpAnim * 0.5) * 0.5; ctx.translate(sx, sy); ctx.scale(sc, sc); ctx.translate(-sx, -sy); }
-        if (this.invincibleTimer > 0) { this.invincibleTimer--; ctx.globalAlpha = (this.invincibleTimer % 4 < 2) ? 0.4 : 1; }
+        if (this.invincibleTimer > 0) { ctx.globalAlpha = (this.invincibleTimer % 4 < 2) ? 0.4 : 1; }
         SpriteRenderer.drawCharacter(ctx, sx, sy, this.type, {
             state: spriteState,
             time: spriteTime,
@@ -22109,6 +22120,7 @@ class Player extends Entity {
     }
 
     takeDamage(a, m, source=null) {
+        if (!Number.isFinite(a)) return; // NaN jamais: hp viraria NaN e a guarda isNaN fixaria o HP no máximo
         if (this.invincibleTimer > 0) return;
         if (this.dodgeChance && a > 0 && SeedSystem.random() < Math.min(0.75, this.dodgeChance)) { spawnParticles(this.x, this.y, '#33ff33', 8, 4); DamageNumbers.add(this.x, this.y, 'ESQUIVA!', 'heal'); return; }
         if(this.type === 'mage' && this.orbShieldReady && a > 0) { this.orbShieldReady = false; this.orbShieldTimer = 0; spawnParticles(this.x, this.y, COLORS.CLASS_MAGE, 15, 4); SND.play(440, 'sine', 0.2, 0.2); DamageNumbers.add(this.x, this.y, 'ORB SHIELD!', 'heal'); return; }
@@ -27179,7 +27191,7 @@ Input.init();
        current MUST stay in sync with the SW CACHE_VERSION suffix (sw.js).
     */
     window.UPDATE_LOG = {
-        current: 'v12',
+        current: 'v13',
         entries: [
             { v: 'v9', date: '2026-09-10', titleKey: 'update.entry.v9.title', title: 'v9 — Tutorial destravado',
               linesKeys: ['update.entry.v9.l1'],
@@ -27196,7 +27208,11 @@ Input.init();
             { v: 'v12', date: '2026-09-10', titleKey: 'update.entry.v12.title', title: 'v12 — Cenário com volume',
               linesKeys: ['update.entry.v12.l1', 'update.entry.v12.l2'],
               lines: ['As masmorras ganharam profundidade: paredes com luz direcional e curso de alvenaria, chão com lajes rebaixadas.',
-                      'Só o visual do cenário mudou — jogabilidade, dano e saves continuam intactos.'] }
+                      'Só o visual do cenário mudou — jogabilidade, dano e saves continuam intactos.'] },
+            { v: 'v13', date: '2026-09-11', titleKey: 'update.entry.v13.title', title: 'v13 — Dano confiável',
+              linesKeys: ['update.entry.v13.l1', 'update.entry.v13.l2'],
+              lines: ['Correção: o jogador podia ficar sem tomar dano (imortal) quando o contador de invencibilidade não rodava ou o dano chegava corrompido (NaN).',
+                      'Dano corrompido agora é ignorado com segurança, e a invencibilidade sempre expira — mesmo quando a renderização pula frames.'] }
         ]
     };
 

@@ -20,7 +20,7 @@
  * Save data lives in localStorage and is NEVER touched by this worker — only
  * Cache Storage entries are cleaned (old caches deleted on activate).
  */
-const CACHE_VERSION = 'krevathorn-v12';
+const CACHE_VERSION = 'krevathorn-v13';
 const CACHE_NAME = CACHE_VERSION;
 const APP_SHELL = ['./', './index.html'];
 
