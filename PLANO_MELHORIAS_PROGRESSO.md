@@ -113,3 +113,14 @@ Pedido do usuário: melhorar o **cenário** como fizemos com personagens e inimi
 2. **Chão:** juntas de laje **2×2 recessed** (seams nas bordas pares, alpha 0.05) + sheen top-lit leve, no lugar do cross invisível — as lajes leem como placas de pedra com a mesma direção de luz das paredes.
 
 **Verificação (pixel-exata):** `vertDir` corrigido para **+16 a +22 nos 4 biomas** (antes −3.1, topo consistentemente claro = volume correto); **contraste parede/chão preservado** (Δ mediana 24–31 antes e depois, chão sempre mais escuro — legibilidade intocada); render ASCII confirmou volume top-lit da parede e juntas de laje do chão. Smoke: run warrior ⇒ PLAYING, todos os 4 biomas re-bakeiam, **0 erros de console**; `check-js` 54/54; `node --check sw.js` OK; notifier v12 validado (usuário v8 → `#update-overlay` com "v12 — Scenery with depth" + "Got it", visível). `CACHE_VERSION` v11→v12. Commit `1405adc`. Screenshots: `.omp/cenario_baseline/` (antes) e `.omp/cenario_depois/` (depois).
+
+## Rodada 2026-09-11 — correção: jogador podia ficar sem tomar dano (HP preso no máximo)
+
+Usuário relatou HP do jogador fixo no máximo (409) mesmo recebendo dano parado. Reprodução em browser real (harness CDP main-world, v12): combate vanilla saudável em todos os cenários (melee + ranged + veneno: 409→205 em ~6s). Mecanismos reais de trava encontrados e **provados em runtime**:
+
+1. **Invencibilidade presa no `draw()`**: `Player.invincibleTimer--` rodava apenas no `Player.draw` — qualquer frame em que o draw não roda (hitch de render, throttling de rAF, painel aberto) congela o timer em 15 ticks → player para de receber dano. Prova: pump só de `update()` (sem draw) → `inv` preso em 15, HP congelado (170) com dezenas de hits.
+2. **Dano NaN → HP pregado no máximo**: `takeDamage(NaN)` → `player.hp` vira NaN → a guarda defensiva `if (isNaN(player.hp)) player.hp = player.maxHp` (update) religa o HP no máximo todo frame (409 no caso do usuário) → imortal enquanto a fonte NaN existir. Prova: após hit NaN, `hp=NaN`; após 5 frames de `update()`, `hp=409`.
+
+**Fix (v13):** (1) tick de `invincibleTimer--` movido para `Player.update` (draw só usa o valor no blink); (2) `takeDamage` (base `Entity` + `Player`) descarta dano não-finito (`!Number.isFinite(a)`) antes de qualquer matemática — NaN/undefined nunca mais vira HP NaN nem consome invencibilidade.
+
+**Verificação (browser real, v13):** pump update-only → HP 409→283 em 240 ticks (inv expira sem render — antes congelava); `takeDamage(NaN)` → HP 409 intacto, `inv` 0, dano real subsequente aplica (10→399); smoke completo (update+draw) 1.5s, 0 erros de console, combate saudável. `check-js` 54/54, 0 erros. `CACHE_VERSION` v12→v13 + `UPDATE_LOG.current` + changelog pt/en/es.
