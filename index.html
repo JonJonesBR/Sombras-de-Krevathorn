@@ -3448,6 +3448,9 @@ const I18n = {
             'update.entry.v16.title': 'v16 — Bosses imunes a oneshot',
             'update.entry.v16.l1': 'Correção: o desafio diário "Glass Cannon" (inimigos morrem em 1 golpe) agora afeta apenas inimigos comuns — chefes de piso não morrem mais com um único golpe.',
             'update.entry.v16.l2': 'O desafio continua difícil: o jogador ainda morre em 1 hit, mas o boss exige um combate de verdade.' ,
+            'update.entry.v17.title': 'v17 — HP dinâmico por tipo',
+            'update.entry.v17.l1': 'Os 6 tipos de inimigo que tinham HP fixo agora escalam com o nível da masmorra — swarms, armadilhas, mimics, curandeiros, escudeiros e invocadores ficam mais resistentes conforme você avança.',
+            'update.entry.v17.l2': 'Hierarquia de resistência preservada: swarms continuam frágeis (1 hit), escudeiros os mais resistentes (5 hits); nada morre com 1 golpe só no piso alto.' ,
 
             // ============================================================
             // Quests
@@ -4646,6 +4649,9 @@ const I18n = {
             'update.entry.v16.title': 'v16 — Bosses immune to oneshot',
             'update.entry.v16.l1': 'Fixed: the daily challenge "Glass Cannon" (enemies die in 1 hit) now only affects common enemies — floor bosses no longer die from a single hit.',
             'update.entry.v16.l2': 'The challenge stays hard: the player still dies in 1 hit, but the boss now requires a real fight.' ,
+            'update.entry.v17.title': 'v17 — Type-based dynamic HP',
+            'update.entry.v17.l1': 'The 6 enemy types that had fixed HP now scale with dungeon level — swarms, traps, mimics, healers, shielders and summoners grow tougher as you advance.',
+            'update.entry.v17.l2': 'Resistance hierarchy preserved: swarms stay fragile (1 hit), shielders the toughest (5 hits); nothing dies in a single hit on high floors.' ,
 
             // ============================================================
             // Quests
@@ -5844,6 +5850,9 @@ const I18n = {
             'update.entry.v16.title': 'v16 — Jefes inmunes a oneshot',
             'update.entry.v16.l1': 'Corrección: el desafío diario "Cañón de cristal" (enemigos mueren en 1 golpe) ahora solo afecta enemigos comunes — los jefes de piso ya no mueren con un solo golpe.',
             'update.entry.v16.l2': 'El desafío sigue siendo difícil: el jugador aún muere en 1 hit, pero el jefe ahora requiere un combate real.' ,
+            'update.entry.v17.title': 'v17 — HP dinámico por tipo',
+            'update.entry.v17.l1': 'Los 6 tipos de enemigo que tenían HP fijo ahora escalan con el nivel de la mazmorra — enjambres, trampas, imitadores, curanderos, escuderos e invocadores se vuelven más resistentes a medida que avanzas.',
+            'update.entry.v17.l2': 'Jerarquía de resistencia preservada: los enjambres siguen siendo frágiles (1 golpe), los escuderos los más resistentes (5 golpes); nada muere con un solo golpe en el piso alto.' ,
 
             // ============================================================
             // Quests
@@ -19622,7 +19631,7 @@ class EliteEnemy extends Enemy {
 // SWARM ENEMY - Small, fast, spawns in groups
 class SwarmEnemy extends Entity {
     constructor(x, y) {
-        super(x, y, CONFIG.SWARM_RADIUS, CONFIG.SWARM_HP, CONFIG.SWARM_COLOR);
+        super(x, y, CONFIG.SWARM_RADIUS, DifficultySystem.getScaledHp(CONFIG.SWARM_HP, false), CONFIG.SWARM_COLOR);
         this.isEnemy = true;
         this.s = CONFIG.SWARM_SPEED;
         this.enemyType = 'swarm';
@@ -19674,7 +19683,7 @@ class SwarmEnemy extends Entity {
 // TRAP ENEMY - Stationary ambusher, lunges at player
 class TrapEnemy extends Entity {
     constructor(x, y) {
-        super(x, y, CONFIG.TRAP_RADIUS, CONFIG.TRAP_HP, CONFIG.TRAP_COLOR);
+        super(x, y, CONFIG.TRAP_RADIUS, DifficultySystem.getScaledHp(CONFIG.TRAP_HP, false), CONFIG.TRAP_COLOR);
         this.isEnemy = true;
         this.enemyType = 'trap';
         this.isB = false;
@@ -19748,7 +19757,7 @@ class TrapEnemy extends Entity {
 // MIMIC ENEMY - Disguised as a pickup, attacks when player is close
 class MimicEnemy extends Entity {
     constructor(x, y) {
-        super(x, y, CONFIG.MIMIC_RADIUS, CONFIG.MIMIC_HP, CONFIG.MIMIC_COLOR);
+        super(x, y, CONFIG.MIMIC_RADIUS, DifficultySystem.getScaledHp(CONFIG.MIMIC_HP, false), CONFIG.MIMIC_COLOR);
         this.isEnemy = true;
         this.enemyType = 'mimic';
         this.isB = false;
@@ -19824,7 +19833,7 @@ class MimicEnemy extends Entity {
 class HealerEnemy extends Enemy {
     constructor(x, y) {
         super(x, y, false, 'ranged');
-        this.hp = CONFIG.HEALER_HP;
+        this.hp = DifficultySystem.getScaledHp(CONFIG.HEALER_HP, false);
         this.maxHp = this.hp;
         this.color = CONFIG.HEALER_COLOR;
         this.xpReward = CONFIG.HEALER_XP;
@@ -19896,7 +19905,7 @@ class HealerEnemy extends Enemy {
 class ShieldEnemy extends Enemy {
     constructor(x, y) {
         super(x, y, false, 'melee');
-        this.hp = CONFIG.SHIELDER_HP;
+        this.hp = DifficultySystem.getScaledHp(CONFIG.SHIELDER_HP, false);
         this.maxHp = this.hp;
         this.color = CONFIG.SHIELDER_COLOR;
         this.xpReward = CONFIG.SHIELDER_XP;
@@ -21032,7 +21041,7 @@ class BossArenaHazard {
 class SummonerEnemy extends Enemy {
     constructor(x, y) {
         super(x, y, false, 'ranged');
-        this.hp = CONFIG.ENEMY_HP * 1.5;
+        this.hp = DifficultySystem.getScaledHp(CONFIG.ENEMY_HP * 1.5, false);
         this.maxHp = this.hp;
         this.color = '#ffaa00';
         this.summonTimer = 0;
@@ -27646,7 +27655,7 @@ Input.init();
        current MUST stay in sync with the SW CACHE_VERSION suffix (sw.js).
     */
     window.UPDATE_LOG = {
-        current: 'v16',
+        current: 'v17',
         entries: [
             { v: 'v9', date: '2026-09-10', titleKey: 'update.entry.v9.title', title: 'v9 — Tutorial destravado',
               linesKeys: ['update.entry.v9.l1'],
@@ -27657,7 +27666,6 @@ Input.init();
                       'Seus saves e progresso são preservados.',
                       'Estas notas aparecem uma única vez a cada nova versão.'] },
             { v: 'v11', date: '2026-09-10', titleKey: 'update.entry.v11.title', title: 'v11 — Textos nítidos',
-              linesKeys: ['update.entry.v11.l1', 'update.entry.v11.l2'],
               lines: ['Os textos dentro do jogo agora ficam nítidos e legíveis mesmo com a resolução dinâmica ativa.',
                       'A redução automática de resolução agora afeta só o mundo; o texto é renderizado em resolução cheia.'] },
             { v: 'v12', date: '2026-09-10', titleKey: 'update.entry.v12.title', title: 'v12 — Cenário com volume',
@@ -27679,7 +27687,11 @@ Input.init();
             { v: 'v16', date: '2026-09-14', titleKey: 'update.entry.v16.title', title: 'v16 — Bosses imunes a oneshot',
               linesKeys: ['update.entry.v16.l1', 'update.entry.v16.l2'],
               lines: ['Correção: o desafio diário "Glass Cannon" (inimigos morrem em 1 golpe) agora afeta apenas inimigos comuns — chefes de piso não morrem mais com um único golpe.',
-                      'O desafio continua difícil: o jogador ainda morre em 1 hit, mas o boss exige um combate de verdade.'] }
+                      'O desafio continua difícil: o jogador ainda morre em 1 hit, mas o boss exige um combate de verdade.'] },
+            { v: 'v17', date: '2026-09-14', titleKey: 'update.entry.v17.title', title: 'v17 — HP dinâmico por tipo',
+              linesKeys: ['update.entry.v17.l1', 'update.entry.v17.l2'],
+              lines: ['Os 6 tipos de inimigo que tinham HP fixo agora escalam com o nível da masmorra — swarms, armadilhas, mimics, curandeiros, escudeiros e invocadores ficam mais resistentes conforme você avança.',
+                      'Hierarquia de resistência preservada: swarms continuam frágeis (1 hit), escudeiros os mais resistentes (5 hits); nada morre com 1 golpe só no piso alto.'] }
         ]
     };
 
