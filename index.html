@@ -3445,6 +3445,9 @@ const I18n = {
             'update.entry.v15.title': 'v15 — Chefes em 24x24',
             'update.entry.v15.l1': 'Os 12 chefes ganharam sprites nativos 24x24 com poses animadas: caminhada, ataque e conjuração — cada investida agora tem identidade visual própria.',
             'update.entry.v15.l2': 'Lâminas, orbes e ameaças aparecem com detalhes novos; o jogo mantém o mesmo ritmo e dificuldade de sempre.' ,
+            'update.entry.v16.title': 'v16 — Bosses imunes a oneshot',
+            'update.entry.v16.l1': 'Correção: o desafio diário "Glass Cannon" (inimigos morrem em 1 golpe) agora afeta apenas inimigos comuns — chefes de piso não morrem mais com um único golpe.',
+            'update.entry.v16.l2': 'O desafio continua difícil: o jogador ainda morre em 1 hit, mas o boss exige um combate de verdade.' ,
 
             // ============================================================
             // Quests
@@ -4640,6 +4643,9 @@ const I18n = {
             'update.entry.v15.title': 'v15 — Bosses at 24x24',
             'update.entry.v15.l1': 'All 12 bosses got native 24x24 sprites with animated poses: walking, attacking and casting — every strike now has its own visual identity.',
             'update.entry.v15.l2': 'Blades, orbs and threats show new detail; the game keeps the same pacing and difficulty.' ,
+            'update.entry.v16.title': 'v16 — Bosses immune to oneshot',
+            'update.entry.v16.l1': 'Fixed: the daily challenge "Glass Cannon" (enemies die in 1 hit) now only affects common enemies — floor bosses no longer die from a single hit.',
+            'update.entry.v16.l2': 'The challenge stays hard: the player still dies in 1 hit, but the boss now requires a real fight.' ,
 
             // ============================================================
             // Quests
@@ -5835,6 +5841,9 @@ const I18n = {
             'update.entry.v15.title': 'v15 — Jefes en 24x24',
             'update.entry.v15.l1': 'Los 12 jefes ahora tienen sprites nativos de 24x24 con poses animadas: caminar, atacar y conjurar — cada ataque tiene su propia identidad visual.',
             'update.entry.v15.l2': 'Láminas, orbes y amenazas se ven con más detalle; el juego mantiene el mismo ritmo y dificultad.' ,
+            'update.entry.v16.title': 'v16 — Jefes inmunes a oneshot',
+            'update.entry.v16.l1': 'Corrección: el desafío diario "Cañón de cristal" (enemigos mueren en 1 golpe) ahora solo afecta enemigos comunes — los jefes de piso ya no mueren con un solo golpe.',
+            'update.entry.v16.l2': 'El desafío sigue siendo difícil: el jugador aún muere en 1 hit, pero el jefe ahora requiere un combate real.' ,
 
             // ============================================================
             // Quests
@@ -18863,7 +18872,7 @@ class Entity {
         if (!Number.isFinite(a)) return; // dano corrompido (NaN/undefined) nunca pode virar HP NaN
         let finalDmg = a; let dmgType = 'normal';
         // Daily challenge 'oneshot': enemies die in a single hit
-        if (this !== player && window._dailyMods && window._dailyMods.enemyOneHit) {
+        if (this !== player && !this.isB && window._dailyMods && window._dailyMods.enemyOneHit) {
             a = this.hp + (this.shield || 0); finalDmg = a;
         }
         if(source && source.mutations) { if(source.mutations.vampiric) { const heal = finalDmg * CONFIG.VAMPIRIC_LIFESTEAL; source.hp = Math.min(source.maxHp, source.hp + heal); DamageNumbers.add(source.x, source.y, heal, 'heal'); } if(source.mutations.lightning && SeedSystem.random() < CONFIG.LIGHTNING_CHAIN_CHANCE) { dmgType = 'lightning'; finalDmg *= CONFIG.LIGHTNING_DAMAGE_MULT; const chainHeal = finalDmg * 0.03; if(source.hp != null) source.hp = Math.min(source.maxHp, source.hp + chainHeal); const chainRangeSq = CONFIG.LIGHTNING_CHAIN_RANGE * CONFIG.LIGHTNING_CHAIN_RANGE; for(let i = 0; i < entities.length; i++) { const e = entities[i]; if(e !== this && e.alive) { const dx = e.x-this.x, dy = e.y-this.y; if(dx*dx + dy*dy < chainRangeSq) { e.takeDamage(finalDmg * 0.5, m, source); spawnParticles(e.x, e.y, '#ffff33', 3, 2); } } } } if(source.mutations.freeze && SeedSystem.random() < CONFIG.FREEZE_CHANCE) { this.frozen = CONFIG.FREEZE_DURATION; spawnParticles(this.x, this.y, '#33ccff', 10, 4); } }
@@ -27637,7 +27646,7 @@ Input.init();
        current MUST stay in sync with the SW CACHE_VERSION suffix (sw.js).
     */
     window.UPDATE_LOG = {
-        current: 'v15',
+        current: 'v16',
         entries: [
             { v: 'v9', date: '2026-09-10', titleKey: 'update.entry.v9.title', title: 'v9 — Tutorial destravado',
               linesKeys: ['update.entry.v9.l1'],
@@ -27666,7 +27675,11 @@ Input.init();
             { v: 'v15', date: '2026-09-14', titleKey: 'update.entry.v15.title', title: 'v15 — Chefes em 24x24',
               linesKeys: ['update.entry.v15.l1', 'update.entry.v15.l2'],
               lines: ['Os 12 chefes ganharam sprites nativos 24x24 com poses animadas: caminhada, ataque e conjuração — cada investida agora tem identidade visual própria.',
-                      'Lâminas, orbes e ameaças aparecem com detalhes novos; o game manter o mesmo ritmo e dificuldade.'] }
+                      'Lâminas, orbes e ameaças aparecem com detalhes novos; o game manter o mesmo ritmo e dificuldade.'] },
+            { v: 'v16', date: '2026-09-14', titleKey: 'update.entry.v16.title', title: 'v16 — Bosses imunes a oneshot',
+              linesKeys: ['update.entry.v16.l1', 'update.entry.v16.l2'],
+              lines: ['Correção: o desafio diário "Glass Cannon" (inimigos morrem em 1 golpe) agora afeta apenas inimigos comuns — chefes de piso não morrem mais com um único golpe.',
+                      'O desafio continua difícil: o jogador ainda morre em 1 hit, mas o boss exige um combate de verdade.'] }
         ]
     };
 
