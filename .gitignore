@@ -1,2 +1,9 @@
 # Estado local da rodada de orquestração (ledger, planos de teste, referências)
 .omp/
+
+# Documentos internos — não expor no repositório público (só index.html, README,
+# sw.js e .github/ ficam públicos)
+AGENTS.md
+NÃO COMMITAR.md
+PLANO_MELHORIAS.md
+PLANO_MELHORIAS_PROGRESSO.md
