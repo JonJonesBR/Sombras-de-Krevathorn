@@ -3451,6 +3451,9 @@ const I18n = {
             'update.entry.v17.title': 'v17 — HP dinâmico por tipo',
             'update.entry.v17.l1': 'Os 6 tipos de inimigo que tinham HP fixo agora escalam com o nível da masmorra — swarms, armadilhas, mimics, curandeiros, escudeiros e invocadores ficam mais resistentes conforme você avança.',
             'update.entry.v17.l2': 'Hierarquia de resistência preservada: swarms continuam frágeis (1 hit), escudeiros os mais resistentes (5 hits); nada morre com 1 golpe só no piso alto.' ,
+            'update.entry.v18.title': 'v18 — Sem cristais azuis',
+            'update.entry.v18.l1': 'Correção: os cristais ciano-azulados que apareciam no chão da Masmorra (em vez de tochas) foram removidos.',
+            'update.entry.v18.l2': 'A iluminação continua igual — agora só tochas quentes iluminam o cenário.' ,
 
             // ============================================================
             // Quests
@@ -4652,6 +4655,9 @@ const I18n = {
             'update.entry.v17.title': 'v17 — Type-based dynamic HP',
             'update.entry.v17.l1': 'The 6 enemy types that had fixed HP now scale with dungeon level — swarms, traps, mimics, healers, shielders and summoners grow tougher as you advance.',
             'update.entry.v17.l2': 'Resistance hierarchy preserved: swarms stay fragile (1 hit), shielders the toughest (5 hits); nothing dies in a single hit on high floors.' ,
+            'update.entry.v18.title': 'v18 — No more blue crystals',
+            'update.entry.v18.l1': 'Fixed: the cyan-blue crystals that appeared on the Dungeon floor (instead of torches) have been removed.',
+            'update.entry.v18.l2': 'Lighting stays the same — only warm torches light up the scene now.' ,
 
             // ============================================================
             // Quests
@@ -5853,6 +5859,9 @@ const I18n = {
             'update.entry.v17.title': 'v17 — HP dinámico por tipo',
             'update.entry.v17.l1': 'Los 6 tipos de enemigo que tenían HP fijo ahora escalan con el nivel de la mazmorra — enjambres, trampas, imitadores, curanderos, escuderos e invocadores se vuelven más resistentes a medida que avanzas.',
             'update.entry.v17.l2': 'Jerarquía de resistencia preservada: los enjambres siguen siendo frágiles (1 golpe), los escuderos los más resistentes (5 golpes); nada muere con un solo golpe en el piso alto.' ,
+            'update.entry.v18.title': 'v18 — Sin cristales azules',
+            'update.entry.v18.l1': 'Corrección: los cristales ciano-azulados que aparecían en el suelo de la Mazmorra (en lugar de antorchas) fueron eliminados.',
+            'update.entry.v18.l2': 'La iluminación sigue igual — ahora solo antorchas cálidas iluminan el escenario.' ,
 
             // ============================================================
             // Quests
@@ -18312,11 +18321,9 @@ class Map {
         const b = (typeof BiomeSystem !== 'undefined' && BiomeSystem.currentBiome) || 'dungeon';
         let pal = this._lightPalette();
         const h3 = (x * 374761393 + y * 668265263) & 0xFF;
-        // Dungeon: ~2 in 5 light props become a cyan crystal cluster instead
-        // of a flame (deterministic per tile hash — the same hash that placed
-        // the prop), echoing the emissive cyan crystals of the target palette.
-        const crystalProp = (b === 'crypt') || (b === 'dungeon' && (h3 % 2) === 0);
-        if (b === 'dungeon' && crystalProp) pal = { flame:'#9ff0ff', core:'#eaffff', outer:'#3fc8f0', body:'#3d4655', glow:'rgba(120,215,255,' };
+        // Apenas o bioma Cripta mantém cristais azuis; a Masmorra usa
+        // exclusivamente tochas quentes (pedido do usuário).
+        const crystalProp = (b === 'crypt');
         const cx3 = px + ts/2, by3 = py + ts - 7;
         // Baked colored halo on the floor around the prop: a soft additive
         // ('lighter') radial in the prop's glow color, baked once into the
@@ -27655,7 +27662,7 @@ Input.init();
        current MUST stay in sync with the SW CACHE_VERSION suffix (sw.js).
     */
     window.UPDATE_LOG = {
-        current: 'v17',
+        current: 'v18',
         entries: [
             { v: 'v9', date: '2026-09-10', titleKey: 'update.entry.v9.title', title: 'v9 — Tutorial destravado',
               linesKeys: ['update.entry.v9.l1'],
@@ -27691,7 +27698,11 @@ Input.init();
             { v: 'v17', date: '2026-09-14', titleKey: 'update.entry.v17.title', title: 'v17 — HP dinâmico por tipo',
               linesKeys: ['update.entry.v17.l1', 'update.entry.v17.l2'],
               lines: ['Os 6 tipos de inimigo que tinham HP fixo agora escalam com o nível da masmorra — swarms, armadilhas, mimics, curandeiros, escudeiros e invocadores ficam mais resistentes conforme você avança.',
-                      'Hierarquia de resistência preservada: swarms continuam frágeis (1 hit), escudeiros os mais resistentes (5 hits); nada morre com 1 golpe só no piso alto.'] }
+                      'Hierarquia de resistência preservada: swarms continuam frágeis (1 hit), escudeiros os mais resistentes (5 hits); nada morre com 1 golpe só no piso alto.'] },
+            { v: 'v18', date: '2026-09-21', titleKey: 'update.entry.v18.title', title: 'v18 — Sem cristais azuis',
+              linesKeys: ['update.entry.v18.l1', 'update.entry.v18.l2'],
+              lines: ['Correção: os cristais ciano-azulados que apareciam no chão da Masmorra (em vez de tochas) foram removidos.',
+                      'A iluminação continua igual — agora só tochas quentes iluminam o cenário.'] },
         ]
     };
 
