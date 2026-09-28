@@ -101,14 +101,16 @@ test('plan F08-F09 and F12: keyboard movement updates the player and every main 
   await page.keyboard.up(movement.direction.key);
 
   await page.evaluate(() => { GameSettings.controlType = 'mouse'; GameSettings.controlTypeAuto = false; });
-  const aim = JSON.parse(await page.evaluate(() => {
-    const rect = canvas.getBoundingClientRect();
-    return JSON.stringify({ left: rect.left, top: rect.top, width: rect.width, height: rect.height });
-  }));
-  await page.mouse.move(aim.left + aim.width * 0.6, aim.top + aim.height * 0.5);
-  await page.mouse.down();
+  await page.locator('#gameCanvas').evaluate((gameCanvas) => {
+    const rect = gameCanvas.getBoundingClientRect();
+    const event = { bubbles: true, clientX: rect.left + rect.width * 0.6, clientY: rect.top + rect.height * 0.5 };
+    gameCanvas.dispatchEvent(new MouseEvent('mousemove', event));
+    gameCanvas.dispatchEvent(new MouseEvent('mousedown', { ...event, button: 0 }));
+  });
   await expect.poll(() => page.evaluate(() => Input.mouse.down && player.shootAnim > 0)).toBe(true);
-  await page.mouse.up();
+  await page.locator('#gameCanvas').evaluate(gameCanvas => {
+    gameCanvas.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, button: 0 }));
+  });
   await page.keyboard.down('Shift');
   await expect.poll(() => page.evaluate(() => player.dodgeCooldown > 0)).toBe(true);
   await page.keyboard.up('Shift');
