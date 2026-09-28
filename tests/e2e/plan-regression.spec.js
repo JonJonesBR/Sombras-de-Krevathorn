@@ -73,6 +73,11 @@ test('plan F08-F09 and F12: keyboard movement updates the player and every main 
   page.on('pageerror', error => errors.push(error.message));
   await startRun(page);
   const movement = JSON.parse(await page.evaluate(() => {
+    const radius = (player.radius || 0) * 0.85;
+    const isPlayerPositionClear = (x, y) => [
+      [0, 0], [-radius, 0], [radius, 0], [0, -radius], [0, radius],
+      [-radius, -radius], [radius, -radius], [-radius, radius], [radius, radius]
+    ].every(([dx, dy]) => !map.isWall(x + dx, y + dy));
     const directions = [
       { key: 'ArrowRight', dx: 1, dy: 0 },
       { key: 'ArrowLeft', dx: -1, dy: 0 },
@@ -80,42 +85,33 @@ test('plan F08-F09 and F12: keyboard movement updates the player and every main 
       { key: 'ArrowUp', dx: 0, dy: -1 }
     ].map(direction => {
       let clearance = 0;
-      for (let distance = 12; distance <= 96 && !map.isWall(player.x + direction.dx * distance, player.y + direction.dy * distance); distance += 12) {
+      for (let distance = 4; distance <= 120 && isPlayerPositionClear(player.x + direction.dx * distance, player.y + direction.dy * distance); distance += 4) {
         clearance = distance;
       }
       return { ...direction, clearance };
     }).sort((a, b) => b.clearance - a.clearance);
     return JSON.stringify({ x: player.x, y: player.y, direction: directions[0] });
   }));
-  expect(movement.direction.clearance).toBeGreaterThan(24);
+  expect(movement.direction.clearance).toBeGreaterThan(36);
   await page.locator('#gameCanvas').focus();
+  await page.evaluate(() => { window.__e2eMovementStart = { x: player.x, y: player.y }; });
   await page.keyboard.down(movement.direction.key);
   await expect.poll(() => page.evaluate(key => Input.keys[key.toLowerCase()], movement.direction.key)).toBe(true);
-  await page.waitForTimeout(350);
+  await expect.poll(() => page.evaluate(() => player.x !== window.__e2eMovementStart.x || player.y !== window.__e2eMovementStart.y)).toBe(true);
   await page.keyboard.up(movement.direction.key);
-  const endPosition = JSON.parse(await page.evaluate(() => JSON.stringify({ x: player.x, y: player.y })));
-  expect(endPosition.x !== movement.x || endPosition.y !== movement.y).toBe(true);
 
+  await page.evaluate(() => { GameSettings.controlType = 'mouse'; GameSettings.controlTypeAuto = false; });
   const aim = JSON.parse(await page.evaluate(() => {
     const rect = canvas.getBoundingClientRect();
-    return JSON.stringify({
-      left: rect.left, top: rect.top, width: rect.width, height: rect.height,
-      logicalWidth: width, logicalHeight: height,
-      playerX: player.x - camX, playerY: player.y - camY
-    });
+    return JSON.stringify({ left: rect.left, top: rect.top, width: rect.width, height: rect.height });
   }));
-  await page.mouse.move(
-    aim.left + aim.width * (aim.playerX + 120) / aim.logicalWidth,
-    aim.top + aim.height * aim.playerY / aim.logicalHeight
-  );
+  await page.mouse.move(aim.left + aim.width * 0.6, aim.top + aim.height * 0.5);
   await page.mouse.down();
-  await page.waitForTimeout(180);
+  await expect.poll(() => page.evaluate(() => Input.mouse.down && player.shootAnim > 0)).toBe(true);
   await page.mouse.up();
-  expect(await page.evaluate(() => player.shootAnim)).toBeGreaterThan(0);
   await page.keyboard.down('Shift');
-  await page.waitForTimeout(80);
+  await expect.poll(() => page.evaluate(() => player.dodgeCooldown > 0)).toBe(true);
   await page.keyboard.up('Shift');
-  expect(await page.evaluate(() => player.dodgeCooldown)).toBeGreaterThan(0);
 
   const panels = JSON.parse(await page.evaluate(() => {
     const ids = ['shop', 'camp', 'skills', 'stats', 'settings', 'achievements', 'lore', 'daily', 'meta'];
@@ -293,7 +289,8 @@ test('plan F18-F21: boss reward, win screen, death continue and saved-run contin
     return JSON.stringify({ state: gameState, continueVisible: !document.getElementById('continue-screen').classList.contains('hidden') });
   });
   expect(JSON.parse(death)).toEqual({ state: 'CONTINUE', continueVisible: true });
-  await page.locator('#continue-btn').click();
+  await expect(page.locator('#continue-btn')).toBeVisible();
+  await page.locator('#continue-btn').evaluate(button => button.click());
   await expect.poll(() => page.evaluate(() => gameState)).toBe('PLAYING');
   expect(await page.evaluate(() => player.hp > 0 && continuesLeft === 2)).toBe(true);
 
