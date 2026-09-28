@@ -18,9 +18,9 @@
  *     { updateViaCache: 'none' }, then skipWaiting + clients.claim take over
  *     and the page reloads once.
  * Save data lives in localStorage and is NEVER touched by this worker — only
- * Cache Storage entries are cleaned (old caches deleted on activate).
+ * Cache Storage entries with the krevathorn- prefix are cleaned on activate.
  */
-const CACHE_VERSION = 'krevathorn-v18';
+const CACHE_VERSION = 'krevathorn-v19';
 const CACHE_NAME = CACHE_VERSION;
 const APP_SHELL = ['./', './index.html'];
 
@@ -33,7 +33,9 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
     event.waitUntil(
         caches.keys()
-            .then((keys) => Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))))
+            .then((keys) => Promise.all(keys
+                .filter((k) => k.indexOf('krevathorn-') === 0 && k !== CACHE_NAME)
+                .map((k) => caches.delete(k))))
             .then(() => self.clients.claim())
     );
 });
