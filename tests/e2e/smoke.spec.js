@@ -414,3 +414,87 @@ test('game panels announce a modal, contain keyboard focus and restore focus in 
     await expect(page.locator('#shop-btn-bar')).toBeFocused();
   }
 });
+
+test('pause settings expose modal focus, localized option states and audio labels', async ({ page }) => {
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto('/');
+  await page.evaluate(() => I18n.setLang('pt'));
+  await page.locator('.class-mini-card.warrior').click();
+  await page.locator('#tutorial-skip-btn').click();
+  await expect.poll(() => page.evaluate(() => gameState)).toBe('PLAYING');
+
+  await page.evaluate(() => {
+    GameSettings.sfxEnabled = false;
+    GameSettings.musicEnabled = false;
+    GameSettings.save();
+    PauseSystem.pause();
+  });
+  await page.locator('#pause-settings').focus();
+  await page.keyboard.press('Enter');
+
+  const settings = page.locator('#settings-panel');
+  await expect(settings).toBeVisible();
+  await expect(settings).toHaveAttribute('role', 'dialog');
+  await expect(settings).toHaveAttribute('aria-modal', 'true');
+  await expect(settings).toHaveAttribute('aria-labelledby', 'settings-dialog-title');
+  await expect(settings).toHaveAttribute('aria-hidden', 'false');
+  await expect(settings.locator('#settings-dialog-title')).toBeVisible();
+  await expect(settings.getByRole('button', { name: 'Som (SFX): Desligado' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(settings.getByRole('button', { name: 'Som (SFX): Ligado' })).toHaveAttribute('aria-pressed', 'false');
+  await expect(settings.getByText('Som (SFX)', { exact: true })).toBeVisible();
+  await expect(settings.getByText('Música', { exact: true })).toBeVisible();
+
+  for (const [locale, sfxLabel, sfxOff, musicLabel, musicOff, fontLabel, fontSmall] of [
+    ['pt', 'Som (SFX)', 'Desligado', 'Música', 'Desligada', 'Tamanho da Fonte', 'Pequena'],
+    ['en', 'Sound (SFX)', 'Off', 'Music', 'Off', 'Font Size', 'Small'],
+    ['es', 'Sonido (SFX)', 'Desactivado', 'Música', 'Desactivada', 'Tamaño de Fuente', 'Pequeña']
+  ]) {
+    await page.evaluate(code => I18n.setLang(code), locale);
+    await expect(page.locator('html')).toHaveAttribute('lang', locale);
+    await expect(settings.getByText(sfxLabel, { exact: true })).toBeVisible();
+    await expect(settings.getByText(musicLabel, { exact: true })).toBeVisible();
+    await expect(settings.getByRole('button', { name: `${sfxLabel}: ${sfxOff}` })).toHaveAttribute('aria-pressed', 'true');
+    await expect(settings.getByRole('button', { name: `${musicLabel}: ${musicOff}` })).toHaveAttribute('aria-pressed', 'true');
+    await expect(settings.getByRole('button', { name: `${fontLabel}: ${fontSmall}` })).toHaveAttribute('aria-pressed', 'false');
+    await expect(settings.locator('button[aria-pressed]')).not.toHaveCount(0);
+  }
+
+  const unlabeledSelections = JSON.parse(await page.evaluate(() => {
+    const panel = document.getElementById('settings-panel');
+    const close = panel.querySelector('.settings-box > button:last-child');
+    return JSON.stringify(Array.from(panel.querySelectorAll('.settings-box button'))
+      .filter(button => button !== close && button.id !== 'settings-reset-btn' && !button.hasAttribute('aria-pressed'))
+      .map(button => button.textContent.trim()));
+  }));
+  expect(unlabeledSelections).toEqual([]);
+
+  await page.evaluate(() => I18n.setLang('pt'));
+  const sfxOn = settings.getByRole('button', { name: 'Som (SFX): Ligado' });
+  await sfxOn.focus();
+  await page.keyboard.press('Enter');
+  await expect(sfxOn).toBeFocused();
+  await expect(sfxOn).toHaveAttribute('aria-pressed', 'true');
+  await expect(settings.getByRole('button', { name: 'Som (SFX): Desligado' })).toHaveAttribute('aria-pressed', 'false');
+
+  const firstOption = settings.locator('button[aria-pressed]').first();
+  const closeButton = settings.locator('.settings-box > button').last();
+  await closeButton.focus();
+  await page.keyboard.press('Tab');
+  await expect(firstOption).toBeFocused();
+  await page.keyboard.press('Shift+Tab');
+  await expect(closeButton).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(settings).toBeHidden();
+  await expect(settings).toHaveAttribute('aria-hidden', 'true');
+  await expect(settings).toHaveAttribute('inert', '');
+  await expect(page.locator('#pause-btn-bar')).toBeFocused();
+
+  await page.evaluate(() => UIManager.openPanel('settings'));
+  const gameDialog = page.getByRole('dialog');
+  await expect(gameDialog).toHaveAttribute('aria-labelledby', 'game-dialog-title');
+  await expect(gameDialog.getByRole('button', { name: 'Som (SFX): Ligado' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(gameDialog.getByRole('button', { name: 'Som (SFX): Desligado' })).toHaveAttribute('aria-pressed', 'false');
+  await expect(gameDialog.locator('button[aria-pressed]')).not.toHaveCount(0);
+  expect(errors).toEqual([]);
+});
