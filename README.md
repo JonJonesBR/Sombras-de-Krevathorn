@@ -49,7 +49,7 @@ This project demonstrates strong capabilities in **state management, performance
 
 As a portfolio piece, this project highlights several advanced software engineering concepts:
 
-*   **No runtime dependencies:** The game uses no external engine or UI framework. Playwright is a development-only dependency for browser regression tests.
+*   **No runtime dependencies:** The game uses no external engine or UI framework. Playwright is a development-only dependency for browser regression tests, which run in Chromium, Firefox, and WebKit.
 *   **Performance Optimization:** 
     *   **Object Pooling:** Reuses bullets and particle objects to prevent garbage collection pauses.
     *   **Offscreen Canvas Rendering:** Caches static layers (like the dungeon floor and lighting) to minimize draw calls per frame.
@@ -70,13 +70,14 @@ Since the game is built with vanilla web technologies, running it is incredibly 
     git clone https://github.com/JonJonesBR/Sombras-de-Krevathorn.git
     ```
 2.  **Open the file:**
-    Simply open `index.html` in any modern web browser.
+    Open `index.html` in a modern browser. The automated regression suite runs in Chromium, Firefox, and WebKit; compatibility with other browsers has not been separately verified.
 3.  *(Optional)* For the best experience, serve it through a local development server (e.g., VSCode Live Server or Python's `http.server`). This enables PWA install and the offline service worker — both require `http(s)://` (opening the file directly always works, just without them).
 
 For development, install the test dependency and run the regression suite:
 
 ```bash
 npm ci
+npx playwright install chromium firefox webkit
 npm test
 ```
 

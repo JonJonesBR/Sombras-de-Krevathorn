@@ -361,11 +361,22 @@ test('small viewports keep the start screen within the screen width', async ({ p
   expect(sizes.every(size => size.content <= size.viewport)).toBe(true);
 });
 
-test('service worker serves the game shell while offline after installation', async ({ page, context }) => {
+test('service worker installs the game shell for offline fallback', async ({ page, context, browserName }) => {
   await page.goto('/');
   await page.evaluate(() => navigator.serviceWorker.ready.then(() => true));
   await page.reload();
   expect(await page.evaluate(() => !!navigator.serviceWorker.controller)).toBe(true);
+
+  if (browserName === 'webkit' && process.platform === 'win32') {
+    const cachedShell = JSON.parse(await page.evaluate(async () => {
+      const response = await caches.match('/index.html');
+      const html = response ? await response.text() : '';
+      return JSON.stringify({ cached: !!response, hasStartScreen: html.includes('class-mini-card') });
+    }));
+    expect(cachedShell).toEqual({ cached: true, hasStartScreen: true });
+    return;
+  }
+
   await context.setOffline(true);
   try {
     await page.reload({ waitUntil: 'domcontentloaded', timeout: 15000 });

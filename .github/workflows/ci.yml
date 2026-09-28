@@ -14,8 +14,8 @@ jobs:
           node-version: 20
       - name: Instalar dependências de teste
         run: npm ci
-      - name: Instalar Chromium do Playwright
-        run: npx playwright install --with-deps chromium
+      - name: Instalar navegadores do Playwright
+        run: npx playwright install --with-deps chromium firefox webkit
       - name: Validar sintaxe JavaScript
         run: npm run check
       - name: Testes unitários

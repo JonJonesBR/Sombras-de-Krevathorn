@@ -3575,6 +3575,9 @@ const I18n = {
             'update.entry.v19.l1': 'A simulação mantém a mesma cadência em monitores de 30, 60 e 120 Hz e descarta o tempo acumulado enquanto a aba está oculta.',
             'update.entry.v19.l2': 'Continuar a run restaura equipamento e relíquias. Trocar de arma preserva bônus de outras fontes, e os botões do gamepad estão ativos.',
             'update.entry.v19.l3': 'O tutorial completo agora anuncia corretamente suas 9 etapas, e o arquivo de lore está traduzido para inglês e espanhol.',
+            'update.entry.v20.title': 'v20 — Compatibilidade ampliada',
+            'update.entry.v20.l1': 'Buffers gráficos agora usam canvas padrão quando o navegador não oferece OffscreenCanvas.',
+            'update.entry.v20.l2': 'A suíte de regressão agora verifica Chromium, Firefox e WebKit.',
 
             // ============================================================
             // Quests
@@ -4801,6 +4804,9 @@ const I18n = {
             'update.entry.v19.l1': 'Simulation now runs at the same pace on 30, 60, and 120 Hz displays and drops accumulated time while the tab is hidden.',
             'update.entry.v19.l2': 'Continuing a run restores equipment and relics. Weapon swaps preserve bonuses from other sources, and gamepad buttons now work.',
             'update.entry.v19.l3': 'The full tutorial now correctly announces its 9 stages, and the lore archive is available in English and Spanish.',
+            'update.entry.v20.title': 'v20 — Broader browser support',
+            'update.entry.v20.l1': 'Graphics buffers now use a standard canvas when the browser does not provide OffscreenCanvas.',
+            'update.entry.v20.l2': 'The regression suite now checks Chromium, Firefox, and WebKit.',
 
             // ============================================================
             // Quests
@@ -6027,6 +6033,9 @@ const I18n = {
             'update.entry.v19.l1': 'La simulación mantiene el mismo ritmo en pantallas de 30, 60 y 120 Hz y descarta el tiempo acumulado mientras la pestaña está oculta.',
             'update.entry.v19.l2': 'Al continuar una partida se restauran el equipo y las reliquias. Cambiar de arma conserva las bonificaciones de otras fuentes y ya funcionan los botones del mando.',
             'update.entry.v19.l3': 'El tutorial completo ahora anuncia correctamente sus 9 etapas y el archivo de lore está traducido al inglés y al español.',
+            'update.entry.v20.title': 'v20 — Compatibilidad ampliada',
+            'update.entry.v20.l1': 'Los buffers gráficos ahora usan canvas estándar cuando el navegador no ofrece OffscreenCanvas.',
+            'update.entry.v20.l2': 'La suite de regresión ahora verifica Chromium, Firefox y WebKit.',
 
             // ============================================================
             // Quests
@@ -18405,7 +18414,7 @@ class Map {
             c.height = this.height * CONFIG.TILE_SIZE;
             return c;
         })();
-        if (!(this.buffer instanceof OffscreenCanvas)) {
+        if (typeof OffscreenCanvas === 'undefined' || !(this.buffer instanceof OffscreenCanvas)) {
             this.buffer.width = this.width * CONFIG.TILE_SIZE;
             this.buffer.height = this.height * CONFIG.TILE_SIZE;
         }
@@ -28146,7 +28155,7 @@ Input.init();
        current MUST stay in sync with the SW CACHE_VERSION suffix (sw.js).
     */
     window.UPDATE_LOG = {
-        current: 'v19',
+        current: 'v20',
         entries: [
             { v: 'v9', date: '2026-09-10', titleKey: 'update.entry.v9.title', title: 'v9 — Tutorial destravado',
               linesKeys: ['update.entry.v9.l1'],
@@ -28192,6 +28201,10 @@ Input.init();
               lines: ['A simulação mantém a mesma cadência em monitores de 30, 60 e 120 Hz e descarta o tempo acumulado enquanto a aba está oculta.',
                       'Continuar a run restaura equipamento e relíquias. Trocar de arma preserva bônus de outras fontes, e os botões do gamepad estão ativos.',
                       'O tutorial completo agora anuncia corretamente suas 9 etapas, e o arquivo de lore está traduzido para inglês e espanhol.'] },
+            { v: 'v20', date: '2026-09-28', titleKey: 'update.entry.v20.title', title: 'v20 — Compatibilidade ampliada',
+              linesKeys: ['update.entry.v20.l1', 'update.entry.v20.l2'],
+              lines: ['Buffers gráficos agora usam canvas padrão quando o navegador não oferece OffscreenCanvas.',
+                      'A suíte de regressão agora verifica Chromium, Firefox e WebKit.'] },
         ]
     };
 

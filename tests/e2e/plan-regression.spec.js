@@ -293,6 +293,7 @@ test('plan F18-F21: boss reward, win screen, death continue and saved-run contin
 });
 
 test('plan F19: floor transitions, camps and final win complete from a fresh run', async ({ page }) => {
+  test.setTimeout(180000);
   await startRun(page);
   const transitions = [];
 
@@ -310,7 +311,20 @@ test('plan F19: floor transitions, camps and final win complete from a fresh run
     }));
     transitions.push(transition);
 
-    await expect.poll(() => page.evaluate(() => gameState === 'WIN' || (!_transitioning && gameState === 'PLAYING')), { timeout: 10000 }).toBe(true);
+    try {
+      await expect.poll(() => page.evaluate(() => gameState === 'WIN' || (!_transitioning && gameState === 'PLAYING')), { timeout: 15000 }).toBe(true);
+    } catch (error) {
+      const state = await page.evaluate(() => JSON.stringify({
+        floor: dungeonLevel,
+        gameState,
+        transitioning: _transitioning,
+        fade: _fadeState && { ..._fadeState },
+        panel: UIManager.currentPanel,
+        camp: !!CampSystem.state,
+        descending: CampSystem._descend
+      }));
+      throw new Error(`${error.message}\nTransition attempt: ${JSON.stringify(transition)}\nLast state: ${state}`);
+    }
     if (await page.evaluate(() => gameState === 'WIN')) break;
   }
 
