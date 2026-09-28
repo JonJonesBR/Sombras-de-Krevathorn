@@ -290,11 +290,40 @@ test('plan F18-F21: boss reward, win screen, death continue and saved-run contin
   expect(savedRun.state).toBe('PLAYING');
   expect(savedRun.playerExists).toBe(true);
   expect(savedRun.version).toBe(3);
+});
 
-  const victory = JSON.parse(await page.evaluate(() => {
-    dungeonLevel = 11;
-    _triggerWin();
-    return JSON.stringify({ state: gameState, screenVisible: !document.getElementById('win-screen').classList.contains('hidden'), saveCleared: !SaveSystem.hasSave() });
-  }));
-  expect(victory).toEqual({ state: 'WIN', screenVisible: true, saveCleared: true });
+test('plan F19: floor transitions, camps and final win complete from a fresh run', async ({ page }) => {
+  await startRun(page);
+  const transitions = [];
+
+  for (let i = 0; i < 10; i++) {
+    const transition = JSON.parse(await page.evaluate(() => {
+      dungeonKills = dungeonKillTarget;
+      dungeonPortal = { x: player.x, y: player.y, timer: 0, update() {} };
+      _updatePortalAndFloor();
+      const campOpened = !!CampSystem.state;
+      if (campOpened) {
+        CampSystem.descend();
+        _updatePortalAndFloor();
+      }
+      return JSON.stringify({ floor: dungeonLevel, campOpened, transitioning: _transitioning, state: gameState });
+    }));
+    transitions.push(transition);
+
+    await expect.poll(() => page.evaluate(() => gameState === 'WIN' || (!_transitioning && gameState === 'PLAYING')), { timeout: 10000 }).toBe(true);
+    if (await page.evaluate(() => gameState === 'WIN')) break;
+  }
+
+  const result = JSON.parse(await page.evaluate(() => JSON.stringify({
+    state: gameState,
+    floor: dungeonLevel,
+    winScreen: !document.getElementById('win-screen').classList.contains('hidden'),
+    saveCleared: !SaveSystem.hasSave(),
+    completedFloors: Statistics.data.dungeonsCompleted
+  })));
+
+  expect(transitions.length).toBe(10);
+  expect(result).toMatchObject({ state: 'WIN', floor: 11, winScreen: true, saveCleared: true });
+  expect(result.completedFloors).toBeGreaterThanOrEqual(9);
+  expect(transitions.slice(0, 9).every(floor => floor.campOpened)).toBe(true);
 });
