@@ -1582,7 +1582,7 @@ body.gfx-low #start-screen::after { animation: none !important; opacity: 0.5 !im
 
         <!-- HIDDEN OLD UTILS (kept for JS compatibility) -->
         <div id="bottom-utils" style="display:none !important;"></div>
-    </div>    <div id="modal-overlay" class="hidden" style="position:fixed;inset:0;z-index:2000;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)"></div>
+    </div>    <div id="modal-overlay" class="hidden" aria-hidden="true" style="position:fixed;inset:0;z-index:2000;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)"></div>
     <div id="logs"></div>
     <div id="fps-counter" class="hidden"></div>
     <div id="settings-panel" class="hidden" style="position:fixed;inset:0;z-index:2000;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);pointer-events:auto"></div>
@@ -1644,7 +1644,7 @@ body.gfx-low #start-screen::after { animation: none !important; opacity: 0.5 !im
         </div>
     </div>
 
-    <canvas id="gameCanvas" data-i18n-aria-label="a11y.gameControls"></canvas>
+    <canvas id="gameCanvas" data-i18n-aria-label="a11y.gameControls" tabindex="0"></canvas>
     <div id="game-accessibility-status" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
 
     <script>
@@ -3578,6 +3578,9 @@ const I18n = {
             'update.entry.v20.title': 'v20 — Compatibilidade ampliada',
             'update.entry.v20.l1': 'Buffers gráficos agora usam canvas padrão quando o navegador não oferece OffscreenCanvas.',
             'update.entry.v20.l2': 'A suíte de regressão agora verifica Chromium, Firefox e WebKit.',
+            'update.entry.v21.title': 'v21 — Diálogos acessíveis',
+            'update.entry.v21.l1': 'Painéis agora anunciam o título como diálogo, prendem o foco e devolvem o foco ao controle que os abriu.',
+            'update.entry.v21.l2': 'Escape fecha painéis, Tab permanece dentro deles e o botão de fechar tem nome traduzido.',
 
             // ============================================================
             // Quests
@@ -4311,6 +4314,7 @@ const I18n = {
             'a11y.floor': 'Piso',
             'a11y.kills': 'Abates',
             'a11y.gold': 'Moedas',
+            'a11y.closeDialog': 'Fechar diálogo',
             'ui.achievementToast': '🏆 Conquista!',
             'ui.lootCommon': 'COMUM',
             'ui.lootWeapon': 'Arma',
@@ -4807,6 +4811,9 @@ const I18n = {
             'update.entry.v20.title': 'v20 — Broader browser support',
             'update.entry.v20.l1': 'Graphics buffers now use a standard canvas when the browser does not provide OffscreenCanvas.',
             'update.entry.v20.l2': 'The regression suite now checks Chromium, Firefox, and WebKit.',
+            'update.entry.v21.title': 'v21 — Accessible dialogs',
+            'update.entry.v21.l1': 'Panels now announce their title as a dialog, contain keyboard focus, and restore focus to the control that opened them.',
+            'update.entry.v21.l2': 'Escape closes panels, Tab stays inside them, and the close button has a translated name.',
 
             // ============================================================
             // Quests
@@ -5540,6 +5547,7 @@ const I18n = {
             'a11y.floor': 'Floor',
             'a11y.kills': 'Kills',
             'a11y.gold': 'Gold',
+            'a11y.closeDialog': 'Close dialog',
             'ui.achievementToast': '🏆 Achievement!',
             'ui.lootCommon': 'COMMON',
             'ui.lootWeapon': 'Weapon',
@@ -6036,6 +6044,9 @@ const I18n = {
             'update.entry.v20.title': 'v20 — Compatibilidad ampliada',
             'update.entry.v20.l1': 'Los buffers gráficos ahora usan canvas estándar cuando el navegador no ofrece OffscreenCanvas.',
             'update.entry.v20.l2': 'La suite de regresión ahora verifica Chromium, Firefox y WebKit.',
+            'update.entry.v21.title': 'v21 — Diálogos accesibles',
+            'update.entry.v21.l1': 'Los paneles ahora anuncian su título como diálogo, mantienen el foco dentro y lo devuelven al control que los abrió.',
+            'update.entry.v21.l2': 'Escape cierra los paneles, Tab permanece dentro y el botón de cierre tiene un nombre traducido.',
 
             // ============================================================
             // Quests
@@ -6767,6 +6778,7 @@ const I18n = {
             'a11y.floor': 'Piso',
             'a11y.kills': 'Bajas',
             'a11y.gold': 'Monedas',
+            'a11y.closeDialog': 'Cerrar diálogo',
             'ui.achievementToast': '🏆 ¡Logro!',
             'ui.lootCommon': 'COMÚN',
             'ui.lootWeapon': 'Arma',
@@ -24797,6 +24809,7 @@ window.SkillTreeUI = SkillTreeUI;
     const UIManager = {
         overlay: null,
         currentPanel: null,
+        _returnFocusElement: null,
 
         init() {
             this.overlay = document.getElementById('modal-overlay');
@@ -24848,6 +24861,42 @@ window.SkillTreeUI = SkillTreeUI;
             this.overlay.onclick = (e) => {
                 if (e.target === this.overlay) this.closePanel();
             };
+            this.overlay.onkeydown = (event) => this._handleDialogKeydown(event);
+        },
+
+        _handleDialogKeydown(event) {
+            if (!this.overlay || this.currentPanel === null) return;
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                event.stopPropagation();
+                this.closePanel();
+                return;
+            }
+            if (event.key !== 'Tab') return;
+
+            const focusable = Array.from(this.overlay.querySelectorAll(
+                'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+            )).filter((element) => element.getClientRects().length > 0 && getComputedStyle(element).visibility !== 'hidden');
+            if (focusable.length === 0) {
+                event.preventDefault();
+                const dialog = this.overlay.querySelector('[role="dialog"]');
+                if (dialog) dialog.focus();
+                return;
+            }
+
+            const first = focusable[0];
+            const last = focusable[focusable.length - 1];
+            const active = document.activeElement;
+            if (!this.overlay.contains(active)) {
+                event.preventDefault();
+                (event.shiftKey ? last : first).focus();
+            } else if (event.shiftKey && active === first) {
+                event.preventDefault();
+                last.focus();
+            } else if (!event.shiftKey && active === last) {
+                event.preventDefault();
+                first.focus();
+            }
         },
 
          openPanel(panelId) {
@@ -24861,6 +24910,9 @@ window.SkillTreeUI = SkillTreeUI;
              
              // Refresh do mesmo painel: preserva a posição de rolagem
              const isRefresh = this.currentPanel === panelId && !this.overlay.classList.contains('hidden');
+             if (this.currentPanel === null || this.overlay.classList.contains('hidden')) {
+                 this._returnFocusElement = document.activeElement;
+             }
              let scrollTop = 0;
              if (isRefresh && this._contentEl) scrollTop = this._contentEl.scrollTop;
              
@@ -24871,12 +24923,17 @@ window.SkillTreeUI = SkillTreeUI;
              achievementsOpen = (panelId === 'achievements');
              if (typeof NarrativeSystem !== 'undefined') NarrativeSystem.uiOpen = (panelId === 'lore');
              
+             this.overlay.setAttribute('aria-hidden', 'false');
              this.overlay.classList.remove('hidden');
              this.overlay.classList.add('fade-in');
              this.overlay.innerHTML = '';
 
              const panel = document.createElement('div');
              panel.className = 'glass-panel';
+             panel.setAttribute('role', 'dialog');
+             panel.setAttribute('aria-modal', 'true');
+             panel.setAttribute('aria-labelledby', 'game-dialog-title');
+             panel.tabIndex = -1;
              panel.style.cssText = 'width:92vw;max-width:440px;max-height:85vh;display:flex;flex-direction:column;padding:24px;pointer-events:auto;position:relative;overflow:hidden';
              
              let title = '';
@@ -24904,14 +24961,17 @@ window.SkillTreeUI = SkillTreeUI;
 
              panel.innerHTML = `
                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
-                     <h2 style="font-size:20px;font-weight:bold;color:#e0b6ff;text-transform:uppercase;letter-spacing:0.1em;text-shadow:0 0 20px rgba(224,182,255,0.6)" class="font-headline-xl">${title}</h2>
-                     <button onclick="window.UIManager.closePanel()" style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:9999px;background:rgba(255,255,255,0.1);border:1.5px solid rgba(255,255,255,0.2);transition:transform 0.2s;cursor:pointer">
+                     <h2 id="game-dialog-title" style="font-size:20px;font-weight:bold;color:#e0b6ff;text-transform:uppercase;letter-spacing:0.1em;text-shadow:0 0 20px rgba(224,182,255,0.6)" class="font-headline-xl">${title}</h2>
+                     <button type="button" aria-label="${_L('a11y.closeDialog', 'Fechar diálogo')}" onclick="window.UIManager.closePanel()" style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:9999px;background:rgba(255,255,255,0.1);border:1.5px solid rgba(255,255,255,0.2);transition:transform 0.2s;cursor:pointer">
                          <span style="color:${COLORS.TEXT_DIM};font-size:24px">&times;</span>
                      </button>
                  </div>
              `;
              panel.appendChild(contentEl);
              this.overlay.appendChild(panel);
+
+             const initialFocus = panel.querySelector('button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled])');
+             (initialFocus || panel).focus();
 
              // Restaura a posição de rolagem após o re-render (mesmo painel)
              if (isRefresh && contentEl) contentEl.scrollTop = scrollTop;
@@ -25041,6 +25101,7 @@ window.SkillTreeUI = SkillTreeUI;
 
         closePanel() {
             if (this.overlay) {
+                const returnFocus = this._returnFocusElement;
                 this.overlay.classList.add('fade-out');
                 if (window.SND && SND.playUI) SND.playUI();
                 // On LOW quality the fade-out is disabled -> close immediately.
@@ -25048,6 +25109,7 @@ window.SkillTreeUI = SkillTreeUI;
                 setTimeout(() => {
                     this.overlay.classList.add('hidden');
                     this.overlay.classList.remove('fade-out');
+                    this.overlay.setAttribute('aria-hidden', 'true');
                     merchantActive = skillTreeOpen = statsOpen = achievementsOpen = false;
                     if (typeof NarrativeSystem !== 'undefined') {
                         NarrativeSystem.uiOpen = false;
@@ -25055,6 +25117,10 @@ window.SkillTreeUI = SkillTreeUI;
                     }
                     this.currentPanel = null;
                     this._contentEl = null;
+                    this._returnFocusElement = null;
+                    if (returnFocus && returnFocus.isConnected && !returnFocus.disabled && typeof returnFocus.focus === 'function') {
+                        returnFocus.focus();
+                    }
                 }, delay);
             }
         },
@@ -28155,7 +28221,7 @@ Input.init();
        current MUST stay in sync with the SW CACHE_VERSION suffix (sw.js).
     */
     window.UPDATE_LOG = {
-        current: 'v20',
+        current: 'v21',
         entries: [
             { v: 'v9', date: '2026-09-10', titleKey: 'update.entry.v9.title', title: 'v9 — Tutorial destravado',
               linesKeys: ['update.entry.v9.l1'],
@@ -28205,6 +28271,10 @@ Input.init();
               linesKeys: ['update.entry.v20.l1', 'update.entry.v20.l2'],
               lines: ['Buffers gráficos agora usam canvas padrão quando o navegador não oferece OffscreenCanvas.',
                       'A suíte de regressão agora verifica Chromium, Firefox e WebKit.'] },
+            { v: 'v21', date: '2026-09-28', titleKey: 'update.entry.v21.title', title: 'v21 — Diálogos acessíveis',
+              linesKeys: ['update.entry.v21.l1', 'update.entry.v21.l2'],
+              lines: ['Painéis agora anunciam o título como diálogo, prendem o foco e devolvem o foco ao controle que os abriu.',
+                      'Escape fecha painéis, Tab permanece dentro deles e o botão de fechar tem nome traduzido.'] },
         ]
     };
 

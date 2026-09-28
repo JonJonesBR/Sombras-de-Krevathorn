@@ -367,7 +367,7 @@ test('service worker installs the game shell for offline fallback', async ({ pag
   await page.reload();
   expect(await page.evaluate(() => !!navigator.serviceWorker.controller)).toBe(true);
 
-  if (browserName === 'webkit' && process.platform === 'win32') {
+  if (browserName === 'webkit') {
     const cachedShell = JSON.parse(await page.evaluate(async () => {
       const response = await caches.match('/index.html');
       const html = response ? await response.text() : '';
@@ -383,5 +383,34 @@ test('service worker installs the game shell for offline fallback', async ({ pag
     await expect(page.locator('.class-mini-card')).toHaveCount(4);
   } finally {
     await context.setOffline(false);
+  }
+});
+
+test('game panels announce a modal, contain keyboard focus and restore focus in every language', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('.class-mini-card.warrior').click();
+  await page.locator('#tutorial-skip-btn').click();
+  await expect.poll(() => page.evaluate(() => gameState)).toBe('PLAYING');
+
+  for (const [locale, closeLabel] of [['pt', 'Fechar diálogo'], ['en', 'Close dialog'], ['es', 'Cerrar diálogo']]) {
+    await page.evaluate(code => I18n.setLang(code), locale);
+    await page.locator('#shop-btn-bar').focus();
+    await page.evaluate(() => UIManager.openPanel('shop'));
+
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toHaveAttribute('aria-modal', 'true');
+    await expect(dialog).toHaveAttribute('aria-labelledby', 'game-dialog-title');
+    await expect(page.locator('#modal-overlay')).toHaveAttribute('aria-hidden', 'false');
+    const closeButton = dialog.getByRole('button', { name: closeLabel });
+    await expect(closeButton).toBeFocused();
+
+    const focusable = dialog.locator('button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled])');
+    await focusable.last().focus();
+    await page.keyboard.press('Tab');
+    await expect(closeButton).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#modal-overlay')).toBeHidden();
+    await expect(page.locator('#modal-overlay')).toHaveAttribute('aria-hidden', 'true');
+    await expect(page.locator('#shop-btn-bar')).toBeFocused();
   }
 });

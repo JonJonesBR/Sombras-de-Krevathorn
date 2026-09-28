@@ -72,12 +72,29 @@ test('plan F08-F09 and F12: keyboard movement updates the player and every main 
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
   await startRun(page);
-  const startX = await page.evaluate(() => player.x);
-  await page.keyboard.down('ArrowRight');
+  const movement = JSON.parse(await page.evaluate(() => {
+    const directions = [
+      { key: 'ArrowRight', dx: 1, dy: 0 },
+      { key: 'ArrowLeft', dx: -1, dy: 0 },
+      { key: 'ArrowDown', dx: 0, dy: 1 },
+      { key: 'ArrowUp', dx: 0, dy: -1 }
+    ].map(direction => {
+      let clearance = 0;
+      for (let distance = 12; distance <= 96 && !map.isWall(player.x + direction.dx * distance, player.y + direction.dy * distance); distance += 12) {
+        clearance = distance;
+      }
+      return { ...direction, clearance };
+    }).sort((a, b) => b.clearance - a.clearance);
+    return JSON.stringify({ x: player.x, y: player.y, direction: directions[0] });
+  }));
+  expect(movement.direction.clearance).toBeGreaterThan(24);
+  await page.locator('#gameCanvas').focus();
+  await page.keyboard.down(movement.direction.key);
+  await expect.poll(() => page.evaluate(key => Input.keys[key.toLowerCase()], movement.direction.key)).toBe(true);
   await page.waitForTimeout(350);
-  await page.keyboard.up('ArrowRight');
-  const endX = await page.evaluate(() => player.x);
-  expect(endX).not.toBe(startX);
+  await page.keyboard.up(movement.direction.key);
+  const endPosition = JSON.parse(await page.evaluate(() => JSON.stringify({ x: player.x, y: player.y })));
+  expect(endPosition.x !== movement.x || endPosition.y !== movement.y).toBe(true);
 
   const aim = JSON.parse(await page.evaluate(() => {
     const rect = canvas.getBoundingClientRect();
