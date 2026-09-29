@@ -3591,6 +3591,9 @@ const I18n = {
             'update.entry.v22.title': 'v22 — Configurações acessíveis',
             'update.entry.v22.l1': 'As configurações da pausa agora funcionam como diálogo, mantêm o foco no painel e o devolvem a um controle visível ao fechar.',
             'update.entry.v22.l2': 'As opções informam o estado selecionado; áudio e tamanho da fonte têm rótulos claros nos dois menus.',
+            'update.entry.v23.title': 'v23 — Autosave corrigido',
+            'update.entry.v23.l1': 'Correção: comprar "Boost de Dano" deixava o salvamento automático quebrado pelo resto da partida, e o progresso era perdido ao recarregar a página.',
+            'update.entry.v23.l2': 'Viewport e ícones do aplicativo corrigidos: o console não acusa mais chaves desconhecidas nem imagens inválidas.',
 
             // ============================================================
             // Quests
@@ -4830,6 +4833,9 @@ const I18n = {
             'update.entry.v22.title': 'v22 — Accessible settings',
             'update.entry.v22.l1': 'Pause settings now behave as a dialog, keep focus inside the panel, and return it to a visible control when closed.',
             'update.entry.v22.l2': 'Options expose their selected state, and audio and font-size controls have clear labels in both settings menus.',
+            'update.entry.v23.title': 'v23 — Autosave fixed',
+            'update.entry.v23.l1': 'Fix: buying "Damage Boost" left autosave broken for the rest of the run, and progress was lost on reload.',
+            'update.entry.v23.l2': 'Viewport and app icons fixed: the console no longer reports unknown keys or invalid images.',
 
             // ============================================================
             // Quests
@@ -6069,6 +6075,9 @@ const I18n = {
             'update.entry.v22.title': 'v22 — Ajustes accesibles',
             'update.entry.v22.l1': 'Los ajustes de pausa ahora funcionan como diálogo, mantienen el foco dentro y lo devuelven a un control visible al cerrar.',
             'update.entry.v22.l2': 'Las opciones exponen su estado seleccionado; audio y tamaño de fuente tienen etiquetas claras en ambos menús.',
+            'update.entry.v23.title': 'v23 — Autoguardado corregido',
+            'update.entry.v23.l1': 'Corrección: comprar "Impulso de Daño" dejaba el guardado automático roto durante el resto de la partida, y se perdía el progreso al recargar.',
+            'update.entry.v23.l2': 'Viewport e iconos de la aplicación corregidos: la consola ya no reporta claves desconocidas ni imágenes no válidas.',
 
             // ============================================================
             // Quests
@@ -28332,7 +28341,7 @@ Input.init();
        current MUST stay in sync with the SW CACHE_VERSION suffix (sw.js).
     */
     window.UPDATE_LOG = {
-        current: 'v22',
+        current: 'v23',
         entries: [
             { v: 'v9', date: '2026-09-10', titleKey: 'update.entry.v9.title', title: 'v9 — Tutorial destravado',
               linesKeys: ['update.entry.v9.l1'],
@@ -28390,6 +28399,10 @@ Input.init();
               linesKeys: ['update.entry.v22.l1', 'update.entry.v22.l2'],
               lines: ['As configurações da pausa agora funcionam como diálogo, mantêm o foco no painel e o devolvem a um controle visível ao fechar.',
                       'As opções informam o estado selecionado; áudio e tamanho da fonte têm rótulos claros nos dois menus.'] },
+            { v: 'v23', date: '2026-09-29', titleKey: 'update.entry.v23.title', title: 'v23 — Autosave corrigido',
+              linesKeys: ['update.entry.v23.l1', 'update.entry.v23.l2'],
+              lines: ['Comprar "Boost de Dano" deixava o salvamento automático quebrado pelo resto da partida, e o progresso era perdido ao recarregar a página.',
+                      'Viewport e ícones do aplicativo corrigidos: o console não acusa mais chaves desconhecidas nem imagens inválidas.'] },
         ]
     };
 
