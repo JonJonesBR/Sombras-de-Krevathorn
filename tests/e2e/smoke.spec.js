@@ -165,6 +165,36 @@ test('timed buffs stored as frame counters survive save and reload', async ({ pa
   expect(errors).toEqual([]);
 });
 
+
+test('a stacked crit bonus above 100% still saves, reloads and is shown as 100%', async ({ page }) => {
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto('/');
+  await page.locator('.class-mini-card.warrior').click();
+  await page.locator('#tutorial-skip-btn').click();
+  await expect.poll(() => page.evaluate(() => gameState)).toBe('PLAYING');
+  // Full-build crit stack: skills, boons x2, achievements and gear add up past 1.
+  const result = JSON.parse(await page.evaluate(() => {
+    player.critChance = 1.45;
+    const saved = SaveSystem.save();
+    const persisted = JSON.parse(localStorage.getItem(SaveSystem.KEY));
+    const reloaded = SaveSystem.load();
+    return JSON.stringify({ saved, persistedCrit: persisted.critChance, reloadedCrit: reloaded && reloaded.critChance });
+  }));
+  expect(result).toEqual({ saved: true, persistedCrit: 1.45, reloadedCrit: 1.45 });
+  // The roll saturates at 1.0, so the panel must not advertise more than 100%.
+  await page.evaluate(() => window.toggleSkillTree());
+  await expect(page.locator('.skills-scroll')).toBeVisible();
+  const critChipValue = await page.evaluate(() => {
+    // Label is "CRÍTICO" (pt) or "CRIT" (en); assert the rendered value, not the wording.
+    const label = [...document.querySelectorAll('.skills-scroll div')]
+      .find(el => el.children.length === 0 && /^(CRÍTICO|CRIT)$/.test(el.textContent.trim()));
+    return label ? label.parentElement.children[1].textContent.trim() : null;
+  });
+  expect(critChipValue).toBe('100%');
+  expect(errors).toEqual([]);
+});
+
 test('continuation restores equipment and relic sources when changing weapons', async ({ page }) => {
   await page.goto('/');
   const result = JSON.parse(await page.evaluate(() => {

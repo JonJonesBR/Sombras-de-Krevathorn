@@ -2749,7 +2749,11 @@ const SaveSystem = {
             // damageBoost/critBoost sao contadores de frames (loja 1800, berserk 900,
             // buff de pet 240), nao multiplicadores: o teto de 1000 os rejeitava e cada
             // save depois de comprar "Boost de Dano" lancava invalid-fields, matando o autosave.
-            damageBoost: [0, 1e6], critChance: [0, 1], damageMult: [0, 1000], lr: [0, 10000],
+            // critChance e um acumulador de bonus, nao uma probabilidade: skills (0.45),
+            // conquistas (0.11), bencaos x2 (0.24), arma e afixos (~0.8) passam de 1 em
+            // build completo. O roll ja satura em 1.0 (Math.min em takeDamage), mas o
+            // teto de 1 aqui reprovava o save e matava o autosave.
+            damageBoost: [0, 1e6], critChance: [0, 10], damageMult: [0, 1000], lr: [0, 10000],
             damageTakenMult: [0.01, 1000], runRegen: [0, 10000], goldMult: [0, 1000], multiShot: [0, 100],
             thornPct: [0, 1], critBoost: [0, 1e6], shopDiscountTimer: [0, 1e8], heatMaxBonus: [0, 1e6]
         };
@@ -3594,6 +3598,9 @@ const I18n = {
             'update.entry.v23.title': 'v23 — Autosave corrigido',
             'update.entry.v23.l1': 'Correção: comprar "Boost de Dano" deixava o salvamento automático quebrado pelo resto da partida, e o progresso era perdido ao recarregar a página.',
             'update.entry.v23.l2': 'Viewport e ícones do aplicativo corrigidos: o console não acusa mais chaves desconhecidas nem imagens inválidas.',
+            'update.entry.v24.title': 'v24 — Crítico acima de 100%',
+            'update.entry.v24.l1': 'Correção: builds que empilhavam muita chance de crítico passavam de 100% e quebravam o salvamento automático pelo resto da partida.',
+            'update.entry.v24.l2': 'A chance de crítico agora é limitada a 100% na tela de habilidades, como já era no cálculo do acerto.',
 
             // ============================================================
             // Quests
@@ -4836,6 +4843,9 @@ const I18n = {
             'update.entry.v23.title': 'v23 — Autosave fixed',
             'update.entry.v23.l1': 'Fix: buying "Damage Boost" left autosave broken for the rest of the run, and progress was lost on reload.',
             'update.entry.v23.l2': 'Viewport and app icons fixed: the console no longer reports unknown keys or invalid images.',
+            'update.entry.v24.title': 'v24 — Crit above 100%',
+            'update.entry.v24.l1': 'Fix: builds that stacked a lot of crit chance could go past 100% and broke autosave for the rest of the run.',
+            'update.entry.v24.l2': 'Crit chance is now capped at 100% on the skills screen, matching how the roll already worked.',
 
             // ============================================================
             // Quests
@@ -6078,6 +6088,9 @@ const I18n = {
             'update.entry.v23.title': 'v23 — Autoguardado corregido',
             'update.entry.v23.l1': 'Corrección: comprar "Impulso de Daño" dejaba el guardado automático roto durante el resto de la partida, y se perdía el progreso al recargar.',
             'update.entry.v23.l2': 'Viewport e iconos de la aplicación corregidos: la consola ya no reporta claves desconocidas ni imágenes no válidas.',
+            'update.entry.v24.title': 'v24 — Crítico por encima del 100%',
+            'update.entry.v24.l1': 'Corrección: las builds que acumulaban mucho crítico podían pasar del 100% y rompían el guardado automático durante el resto de la partida.',
+            'update.entry.v24.l2': 'La probabilidad de crítico ahora está limitada al 100% en la pantalla de habilidades, igual que ya funcionaba el cálculo.',
 
             // ============================================================
             // Quests
@@ -25518,7 +25531,7 @@ window.SkillTreeUI = SkillTreeUI;
                 <div style="display:flex;gap:6px;margin-bottom:14px">
                     ${statChip('HP', p.maxHp, '#4ade80')}
                     ${statChip(_L('skills.damage', 'DANO'), dmg, '#f87171')}
-                    ${statChip(_L('skills.crit', 'CRÍTICO'), Math.round((CONFIG.CRIT_CHANCE_BASE + (p.critChance || 0)) * 100) + '%', '#fbbf24')}
+                    ${statChip(_L('skills.crit', 'CRÍTICO'), Math.round(Math.min(1, CONFIG.CRIT_CHANCE_BASE + (p.critChance || 0)) * 100) + '%', '#fbbf24')}
                     ${statChip(_L('skills.speed', 'VEL.'), p.speed.toFixed(1), '#60a5fa')}
                 </div>
                 <div style="display:flex;flex-direction:column;gap:10px">
@@ -28341,7 +28354,7 @@ Input.init();
        current MUST stay in sync with the SW CACHE_VERSION suffix (sw.js).
     */
     window.UPDATE_LOG = {
-        current: 'v23',
+        current: 'v24',
         entries: [
             { v: 'v9', date: '2026-09-10', titleKey: 'update.entry.v9.title', title: 'v9 — Tutorial destravado',
               linesKeys: ['update.entry.v9.l1'],
@@ -28403,6 +28416,10 @@ Input.init();
               linesKeys: ['update.entry.v23.l1', 'update.entry.v23.l2'],
               lines: ['Comprar "Boost de Dano" deixava o salvamento automático quebrado pelo resto da partida, e o progresso era perdido ao recarregar a página.',
                       'Viewport e ícones do aplicativo corrigidos: o console não acusa mais chaves desconhecidas nem imagens inválidas.'] },
+            { v: 'v24', date: '2026-09-29', titleKey: 'update.entry.v24.title', title: 'v24 — Crítico acima de 100%',
+              linesKeys: ['update.entry.v24.l1', 'update.entry.v24.l2'],
+              lines: ['Builds que empilhavam muita chance de crítico passavam de 100% e quebravam o salvamento automático pelo resto da partida.',
+                      'A chance de crítico agora é limitada a 100% na tela de habilidades, como já era no cálculo do acerto.'] },
         ]
     };
 
