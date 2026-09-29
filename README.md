@@ -26,7 +26,7 @@ This project demonstrates strong capabilities in **state management, performance
   - **Warrior:** High HP, heavy melee damage, fury mechanics.
   - **Rogue:** High mobility, critical hits, poison damage.
   - **Mage:** Area control, spell combos, arcane shielding.
-  - **Elf:** Ranged combat, mobility, and nature abilities.
+  - **Elf:** Ranged combat, mobility, and nature abilities. Shares the Rogue's weapon table by design — the two are mechanically interchangeable at range, and a separate table would be balance guesswork without playtest data behind it.
 - **🗺️ Procedural Dungeon Generation:** Unique map layouts, hazards, and enemy spawns every run.
 - **⚙️ Custom Game Engine:** Built from scratch featuring an entity-component style architecture, collision detection (Spatial Hash), and dynamic lighting.
 - **📈 Dynamic Difficulty Adjustment (DDA):** The game adapts to the player's performance in real-time.
@@ -80,6 +80,18 @@ npm ci
 npx playwright install chromium firefox webkit
 npm test
 ```
+
+The balance harness plays deterministic bot runs and writes `tests/balance/report.md`. It changes no balance value — it exists to produce the data needed to decide them:
+
+```bash
+npm run test:balance                     # 1 quick cell, fast
+BALANCE_CLASSES=warrior,rogue,mage,elf \
+BALANCE_DIFFS=normal,dificil,pesadelo \
+BALANCE_SEEDS=1,2 BALANCE_FRAMES=40000 \
+  npm run test:balance                   # full matrix
+```
+
+Columns: `floor` is the deepest level reached, `kills`/`time s` are throughput, `skills`/`dodges` are counts the game does not keep per run, `dmg taken` is damage received, `first shop` is when the bot first bought something and `first boss` when the first boss appeared (`–` means it never did). Cells that hit the frame cap are marked `truncated`; raise `BALANCE_FRAMES` to look closer. The bot has no pathfinding, so its numbers compare classes against each other rather than predicting human play.
 
 ---
 
