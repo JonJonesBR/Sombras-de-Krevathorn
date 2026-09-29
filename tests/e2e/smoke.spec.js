@@ -195,6 +195,166 @@ test('a stacked crit bonus above 100% still saves, reloads and is shown as 100%'
   expect(errors).toEqual([]);
 });
 
+test('gamepad actions can be rebound, swap on conflict and survive a reload', async ({ page }) => {
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto('/');
+  await page.locator('.class-mini-card.warrior').click();
+  await page.locator('#tutorial-skip-btn').click();
+  await expect.poll(() => page.evaluate(() => gameState)).toBe('PLAYING');
+  // Lock the graphics tier: the auto-quality step re-renders an open settings
+  // panel, which would detach the button between hit-test and click.
+  await page.evaluate(() => { GameSettings.userSetQuality = true; });
+
+  await page.evaluate(() => window.toggleSettings());
+  await expect(page.locator('#settings-panel')).toBeVisible();
+  // Every action is exposed as a labelled select, reachable by keyboard/screen reader.
+  await expect(page.locator('#gp-ability')).toHaveValue('0');
+  await expect(page.locator('#gp-dodge')).toHaveValue('1');
+  await expect(page.locator('#gp-pause')).toHaveValue('9');
+
+  // Rebinding through the select is what a keyboard player uses.
+  await page.locator('#gp-ability').selectOption('5');
+  await expect(page.locator('#gp-ability')).toHaveValue('5');
+  await page.locator('#gp-dodge').selectOption('2');
+  // Binding a button another action already holds must swap the two, never leave
+  // an action unreachable.
+  await page.locator('#gp-ability').selectOption('2');
+  // Ability now owns 2, so Dodge inherits the 5 that Ability had: no dead action.
+  await expect.poll(() => page.evaluate(() => GameSettings.gamepadMap.dodge)).toBe(5);
+
+  // The rebound buttons must actually drive the action: poll on the new indices,
+  // not on the hardcoded A/B/Start ones.
+  const polled = await page.evaluate(() => {
+    const oldDescriptor = Object.getOwnPropertyDescriptor(navigator, 'getGamepads');
+    const oldPlayer = player;
+    const oldState = gameState;
+    const oldPauseToggle = PauseSystem.toggle;
+    const oldButtons = Input._gamepadButtons;
+    const counts = { ability: 0, dodge: 0, pause: 0 };
+    const buttons = Array.from({ length: 10 }, () => ({ pressed: false, value: 0 }));
+    const pad = { axes: [0, 0, 0, 0], buttons };
+    try {
+      Object.defineProperty(navigator, 'getGamepads', { configurable: true, value: () => [pad] });
+      GameSettings.controlType = 'gamepad';
+      GameSettings.setGamepadAction('ability', 5);
+      GameSettings.setGamepadAction('dodge', 2);
+      GameSettings.setGamepadAction('pause', 7);
+      Input._gamepadButtons = [];
+      player = { useSkill() { counts.ability++; }, dodge() { counts.dodge++; } };
+      PauseSystem.toggle = () => { counts.pause++; };
+      gameState = 'PLAYING';
+      // Only the rebound indices: the hardcoded A/B/Start ones must do nothing.
+      [2, 5, 7].forEach(i => { buttons[i] = { pressed: true, value: 1 }; });
+      Input.pollGamepad();
+      const rebound = JSON.stringify(counts);
+      [2, 5, 7].forEach(i => { buttons[i] = { pressed: false, value: 0 }; });
+      counts.ability = 0; counts.dodge = 0; counts.pause = 0;
+      Input.pollGamepad();
+      // And the old default indices must now be inert.
+      [0, 1, 9].forEach(i => { buttons[i] = { pressed: true, value: 1 }; });
+      Input.pollGamepad();
+      return rebound + '|' + JSON.stringify(counts);
+    } finally {
+      if (oldDescriptor) Object.defineProperty(navigator, 'getGamepads', oldDescriptor);
+      else delete navigator.getGamepads;
+      player = oldPlayer;
+      gameState = oldState;
+      PauseSystem.toggle = oldPauseToggle;
+      Input._gamepadButtons = oldButtons;
+    }
+  });
+  const [rebound, defaults] = polled.split('|').map(JSON.parse);
+  expect(rebound).toEqual({ ability: 1, dodge: 1, pause: 1 });
+  expect(defaults).toEqual({ ability: 0, dodge: 0, pause: 0 });
+
+  // The stored map survives a save/load round trip.
+  const roundTrip = JSON.parse(await page.evaluate(() => {
+    GameSettings.save();
+    const before = JSON.stringify(GameSettings.gamepadMap);
+    GameSettings.gamepadMap = { ability: 0, dodge: 1, pause: 9 };
+    GameSettings.load();
+    return JSON.stringify({ before, after: JSON.stringify(GameSettings.gamepadMap) });
+  }));
+  expect(roundTrip.after).toBe(roundTrip.before);
+
+  // Unknown indices from a corrupted blob fall back instead of breaking input.
+  const guarded = await page.evaluate(() => {
+    StorageManager.setRaw('settings', JSON.stringify({ controlType: 'gamepad', gamepadMap: { ability: 99, dodge: 'x' } }));
+    GameSettings.load();
+    return JSON.stringify(GameSettings.gamepadMap);
+  });
+  expect(guarded).toBe(JSON.stringify({ ability: 0, dodge: 1, pause: 9 }));
+
+  // The tutorial must describe the buttons the player actually has, not A/B/Start.
+  const tutorial = await page.evaluate(() => {
+    GameSettings.setGamepadAction('ability', 5);
+    GameSettings.setGamepadAction('dodge', 2);
+    GameSettings.setGamepadAction('pause', 7);
+    GameSettings.controlType = 'gamepad';
+    return TutorialSystem._stageLines({ id: 'welcome_quick', linesKeys: ['x'], lines: ['x'] }).join(' ');
+  });
+  expect(tutorial).not.toContain('{');
+  expect(tutorial).toMatch(/\bRB\b/);
+  expect(tutorial).toMatch(/\bX\b/);
+  expect(tutorial).toMatch(/\bRT\b/);
+
+  // Capture mode: "Remap" arms the action, then the next pad press binds it. The
+  // button held to reach the screen must not be captured as the new binding.
+  await page.evaluate(() => {
+    const buttons = Array.from({ length: 17 }, () => ({ pressed: false, value: 0 }));
+    window.__gpButtons = buttons;
+    Object.defineProperty(navigator, 'getGamepads', {
+      configurable: true,
+      value: () => [{ axes: [0, 0, 0, 0], buttons: window.__gpButtons }]
+    });
+    window.__gpButtons[6] = { pressed: true, value: 1 };
+  });
+  // The auto-quality step can re-render the open panel; refresh so the click
+  // lands on the live node instead of a detached one.
+  const beforeCapture = await page.evaluate(() => JSON.stringify(GameSettings.gamepadMap));
+  await page.locator('#gp-remap-ability').click();
+  await expect.poll(() => page.evaluate(() => !!(SettingsUI._remapState && SettingsUI._remapTimer))).toBe(true);
+  // The button already held when arming is the baseline, not a new binding.
+  await page.waitForTimeout(200);
+  expect(await page.evaluate(() => JSON.stringify(GameSettings.gamepadMap))).toBe(beforeCapture);
+  await page.evaluate(() => { window.__gpButtons[6] = { pressed: false, value: 0 }; window.__gpButtons[3] = { pressed: true, value: 1 }; });
+  await expect.poll(() => page.evaluate(() => GameSettings.gamepadMap.ability)).toBe(3);
+  // Capture must not leave a timer running behind the closed panel.
+  await page.evaluate(() => window.SettingsUI.close());
+  expect(await page.evaluate(() => JSON.stringify({ state: SettingsUI._remapState, timer: SettingsUI._remapTimer }))).toBe('{"state":null,"timer":null}');
+
+  await page.locator('#settings-reset-btn').waitFor();
+  const afterReset = await page.evaluate(() => {
+    window.SettingsUI._resetGamepadMap();
+    return JSON.stringify(GameSettings.gamepadMap);
+  });
+  expect(afterReset).toBe(JSON.stringify({ ability: 0, dodge: 1, pause: 9 }));
+  expect(errors).toEqual([]);
+});
+
+test('the first settings click after leaving gamepad mode is not swallowed', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('.class-mini-card.warrior').click();
+  await page.locator('#tutorial-skip-btn').click();
+  await expect.poll(() => page.evaluate(() => gameState)).toBe('PLAYING');
+  // Auto-adapting from gamepad to mouse re-renders the panel on mousedown; if
+  // that happens inline the control is replaced before mouseup and the click
+  // never completes, so the first tap on any setting does nothing.
+  await page.evaluate(() => {
+    GameSettings.userSetQuality = true;
+    GameSettings.controlType = 'gamepad';
+    GameSettings.controlTypeAuto = true;
+  });
+  await page.evaluate(() => window.toggleSettings());
+  await expect(page.locator('#settings-panel')).toBeVisible();
+  // A real pointer click, not selectOption: this is the path that goes through
+  // mousedown and therefore through adaptTo().
+  await page.locator('#gp-remap-dodge').click();
+  await expect.poll(() => page.evaluate(() => !!(SettingsUI._remapState && SettingsUI._remapTimer))).toBe(true);
+  expect(await page.evaluate(() => GameSettings.controlType)).toBe('mouse');
+});
+
 test('continuation restores equipment and relic sources when changing weapons', async ({ page }) => {
   await page.goto('/');
   const result = JSON.parse(await page.evaluate(() => {

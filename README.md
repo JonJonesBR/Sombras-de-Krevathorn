@@ -87,7 +87,7 @@ npm test
 
 *   **Mobile:** On-screen virtual joysticks (configurable in settings as fixed or floating) and dedicated action buttons.
 *   **Desktop keyboard/mouse:** WASD or Arrow keys to move, hold the left mouse button to aim and fire, Space to use the class ability, Shift to dodge, and Escape to close panels.
-*   **Gamepad:** Left stick to move, right stick to aim/fire, A/× for the class ability, B/○ to dodge, and Start/Menu to pause.
+*   **Gamepad:** Left stick to move, right stick to aim/fire, A/× for the class ability, B/○ to dodge, and Start/Menu to pause. All three can be rebound to any of the 17 standard buttons in **Settings → Gamepad** (pick from the dropdown, or press *Remap* and hit the button you want), and the mapping is saved with your other settings. Picking a button another action already uses swaps the two, so no action can become unreachable. The tutorial quotes your current bindings.
 
 The daily leaderboard is stored on the device; there is no online leaderboard or telemetry.
 
