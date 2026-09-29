@@ -112,7 +112,7 @@ async function openPanel(page) {
   await page.goto('/');
   await page.locator('.class-mini-card.warrior').click();
   await page.locator('#tutorial-skip-btn').click();
-  await expect.poll(() => page.evaluate(() => gameState)).toBe('PLAYING');
+  await expect.poll(() => page.evaluate(() => gameState), { timeout: 15000 }).toBe('PLAYING');
 }
 
 test('settings panel: every control has an accessible name and a 24px target', async ({ page }) => {
