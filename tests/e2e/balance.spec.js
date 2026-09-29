@@ -94,6 +94,10 @@ const RUN = (optsJson) => {
       if (affordable.length) UIManager.buyItem(affordable[0].id, 1);
       CampSystem.descend();
     }
+    // A boss kill opens a boon picker and parks the game in REWARD. Always
+    // take the first option: the harness measures progression, and a choice
+    // needs a rule to be comparable across cells.
+    if (gameState === 'REWARD') { if (window.BossRewardSystem) BossRewardSystem.choose(0); else { m.outcome = 'stalled'; m.stallState = 'REWARD'; break; } }
     if (gameState === 'GAME_OVER') { m.outcome = 'died'; m.deathFloor = dungeonLevel; break; }
     if (gameState === 'WIN') { m.outcome = 'won'; break; }
     // A state other than PLAYING that is neither death nor victory means the
@@ -247,7 +251,7 @@ function render(rows) {
   lines.push('| class | diff | seed | outcome | floor | kills | time s | skills | dodges | dmg taken | lvl | first shop | first boss |');
   lines.push('|---|---|---|---|---|---|---|---|---|---|---|---|---|');
   for (const r of rows) {
-    lines.push(`| ${r.cls} | ${r.diff} | ${r.seed} | ${r.outcome}${r.truncated ? ' (cap)' : ''} | ${r.floor} | ${r.kills} | ${r.seconds} | ${r.skills} | ${r.dodges} | ${r.damageTaken} | ${r.level} | ${secs(r.firstPurchaseFrame)} | ${secs(r.firstBossFrame)} |`);
+    lines.push(`| ${r.cls} | ${r.diff} | ${r.seed} | ${r.outcome}${r.truncated ? ' (cap)' : ''}${r.stallState ? ' [' + r.stallState + ']' : ''} | ${r.floor} | ${r.kills} | ${r.seconds} | ${r.skills} | ${r.dodges} | ${r.damageTaken} | ${r.level} | ${secs(r.firstPurchaseFrame)} | ${secs(r.firstBossFrame)} |`);
   }
   lines.push('');
   lines.push('## Averages per cell');
