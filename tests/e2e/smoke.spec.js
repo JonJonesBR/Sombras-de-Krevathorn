@@ -676,7 +676,7 @@ test('pause settings expose modal focus, localized option states and audio label
     const panel = document.getElementById('settings-panel');
     const close = panel.querySelector('.settings-box > button:last-child');
     return JSON.stringify(Array.from(panel.querySelectorAll('.settings-box button'))
-      .filter(button => button !== close && button.id !== 'settings-reset-btn' && !button.hasAttribute('aria-pressed'))
+      .filter(button => button !== close && button.id !== 'settings-reset-btn' && button.id !== 'settings-gp-reset-btn' && !button.hasAttribute('aria-pressed'))
       .map(button => button.textContent.trim()));
   }));
   expect(unlabeledSelections).toEqual([]);

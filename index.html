@@ -3609,6 +3609,10 @@ const I18n = {
             'update.entry.v24.title': 'v24 — Crítico acima de 100%',
             'update.entry.v24.l1': 'Correção: builds que empilhavam muita chance de crítico passavam de 100% e quebravam o salvamento automático pelo resto da partida.',
             'update.entry.v24.l2': 'A chance de crítico agora é limitada a 100% na tela de habilidades, como já era no cálculo do acerto.',
+            'update.entry.v25.title': 'v25 — Controles de gamepad configuráveis',
+            'update.entry.v25.l1': 'Habilidade, esquiva e pausa agora podem ser remapeadas em Ajustes, por lista ou apertando o botão que você quer. A configuração é salva junto com as suas preferências e o tutorial passa a citar os seus botões.',
+            'update.entry.v25.l2': 'Correção: ao voltar do controle de gamepad ou de toque para o mouse, o primeiro clique em qualquer ajuste era ignorado. A auditoria automática de acessibilidade e o orçamento de performance passaram a rodar na suíte.',
+
 
             // ============================================================
             // Quests
@@ -4862,6 +4866,10 @@ const I18n = {
             'update.entry.v24.title': 'v24 — Crit above 100%',
             'update.entry.v24.l1': 'Fix: builds that stacked a lot of crit chance could go past 100% and broke autosave for the rest of the run.',
             'update.entry.v24.l2': 'Crit chance is now capped at 100% on the skills screen, matching how the roll already worked.',
+            'update.entry.v25.title': 'v25 — Configurable gamepad controls',
+            'update.entry.v25.l1': 'Ability, dodge and pause can now be rebound in Settings, from the dropdown or by pressing the button you want. The mapping is saved with your other preferences, and the tutorial quotes your current buttons.',
+            'update.entry.v25.l2': 'Fix: switching from gamepad or touch control back to the mouse swallowed the first click on any setting. An automated accessibility audit and a frame-time budget now run with the suite.',
+
 
             // ============================================================
             // Quests
@@ -6115,6 +6123,9 @@ const I18n = {
             'update.entry.v24.title': 'v24 — Crítico por encima del 100%',
             'update.entry.v24.l1': 'Corrección: las builds que acumulaban mucho crítico podían pasar del 100% y rompían el guardado automático durante el resto de la partida.',
             'update.entry.v24.l2': 'La probabilidad de crítico ahora está limitada al 100% en la pantalla de habilidades, igual que ya funcionaba el cálculo.',
+            'update.entry.v25.title': 'v25 — Controles de gamepad configurables',
+            'update.entry.v25.l1': 'Habilidad, esquiva y pausa ahora se pueden reasignar en Ajustes, desde la lista o pulsando el botón que quieras. La configuración se guarda con tus preferencias y el tutorial cita tus botones actuales.',
+            'update.entry.v25.l2': 'Corrección: al volver del control de gamepad o táctil al ratón, el primer clic en cualquier ajuste se perdía. Una auditoría automática de accesibilidad y un presupuesto de tiempo de fotograma ahora se ejecutan con la suite.',
 
             // ============================================================
             // Quests
@@ -24277,13 +24288,14 @@ var GameSettings = {
         if (!this.controlTypeAuto || this.controlType === type) return;
         this.controlType = type;
         this.save();
-        // adaptTo() runs from mousedown/touchstart. Re-rendering the panel right
-        // there replaces the control between mousedown and mouseup, so the
-        // click never completes and the first tap on any setting does nothing.
-        // Defer it so the in-flight click is honoured first.
-        if (window.SettingsUI && window.SettingsUI.open) {
-            setTimeout(() => { if (window.SettingsUI.open) window.SettingsUI._render(); }, 0);
-        }
+        // adaptTo() runs from mousedown/touchstart. Re-rendering the panel there
+        // replaces the control between mousedown and mouseup, so the click never
+        // completes and the first tap on any setting does nothing. A timer is
+        // not enough on its own: the browser is free to run it in the middle of
+        // the gesture, which is exactly what Chromium does. The render waits
+        // for the click to finish instead, with a timer only as a backstop for
+        // a mousedown that never completes.
+        if (window.SettingsUI && window.SettingsUI.open) window.SettingsUI._queueRender();
     },
 
     // Graphics quality presets -> window.GFX (checked by render code)
@@ -24611,7 +24623,7 @@ var SettingsUI = {
                         ${gpRow('ability', 'settings.gpAbility', 'Habilidade')}
                         ${gpRow('dodge', 'settings.gpDodge', 'Esquiva')}
                         ${gpRow('pause', 'settings.gpPause', 'Pausar')}
-                        <button type="button" class="w-full py-2 mt-1 rounded-lg text-xs font-bold bg-primary/10 text-gray-300 border border-white/15"
+                        <button type="button" id="settings-gp-reset-btn" class="w-full py-2 mt-1 rounded-lg text-xs font-bold bg-primary/10 text-gray-300 border border-white/15"
                                 ontouchstart="window.SettingsUI._resetGamepadMap(); event.stopPropagation();"
                                 onclick="window.SettingsUI._resetGamepadMap(); event.stopPropagation();">${T('settings.gpReset', 'Restaurar padrão')}</button>
                     </div>
@@ -24753,6 +24765,23 @@ var SettingsUI = {
         GameSettings.save();
         this._render();
         if (window.SND && SND.playUI) SND.playUI();
+    },
+
+    // A re-render is requested while a pointer gesture is in flight. It must
+    // wait for the click to complete, otherwise the control the player is
+    // clicking is replaced under their finger and the click dies with it.
+    _queueRender() {
+        if (this._renderPending) return;
+        this._renderPending = true;
+        const flush = () => {
+            this._renderPending = false;
+            clearTimeout(this._renderTimer);
+            if (this.open) this._render();
+        };
+        this._renderTimer = setTimeout(flush, 600);
+        // Bubble phase on purpose: capture would run before the control's own
+        // handler and replace it anyway.
+        document.addEventListener('click', flush, { once: true });
     },
 
     // ---- Gamepad rebinding ----
@@ -28536,7 +28565,7 @@ Input.init();
        current MUST stay in sync with the SW CACHE_VERSION suffix (sw.js).
     */
     window.UPDATE_LOG = {
-        current: 'v24',
+        current: 'v25',
         entries: [
             { v: 'v9', date: '2026-09-10', titleKey: 'update.entry.v9.title', title: 'v9 — Tutorial destravado',
               linesKeys: ['update.entry.v9.l1'],
@@ -28602,6 +28631,10 @@ Input.init();
               linesKeys: ['update.entry.v24.l1', 'update.entry.v24.l2'],
               lines: ['Builds que empilhavam muita chance de crítico passavam de 100% e quebravam o salvamento automático pelo resto da partida.',
                       'A chance de crítico agora é limitada a 100% na tela de habilidades, como já era no cálculo do acerto.'] },
+            { v: 'v25', date: '2026-09-29', titleKey: 'update.entry.v25.title', title: 'v25 — Controles de gamepad configuráveis',
+              linesKeys: ['update.entry.v25.l1', 'update.entry.v25.l2'],
+              lines: ['Habilidade, esquiva e pausa agora podem ser remapeadas em Ajustes, por lista ou apertando o botão que você quer. A configuração é salva junto com as suas preferências e o tutorial passa a citar os seus botões.',
+                      'Correção: ao voltar do controle de gamepad ou de toque para o mouse, o primeiro clique em qualquer ajuste era ignorado. A auditoria automática de acessibilidade e o orçamento de performance passaram a rodar na suíte.'] },
         ]
     };
 
