@@ -143,7 +143,7 @@ test('save migration and validation preserve compatible data and reject future s
   expect(result).toEqual({ migratedVersion: 3, migratedLevel: 4, rejected: true, futurePreserved: true, corruptRejected: true, corruptPreserved: true });
 });
 
-test('timed buffs stored as frame counters survive save and reload', async ({ page }) => {
+test('shop buffs and permanent upgrades survive save and reload', async ({ page }) => {
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.goto('/');
@@ -151,17 +151,47 @@ test('timed buffs stored as frame counters survive save and reload', async ({ pa
   await page.locator('#tutorial-skip-btn').click();
   await expect.poll(() => page.evaluate(() => gameState)).toBe('PLAYING');
   const result = JSON.parse(await page.evaluate(() => {
-    SHOP_ITEMS.filter(item => item.id === 'damageBoost' || item.id === 'critPotion').forEach(item => item.effect(player));
+    SHOP_ITEMS.filter(item => ['damageBoost', 'critPotion', 'traderLuck', 'regenTalisman', 'crystal'].includes(item.id))
+      .forEach(item => item.effect(player));
+    player.greedBonus = true;
     const saved = SaveSystem.save();
     const persisted = JSON.parse(localStorage.getItem(SaveSystem.KEY));
     const reloaded = SaveSystem.load();
     return JSON.stringify({
       saved,
       damageBoost: persisted.damageBoost,
-      reloadedDamageBoost: reloaded && reloaded.damageBoost
+      critBoost: persisted.critBoost,
+      shopDiscountTimer: persisted.shopDiscountTimer,
+      regenerating: persisted.regenerating,
+      greedBonus: persisted.greedBonus,
+      heatMaxBonus: persisted.heatMaxBonus,
+      reloaded: reloaded && {
+        damageBoost: reloaded.damageBoost,
+        critBoost: reloaded.critBoost,
+        shopDiscountTimer: reloaded.shopDiscountTimer,
+        regenerating: reloaded.regenerating,
+        greedBonus: reloaded.greedBonus,
+        heatMaxBonus: reloaded.heatMaxBonus
+      }
     });
   }));
-  expect(result).toEqual({ saved: true, damageBoost: 1800, reloadedDamageBoost: 1800 });
+  expect(result).toEqual({
+    saved: true,
+    damageBoost: 1800,
+    critBoost: 1800,
+    shopDiscountTimer: 3600,
+    regenerating: true,
+    greedBonus: true,
+    heatMaxBonus: 20,
+    reloaded: {
+      damageBoost: 1800,
+      critBoost: 1800,
+      shopDiscountTimer: 3600,
+      regenerating: true,
+      greedBonus: true,
+      heatMaxBonus: 20
+    }
+  });
   expect(errors).toEqual([]);
 });
 

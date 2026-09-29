@@ -10,7 +10,7 @@ const { test, expect } = require('@playwright/test');
  *    roles and states exist, not that they are announced well.
  */
 
-const AUDIT = rootSel => {
+const AUDIT = (rootSel, minimumTarget = 16) => {
   const root = document.querySelector(rootSel);
   const srgb = c => { c /= 255; return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); };
   const luminance = ([r, g, b]) => 0.2126 * srgb(r) + 0.7152 * srgb(g) + 0.0722 * srgb(b);
@@ -42,16 +42,40 @@ const AUDIT = rootSel => {
   const nameOf = el => (el.getAttribute('aria-label') || el.textContent || el.value || '').trim();
 
   const nameless = interactive.filter(el => !nameOf(el)).map(el => el.tagName + '#' + (el.id || '') + '.' + (el.className || '').toString().slice(0, 40));
-  // Layout box, not getBoundingClientRect: the panel is transform-scaled for
-  // screen fitting, which would otherwise make every control read as smaller
-  // than it is authored.
-  // 16px floor: this is a mobile-first game whose panels ship every control
-  // between 17 and 20px tall, well under the 24px WCAG 2.2 AA target minimum.
-  // The gate holds that floor so new controls cannot shrink further; raising
-  // the whole panel past 16px is a separate design change, not a test fix.
+  // Measure the authored layout box so the panel's entrance animation does not
+  // temporarily make otherwise-compliant controls appear smaller.
+  // Settings callers use 24px; other game controls retain their established 16px floor.
   const smallTargets = interactive
-    .filter(el => el.offsetWidth > 0 && (el.offsetWidth < 16 || el.offsetHeight < 16))
+    .filter(el => el.offsetWidth > 0 && (el.offsetWidth < minimumTarget || el.offsetHeight < minimumTarget))
     .map(el => (el.id || el.tagName) + ' ' + el.offsetWidth + 'x' + el.offsetHeight);
+  const selects = [...root.querySelectorAll('select')].filter(isVisible);
+  const lowContrastControls = selects.map(el => {
+    const fg = parse(getComputedStyle(el).color);
+    if (!fg) return null;
+    const bg = effectiveBg(el);
+    const flat = fg.a < 1 ? over(fg.rgb, bg, fg.a) : fg.rgb;
+    const contrast = ratio(flat, bg);
+    return contrast >= 4.5 ? null : {
+      id: el.id,
+      foreground: getComputedStyle(el).color,
+      background: getComputedStyle(el).backgroundColor,
+      ratio: Math.round(contrast * 100) / 100
+    };
+  }).filter(Boolean);
+  const lowContrastOptions = selects.flatMap(select => [...select.options].map(option => {
+    const fg = parse(getComputedStyle(option).color);
+    const bg = parse(getComputedStyle(option).backgroundColor);
+    if (!fg || !bg) return null;
+    const flat = fg.a < 1 ? over(fg.rgb, bg.rgb, fg.a) : fg.rgb;
+    const contrast = ratio(flat, bg.rgb);
+    return contrast >= 4.5 ? null : {
+      select: select.id,
+      option: option.textContent,
+      foreground: getComputedStyle(option).color,
+      background: getComputedStyle(option).backgroundColor,
+      ratio: Math.round(contrast * 100) / 100
+    };
+  })).filter(Boolean);
 
   const textNodes = [...root.querySelectorAll('*')].filter(el =>
     isVisible(el) && el.children.length === 0 && (el.textContent || '').trim().length > 0);
@@ -66,8 +90,10 @@ const AUDIT = rootSel => {
 
   return {
     interactive: interactive.length,
+    selectCount: selects.length,
     textNodes: textNodes.length,
-    nameless, smallTargets, lowContrast: lowContrast.slice(0, 8), lowContrastCount: lowContrast.length
+    nameless, smallTargets, lowContrast: lowContrast.slice(0, 8), lowContrastCount: lowContrast.length,
+    lowContrastControls, lowContrastOptions
   };
 };
 
@@ -76,9 +102,10 @@ const AUDIT = rootSel => {
 // One string argument per evaluate: passing an array trips a broken
 // deserialiser in this environment ("refs.set is not a function"), and
 // returning a plain object comes back undefined. Hence the string round-trip.
-const audit = async (page, root) => {
+const audit = async (page, root, minimumTarget = 16) => {
   await page.evaluate(sel => { window.__auditRoot = sel; }, root);
-  return JSON.parse(await page.evaluate(src => JSON.stringify(eval('(' + src + ')')(window.__auditRoot)), AUDIT.toString()));
+  await page.evaluate(size => { window.__auditMinimumTarget = size; }, minimumTarget);
+  return JSON.parse(await page.evaluate(src => JSON.stringify(eval('(' + src + ')')(window.__auditRoot, window.__auditMinimumTarget)), AUDIT.toString()));
 };
 
 async function openPanel(page) {
@@ -88,17 +115,17 @@ async function openPanel(page) {
   await expect.poll(() => page.evaluate(() => gameState)).toBe('PLAYING');
 }
 
-test('settings panel: every control has an accessible name and a 16px target', async ({ page }) => {
+test('settings panel: every control has an accessible name and a 24px target', async ({ page }) => {
   await openPanel(page);
   await page.evaluate(() => window.toggleSettings());
   await expect(page.locator('#settings-panel')).toBeVisible();
   for (const lang of ['pt', 'en', 'es']) {
     await page.evaluate(l => { I18n.setLang(l); SettingsUI._render(); }, lang);
-    const report = (await audit(page, '#settings-panel'));
+    const report = (await audit(page, '#settings-panel', 24));
     // Guards against a silently empty scan passing every check below.
     expect(report.interactive, `controls scanned in ${lang}`).toBeGreaterThan(10);
     expect(report.nameless, `controls without a name in ${lang}`).toEqual([]);
-    expect(report.smallTargets, `targets under 16px in ${lang}`).toEqual([]);
+    expect(report.smallTargets, `targets under 24px in ${lang}`).toEqual([]);
   }
 });
 
@@ -121,4 +148,14 @@ test('settings panel text meets the 4.5:1 contrast ratio in every language', asy
     expect(report.textNodes, `text nodes scanned in ${lang}`).toBeGreaterThan(10);
     expect(report.lowContrast, `low contrast text in ${lang}`).toEqual([]);
   }
+});
+
+test('gamepad mapping dropdowns keep readable text when enabled', async ({ page }) => {
+  await openPanel(page);
+  await page.evaluate(() => window.toggleSettings());
+  await page.evaluate(() => window.SettingsUI._setControl('gamepad'));
+  const report = await audit(page, '#settings-panel');
+  expect(report.selectCount).toBe(3);
+  expect(report.lowContrastControls).toEqual([]);
+  expect(report.lowContrastOptions).toEqual([]);
 });
