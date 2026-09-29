@@ -1,0 +1,16 @@
+{
+  "name": "krevathorn",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Browser regression checks for Krevathorn",
+  "scripts": {
+    "check": "node .github/check-js.js index.html && node --check sw.js",
+    "test": "playwright test",
+    "test:unit": "node --test tests/*.test.cjs",
+    "test:e2e": "playwright test",
+    "test:balance": "playwright test balance.spec --project=chromium --reporter=line"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0"
+  }
+}
