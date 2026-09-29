@@ -143,6 +143,28 @@ test('save migration and validation preserve compatible data and reject future s
   expect(result).toEqual({ migratedVersion: 3, migratedLevel: 4, rejected: true, futurePreserved: true, corruptRejected: true, corruptPreserved: true });
 });
 
+test('timed buffs stored as frame counters survive save and reload', async ({ page }) => {
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto('/');
+  await page.locator('.class-mini-card.warrior').click();
+  await page.locator('#tutorial-skip-btn').click();
+  await expect.poll(() => page.evaluate(() => gameState)).toBe('PLAYING');
+  const result = JSON.parse(await page.evaluate(() => {
+    SHOP_ITEMS.filter(item => item.id === 'damageBoost' || item.id === 'critPotion').forEach(item => item.effect(player));
+    const saved = SaveSystem.save();
+    const persisted = JSON.parse(localStorage.getItem(SaveSystem.KEY));
+    const reloaded = SaveSystem.load();
+    return JSON.stringify({
+      saved,
+      damageBoost: persisted.damageBoost,
+      reloadedDamageBoost: reloaded && reloaded.damageBoost
+    });
+  }));
+  expect(result).toEqual({ saved: true, damageBoost: 1800, reloadedDamageBoost: 1800 });
+  expect(errors).toEqual([]);
+});
+
 test('continuation restores equipment and relic sources when changing weapons', async ({ page }) => {
   await page.goto('/');
   const result = JSON.parse(await page.evaluate(() => {
