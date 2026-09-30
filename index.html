@@ -7271,6 +7271,7 @@ var CONFIG = {
     BOSS_ABILITY_CHARGE_SPEED: 10,
     BOSS_ABILITY_CHARGE_DAMAGE: 45,
     BOSS_CHARGE_RANGE: 400,
+    BOSS_DRAIN_RADIUS: 340,        // raio do canal de dreno
     BOSS_ABILITY_CHARGE_RANGE: 250,
     // Dash: investida rápida disponível para TODOS os chefes (fase 2+)
     BOSS_DASH_SPEED: 9,
@@ -21000,7 +21001,7 @@ class Boss extends Enemy {
             const pdx = p.x - this.x, pdy = p.y - this.y;
             const pdl = Math.hypot(pdx, pdy) || 1;
             // Dreno exige linha de visão: paredes entre o jogador e o chefe bloqueiam o dano
-            if(pdl < 340 && hasLineOfSight(m, this.x, this.y, p.x, p.y) && this._drainT % 7 === 0) {
+            if(pdl < CONFIG.BOSS_DRAIN_RADIUS && hasLineOfSight(m, this.x, this.y, p.x, p.y) && this._drainT % 7 === 0) {
                 const h = Math.floor(CONFIG.BOSS_ABILITY_PROJECTILE_DAMAGE * 0.9);
                 p.takeDamage(h, m);
                 this.hp = Math.min(this.maxHp, this.hp + Math.floor(h * 0.8));
@@ -21419,6 +21420,33 @@ class Boss extends Enemy {
             ctx.font = `bold ${Math.floor(11 + (1-t)*5)}px ${COLORS.CANVAS_FONT}`;
             ctx.textAlign = 'center';
             ctx.fillText(I18n.t('boss.chargeWarn'), this.x-cx, this.y-cy-this.radius-34);
+        }
+
+        // Telegraph: soul drain danger radius (the channel is otherwise invisible)
+        if(this._drainT > 0) {
+            const pulse = 0.5 + Math.sin(gameTime * 0.25) * 0.25;
+            ctx.save();
+            ctx.globalAlpha = 0.10 * pulse;
+            ctx.fillStyle = '#ff3b5c';
+            ctx.beginPath(); ctx.arc(this.x-cx, this.y-cy, CONFIG.BOSS_DRAIN_RADIUS, 0, Math.PI*2); ctx.fill();
+            ctx.globalAlpha = 0.55;
+            ctx.strokeStyle = '#ff3b5c';
+            ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.arc(this.x-cx, this.y-cy, CONFIG.BOSS_DRAIN_RADIUS, 0, Math.PI*2); ctx.stroke();
+            ctx.restore();
+        }
+
+        // Telegraph: rotating spiral burst (arc shows the outgoing direction)
+        if(this._spiralTimer > 0) {
+            const sa = this._spiralAngle || 0;
+            ctx.save();
+            ctx.globalAlpha = 0.5;
+            ctx.strokeStyle = '#ffaa00';
+            ctx.lineWidth = 3;
+            ctx.beginPath(); ctx.arc(this.x-cx, this.y-cy, this.radius + 22, sa, sa + Math.PI * 0.9); ctx.stroke();
+            ctx.globalAlpha = 0.25;
+            ctx.beginPath(); ctx.arc(this.x-cx, this.y-cy, this.radius + 34, -sa, -sa + Math.PI * 0.9); ctx.stroke();
+            ctx.restore();
         }
 
         if(this.ft > 0) this.ft--;
