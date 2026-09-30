@@ -7089,6 +7089,7 @@ var CONFIG = {
     // Performance Tuning
     PARTICLE_CAP: 60,
     MAX_BULLETS: 45,
+    INPUT_BUFFER_FRAMES: 8,        // janela em frames para buffer de dodge/habilidade
     LIGHTING_THROTTLE: 15,          // skip frames
     AMBIENT_PARTICLE_INTERVAL: 12,  // frames
     TORCH_PARTICLE_INTERVAL: 5,    // frames
@@ -22412,6 +22413,8 @@ class Player extends Entity {
         this.invincibleTimer = 0;
         
         this.dodgeCooldown = 0;
+        this._dodgeBuffer = 0;
+        this._skillBuffer = 0;
         this.dodgeAnim = 0;
         this.levelUpAnim = 0;
         this.shootAnim = 0;
@@ -22463,7 +22466,9 @@ class Player extends Entity {
     }
 
     dodge() {
-        if(this.dodgeCooldown > 0) return;
+        // A press during cooldown is buffered instead of dropped: touch and
+        // gamepad triggers are edge-based, so the press would otherwise be lost.
+        if(this.dodgeCooldown > 0) { this._dodgeBuffer = CONFIG.INPUT_BUFFER_FRAMES; return; }
         
         let dx = Input.left.active ? Input.left.dx : ((Input.keys['d'] || Input.keys['arrowright'])?1:(Input.keys['a'] || Input.keys['arrowleft'])?-1:0);
         let dy = Input.left.active ? Input.left.dy : ((Input.keys['s'] || Input.keys['arrowdown'])?1:(Input.keys['w'] || Input.keys['arrowup'])?-1:0);
@@ -22515,7 +22520,9 @@ class Player extends Entity {
     }
 
     useSkill() {
-        if(this.skillCooldown > 0) return;
+        // A press during cooldown is buffered instead of dropped: touch and
+        // gamepad triggers are edge-based, so the press would otherwise be lost.
+        if(this.skillCooldown > 0) { this._skillBuffer = CONFIG.INPUT_BUFFER_FRAMES; return; }
         if(this.type === 'warrior') {
             this.skillCooldown = Math.floor(CONFIG.WARRIOR_SLAM_COOLDOWN * Math.max(0.5, 1 - (this.cdrMult || 0)));
             // Ground slam visual indicators
@@ -22773,6 +22780,9 @@ class Player extends Entity {
         } else { this.walkTimer = 0; this._footstepTimer = 0; this._pvx = 0; this._pvy = 0; }
 
         if(this.scd > 0) this.scd--; if(this.skillCooldown > 0) this.skillCooldown--; if(this.speedBoost > 0) this.speedBoost--;
+        // Buffered input: fire what was pressed during cooldown as soon as it is ready.
+        if(this._dodgeBuffer > 0) { this._dodgeBuffer--; if(this.dodgeCooldown <= 0) { this._dodgeBuffer = 0; this.dodge(); } }
+        if(this._skillBuffer > 0) { this._skillBuffer--; if(this.skillCooldown <= 0) { this._skillBuffer = 0; this.useSkill(); } }
         if(this.goldRushTimer > 0) this.goldRushTimer--;
         if(this.critBoost > 0) this.critBoost--;
         if(this.shopDiscountTimer > 0) this.shopDiscountTimer--;
