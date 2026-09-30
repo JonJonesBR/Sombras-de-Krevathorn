@@ -22022,6 +22022,11 @@ class Bullet {
         this.x=x; this.y=y; this.vx=vx; this.vy=vy; this.color=c; this.dmg=dmg; this.isP=isP; this.alive=true;
         this.weapon = weapon; this.range = range || 400; this.distTraveled = 0;
         this.projType = projType || null;
+        // Pooled bullets are reused across owners. trail is player-only and
+        // element is copied from the firing enemy; neither is a constructor
+        // argument, so a recycled bullet must not inherit them from its past owner.
+        this.trail = null;
+        this.element = null;
         this.spd = Math.sqrt(vx * vx + vy * vy);
         this.poisonDmg = weapon && weapon.poison ? Math.floor(dmg * 0.3) : 0;
         this.hitCount = 0;
