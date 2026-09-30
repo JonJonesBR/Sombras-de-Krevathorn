@@ -28446,64 +28446,96 @@ Input.init();
     </script>
 
     <script>
+    /* === FLOATING PARTICLE CANVAS (shared by the splash + start screen) === */
+    // Both backgrounds are the same integrator (drift, wrap, flicker, arc fill);
+    // only the tuning and the "should I be running?" rule differ, so they share
+    // one factory instead of two near-identical loops. Returns null when the
+    // canvas or its 2D context is unavailable.
+    function createParticleField(canvas, opts) {
+        if (!canvas || !canvas.getContext) return null;
+        var o = opts || {};
+        var ctx = canvas.getContext('2d');
+        var rnd = o.random || Math.random;
+        var count = o.count || 50;
+        var area = o.spawnArea || null;
+        var W = 0, H = 0, frame = 0, rafId = null, running = false;
+        var particles = [];
+
+        function makeParticle() {
+            return {
+                x: rnd() * (area ? area.w : W),
+                y: rnd() * (area ? area.h : H),
+                vx: (rnd() - 0.5) * o.vxSpread,
+                vy: -(rnd() * o.vyBase + o.vyExtra),
+                r: rnd() * o.rSpread + o.rBase,
+                a: rnd() * o.aSpread + o.aBase,
+                color: o.pickColor(rnd())
+            };
+        }
+        function resize() {
+            var s = o.measure ? o.measure() : { w: window.innerWidth, h: window.innerHeight };
+            W = canvas.width = s.w;
+            H = canvas.height = s.h;
+        }
+        function step() {
+            ctx.clearRect(0, 0, W, H);
+            for (var j = 0; j < particles.length; j++) {
+                var p = particles[j];
+                p.x += p.vx;
+                p.y += p.vy;
+                if (p.y < -10) { p.y = H + 10; p.x = rnd() * W; }
+                if (p.x < -10 || p.x > W + 10) p.x = rnd() * W;
+                var flick = o.flicker(j, frame);
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(' + p.color + ',' + (p.a * flick) + ')';
+                ctx.fill();
+            }
+            frame++;
+            rafId = requestAnimationFrame(loop);
+        }
+        function loop() {
+            // Zero-cost when hidden: stop the loop while the field is covered;
+            // the caller restarts it (e.g. via a MutationObserver).
+            if (o.shouldRun && !o.shouldRun()) { running = false; rafId = null; return; }
+            step();
+        }
+        function ensureRunning() {
+            if (!running && (!o.shouldRun || o.shouldRun())) {
+                running = true;
+                rafId = requestAnimationFrame(loop);
+            }
+        }
+
+        resize();
+        for (var i = 0; i < count; i++) particles.push(makeParticle());
+        return { resize: resize, ensureRunning: ensureRunning };
+    }
+
     /* === START SCREEN PARTICLES === */
     (function() {
         var startScreen = document.getElementById('start-screen');
-        var sc = document.getElementById('start-particles');
-        if (!sc || !sc.getContext) return;
-        var sctx = sc.getContext('2d');
-        var sW, sH;
-        var sParticles = [];
-        function resize() {
-            if (!startScreen) return;
-            sW = sc.width = startScreen.offsetWidth;
-            sH = sc.height = startScreen.offsetHeight;
-        }
-        resize();
-        window.addEventListener('resize', resize);
-        for (var i = 0; i < 50; i++) {
-            sParticles.push({
-                x: Math.random() * 1200,
-                y: Math.random() * 2000,
-                vx: (Math.random() - 0.5) * 0.2,
-                vy: -Math.random() * 0.4 - 0.05,
-                r: Math.random() * 1.5 + 0.3,
-                a: Math.random() * 0.3 + 0.05,
-                color: ['224,182,255','157,78,221','100,80,200','200,180,255'][Math.floor(Math.random()*4)]
-            });
-        }
-        function anim() {
-            // Zero-cost when hidden: stop the loop while gameplay/menus cover
-            // the start screen; a MutationObserver restarts it when shown.
-            if (startScreen.classList.contains('hidden')) {
-                running = false;
-                return;
-            }
-            sctx.clearRect(0, 0, sW, sH);
-            for (var j = 0; j < sParticles.length; j++) {
-                var p = sParticles[j];
-                p.x += p.vx;
-                p.y += p.vy;
-                if (p.y < -10) { p.y = sH + 10; p.x = Math.random() * sW; }
-                if (p.x < -10 || p.x > sW + 10) { p.x = Math.random() * sW; }
-                var flick = 0.6 + Math.sin(Date.now() * 0.001 + j) * 0.4;
-                sctx.beginPath();
-                sctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-                sctx.fillStyle = 'rgba(' + p.color + ',' + (p.a * flick) + ')';
-                sctx.fill();
-            }
-            rafId = requestAnimationFrame(anim);
-        }
-        var rafId = null, running = false;
-        function ensureRunning() {
-            if (!running && !startScreen.classList.contains('hidden')) {
-                running = true;
-                rafId = requestAnimationFrame(anim);
-            }
-        }
-        ensureRunning();
-        if (window.MutationObserver) {
-            new MutationObserver(ensureRunning).observe(startScreen, { attributes: true, attributeFilter: ['class'] });
+        var palette = ['224,182,255', '157,78,221', '100,80,200', '200,180,255'];
+        var field = createParticleField(document.getElementById('start-particles'), {
+            count: 50,
+            spawnArea: { w: 1200, h: 2000 },
+            vxSpread: 0.2, vyBase: 0.4, vyExtra: 0.05,
+            rSpread: 1.5, rBase: 0.3,
+            aSpread: 0.3, aBase: 0.05,
+            pickColor: function(r) { return palette[Math.floor(r * 4)]; },
+            flicker: function(j) { return 0.6 + Math.sin(Date.now() * 0.001 + j) * 0.4; },
+            measure: function() {
+                return startScreen
+                    ? { w: startScreen.offsetWidth, h: startScreen.offsetHeight }
+                    : { w: window.innerWidth, h: window.innerHeight };
+            },
+            shouldRun: function() { return !!startScreen && !startScreen.classList.contains('hidden'); }
+        });
+        if (!field) return;
+        window.addEventListener('resize', field.resize);
+        field.ensureRunning();
+        if (window.MutationObserver && startScreen) {
+            new MutationObserver(field.ensureRunning).observe(startScreen, { attributes: true, attributeFilter: ['class'] });
         }
     })();
     </script>
@@ -28515,49 +28547,19 @@ Input.init();
         var statusEl = document.getElementById('splash-status');
         if (!splash) return;
         
-        // Animated particle canvas
-        var pc = document.getElementById('splash-particles');
-        if (pc && pc.getContext) {
-            var pctx = pc.getContext('2d');
-            var pW, pH;
-            var particles = [];
-            function resizeParticles() {
-                pW = pc.width = window.innerWidth;
-                pH = pc.height = window.innerHeight;
-            }
-            resizeParticles();
-            for (var i = 0; i < 40; i++) {
-                particles.push({
-                    x: Math.random() * pW,
-                    y: Math.random() * pH,
-                    vx: (Math.random() - 0.5) * 0.3,
-                    vy: -Math.random() * 0.5 - 0.1,
-                    r: Math.random() * 2 + 0.5,
-                    a: Math.random() * 0.4 + 0.1,
-                    color: Math.random() > 0.5 ? '224,182,255' : '157,78,221'
-                });
-            }
-            var pFrame = 0;
-            function animateParticles() {
-                if (!splash.parentNode) return;
-                pctx.clearRect(0, 0, pW, pH);
-                for (var j = 0; j < particles.length; j++) {
-                    var p = particles[j];
-                    p.x += p.vx;
-                    p.y += p.vy;
-                    if (p.y < -10) { p.y = pH + 10; p.x = Math.random() * pW; }
-                    if (p.x < -10 || p.x > pW + 10) p.x = Math.random() * pW;
-                    var flicker = 0.5 + Math.sin(pFrame * 0.02 + j) * 0.3;
-                    pctx.beginPath();
-                    pctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-                    pctx.fillStyle = 'rgba(' + p.color + ',' + (p.a * flicker) + ')';
-                    pctx.fill();
-                }
-                pFrame++;
-                requestAnimationFrame(animateParticles);
-            }
-            animateParticles();
-            window.addEventListener('resize', resizeParticles);
+        // Animated particle canvas (shared factory; see createParticleField)
+        var splashField = createParticleField(document.getElementById('splash-particles'), {
+            count: 40,
+            vxSpread: 0.3, vyBase: 0.5, vyExtra: 0.1,
+            rSpread: 2, rBase: 0.5,
+            aSpread: 0.4, aBase: 0.1,
+            pickColor: function(r) { return r > 0.5 ? '224,182,255' : '157,78,221'; },
+            flicker: function(j, frame) { return 0.5 + Math.sin(frame * 0.02 + j) * 0.3; },
+            shouldRun: function() { return !!splash.parentNode; }
+        });
+        if (splashField) {
+            splashField.ensureRunning();
+            window.addEventListener('resize', splashField.resize);
         }
         
         // Status text animation
