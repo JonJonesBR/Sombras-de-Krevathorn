@@ -686,6 +686,16 @@ body.cb-tritan  { filter: url("#cb-tritan"); }
     0%, 100% { transform: scale(1); }
     50% { transform: scale(1.05); }
 }
+/* Double-tap-to-confirm on the death screen restart button: the first tap
+   arms a countdown instead of instantly abandoning the run. */
+#restart-btn._go-confirm {
+    filter: saturate(1.4) brightness(1.12);
+    animation: goConfirmPulse 0.9s ease-in-out infinite;
+}
+@keyframes goConfirmPulse {
+    0%, 100% { transform: scale(1); box-shadow: 0 4px 20px rgba(200,0,15,0.3); }
+    50% { transform: scale(1.03); box-shadow: 0 4px 28px rgba(255,80,40,0.55); }
+}
 #win-screen h1, #continue-screen h2 {
     text-shadow: 0 0 25px currentColor, 0 0 50px currentColor;
 }
@@ -1628,7 +1638,7 @@ body.gfx-low #start-screen::after { animation: none !important; opacity: 0.5 !im
             <div id="go-tip" class="text-xs hidden text-center px-4" style="color:#ffcc00;"></div>
             <div id="go-lore-teaser" class="text-xs hidden text-center px-4" style="color:#e0b6ff;"></div>
             <button id="go-share-btn" data-i18n="gameover.share" style="width:100%;padding:10px 0;border-radius:12px;color:#9ad0ff;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;background:rgba(80,140,255,0.1);border:1px solid rgba(80,140,255,0.3);cursor:pointer;transition:all 0.3s;">&#128279; COMPARTILHAR RESULTADO</button>
-            <button id="restart-btn" data-i18n="gameover.restart" style="width:100%;padding:16px 0;border-radius:12px;color:#fff;font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:0.05em;background:linear-gradient(135deg,#b8000f,#e84525);border:1px solid rgba(255,100,80,0.3);box-shadow:0 4px 20px rgba(200,0,15,0.3);transition:all 0.3s;text-shadow:0 1px 4px rgba(0,0,0,0.4);cursor:pointer;">TENTAR NOVAMENTE</button>
+            <button id="restart-btn" data-i18n="gameover.restart" aria-live="polite" style="width:100%;padding:16px 0;border-radius:12px;color:#fff;font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:0.05em;background:linear-gradient(135deg,#b8000f,#e84525);border:1px solid rgba(255,100,80,0.3);box-shadow:0 4px 20px rgba(200,0,15,0.3);transition:all 0.3s;text-shadow:0 1px 4px rgba(0,0,0,0.4);cursor:pointer;">TENTAR NOVAMENTE</button>
         </div>
     </div>
 
@@ -3172,6 +3182,7 @@ const I18n = {
             // Game over
             'gameover.title': 'VOCÊ MORREU',
             'gameover.restart': 'Tentar Novamente',
+            'gameover.confirmHint': 'Toque de novo para confirmar',
             'gameover.level': 'Nível',
             'gameover.kills': 'Abates',
             'gameover.dungeon': 'Dungeon',
@@ -3647,6 +3658,8 @@ const I18n = {
             'update.entry.v26.title': 'v26 — Correções de save e acessibilidade',
             'update.entry.v26.l1': 'Correção: recursos da v25 — incluindo remapeamento de gamepad, diálogos acessíveis e simulação consistente — foram restaurados; os upgrades e efeitos temporários também são salvos.',
             'update.entry.v26.l2': 'Os controles das configurações agora têm alvos de pelo menos 24 px e os estilos ausentes do painel foram restaurados.',
+            'update.entry.v27.title': 'v27 — Confirmação no reinício',
+            'update.entry.v27.l1': 'O botão "Tentar Novamente" agora pede um segundo toque para confirmar, evitando sair da tela de resultado por toque acidental.',
 
 
             // ============================================================
@@ -4432,6 +4445,7 @@ const I18n = {
             // Game over
             'gameover.title': 'YOU DIED',
             'gameover.restart': 'Try Again',
+            'gameover.confirmHint': 'Tap again to confirm',
             'gameover.level': 'Level',
             'gameover.kills': 'Kills',
             'gameover.dungeon': 'Dungeon',
@@ -4907,6 +4921,8 @@ const I18n = {
             'update.entry.v26.title': 'v26 — Save and accessibility fixes',
             'update.entry.v26.l1': 'Fix: v25 features — including gamepad remapping, accessible dialogs and consistent simulation — are restored; permanent upgrades and timed effects are saved too.',
             'update.entry.v26.l2': 'Settings controls now have at least 24px targets, and missing panel styles are restored.',
+            'update.entry.v27.title': 'v27 — Restart confirmation',
+            'update.entry.v27.l1': 'The "Try Again" button now asks for a second tap to confirm, so you no longer leave the results screen by accident.',
 
 
             // ============================================================
@@ -5692,6 +5708,7 @@ const I18n = {
             // Game over
             'gameover.title': 'HAS MUERTO',
             'gameover.restart': 'Intentar de Nuevo',
+            'gameover.confirmHint': 'Toca otra vez para confirmar',
             'gameover.level': 'Nivel',
             'gameover.kills': 'Bajas',
             'gameover.dungeon': 'Mazmorra',
@@ -6167,6 +6184,8 @@ const I18n = {
             'update.entry.v26.title': 'v26 — Correcciones de guardado y accesibilidad',
             'update.entry.v26.l1': 'Corrección: se restauraron funciones de la v25 — reasignación del gamepad, diálogos accesibles y simulación consistente — y ahora también se guardan las mejoras y efectos temporales.',
             'update.entry.v26.l2': 'Los controles de Ajustes tienen ahora objetivos de al menos 24 px y se restauraron los estilos que faltaban en el panel.',
+            'update.entry.v27.title': 'v27 — Confirmación al reiniciar',
+            'update.entry.v27.l1': 'El botón "Intentar de Nuevo" ahora pide un segundo toque para confirmar, así no sales de la pantalla de resultados por accidente.',
 
             // ============================================================
             // Quests
@@ -10613,6 +10632,24 @@ function _initEngine() {
     const restartBtn = document.getElementById('restart-btn');
     if (restartBtn) {
         restartBtn.onclick = () => {
+            // Double-tap confirmation: the first tap arms a short countdown so a
+            // stray tap can't dismiss the results screen and abandon the run.
+            if (!restartBtn._goArmed) {
+                restartBtn._goArmed = true;
+                restartBtn.classList.add('_go-confirm');
+                restartBtn.dataset.origText = restartBtn.textContent;
+                restartBtn.textContent = (window.I18n ? I18n.t('gameover.confirmHint') : 'Toque de novo para confirmar');
+                if (restartBtn._goTimer) clearTimeout(restartBtn._goTimer);
+                restartBtn._goTimer = setTimeout(() => {
+                    restartBtn._goArmed = false;
+                    restartBtn.classList.remove('_go-confirm');
+                    if (restartBtn.dataset.origText) restartBtn.textContent = restartBtn.dataset.origText;
+                }, 2500);
+                return;
+            }
+            if (restartBtn._goTimer) clearTimeout(restartBtn._goTimer);
+            restartBtn._goArmed = false;
+            restartBtn.classList.remove('_go-confirm');
             if (uiG) {
                 uiG.classList.add('fade-out');
                 setTimeout(() => {
@@ -28604,7 +28641,7 @@ Input.init();
        current MUST stay in sync with the SW CACHE_VERSION suffix (sw.js).
     */
     window.UPDATE_LOG = {
-        current: 'v26',
+        current: 'v27',
         entries: [
             { v: 'v9', date: '2026-09-10', titleKey: 'update.entry.v9.title', title: 'v9 — Tutorial destravado',
               linesKeys: ['update.entry.v9.l1'],
@@ -28678,6 +28715,9 @@ Input.init();
               linesKeys: ['update.entry.v26.l1', 'update.entry.v26.l2'],
               lines: ['Recursos da v25 — incluindo remapeamento de gamepad, diálogos acessíveis e simulação consistente — foram restaurados; os upgrades e efeitos temporários também são salvos.',
                       'Os controles das configurações agora têm alvos de pelo menos 24 px e os estilos ausentes do painel foram restaurados.'] },
+            { v: 'v27', date: '2026-09-30', titleKey: 'update.entry.v27.title', title: 'v27 — Confirmação no reinício',
+              linesKeys: ['update.entry.v27.l1'],
+              lines: ['O botão "Tentar Novamente" agora pede um segundo toque: o primeiro arma a confirmação por 2,5 s, evitando perder a tela de resultado por toque acidental.'] },
         ]
     };
 
