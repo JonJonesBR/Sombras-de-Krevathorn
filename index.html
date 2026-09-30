@@ -3660,6 +3660,9 @@ const I18n = {
             'update.entry.v26.l2': 'Os controles das configurações agora têm alvos de pelo menos 24 px e os estilos ausentes do painel foram restaurados.',
             'update.entry.v27.title': 'v27 — Confirmação no reinício',
             'update.entry.v28.title': 'v28 — Chefes legíveis e projéteis limpos',
+            'update.entry.v29.title': 'v29 — Comandos e alvos de toque',
+            'update.entry.v29.l1': 'Dodge e habilidade agora guardam o comando por um instante quando o cooldown ainda está ativo: o toque não se perde mais.',
+            'update.entry.v29.l2': 'Os filtros do Lore e o botão de fechar as missões ganharam alvo de toque de pelo menos 24 px, o mínimo de acessibilidade.',
             'update.entry.v28.l1': 'O dreno de alma e a espiral do chefe agora mostram a área de perigo: ataques que antes eram invisíveis ficaram legíveis.',
             'update.entry.v28.l2': 'Projéteis reciclados não herdam mais o rastro do jogador nem o elemento do inimigo que atirou antes.',
             'update.entry.v28.l3': 'Textos desenhados no canvas (banner de chefe, aviso de carga, minimapa e dicas do tutorial) agora seguem o idioma escolhido.',
@@ -4935,6 +4938,9 @@ const I18n = {
             'update.entry.v26.l2': 'Settings controls now have at least 24px targets, and missing panel styles are restored.',
             'update.entry.v27.title': 'v27 — Restart confirmation',
             'update.entry.v28.title': 'v28 — Readable bosses and clean projectiles',
+            'update.entry.v29.title': 'v29 — Input buffering and touch targets',
+            'update.entry.v29.l1': 'Dodge and ability now hold your command briefly while the cooldown is still running, so a tap is no longer dropped.',
+            'update.entry.v29.l2': 'The Lore filters and the quest close button now have touch targets of at least 24 px, the accessibility minimum.',
             'update.entry.v28.l1': 'The boss soul drain and spiral burst now show their danger zone: attacks that used to be invisible are readable.',
             'update.entry.v28.l2': 'Recycled projectiles no longer inherit the player trail or the element of the enemy that fired before.',
             'update.entry.v28.l3': 'Canvas text (boss banner, charge warning, minimap and tutorial hints) now follows the selected language.',
@@ -6210,6 +6216,9 @@ const I18n = {
             'update.entry.v26.l2': 'Los controles de Ajustes tienen ahora objetivos de al menos 24 px y se restauraron los estilos que faltaban en el panel.',
             'update.entry.v27.title': 'v27 — Confirmación al reiniciar',
             'update.entry.v28.title': 'v28 — Jefes legibles y proyectiles limpios',
+            'update.entry.v29.title': 'v29 — Comandos y áreas táctiles',
+            'update.entry.v29.l1': 'El esquive y la habilidad ahora guardan la orden un instante mientras el enfriamiento sigue activo: el toque ya no se pierde.',
+            'update.entry.v29.l2': 'Los filtros del Lore y el botón de cerrar misiones ahora tienen un área táctil de al menos 24 px, el mínimo de accesibilidad.',
             'update.entry.v28.l1': 'El drenaje de alma y la espiral del jefe ahora muestran su zona de peligro: ataques que antes eran invisibles ya se leen.',
             'update.entry.v28.l2': 'Los proyectiles reciclados ya no heredan el rastro del jugador ni el elemento del enemigo que disparó antes.',
             'update.entry.v28.l3': 'Los textos dibujados en el canvas (banner de jefe, aviso de carga, minimapa y consejos del tutorial) ahora siguen el idioma elegido.',
@@ -28720,7 +28729,7 @@ Input.init();
        current MUST stay in sync with the SW CACHE_VERSION suffix (sw.js).
     */
     window.UPDATE_LOG = {
-        current: 'v28',
+        current: 'v29',
         entries: [
             { v: 'v9', date: '2026-09-10', titleKey: 'update.entry.v9.title', title: 'v9 — Tutorial destravado',
               linesKeys: ['update.entry.v9.l1'],
@@ -28802,6 +28811,10 @@ Input.init();
               lines: ['O dreno de alma e a espiral do chefe agora mostram a área de perigo: ataques que antes eram invisíveis ficaram legíveis.',
                       'Projéteis reciclados não herdam mais o rastro do jogador nem o elemento do inimigo que atirou antes.',
                       'Textos desenhados no canvas (banner de chefe, aviso de carga, minimapa e dicas do tutorial) agora seguem o idioma escolhido.'] },
+            { v: 'v29', date: '2026-09-30', titleKey: 'update.entry.v29.title', title: 'v29 — Comandos e alvos de toque',
+              linesKeys: ['update.entry.v29.l1', 'update.entry.v29.l2'],
+              lines: ['Dodge e habilidade agora guardam o comando por um instante quando o cooldown ainda está ativo: o toque não se perde mais.',
+                      'Os filtros do Lore e o botão de fechar as missões ganharam alvo de toque de pelo menos 24 px, o mínimo de acessibilidade.'] },
         ]
     };
 
