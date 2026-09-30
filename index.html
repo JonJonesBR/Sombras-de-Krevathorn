@@ -23218,8 +23218,12 @@ const NPCInteractionPanel = {
     }
 };
 
-// Helper: round rect path
+// Helper: round rect path. The radius is clamped to half the shorter side,
+// so degenerate calls (r > w/2 or r > h/2) still produce a valid path
+// instead of an inverted one.
 function _roundRect(ctx, x, y, w, h, r) {
+    if (w < 2 * r) r = w / 2;
+    if (h < 2 * r) r = h / 2;
     ctx.beginPath();
     ctx.moveTo(x + r, y);
     ctx.lineTo(x + w - r, y);
@@ -27911,20 +27915,10 @@ window.TutorialSystem = TutorialSystem;
 // ============================================================
 // Helper: rounded rectangle path (local to avoid name collisions)
 // ============================================================
+// Helper: rounded rectangle path (local name kept for the tutorial block's
+// call sites; delegates to the shared clamped helper).
 function _tutRoundRect(ctx, x, y, w, h, r) {
-    if(w < 2 * r) r = w / 2;
-    if(h < 2 * r) r = h / 2;
-    ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.lineTo(x + w - r, y);
-    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-    ctx.lineTo(x + w, y + h - r);
-    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-    ctx.lineTo(x + r, y + h);
-    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-    ctx.lineTo(x, y + r);
-    ctx.quadraticCurveTo(x, y, x + r, y);
-    ctx.closePath();
+    _roundRect(ctx, x, y, w, h, r);
 }
 
 // ============================================================
@@ -28496,8 +28490,13 @@ Input.init();
         }
         function loop() {
             // Zero-cost when hidden: stop the loop while the field is covered;
-            // the caller restarts it (e.g. via a MutationObserver).
-            if (o.shouldRun && !o.shouldRun()) { running = false; rafId = null; return; }
+            // the caller restarts it (e.g. via a MutationObserver). The canvas
+            // is cleared on stop so no stale frame lingers behind the overlay.
+            if (o.shouldRun && !o.shouldRun()) {
+                ctx.clearRect(0, 0, W, H);
+                running = false; rafId = null;
+                return;
+            }
             step();
         }
         function ensureRunning() {
