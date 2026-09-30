@@ -4265,6 +4265,14 @@ const I18n = {
             'log.petDismounted': ' Desmontou ',
             'log.petDefeated': ' foi derrotado!',
             'log.shieldBroken': ' Escudo quebrado!',
+            'boss.banner': 'CHEFE!',
+            'boss.waiting': 'Aguardando...',
+            'boss.chargeWarn': ' CARGA!',
+            'hud.mapExpanded': 'MAPA EXPANDIDO',
+            'hud.tapOutside': 'Toque fora para fechar',
+            'tutorial.pressSpace': '  PRESIONE ESPAÇO',
+            'tutorial.pressShift': '  PRESIONE SHIFT',
+            'tutorial.targetDummy': ' ALVO: BONECO DE TREINO',
             'log.levelUp': ' Nível UP! ',
             'log.warCry': ' WAR CRY!',
             'log.groundSlam': ' GROUND SLAM!',
@@ -5528,6 +5536,14 @@ const I18n = {
             'log.petDismounted': ' Dismounted ',
             'log.petDefeated': ' was defeated!',
             'log.shieldBroken': ' Shield broken!',
+            'boss.banner': 'BOSS!',
+            'boss.waiting': 'Waiting...',
+            'boss.chargeWarn': ' CHARGE!',
+            'hud.mapExpanded': 'MAP EXPANDED',
+            'hud.tapOutside': 'Tap outside to close',
+            'tutorial.pressSpace': '  PRESS SPACE',
+            'tutorial.pressShift': '  PRESS SHIFT',
+            'tutorial.targetDummy': ' TARGET: TRAINING DUMMY',
             'log.levelUp': ' LEVEL UP! ',
             'log.warCry': ' WAR CRY!',
             'log.groundSlam': ' GROUND SLAM!',
@@ -6790,6 +6806,14 @@ const I18n = {
             'log.petDismounted': ' Desmontaste a ',
             'log.petDefeated': ' fue derrotado!',
             'log.shieldBroken': ' ¡Escudo roto!',
+            'boss.banner': '¡JEFE!',
+            'boss.waiting': 'Esperando...',
+            'boss.chargeWarn': ' ¡EMBESTIDA!',
+            'hud.mapExpanded': 'MAPA AMPLIADO',
+            'hud.tapOutside': 'Toca fuera para cerrar',
+            'tutorial.pressSpace': '  PULSA ESPACIO',
+            'tutorial.pressShift': '  PULSA SHIFT',
+            'tutorial.targetDummy': ' OBJETIVO: MUÑECO DE ENTRENAMIENTO',
             'log.levelUp': ' ¡NIVEL SUBIDO! ',
             'log.warCry': ' ¡GRITO DE GUERRA!',
             'log.groundSlam': ' ¡GOLPE DE SUELO!',
@@ -8603,7 +8627,7 @@ function _drawExpandedMinimap() {
     ctx.fillStyle = 'rgba(224,182,255,0.6)';
     ctx.font = 'bold 13px ' + COLORS.CANVAS_FONT;
     ctx.textAlign = 'center';
-    ctx.fillText('MAPA EXPANDIDO', width / 2, mmY - 10);
+    ctx.fillText(I18n.t('hud.mapExpanded'), width / 2, mmY - 10);
 
     // Legend row
     const legendY = mmY + mmSize + 14;
@@ -8622,7 +8646,7 @@ function _drawExpandedMinimap() {
         legX += 70;
     });
     ctx.fillStyle = 'rgba(255,255,255,0.2)';
-    ctx.fillText('Toque fora para fechar', mmX + mmSize - 120, legendY);
+    ctx.fillText(I18n.t('hud.tapOutside'), mmX + mmSize - 120, legendY);
 
     // Close button "X"
     const closeX = mmX + mmSize - 18;
@@ -9811,7 +9835,7 @@ function draw() {
             ctx.fillStyle = '#ff4444';
             ctx.font = `bold 14px ${COLORS.CANVAS_FONT}`;
             ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-            ctx.fillText('CHEFE!', width/2, height/2 - 20);
+            ctx.fillText(I18n.t('boss.banner'), width/2, height/2 - 20);
             ctx.fillStyle = '#fff';
             ctx.font = `bold 18px ${COLORS.CANVAS_FONT}`;
             ctx.fillText(_bossBanner.name, width/2, height/2 + 10);
@@ -9834,7 +9858,7 @@ function draw() {
                 ctx.globalAlpha = Math.min(1, _fadeState.alpha * 2);
                 ctx.fillStyle = '#aaa';
                 ctx.font = `14px ${COLORS.CANVAS_FONT}`;
-                ctx.fillText('Aguardando...', width/2, height/2 + 20);
+                ctx.fillText(I18n.t('boss.waiting'), width/2, height/2 + 20);
             }
             ctx.restore();
             if (_fadeState.phase === 'in' && !_anyPanelOpen()) {
@@ -21394,7 +21418,7 @@ class Boss extends Enemy {
             ctx.fillStyle = '#ff0000';
             ctx.font = `bold ${Math.floor(11 + (1-t)*5)}px ${COLORS.CANVAS_FONT}`;
             ctx.textAlign = 'center';
-            ctx.fillText(' CARGA!', this.x-cx, this.y-cy-this.radius-34);
+            ctx.fillText(I18n.t('boss.chargeWarn'), this.x-cx, this.y-cy-this.radius-34);
         }
 
         if(this.ft > 0) this.ft--;
@@ -27848,7 +27872,7 @@ const TutorialSystem = {
             ctx.fillStyle = '#ffcc00';
             ctx.font = 'bold ' + Math.round(18 * sc) + 'px ' + COLORS.CANVAS_FONT;
             ctx.textAlign = 'center';
-            ctx.fillText('  PRESIONE ESPACO', W / 2, y - Math.round(14 * sc));
+            ctx.fillText(I18n.t('tutorial.pressSpace'), W / 2, y - Math.round(14 * sc));
         }
         ctx.restore();
     },
@@ -27903,7 +27927,7 @@ const TutorialSystem = {
             ctx.fillStyle = '#5cff82';
             ctx.font = 'bold ' + Math.round(18 * sc) + 'px ' + COLORS.CANVAS_FONT;
             ctx.textAlign = 'center';
-            ctx.fillText('  PRESIONE SHIFT', W / 2, y - Math.round(14 * sc));
+            ctx.fillText(I18n.t('tutorial.pressShift'), W / 2, y - Math.round(14 * sc));
         }
         ctx.restore();
     },
@@ -27941,7 +27965,7 @@ const TutorialSystem = {
         ctx.fillStyle = '#00ddaa';
         ctx.font = 'bold 14px ' + COLORS.CANVAS_FONT;
         ctx.textAlign = 'center';
-        ctx.fillText(' ALVO: BONECO DE TREINO', sx, sy);
+        ctx.fillText(I18n.t('tutorial.targetDummy'), sx, sy);
         ctx.shadowBlur = 0;
 
         // HP bar
