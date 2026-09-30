@@ -4276,6 +4276,7 @@ const I18n = {
             'boss.waiting': 'Aguardando...',
             'boss.chargeWarn': ' CARGA!',
             'hud.mapExpanded': 'MAPA EXPANDIDO',
+            'hud.parry': 'APARO!',
             'hud.tapOutside': 'Toque fora para fechar',
             'tutorial.pressSpace': '  PRESIONE ESPAÇO',
             'tutorial.pressShift': '  PRESIONE SHIFT',
@@ -5554,6 +5555,7 @@ const I18n = {
             'boss.waiting': 'Waiting...',
             'boss.chargeWarn': ' CHARGE!',
             'hud.mapExpanded': 'MAP EXPANDED',
+            'hud.parry': 'PARRY!',
             'hud.tapOutside': 'Tap outside to close',
             'tutorial.pressSpace': '  PRESS SPACE',
             'tutorial.pressShift': '  PRESS SHIFT',
@@ -6831,6 +6833,7 @@ const I18n = {
             'boss.waiting': 'Esperando...',
             'boss.chargeWarn': ' ¡EMBESTIDA!',
             'hud.mapExpanded': 'MAPA AMPLIADO',
+            'hud.parry': '¡APARO!',
             'hud.tapOutside': 'Toca fuera para cerrar',
             'tutorial.pressSpace': '  PULSA ESPACIO',
             'tutorial.pressShift': '  PULSA SHIFT',
@@ -7446,6 +7449,9 @@ var CONFIG = {
     WARRIOR_FURY_DMG_PER_STACK: 0.25,   // +20% dmg per stack
     WARRIOR_MELEE_ARC_DEG: 120,
     WARRIOR_MELEE_RANGE: 80,
+    WARRIOR_PARRY_FRAMES: 8,          // janela de aparo no inicio do dash (guerreiro)
+    WARRIOR_PARRY_REFLECT: 0.6,       // fracao do dano aparado devolvida em arco
+    WARRIOR_PARRY_FURY: 3,            // stacks de furia ganhas ao aparar
 
     // Rogue  Clone & Poison
     ROGUE_CLONE_DURATION: 60,           // frames (1s)
@@ -22424,6 +22430,7 @@ class Player extends Entity {
         this.dodgeCooldown = 0;
         this._dodgeBuffer = 0;
         this._skillBuffer = 0;
+        this.parryWindow = 0;
         this.dodgeAnim = 0;
         this.levelUpAnim = 0;
         this.shootAnim = 0;
@@ -22519,6 +22526,7 @@ class Player extends Entity {
             if (typeof SND !== 'undefined') SND.play(400, 'square', 0.1, 0.1);
             this.dodgeCooldown = 60;
             this.dodgeAnim = 15;
+            if (this.type === 'warrior') this.parryWindow = CONFIG.WARRIOR_PARRY_FRAMES;
             Vibrate.trigger('dodge');
             this.stealth = 20;
             DamageNumbers.add(this.x, this.y, 'DASH!', 'heal');
@@ -22768,6 +22776,7 @@ class Player extends Entity {
         if (!this.alive) return;
         if(this.shadowShieldTimer > 0) { this.shadowShieldTimer--; if(this.shadowShieldTimer <= 0) this.shield = 0; }
         if(this.dodgeCooldown > 0) this.dodgeCooldown--;
+        if(this.parryWindow > 0) this.parryWindow--;
 
         let dx = Input.left.active ? Input.left.dx : ((Input.keys['d'] || Input.keys['arrowright'])?1:(Input.keys['a'] || Input.keys['arrowleft'])?-1:0);
         let dy = Input.left.active ? Input.left.dy : ((Input.keys['s'] || Input.keys['arrowdown'])?1:(Input.keys['w'] || Input.keys['arrowup'])?-1:0);
@@ -23153,6 +23162,37 @@ class Player extends Entity {
     takeDamage(a, m, source=null) {
         if (!Number.isFinite(a)) return; // NaN jamais: hp viraria NaN e a guarda isNaN fixaria o HP no máximo
         if (this.invincibleTimer > 0) return;
+        // Warrior parry: a hit landing inside the dash parry window is negated,
+        // feeds Fury and answers with an arc riposte in the facing direction.
+        if(this.type === 'warrior' && this.parryWindow > 0 && a > 0) {
+            this.parryWindow = 0;
+            this.invincibleTimer = 15;
+            this.furyStacks = Math.min(CONFIG.WARRIOR_FURY_MAX_STACKS, this.furyStacks + CONFIG.WARRIOR_PARRY_FURY);
+            this.furyDecayTimer = CONFIG.WARRIOR_FURY_DECAY_FRAMES;
+            const riposte = Math.max(1, Math.floor(a * CONFIG.WARRIOR_PARRY_REFLECT));
+            const parryRangeSq = CONFIG.WARRIOR_MELEE_RANGE * CONFIG.WARRIOR_MELEE_RANGE;
+            for(let i = 0; i < entities.length; i++) {
+                const e = entities[i];
+                if(e !== this && e.alive && typeof Enemy !== 'undefined' && (e instanceof Enemy || e.isEnemy)) {
+                    const edx = e.x - this.x, edy = e.y - this.y;
+                    const dSq = edx*edx + edy*edy;
+                    if(dSq < parryRangeSq && hasLineOfSight(m, this.x, this.y, e.x, e.y)) {
+                        const angleToEnemy = Math.atan2(edy, edx);
+                        let diff = Math.abs(angleToEnemy - this.angle);
+                        if(diff > Math.PI) diff = Math.PI * 2 - diff;
+                        if(diff <= Math.PI / 2) e.takeDamage(riposte, m, this);
+                    }
+                }
+            }
+            DamageNumbers.add(this.x, this.y, window.I18n ? I18n.t('hud.parry') : 'PARRY!', 'heal');
+            spawnParticles(this.x, this.y, '#ffcc00', 14, 5);
+            ScreenEffects.triggerShake(CONFIG.SHAKE_HIT, this.x, this.y);
+            ScreenEffects.triggerFlash(0.12, '#ffcc00');
+            if(typeof hitstopFrames !== 'undefined' && !(window.GameSettings && GameSettings.hitstopEnabled === false)) hitstopFrames = CONFIG.HITSTOP_ELITE;
+            SND.play(660, 'square', 0.12, 0.14);
+            if(window.Vibrate) Vibrate.trigger('normalHit');
+            return;
+        }
         if (this.dodgeChance && a > 0 && SeedSystem.random() < Math.min(0.75, this.dodgeChance)) { spawnParticles(this.x, this.y, '#33ff33', 8, 4); DamageNumbers.add(this.x, this.y, 'ESQUIVA!', 'heal'); return; }
         if(this.type === 'mage' && this.orbShieldReady && a > 0) { this.orbShieldReady = false; this.orbShieldTimer = 0; spawnParticles(this.x, this.y, COLORS.CLASS_MAGE, 15, 4); SND.play(440, 'sine', 0.2, 0.2); DamageNumbers.add(this.x, this.y, 'ORB SHIELD!', 'heal'); return; }
         if(this.type === 'rogue' || this.type === 'mage') this.mageComboCount = 0;
