@@ -3661,6 +3661,9 @@ const I18n = {
             'update.entry.v27.title': 'v27 — Confirmação no reinício',
             'update.entry.v28.title': 'v28 — Chefes legíveis e projéteis limpos',
             'update.entry.v29.title': 'v29 — Comandos e alvos de toque',
+            'update.entry.v30.title': 'v30 — Aparo do Guerreiro',
+            'update.entry.v30.l1': 'O Guerreiro agora apara: os primeiros instantes do dash negam o dano, geram Fúria e devolvem um golpe em arco na direção encarada.',
+            'update.entry.v30.l2': 'Nenhum botão novo: o aparo usa o próprio botão de esquiva.',
             'update.entry.v29.l1': 'Dodge e habilidade agora guardam o comando por um instante quando o cooldown ainda está ativo: o toque não se perde mais.',
             'update.entry.v29.l2': 'Os filtros do Lore e o botão de fechar as missões ganharam alvo de toque de pelo menos 24 px, o mínimo de acessibilidade.',
             'update.entry.v28.l1': 'O dreno de alma e a espiral do chefe agora mostram a área de perigo: ataques que antes eram invisíveis ficaram legíveis.',
@@ -4940,6 +4943,9 @@ const I18n = {
             'update.entry.v27.title': 'v27 — Restart confirmation',
             'update.entry.v28.title': 'v28 — Readable bosses and clean projectiles',
             'update.entry.v29.title': 'v29 — Input buffering and touch targets',
+            'update.entry.v30.title': 'v30 — Warrior parry',
+            'update.entry.v30.l1': 'The Warrior can now parry: the first moments of the dash negate damage, build Fury and answer with an arc strike in the facing direction.',
+            'update.entry.v30.l2': 'No new button: the parry uses the dodge button itself.',
             'update.entry.v29.l1': 'Dodge and ability now hold your command briefly while the cooldown is still running, so a tap is no longer dropped.',
             'update.entry.v29.l2': 'The Lore filters and the quest close button now have touch targets of at least 24 px, the accessibility minimum.',
             'update.entry.v28.l1': 'The boss soul drain and spiral burst now show their danger zone: attacks that used to be invisible are readable.',
@@ -6219,6 +6225,9 @@ const I18n = {
             'update.entry.v27.title': 'v27 — Confirmación al reiniciar',
             'update.entry.v28.title': 'v28 — Jefes legibles y proyectiles limpios',
             'update.entry.v29.title': 'v29 — Comandos y áreas táctiles',
+            'update.entry.v30.title': 'v30 — Aparo del Guerrero',
+            'update.entry.v30.l1': 'El Guerrero ahora puede aparar: los primeros instantes del dash niegan el daño, generan Furia y devuelven un golpe en arco hacia donde mira.',
+            'update.entry.v30.l2': 'Sin botón nuevo: el aparo usa el propio botón de esquiva.',
             'update.entry.v29.l1': 'El esquive y la habilidad ahora guardan la orden un instante mientras el enfriamiento sigue activo: el toque ya no se pierde.',
             'update.entry.v29.l2': 'Los filtros del Lore y el botón de cerrar misiones ahora tienen un área táctil de al menos 24 px, el mínimo de accesibilidad.',
             'update.entry.v28.l1': 'El drenaje de alma y la espiral del jefe ahora muestran su zona de peligro: ataques que antes eran invisibles ya se leen.',
@@ -28769,7 +28778,7 @@ Input.init();
        current MUST stay in sync with the SW CACHE_VERSION suffix (sw.js).
     */
     window.UPDATE_LOG = {
-        current: 'v29',
+        current: 'v30',
         entries: [
             { v: 'v9', date: '2026-09-10', titleKey: 'update.entry.v9.title', title: 'v9 — Tutorial destravado',
               linesKeys: ['update.entry.v9.l1'],
@@ -28855,6 +28864,10 @@ Input.init();
               linesKeys: ['update.entry.v29.l1', 'update.entry.v29.l2'],
               lines: ['Dodge e habilidade agora guardam o comando por um instante quando o cooldown ainda está ativo: o toque não se perde mais.',
                       'Os filtros do Lore e o botão de fechar as missões ganharam alvo de toque de pelo menos 24 px, o mínimo de acessibilidade.'] },
+            { v: 'v30', date: '2026-09-30', titleKey: 'update.entry.v30.title', title: 'v30 — Aparo do Guerreiro',
+              linesKeys: ['update.entry.v30.l1', 'update.entry.v30.l2'],
+              lines: ['O Guerreiro agora apara: os primeiros instantes do dash negam o dano, geram Fúria e devolvem um golpe em arco na direção encarada.',
+                      'Nenhum botão novo: o aparo usa o próprio botão de esquiva.'] },
         ]
     };
 
