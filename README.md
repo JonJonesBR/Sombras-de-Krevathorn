@@ -12,6 +12,14 @@
 
 <br>
 
+## ▶️ Play Now
+
+**[🎮 Jogar no navegador — Play in the browser](https://jonjonesbr.github.io/Sombras-de-Krevathorn/)**
+
+No install needed. The game installs itself as an offline PWA after the first visit over HTTPS.
+
+<br>
+
 ## 📜 Overview
 **Krevathorn** is a mobile-optimized 2D roguelike action RPG. Built with **Vanilla JavaScript and the HTML5 Canvas API**, it features procedural dungeon generation, dynamic difficulty, a deep skill tree, and a custom rendering engine. After the first successful online load through HTTPS, its service worker caches the game for offline play.
 
@@ -70,28 +78,10 @@ Since the game is built with vanilla web technologies, running it is incredibly 
     git clone https://github.com/JonJonesBR/Sombras-de-Krevathorn.git
     ```
 2.  **Open the file:**
-    Open `index.html` in a modern browser. The automated regression suite runs in Chromium, Firefox, and WebKit; compatibility with other browsers has not been separately verified.
+    Open `index.html` in a modern browser.
 3.  *(Optional)* For the best experience, serve it through a local development server (e.g., VSCode Live Server or Python's `http.server`). This enables PWA install and the offline service worker — both require `http(s)://` (opening the file directly always works, just without them).
 
-For development, install the test dependency and run the regression suite:
-
-```bash
-npm ci
-npx playwright install chromium firefox webkit
-npm test
-```
-
-The balance harness plays deterministic bot runs and writes `tests/balance/report.md`. It changes no balance value — it exists to produce the data needed to decide them:
-
-```bash
-npm run test:balance                     # 1 quick cell, fast
-BALANCE_CLASSES=warrior,rogue,mage,elf \
-BALANCE_DIFFS=normal,dificil,pesadelo \
-BALANCE_SEEDS=1,2 BALANCE_FRAMES=40000 \
-  npm run test:balance                   # full matrix
-```
-
-Columns: `floor` is the deepest level reached, `kills`/`time s` are throughput, `skills`/`dodges` are counts the game does not keep per run, `dmg taken` is damage received, `first shop` is when the bot first bought something and `first boss` when the first boss appeared (`–` means it never did). Cells that hit the frame cap are marked `truncated`; raise `BALANCE_FRAMES` to look closer. The bot has no pathfinding, so its numbers compare classes against each other rather than predicting human play.
+The game is a single self-contained `index.html` plus a `sw.js` service worker — no build step, no runtime dependencies. This repository intentionally contains only the files GitHub Pages serves; development tooling (tests, CI, linting) lives outside the repo.
 
 ---
 

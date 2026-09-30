@@ -1,15 +1,29 @@
-# Estado local da rodada de orquestração (ledger, planos de teste, referências)
-.omp/
+# Só index.html, sw.js, README.md, LICENSE e .gitignore ficam no repositório —
+# é o essencial para o GitHub Pages. Todo o resto é de desenvolvimento e fica
+# apenas na máquina (os arquivos continuam no disco, só não são versionados).
 
-# Artefatos de desenvolvimento e testes do navegador
-node_modules/
-test-results/
-playwright-report/
-playwright/.cache/
-
-# Documentos internos — não expor no repositório público (só index.html, README,
-# sw.js e .github/ ficam públicos)
+# Documentos internos de orquestração
 AGENTS.md
 NÃO COMMITAR.md
 PLANO_MELHORIAS.md
 PLANO_MELHORIAS_PROGRESSO.md
+
+# Estado local da rodada de orquestração (ledger, planos, referências)
+.omp/
+.freebuff/
+
+# Dependências e artefatos de desenvolvimento/testes
+node_modules/
+test-results/
+playwright-report/
+playwright/.cache/
+tests/
+package.json
+package-lock.json
+playwright.config.js
+.github/
+
+# Exportação/pasta do Google Drive e lixo de ferramentas
+graficos_melhores/
+%LOCALAPPDATA%/
+ERROS CONSOLE.txt
