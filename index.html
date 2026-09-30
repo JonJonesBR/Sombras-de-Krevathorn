@@ -3659,6 +3659,10 @@ const I18n = {
             'update.entry.v26.l1': 'Correção: recursos da v25 — incluindo remapeamento de gamepad, diálogos acessíveis e simulação consistente — foram restaurados; os upgrades e efeitos temporários também são salvos.',
             'update.entry.v26.l2': 'Os controles das configurações agora têm alvos de pelo menos 24 px e os estilos ausentes do painel foram restaurados.',
             'update.entry.v27.title': 'v27 — Confirmação no reinício',
+            'update.entry.v28.title': 'v28 — Chefes legíveis e projéteis limpos',
+            'update.entry.v28.l1': 'O dreno de alma e a espiral do chefe agora mostram a área de perigo: ataques que antes eram invisíveis ficaram legíveis.',
+            'update.entry.v28.l2': 'Projéteis reciclados não herdam mais o rastro do jogador nem o elemento do inimigo que atirou antes.',
+            'update.entry.v28.l3': 'Textos desenhados no canvas (banner de chefe, aviso de carga, minimapa e dicas do tutorial) agora seguem o idioma escolhido.',
             'update.entry.v27.l1': 'O botão "Tentar Novamente" agora pede um segundo toque para confirmar, evitando sair da tela de resultado por toque acidental.',
 
 
@@ -4930,6 +4934,10 @@ const I18n = {
             'update.entry.v26.l1': 'Fix: v25 features — including gamepad remapping, accessible dialogs and consistent simulation — are restored; permanent upgrades and timed effects are saved too.',
             'update.entry.v26.l2': 'Settings controls now have at least 24px targets, and missing panel styles are restored.',
             'update.entry.v27.title': 'v27 — Restart confirmation',
+            'update.entry.v28.title': 'v28 — Readable bosses and clean projectiles',
+            'update.entry.v28.l1': 'The boss soul drain and spiral burst now show their danger zone: attacks that used to be invisible are readable.',
+            'update.entry.v28.l2': 'Recycled projectiles no longer inherit the player trail or the element of the enemy that fired before.',
+            'update.entry.v28.l3': 'Canvas text (boss banner, charge warning, minimap and tutorial hints) now follows the selected language.',
             'update.entry.v27.l1': 'The "Try Again" button now asks for a second tap to confirm, so you no longer leave the results screen by accident.',
 
 
@@ -6201,6 +6209,10 @@ const I18n = {
             'update.entry.v26.l1': 'Corrección: se restauraron funciones de la v25 — reasignación del gamepad, diálogos accesibles y simulación consistente — y ahora también se guardan las mejoras y efectos temporales.',
             'update.entry.v26.l2': 'Los controles de Ajustes tienen ahora objetivos de al menos 24 px y se restauraron los estilos que faltaban en el panel.',
             'update.entry.v27.title': 'v27 — Confirmación al reiniciar',
+            'update.entry.v28.title': 'v28 — Jefes legibles y proyectiles limpios',
+            'update.entry.v28.l1': 'El drenaje de alma y la espiral del jefe ahora muestran su zona de peligro: ataques que antes eran invisibles ya se leen.',
+            'update.entry.v28.l2': 'Los proyectiles reciclados ya no heredan el rastro del jugador ni el elemento del enemigo que disparó antes.',
+            'update.entry.v28.l3': 'Los textos dibujados en el canvas (banner de jefe, aviso de carga, minimapa y consejos del tutorial) ahora siguen el idioma elegido.',
             'update.entry.v27.l1': 'El botón "Intentar de Nuevo" ahora pide un segundo toque para confirmar, así no sales de la pantalla de resultados por accidente.',
 
             // ============================================================
@@ -28698,7 +28710,7 @@ Input.init();
        current MUST stay in sync with the SW CACHE_VERSION suffix (sw.js).
     */
     window.UPDATE_LOG = {
-        current: 'v27',
+        current: 'v28',
         entries: [
             { v: 'v9', date: '2026-09-10', titleKey: 'update.entry.v9.title', title: 'v9 — Tutorial destravado',
               linesKeys: ['update.entry.v9.l1'],
@@ -28775,6 +28787,11 @@ Input.init();
             { v: 'v27', date: '2026-09-30', titleKey: 'update.entry.v27.title', title: 'v27 — Confirmação no reinício',
               linesKeys: ['update.entry.v27.l1'],
               lines: ['O botão "Tentar Novamente" agora pede um segundo toque: o primeiro arma a confirmação por 2,5 s, evitando perder a tela de resultado por toque acidental.'] },
+            { v: 'v28', date: '2026-09-30', titleKey: 'update.entry.v28.title', title: 'v28 — Chefes legíveis e projéteis limpos',
+              linesKeys: ['update.entry.v28.l1', 'update.entry.v28.l2', 'update.entry.v28.l3'],
+              lines: ['O dreno de alma e a espiral do chefe agora mostram a área de perigo: ataques que antes eram invisíveis ficaram legíveis.',
+                      'Projéteis reciclados não herdam mais o rastro do jogador nem o elemento do inimigo que atirou antes.',
+                      'Textos desenhados no canvas (banner de chefe, aviso de carga, minimapa e dicas do tutorial) agora seguem o idioma escolhido.'] },
         ]
     };
 
