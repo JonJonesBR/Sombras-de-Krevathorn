@@ -2272,6 +2272,27 @@ window.addEventListener('resize', resize);
 </script>
     <script>
 // === js/core/storage.js ===
+// Shared versioned-store helpers (used by StorageManager and SaveSystem).
+// Keeping the migration chain and the default-merge in one place means a save
+// format change is implemented once instead of once per store.
+function _runMigrationChain(data, fromVersion, toVersion, migrations, label) {
+    let current = { ...data };
+    for (let v = fromVersion; v < toVersion; v++) {
+        if (migrations[v]) {
+            current = migrations[v](current, label);
+        } else {
+            Debug.warn(`${label}: No migration from v${v} to v${v + 1}`);
+            current._version = v + 1;
+        }
+    }
+    return current;
+}
+
+// Merge data over a deep clone of its defaults so newer fields always exist.
+function _mergeDefaults(defaults, data) {
+    return Object.assign({}, JSON.parse(JSON.stringify(defaults)), data);
+}
+
 // STORAGE MANAGER - Versioned localStorage with migrations
 const StorageManager = {
     // Current schema version - increment when data structure changes
@@ -2537,23 +2558,12 @@ const StorageManager = {
 
     // Internal: merge data with defaults to fill missing fields
     _mergeWithDefaults(data, storeName) {
-        const defaults = this._cloneDefaults(storeName);
-        const merged = { ...defaults, ...data };
-        return merged;
+        return _mergeDefaults(this.DEFAULTS[storeName] || {}, data);
     },
 
     // Internal: run migrations
     _migrate(data, storeName, fromVersion) {
-        let current = { ...data };
-        for (let v = fromVersion; v < this.CURRENT_VERSION; v++) {
-            if (this.MIGRATIONS[v]) {
-                current = this.MIGRATIONS[v](current, storeName);
-            } else {
-                Debug.warn(`Storage: No migration from v${v} to v${v+1} for ${storeName}`);
-                current._version = v + 1;
-            }
-        }
-        return current;
+        return _runMigrationChain(data, fromVersion, this.CURRENT_VERSION, this.MIGRATIONS, storeName);
     },
 
     // Internal: save helper
@@ -2726,21 +2736,12 @@ const SaveSystem = {
 
     // Internal: run the migration chain from an old version up to VERSION
     _migrate(data, fromVersion) {
-        let current = { ...data };
-        for (let v = fromVersion; v < this.VERSION; v++) {
-            if (this.MIGRATIONS[v]) {
-                current = this.MIGRATIONS[v](current);
-            } else {
-                Debug.warn('[SaveSystem] No migration from v' + v + ' to v' + (v + 1));
-                current._version = v + 1;
-            }
-        }
-        return current;
+        return _runMigrationChain(data, fromVersion, this.VERSION, this.MIGRATIONS, '[SaveSystem]');
     },
 
-    // Internal: fill any missing field with its default (mirrors StorageManager._mergeWithDefaults)
+    // Internal: fill any missing field with its default
     _mergeWithDefaults(data) {
-        return Object.assign({}, JSON.parse(JSON.stringify(this.DEFAULTS)), data);
+        return _mergeDefaults(this.DEFAULTS, data);
     },
 
     prepare(data) {
@@ -8936,7 +8937,7 @@ function _updateEntitySimulation() {
     if (gameTime % CONFIG.HAZARD_SPAWN_INTERVAL === 0 && hazards.length < CONFIG.HAZARD_MAX_COUNT) map.spawnHazard();
     if (window.NPCSystem) {
         NPCSystem.update();
-        if (gameTime % 600 === 0 && Math.random() < 0.25) NPCSystem.spawnNPC();
+        if (gameTime % 600 === 0 && SeedSystem.random() < 0.25) NPCSystem.spawnNPC();
     }
     for (let i = entities.length - 1; i >= 0; i--) {
         if (!entities[i].alive && entities[i] !== player) {
@@ -11575,53 +11576,50 @@ function getPrestigeXpMult(prestigeLevel) {
     return 1 + bestReward.bonus + Math.min(prestigeLevel, 20) * CONFIG.PRESTIGE_XP_PER_LEVEL;
 }
 
+// Generic prestige tier lookup: returns `fallback` when the player has no
+// prestige yet, and the tier's table value (or `fallback` if absent) otherwise.
+// Every per-stat getter below is a thin wrapper over this.
+function _prestigeTierValue(table, prestigeLevel, fallback) {
+    if (prestigeLevel <= 0) return fallback;
+    return table[getPrestigeTier(prestigeLevel)] || fallback;
+}
+
 // Get cosmetic aura color for prestige level
 function getPrestigeAuraColor(prestigeLevel) {
     if (prestigeLevel <= 0) return null;
-    const tier = getPrestigeTier(prestigeLevel);
-    return CONFIG.PRESTIGE_AURA_COLORS[tier] || CONFIG.PRESTIGE_AURA_COLORS[0];
+    return _prestigeTierValue(CONFIG.PRESTIGE_AURA_COLORS, prestigeLevel, CONFIG.PRESTIGE_AURA_COLORS[0]);
 }
 
 // Get cosmetic aura size for prestige level
 function getPrestigeAuraSize(prestigeLevel) {
-    if (prestigeLevel <= 0) return 0;
-    const tier = getPrestigeTier(prestigeLevel);
-    return CONFIG.PRESTIGE_AURA_SIZES[tier] || 0;
+    return _prestigeTierValue(CONFIG.PRESTIGE_AURA_SIZES, prestigeLevel, 0);
 }
 
 // Get starting weapon tier for prestige level
 function getPrestigeStartingWeaponTier(prestigeLevel) {
-    if (prestigeLevel <= 0) return null;
-    const tier = getPrestigeTier(prestigeLevel);
-    return CONFIG.PRESTIGE_STARTING_WEAPON_TIERS[tier] || null;
+    return _prestigeTierValue(CONFIG.PRESTIGE_STARTING_WEAPON_TIERS, prestigeLevel, null);
 }
 
 // Get permanent HP bonus for prestige level
 function getPrestigeHpBonus(prestigeLevel) {
-    if (prestigeLevel <= 0) return 0;
-    const tier = getPrestigeTier(prestigeLevel);
-    return CONFIG.PRESTIGE_PERMANENT_HP[tier] || 0;
+    return _prestigeTierValue(CONFIG.PRESTIGE_PERMANENT_HP, prestigeLevel, 0);
 }
 
 // Get permanent damage bonus for prestige level
 function getPrestigeDmgBonus(prestigeLevel) {
     if (prestigeLevel <= 0) return 0;
-    const tier = getPrestigeTier(prestigeLevel);
-    return (CONFIG.PRESTIGE_PERMANENT_DMG[tier] || 0) + Math.min(prestigeLevel, 50) * CONFIG.PRESTIGE_DMG_PER_LEVEL;
+    const tierBonus = _prestigeTierValue(CONFIG.PRESTIGE_PERMANENT_DMG, prestigeLevel, 0);
+    return tierBonus + Math.min(prestigeLevel, 50) * CONFIG.PRESTIGE_DMG_PER_LEVEL;
 }
 
 // Get starting shield for prestige level
 function getPrestigeStartingShield(prestigeLevel) {
-    if (prestigeLevel <= 0) return 0;
-    const tier = getPrestigeTier(prestigeLevel);
-    return CONFIG.PRESTIGE_STARTING_SHIELD[tier] || 0;
+    return _prestigeTierValue(CONFIG.PRESTIGE_STARTING_SHIELD, prestigeLevel, 0);
 }
 
 // Get starting currency for prestige level
 function getPrestigeStartingCurrency(prestigeLevel) {
-    if (prestigeLevel <= 0) return 0;
-    const tier = getPrestigeTier(prestigeLevel);
-    return CONFIG.PRESTIGE_STARTING_CURRENCY[tier] || 0;
+    return _prestigeTierValue(CONFIG.PRESTIGE_STARTING_CURRENCY, prestigeLevel, 0);
 }
 
 // Apply all prestige bonuses to the player
@@ -12839,8 +12837,8 @@ const EquipmentSystem = {
         }
 
         // Generate name
-        const prefix = CONFIG.EQUIPMENT_PREFIXES[Math.floor(Math.random() * CONFIG.EQUIPMENT_PREFIXES.length)];
-        const suffix = CONFIG.EQUIPMENT_SUFFIXES[Math.floor(Math.random() * CONFIG.EQUIPMENT_SUFFIXES.length)];
+        const prefix = CONFIG.EQUIPMENT_PREFIXES[Math.floor(SeedSystem.random() * CONFIG.EQUIPMENT_PREFIXES.length)];
+        const suffix = CONFIG.EQUIPMENT_SUFFIXES[Math.floor(SeedSystem.random() * CONFIG.EQUIPMENT_SUFFIXES.length)];
         const name = `${prefix} ${CONFIG.EQUIPMENT_SLOT_NAMES[slot]} ${suffix}`;
 
         return {
@@ -13039,14 +13037,14 @@ const NarrativeSystem = {
         else if (enemyType === 'elite') chance = CONFIG.LORE_DROP_CHANCE_ELITE;
         else chance = CONFIG.LORE_DROP_CHANCE_SECRET;
 
-        if (Math.random() < chance) {
+        if (SeedSystem.random() < chance) {
             // Pick a random undiscovered fragment, weighted by rarity
             const weighted = [];
             for (const f of undiscovered) {
                 const weight = f.rarity === 'rare' ? 1 : (f.rarity === 'uncommon' ? 2 : 3);
                 for (let i = 0; i < weight; i++) weighted.push(f);
             }
-            const fragment = weighted[Math.floor(Math.random() * weighted.length)];
+            const fragment = weighted[Math.floor(SeedSystem.random() * weighted.length)];
             return this.discover(fragment.id);
         }
         return false;
@@ -17148,7 +17146,7 @@ const BiomeSystem = {
         if (!e || e.isB || !this.currentBiome) return;
         const b = this.currentBiome;
         const chance = 0.45;
-        const r = Math.random();
+        const r = SeedSystem.random();
         if (b === 'lavaCave' && r < chance) {
             e._variant = 'ember';
             e.maxHp = Math.max(1, Math.floor(e.maxHp * 0.85)); e.hp = e.maxHp;
@@ -17180,7 +17178,7 @@ const BiomeSystem = {
             e.color = '#b8b8c8';
         }
         // Elemento do bioma em qualquer inimigo comum (elementos variados por cenário)
-        if (!e.element && Math.random() < 0.2) {
+        if (!e.element && SeedSystem.random() < 0.2) {
             if (b === 'lavaCave') e.element = 'fire';
             else if (b === 'crypt') e.element = 'ice';
             else if (b === 'forest') e.element = 'poison';
@@ -17307,7 +17305,7 @@ const BiomeSystem = {
         let total = 0;
         for (const w of weights) total += w;
 
-        let roll = Math.random() * total;
+        let roll = SeedSystem.random() * total;
         for (let i = 0; i < types.length; i++) {
             roll -= weights[i];
             if (roll <= 0) return types[i];
@@ -21971,7 +21969,7 @@ function awardKillRewards(player, target, source) {
     }
     // Chest drop: 3% normal, 15% elite, 40% boss (boss chest spawned separately)
     const chestChance = target.isBoss ? 0 : (target.elite ? 0.15 : 0.03);
-    if(Math.random() < chestChance && typeof Chest !== 'undefined') {
+    if(SeedSystem.random() < chestChance && typeof Chest !== 'undefined') {
         const r = target.elite ? (SeedSystem.random() < 0.4 ? 'epico' : 'raro') : 'comum';
         chests.push(new Chest(target.x, target.y, r));
     }
@@ -23573,7 +23571,7 @@ const NPCSystem = {
     spawnNPC(type) {
         if (!window.map) return;
         const pos = map.getSafeSpawn(300);
-        const npcType = type || ['guide', 'merchant', 'oracle'][Math.floor(Math.random() * 3)];
+        const npcType = type || ['guide', 'merchant', 'oracle'][Math.floor(SeedSystem.random() * 3)];
         this.npcs.push(new NPC(pos.x, pos.y, npcType));
         if (window.addLog) addLog(window.I18n ? I18n.t('log.travelerSpawned') : 'Um viajante misterioso apareceu!');
     },
@@ -24105,7 +24103,7 @@ const RelicSystem = {
         const all = WeaponSystem.getWeaponsForClass(playerType);
         const pool = all.filter(w => w.tier >= minTier && w.tier <= maxTier);
         const src = pool.length ? pool : all;
-        return src[Math.floor(Math.random() * src.length)];
+        return src[Math.floor(SeedSystem.random() * src.length)];
     },
 
     // Open a chest and give loot to player
@@ -24118,7 +24116,7 @@ const RelicSystem = {
         player.currency += currencyBonus;
         Statistics.data.totalCurrencyEarned = (Statistics.data.totalCurrencyEarned || 0) + currencyBonus;
 
-        const roll = Math.random();
+        const roll = SeedSystem.random();
 
         if (r === 'comum') {
             if (roll < 0.55) {
@@ -24170,7 +24168,7 @@ const RelicSystem = {
     _randomRelic(rarity) {
         const pool = Object.values(RELICS).filter(r => r.rarity === rarity);
         if (!pool.length) return null;
-        return pool[Math.floor(Math.random() * pool.length)];
+        return pool[Math.floor(SeedSystem.random() * pool.length)];
     },
 
     // Called at start of each dungeon level (escudo_arcano perk)
@@ -26631,15 +26629,15 @@ window.GameBootstrap = {
 
     _spawnMapChests() {
         if (!map) return;
-        var count = 3 + Math.floor(Math.random() * 3);
+        var count = 3 + Math.floor(SeedSystem.random() * 3);
         var rarityPool = ['comum','comum','comum','raro','raro','epico'];
         for (var i = 0; i < count; i++) {
             var pos = map.getSafeSpawn(200);
-            var rarity = rarityPool[Math.floor(Math.random() * rarityPool.length)];
+            var rarity = rarityPool[Math.floor(SeedSystem.random() * rarityPool.length)];
             chests.push(new Chest(pos.x, pos.y, rarity));
         }
         var hiddenPos = map.getSafeSpawn(400);
-        var hiddenRarity = Math.random() < 0.4 ? 'epico' : 'raro';
+        var hiddenRarity = SeedSystem.random() < 0.4 ? 'epico' : 'raro';
         chests.push(new Chest(hiddenPos.x, hiddenPos.y, hiddenRarity));
     }
 };
