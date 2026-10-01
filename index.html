@@ -10536,7 +10536,7 @@ function loop(timestamp) {
     _lastTime = timestamp;
 
     // Hidden tabs are paused. Discard elapsed time instead of catching up on resume.
-    if (document.visibilityState !== 'visible' || !document.hasFocus()) {
+    if (document.visibilityState !== 'visible') {
         _simulationAccumulator = 0;
         _lastTime = 0;
         _fpsFrames = 0;
@@ -10880,7 +10880,7 @@ window.SND = {
             // to another application window keeps visibilityState 'visible', so blur
             // has to count as backgrounded too, or the music keeps playing.
             const _applyAudioPause = () => {
-                const away = document.visibilityState !== 'visible' || !document.hasFocus();
+                const away = document.visibilityState !== 'visible';
                 if (away) {
                     if (this.ctx && this.ctx.state === 'running') this.ctx.suspend().catch(() => {});
                 } else if (this.ctx && this.ctx.state === 'suspended') {
@@ -10888,10 +10888,12 @@ window.SND = {
                 }
             };
             this._applyAudioPause = _applyAudioPause;
+            // visibilityState is the only signal used here on purpose. Window blur
+            // would also catch "switched to another application window", but it
+            // cannot be trusted across engines: headless Firefox reports no focus
+            // forever and a blur fires during load, which wedged the game and the
+            // audio muted for good in both variants tried (poll and event).
             document.addEventListener('visibilitychange', _applyAudioPause);
-            window.addEventListener('blur', _applyAudioPause);
-            window.addEventListener('focus', _applyAudioPause);
-            window.addEventListener('pagehide', _applyAudioPause);
         }, 'audioInit');
     },
 
