@@ -3663,6 +3663,9 @@ const I18n = {
             'update.entry.v29.title': 'v29 — Comandos e alvos de toque',
             'update.entry.v30.title': 'v30 — Aparo do Guerreiro',
             'update.entry.v31.title': 'v31 — Áudio reformulado',
+            'update.entry.v32.title': 'v32 — Correções de som e de estado',
+            'update.entry.v32.l1': 'O som que ficava preso na tela de fim de piso (ao escolher o que comprar antes de descer) parou de travar.',
+            'update.entry.v32.l2': 'Morrer no mesmo instante em que o chefe morre não dá mais "continuar" e "próximo piso" ao mesmo tempo: a morte tem prioridade.',
             'update.entry.v31.l1': 'O motor de som foi refeito: bus mestre com limitador (nada mais estoura), reverb procedural e envelope em cada som — o estalo entre as notas acabou.',
             'update.entry.v31.l2': 'A música agora segue progressões de acordes por bioma, com pad sustentado e baixo no acorde, em vez de notas sorteadas.',
             'update.entry.v31.l3': 'Golpes ganharam ataque percussivo, a morte tem queda de tom e a coleta virou arpejo.',
@@ -4949,6 +4952,9 @@ const I18n = {
             'update.entry.v29.title': 'v29 — Input buffering and touch targets',
             'update.entry.v30.title': 'v30 — Warrior parry',
             'update.entry.v31.title': 'v31 — Audio rebuilt',
+            'update.entry.v32.title': 'v32 — Sound and state fixes',
+            'update.entry.v32.l1': 'The sound that got stuck on the floor-complete screen (while choosing what to buy before descending) no longer hangs.',
+            'update.entry.v32.l2': 'Dying at the same moment the boss dies no longer gives you both "continue" and the next floor: death takes priority.',
             'update.entry.v31.l1': 'The sound engine was rebuilt: a master bus with a limiter (nothing clips any more), procedural reverb and an envelope on every sound — the click between notes is gone.',
             'update.entry.v31.l2': 'Music now follows per-biome chord progressions with a sustained pad and bass on the chord, instead of random notes.',
             'update.entry.v31.l3': 'Hits gained a percussive attack, death has a pitch fall and pickups became an arpeggio.',
@@ -6235,6 +6241,9 @@ const I18n = {
             'update.entry.v29.title': 'v29 — Comandos y áreas táctiles',
             'update.entry.v30.title': 'v30 — Aparo del Guerrero',
             'update.entry.v31.title': 'v31 — Audio renovado',
+            'update.entry.v32.title': 'v32 — Correcciones de sonido y estado',
+            'update.entry.v32.l1': 'El sonido que se quedaba pegado en la pantalla de fin de piso (al elegir qué comprar antes de bajar) ya no se traba.',
+            'update.entry.v32.l2': 'Morir en el mismo instante en que muere el jefe ya no da "continuar" y "siguiente piso" a la vez: la muerte tiene prioridad.',
             'update.entry.v31.l1': 'El motor de sonido fue rehecho: bus maestro con limitador (ya nada satura), reverb procedural y envolvente en cada sonido — el chasquido entre notas se acabó.',
             'update.entry.v31.l2': 'La música ahora sigue progresiones de acordes por bioma, con pad sostenido y bajo en el acorde, en vez de notas al azar.',
             'update.entry.v31.l3': 'Los golpes ganaron un ataque percusivo, la muerte tiene caída de tono y la recogida pasó a ser un arpegio.',
@@ -28942,7 +28951,7 @@ Input.init();
        current MUST stay in sync with the SW CACHE_VERSION suffix (sw.js).
     */
     window.UPDATE_LOG = {
-        current: 'v31',
+        current: 'v32',
         entries: [
             { v: 'v9', date: '2026-09-10', titleKey: 'update.entry.v9.title', title: 'v9 — Tutorial destravado',
               linesKeys: ['update.entry.v9.l1'],
@@ -29037,6 +29046,10 @@ Input.init();
               lines: ['O motor de som foi refeito: bus mestre com limitador (nada mais estoura), reverb procedural e envelope em cada som — o estalo entre as notas acabou.',
                       'A música agora segue progressões de acordes por bioma, com pad sustentado e baixo no acorde, em vez de notas sorteadas.',
                       'Golpes ganharam ataque percussivo, a morte tem queda de tom e a coleta virou arpejo.'] },
+            { v: 'v32', date: '2026-10-01', titleKey: 'update.entry.v32.title', title: 'v32 — Correções de som e de estado',
+              linesKeys: ['update.entry.v32.l1', 'update.entry.v32.l2'],
+              lines: ['O som que ficava preso na tela de fim de piso (ao escolher o que comprar antes de descer) parou de travar.',
+                      'Morrer no mesmo instante em que o chefe morre não dá mais "continuar" e "próximo piso" ao mesmo tempo: a morte tem prioridade.'] },
         ]
     };
 
