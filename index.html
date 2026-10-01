@@ -10899,10 +10899,12 @@ window.SND = {
         if (!this.ctx) return;
         let finalVol = vol;
         let pan = 0;
+        let dist = 0;
         if (x !== null && y !== null && typeof player !== 'undefined' && player) {
             const dx = x - player.x;
             const dy = y - player.y;
             const d = Math.hypot(dx, dy);
+            dist = d;
             if (d > 800) return; // Too far to hear
             const maxDist = 500;
             finalVol = vol * Math.max(0.05, 1 - (d / maxDist));
@@ -10924,18 +10926,27 @@ window.SND = {
         gain.gain.exponentialRampToValueAtTime(0.0001, _t0 + dur);
 
         const dest = target === 'music' ? this.musicGain : this.sfxGain;
-        
+
+        // Distance muffling: far sounds lose their highs before they lose
+        // loudness, which is what makes them read as far instead of just quiet.
+        let filter = null;
+        if (dist > 0 && this.ctx.createBiquadFilter) {
+            filter = this.ctx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.value = Math.max(700, 14000 - dist * 16);
+            filter.Q.value = 0.7;
+        }
+
         let panner = null;
         if (pan !== 0 && this.ctx.createStereoPanner) {
             panner = this.ctx.createStereoPanner();
             panner.pan.value = pan;
-            osc.connect(gain);
-            gain.connect(panner);
-            panner.connect(dest);
-        } else {
-            osc.connect(gain);
-            gain.connect(dest);
         }
+        osc.connect(gain);
+        let tail = gain;
+        if (filter) { gain.connect(filter); tail = filter; }
+        if (panner) { tail.connect(panner); panner.connect(dest); }
+        else { tail.connect(dest); }
         
         osc.start();
         osc.stop(this.ctx.currentTime + dur);
@@ -10946,6 +10957,7 @@ window.SND = {
             this._voiceCount = Math.max(0, this._voiceCount - 1);
             try { osc.disconnect(); } catch(e) {}
             try { gain.disconnect(); } catch(e) {}
+            try { if (filter) filter.disconnect(); } catch(e) {}
             if (panner) { try { panner.disconnect(); } catch(e) {} }
         };
     },
