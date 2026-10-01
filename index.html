@@ -10536,7 +10536,7 @@ function loop(timestamp) {
     _lastTime = timestamp;
 
     // Hidden tabs are paused. Discard elapsed time instead of catching up on resume.
-    if (document.visibilityState === 'hidden') {
+    if (document.visibilityState !== 'visible' || !document.hasFocus()) {
         _simulationAccumulator = 0;
         _lastTime = 0;
         _fpsFrames = 0;
@@ -10876,13 +10876,22 @@ window.SND = {
 
             // Suspend the audio graph when the tab is hidden (battery + avoids
             // playing over other apps), resume when it becomes visible again.
-            document.addEventListener('visibilitychange', () => {
-                if (document.visibilityState === 'hidden') {
+            // Pause audio whenever this is not the focused, visible page. Switching
+            // to another application window keeps visibilityState 'visible', so blur
+            // has to count as backgrounded too, or the music keeps playing.
+            const _applyAudioPause = () => {
+                const away = document.visibilityState !== 'visible' || !document.hasFocus();
+                if (away) {
                     if (this.ctx && this.ctx.state === 'running') this.ctx.suspend().catch(() => {});
-                } else if (document.visibilityState === 'visible') {
-                    if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
+                } else if (this.ctx && this.ctx.state === 'suspended') {
+                    this.ctx.resume().catch(() => {});
                 }
-            });
+            };
+            this._applyAudioPause = _applyAudioPause;
+            document.addEventListener('visibilitychange', _applyAudioPause);
+            window.addEventListener('blur', _applyAudioPause);
+            window.addEventListener('focus', _applyAudioPause);
+            window.addEventListener('pagehide', _applyAudioPause);
         }, 'audioInit');
     },
 
