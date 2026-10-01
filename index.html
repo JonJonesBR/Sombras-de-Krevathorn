@@ -8849,7 +8849,9 @@ function _drawWeatherOverlay(ctx) {
 function _handlePlayerDeath() {
     // Death preempts an open panel. Deferring it let a floor transition run
     // first, so the same frame could both advance a floor and open CONTINUE.
-    if (_anyPanelOpen()) {
+    // Only a real death preempts a panel; while the player is alive an open
+    // panel must be left alone (closing it here froze every settings/pause test).
+    if (player && (!player.alive || player.hp <= 0) && !_continueActive && _anyPanelOpen()) {
         if (window.UIManager && typeof UIManager.closePanel === 'function') UIManager.closePanel();
         if (typeof PauseSystem !== 'undefined' && PauseSystem.active && PauseSystem.toggle) PauseSystem.toggle();
         if (window.SettingsUI && SettingsUI.open && SettingsUI.close) SettingsUI.close();
