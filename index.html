@@ -3662,6 +3662,10 @@ const I18n = {
             'update.entry.v28.title': 'v28 — Chefes legíveis e projéteis limpos',
             'update.entry.v29.title': 'v29 — Comandos e alvos de toque',
             'update.entry.v30.title': 'v30 — Aparo do Guerreiro',
+            'update.entry.v31.title': 'v31 — Áudio reformulado',
+            'update.entry.v31.l1': 'O motor de som foi refeito: bus mestre com limitador (nada mais estoura), reverb procedural e envelope em cada som — o estalo entre as notas acabou.',
+            'update.entry.v31.l2': 'A música agora segue progressões de acordes por bioma, com pad sustentado e baixo no acorde, em vez de notas sorteadas.',
+            'update.entry.v31.l3': 'Golpes ganharam ataque percussivo, a morte tem queda de tom e a coleta virou arpejo.',
             'update.entry.v30.l1': 'O Guerreiro agora apara: os primeiros instantes do dash negam o dano, geram Fúria e devolvem um golpe em arco na direção encarada.',
             'update.entry.v30.l2': 'Nenhum botão novo: o aparo usa o próprio botão de esquiva.',
             'update.entry.v29.l1': 'Dodge e habilidade agora guardam o comando por um instante quando o cooldown ainda está ativo: o toque não se perde mais.',
@@ -4944,6 +4948,10 @@ const I18n = {
             'update.entry.v28.title': 'v28 — Readable bosses and clean projectiles',
             'update.entry.v29.title': 'v29 — Input buffering and touch targets',
             'update.entry.v30.title': 'v30 — Warrior parry',
+            'update.entry.v31.title': 'v31 — Audio rebuilt',
+            'update.entry.v31.l1': 'The sound engine was rebuilt: a master bus with a limiter (nothing clips any more), procedural reverb and an envelope on every sound — the click between notes is gone.',
+            'update.entry.v31.l2': 'Music now follows per-biome chord progressions with a sustained pad and bass on the chord, instead of random notes.',
+            'update.entry.v31.l3': 'Hits gained a percussive attack, death has a pitch fall and pickups became an arpeggio.',
             'update.entry.v30.l1': 'The Warrior can now parry: the first moments of the dash negate damage, build Fury and answer with an arc strike in the facing direction.',
             'update.entry.v30.l2': 'No new button: the parry uses the dodge button itself.',
             'update.entry.v29.l1': 'Dodge and ability now hold your command briefly while the cooldown is still running, so a tap is no longer dropped.',
@@ -6226,6 +6234,10 @@ const I18n = {
             'update.entry.v28.title': 'v28 — Jefes legibles y proyectiles limpios',
             'update.entry.v29.title': 'v29 — Comandos y áreas táctiles',
             'update.entry.v30.title': 'v30 — Aparo del Guerrero',
+            'update.entry.v31.title': 'v31 — Audio renovado',
+            'update.entry.v31.l1': 'El motor de sonido fue rehecho: bus maestro con limitador (ya nada satura), reverb procedural y envolvente en cada sonido — el chasquido entre notas se acabó.',
+            'update.entry.v31.l2': 'La música ahora sigue progresiones de acordes por bioma, con pad sostenido y bajo en el acorde, en vez de notas al azar.',
+            'update.entry.v31.l3': 'Los golpes ganaron un ataque percusivo, la muerte tiene caída de tono y la recogida pasó a ser un arpegio.',
             'update.entry.v30.l1': 'El Guerrero ahora puede aparar: los primeros instantes del dash niegan el daño, generan Furia y devuelven un golpe en arco hacia donde mira.',
             'update.entry.v30.l2': 'Sin botón nuevo: el aparo usa el propio botón de esquiva.',
             'update.entry.v29.l1': 'El esquive y la habilidad ahora guardan la orden un instante mientras el enfriamiento sigue activo: el toque ya no se pierde.',
@@ -28903,7 +28915,7 @@ Input.init();
        current MUST stay in sync with the SW CACHE_VERSION suffix (sw.js).
     */
     window.UPDATE_LOG = {
-        current: 'v30',
+        current: 'v31',
         entries: [
             { v: 'v9', date: '2026-09-10', titleKey: 'update.entry.v9.title', title: 'v9 — Tutorial destravado',
               linesKeys: ['update.entry.v9.l1'],
@@ -28993,6 +29005,11 @@ Input.init();
               linesKeys: ['update.entry.v30.l1', 'update.entry.v30.l2'],
               lines: ['O Guerreiro agora apara: os primeiros instantes do dash negam o dano, geram Fúria e devolvem um golpe em arco na direção encarada.',
                       'Nenhum botão novo: o aparo usa o próprio botão de esquiva.'] },
+            { v: 'v31', date: '2026-09-30', titleKey: 'update.entry.v31.title', title: 'v31 — Áudio reformulado',
+              linesKeys: ['update.entry.v31.l1', 'update.entry.v31.l2', 'update.entry.v31.l3'],
+              lines: ['O motor de som foi refeito: bus mestre com limitador (nada mais estoura), reverb procedural e envelope em cada som — o estalo entre as notas acabou.',
+                      'A música agora segue progressões de acordes por bioma, com pad sustentado e baixo no acorde, em vez de notas sorteadas.',
+                      'Golpes ganharam ataque percussivo, a morte tem queda de tom e a coleta virou arpejo.'] },
         ]
     };
 
