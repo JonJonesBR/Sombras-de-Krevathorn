@@ -3664,6 +3664,10 @@ const I18n = {
             'update.entry.v30.title': 'v30 — Aparo do Guerreiro',
             'update.entry.v31.title': 'v31 — Áudio reformulado',
             'update.entry.v32.title': 'v32 — Correções de som e de estado',
+            'update.entry.v33.title': 'v33 — Animação dos inimigos e áudio espacial',
+            'update.entry.v33.l1': 'Os inimigos agora usam a pose de ataque ao golpear — e duas classes que estavam sempre paradas animam de verdade.',
+            'update.entry.v33.l2': 'Sons distantes ficam abafados: perdem os agudos antes de perder o volume, o que faz eles parecerem longe e não apenas baixos.',
+            'update.entry.v33.l3': 'Ao minimizar ou trocar de aba o jogo pausa e o áudio silencia, voltando quando você reabre.',
             'update.entry.v32.l1': 'O som que ficava preso na tela de fim de piso (ao escolher o que comprar antes de descer) parou de travar.',
             'update.entry.v32.l2': 'Morrer no mesmo instante em que o chefe morre não dá mais "continuar" e "próximo piso" ao mesmo tempo: a morte tem prioridade.',
             'update.entry.v31.l1': 'O motor de som foi refeito: bus mestre com limitador (nada mais estoura), reverb procedural e envelope em cada som — o estalo entre as notas acabou.',
@@ -4953,6 +4957,10 @@ const I18n = {
             'update.entry.v30.title': 'v30 — Warrior parry',
             'update.entry.v31.title': 'v31 — Audio rebuilt',
             'update.entry.v32.title': 'v32 — Sound and state fixes',
+            'update.entry.v33.title': 'v33 — Enemy animation and spatial audio',
+            'update.entry.v33.l1': 'Enemies now use their attack pose while striking — and two classes that never animated at all now walk and attack.',
+            'update.entry.v33.l2': 'Distant sounds get muffled: they lose their highs before losing volume, so they read as far instead of just quiet.',
+            'update.entry.v33.l3': 'Minimizing or switching tabs pauses the game and silences audio, resuming when you come back.',
             'update.entry.v32.l1': 'The sound that got stuck on the floor-complete screen (while choosing what to buy before descending) no longer hangs.',
             'update.entry.v32.l2': 'Dying at the same moment the boss dies no longer gives you both "continue" and the next floor: death takes priority.',
             'update.entry.v31.l1': 'The sound engine was rebuilt: a master bus with a limiter (nothing clips any more), procedural reverb and an envelope on every sound — the click between notes is gone.',
@@ -6242,6 +6250,10 @@ const I18n = {
             'update.entry.v30.title': 'v30 — Aparo del Guerrero',
             'update.entry.v31.title': 'v31 — Audio renovado',
             'update.entry.v32.title': 'v32 — Correcciones de sonido y estado',
+            'update.entry.v33.title': 'v33 — Animación de enemigos y audio espacial',
+            'update.entry.v33.l1': 'Los enemigos ahora usan su pose de ataque al golpear — y dos clases que nunca se animaban ahora caminan y atacan.',
+            'update.entry.v33.l2': 'Los sonidos lejanos se apagan: pierden los agudos antes de perder volumen, así suenan lejos y no solo bajos.',
+            'update.entry.v33.l3': 'Al minimizar o cambiar de pestaña el juego se pausa y el audio se silencia, y vuelve cuando reabres.',
             'update.entry.v32.l1': 'El sonido que se quedaba pegado en la pantalla de fin de piso (al elegir qué comprar antes de bajar) ya no se traba.',
             'update.entry.v32.l2': 'Morir en el mismo instante en que muere el jefe ya no da "continuar" y "siguiente piso" a la vez: la muerte tiene prioridad.',
             'update.entry.v31.l1': 'El motor de sonido fue rehecho: bus maestro con limitador (ya nada satura), reverb procedural y envolvente en cada sonido — el chasquido entre notas se acabó.',
@@ -28977,7 +28989,7 @@ Input.init();
        current MUST stay in sync with the SW CACHE_VERSION suffix (sw.js).
     */
     window.UPDATE_LOG = {
-        current: 'v32',
+        current: 'v33',
         entries: [
             { v: 'v9', date: '2026-09-10', titleKey: 'update.entry.v9.title', title: 'v9 — Tutorial destravado',
               linesKeys: ['update.entry.v9.l1'],
@@ -29076,6 +29088,11 @@ Input.init();
               linesKeys: ['update.entry.v32.l1', 'update.entry.v32.l2'],
               lines: ['O som que ficava preso na tela de fim de piso (ao escolher o que comprar antes de descer) parou de travar.',
                       'Morrer no mesmo instante em que o chefe morre não dá mais "continuar" e "próximo piso" ao mesmo tempo: a morte tem prioridade.'] },
+            { v: 'v33', date: '2026-10-01', titleKey: 'update.entry.v33.title', title: 'v33 — Animação dos inimigos e áudio espacial',
+              linesKeys: ['update.entry.v33.l1', 'update.entry.v33.l2', 'update.entry.v33.l3'],
+              lines: ['Os inimigos agora usam a pose de ataque ao golpear — e duas classes que estavam sempre paradas animam de verdade.',
+                      'Sons distantes ficam abafados: perdem os agudos antes de perder o volume, o que faz eles parecerem longe e não apenas baixos.',
+                      'Ao minimizar ou trocar de aba o jogo pausa e o áudio silencia, voltando quando você reabre.'] },
         ]
     };
 
