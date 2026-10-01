@@ -10758,6 +10758,8 @@ window.SND = {
     _ambientInterval: null,
     _ambientGain: null,
     _masterMusicGain: null,
+    _masterGain: null, _limiter: null, _voiceCount: 0, _noiseBuf: null,
+    _reverb: null, _reverbReturn: null, sfxReverb: null, musicReverb: null,
 
     // Audio configuration state
     settings: { music: 0.15, ambient: 0.08, sfx: 0.3 },
@@ -10784,9 +10786,22 @@ window.SND = {
                 document.addEventListener('click', resume, { once: true });
                 document.addEventListener('keydown', resume, { once: true });
             }
+            // Master bus: every voice (SFX, music, ambient) reaches the speakers
+            // through one gain and a limiter, so overlapping sounds cannot clip.
+            this._masterGain = this.ctx.createGain();
+            this._masterGain.gain.value = 1.0;
+            this._limiter = this.ctx.createDynamicsCompressor();
+            this._limiter.threshold.value = -10;
+            this._limiter.knee.value = 6;
+            this._limiter.ratio.value = 12;
+            this._limiter.attack.value = 0.003;
+            this._limiter.release.value = 0.18;
+            this._masterGain.connect(this._limiter);
+            this._limiter.connect(this.ctx.destination);
+
             this._masterMusicGain = this.ctx.createGain();
             this._masterMusicGain.gain.value = 1.0;
-            this._masterMusicGain.connect(this.ctx.destination);
+            this._masterMusicGain.connect(this._masterGain);
 
             this.musicGain = this.ctx.createGain();
             this.musicGain.gain.value = this.settings.music;
@@ -10798,7 +10813,28 @@ window.SND = {
 
             this.sfxGain = this.ctx.createGain();
             this.sfxGain.gain.value = this.settings.sfx;
-            this.sfxGain.connect(this.ctx.destination);
+            this.sfxGain.connect(this._masterGain);
+            // Space: one procedurally generated impulse response (no external
+            // asset, stays offline) shared by a send from each bus, so a single
+            // convolver serves every voice instead of one per sound.
+            if (this.ctx.createConvolver) {
+                this._reverb = this.ctx.createConvolver();
+                this._reverb.buffer = this._buildImpulse(1.3, 3.2);
+                this._reverbReturn = this.ctx.createGain();
+                this._reverbReturn.gain.value = 1.0;
+                this._reverb.connect(this._reverbReturn);
+                this._reverbReturn.connect(this._masterGain);
+
+                this.sfxReverb = this.ctx.createGain();
+                this.sfxReverb.gain.value = 0.16;
+                this.sfxReverb.connect(this._reverb);
+                this.sfxGain.connect(this.sfxReverb);
+
+                this.musicReverb = this.ctx.createGain();
+                this.musicReverb.gain.value = 0.34;
+                this.musicReverb.connect(this._reverb);
+                this.musicGain.connect(this.musicReverb);
+            }
 
             // Suspend the audio graph when the tab is hidden (battery + avoids
             // playing over other apps), resume when it becomes visible again.
@@ -10812,7 +10848,7 @@ window.SND = {
         }, 'audioInit');
     },
 
-    play(freq, type, dur, vol, target = 'sfx', x = null, y = null) {
+    play(freq, type, dur, vol, target = 'sfx', x = null, y = null, sweepTo = null) {
         if (!this.ctx) return;
         let finalVol = vol;
         let pan = 0;
@@ -10826,11 +10862,19 @@ window.SND = {
             pan = Math.max(-1, Math.min(1, dx / 300));
         }
 
+        if (this._voiceCount >= 28) return; // polyphony cap: no CPU spike, no pile-up
+        this._voiceCount++;
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         osc.type = type;
         osc.frequency.value = freq;
-        gain.gain.value = finalVol;
+        if (sweepTo) osc.frequency.exponentialRampToValueAtTime(Math.max(1, sweepTo), this.ctx.currentTime + dur);
+        // Envelope: without it every note starts and stops at full amplitude,
+        // which is heard as a click on each note boundary.
+        const _t0 = this.ctx.currentTime;
+        gain.gain.setValueAtTime(0.0001, _t0);
+        gain.gain.linearRampToValueAtTime(finalVol, _t0 + Math.min(0.012, dur * 0.3));
+        gain.gain.exponentialRampToValueAtTime(0.0001, _t0 + dur);
 
         const dest = target === 'music' ? this.musicGain : this.sfxGain;
         
@@ -10852,6 +10896,7 @@ window.SND = {
         // (OscillatorNodes are single-use; without this, nodes stay connected
         // and accumulate in combat-heavy sessions).
         osc.onended = () => {
+            this._voiceCount = Math.max(0, this._voiceCount - 1);
             try { osc.disconnect(); } catch(e) {}
             try { gain.disconnect(); } catch(e) {}
             if (panner) { try { panner.disconnect(); } catch(e) {} }
@@ -10872,14 +10917,18 @@ window.SND = {
             pan = Math.max(-1, Math.min(1, dx / 300));
         }
 
-        const buffer = this._noiseBuffer(dur);
+        const buffer = this._noiseBuffer();
         const noise = this.ctx.createBufferSource();
         noise.buffer = buffer;
+        noise.playbackRate.value = 0.8 + Math.random() * 0.45;
         const filter = this.ctx.createBiquadFilter();
         filter.type = filterType;
         filter.frequency.value = freq;
         const gain = this.ctx.createGain();
-        gain.gain.value = finalVol;
+        const _n0 = this.ctx.currentTime;
+        gain.gain.setValueAtTime(0.0001, _n0);
+        gain.gain.linearRampToValueAtTime(finalVol, _n0 + Math.min(0.008, dur * 0.25));
+        gain.gain.exponentialRampToValueAtTime(0.0001, _n0 + dur);
         noise.connect(filter);
         filter.connect(gain);
 
@@ -10893,7 +10942,8 @@ window.SND = {
             gain.connect(this.sfxGain);
         }
 
-        noise.start();
+        noise.start(this.ctx.currentTime, Math.random() * 0.4);
+        noise.stop(this.ctx.currentTime + dur);
         noise.onended = () => {
             try { noise.disconnect(); } catch(e) {}
             try { filter.disconnect(); } catch(e) {}
@@ -10902,18 +10952,36 @@ window.SND = {
         };
     },
 
-    _noiseBuffer(dur) {
+    // Exponentially decaying noise: a usable reverb tail without shipping a file.
+    _buildImpulse(dur, decay) {
+        const rate = this.ctx.sampleRate;
+        const len = Math.max(1, Math.floor(rate * dur));
+        const impulse = this.ctx.createBuffer(2, len, rate);
+        for (let ch = 0; ch < 2; ch++) {
+            const data = impulse.getChannelData(ch);
+            for (let i = 0; i < len; i++) {
+                data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay);
+            }
+        }
+        return impulse;
+    },
+    // One shared 1s noise buffer, reused by every noise voice and started at a
+    // random offset. Rebuilding it per call (as before) allocated on every hit.
+    _noiseBuffer() {
+        if (this._noiseBuf) return this._noiseBuf;
         if (!this.ctx) return null;
-        const bufferSize = Math.max(1, Math.floor(this.ctx.sampleRate * dur));
+        const bufferSize = Math.max(1, Math.floor(this.ctx.sampleRate));
         const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
         const data = buffer.getChannelData(0);
         for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+        this._noiseBuf = buffer;
         return buffer;
     },
 
     playHit() {
         this.lastHitPitch = (this.lastHitPitch + 0.1) % 0.5;
         this.play(200 + this.lastHitPitch * 50, 'square', 0.1, 0.2);
+        this.playNoise(0.07, 0.012, 3200, 'highpass'); // transient attack
         Vibrate.trigger('hit');
     },
 
@@ -10931,6 +10999,7 @@ window.SND = {
 
     playMeleeHit() {
         this.play(170 + Math.random() * 25, 'square', 0.09, 0.18);
+        this.playNoise(0.06, 0.012, 2600, 'highpass'); // transient attack
     },
 
     playRangedHit() {
@@ -10958,19 +11027,22 @@ window.SND = {
     },
 
     playKill() {
-        this.play(100, 'sawtooth', 0.3, 0.3);
-        this.schedule(() => this.play(50, 'sawtooth', 0.5, 0.2), 100);
+        this.play(180, 'sawtooth', 0.35, 0.26, 'sfx', null, null, 45);
+        this.playNoise(0.16, 0.18, 900, 'lowpass');
+        this.schedule(() => this.play(70, 'triangle', 0.45, 0.16, 'sfx', null, null, 35), 90);
         Vibrate.trigger('kill');
     },
 
     playPickup() {
-        this.play(600, 'sine', 0.1, 0.2);
-        this.play(800, 'sine', 0.2, 0.2);
+        [660, 880, 1320].forEach((f, i) => {
+            this.schedule(() => this.play(f, 'triangle', 0.12, 0.16), i * 55);
+        });
     },
 
     playBossSpawn() {
-        this.play(80, 'sawtooth', 0.5, 0.4);
-        this.play(60, 'sawtooth', 0.8, 0.3);
+        this.play(80, 'sawtooth', 0.5, 0.34, 'sfx', null, null, 46);
+        this.play(60, 'sawtooth', 0.8, 0.26);
+        this.playNoise(0.3, 1.0, 220, 'lowpass');
         Vibrate.trigger('boss');
     },
 
@@ -11026,6 +11098,15 @@ window.SND = {
     _currentMusicMode: null, // 'dungeon'|'lavaCave'|'crypt'|'forest'|'boss'
 
     //  Music profiles per context 
+    // Chord roots per biome, as indices into that biome's scale. Each entry is
+    // one bar; the melody is drawn from the chord tones of the current bar.
+    _MUSIC_PROG: {
+        dungeon: [0, 0, 3, 4],
+        lavaCave: [0, 1, 0, 2],
+        crypt: [0, 2, 1, 3],
+        forest: [0, 3, 5, 4],
+        boss: [0, 0, 1, 0]
+    },
     _MUSIC_PROFILES: {
         dungeon: {
             // C minor pentatonic  tense dungeon crawl
@@ -11108,22 +11189,66 @@ window.SND = {
         this.startMusic(biome);
     },
 
+    // Two detuned saws through a slow lowpass: a sustained bed under the loop.
+    _playPad(freq, dur, vol) {
+        if (!this.ctx) return;
+        const t0 = this.ctx.currentTime;
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(300, t0);
+        filter.frequency.linearRampToValueAtTime(760, t0 + dur * 0.5);
+        filter.Q.value = 3;
+        const gain = this.ctx.createGain();
+        gain.gain.setValueAtTime(0.0001, t0);
+        gain.gain.linearRampToValueAtTime(vol, t0 + dur * 0.35);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+        filter.connect(gain);
+        gain.connect(this.musicGain);
+        if (this.musicReverb) gain.connect(this.musicReverb);
+        const oscs = [];
+        for (const detune of [-8, 8]) {
+            const osc = this.ctx.createOscillator();
+            osc.type = 'sawtooth';
+            osc.frequency.value = freq;
+            osc.detune.value = detune;
+            osc.connect(filter);
+            osc.start(t0);
+            osc.stop(t0 + dur);
+            oscs.push(osc);
+        }
+        oscs[0].onended = () => {
+            oscs.forEach(o => { try { o.disconnect(); } catch(e) {} });
+            try { filter.disconnect(); } catch(e) {}
+            try { gain.disconnect(); } catch(e) {}
+        };
+    },
     _playMusicNote(profile) {
         if(!this.ctx) return;
         const scale = profile.scale;
-        // Weighted random  favor middle notes for melodic feel
-        const idx = Math.floor(Math.pow(Math.random(), 0.7) * scale.length);
-        const note = scale[idx];
+        const prog = (this._MUSIC_PROG && this._MUSIC_PROG[this._currentMusicMode]) || [0, 0, 3, 4];
+        const bar = Math.floor(this._musicStep / 8);
+        const rootIdx = prog[bar % prog.length] % scale.length;
+        const root = scale[rootIdx];
+        // Chord tones: the root plus a third and a fifth up the scale.
+        const tones = [0, 2, 4].map(step => scale[(rootIdx + step) % scale.length]);
 
-        // Bass pulse
-        if(this._musicStep % profile.bassEvery === 0) {
-            this.play(note * profile.bassOctave, profile.bassWave, profile.tempo / 900, profile.bassVol, 'music');
+        // One sustained pad per bar gives the loop a harmonic floor.
+        if(this._musicStep % 8 === 0) {
+            this._playPad(root * profile.bassOctave * 2, (profile.tempo * 8) / 1000, profile.bassVol * 0.9);
         }
-        // Melody note
+        // Bass pulse on the chord root
+        if(this._musicStep % profile.bassEvery === 0) {
+            this.play(root * profile.bassOctave, profile.bassWave, profile.tempo / 900, profile.bassVol, 'music');
+        }
+        // Melody: mostly chord tones, sometimes a step-wise passing note.
+        const onChord = Math.random() < 0.75;
+        const note = onChord
+            ? tones[Math.floor(Math.random() * tones.length)]
+            : scale[(rootIdx + (Math.random() < 0.5 ? 1 : 3)) % scale.length];
         this.play(note * profile.melOctave, profile.melWave, profile.tempo / 1100, profile.melVol, 'music');
-        // Accent (higher pitch stab)
+        // Accent (chord root an octave up on the downbeat)
         if(this._musicStep % profile.accentEvery === 0) {
-            this.play(note * 2, profile.accentWave, profile.tempo / 1400, profile.accentVol, 'music');
+            this.play(root * profile.melOctave * 2, profile.accentWave, profile.tempo / 1400, profile.accentVol, 'music');
         }
         this._musicStep++;
     },
