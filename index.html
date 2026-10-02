@@ -1226,8 +1226,9 @@ body.gfx-low #start-screen::after { animation: none !important; opacity: 0.5 !im
                 <div id="splash-progress" style="height:100%;width:0%;background:linear-gradient(90deg,#7c3aed,#c084fc,#e0b6ff);border-radius:4px;transition:width 0.3s ease;box-shadow:0 0 12px rgba(157,78,221,0.6);"></div>
             </div>
             <div id="splash-status" style="font-size:0.65rem;color:rgba(255,255,255,0.25);margin-top:12px;transition:opacity 0.3s;">Inicializando...</div>
-            <!-- Version -->
-            <div style="position:fixed;bottom:16px;left:0;right:0;text-align:center;font-size:0.55rem;color:rgba(255,255,255,0.15);letter-spacing:0.1em;">v2.0 PREMIUM</div>
+            <!-- Version. Filled from UPDATE_LOG.current at boot; it used to be a hardcoded
+                 marketing string two releases out of date. -->
+            <div id="splash-version" style="position:fixed;bottom:16px;left:0;right:0;text-align:center;font-size:0.55rem;color:rgba(255,255,255,0.15);letter-spacing:0.1em;"></div>
         </div>
     </div>
 
@@ -1427,7 +1428,7 @@ body.gfx-low #start-screen::after { animation: none !important; opacity: 0.5 !im
                 </div>
             </details>
 
-            <div style="text-align:center;margin-top:auto;padding:6px 0 4px;font-size:0.6rem;color:rgba(255,255,255,0.2);letter-spacing:0.1em;">v2.0 PREMIUM</div>
+            <div id="menu-version" style="text-align:center;margin-top:auto;padding:6px 0 4px;font-size:0.6rem;color:rgba(255,255,255,0.2);letter-spacing:0.1em;"></div>
         </div>
     </div>
     <!-- TUTORIAL PROMPT (shown on first game start) -->
@@ -3237,6 +3238,12 @@ const I18n = {
             'ui.noRun': 'Nenhuma run ativa.',
             'ui.achievementDone': 'Concluído',
             'log.relicActive': ' — ativa nesta run',
+            'tutorial.bonusLine': 'Bônus: +{amount} moedas!',
+            'tip.warrior': 'Acumule Fúria antes de usar a habilidade especial.',
+            'tip.rogue': 'Veneno acumula nos alvos — foque um inimigo por vez.',
+            'tip.mage': 'Três feitiços seguidos ativam a explosão em área.',
+            'tip.elf': 'Projéteis viajam mais longe: use a distância a seu favor.',
+            'tip.default': 'Elites deixam loot melhor — vale o risco.',
             'eqRarity.common': 'COMUM',
             'eqRarity.uncommon': 'INCOMUM',
             'eqRarity.rare': 'RARO',
@@ -4578,6 +4585,12 @@ const I18n = {
             'ui.noRun': 'No active run.',
             'ui.achievementDone': 'Done',
             'log.relicActive': ' — active this run',
+            'tutorial.bonusLine': 'Bonus: +{amount} coins!',
+            'tip.warrior': 'Bank Fury before using your class ability.',
+            'tip.rogue': 'Poison stacks on targets — focus one enemy at a time.',
+            'tip.mage': 'Three spells in a row trigger the area explosion.',
+            'tip.elf': 'Your projectiles fly further: use the range to your advantage.',
+            'tip.default': 'Elites drop better loot — worth the risk.',
             'eqRarity.common': 'COMMON',
             'eqRarity.uncommon': 'UNCOMMON',
             'eqRarity.rare': 'RARE',
@@ -5919,6 +5932,12 @@ const I18n = {
             'ui.noRun': 'Ninguna partida activa.',
             'ui.achievementDone': 'Completado',
             'log.relicActive': ' — activa esta partida',
+            'tutorial.bonusLine': 'Bono: +{amount} monedas!',
+            'tip.warrior': 'Acumula Furia antes de usar la habilidad de clase.',
+            'tip.rogue': 'El veneno se acumula en los objetivos: enfoca a uno cada vez.',
+            'tip.mage': 'Tres hechizos seguidos activan la explosión en área.',
+            'tip.elf': 'Tus proyectiles llegan más lejos: aprovecha el alcance.',
+            'tip.default': 'Las élites sueltan mejor botín: vale la pena.',
             'eqRarity.common': 'COMÚN',
             'eqRarity.uncommon': 'INCOMÚN',
             'eqRarity.rare': 'RARO',
@@ -8585,12 +8604,12 @@ function _populateGameOverUI() {
 
     var tipEl = document.getElementById('go-tip');
     if (tipEl) {
-        var tips = {
-            warrior: 'Dica: Acumule Furia antes de usar a habilidade especial.',
-            rogue: 'Dica: Veneno acumula em alvos. Foque um inimigo por vez.',
-            mage: 'Dica: 3 feiticos seguidos ativam explosao area.'
-        };
-        tipEl.textContent = tips[player.type] || 'Dica: Elites dropam loot melhor - vale o risco!';
+        // Was hardcoded Portuguese with no `elf` branch, so an EN/ES player read
+        // Portuguese and an elf read the "elites drop better loot" fallback.
+        var tipKey = {
+            warrior: 'tip.warrior', rogue: 'tip.rogue', mage: 'tip.mage', elf: 'tip.elf'
+        }[player.type] || 'tip.default';
+        tipEl.textContent = T(tipKey);
         tipEl.style.display = 'block';
     }
 
@@ -27860,7 +27879,7 @@ const TutorialSystem = {
                 'O Abismo espera. Boa sorte, herói!',
                 'Bônus: +100 moedas!',
             ],
-            onEnter: sys => { if (player) player.currency += 50; },
+            onEnter: sys => { if (player) player.currency += TutorialSystem.BONUS_FINAL_STAGE; },
             waitForTap: true,
             isLast: true
         }
@@ -28318,8 +28337,18 @@ const TutorialSystem = {
                 t('tutorial.stage4.line4')
             ];
         }
-        if (stg.linesKeys && window.I18n) return stg.linesKeys.map(t);
-        return stg.lines;
+        let out;
+        if (stg.linesKeys && window.I18n) out = stg.linesKeys.map(t);
+        else out = stg.lines.slice();
+        // The payout line is computed, not read from the dictionary, so the
+        // promised amount can never drift from what is actually paid again.
+        if (stg.isLast && out.length) out[out.length - 1] = this._bonusLine();
+        return out;
+    },
+
+    _bonusLine() {
+        const tmpl = window.I18n ? I18n.t('tutorial.bonusLine') : 'Bônus: +{amount} moedas!';
+        return tmpl.replace('{amount}', String(this.totalBonus));
     },
 
     // ============================================================
@@ -28396,12 +28425,21 @@ const TutorialSystem = {
         }
     },
 
+    // One source of truth for the tutorial payout. The stage text used to promise
+    // "+50 moedas" (quick) and "+100 moedas" (full) while _complete() paid 25
+    // and the full tutorial's final onEnter paid 50 — so the player was told
+    // 50 and got 25, and 100 and got 75. Both the text and the payout read
+    // these now.
+BONUS_COMPLETE: 25,
+BONUS_FINAL_STAGE: 50,
+get totalBonus() { return this.BONUS_COMPLETE + (this.mode === 'full' ? this.BONUS_FINAL_STAGE : 0); },
+
     _complete() {
         this.active = false;
         this.suppressEnemySpawns = false;
         this._showControls(true);
         try { StorageManager.set('tutorial', { completed: true, completedAt: Date.now(), skipped: false }); } catch(e) {}
-        const bonus = 25;
+        const bonus = this.BONUS_COMPLETE;
         if(typeof player !== 'undefined' && player) {
             player.currency += bonus;
             if(typeof DamageNumbers !== 'undefined') {
@@ -29658,6 +29696,17 @@ Input.init();
 
     window.UpdateNotifier = {
         _cachePrefix: 'krevathorn-',
+        // The splash and the menu footer both used to carry a hardcoded marketing
+        // string that was many releases out of date. They now read
+        // UPDATE_LOG.current, which is the same value the release bump keeps in
+        // sync with sw.js.
+        paintVersion() {
+            const v = (window.UPDATE_LOG && window.UPDATE_LOG.current) || '';
+            for (const id of ['splash-version', 'menu-version']) {
+                const el = document.getElementById(id);
+                if (el) el.textContent = v;
+            }
+        },
         check() {
             const ug = window.UPDATE_LOG;
             if (!ug || !ug.current || typeof StorageManager === 'undefined' || typeof document === 'undefined') return;
@@ -29716,8 +29765,12 @@ Input.init();
 
     // Run once, after the DOM is ready (I18n already applied by its own hook).
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function() { window.UpdateNotifier.check(); });
+        document.addEventListener('DOMContentLoaded', function() {
+            window.UpdateNotifier.paintVersion();
+            window.UpdateNotifier.check();
+        });
     } else {
+        window.UpdateNotifier.paintVersion();
         window.UpdateNotifier.check();
     }
     </script>
