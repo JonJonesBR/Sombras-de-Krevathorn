@@ -1612,6 +1612,21 @@ body.gfx-low #start-screen::after { animation: none !important; opacity: 0.5 !im
             </div>
         </div>
 
+        <!-- EQUIPMENT CARD: shows the stats of the piece you just picked up and how it
+             compares to what you are wearing. Auto-equip used to happen with no
+             information at all — getStatDescription()/isUpgrade() existed but
+             nothing ever called them, so a downgrade cost HP and speed silently. -->
+        <div id="equip-card" class="hidden" style="position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,12px) + 96px);transform:translateX(-50%);z-index:240;pointer-events:none;width:min(280px,86vw);">
+            <div id="equip-card-inner" style="background:rgba(20,15,30,0.97);border-radius:14px;padding:10px 12px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 6px 22px rgba(0,0,0,0.55);border:1.5px solid rgba(224,182,255,0.25);transition:opacity 0.3s,transform 0.3s;">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:6px">
+                    <span id="eqc-rarity" style="font-size:8px;letter-spacing:0.15em;text-transform:uppercase;color:#9ca3af;">COMUM</span>
+                    <span id="eqc-verdict" style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;"></span>
+                </div>
+                <div id="eqc-name" style="font-size:12px;font-weight:700;color:#e0b6ff;margin:2px 0 6px;">Equipamento</div>
+                <div id="eqc-stats" style="display:flex;flex-direction:column;gap:3px;"></div>
+            </div>
+        </div>
+
         <!-- PAUSE OVERLAY -->
         <div id="pause-overlay" class="hidden" style="position:absolute;inset:0;z-index:300;background:rgba(6,2,12,0.85);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:auto;padding:24px;">
             <div class="glass-panel" style="width:100%;max-width:20rem;padding:32px;display:flex;flex-direction:column;align-items:center;gap:6px;">
@@ -3221,6 +3236,29 @@ const I18n = {
             'ui.bestiaryKills': 'Abates',
             'ui.noRun': 'Nenhuma run ativa.',
             'ui.achievementDone': 'Concluído',
+            'log.relicActive': ' — ativa nesta run',
+            'eqRarity.common': 'COMUM',
+            'eqRarity.uncommon': 'INCOMUM',
+            'eqRarity.rare': 'RARO',
+            'eqRarity.epic': 'ÉPICO',
+            'eqRarity.legendary': 'LENDÁRIO',
+            'eqRarity.mythic': 'MÍTICO',
+            'eqStat.maxHp': 'HP máx.',
+            'eqStat.maxHpFlat': 'HP',
+            'eqStat.damageMult': 'Dano',
+            'eqStat.speedMult': 'Velocidade',
+            'eqStat.critChance': 'Crítico',
+            'eqStat.thornPct': 'Reflexo de dano',
+            'eqStat.poisonPotency': 'Veneno',
+            'eqStat.dodgeChance': 'Esquiva',
+            'eqStat.equipLifesteal': 'Roubo de vida',
+            'eqStat.cdrMult': 'Redução de cooldown',
+            'eq.noStats': 'Sem atributos.',
+            'eq.verdictNew': 'NOVO',
+            'eq.verdictUp': 'MELHOR',
+            'eq.verdictDown': 'PIOR QUE O ANTERIOR',
+            'eq.verdictMixed': 'MISTO',
+            'eq.verdictSame': 'EQUIVALENTE',
             'bestCat.basic': 'Básico',
             'bestCat.elite': 'Elite',
             'bestCat.swarm': 'Enxame',
@@ -4539,6 +4577,29 @@ const I18n = {
             'ui.bestiaryKills': 'Kills',
             'ui.noRun': 'No active run.',
             'ui.achievementDone': 'Done',
+            'log.relicActive': ' — active this run',
+            'eqRarity.common': 'COMMON',
+            'eqRarity.uncommon': 'UNCOMMON',
+            'eqRarity.rare': 'RARE',
+            'eqRarity.epic': 'EPIC',
+            'eqRarity.legendary': 'LEGENDARY',
+            'eqRarity.mythic': 'MYTHIC',
+            'eqStat.maxHp': 'Max HP',
+            'eqStat.maxHpFlat': 'HP',
+            'eqStat.damageMult': 'Damage',
+            'eqStat.speedMult': 'Speed',
+            'eqStat.critChance': 'Crit',
+            'eqStat.thornPct': 'Thorns',
+            'eqStat.poisonPotency': 'Poison',
+            'eqStat.dodgeChance': 'Dodge',
+            'eqStat.equipLifesteal': 'Lifesteal',
+            'eqStat.cdrMult': 'Cooldown reduction',
+            'eq.noStats': 'No stats.',
+            'eq.verdictNew': 'NEW',
+            'eq.verdictUp': 'BETTER',
+            'eq.verdictDown': 'WORSE THAN BEFORE',
+            'eq.verdictMixed': 'MIXED',
+            'eq.verdictSame': 'EQUIVALENT',
             'bestCat.basic': 'Basic',
             'bestCat.elite': 'Elite',
             'bestCat.swarm': 'Swarm',
@@ -5857,6 +5918,29 @@ const I18n = {
             'ui.bestiaryKills': 'Bajas',
             'ui.noRun': 'Ninguna partida activa.',
             'ui.achievementDone': 'Completado',
+            'log.relicActive': ' — activa esta partida',
+            'eqRarity.common': 'COMÚN',
+            'eqRarity.uncommon': 'INCOMÚN',
+            'eqRarity.rare': 'RARO',
+            'eqRarity.epic': 'ÉPICO',
+            'eqRarity.legendary': 'LEGENDARIO',
+            'eqRarity.mythic': 'MÍTICO',
+            'eqStat.maxHp': 'HP máx.',
+            'eqStat.maxHpFlat': 'HP',
+            'eqStat.damageMult': 'Daño',
+            'eqStat.speedMult': 'Velocidad',
+            'eqStat.critChance': 'Crítico',
+            'eqStat.thornPct': 'Reflejo de daño',
+            'eqStat.poisonPotency': 'Veneno',
+            'eqStat.dodgeChance': 'Esquiva',
+            'eqStat.equipLifesteal': 'Robo de vida',
+            'eqStat.cdrMult': 'Reducción de enfriamiento',
+            'eq.noStats': 'Sin atributos.',
+            'eq.verdictNew': 'NUEVO',
+            'eq.verdictUp': 'MEJOR',
+            'eq.verdictDown': 'PEOR QUE EL ANTERIOR',
+            'eq.verdictMixed': 'MIXTO',
+            'eq.verdictSame': 'EQUIVALENTE',
             'bestCat.basic': 'Basico',
             'bestCat.elite': 'Elite',
             'bestCat.swarm': 'Enjambre',
@@ -9223,10 +9307,15 @@ function _updateEntitySimulation() {
             ep.alive = false;
             SND.playPickup();
             if (typeof EquipmentSystem !== 'undefined' && EquipmentSystem.applyEquipment) {
+                const previous = player.equipment && player.equipment[ep.equip.slot];
                 EquipmentSystem.applyEquipment(player, ep.equip);
                 const msg = ep.equip.name || 'Equipamento';
                 DamageNumbers.add(player.x, player.y, msg, 'normal');
                 if (typeof addLog !== 'undefined') addLog((window.I18n ? I18n.t('log.newEquipment') : 'Novo equipamento: ') + msg);
+                // The pickup used to swap the piece in with no information at
+                // all, so a downgrade cost HP and speed silently. Show the stats
+                // and the delta against what was worn.
+                EquipmentCard.show(ep.equip, previous);
             }
         }
     }
@@ -10656,6 +10745,96 @@ const LootCard = {
         }
     }
 };
+
+// Shows what an equipment pickup actually grants and how it compares to the
+// piece it replaced. Auto-equip had no UI, and getStatDescription()/isUpgrade()
+// were dead code, so 6 rarities x 10 stats x 5 affixes were invisible.
+const EquipmentCard = {
+    el: null, _timer: null, seq: 0,
+    _i18n(k, fallback) { return window.I18n ? I18n.t(k) : fallback; },
+
+    init() {
+        if (this.el) return;
+        this.el = document.getElementById('equip-card');
+    },
+
+    _rarityText(rarity) {
+        const L = (k, f) => this._i18n(k, f);
+        return {
+            Comum: L('eqRarity.common', 'COMUM'), Incomum: L('eqRarity.uncommon', 'INCOMUM'),
+            Raro: L('eqRarity.rare', 'RARO'), Epico: L('eqRarity.epic', 'ÉPICO'),
+            Lendario: L('eqRarity.legendary', 'LENDÁRIO'), Mitico: L('eqRarity.mythic', 'MÍTICO')
+        }[rarity] || String(rarity || '').toUpperCase();
+    },
+
+    show(equip, previous) {
+        this.init();
+        if (!this.el || !equip || typeof EquipmentSystem === 'undefined') return;
+        const rarityEl = document.getElementById('eqc-rarity');
+        const nameEl = document.getElementById('eqc-name');
+        const statsEl = document.getElementById('eqc-stats');
+        const verdictEl = document.getElementById('eqc-verdict');
+        const inner = document.getElementById('equip-card-inner');
+
+        rarityEl.textContent = this._rarityText(equip.rarity);
+        rarityEl.style.color = equip.color || '#9ca3af';
+        nameEl.textContent = equip.name || '';
+        inner.style.borderColor = (equip.color || '#e0b6ff') + '88';
+
+        const rows = EquipmentSystem.compareStats(equip, previous);
+        statsEl.innerHTML = '';
+        if (!rows.length) {
+            const div = document.createElement('div');
+            div.style.cssText = 'font-size:10px;color:rgba(255,255,255,0.4);';
+            div.textContent = this._i18n('eq.noStats', 'Sem atributos.');
+            statsEl.appendChild(div);
+        } else {
+            for (const r of rows) {
+                const line = document.createElement('div');
+                line.style.cssText = 'display:flex;align-items:baseline;justify-content:space-between;gap:8px;font-size:10px;';
+                const name = document.createElement('span');
+                name.style.color = 'rgba(255,255,255,0.6)';
+                name.textContent = r.label;
+                const val = document.createElement('span');
+                val.style.cssText = 'font-weight:700;white-space:nowrap;';
+                const deltaTxt = previous
+                    ? (r.delta > 0.0001 ? '  +' + EquipmentSystem._statText(r.key, r.delta).slice(1)
+                        : r.delta < -0.0001 ? '  ' + EquipmentSystem._statText(r.key, r.delta).slice(1) : '')
+                    : '';
+                val.style.color = !previous || r.delta > 0.0001 ? '#7ee08a' : (r.delta < -0.0001 ? '#ff8080' : 'rgba(255,255,255,0.85)');
+                val.textContent = EquipmentSystem._statText(r.key, r.value) + deltaTxt;
+                line.appendChild(name);
+                line.appendChild(val);
+                statsEl.appendChild(line);
+            }
+        }
+
+        const verdict = EquipmentSystem.compareVerdict(equip, previous);
+        const vMap = {
+            new: [this._i18n('eq.verdictNew', 'NOVO'), '#7ee08a'],
+            up: [this._i18n('eq.verdictUp', 'MELHOR'), '#7ee08a'],
+            down: [this._i18n('eq.verdictDown', 'PIOR QUE O ANTERIOR'), '#ff8080'],
+            mixed: [this._i18n('eq.verdictMixed', 'MISTO'), '#ffd86b'],
+            same: [this._i18n('eq.verdictSame', 'EQUIVALENTE'), 'rgba(255,255,255,0.4)']
+        }[verdict] || ['', ''];
+        verdictEl.textContent = vMap[0];
+        verdictEl.style.color = vMap[1];
+
+        this.el.classList.remove('hidden');
+        this.el.style.opacity = '1';
+        this.seq++;
+        if (this._timer) clearTimeout(this._timer);
+        this._timer = setTimeout(() => { this.hide(); }, 3200);
+    },
+
+    hide() {
+        if (!this.el) return;
+        this.el.style.opacity = '0';
+        const self = this;
+        setTimeout(() => { if (self.el) self.el.classList.add('hidden'); }, 320);
+    }
+};
+window.EquipmentCard = EquipmentCard;
 
 // --- SOUND TOGGLE ---
 var _soundMuted = false;
@@ -13370,22 +13549,74 @@ const EquipmentSystem = {
         return total;
     },
 
-    // Get stat description string
+    // Every stat applyEquipment() actually reads, with the label and formatting
+    // used by the pickup card. getStatDescription() below is the plain-text
+    // version of this list.
+_STAT_ORDER: ['maxHp', 'maxHpFlat', 'damageMult', 'speedMult', 'critChance', 'thornPct', 'poisonPotency', 'dodgeChance', 'equipLifesteal', 'cdrMult'],
+
+_statLabel(key) {
+        // Call through I18n rather than aliasing I18n.t: detaching the method
+        // loses `this` and throws inside the pickup loop.
+        const L = (k) => (window.I18n ? I18n.t(k) : k);
+        return {
+            maxHp: L('eqStat.maxHp'), maxHpFlat: L('eqStat.maxHpFlat'),
+            damageMult: L('eqStat.damageMult'), speedMult: L('eqStat.speedMult'),
+            critChance: L('eqStat.critChance'), thornPct: L('eqStat.thornPct'),
+            poisonPotency: L('eqStat.poisonPotency'), dodgeChance: L('eqStat.dodgeChance'),
+            equipLifesteal: L('eqStat.equipLifesteal'), cdrMult: L('eqStat.cdrMult')
+        }[key] || key;
+    },
+
+_statText(key, val) {
+        if (key === 'maxHp' || key === 'maxHpFlat') return '+' + Math.floor(val) + ' HP';
+        return '+' + Math.round(val * 100) + '% ' + this._statLabel(key);
+    },
+
+// Get stat description string
     getStatDescription(equipment) {
         if(!equipment || !equipment.stats) return '';
         const lines = [];
-        const s = equipment.stats;
-        if(s.maxHp) lines.push(`+${Math.floor(s.maxHp)} Max HP`);
-        if(s.maxHpFlat) lines.push(`+${Math.floor(s.maxHpFlat)} HP`);
-        if(s.damageMult) lines.push(`+${Math.floor(s.damageMult*100)}% Dano`);
-        if(s.speedMult) lines.push(`+${Math.floor(s.speedMult*100)}% Velocidade`);
-        if(s.critChance) lines.push(`+${Math.floor(s.critChance*100)}% Crtico`);
-        if(s.thornPct) lines.push(`+${Math.floor(s.thornPct*100)}% Reflexo de Dano`);
-        if(s.poisonPotency) lines.push(`+${Math.floor(s.poisonPotency*100)}% Potncia de Veneno`);
-        if(s.dodgeChance) lines.push(`+${Math.floor(s.dodgeChance*100)}% Esquiva`);
-        if(s.equipLifesteal) lines.push(`+${Math.floor(s.equipLifesteal*100)}% Roubo de Vida`);
-        if(s.cdrMult) lines.push(`+${Math.floor(s.cdrMult*100)}% Reduo de Cooldown`);
+        for (const key of this._STAT_ORDER) {
+            const v = equipment.stats[key];
+            if (v) lines.push(this._statText(key, v));
+        }
         return lines.join('\n');
+    },
+
+    // Per-stat delta against the currently equipped piece. isUpgrade() summed
+    // raw values, which compared "+50 HP" against "+30% damage" as if they were
+    // the same unit — so its verdict was meaningless. This returns the honest
+    // per-attribute difference and leaves the "better/worse" call to a real
+    // comparison in the UI.
+    compareStats(newEquip, currentEquip) {
+        const out = [];
+        const ns = (newEquip && newEquip.stats) || {};
+        const cs = (currentEquip && currentEquip.stats) || {};
+        for (const key of this._STAT_ORDER) {
+            const nv = Number(ns[key] || 0);
+            const cv = Number(cs[key] || 0);
+            if (!nv && !cv) continue;
+            out.push({ key, label: this._statLabel(key), value: nv, delta: nv - cv });
+        }
+        return out;
+    },
+
+    // Net verdict from the per-stat deltas: counts strictly better and strictly
+    // worse attributes. Returns null when the piece has nothing to compare
+    // against (empty slot).
+    compareVerdict(newEquip, currentEquip) {
+        if (!currentEquip) return 'new';
+        const rows = this.compareStats(newEquip, currentEquip);
+        if (!rows.length) return null;
+        let better = 0, worse = 0;
+        for (const r of rows) {
+            if (r.delta > 0.0001) better++;
+            else if (r.delta < -0.0001) worse++;
+        }
+        if (better > 0 && worse === 0) return 'up';
+        if (worse > 0 && better === 0) return 'down';
+        if (better > 0 && worse > 0) return 'mixed';
+        return 'same';
     },
 
     // Check if new equipment is better than current
@@ -24583,8 +24814,15 @@ const RelicSystem = {
             // alma, regen, aguia, espinhos, explosao, berserker: checked at runtime
         }
 
-        addLog(r.icon + ' ' + (window._L ? _L(r.nameKey, r.name) : r.name) + '!');
-        DamageNumbers.add(player.x, player.y, window._L ? _L(r.nameKey, r.name) : r.name, 'crit');
+        const relicName = window._L ? _L(r.nameKey, r.name) : r.name;
+        const relicDesc = window._L ? _L(r.descKey, r.desc) : r.desc;
+        addLog(r.icon + ' ' + relicName + '!');
+        // The description was never shown: the relic.*.desc keys exist in all
+        // three languages and nothing read them, so the player got a name and
+        // had no idea what it did.
+        addLog(r.color + ' ' + relicDesc + (window.I18n ? I18n.t('log.relicActive') : ' (ativa nesta run)'));
+        if (typeof showToast === 'function') showToast(relicName + ' — ' + relicDesc, 'success');
+        DamageNumbers.add(player.x, player.y, relicName, 'crit');
         spawnParticles(player.x, player.y, r.color, 30, 6);
         SND.playAchievement();
         Statistics.data.skillsUnlocked = (Statistics.data.skillsUnlocked || 0) + 1;
