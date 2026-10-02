@@ -1050,8 +1050,8 @@ body.quest-open #minimap-container {
     pointer-events: none;
     transition: opacity 0.2s ease;
 }
-#dungeon-progress > div {
-    border-color: rgba(224,182,255,0.22) !important;
+#dungeon-progress {
+    border-color: rgba(224,182,255,0.28) !important;
     box-shadow: inset 0 1px 0 rgba(255,255,255,0.10), inset 0 -2px 3px rgba(0,0,0,0.3);
 }
 #boss-hp-container > div:nth-child(2) {
@@ -1457,19 +1457,20 @@ body.gfx-low #start-screen::after { animation: none !important; opacity: 0.5 !im
                 <div id="heat-container" class="heat-container hidden">
                     <div id="heat-bar"></div>
                 </div>
+                <!-- DUNGEON PROGRESS: piso atual, progresso do andar e tempo da run.
+                     Vive dentro de #hud-left (antes ficava absoluto no topo
+                     central, onde colidia com a barra do chefe). -->
+                <div id="dungeon-progress" class="hidden" style="display:flex;align-items:center;gap:4px;margin-top:3px;background:rgba(0,0,0,0.55);padding:2px 6px;border-radius:999px;border:1px solid rgba(224,182,255,0.15);width:fit-content;max-width:100%;">
+                    <span id="dp-floor" style="font-size:9px;color:rgba(224,182,255,0.8);font-weight:700;white-space:nowrap;">Piso 1</span>
+                    <span style="font-size:9px;color:rgba(255,255,255,0.3);">|</span>
+                    <span id="dp-kills" style="font-size:9px;color:rgba(255,255,255,0.7);font-weight:600;white-space:nowrap;">0/20</span>
+                    <span style="font-size:9px;color:rgba(255,255,255,0.3);">|</span>
+                    <span id="dp-time" style="font-size:9px;color:rgba(255,255,255,0.7);font-weight:600;white-space:nowrap;">0:00</span>
+                </div>
             </div>
             <div class="top-right-chips" style="display:flex;gap:4px;align-items:center;">
                 <span id="difficulty-badge" class="lv-text" style="font-size:9px;padding:2px 8px;background:rgba(224,182,255,0.08);border-radius:999px;border:1px solid rgba(224,182,255,0.25);display:inline-flex;align-items:center;gap:3px;"><svg class="icon-inline" width="11" height="11"><use href="#ic-swords"/></svg>Normal</span>
-                <div id="level-badge" class="lv-text" style="font-size:9px;padding:2px 10px;background:rgba(224,182,255,0.1);border-radius:999px;border:1px solid rgba(224,182,255,0.15);">N1</div>
-            </div>
-        </div>
-
-        <!-- DUNGEON PROGRESS (top center, during dungeons) -->
-        <div id="dungeon-progress" class="hidden" style="position:absolute;top:max(36px,calc(env(safe-area-inset-top,36px) + 8px));left:50%;transform:translateX(-50%);z-index:115;pointer-events:none;text-align:center;">
-            <div style="display:flex;align-items:center;gap:6px;background:rgba(0,0,0,0.5);padding:2px 10px;border-radius:999px;border:1px solid rgba(224,182,255,0.1);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);">
-                <span style="font-size:8px;color:rgba(224,182,255,0.5);font-weight:600;">Piso 1</span>
-                <span style="font-size:7px;color:rgba(255,255,255,0.2);">|</span>
-                <span style="font-size:8px;color:rgba(255,255,255,0.4);font-weight:600;">0/10</span>
+                <div id="level-badge" class="lv-text" style="font-size:9px;padding:2px 10px;background:rgba(224,182,255,0.1);border-radius:999px;border:1px solid rgba(224,182,255,0.15);white-space:nowrap;">N1</div>
             </div>
         </div>
 
@@ -1569,8 +1570,9 @@ body.gfx-low #start-screen::after { animation: none !important; opacity: 0.5 !im
         <!-- ACTIVE STATUS CHIPS (below combo) -->
         <div id="status-chips" style="position:absolute;right:80px;bottom:calc(env(safe-area-inset-bottom,20px) + 118px);z-index:115;display:flex;flex-direction:column;align-items:flex-end;gap:3px;pointer-events:none;"></div>
 
-        <!-- XP BAR (thin strip at very bottom edge) -->
-        <div id="xp-strip" class="hidden" style="position:absolute;bottom:0;left:0;right:0;height:2px;z-index:110;pointer-events:none;background:rgba(255,255,255,0.05);">
+        <!-- XP BAR. Was 2px tall at the screen edge with no number anywhere: the player
+             had no way to tell whether levelling was happening. -->
+        <div id="xp-strip" class="hidden" style="position:absolute;bottom:0;left:0;right:0;height:6px;z-index:110;pointer-events:none;background:rgba(255,255,255,0.08);border-top:1px solid rgba(0,0,0,0.5);">
             <div id="xp-bar-strip" style="height:100%;width:0%;background:linear-gradient(90deg,#f0a500,#ffcc00,#ffee88);border-radius:0;transition:width 0.4s cubic-bezier(0.22,1,0.36,1);overflow:hidden;position:relative;">
                 <div id="xp-shimmer" style="position:absolute;inset:0;background:linear-gradient(110deg,transparent 20%,rgba(255,255,255,0.45) 50%,transparent 80%);background-size:200% 100%;animation:xpShimmer 1.6s linear infinite;opacity:0.6;"></div>
             </div>
@@ -22791,6 +22793,12 @@ class Player extends Entity {
 
     updateMutations() { Object.keys(this.mutations).forEach(key => { if(!this.mutations[key].update()) delete this.mutations[key]; }); }
 
+    // XP required to reach the next level. gainXP() spends exactly this much
+    // (CONFIG.XP_LEVEL_MULTIPLIER = 100 per level), so the HUD must read the
+    // same number instead of guessing with `player.lvl * 100` — that fallback
+    // was only right by coincidence and hid the field from every writer.
+    get xpNeeded() { return this.lvl * CONFIG.XP_LEVEL_MULTIPLIER; }
+
     gainXP(a) {
         let xpMult = (currentEvent && currentEvent.type === 'doubleXP') ? CONFIG.DOUBLE_XP_MULTIPLIER : 1;
         if(typeof DifficultySystem !== 'undefined') xpMult *= DifficultySystem.getXpMult();
@@ -26832,20 +26840,52 @@ window.SkillTreeUI = SkillTreeUI;
                 }
             }
             if (xpBar) {
-                const xpReq = player.xpNeeded || (player.lvl * 100);
+                // xpNeeded is a Player getter mirroring gainXP()'s own formula.
+                const xpReq = player.xpNeeded > 0 ? player.xpNeeded : (player.lvl * CONFIG.XP_LEVEL_MULTIPLIER);
                 const xpPct = Math.min(100, (player.xp / xpReq) * 100);
                 if (cache.xp !== xpPct) {
                     cache.xp = xpPct;
                     xpBar.style.width = xpPct + '%';
                 }
+                const xpStrip = this._xpStripEl || (this._xpStripEl = document.getElementById('xp-strip'));
+                // Only the class is cleared here: during the tutorial
+                // TutorialSystem hides the strip with an inline display:none,
+                // which still wins, so the tutorial keeps its clean layout.
+                if (xpStrip && xpStrip.classList.contains('hidden')) xpStrip.classList.remove('hidden');
             }
             if (lvlInfo) {
-                const killProg = window.dungeonPortal ? ' PORTAL' : ((window.dungeonKills || 0) + '/' + (window.dungeonKillTarget || 0));
-                const lvlText = `NÍVEL ${player.lvl} | ${killProg}`;
+                // The level badge used to carry the floor kill count, which is
+                // what the floor pill below now shows. It carries XP instead:
+                // the player could not see progress toward the next level.
+                const xpReq = player.xpNeeded > 0 ? player.xpNeeded : (player.lvl * CONFIG.XP_LEVEL_MULTIPLIER);
+                const xpLeft = Math.max(0, Math.ceil(xpReq - (player.xp || 0)));
+                const lvlText = `N${player.lvl} · XP ${Math.floor(player.xp || 0)}/${xpReq}`;
                 if (cache.lvl !== lvlText) {
                     cache.lvl = lvlText;
                     lvlInfo.textContent = lvlText;
                 }
+                lvlInfo.title = xpLeft > 0 ? (xpLeft + ' XP para o proximo nivel') : 'Proximo nivel pronto';
+            }
+            // Floor pill: which floor, how far through it, and how long the run
+            // has been going. It existed in the markup and was never filled.
+            const dpEl = this._dpEl || (this._dpEl = document.getElementById('dungeon-progress'));
+            if (dpEl) {
+                if (dpEl.classList.contains('hidden')) dpEl.classList.remove('hidden');
+                const dpFloor = this._dpFloor || (this._dpFloor = document.getElementById('dp-floor'));
+                const dpKills = this._dpKills || (this._dpKills = document.getElementById('dp-kills'));
+                const dpTime = this._dpTime || (this._dpTime = document.getElementById('dp-time'));
+                const secs = Math.floor(gameTime / GAME_TICKS_PER_SECOND);
+                const mm = Math.floor(secs / 60), ss = secs % 60;
+                const floorTxt = 'Piso ' + (window.dungeonLevel || 1);
+                if (dpFloor && cache.dpFloor !== floorTxt) { cache.dpFloor = floorTxt; dpFloor.textContent = floorTxt; }
+                const killTxt = window.dungeonPortal ? 'PORTAL ABERTO' : ((window.dungeonKills || 0) + '/' + (window.dungeonKillTarget || 0));
+                if (dpKills && cache.dpKills !== killTxt) {
+                    cache.dpKills = killTxt;
+                    dpKills.textContent = killTxt;
+                    dpKills.style.color = window.dungeonPortal ? '#7fd08a' : 'rgba(255,255,255,0.7)';
+                }
+                const timeTxt = mm + ':' + (ss < 10 ? '0' : '') + ss;
+                if (dpTime && cache.dpTime !== timeTxt) { cache.dpTime = timeTxt; dpTime.textContent = timeTxt; }
             }
             if (window.RunObjectiveSystem) RunObjectiveSystem.syncHUD();
             // Boss HP bar: updateHUD() is the per-frame gameplay HUD path; the
