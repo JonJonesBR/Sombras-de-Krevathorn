@@ -1669,6 +1669,7 @@ body.gfx-low #start-screen::after { animation: none !important; opacity: 0.5 !im
             <div id="go-tip" class="text-xs hidden text-center px-4" style="color:#ffcc00;"></div>
             <div id="go-lore-teaser" class="text-xs hidden text-center px-4" style="color:#e0b6ff;"></div>
             <button id="go-share-btn" data-i18n="gameover.share" style="width:100%;padding:10px 0;border-radius:12px;color:#9ad0ff;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;background:rgba(80,140,255,0.1);border:1px solid rgba(80,140,255,0.3);cursor:pointer;transition:all 0.3s;">&#128279; COMPARTILHAR RESULTADO</button>
+            <button id="go-prestige-btn" data-i18n="gameover.prestigeBtn" onclick="if(window.UIManager) window.UIManager.openPanel('prestige')" style="width:100%;padding:10px 0;border-radius:12px;color:#ff8c42;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;background:rgba(255,140,66,0.12);border:1px solid rgba(255,140,66,0.35);cursor:pointer;transition:all 0.3s;">Prestígio</button>
             <button id="restart-btn" data-i18n="gameover.restart" aria-live="polite" style="width:100%;padding:16px 0;border-radius:12px;color:#fff;font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:0.05em;background:linear-gradient(135deg,#b8000f,#e84525);border:1px solid rgba(255,100,80,0.3);box-shadow:0 4px 20px rgba(200,0,15,0.3);transition:all 0.3s;text-shadow:0 1px 4px rgba(0,0,0,0.4);cursor:pointer;">TENTAR NOVAMENTE</button>
         </div>
     </div>
@@ -3227,6 +3228,22 @@ const I18n = {
             'gameover.runScope': 'desta run',
             'gameover.resumedNote': 'Números desde a retomada no Piso {floor}.',
             'gameover.newRecord': 'Novo recorde!',
+            'gameover.prestigeBtn': 'Prestígio',
+            'panel.prestige': 'Prestígio',
+            'prestige.current': 'Prestígio atual',
+            'prestige.hp': 'HP permanente',
+            'prestige.dmg': 'Dano permanente',
+            'prestige.xp': 'Multiplicador de XP',
+            'prestige.shield': 'Escudo inicial',
+            'prestige.gold': 'Ouro inicial',
+            'prestige.weapon': 'Arma inicial',
+            'prestige.aura': 'Aura',
+            'prestige.tierN': 'Tier {n}',
+            'prestige.tierLabel': 'Prestígio {n}',
+            'prestige.tiers': 'Progressão',
+            'prestige.do': 'PRESTIGIAR',
+            'prestige.hintDead': 'Só é possível prestigiar após uma derrota.',
+            'prestige.hintLevel': 'Alcance nível {n} para prestigiar.',
             'ui.tabStatus': 'Status',
             'ui.tabAchievements': 'Conquistas',
             'ui.tabBestiary': 'Bestiário',
@@ -4574,6 +4591,22 @@ const I18n = {
             'gameover.runScope': 'this run',
             'gameover.resumedNote': 'Numbers since resuming on Floor {floor}.',
             'gameover.newRecord': 'New record!',
+            'gameover.prestigeBtn': 'Prestige',
+            'panel.prestige': 'Prestige',
+            'prestige.current': 'Current prestige',
+            'prestige.hp': 'Permanent HP',
+            'prestige.dmg': 'Permanent damage',
+            'prestige.xp': 'XP multiplier',
+            'prestige.shield': 'Starting shield',
+            'prestige.gold': 'Starting gold',
+            'prestige.weapon': 'Starting weapon',
+            'prestige.aura': 'Aura',
+            'prestige.tierN': 'Tier {n}',
+            'prestige.tierLabel': 'Prestige {n}',
+            'prestige.tiers': 'Progression',
+            'prestige.do': 'PRESTIGE',
+            'prestige.hintDead': 'You can prestige only after a defeat.',
+            'prestige.hintLevel': 'Reach level {n} to prestige.',
             'ui.tabStatus': 'Status',
             'ui.tabAchievements': 'Achievements',
             'ui.tabBestiary': 'Bestiary',
@@ -5921,6 +5954,22 @@ const I18n = {
             'gameover.runScope': 'de esta partida',
             'gameover.resumedNote': 'Números desde la reanudación en el piso {floor}.',
             'gameover.newRecord': '¡Nuevo récord!',
+            'gameover.prestigeBtn': 'Prestigio',
+            'panel.prestige': 'Prestigio',
+            'prestige.current': 'Prestigio actual',
+            'prestige.hp': 'HP permanente',
+            'prestige.dmg': 'Daño permanente',
+            'prestige.xp': 'Multiplicador de XP',
+            'prestige.shield': 'Escudo inicial',
+            'prestige.gold': 'Oro inicial',
+            'prestige.weapon': 'Arma inicial',
+            'prestige.aura': 'Aura',
+            'prestige.tierN': 'Nivel {n}',
+            'prestige.tierLabel': 'Prestigio {n}',
+            'prestige.tiers': 'Progresión',
+            'prestige.do': 'PRESTIGIAR',
+            'prestige.hintDead': 'Solo puedes prestigiar tras una derrota.',
+            'prestige.hintLevel': 'Alcanza el nivel {n} para prestigiar.',
             'ui.tabStatus': 'Estado',
             'ui.tabAchievements': 'Logros',
             'ui.tabBestiary': 'Bestiario',
@@ -23117,7 +23166,10 @@ class Player extends Entity {
         let xpMult = (currentEvent && currentEvent.type === 'doubleXP') ? CONFIG.DOUBLE_XP_MULTIPLIER : 1;
         if(typeof DifficultySystem !== 'undefined') xpMult *= DifficultySystem.getXpMult();
         if(window.RelicSystem) xpMult *= RelicSystem.xpMult(this);
-        if(prestigeLevel > 0) { const prestigeData = PRESTIGE_REWARDS.find(r => prestigeLevel >= r.level) || PRESTIGE_REWARDS[0]; xpMult *= (1 + prestigeData.bonus); }
+        // getPrestigeXpMult() folds in both the milestone bonus AND the smooth
+        // +2%-per-level growth (PRESTIGE_XP_PER_LEVEL) that the old code ignored,
+        // so the start-screen summary and the actual payout disagreed.
+        if(prestigeLevel > 0) xpMult *= getPrestigeXpMult(prestigeLevel);
         if (Number.isFinite(this.xpMult) && this.xpMult > 0) xpMult *= this.xpMult;
         this.xp += a * xpMult;
         let levelsGained = 0;
@@ -26111,7 +26163,7 @@ window.SkillTreeUI = SkillTreeUI;
         },
 
          openPanel(panelId) {
-             const supportedPanels = ['shop', 'skills', 'stats', 'settings', 'achievements', 'lore', 'daily', 'meta', 'camp'];
+             const supportedPanels = ['shop', 'skills', 'stats', 'settings', 'achievements', 'lore', 'daily', 'meta', 'camp', 'prestige'];
              if (!supportedPanels.includes(panelId)) return;
              
              if (!this.overlay) {
@@ -26162,6 +26214,7 @@ window.SkillTreeUI = SkillTreeUI;
                  case 'lore': title = _L('panel.lore', 'Grimório de Krevathorn'); contentHtml = this.renderLoreContent(); break;
                  case 'daily': title = _L('panel.daily', 'Desafio Diário'); contentHtml = this.renderDailyContent(); break;
                  case 'meta': title = _L('panel.meta', 'MetaLoja'); contentHtml = this.renderMetaContent(); break;
+                 case 'prestige': title = _L('panel.prestige', 'Prestígio'); contentHtml = this.renderPrestigeContent(); break;
              }
 
               const contentEl = document.createElement('div');
@@ -26757,6 +26810,95 @@ renderBestiaryContent() {
         </div>
         <div style="display:flex;flex-direction:column;gap:8px">${rows}</div>`;
 },
+
+// Prestige: 10 tiers of permanent bonuses. The whole system was already
+    // written and wired into combat (revive chance, lifesteal, aura, merchant
+    // discount, starting weapon/shield/gold) and persisted — doPrestige() simply
+    // had no caller, so prestigeLevel could never leave 0 and the "PREST."
+    // stat in the status panel was permanently zero.
+renderPrestigeContent() {
+        const lvl = (typeof prestigeLevel !== 'undefined') ? prestigeLevel : 0;
+        const tiers = CONFIG.PRESTIGE_TIER_LEVELS;
+        const xpMult = getPrestigeXpMult(lvl);
+        const hpBonus = getPrestigeHpBonus(lvl);
+        const dmgBonus = getPrestigeDmgBonus(lvl);
+        const shield = getPrestigeStartingShield(lvl);
+        const gold = getPrestigeStartingCurrency(lvl);
+        const weaponTier = getPrestigeStartingWeaponTier(lvl);
+        const auraColor = getPrestigeAuraColor(lvl);
+
+        const cur = [[_L('prestige.hp', 'HP permanente'), '+' + hpBonus],
+                     [_L('prestige.dmg', 'Dano permanente'), '+' + Math.round(dmgBonus * 100) + '%'],
+                     [_L('prestige.xp', 'Multiplicador de XP'), 'x' + xpMult.toFixed(2)],
+                     [_L('prestige.shield', 'Escudo inicial'), String(shield)],
+                     [_L('prestige.gold', 'Ouro inicial'), String(gold)],
+                     [_L('prestige.weapon', 'Arma inicial'), weaponTier === null ? '—' : _L('prestige.tierN', 'Tier {n}').replace('{n}', String(weaponTier + 1))],
+                     [_L('prestige.aura', 'Aura'), auraColor || '—']
+        ];
+        const curHtml = cur.map(([k, v]) => `
+            <div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.06);font-size:11px">
+                <span style="color:${COLORS.TEXT_MUTED}">${k}</span>
+                <span style="font-weight:700;color:${COLORS.GOLD}">${v}</span>
+            </div>`).join('');
+
+        const tiersHtml = tiers.map((need, i) => {
+            const reached = lvl > need;
+            const current = lvl === need + 1;
+            const color = CONFIG.PRESTIGE_AURA_COLORS[i] || '#ffffff';
+            const border = reached ? 'rgba(34,197,94,0.35)' : (current ? 'rgba(255,140,66,0.5)' : 'rgba(255,255,255,0.08)');
+            const bg = reached ? 'rgba(34,197,94,0.08)' : (current ? 'rgba(255,140,66,0.12)' : 'rgba(255,255,255,0.03)');
+            const mark = reached ? '✓' : (current ? '▶' : String(need + 1));
+            return `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;border:1px solid ${border};background:${bg};${reached ? '' : 'opacity:0.75'}">
+                <span style="width:20px;height:20px;flex:none;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;background:${color}22;color:${color};border:1px solid ${color}66">${mark}</span>
+                <span style="flex:1;font-size:11px;font-weight:700;color:${COLORS.TEXT}">${_L('prestige.tierLabel', 'Prestígio {n}').replace('{n}', String(need + 1))}</span>
+                <span style="font-size:10px;color:${COLORS.TEXT_MUTED};white-space:nowrap">+${CONFIG.PRESTIGE_PERMANENT_HP[i]} HP · +${Math.round(CONFIG.PRESTIGE_PERMANENT_DMG[i] * 100)}% dano</span>
+            </div>`;
+        }).join('');
+
+        const canPrestige = typeof player !== 'undefined' && player && player.lvl >= CONFIG.PRESTIGE_MIN_LEVEL && gameState === 'GAME_OVER';
+        const hint = canPrestige ? ''
+            : (gameState !== 'GAME_OVER'
+                ? _L('prestige.hintDead', 'Só é possível prestigiar após uma derrota.')
+                : _L('prestige.hintLevel', 'Alcance nível {n} para prestigiar.').replace('{n}', String(CONFIG.PRESTIGE_MIN_LEVEL)));
+
+        return `
+            <div style="text-align:center;margin-bottom:12px;padding:12px;border-radius:12px;background:rgba(255,140,66,0.08);border:1px solid rgba(255,140,66,0.25)">
+                <div style="font-size:22px;font-weight:800;color:#ff8c42">${lvl}</div>
+                <div style="font-size:10px;color:${COLORS.TEXT_MUTED};margin-top:2px">${_L('prestige.current', 'Prestígio atual')}</div>
+            </div>
+            <div style="margin-bottom:14px">${curHtml}</div>
+            <div style="font-size:10px;font-weight:700;color:${COLORS.TEXT_MUTED};text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px">${_L('prestige.tiers', 'Progressão')}</div>
+            <div style="display:flex;flex-direction:column;gap:5px">${tiersHtml}</div>
+            <button id="prestige-do-btn" onclick="UIManager.requestPrestige()" ${canPrestige ? '' : 'disabled'}
+                style="width:100%;margin-top:16px;padding:14px 0;border-radius:12px;font-weight:800;font-size:13px;text-transform:uppercase;letter-spacing:0.06em;
+                color:${canPrestige ? '#fff' : 'rgba(255,255,255,0.3)'};
+                background:${canPrestige ? 'linear-gradient(135deg,#c2410c,#ff8c42)' : 'rgba(255,255,255,0.05)'};
+                border:1px solid rgba(255,140,66,0.35);cursor:${canPrestige ? 'pointer' : 'not-allowed'}">
+                ${_L('prestige.do', 'PRISTIGIAR')}
+            </button>
+            ${hint ? `<div style="text-align:center;font-size:10px;color:${COLORS.TEXT_MUTED};margin-top:8px">${hint}</div>` : ''}`;
+    },
+
+// Two-step: the first press arms, the second commits. Prestige is permanent,
+// so it must never be one stray tap away.
+requestPrestige() {
+        const btn = document.getElementById('prestige-do-btn');
+        if (!btn) return;
+        if (btn.dataset.armed === '1') {
+            if (btn._t) clearTimeout(btn._t);
+            delete btn.dataset.armed;
+            if (window.UIManager) window.UIManager.closePanel();
+            window.doPrestige();
+            return;
+        }
+        btn.dataset.armed = '1';
+        const original = btn.textContent;
+        btn.textContent = (window.I18n ? I18n.t('gameover.confirmHint') : 'Toque de novo para confirmar');
+        btn._t = setTimeout(() => {
+            delete btn.dataset.armed;
+            btn.textContent = original;
+        }, 3000);
+    },
 
 renderStatsContent() {
     const tabs = this._statsTabsHtml();
