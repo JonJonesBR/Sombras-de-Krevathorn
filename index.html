@@ -1390,6 +1390,19 @@ body.gfx-low #start-screen::after { animation: none !important; opacity: 0.5 !im
                 </button>
             </div>
 
+            <!-- Coleções de carreira: Conquistas, Bestiário e Grimório vivem como
+                 abas do painel Status, que é o único ponto alcançável por toque.
+                 Antes o painel de conquistas nao tinha nenhum chamador e o
+                 Grimorio so abria pela tecla "L". -->
+            <div style="display:flex;gap:6px;margin-top:4px;">
+                <button id="collection-btn-start" onclick="if(window.UIManager) window.UIManager.setStatsTab('achievements')" style="flex:1;padding:9px;border-radius:14px;font-size:clamp(0.7rem,2.6vw,0.85rem);font-weight:700;border:1.5px solid rgba(255,215,0,0.25);background:rgba(255,215,0,0.08);color:#ffd86b;text-transform:uppercase;letter-spacing:0.05em;transition:all 0.2s;touch-action:manipulation;display:inline-flex;align-items:center;justify-content:center;gap:5px;">
+                    <svg class="icon-inline" style="width:14px;height:14px;flex:none;"><use href="#ic-star"/></svg><span data-i18n="ui.tabAchievements">Conquistas</span>
+                </button>
+                <button id="lore-btn-start" onclick="if(window.UIManager) window.UIManager.setStatsTab('lore')" style="flex:1;padding:9px;border-radius:14px;font-size:clamp(0.7rem,2.6vw,0.85rem);font-weight:700;border:1.5px solid rgba(192,132,252,0.25);background:rgba(192,132,252,0.08);color:#e0b6ff;text-transform:uppercase;letter-spacing:0.05em;transition:all 0.2s;touch-action:manipulation;display:inline-flex;align-items:center;justify-content:center;gap:5px;">
+                    <svg class="icon-inline" style="width:14px;height:14px;flex:none;"><use href="#ic-book"/></svg><span data-i18n="ui.tabLore">Grimório</span>
+                </button>
+            </div>
+
             <!-- Build (arquétipos + build-code) — colapsável (opção avançada) -->
             <details id="start-options-build">
                 <summary style="cursor:pointer;padding:8px 10px;border-radius:12px;border:1.5px solid rgba(224,182,255,0.22);background:rgba(224,182,255,0.06);color:rgba(224,182,255,0.9);font-size:clamp(0.65rem,2.4vw,0.8rem);font-weight:700;text-align:center;letter-spacing:0.05em;text-transform:uppercase;touch-action:manipulation;user-select:none;list-style:none;"><span style="display:inline-flex;align-items:center;justify-content:center;gap:5px;"><svg class="icon-inline" style="width:14px;height:14px;flex:none;"><use href="#ic-wrench"/></svg><span data-i18n="start.buildOptions">Opções — Build (código e arquétipos)</span></span></summary>
@@ -3198,6 +3211,23 @@ const I18n = {
             'gameover.runScope': 'desta run',
             'gameover.resumedNote': 'Números desde a retomada no Piso {floor}.',
             'gameover.newRecord': 'Novo recorde!',
+            'ui.tabStatus': 'Status',
+            'ui.tabAchievements': 'Conquistas',
+            'ui.tabBestiary': 'Bestiário',
+            'ui.tabLore': 'Grimório',
+            'ui.bestiaryProgress': 'registrados',
+            'ui.bestiaryLocked': 'Bloqueado',
+            'ui.bestiaryLockedHint': 'Derrote um para registrar aqui.',
+            'ui.bestiaryKills': 'Abates',
+            'ui.noRun': 'Nenhuma run ativa.',
+            'ui.achievementDone': 'Concluído',
+            'bestCat.basic': 'Básico',
+            'bestCat.elite': 'Elite',
+            'bestCat.swarm': 'Enxame',
+            'bestCat.hazard': 'Armadilha',
+            'bestCat.special': 'Especial',
+            'bestCat.biome': 'Bioma',
+            'bestCat.boss': 'Chefe',
 
             // Settings
             'settings.title': 'Configurações',
@@ -4499,6 +4529,23 @@ const I18n = {
             'gameover.runScope': 'this run',
             'gameover.resumedNote': 'Numbers since resuming on Floor {floor}.',
             'gameover.newRecord': 'New record!',
+            'ui.tabStatus': 'Status',
+            'ui.tabAchievements': 'Achievements',
+            'ui.tabBestiary': 'Bestiary',
+            'ui.tabLore': 'Grimoire',
+            'ui.bestiaryProgress': 'registered',
+            'ui.bestiaryLocked': 'Locked',
+            'ui.bestiaryLockedHint': 'Defeat one to record it here.',
+            'ui.bestiaryKills': 'Kills',
+            'ui.noRun': 'No active run.',
+            'ui.achievementDone': 'Done',
+            'bestCat.basic': 'Basic',
+            'bestCat.elite': 'Elite',
+            'bestCat.swarm': 'Swarm',
+            'bestCat.hazard': 'Hazard',
+            'bestCat.special': 'Special',
+            'bestCat.biome': 'Biome',
+            'bestCat.boss': 'Boss',
 
             // Settings
             'settings.title': 'Settings',
@@ -5800,6 +5847,23 @@ const I18n = {
             'gameover.runScope': 'de esta partida',
             'gameover.resumedNote': 'Números desde la reanudación en el piso {floor}.',
             'gameover.newRecord': '¡Nuevo récord!',
+            'ui.tabStatus': 'Estado',
+            'ui.tabAchievements': 'Logros',
+            'ui.tabBestiary': 'Bestiario',
+            'ui.tabLore': 'Grimorio',
+            'ui.bestiaryProgress': 'registrados',
+            'ui.bestiaryLocked': 'Bloqueado',
+            'ui.bestiaryLockedHint': 'Derrota a uno para registrarlo aquí.',
+            'ui.bestiaryKills': 'Bajas',
+            'ui.noRun': 'Ninguna partida activa.',
+            'ui.achievementDone': 'Completado',
+            'bestCat.basic': 'Basico',
+            'bestCat.elite': 'Elite',
+            'bestCat.swarm': 'Enjambre',
+            'bestCat.hazard': 'Trampa',
+            'bestCat.special': 'Especial',
+            'bestCat.biome': 'Bioma',
+            'bestCat.boss': 'Jefe',
 
             // Settings
             'settings.title': 'Configuración',
@@ -26367,9 +26431,83 @@ window.SkillTreeUI = SkillTreeUI;
             }
         },
 
-        renderStatsContent() {
-            const p = player;
-            if (!p) return '';
+        // The Status panel is the one career surface already reachable from the thumb
+// bar, so it hosts the other three read-only collections as tabs. Before this,
+// Achievements had no opener at all (toggleAchievements had zero callers), the
+// Grimoire was only reachable with the "L" key (impossible on touch) and the
+// Bestiary had getEntries()/getProgress() that nothing ever called.
+_statsTab: 'status',
+
+setStatsTab(tab) {
+    const allowed = ['status', 'achievements', 'bestiary', 'lore'];
+    this._statsTab = allowed.indexOf(tab) >= 0 ? tab : 'status';
+    if (window.SND && SND.playUI) SND.playUI();
+    this.openPanel('stats');
+},
+
+_statsTabsHtml() {
+    const tabs = [
+        { id: 'status', label: _L('ui.tabStatus', 'Status') },
+        { id: 'achievements', label: _L('ui.tabAchievements', 'Conquistas') },
+        { id: 'bestiary', label: _L('ui.tabBestiary', 'Bestiário') },
+        { id: 'lore', label: _L('ui.tabLore', 'Grimório') }
+    ];
+    const row = tabs.map(t => {
+        const on = this._statsTab === t.id;
+        return `<button type="button" aria-pressed="${on}" onclick="UIManager.setStatsTab('${t.id}')"
+            style="flex:1;min-width:0;padding:8px 4px;border-radius:10px;font-size:11px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+            border:1px solid ${on ? COLORS.PRIMARY : 'rgba(255,255,255,0.15)'};
+            background:${on ? 'rgba(224,182,255,0.2)' : 'rgba(255,255,255,0.05)'};
+            color:${on ? COLORS.PRIMARY : COLORS.TEXT_DIM};cursor:pointer;touch-action:manipulation">${t.label}</button>`;
+    }).join('');
+    return `<div style="display:flex;gap:5px;margin-bottom:14px">${row}</div>`;
+},
+
+renderBestiaryContent() {
+    if (typeof Bestiary === 'undefined') return '';
+    const progress = Bestiary.getProgress();
+    const catLabels = {
+        basic: _L('bestCat.basic', 'Básico'), elite: _L('bestCat.elite', 'Elite'),
+        swarm: _L('bestCat.swarm', 'Enxame'), hazard: _L('bestCat.hazard', 'Armadilha'),
+        special: _L('bestCat.special', 'Especial'), biome: _L('bestCat.biome', 'Bioma'),
+        boss: _L('bestCat.boss', 'Chefe')
+    };
+    const catColors = { basic: '#9ca3af', elite: '#ff8844', swarm: '#88ccff', hazard: '#c084fc', special: '#ffd86b', biome: '#44ff88', boss: '#ff4444' };
+    const types = Object.keys(Bestiary._monsters);
+    const rows = types.map(type => {
+        const m = Bestiary._monsters[type];
+        const e = Bestiary._entries[type];
+        const seen = !!e;
+        const color = catColors[m.category] || COLORS.TEXT_DIM;
+        const pips = Array.from({ length: 10 }, (_, i) => `<span style="width:5px;height:5px;border-radius:999px;background:${i < m.difficulty ? color : 'rgba(255,255,255,0.12)'};display:inline-block"></span>`).join('');
+        return `<div style="padding:12px 14px;border-radius:12px;border:1px solid ${seen ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.06)'};background:${seen ? 'rgba(30,20,60,0.5)' : 'rgba(255,255,255,0.02)'};${seen ? '' : 'opacity:0.65'}">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+                <span style="font-weight:700;font-size:13px;color:${seen ? '#fff' : COLORS.TEXT_MUTED}">${seen ? _L(m.nameKey, m.name) : '???'}</span>
+                <span style="font-size:9px;text-transform:uppercase;letter-spacing:0.05em;color:${seen ? color : COLORS.TEXT_MUTED};white-space:nowrap">${seen ? (catLabels[m.category] || m.category) : _L('ui.bestiaryLocked', 'Bloqueado')}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:4px;margin-top:4px">${pips}</div>
+            <div style="font-size:11px;color:${COLORS.TEXT_MUTED};margin-top:5px;line-height:1.3">${seen ? _L(m.descKey, m.desc) : _L('ui.bestiaryLockedHint', 'Derrote um para registrar aqui.')}</div>
+            ${seen && e.kills ? `<div style="font-size:10px;color:${COLORS.TEXT_DIM};margin-top:3px">${_L('ui.bestiaryKills', 'Abates')}: ${e.kills}</div>` : ''}
+        </div>`;
+    }).join('');
+    return `
+        <div style="text-align:center;margin-bottom:12px;padding:10px;border-radius:12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1)">
+            <div style="font-size:18px;font-weight:700;color:#fff">${progress.discovered} / ${progress.total}</div>
+            <div style="font-size:10px;color:${COLORS.TEXT_MUTED};margin-top:2px">${progress.percent}% ${_L('ui.bestiaryProgress', 'registrados')}</div>
+            <div style="height:6px;border-radius:999px;background:rgba(255,255,255,0.08);margin-top:8px;overflow:hidden">
+                <div style="height:100%;width:${progress.percent}%;background:linear-gradient(90deg,#4ade80,#fbbf24);border-radius:999px"></div>
+            </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">${rows}</div>`;
+},
+
+renderStatsContent() {
+    const tabs = this._statsTabsHtml();
+    if (this._statsTab === 'achievements') return tabs + this.renderAchievementsContent();
+    if (this._statsTab === 'bestiary') return tabs + this.renderBestiaryContent();
+    if (this._statsTab === 'lore') return tabs + this.renderLoreContent();
+    const p = player;
+    if (!p) return tabs + `<p style="text-align:center;color:${COLORS.TEXT_DIM};padding:20px 0">${_L('ui.noRun', 'Nenhuma run ativa.')}</p>`;
             const statCard = (label, value) => `
                 <div style="padding:16px;border-radius:12px;border:1px solid rgba(255,255,255,0.1);background:rgba(35,28,48,0.5);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center">
                     <div style="font-size:10px;color:${COLORS.TEXT_MUTED};font-weight:bold;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px">${label}</div>
@@ -26408,7 +26546,7 @@ window.SkillTreeUI = SkillTreeUI;
             const playSeconds = Math.floor((S.totalPlayTime || 0) / GAME_TICKS_PER_SECOND);
             const hours = Math.floor(playSeconds / 3600);
             const mins = Math.floor((playSeconds % 3600) / 60);
-            return `
+            return tabs + `
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
                     ${statCard('DANO BASE', dmg)}
                     ${statCard('VELOCIDADE', p.speed.toFixed(1))}
@@ -26427,7 +26565,23 @@ window.SkillTreeUI = SkillTreeUI;
             `;
         },
 
-        renderAchievementsContent() {
+        // Every reward type here is really applied by applyAchievementRewards(). The
+// card used to render only `reward.currency`, so 19 of the 25 achievements
+// showed no reward at all even though they granted a permanent bonus every run.
+_rewardText(ach) {
+    const r = ach.reward || {};
+    const parts = [];
+    if (r.currency) parts.push('💰 +' + r.currency);
+    if (r.maxHp) parts.push('❤ +' + r.maxHp + ' HP');
+    if (r.dmgMult) parts.push('⚔ +' + Math.round(r.dmgMult * 100) + '% dano');
+    if (r.prestigeBonus) parts.push('⚔ +' + Math.round(r.prestigeBonus * 100) + '% dano');
+    if (r.critChance) parts.push('✦ +' + Math.round(r.critChance * 100) + '% crítico');
+    if (r.speedMult) parts.push('» +' + Math.round(r.speedMult * 100) + '% velocidade');
+    if (r.shopDiscount) parts.push('🏷 -' + Math.round(r.shopDiscount * 100) + '% preço');
+    return parts.join(' · ');
+},
+
+renderAchievementsContent() {
             const store = StorageManager.get('achievements') || {};
             const unlocked = store.unlocked || [];
             const total = ACHIEVEMENTS.length;
@@ -26446,8 +26600,9 @@ window.SkillTreeUI = SkillTreeUI;
                         const isUnlocked = unlocked.includes(ach.id);
                         const border = isUnlocked ? 'rgba(34,197,94,0.3)' : 'rgba(255,255,255,0.1)';
                         const bg = isUnlocked ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.05)';
-                        const reward = (ach.reward && ach.reward.currency)
-                            ? `<span style="font-size:9px;color:${COLORS.GOLD}">💰 +${ach.reward.currency}</span>`
+                        const rewardText = this._rewardText(ach);
+                        const reward = rewardText
+                            ? `<span style="font-size:9px;color:${COLORS.GOLD}">${rewardText}</span>`
                             : '';
                         return `
                             <div style="padding:16px;border-radius:16px;border:1px solid ${border};background:${bg};transition:all 0.2s;${isUnlocked ? '' : 'opacity:0.6'};display:flex;align-items:center;gap:12px">
@@ -26456,7 +26611,7 @@ window.SkillTreeUI = SkillTreeUI;
                                     <h3 style="font-size:14px;font-weight:bold;${isUnlocked ? 'color:#fff' : 'color:${COLORS.TEXT_DIM}'}">${_L(ach.nameKey, ach.name)} ${reward}</h3>
                                     <p style="font-size:11px;color:${COLORS.TEXT_MUTED};line-height:1.3">${_L(ach.descKey, ach.desc)}</p>
                                 </div>
-                                ${isUnlocked ? '<span style="font-size:10px;color:#4ade80;font-weight:bold;text-transform:uppercase;letter-spacing:0.05em">Concluído</span>' : ''}
+                                ${isUnlocked ? `<span style="font-size:10px;color:#4ade80;font-weight:bold;text-transform:uppercase;letter-spacing:0.05em;white-space:nowrap">${_L('ui.achievementDone', 'Concluído')}</span>` : ''}
                             </div>
                         `;
                     }).join('')}
