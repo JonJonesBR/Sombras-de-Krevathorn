@@ -3188,6 +3188,14 @@ const I18n = {
             'gameover.dungeon': 'Dungeon',
             'gameover.prestige': 'Prestígio',
             'gameover.coins': 'Moedas',
+            'gameover.runDamage': 'Dano causado',
+            'gameover.runDamageTaken': 'Dano sofrido',
+            'gameover.runGold': 'Ouro ganho',
+            'gameover.runCombo': 'Combo máx.',
+            'gameover.runBosses': 'Chefes',
+            'gameover.runScope': 'desta run',
+            'gameover.resumedNote': 'Números desde a retomada no Piso {floor}.',
+            'gameover.newRecord': 'Novo recorde!',
 
             // Settings
             'settings.title': 'Configurações',
@@ -4481,6 +4489,14 @@ const I18n = {
             'gameover.dungeon': 'Dungeon',
             'gameover.prestige': 'Prestige',
             'gameover.coins': 'Coins',
+            'gameover.runDamage': 'Damage dealt',
+            'gameover.runDamageTaken': 'Damage taken',
+            'gameover.runGold': 'Gold earned',
+            'gameover.runCombo': 'Max combo',
+            'gameover.runBosses': 'Bosses',
+            'gameover.runScope': 'this run',
+            'gameover.resumedNote': 'Numbers since resuming on Floor {floor}.',
+            'gameover.newRecord': 'New record!',
 
             // Settings
             'settings.title': 'Settings',
@@ -5774,6 +5790,14 @@ const I18n = {
             'gameover.dungeon': 'Mazmorra',
             'gameover.prestige': 'Prestigio',
             'gameover.coins': 'Monedas',
+            'gameover.runDamage': 'Daño causado',
+            'gameover.runDamageTaken': 'Daño recibido',
+            'gameover.runGold': 'Oro ganado',
+            'gameover.runCombo': 'Combo máx.',
+            'gameover.runBosses': 'Jefes',
+            'gameover.runScope': 'de esta partida',
+            'gameover.resumedNote': 'Números desde la reanudación en el piso {floor}.',
+            'gameover.newRecord': '¡Nuevo récord!',
 
             // Settings
             'settings.title': 'Configuración',
@@ -8009,6 +8033,80 @@ const Statistics = {
 window.Statistics = Statistics;
 
 
+// Per-run counters. Statistics.data is career data: it is never reset between
+// runs, so reading it on the game-over screen reported career totals as if they
+// belonged to the run that just ended ("DANO TOTAL 87.432" on the third run).
+// Everything displayed as "this run" must come from here instead.
+// A continued run starts a fresh set of counters (run stats are deliberately not
+// added to the save schema) and is labelled as "since resuming" so the number
+// on screen is never wider than what was actually measured.
+const RunStats = {
+    damageDealt: 0,
+    damageTaken: 0,
+    maxCombo: 0,
+    bosses: 0,
+    goldStart: 0,
+    startLevel: 1,
+    startMaxLevel: 0,
+    startBestKills: 0,
+    floorTimes: [],
+    resumed: false,
+    resumedFromFloor: 1,
+    _floorEnteredAt: 0,
+
+    _zero() {
+        this.damageDealt = 0;
+        this.damageTaken = 0;
+        this.maxCombo = 0;
+        this.bosses = 0;
+        this.floorTimes = [];
+        this._floorEnteredAt = 0;
+        this.startMaxLevel = (typeof Statistics !== 'undefined') ? (Statistics.data.maxLevel || 0) : 0;
+        this.startBestKills = (typeof Statistics !== 'undefined') ? (Statistics.data.bestKills || 0) : 0;
+        this.goldStart = (typeof player !== 'undefined' && player) ? (player.currency || 0) : 0;
+        this.startLevel = (typeof player !== 'undefined' && player) ? (player.lvl || 1) : 1;
+    },
+
+    start() {
+        this.resumed = false;
+        this.resumedFromFloor = 1;
+        this._zero();
+    },
+
+    resume(fromFloor) {
+        this.resumed = true;
+        this.resumedFromFloor = fromFloor || 1;
+        this._zero();
+    },
+
+    // Gold collected during this run (the shop spends it, so it is a delta).
+    goldEarned() {
+        const now = (typeof player !== 'undefined' && player) ? (player.currency || 0) : 0;
+        return Math.max(0, now - this.goldStart);
+    },
+
+    // Called on every floor transition so the run summary can say how long each
+    // floor actually took.
+    recordFloor() {
+        if (this._floorEnteredAt > 0) {
+            const secs = Math.round((gameTime - this._floorEnteredAt) / GAME_TICKS_PER_SECOND);
+            if (secs >= 0 && isFinite(secs)) this.floorTimes.push(secs);
+        }
+        this._floorEnteredAt = gameTime;
+    },
+
+    // True when this run beat the career record that existed when it started.
+    beatLevelRecord() {
+        return (typeof player !== 'undefined' && player) ? (player.lvl > this.startMaxLevel) : false;
+    },
+    beatKillsRecord() {
+        return ((typeof player !== 'undefined' && player) ? (player.kills || 0) : 0) > this.startBestKills;
+    },
+};
+
+window.RunStats = RunStats;
+
+
 </script>
     <script>
 // === js/engine.js ===
@@ -8262,17 +8360,31 @@ function _populateGameOverUI() {
     if (timeEl) timeEl.textContent = timeStr;
     if (floorEl) floorEl.textContent = 'Piso ' + dungeonLevel;
 
-    // Stats grid
+    // Stats grid. Every "this run" number comes from RunStats; Statistics.data is
+    // career data and would have shown lifetime totals on every death screen.
+    var T = (k) => (window.I18n ? I18n.t(k) : k);
+    var _rs = window.RunStats;
+    var runDamage = _rs ? Math.round(_rs.damageDealt) : 0;
+    var runTaken = _rs ? Math.round(_rs.damageTaken) : 0;
+    var runCombo = _rs ? (_rs.maxCombo || 0) : 0;
+    var runGold = _rs ? _rs.goldEarned() : 0;
+    var runBosses = _rs ? (_rs.bosses || 0) : 0;
     var elapsedS = Math.floor(gameTime / GAME_TICKS_PER_SECOND);
     var runScore = Math.max(10, dungeonLevel * 500 - Math.floor(elapsedS / 10));
+    var _tile = function(label, value, color) {
+        return '<div style="background:rgba(255,255,255,0.03);border-radius:10px;padding:8px;text-align:center;"><div style="font-size:9px;color:rgba(255,255,255,0.35);margin-bottom:2px;">' + label + '</div><div style="font-size:18px;font-weight:800;color:' + color + ';">' + value + '</div></div>';
+    };
     var statsHtml = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">'
-        + '<div style="background:rgba(255,255,255,0.03);border-radius:10px;padding:8px;text-align:center;"><div style="font-size:9px;color:rgba(255,255,255,0.35);margin-bottom:2px;">NÍVEL</div><div style="font-size:18px;font-weight:800;color:#e0b6ff;">' + player.lvl + '</div></div>'
-        + '<div style="background:rgba(255,255,255,0.03);border-radius:10px;padding:8px;text-align:center;"><div style="font-size:9px;color:rgba(255,255,255,0.35);margin-bottom:2px;">ABATES</div><div style="font-size:18px;font-weight:800;color:#ff8888;">' + thisKills + '</div></div>'
-        + '<div style="background:rgba(255,255,255,0.03);border-radius:10px;padding:8px;text-align:center;"><div style="font-size:9px;color:rgba(255,255,255,0.35);margin-bottom:2px;">COMBO MAX</div><div style="font-size:18px;font-weight:800;color:#ffcc00;">' + (Statistics.data.maxCombo || 0) + 'x</div></div>'
-        + '<div style="background:rgba(255,255,255,0.03);border-radius:10px;padding:8px;text-align:center;"><div style="font-size:9px;color:rgba(255,255,255,0.35);margin-bottom:2px;">MOEDAS</div><div style="font-size:18px;font-weight:800;color:#ffcc00;">' + player.currency + '</div></div>'
-        + '<div style="background:rgba(255,255,255,0.03);border-radius:10px;padding:8px;text-align:center;"><div style="font-size:9px;color:rgba(255,255,255,0.35);margin-bottom:2px;">DANO TOTAL</div><div style="font-size:18px;font-weight:800;color:#ff9955;">' + (Statistics.data.totalDamageDealt || 0) + '</div></div>'
-        + '<div style="background:rgba(255,255,255,0.03);border-radius:10px;padding:8px;text-align:center;"><div style="font-size:9px;color:rgba(255,255,255,0.35);margin-bottom:2px;">PONTOS</div><div style="font-size:18px;font-weight:800;color:#9ad0ff;">' + runScore + '</div></div>'
+        + _tile(T('gameover.level').toUpperCase(), player.lvl, '#e0b6ff')
+        + _tile(T('gameover.kills').toUpperCase(), thisKills, '#ff8888')
+        + _tile(T('gameover.runDamage').toUpperCase(), runDamage, '#ff9955')
+        + _tile(T('gameover.runDamageTaken').toUpperCase(), runTaken, '#ff5566')
+        + _tile(T('gameover.runCombo').toUpperCase(), runCombo + 'x', '#ffcc00')
+        + _tile(T('gameover.runGold').toUpperCase(), runGold, '#ffd86b')
+        + _tile(T('gameover.runBosses').toUpperCase(), runBosses, '#c084fc')
+        + _tile('PONTOS', runScore, '#9ad0ff')
         + ((window.RunObjectiveSystem && window.RunObjectiveSystem.summaryLine) ? '<div style="grid-column:1 / -1;background:rgba(224,182,255,0.05);border-radius:10px;padding:8px;text-align:center;font-size:11px;font-weight:700;">' + window.RunObjectiveSystem.summaryLine() + '</div>' : '')
+        + (_rs && _rs.resumed ? '<div style="grid-column:1 / -1;text-align:center;font-size:9px;color:rgba(255,255,255,0.4);">' + String(T('gameover.resumedNote')).replace('{floor}', _rs.resumedFromFloor) + '</div>' : '')
         + '</div>';
     document.getElementById('game-over-stats').innerHTML = statsHtml;
 
@@ -8283,7 +8395,7 @@ function _populateGameOverUI() {
             var classNames2 = { warrior: 'Guerreiro', rogue: 'Ladino', mage: 'Mago', elf: 'Elfa' };
             var text = 'Krevathorn - ' + (classNames2[player.type] || player.type)
                 + ' | Piso ' + dungeonLevel + ' | ' + timeStr
-                + ' | Pontos: ' + runScore + ' | Abates: ' + thisKills + ' | Combo: ' + (Statistics.data.maxCombo || 0) + 'x';
+                + ' | Pontos: ' + runScore + ' | Abates: ' + thisKills + ' | Combo: ' + runCombo + 'x';
             if (navigator.share) {
                 navigator.share({ title: 'Krevathorn', text: text }).catch(function(){});
             } else if (navigator.clipboard) {
@@ -8292,16 +8404,21 @@ function _populateGameOverUI() {
         };
     }
 
-    // Best run comparison
+    // Best run comparison. The record comparison used to read the live career
+    // value, which gainXP() had already raised to this run's level before the
+    // death screen was built — so "new record" could never appear. Compare
+    // against the value captured when the run started instead.
     var bestEl = document.getElementById('go-best-stats');
     if (bestEl) {
-        var bestKills = Statistics.data.bestKills || 0;
-        var bestLevel = Statistics.data.maxLevel || 0;
-        var beatKills = thisKills > bestKills;
-        var beatLevel = player.lvl > bestLevel;
+        var beatKills = _rs ? _rs.beatKillsRecord() : (thisKills > (Statistics.data.bestKills || 0));
+        var beatLevel = _rs ? _rs.beatLevelRecord() : (player.lvl > (Statistics.data.maxLevel || 0));
+        var bestKills = Math.max(Statistics.data.bestKills || 0, thisKills);
+        var bestLevel = Math.max(Statistics.data.maxLevel || 0, player.lvl);
+        var recMark = '<span style="color:#4ade80;">' + T('gameover.newRecord') + '</span>';
+        var recNone = '<span style="color:rgba(255,255,255,0.2);">—</span>';
         var compHtml = '<table style="width:100%;border-collapse:collapse;">'
-            + '<tr style="font-size:10px;"><td style="padding:3px 0;color:rgba(255,255,255,0.3);width:40%;">Melhor Abates</td><td style="padding:3px 0;color:rgba(255,255,255,0.5);text-align:right;">' + bestKills + '</td><td style="padding:3px 0;width:20%;text-align:right;">' + (beatKills ? '<span style="color:#4ade80;">\u2191 REC!</span>' : '<span style="color:rgba(255,255,255,0.2);">\u2014</span>') + '</td></tr>'
-            + '<tr style="font-size:10px;"><td style="padding:3px 0;color:rgba(255,255,255,0.3);">Melhor Nível</td><td style="padding:3px 0;color:rgba(255,255,255,0.5);text-align:right;">' + bestLevel + '</td><td style="padding:3px 0;text-align:right;">' + (beatLevel ? '<span style="color:#4ade80;">\u2191 REC!</span>' : '<span style="color:rgba(255,255,255,0.2);">\u2014</span>') + '</td></tr>'
+            + '<tr style="font-size:10px;"><td style="padding:3px 0;color:rgba(255,255,255,0.3);width:40%;">' + T('gameover.kills') + '</td><td style="padding:3px 0;color:rgba(255,255,255,0.5);text-align:right;">' + bestKills + '</td><td style="padding:3px 0;width:20%;text-align:right;">' + (beatKills ? recMark : recNone) + '</td></tr>'
+            + '<tr style="font-size:10px;"><td style="padding:3px 0;color:rgba(255,255,255,0.3);">' + T('gameover.level') + '</td><td style="padding:3px 0;color:rgba(255,255,255,0.5);text-align:right;">' + bestLevel + '</td><td style="padding:3px 0;text-align:right;">' + (beatLevel ? recMark : recNone) + '</td></tr>'
             + '<tr style="font-size:10px;"><td style="padding:3px 0;color:rgba(255,255,255,0.3);">Games Jogados</td><td style="padding:3px 0;color:rgba(255,255,255,0.5);text-align:right;" colspan="2">' + (totalGamesPlayed || 1) + '</td></tr>'
             + '</table>';
         bestEl.innerHTML = compHtml;
@@ -8311,8 +8428,8 @@ function _populateGameOverUI() {
     var recordsEl = document.getElementById('go-records');
     if (recordsEl) {
         var badges = '';
-        if (beatKills) badges += '<span style="display:inline-block;padding:3px 10px;border-radius:8px;background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.3);color:#ffcc00;font-size:9px;font-weight:700;margin:2px;">\u2B50 Novo Recorde de Abates!</span>';
-        if (beatLevel) badges += '<span style="display:inline-block;padding:3px 10px;border-radius:8px;background:rgba(100,200,255,0.1);border:1px solid rgba(100,200,255,0.3);color:#66ccff;font-size:9px;font-weight:700;margin:2px;">\u2B50 Novo Recorde de Nível!</span>';
+        if (beatKills) badges += '<span style="display:inline-block;padding:3px 10px;border-radius:8px;background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.3);color:#ffcc00;font-size:9px;font-weight:700;margin:2px;">★ ' + T('gameover.kills') + ': ' + T('gameover.newRecord') + '</span>';
+        if (beatLevel) badges += '<span style="display:inline-block;padding:3px 10px;border-radius:8px;background:rgba(100,200,255,0.1);border:1px solid rgba(100,200,255,0.3);color:#66ccff;font-size:9px;font-weight:700;margin:2px;">★ ' + T('gameover.level') + ': ' + T('gameover.newRecord') + '</span>';
         recordsEl.innerHTML = badges;
     }
 
@@ -8392,17 +8509,20 @@ function _triggerWin() {
 
     var ws = document.getElementById('win-screen');
     var statsEl = document.getElementById('win-stats');
+    var T = (k) => (window.I18n ? I18n.t(k) : k);
     if(statsEl) {
         var mins = Math.floor(elapsed / 60);
         var secs = elapsed % 60;
         var timeStr = mins > 0 ? mins + 'm ' + secs + 's' : secs + 's';
-        statsEl.innerHTML = '<div style="margin:8px 0;">'
+statsEl.innerHTML = '<div style="margin:8px 0;">'
             + '<span style="color:#ffcc00;">' + starStr + '</span></div>'
             + '<table class="go-stats-table">'
-            + '<tr><td>N\u00edvel</td><td>' + player.lvl + '</td></tr>'
-            + '<tr><td>Abates</td><td>' + player.kills + '</td></tr>'
+            + '<tr><td>' + T('gameover.level') + '</td><td>' + player.lvl + '</td></tr>'
+            + '<tr><td>' + T('gameover.kills') + '</td><td>' + player.kills + '</td></tr>'
+            + '<tr><td>' + T('gameover.runDamage') + '</td><td>' + (window.RunStats ? Math.round(RunStats.damageDealt) : 0) + '</td></tr>'
+            + '<tr><td>' + T('gameover.runDamageTaken') + '</td><td>' + (window.RunStats ? Math.round(RunStats.damageTaken) : 0) + '</td></tr>'
+            + '<tr><td>' + T('gameover.runGold') + '</td><td>' + (window.RunStats ? RunStats.goldEarned() : 0) + '</td></tr>'
             + '<tr><td>Tempo</td><td>' + timeStr + '</td></tr>'
-            + '<tr><td>Moedas</td><td>' + player.currency + ' \u26D3</td></tr>'
             + '<tr><td>Estrelas</td><td style="color:#ffcc00;">' + stars + '/3</td></tr>'
             + ((window.RunObjectiveSystem && window.RunObjectiveSystem.summaryLine) ? '<tr><td>Objetivo</td><td>' + window.RunObjectiveSystem.summaryLine() + '</td></tr>' : '')
             + '</table>';
@@ -9119,6 +9239,7 @@ class Portal {
 function _startFloorTransition() {
     if (typeof CampSystem !== 'undefined') CampSystem._descend = false;
     dungeonLevel++; dungeonKills = 0; dungeonKillTarget = 18 + dungeonLevel * 2;
+    if (window.RunStats) RunStats.recordFloor();
     if (window.RunObjectiveSystem) RunObjectiveSystem.onFloor(dungeonLevel);
     if (typeof Statistics !== 'undefined') Statistics.data.maxFloor = Math.max(Statistics.data.maxFloor || 0, dungeonLevel);
     dungeonPortal = null; bossActive = false;
@@ -19661,7 +19782,7 @@ class Entity {
         if(currentEvent && currentEvent.type === 'bloodMoon' && source === player) finalDmg *= CONFIG.BLOOD_MOON_DAMAGE_BOOST;
         if(source === player && player && player.damageMult > 1) finalDmg *= player.damageMult;
         // Track lifetime damage dealt by the player (used by achievements + stats)
-        if (source === player && typeof Statistics !== 'undefined') Statistics.data.totalDamageDealt = (Statistics.data.totalDamageDealt || 0) + finalDmg;
+        if (source === player && typeof Statistics !== 'undefined') { Statistics.data.totalDamageDealt = (Statistics.data.totalDamageDealt || 0) + finalDmg; if (window.RunStats) RunStats.damageDealt += finalDmg; }
         if(this.shield > 0) { this.shield -= finalDmg; if(this.shield < 0) { this.hp += this.shield; this.shield = 0; } } else { this.hp -= finalDmg; if(source === player || (source && source.owner === player)) DamageNumbers.add(this.x, this.y, finalDmg, dmgType); }
         
         // Hit effects: flash, particles, shake
@@ -19707,7 +19828,7 @@ class Entity {
             }
         }
         
-        if(this === player) { shake = CONFIG.SHAKE_HIT; SND.playHit(); Statistics.data.totalDamageTaken += finalDmg; if (window.RunObjectiveSystem) RunObjectiveSystem.onDamage(finalDmg); ScreenEffects.onHitEnemy(finalDmg, source ? source.x : 0, source ? source.y : 0, this.x, this.y); this.combatTimer = 0; }
+        if(this === player) { shake = CONFIG.SHAKE_HIT; SND.playHit(); Statistics.data.totalDamageTaken += finalDmg; if (window.RunStats) RunStats.damageTaken += finalDmg; if (window.RunObjectiveSystem) RunObjectiveSystem.onDamage(finalDmg); ScreenEffects.onHitEnemy(finalDmg, source ? source.x : 0, source ? source.y : 0, this.x, this.y); this.combatTimer = 0; }
 
         // Screen juice when the player lands a hit on an enemy (shake/blood
         // splatter/chroma are capped internally by ScreenEffects.onHitEnemy and
@@ -19805,7 +19926,7 @@ class Entity {
             // Haptic feedback on kill
             if(this.isB) Vibrate.trigger('bossKill');
             else if(this.elite) Vibrate.trigger('eliteKill');
-            if(this.isB) { Statistics.data.bossKills++; DifficultySystem.trackKill(); SND.playEnemyDeath('boss'); NarrativeSystem.tryDropLore(null, true); } else if(source === player) { DifficultySystem.trackKill(); SND.playEnemyDeath(this.elite ? 'elite' : (this.enemyType === 'swarm' ? 'swarm' : (this.enemyType === 'trap' ? 'trap' : (this.enemyType === 'mimic' ? 'mimic' : 'normal')))); NarrativeSystem.tryDropLore(this.elite ? 'elite' : 'normal', false); if(this.elite) ScreenEffects.onEliteDeath(); } if(this.isB) { Statistics.data.totalDamageDealt += CONFIG.BOSS_DAMAGE_DEALT_STAT; } if(source && source.skills && source.skills.stealth) source.stealth = CONFIG.STEALTH_DURATION; if(source === player && (this.isB || SeedSystem.random() < CONFIG.ENEMY_CURRENCY_DROP_CHANCE)) { const _mult = this.isB ? CONFIG.BOSS_LOOT_MULTIPLIER : 1; for(let _ci = 0; _ci < Math.ceil(_mult); _ci++) pickups.push(new Pickup(this.x + (Math.random()-0.5)*30, this.y + (Math.random()-0.5)*30, 'currency')); }
+            if(this.isB) { Statistics.data.bossKills++; if (window.RunStats) RunStats.bosses++; DifficultySystem.trackKill(); SND.playEnemyDeath('boss'); NarrativeSystem.tryDropLore(null, true); } else if(source === player) { DifficultySystem.trackKill(); SND.playEnemyDeath(this.elite ? 'elite' : (this.enemyType === 'swarm' ? 'swarm' : (this.enemyType === 'trap' ? 'trap' : (this.enemyType === 'mimic' ? 'mimic' : 'normal')))); NarrativeSystem.tryDropLore(this.elite ? 'elite' : 'normal', false); if(this.elite) ScreenEffects.onEliteDeath(); } if(this.isB) { Statistics.data.totalDamageDealt += CONFIG.BOSS_DAMAGE_DEALT_STAT; } if(source && source.skills && source.skills.stealth) source.stealth = CONFIG.STEALTH_DURATION; if(source === player && (this.isB || SeedSystem.random() < CONFIG.ENEMY_CURRENCY_DROP_CHANCE)) { const _mult = this.isB ? CONFIG.BOSS_LOOT_MULTIPLIER : 1; for(let _ci = 0; _ci < Math.ceil(_mult); _ci++) pickups.push(new Pickup(this.x + (Math.random()-0.5)*30, this.y + (Math.random()-0.5)*30, 'currency')); }
         }
     }
     move(dx, dy, m) {
@@ -22275,7 +22396,7 @@ function awardKillRewards(player, target, source) {
     // Track lifetime kill/combo stats (used by achievements + death screen)
     if (typeof Statistics !== 'undefined') {
         Statistics.data.totalKills = (Statistics.data.totalKills || 0) + 1;
-        Statistics.data.maxCombo = Math.max(Statistics.data.maxCombo || 0, player.comboCount);
+        Statistics.data.maxCombo = Math.max(Statistics.data.maxCombo || 0, player.comboCount); if (window.RunStats) RunStats.maxCombo = Math.max(RunStats.maxCombo || 0, player.comboCount);
     }
     SND.playKill();
     if(player.comboCount > CONFIG.COMBO_DISPLAY_MIN) DamageNumbers.add(player.x, player.y, `${player.comboCount}x COMBO!`, 'crit');
@@ -26878,6 +26999,9 @@ window.GameBootstrap = {
             this._spawnInitialEntities(cls);
             this._startUI();
             if (window.RunObjectiveSystem) RunObjectiveSystem.restoreSave(save.objective);
+            // Resuming starts a fresh measurement window; the run summary says so
+            // explicitly instead of implying it covers the pre-death part.
+            if (window.RunStats) RunStats.resume(dungeonLevel);
             addLog((window.I18n ? I18n.t('log.progressRestored') : 'Progresso restaurado - Piso ') + dungeonLevel);
             Debug.info('Game continued: floor ' + dungeonLevel + ', class ' + cls);
         }, 'continueGame');
@@ -26928,6 +27052,9 @@ window.GameBootstrap = {
         Statistics.data.gamesPlayed = totalGamesPlayed;
         applyAchievementRewards(player);
         applyPrestigeBonuses(player, prestigeLevel);
+        // Per-run counters start here (and only on a fresh run — continueGame()
+        // calls RunStats.resume() instead so a resumed run is not counted twice).
+        RunStats.start();
 
         // Aplica bônus permanentes da MetaLoja (progressão de conta)
         if (window.MetaSystem) {
