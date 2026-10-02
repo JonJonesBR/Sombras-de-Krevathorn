@@ -257,7 +257,11 @@ body.mm-hidden #top-bar .top-right-chips { margin-right: 0; }
    ============================================================ */
 #actions-right {
     position: absolute;
-    bottom: max(20px, env(safe-area-inset-bottom, 20px));
+    /* Sits ABOVE the utility bar, not in the same band. At bottom:20px the
+       special-ability button covered the "Missoes" button on every phone
+       narrower than ~420px (measured: 40x36px of overlap at 320px), which
+       swallowed taps meant for the quest panel. */
+    bottom: max(60px, env(safe-area-inset-bottom, 60px));
     right: max(14px, env(safe-area-inset-right, 14px));
     display: flex;
     flex-direction: column;
@@ -419,7 +423,10 @@ body.mm-hidden #top-bar .top-right-chips { margin-right: 0; }
     transition: opacity 0.3s ease, transform 0.3s ease;
     max-width: 80vw;
     line-height: 1.4;
-    white-space: nowrap;
+    /* Not nowrap: it defeated the 80vw max-width above, so on a 320px screen a
+       long line overflowed on both sides and was cut mid-word. Short lines
+       still render on a single line. */
+    white-space: normal;
 }
 
 /* Log animation */
@@ -864,7 +871,10 @@ body.cb-tritan  { filter: url("#cb-tritan"); }
 @supports (padding: env(safe-area-inset-top)) {
     #start-screen { padding-top: max(16px, env(safe-area-inset-top)); }
     #top-bar { top: max(8px, env(safe-area-inset-top, 8px)); left: max(8px, env(safe-area-inset-left, 8px)); right: max(8px, env(safe-area-inset-right, 8px)); }
-    #actions-right { bottom: max(20px, env(safe-area-inset-bottom, 20px)); right: max(14px, env(safe-area-inset-right, 14px)); }
+    /* This duplicate rule overrode the base #actions-right position with the
+       same value, putting the action buttons back in the utility bar band. It
+       must match the base rule, otherwise the fix below is silently lost. */
+    #actions-right { bottom: max(60px, env(safe-area-inset-bottom, 60px)); right: max(14px, env(safe-area-inset-right, 14px)); }
     #logs { bottom: max(80px, calc(env(safe-area-inset-bottom, 16px) + 50px)); }
 }
 
@@ -1175,6 +1185,15 @@ body.gfx-low #start-screen::after { animation: none !important; opacity: 0.5 !im
 #minimap-toggle-btn { width:44px !important; height:44px !important; }
 @media (max-width: 359px) {
     .util-btn .util-label { display: none; }
+    /* At 320px the currency chip + five utility buttons + the minimap toggle
+       overflowed the viewport: the toggle landed at x=302 with width 44, i.e.
+       26px outside a 320px screen, so it could not be tapped at all. These
+       sizes still clear the 24px WCAG 2.5.8 minimum.
+       The !important is required: #bottom-controls and the util buttons carry
+       inline width/left/right, and inline styles beat any stylesheet rule. */
+    .util-btn { width: 34px !important; height: 34px !important; min-width: 34px; min-height: 34px; }
+    #minimap-toggle-btn { width: 34px !important; height: 34px !important; }
+    #bottom-controls { gap: 2px !important; left: max(4px, env(safe-area-inset-left, 4px)) !important; right: max(4px, env(safe-area-inset-right, 4px)) !important; }
 }
 
 /* ============================================================
@@ -1617,7 +1636,7 @@ body.gfx-low #start-screen::after { animation: none !important; opacity: 0.5 !im
              compares to what you are wearing. Auto-equip used to happen with no
              information at all — getStatDescription()/isUpgrade() existed but
              nothing ever called them, so a downgrade cost HP and speed silently. -->
-        <div id="equip-card" class="hidden" style="position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,12px) + 96px);transform:translateX(-50%);z-index:240;pointer-events:none;width:min(280px,86vw);">
+        <div id="equip-card" class="hidden" style="position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,12px) + 152px);transform:translateX(-50%);z-index:240;pointer-events:none;width:min(280px,86vw);">
             <div id="equip-card-inner" style="background:rgba(20,15,30,0.97);border-radius:14px;padding:10px 12px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 6px 22px rgba(0,0,0,0.55);border:1.5px solid rgba(224,182,255,0.25);transition:opacity 0.3s,transform 0.3s;">
                 <div style="display:flex;align-items:center;justify-content:space-between;gap:6px">
                     <span id="eqc-rarity" style="font-size:8px;letter-spacing:0.15em;text-transform:uppercase;color:#9ca3af;">COMUM</span>
@@ -3775,6 +3794,10 @@ const I18n = {
             'update.entry.v34.l2': 'O HUD agora diz em que piso você está, o progresso do andar, o tempo da run e quantos XP faltam para o próximo nível.',
             'update.entry.v34.l3': 'Conquistas, Bestiário e Grimório finalmente têm botão: 25 conquistas com bônus permanente, 13 monstros e 55 fragmentos eram invisíveis.',
             'update.entry.v34.l4': 'Equipamento mostra o que concede e se é melhor ou pior que o anterior. Relíquias anunciam o que fazem. Prestígio destravado.',
+            'update.entry.v35.title': 'v35 - Botões que se sobrepunham no celular',
+            'update.entry.v35.l1': 'O botão de esquiva/habilidade cobria o botão Missões em telas estreitas e engolia toques — agora fica acima da barra de utilidades.',
+            'update.entry.v35.l2': 'Em 320px o botão do minimapa saía da tela e não podia ser tocado. A barra encolhe para caber.',
+            'update.entry.v35.l3': 'O cartão de equipamento mostra a comparação com setas (▲/▼) para não se ler como um bônus extra, e as mensagens longas deixaram de ser cortadas nas bordas.',
             'update.entry.v32.l1': 'O som que ficava preso na tela de fim de piso (ao escolher o que comprar antes de descer) parou de travar.',
             'update.entry.v32.l2': 'Morrer no mesmo instante em que o chefe morre não dá mais "continuar" e "próximo piso" ao mesmo tempo: a morte tem prioridade.',
             'update.entry.v31.l1': 'O motor de som foi refeito: bus mestre com limitador (nada mais estoura), reverb procedural e envelope em cada som — o estalo entre as notas acabou.',
@@ -5143,6 +5166,10 @@ const I18n = {
             'update.entry.v34.l2': 'The HUD now tells you which floor you are on, how far through it you are, how long the run has lasted and how much XP is left to the next level.',
             'update.entry.v34.l3': 'Achievements, Bestiary and Grimoire finally have a button: 25 achievements with permanent bonuses, 13 monsters and 55 fragments were invisible.',
             'update.entry.v34.l4': 'Equipment shows what it grants and whether it beats what you had. Relics announce what they do. Prestige unlocked.',
+            'update.entry.v35.title': 'v35 - Overlapping buttons on phones',
+            'update.entry.v35.l1': 'The dodge/ability button covered the Quests button on narrow screens and swallowed taps - it now sits above the utility bar.',
+            'update.entry.v35.l2': 'At 320px the minimap button fell off-screen and could not be tapped. The bar now shrinks to fit.',
+            'update.entry.v35.l3': 'The equipment card marks the comparison with arrows (up/down) so it cannot be misread as a second bonus, and long messages are no longer clipped at the edges.',
             'update.entry.v32.l1': 'The sound that got stuck on the floor-complete screen (while choosing what to buy before descending) no longer hangs.',
             'update.entry.v32.l2': 'Dying at the same moment the boss dies no longer gives you both "continue" and the next floor: death takes priority.',
             'update.entry.v31.l1': 'The sound engine was rebuilt: a master bus with a limiter (nothing clips any more), procedural reverb and an envelope on every sound — the click between notes is gone.',
@@ -6511,6 +6538,10 @@ const I18n = {
             'update.entry.v34.l2': 'El HUD ahora dice en qué piso estás, cuánto llevas de él, cuánto dura la partida y cuántos XP faltan para el siguiente nivel.',
             'update.entry.v34.l3': 'Logros, Bestiario y Grimorio por fin tienen botón: 25 logros con bonificación permanente, 13 monstruos y 55 fragmentos eran invisibles.',
             'update.entry.v34.l4': 'El equipo muestra qué otorga y si mejora lo que tenías. Las reliquias anuncian qué hacen. Prestigio desbloqueado.',
+            'update.entry.v35.title': 'v35 - Botones superpuestos en el móvil',
+            'update.entry.v35.l1': 'El botón de esquiva/habilidad cubría el de Misiones en pantallas estrechas y se tragaba los toques: ahora queda encima de la barra.',
+            'update.entry.v35.l2': 'A 320px el botón del minimapa se salía de la pantalla y no se podía tocar. La barra se encoge para caber.',
+            'update.entry.v35.l3': 'La carta de equipo marca la comparación con flechas (arriba/abajo) para que no se lea como un segundo bonus, y los mensajes largos ya no se cortan en los bordes.',
             'update.entry.v32.l1': 'El sonido que se quedaba pegado en la pantalla de fin de piso (al elegir qué comprar antes de bajar) ya no se traba.',
             'update.entry.v32.l2': 'Morir en el mismo instante en que muere el jefe ya no da "continuar" y "siguiente piso" a la vez: la muerte tiene prioridad.',
             'update.entry.v31.l1': 'El motor de sonido fue rehecho: bus maestro con limitador (ya nada satura), reverb procedural y envolvente en cada sonido — el chasquido entre notas se acabó.',
@@ -8389,7 +8420,10 @@ window.isAnyPanelOpen = isAnyPanelOpen;
 window.toggleShop = function() { window.UIManager.openPanel('shop'); };
 window.toggleSkillTree = function() { window.UIManager.openPanel('skills'); };
 window.toggleStats = function() { window.UIManager.openPanel('stats'); };
-window.toggleAchievements = function() { window.UIManager.openPanel('achievements'); };
+// Routes to the Achievements tab of the Status hub: this function had zero
+// callers for the whole project, which is why the achievements list was
+// unreachable even with a keyboard.
+window.toggleAchievements = function() { window.UIManager.setStatsTab('achievements'); };
 window.toggleLore = function() {
     if(gameState !== 'PLAYING') return;
     // Lore journal lives in UIManager ('lore' panel); NarrativeSystem has no
@@ -10878,14 +10912,22 @@ const EquipmentCard = {
                 const name = document.createElement('span');
                 name.style.color = 'rgba(255,255,255,0.6)';
                 name.textContent = r.label;
+                // The delta carries an explicit arrow. Without it the row read as
+                // "+30% Critico +25% Critico", which looks like the item grants
+                // both numbers instead of one value and one comparison.
+                const up = r.delta > 0.0001, down = r.delta < -0.0001;
                 const val = document.createElement('span');
-                val.style.cssText = 'font-weight:700;white-space:nowrap;';
-                const deltaTxt = previous
-                    ? (r.delta > 0.0001 ? '  +' + EquipmentSystem._statText(r.key, r.delta).slice(1)
-                        : r.delta < -0.0001 ? '  ' + EquipmentSystem._statText(r.key, r.delta).slice(1) : '')
-                    : '';
-                val.style.color = !previous || r.delta > 0.0001 ? '#7ee08a' : (r.delta < -0.0001 ? '#ff8080' : 'rgba(255,255,255,0.85)');
-                val.textContent = EquipmentSystem._statText(r.key, r.value) + deltaTxt;
+                val.style.cssText = 'display:inline-flex;align-items:baseline;gap:6px;font-weight:700;white-space:nowrap;';
+                const value = document.createElement('span');
+                value.style.color = '#fff';
+                value.textContent = EquipmentSystem._statText(r.key, r.value);
+                val.appendChild(value);
+                if (previous && (up || down)) {
+                    const delta = document.createElement('span');
+                    delta.style.color = up ? '#7ee08a' : '#ff8080';
+                    delta.textContent = (up ? '▲ ' : '▼ ') + EquipmentSystem._statValue(r.key, Math.abs(r.delta));
+                    val.appendChild(delta);
+                }
                 line.appendChild(name);
                 line.appendChild(val);
                 statsEl.appendChild(line);
@@ -13622,15 +13664,9 @@ const EquipmentSystem = {
         return rolled;
     },
 
-    // Calculate total stat value for comparison
-    getStatValue(equipment) {
-        if(!equipment || !equipment.stats) return 0;
-        let total = 0;
-        Object.values(equipment.stats).forEach(val => {
-            total += val;
-        });
-        return total;
-    },
+    // getStatValue() — REMOVED with isUpgrade(). It summed raw stat values across
+    // units ("+50 maxHp" plus "+0.30 damageMult") and its only caller was
+    // isUpgrade(). compareStats()/compareVerdict() below do the comparison.
 
     // Every stat applyEquipment() actually reads, with the label and formatting
     // used by the pickup card. getStatDescription() below is the plain-text
@@ -13650,9 +13686,15 @@ _statLabel(key) {
         }[key] || key;
     },
 
-_statText(key, val) {
-        if (key === 'maxHp' || key === 'maxHpFlat') return '+' + Math.floor(val) + ' HP';
-        return '+' + Math.round(val * 100) + '% ' + this._statLabel(key);
+// Number + unit only, without the attribute name (the row already shows it).
+    _statValue(key, val) {
+        if (key === 'maxHp' || key === 'maxHpFlat') return Math.floor(val) + ' HP';
+        return Math.round(val * 100) + '%';
+    },
+
+    _statText(key, val) {
+        if (key === 'maxHp' || key === 'maxHpFlat') return '+' + this._statValue(key, val);
+        return '+' + this._statValue(key, val) + ' ' + this._statLabel(key);
     },
 
 // Get stat description string
@@ -13702,11 +13744,11 @@ _statText(key, val) {
         return 'same';
     },
 
-    // Check if new equipment is better than current
-    isUpgrade(newEquip, currentEquip) {
-        if(!currentEquip) return true;
-        return this.getStatValue(newEquip) > this.getStatValue(currentEquip);
-    },
+    // isUpgrade(new, current) — REMOVED on purpose. It summed raw stat values,
+    // so it ranked "+50 maxHp" above "+30% damageMult" as if HP and a multiplier
+    // were the same unit, and nothing called it. compareVerdict() above is the
+    // replacement: it compares per attribute and reports mixed results instead
+    // of collapsing them into one wrong verdict.
 
     // Apply equipment stats to player
     applyEquipment(player, equipment) {
@@ -29744,7 +29786,7 @@ Input.init();
        current MUST stay in sync with the SW CACHE_VERSION suffix (sw.js).
     */
     window.UPDATE_LOG = {
-        current: 'v34',
+        current: 'v35',
         entries: [
             { v: 'v9', date: '2026-09-10', titleKey: 'update.entry.v9.title', title: 'v9 — Tutorial destravado',
               linesKeys: ['update.entry.v9.l1'],
@@ -29854,6 +29896,11 @@ Input.init();
                       'O HUD agora diz em que piso você está, o progresso do andar, o tempo da run e quantos XP faltam para o próximo nível.',
                       'Conquistas, Bestiário e Grimório finalmente têm botão: 25 conquistas com bônus permanente, 13 monstros e 55 fragmentos eram invisíveis.',
                       'Equipamento mostra o que concede e se é melhor ou pior que o anterior. Relíquias anunciam o que fazem. Prestígio destravado.'] },
+            { v: 'v35', date: '2026-10-02', titleKey: 'update.entry.v35.title', title: 'v35 — Botões que se sobrepunham no celular',
+              linesKeys: ['update.entry.v35.l1', 'update.entry.v35.l2', 'update.entry.v35.l3'],
+              lines: ['O botão de esquiva/habilidade cobria o botão Missões em telas estreitas e engolia toques — agora fica acima da barra de utilidades.',
+                      'Em 320px o botão do minimapa saía da tela e não podia ser tocado. A barra encolhe para caber.',
+                      'O cartão de equipamento mostra a comparação com setas (▲/▼) para não se ler como um bônus extra, e as mensagens longas deixaram de ser cortadas nas bordas.'] },
         ]
     };
 
