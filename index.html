@@ -2063,6 +2063,7 @@ function triggerCamZoom(strength, frames) {
 }
 var dungeonKills = 0, dungeonKillTarget = 18, dungeonPortal = null;
 var hitstopFrames = 0;
+var _chainLightningActive = false; // guards chain lightning from chaining recursively
 var merchantActive = false, skillTreeOpen = false, statsOpen = false, achievementsOpen = false;
 var currentEvent = null;
 var weather = null, weatherTimer = 0;
@@ -3798,6 +3799,11 @@ const I18n = {
             'update.entry.v35.l1': 'O botão de esquiva/habilidade cobria o botão Missões em telas estreitas e engolia toques — agora fica acima da barra de utilidades.',
             'update.entry.v35.l2': 'Em 320px o botão do minimapa saía da tela e não podia ser tocado. A barra encolhe para caber.',
             'update.entry.v35.l3': 'O cartão de equipamento mostra a comparação com setas (▲/▼) para não se ler como um bônus extra, e as mensagens longas deixaram de ser cortadas nas bordas.',
+            'update.entry.v36.title': 'v36 - Combate, builds e chefes',
+            'update.entry.v36.l1': 'Acertar agora tem impacto: a câmera reage a acertos, críticos e mortes (esse efeito estava desligado), e a esquiva concede invencibilidade breve.',
+            'update.entry.v36.l2': 'O veneno do Ladino finalmente causa dano contínuo e o raio em cadeia do Cajado Trovão e da relíquia Trovão passa a saltar entre inimigos. O crítico de classe (Ladino/Elfa) voltou a contar.',
+            'update.entry.v36.l3': 'Chefes: as fases acontecem na ordem certa (a fase 3 não é mais pulada), ficam progressivamente mais rápidas e não curam mais entre si; confrontos menos longos.',
+            'update.entry.v36.l4': 'Cada andar abre com mais inimigos e tem baú próprio, e a dificuldade dinâmica não pune mais quem joga bem.',
             'update.entry.v32.l1': 'O som que ficava preso na tela de fim de piso (ao escolher o que comprar antes de descer) parou de travar.',
             'update.entry.v32.l2': 'Morrer no mesmo instante em que o chefe morre não dá mais "continuar" e "próximo piso" ao mesmo tempo: a morte tem prioridade.',
             'update.entry.v31.l1': 'O motor de som foi refeito: bus mestre com limitador (nada mais estoura), reverb procedural e envelope em cada som — o estalo entre as notas acabou.',
@@ -5170,6 +5176,11 @@ const I18n = {
             'update.entry.v35.l1': 'The dodge/ability button covered the Quests button on narrow screens and swallowed taps - it now sits above the utility bar.',
             'update.entry.v35.l2': 'At 320px the minimap button fell off-screen and could not be tapped. The bar now shrinks to fit.',
             'update.entry.v35.l3': 'The equipment card marks the comparison with arrows (up/down) so it cannot be misread as a second bonus, and long messages are no longer clipped at the edges.',
+            'update.entry.v36.title': 'v36 - Combat, builds and bosses',
+            'update.entry.v36.l1': 'Landing a hit now has impact: the camera reacts to hits, crits and kills (that effect was off), and dodging grants brief invulnerability.',
+            'update.entry.v36.l2': 'The Rogue poison finally deals damage over time and the Thunder Staff and Thunder relic lightning now arcs between enemies. Class crit (Rogue/Elf) counts again.',
+            'update.entry.v36.l3': 'Bosses: phases happen in order (phase 3 is no longer skipped), get progressively faster and no longer heal each other; fights are shorter.',
+            'update.entry.v36.l4': 'Every floor opens with more enemies and has its own chest, and dynamic difficulty no longer punishes strong play.',
             'update.entry.v32.l1': 'The sound that got stuck on the floor-complete screen (while choosing what to buy before descending) no longer hangs.',
             'update.entry.v32.l2': 'Dying at the same moment the boss dies no longer gives you both "continue" and the next floor: death takes priority.',
             'update.entry.v31.l1': 'The sound engine was rebuilt: a master bus with a limiter (nothing clips any more), procedural reverb and an envelope on every sound — the click between notes is gone.',
@@ -6542,6 +6553,11 @@ const I18n = {
             'update.entry.v35.l1': 'El botón de esquiva/habilidad cubría el de Misiones en pantallas estrechas y se tragaba los toques: ahora queda encima de la barra.',
             'update.entry.v35.l2': 'A 320px el botón del minimapa se salía de la pantalla y no se podía tocar. La barra se encoge para caber.',
             'update.entry.v35.l3': 'La carta de equipo marca la comparación con flechas (arriba/abajo) para que no se lea como un segundo bonus, y los mensajes largos ya no se cortan en los bordes.',
+            'update.entry.v36.title': 'v36 - Combate, builds y jefes',
+            'update.entry.v36.l1': 'Acertar ahora tiene impacto: la cámara reacciona a golpes, críticos y muertes (ese efecto estaba apagado), y esquivar concede invulnerabilidad breve.',
+            'update.entry.v36.l2': 'El veneno del Pícaro por fin hace daño continuo y el rayo en cadena del Bastón Trueno y la reliquia Trueno ahora salta entre enemigos. El crítico de clase (Pícaro/Elfa) vuelve a contar.',
+            'update.entry.v36.l3': 'Jefes: las fases ocurren en orden (la fase 3 ya no se salta), se vuelven progresivamente más rápidos y no se curan entre sí; los combates son más cortos.',
+            'update.entry.v36.l4': 'Cada piso abre con más enemigos y tiene su propio cofre, y la dificultad dinámica ya no castiga a quien juega bien.',
             'update.entry.v32.l1': 'El sonido que se quedaba pegado en la pantalla de fin de piso (al elegir qué comprar antes de bajar) ya no se traba.',
             'update.entry.v32.l2': 'Morir en el mismo instante en que muere el jefe ya no da "continuar" y "siguiente piso" a la vez: la muerte tiene prioridad.',
             'update.entry.v31.l1': 'El motor de sonido fue rehecho: bus maestro con limitador (ya nada satura), reverb procedural y envolvente en cada sonido — el chasquido entre notas se acabó.',
@@ -7438,7 +7454,10 @@ var CONFIG = {
     CD_UPDATE_INTERVAL: 20,        // frames
     PERFORMANCE_MODE: false,        // true = aggressive throttling
     ENEMY_INITIAL_COUNT: 4,
-    ENEMY_INITIAL_COUNT_DUNGEON_RAMP: [4, 6, 8, 9], // B1=3, B2=5, B3=7, B4+=8
+    // Enemies placed when a floor is entered, per floor 1..10 (and clamped past
+    // 10 for the Abyss). Living pressure already had a hard cap + trickle
+    // spawner; this only stops every floor from STARTING identically empty.
+    ENEMY_INITIAL_COUNT_DUNGEON_RAMP: [4, 5, 6, 7, 8, 9, 10, 10, 11, 11],
     ENEMY_SPAWN_MIN_DIST: 300,
     HAZARD_SPAWN_INTERVAL: 300,      // frames (~5s at 60fps)
     HAZARD_MAX_COUNT: 5,
@@ -7815,6 +7834,7 @@ var CONFIG = {
     HITSTOP_BOSS: 8,
     KNOCKBACK_STRENGTH: 8,
     KNOCKBACK_HEAVY_MULT: 0.3,          // reduced knockback on elite/boss
+    DODGE_INVULN_FRAMES: 12,            // i-frames granted at the start of the dash (0.2s)
 
     // New Enemy Types (Phase 4)
     BERSERKER_HP_THRESHOLD: 0.3,
@@ -7835,7 +7855,11 @@ var CONFIG = {
     SHIELDER_SPAWN_DUNGEON: 4,          // unlocks at dungeon 4
 
     // Boss  New Phase Abilities
-    BOSS_DAMAGE_REDUCTION: 0.40,    // bosses take 40% less damage from all sources
+    // Bosses take 30% less damage from all sources. Was 40%, which (stacked with
+    // armor + the 45-frame phase guard) stretched a base-gear floor-1 boss to
+    // ~75-125s by analytic estimate. Lowering it is the least "HP-sponge" knob:
+    // it shortens the fight without changing the intended HP curve.
+    BOSS_DAMAGE_REDUCTION: 0.30,
     BOSS_FIRE_PILLAR_COUNT: 3,
     BOSS_THORN_REFLECT_RATIO: 0.10,     // 10% dmg reflected in phase 3+
     BOSS_GUIDED_SPEED: 4,
@@ -9443,7 +9467,10 @@ function _updateEntitySimulation() {
     for (let i = guidedBullets.length - 1; i >= 0; i--) { if (!guidedBullets[i].alive) guidedBullets.splice(i, 1); }
     for (let i = 0; i < rogueClones.length; i++) { rogueClones[i].timer--; if (rogueClones[i].timer <= 0) rogueClones[i].alive = false; }
     for (let i = rogueClones.length - 1; i >= 0; i--) { if (!rogueClones[i].alive) rogueClones.splice(i, 1); }
-    for (let i = 0; i < entities.length; i++) { const e = entities[i]; if (e !== player && e.alive && e.updatePoison) e.updatePoison(); }
+    // Freeze/stun countdown is centralized here. It used to tick only inside the
+    // base Enemy.draw / Boss.draw, but every subclass overrides draw() without
+    // ticking it, so a frozen elite/special stayed frozen forever.
+    for (let i = 0; i < entities.length; i++) { const e = entities[i]; if (e === player) continue; if (e.frozen > 0) e.frozen--; if (e.alive && e.updatePoison) e.updatePoison(); }
     for (let i = 0; i < chests.length; i++) chests[i].update();
     for (let i = chests.length - 1; i >= 0; i--) { if (!chests[i].alive) chests.splice(i, 1); }
     if (window.RelicSystem) RelicSystem.update(player);
@@ -10232,8 +10259,15 @@ function draw() {
         // Apply screen effects (shake, zoom) before drawing world
         ctx.save();
         
-        if (shake > 0 && gameState === 'PLAYING' && (window.GameSettings === undefined || GameSettings.screenShakeEnabled) && (window.GFX === undefined || GFX.shake !== false)) {
-            ctx.translate((Math.random()-0.5)*shake*2, (Math.random()-0.5)*shake*2);
+        // Two shake sources existed: the global `shake` (player hurt, boss spawn,
+        // some skills) and ScreenEffects._shake (onHitEnemy/onCrit/onMeteor/...).
+        // The latter was accumulated and decayed but never read, so almost every
+        // hit in the game produced no camera kick. Combine both, capped, so a
+        // single hit reads as one impact instead of adding the two.
+        const _fxShake = (typeof ScreenEffects !== 'undefined' && ScreenEffects._shake) ? ScreenEffects._shake : 0;
+        const _shakeTotal = Math.min(24, Math.max(shake, _fxShake));
+        if (_shakeTotal > 0 && gameState === 'PLAYING' && (window.GameSettings === undefined || GameSettings.screenShakeEnabled) && (window.GFX === undefined || GFX.shake !== false)) {
+            ctx.translate((Math.random()-0.5)*_shakeTotal*2, (Math.random()-0.5)*_shakeTotal*2);
         }
         
         if (player && player.critZoomTimer > 0 && CONFIG.ROGUE_CRIT_ZOOM_DURATION) {
@@ -10367,12 +10401,19 @@ function draw() {
                 if (window.NPCSystem) NPCSystem.reset();
                 if (window.RelicSystem) RelicSystem.onNewDungeon(player);
                 DifficultySystem.dungeonLevel = dungeonLevel;
-                for (let i = 0; i < CONFIG.ENEMY_INITIAL_COUNT; i++) {
+                // Was a flat CONFIG.ENEMY_INITIAL_COUNT for every floor, so only
+                // the number-free starter floor ever used the ramp. Deeper floors
+                // now open with more simultaneous enemies (density, not HP).
+                const _initCount = (typeof DifficultySystem.getInitialEnemyCount === 'function') ? DifficultySystem.getInitialEnemyCount() : CONFIG.ENEMY_INITIAL_COUNT;
+                for (let i = 0; i < _initCount; i++) {
                     const ep = map.getSafeSpawn(CONFIG.ENEMY_SPAWN_MIN_DIST);
                     const _ne = new Enemy(ep.x, ep.y, false);
                     if (typeof BiomeSystem !== 'undefined' && BiomeSystem.applyEnemyVariant) BiomeSystem.applyEnemyVariant(_ne);
                     entities.push(_ne);
                 }
+                // Floors 2-10 previously had no placed chests at all (they were
+                // only seeded at run start), so exploration had no payoff.
+                if (window.GameBootstrap && GameBootstrap._spawnFloorChests) GameBootstrap._spawnFloorChests();
                 ScreenEffects.onBossDeath(); Statistics.data.dungeonsCompleted++;
                 Debug.safe(() => SaveSystem.save(), 'autosaveFloor');
                 } catch (e) {
@@ -13953,7 +13994,7 @@ window.NarrativeSystem = NarrativeSystem;
 // ============================================================
 const DIFFICULTY_PRESETS = {
     facil:    { name: 'Fácil',    nameKey: 'difficulty.facil.name', descKey: 'difficulty.facil.desc', icon: 'ic-leaf', hpMult: 0.70, bossHpMult: 1.50, dmgMult: 0.60, xpMult: 0.80, color: '#6fce85', desc: 'Inimigos mais fracos. Ideal para aprender o jogo.' },
-    normal:   { name: 'Normal',   nameKey: 'difficulty.normal.name', descKey: 'difficulty.normal.desc', icon: 'ic-swords', hpMult: 1.00, bossHpMult: 1.85, dmgMult: 1.00, xpMult: 1.00, color: '#e0b6ff', desc: 'A experiência padrão de Krevathorn.' },
+    normal:   { name: 'Normal',   nameKey: 'difficulty.normal.name', descKey: 'difficulty.normal.desc', icon: 'ic-swords', hpMult: 1.00, bossHpMult: 1.60, dmgMult: 1.00, xpMult: 1.00, color: '#e0b6ff', desc: 'A experiência padrão de Krevathorn.' },
     dificil:  { name: 'Difícil',  nameKey: 'difficulty.dificil.name', descKey: 'difficulty.dificil.desc', icon: 'ic-skull', hpMult: 1.40, bossHpMult: 2.25, dmgMult: 1.35, xpMult: 1.30, color: '#eea55c', desc: 'Inimigos mais fortes. +30% de XP.' },
     pesadelo: { name: 'Pesadelo', nameKey: 'difficulty.pesadelo.name', descKey: 'difficulty.pesadelo.desc', icon: 'ic-flame-alt', hpMult: 1.90, bossHpMult: 3.00, dmgMult: 1.70, xpMult: 1.60, color: '#e05246', desc: 'Só para veteranos. +60% de XP.' }
 };
@@ -14038,8 +14079,10 @@ const DifficultySystem = {
     // Get scaled damage for a regular enemy
     // ============================================================
     getScaledDamage(baseDmg) {
+        // DDA deliberately does NOT scale damage: buffing both HP and damage at
+        // once for a fast-clearing player was a hidden double punishment. It now
+        // only ever eases enemy HP for a struggling player (see updateDDA).
         let dmg = baseDmg * this.getEnemyDamageMult();
-        dmg *= this.ddaMultiplier;
         return Math.max(0.1, dmg);
     },
 
@@ -14129,11 +14172,13 @@ const DifficultySystem = {
         const killsPerFrame = killsInWindow / elapsedWindow;
 
         if (killsPerFrame > CONFIG.DDA_EASY_THRESHOLD) {
-            // Player is killing too fast - make it harder
-            this.ddaMultiplier = Math.min(1.5, this.ddaMultiplier + 0.05);
+            // Player is clearing well. Do NOT secretly harden the enemies: a
+            // strong build must feel strong, and the floor curve already ramps
+            // pressure. Just relax any prior "struggling" relief back to 1.0.
+            this.ddaMultiplier = Math.min(1.0, this.ddaMultiplier + 0.05);
             this.lastAdjustmentFrame = gameTime;
         } else if (killsPerFrame < CONFIG.DDA_HARD_THRESHOLD) {
-            // Player is struggling - make it easier
+            // Player is struggling - ease enemy HP only (bounded at 0.7).
             this.ddaMultiplier = Math.max(0.7, this.ddaMultiplier - 0.05);
             this.lastAdjustmentFrame = gameTime;
         }
@@ -17772,7 +17817,7 @@ class DamageNumber {
         this.vy = -3 - Math.random() * 2; 
         this.vx = (Math.random()-0.5)*2;
         this.gravity = 0.15;
-        this.baseSize = type === 'crit' ? 20 : (type === 'heal' ? 15 : (type === 'stun' || type === 'bleed' || type === 'frost' || type === 'execute' ? 14 : 13));
+        this.baseSize = type === 'crit' ? 20 : (type === 'hurt' ? 16 : (type === 'heal' ? 15 : (type === 'stun' || type === 'bleed' || type === 'frost' || type === 'execute' ? 14 : 13)));
         this.scale = type === 'crit' ? 1.8 : 1.4;
         this.alive = true;
         return this;
@@ -17917,7 +17962,7 @@ const DamageNumbers = {
             ctx.globalAlpha = Math.min(1, Math.max(0, n.life * 1.5));
             ctx.font = `bold ${n.baseSize}px ${COLORS.CANVAS_FONT}`; 
             ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; 
-            let color = n.type === 'crit' ? COLORS.DMG_CRIT : (n.type === 'heal' ? COLORS.DMG_HEAL : (n.type === 'lightning' ? COLORS.DMG_LIGHTNING : (n.type === 'stun' ? '#ffcc00' : (n.type === 'bleed' ? '#ff4444' : (n.type === 'frost' ? '#66ccff' : (n.type === 'execute' ? '#ff8800' : COLORS.DMG_NORMAL)))))); 
+            let color = n.type === 'crit' ? COLORS.DMG_CRIT : (n.type === 'heal' ? COLORS.DMG_HEAL : (n.type === 'lightning' ? COLORS.DMG_LIGHTNING : (n.type === 'stun' ? '#ffcc00' : (n.type === 'bleed' ? '#ff4444' : (n.type === 'hurt' ? '#ff5555' : (n.type === 'frost' ? '#66ccff' : (n.type === 'execute' ? '#ff8800' : COLORS.DMG_NORMAL))))))); 
 
             // Glow shadow removed entirely (shadowBlur is one of the most
             // expensive canvas ops, and this fired on every hit)
@@ -20184,13 +20229,24 @@ class Entity {
                 SND.play(400, 'square', 0.1, 0.2);
             }
         }
-        if(SeedSystem.random() < Math.min(1.0, (source && source.critChance ? CONFIG.CRIT_CHANCE_BASE + source.critChance : CONFIG.CRIT_CHANCE_BASE) + (source && source.critBoost > 0 ? 0.10 : 0) + (this.poisonStacks > 0 && source === player ? CONFIG.CRIT_BONUS_POISONED : 0))) { 
+        // classCritChance carries the class identity bonus (rogue 12%, elf 8%)
+        // declared in CONFIG.PLAYER; it was never read, so every class rolled
+        // the flat 5% base. Kept separate from critChance so mid-run saves with
+        // critChance:0 still get their class crit on continue.
+        const _critChance = Math.min(1.0, CONFIG.CRIT_CHANCE_BASE + (source ? ((source.critChance || 0) + (source.classCritChance || 0)) : 0) + (source && source.critBoost > 0 ? 0.10 : 0) + (this.poisonStacks > 0 && source === player ? CONFIG.CRIT_BONUS_POISONED : 0));
+        if(SeedSystem.random() < _critChance) { 
             finalDmg *= CONFIG.CRIT_MULTIPLIER; dmgType = 'crit'; 
-            if(source) { SND.playCrit(); ScreenEffects.onCrit(); }
-            if(typeof hitstopFrames !== 'undefined' && this !== player && !(window.GameSettings && GameSettings.hitstopEnabled === false)) hitstopFrames = 3; // crit: extra frame
+            // Only the PLAYER's crits get the player's crit sting/flash/hitstop.
+            // Enemies that crit against the player used to trigger them too,
+            // which read as "I landed a crit" while actually taking one.
+            if(source === player) {
+                SND.playCrit(); ScreenEffects.onCrit();
+                if(typeof hitstopFrames !== 'undefined' && this !== player && !(window.GameSettings && GameSettings.hitstopEnabled === false)) hitstopFrames = 3; // crit: extra frame
+            }
             // Synergy B: critical hits reapply/amp poison for poison builds
             if(source === player && source.poison && this !== player) {
                 this.poisonStacks = Math.min(CONFIG.ROGUE_POISON_MAX_STACKS, (this.poisonStacks || 0) + 1);
+                this.poisonTimer = CONFIG.ROGUE_POISON_DURATION;
                 if (typeof spawnParticles !== 'undefined') spawnParticles(this.x, this.y, '#44ff44', 4, 3);
             }
             // Synergy) vampiric builds heal a bit extra on crit
@@ -20206,6 +20262,28 @@ class Entity {
         // Track lifetime damage dealt by the player (used by achievements + stats)
         if (source === player && typeof Statistics !== 'undefined') { Statistics.data.totalDamageDealt = (Statistics.data.totalDamageDealt || 0) + finalDmg; if (window.RunStats) RunStats.damageDealt += finalDmg; }
         if(this.shield > 0) { this.shield -= finalDmg; if(this.shield < 0) { this.hp += this.shield; this.shield = 0; } } else { this.hp -= finalDmg; if(source === player || (source && source.owner === player)) DamageNumbers.add(this.x, this.y, finalDmg, dmgType); }
+
+        // Chain lightning (Cajado Trovão weapon unique / relic "trovao"): a
+        // player hit has a chance to arc half its damage to a nearby enemy.
+        // The flag only fed the projectile zig-zag visual before, so the
+        // "chain lightning" build had no actual chaining.
+        if(source === player && source.chainLightning && this !== player && !_chainLightningActive && SeedSystem.random() < CONFIG.LIGHTNING_CHAIN_CHANCE) {
+            _chainLightningActive = true;
+            let _chainBest = null, _chainBestSq = CONFIG.LIGHTNING_CHAIN_RANGE * CONFIG.LIGHTNING_CHAIN_RANGE;
+            for (let _ci = 0; _ci < entities.length; _ci++) {
+                const _ce = entities[_ci];
+                if (_ce !== this && _ce !== player && _ce.alive && (_ce.isEnemy || _ce instanceof Enemy || _ce.isB)) {
+                    const _cdx = _ce.x - this.x, _cdy = _ce.y - this.y, _cdSq = _cdx*_cdx + _cdy*_cdy;
+                    if (_cdSq < _chainBestSq) { _chainBestSq = _cdSq; _chainBest = _ce; }
+                }
+            }
+            if (_chainBest) {
+                _chainBest.takeDamage(finalDmg * 0.5, m, player);
+                if (typeof spawnParticles !== 'undefined') spawnParticles(_chainBest.x, _chainBest.y, '#ffff33', 6, 3);
+                if (typeof SND !== 'undefined' && SND.playLightning) SND.playLightning();
+            }
+            _chainLightningActive = false;
+        }
         
         // Hit effects: flash, particles, shake
         this.ft = 5;
@@ -20238,8 +20316,12 @@ class Entity {
             // Flinch / knockback (only for non-player, non-boss entities)
             if (this !== player && !this.isB) {
                 this.flinchTimer = Math.min(4 + Math.floor(finalDmg / 5), 12);
-                this.flinchVx = Math.cos(angle) * Math.min(1 + finalDmg * 0.03, 5);
-                this.flinchVy = Math.sin(angle) * Math.min(1 + finalDmg * 0.03, 5);
+                // Single source of knockback: bullets used to also push the body
+                // directly, so one hit flung the enemy twice. The flinch is the
+                // one that also drives the squash animation.
+                const kbMag = Math.min(CONFIG.KNOCKBACK_STRENGTH, 1 + finalDmg * 0.03) * (this.elite ? CONFIG.KNOCKBACK_HEAVY_MULT : 1);
+                this.flinchVx = Math.cos(angle) * kbMag;
+                this.flinchVy = Math.sin(angle) * kbMag;
                 // Brief material flash
                 this.hitFlashTimer = 4;
             }
@@ -20250,7 +20332,11 @@ class Entity {
             }
         }
         
-        if(this === player) { shake = CONFIG.SHAKE_HIT; SND.playHit(); Statistics.data.totalDamageTaken += finalDmg; if (window.RunStats) RunStats.damageTaken += finalDmg; if (window.RunObjectiveSystem) RunObjectiveSystem.onDamage(finalDmg); ScreenEffects.onHitEnemy(finalDmg, source ? source.x : 0, source ? source.y : 0, this.x, this.y); this.combatTimer = 0; }
+        if(this === player) { shake = CONFIG.SHAKE_HIT; SND.playHit(); Statistics.data.totalDamageTaken += finalDmg; if (window.RunStats) RunStats.damageTaken += finalDmg; if (window.RunObjectiveSystem) RunObjectiveSystem.onDamage(finalDmg); ScreenEffects.onHitEnemy(finalDmg, source ? source.x : 0, source ? source.y : 0, this.x, this.y); this.combatTimer = 0;
+            // The number only rendered for damage the player DEALT. Taking a hit
+            // showed a flash but no magnitude; a red number closes that gap.
+            if(typeof DamageNumbers !== 'undefined' && finalDmg >= 1) DamageNumbers.add(this.x, this.y, Math.round(finalDmg), 'hurt');
+        }
 
         // Screen juice when the player lands a hit on an enemy (shake/blood
         // splatter/chroma are capped internally by ScreenEffects.onHitEnemy and
@@ -20351,6 +20437,27 @@ class Entity {
             if(this.isB) { Statistics.data.bossKills++; if (window.RunStats) RunStats.bosses++; DifficultySystem.trackKill(); SND.playEnemyDeath('boss'); NarrativeSystem.tryDropLore(null, true); } else if(source === player) { DifficultySystem.trackKill(); SND.playEnemyDeath(this.elite ? 'elite' : (this.enemyType === 'swarm' ? 'swarm' : (this.enemyType === 'trap' ? 'trap' : (this.enemyType === 'mimic' ? 'mimic' : 'normal')))); NarrativeSystem.tryDropLore(this.elite ? 'elite' : 'normal', false); if(this.elite) ScreenEffects.onEliteDeath(); } if(this.isB) { Statistics.data.totalDamageDealt += CONFIG.BOSS_DAMAGE_DEALT_STAT; } if(source && source.skills && source.skills.stealth) source.stealth = CONFIG.STEALTH_DURATION; if(source === player && (this.isB || SeedSystem.random() < CONFIG.ENEMY_CURRENCY_DROP_CHANCE)) { const _mult = this.isB ? CONFIG.BOSS_LOOT_MULTIPLIER : 1; for(let _ci = 0; _ci < Math.ceil(_mult); _ci++) pickups.push(new Pickup(this.x + (Math.random()-0.5)*30, this.y + (Math.random()-0.5)*30, 'currency')); }
         }
     }
+    // Rogue poison damage-over-time. poisonStacks (cap ROGUE_POISON_MAX_STACKS)
+    // is refreshed by each applying hit; every ROGUE_POISON_TICK_INTERVAL frames
+    // it deals ROGUE_POISON_DAMAGE per stack, scaled by player.poisonPotency.
+    // Ticks are credited to the player so a poison kill still pays XP/loot and
+    // feeds the poison->crit synergy. The method was referenced by the world
+    // loop but never defined, so poison was only a crit debuff + death cloud.
+    updatePoison() {
+        if (this.poisonTimer > 0) {
+            if (this.poisonStacks > 0 && this.poisonTimer % CONFIG.ROGUE_POISON_TICK_INTERVAL === 0) {
+                const potency = (typeof player !== 'undefined' && player && player.poisonPotency) ? player.poisonPotency : 1;
+                const dmg = CONFIG.ROGUE_POISON_DAMAGE * this.poisonStacks * potency;
+                if (dmg > 0) {
+                    this.takeDamage(dmg, (typeof map !== 'undefined' ? map : null), (typeof player !== 'undefined' ? player : null));
+                    if (typeof spawnParticles !== 'undefined') spawnParticles(this.x, this.y, '#44ff88', 2, 3);
+                }
+            }
+            this.poisonTimer--;
+            if (this.poisonTimer <= 0) this.poisonStacks = 0;
+        }
+    }
+
     move(dx, dy, m) {
         // Daily challenge modifier: enemy movement speed
         if (window._dailyMods && window._dailyMods.enemySpeed) { dx *= window._dailyMods.enemySpeed; dy *= window._dailyMods.enemySpeed; }
@@ -20760,7 +20867,8 @@ class Enemy extends Entity {
             ctx.closePath();
             ctx.fill(); 
             ctx.globalAlpha = 1;
-            this.frozen--; 
+            // Countdown is centralized in the world sim loop (Entity.draw is
+            // overridden by every subclass, so ticking here froze them forever).
         }
         
         // Small HP bar for damaged enemies (legibility feedback). Mirrors the
@@ -21162,7 +21270,7 @@ class HealerEnemy extends Enemy {
             this.healTimer = 0;
             for (let i = 0; i < entities.length; i++) {
                 const e = entities[i];
-                if(e !== this && e.alive && e !== player && !(e instanceof HealerEnemy)) {
+                if(e !== this && e.alive && e !== player && !e.isB && !(e instanceof HealerEnemy)) {
                     const edx = e.x - this.x, edy = e.y - this.y;
                     if(edx * edx + edy * edy < CONFIG.HEALER_REGEN_RADIUS * CONFIG.HEALER_REGEN_RADIUS) {
                         e.hp = Math.min(e.maxHp, e.hp + CONFIG.HEALER_REGEN_RATE);
@@ -21824,53 +21932,42 @@ class Boss extends Enemy {
 
         const phaseCount = DifficultySystem.getBossPhaseCount();
         const hpRatio = this.hp / this.maxHp;
-
-        // Phase 5 (dungeon 20+)
-        if(phaseCount >= 5 && hpRatio <= 0.2 && this.phase < 5) {
-            this.phase = 5;
-            this.s = DifficultySystem.getBossSpeedMult(5);
-            addLog(' ' + this.name + (window.I18n ? I18n.t('log.bossPhase5') : ' - FASE 5!'));
-            ScreenEffects.onBossPhase3(true);
-            this.trySummonMinions(m);
-            this.trySummonMinions(m); // Double summon
-            this.hp = Math.min(this.maxHp, this.hp + Math.floor(this.maxHp * CONFIG.BOSS_PHASE_HEAL * (this._abyssalPhaseHeal || 1)));
-            this._phaseGuardFrames = 45;
-            spawnParticles(this.x, this.y, '#55ffaa', 12, 4);
-        // Phase 4 (dungeon 10+)
-        } else if(phaseCount >= 4 && hpRatio <= 0.3 && this.phase < 4) {
-            this.phase = 4;
-            this.s = DifficultySystem.getBossSpeedMult(4);
-            spawnParticles(this.x, this.y, '#ff4400', 35, 7);
-            addLog(' ' + this.name + (window.I18n ? I18n.t('log.bossPhase4') : ' - FASE 4!'));
-            shake = 25;
-            ScreenEffects.onBossPhase3(true);
-            this.trySummonMinions(m);
-            this.hp = Math.min(this.maxHp, this.hp + Math.floor(this.maxHp * CONFIG.BOSS_PHASE_HEAL * (this._abyssalPhaseHeal || 1)));
-            this._phaseGuardFrames = 45;
-            spawnParticles(this.x, this.y, '#55ffaa', 12, 4);
-        // Phase 3
-        } else if(hpRatio <= CONFIG.BOSS_PHASE_3_THRESHOLD && this.phase < 3) {
-            this.phase = 3;
-            this.s = CONFIG.BOSS_SPEED * CONFIG.BOSS_PHASE_3_SPEED_MULT;
-            spawnParticles(this.x, this.y, '#ff0000', 30, 6);
-            addLog(' ' + this.name + (window.I18n ? I18n.t('log.bossPhase3') : ' - FASE 3!'));
-            shake = 20;
-            ScreenEffects.onBossPhase3(true);
-            this.trySummonMinions(m);
-            this.hp = Math.min(this.maxHp, this.hp + Math.floor(this.maxHp * CONFIG.BOSS_PHASE_HEAL * (this._abyssalPhaseHeal || 1)));
-            this._phaseGuardFrames = 45;
-            spawnParticles(this.x, this.y, '#55ffaa', 12, 4);
-        } else if(hpRatio <= CONFIG.BOSS_PHASE_2_THRESHOLD && this.phase < 2) {
-            this.phase = 2;
-            this.s = CONFIG.BOSS_SPEED * CONFIG.BOSS_PHASE_2_SPEED_MULT;
-            spawnParticles(this.x, this.y, '#ff8800', 25, 5);
-            addLog(' ' + this.name + (window.I18n ? I18n.t('log.bossPhase2') : ' - FASE 2!'));
-            shake = 15;
-            ScreenEffects.onBossPhase3(false);
-            if (window.SND && SND.playBossPhase2) SND.playBossPhase2();
-            this.trySummonMinions(m);
-            // --- Phase 4: Spawn fire pillars on phase 2 ---
-            this._spawnFirePillars(p, m);
+        // Advance phase by phase, in order, at most as far as the HP allows. The
+        // old chain checked phase 5 -> 4 -> 3 -> 2, so on floor 10+ a boss that
+        // dropped from 100% to 30% never ran phase 3. Speed is always
+        // base * multiplier, so it rises with each phase instead of the
+        // phase-4/5 regression (they assigned the multiplier as an absolute).
+        const _phaseThresholds = [1.0, CONFIG.BOSS_PHASE_2_THRESHOLD, CONFIG.BOSS_PHASE_3_THRESHOLD, 0.3, 0.2];
+        while (this.phase < phaseCount && hpRatio <= _phaseThresholds[this.phase]) {
+            this.phase++;
+            const _np = this.phase;
+            this.s = CONFIG.BOSS_SPEED * DifficultySystem.getBossSpeedMult(_np);
+            if (_np === 2) {
+                spawnParticles(this.x, this.y, '#ff8800', 25, 5);
+                addLog(' ' + this.name + (window.I18n ? I18n.t('log.bossPhase2') : ' - FASE 2!'));
+                shake = 15;
+                ScreenEffects.onBossPhase3(false);
+                if (window.SND && SND.playBossPhase2) SND.playBossPhase2();
+                this.trySummonMinions(m);
+                this._spawnFirePillars(p, m);
+            } else if (_np === 3) {
+                spawnParticles(this.x, this.y, '#ff0000', 30, 6);
+                addLog(' ' + this.name + (window.I18n ? I18n.t('log.bossPhase3') : ' - FASE 3!'));
+                shake = 20;
+                ScreenEffects.onBossPhase3(true);
+                this.trySummonMinions(m);
+            } else if (_np === 4) {
+                spawnParticles(this.x, this.y, '#ff4400', 35, 7);
+                addLog(' ' + this.name + (window.I18n ? I18n.t('log.bossPhase4') : ' - FASE 4!'));
+                shake = 25;
+                ScreenEffects.onBossPhase3(true);
+                this.trySummonMinions(m);
+            } else if (_np === 5) {
+                addLog(' ' + this.name + (window.I18n ? I18n.t('log.bossPhase5') : ' - FASE 5!'));
+                ScreenEffects.onBossPhase3(true);
+                this.trySummonMinions(m);
+                this.trySummonMinions(m); // Double summon
+            }
             this.hp = Math.min(this.maxHp, this.hp + Math.floor(this.maxHp * CONFIG.BOSS_PHASE_HEAL * (this._abyssalPhaseHeal || 1)));
             this._phaseGuardFrames = 45;
             spawnParticles(this.x, this.y, '#55ffaa', 12, 4);
@@ -21960,7 +22057,7 @@ class Boss extends Enemy {
                 }
             } else if(dSq > 0 && dSq < chaseRangeSq) {
                 this._steer(p.x, p.y, m);
-                const dmgMult = (this.phase >= 3 ? CONFIG.BOSS_PHASE_3_DAMAGE_MULT : (this.phase === 2 ? CONFIG.BOSS_PHASE_2_DAMAGE_MULT : 1)) * (this._archDamageMult || 1);
+                const dmgMult = DifficultySystem.getBossDamageMult(this.phase) * (this._archDamageMult || 1);
                 const contactSq = (p.radius + this.radius) * (p.radius + this.radius);
                 if(dSq < contactSq) p.takeDamage(CONFIG.ENEMY_MELEE_DAMAGE * CONFIG.BOSS_CONTACT_DAMAGE_MULT * dmgMult, m);
             }
@@ -22241,7 +22338,7 @@ class Boss extends Enemy {
         }
 
         if(this.ft > 0) this.ft--;
-        if(this.frozen > 0) { ctx.globalAlpha = 0.5; ctx.fillStyle = '#33ccff'; ctx.fillRect(this.x-cx-this.radius-3, this.y-cy-this.radius-3, (this.radius+3)*2, (this.radius+3)*2); ctx.globalAlpha = 1; this.frozen--; }
+        if(this.frozen > 0) { ctx.globalAlpha = 0.5; ctx.fillStyle = '#33ccff'; ctx.fillRect(this.x-cx-this.radius-3, this.y-cy-this.radius-3, (this.radius+3)*2, (this.radius+3)*2); ctx.globalAlpha = 1; }
 
         // Draw arena hazards
         for(let i = 0; i < this.arenaHazards.length; i++) { this.arenaHazards[i].update(player); this.arenaHazards[i].draw(ctx, cx, cy); }
@@ -22997,18 +23094,11 @@ class Bullet {
                     // --- Phase 4: Rogue poison stacks ---
                     if(this.isP && this.applyPoison && e.alive) {
                         e.poisonStacks = Math.min(CONFIG.ROGUE_POISON_MAX_STACKS, (e.poisonStacks || 0) + 1);
+                        e.poisonTimer = CONFIG.ROGUE_POISON_DURATION;
                         spawnParticles(e.x, e.y, '#33ff88', 3, 2);
                     }
-                    // --- Phase 4: Knockback from player bullets ---
-                    if(this.isP && e.alive && !e.isB) {
-                        const bd = this.spd || 1;
-                        const kbMult = e.elite ? CONFIG.KNOCKBACK_HEAVY_MULT : 1.0;
-                        const kbx = (this.vx/bd) * CONFIG.KNOCKBACK_STRENGTH * kbMult;
-                        const kby = (this.vy/bd) * CONFIG.KNOCKBACK_STRENGTH * kbMult;
-                        if(!m.isWall(e.x + kbx, e.y + kby)) { e.x += kbx; e.y += kby; }
-                        else if(!m.isWall(e.x + kbx, e.y)) { e.x += kbx; }
-                        else if(!m.isWall(e.x, e.y + kby)) { e.y += kby; }
-                    }
+                    // (Knockback moved entirely into Entity.takeDamage's flinch:
+                    // this block used to push the body as well, doubling it.)
                     // --- Phase 4: Rogue crit-zoom on high damage ---
                     if(this.isP && source && source.type === 'rogue' && this.dmg >= CONFIG.ROGUE_CRIT_ZOOM_THRESHOLD) {
                         source.critZoomTimer = CONFIG.ROGUE_CRIT_ZOOM_DURATION;
@@ -23153,7 +23243,7 @@ class Player extends Entity {
         this.type=t; this.speed=stats.speed; this.scd=0; this.lr=baseLr; this.lvl=1; this.xp=0; this.kills=0;
         this.skillCooldown = 0; this.weaponLevel = 1; this.comboCount = 0; this.comboTimer = 0;
         this.mutations = {}; this.skills = {}; this.unlockedSkills = []; this.currency = 0;
-        this.damageBoost = 0; this.critChance = 0; this.damageMult = 1;
+        this.damageBoost = 0; this.critChance = 0; this.classCritChance = stats.critChance || 0; this.damageMult = 1;
         this.permanentDiscount = 0;
         this.critBoost = 0; this.shopDiscountTimer = 0; this.regenerating = false; this.greedBonus = false;
         this.heatMaxBonus = 0;
@@ -23298,10 +23388,15 @@ class Player extends Entity {
             if (typeof SND !== 'undefined') SND.play(400, 'square', 0.1, 0.1);
             this.dodgeCooldown = 60;
             this.dodgeAnim = 15;
+            // I-frames: a dash must beat an attack it visibly passes through,
+            // otherwise dodging feels like it "didn't work". Short window so the
+            // 60-frame cooldown still prices the safety.
+            this.invincibleTimer = Math.max(this.invincibleTimer || 0, CONFIG.DODGE_INVULN_FRAMES);
             if (this.type === 'warrior') this.parryWindow = CONFIG.WARRIOR_PARRY_FRAMES;
             Vibrate.trigger('dodge');
             this.stealth = 20;
             DamageNumbers.add(this.x, this.y, 'DASH!', 'heal');
+            if (typeof triggerCamZoom === 'function') triggerCamZoom(0.04, 12);
             if (typeof spawnParticles !== 'undefined') {
                 spawnParticles(this.x, this.y, '#55ffaa', 8, 4);
             }
@@ -26719,7 +26814,7 @@ window.SkillTreeUI = SkillTreeUI;
                 <div style="display:flex;gap:6px;margin-bottom:14px">
                     ${statChip('HP', p.maxHp, '#4ade80')}
                     ${statChip(_L('skills.damage', 'DANO'), dmg, '#f87171')}
-                    ${statChip(_L('skills.crit', 'CRÍTICO'), Math.round(Math.min(1, CONFIG.CRIT_CHANCE_BASE + (p.critChance || 0)) * 100) + '%', '#fbbf24')}
+                    ${statChip(_L('skills.crit', 'CRÍTICO'), Math.round(Math.min(1, CONFIG.CRIT_CHANCE_BASE + (p.critChance || 0) + (p.classCritChance || 0)) * 100) + '%', '#fbbf24')}
                     ${statChip(_L('skills.speed', 'VEL.'), p.speed.toFixed(1), '#60a5fa')}
                 </div>
                 <div style="display:flex;flex-direction:column;gap:10px">
@@ -27806,6 +27901,20 @@ window.GameBootstrap = {
         var hiddenPos = map.getSafeSpawn(400);
         var hiddenRarity = SeedSystem.random() < 0.4 ? 'epico' : 'raro';
         chests.push(new Chest(hiddenPos.x, hiddenPos.y, hiddenRarity));
+    },
+
+    // One placed chest per floor (two on floors divisible by 4), so deeper
+    // floors reward exploration instead of only dropping chests at run start.
+    // Seeded, so same seed + same floor -> same chests.
+    _spawnFloorChests() {
+        if (!map) return;
+        var count = (dungeonLevel % 4 === 0) ? 2 : 1;
+        var rarityPool = ['comum','comum','raro','raro','epico'];
+        for (var i = 0; i < count; i++) {
+            var pos = map.getSafeSpawn(200);
+            var rarity = rarityPool[Math.floor(SeedSystem.random() * rarityPool.length)];
+            chests.push(new Chest(pos.x, pos.y, rarity));
+        }
     }
 };
 
@@ -29786,7 +29895,7 @@ Input.init();
        current MUST stay in sync with the SW CACHE_VERSION suffix (sw.js).
     */
     window.UPDATE_LOG = {
-        current: 'v35',
+        current: 'v36',
         entries: [
             { v: 'v9', date: '2026-09-10', titleKey: 'update.entry.v9.title', title: 'v9 — Tutorial destravado',
               linesKeys: ['update.entry.v9.l1'],
@@ -29901,6 +30010,12 @@ Input.init();
               lines: ['O botão de esquiva/habilidade cobria o botão Missões em telas estreitas e engolia toques — agora fica acima da barra de utilidades.',
                       'Em 320px o botão do minimapa saía da tela e não podia ser tocado. A barra encolhe para caber.',
                       'O cartão de equipamento mostra a comparação com setas (▲/▼) para não se ler como um bônus extra, e as mensagens longas deixaram de ser cortadas nas bordas.'] },
+            { v: 'v36', date: '2026-10-06', titleKey: 'update.entry.v36.title', title: 'v36 - Combate, builds e chefes',
+              linesKeys: ['update.entry.v36.l1', 'update.entry.v36.l2', 'update.entry.v36.l3', 'update.entry.v36.l4'],
+              lines: ['Acertar agora tem impacto: a câmera reage a acertos, críticos e mortes (esse efeito estava desligado), e a esquiva concede invencibilidade breve.',
+                      'O veneno do Ladino finalmente causa dano contínuo e o raio em cadeia do Cajado Trovão e da relíquia Trovão passa a saltar entre inimigos. O crítico de classe (Ladino/Elfa) voltou a contar.',
+                      'Chefes: as fases acontecem na ordem certa (a fase 3 não é mais pulada), ficam progressivamente mais rápidas e não curam mais entre si; confrontos menos longos.',
+                      'Cada andar abre com mais enemigos e tem baú próprio, e a dificuldade dinâmica não pune mais quem joga bem.'] },
         ]
     };
 
@@ -30116,6 +30231,227 @@ Input.init();
             }
         }
     })();
+    </script>
+    <script>
+// === js/core/balance-tools.js ===
+// Authoring-time tools. They only READ existing systems (plus a couple of pure
+// formulas) and are inert unless a developer calls them from the console:
+//   KrevathornBalance.report()   -> analytic DPS/eHP/TTK table per class/floor
+//   KrevathornTests.runAll()     -> lightweight assertions on core invariants
+//   KrevathornDebug.floorReport()/playerPower()/spawnBoss()/validateSave()
+// Nothing here runs at boot, so it cannot affect gameplay, saves or perf.
+(function () {
+    'use strict';
+
+    function _num(v, fallback) { return (typeof v === 'number' && isFinite(v)) ? v : fallback; }
+
+    // Player sustained single-target DPS from base stats + weapon tier + crit.
+    // Fire interval is in frames, so 60/interval = attacks per second.
+    function classDps(cls, weaponLevel, damageMult, extraCrit) {
+        const s = (CONFIG.PLAYER && CONFIG.PLAYER[cls]) || {};
+        const dmg = _num(s.baseDmg, 0) * _num(weaponLevel, 1) * _num(damageMult, 1);
+        const interval = Math.max(1, _num(s.fireRate, 10));
+        const crit = Math.min(1, CONFIG.CRIT_CHANCE_BASE + _num(s.critChance, 0) + _num(extraCrit, 0));
+        const eCrit = 1 + crit * (CONFIG.CRIT_MULTIPLIER - 1);
+        return dmg * eCrit * (60 / interval);
+    }
+
+    function classEhp(cls) {
+        const s = (CONFIG.PLAYER && CONFIG.PLAYER[cls]) || {};
+        return _num(s.hp, 1);
+    }
+
+    function floorScale(floor, ddaMult, presetHpMult) {
+        const lvl = Math.min(floor, CONFIG.DIFFICULTY_MAX_SCALING_LEVEL);
+        return (1 + (lvl - 1) * CONFIG.DIFFICULTY_HP_PER_LEVEL) * _num(ddaMult, 1) * _num(presetHpMult, 1);
+    }
+
+    function bossHpAtFloor(floor, ddaMult, presetBossHpMult, blueprintHpMult) {
+        const lvl = Math.min(floor, CONFIG.DIFFICULTY_MAX_SCALING_LEVEL);
+        return CONFIG.BOSS_HP * (1 + (lvl - 1) * CONFIG.BOSS_HP_PER_LEVEL) * _num(ddaMult, 1) * _num(presetBossHpMult, 1) * _num(blueprintHpMult, 1);
+    }
+
+    window.KrevathornBalance = {
+        classDps,
+        classEhp,
+        floorScale,
+        bossHpAtFloor,
+        // Analytic snapshot. weaponLevel scales with floor (shops/forge), which
+        // is a rough proxy for how a player's damage keeps up with enemy HP.
+        snapshot(opts) {
+            opts = opts || {};
+            const classes = opts.classes || ['warrior', 'rogue', 'mage', 'elf'];
+            const preset = (opts.preset && DIFFICULTY_PRESETS[opts.preset]) || DIFFICULTY_PRESETS.normal;
+            const baseLevel = _num(opts.weaponLevel, 3);
+            const dmgMult = _num(opts.damageMult, 1);
+            const bossReduction = 1 - CONFIG.BOSS_DAMAGE_REDUCTION;
+            const rows = [];
+            for (let floor = 1; floor <= 10; floor++) {
+                const wl = baseLevel + Math.floor((floor - 1) / 3); // ~ +1 tier every 3 floors
+                const enemyHp = CONFIG.ENEMY_HP * floorScale(floor, 1, preset.hpMult);
+                const bossHp = bossHpAtFloor(floor, 1, preset.bossHpMult, 1);
+                const row = { floor, enemyHp: Math.round(enemyHp), bossHp: Math.round(bossHp) };
+                for (const c of classes) {
+                    const dps = classDps(c, wl, dmgMult, 0);
+                    row[c + 'Dps'] = Math.round(dps);
+                    row[c + 'KillTimeEnemy'] = +(enemyHp / Math.max(1, dps)).toFixed(2);
+                    row[c + 'BossTime'] = +(bossHp / Math.max(1, dps * bossReduction)).toFixed(1);
+                }
+                rows.push(row);
+            }
+            return { preset: opts.preset || 'normal', rows };
+        },
+        report(opts) {
+            const s = this.snapshot(opts);
+            let out = 'Krevathorn balance snapshot (' + s.preset + ')\n';
+            out += 'floor | enemyHP | bossHP | warrior DPS/killT/bossT | rogue | mage | elf\n';
+            for (const r of s.rows) {
+                out += [r.floor, r.enemyHp, r.bossHp,
+                    r.warriorDps + '/' + r.warriorKillTimeEnemy + '/' + r.warriorBossTime,
+                    r.rogueDps + '/' + r.rogueKillTimeEnemy + '/' + r.rogueBossTime,
+                    r.mageDps + '/' + r.mageKillTimeEnemy + '/' + r.mageBossTime,
+                    r.elfDps + '/' + r.elfKillTimeEnemy + '/' + r.elfBossTime].join(' | ');
+                out += '\n';
+            }
+            return out;
+        }
+    };
+
+    // ---------------------------------------------------------------------
+    window.KrevathornDebug = {
+        playerPower() {
+            if (typeof player === 'undefined' || !player) return null;
+            const cls = player.type;
+            const wl = player.weaponLevel || 1;
+            return {
+                cls, level: player.lvl,
+                critChance: Math.min(1, CONFIG.CRIT_CHANCE_BASE + (player.critChance || 0) + (player.classCritChance || 0)),
+                damageMult: player.damageMult || 1,
+                weaponLevel: wl,
+                dps: Math.round(classDps(cls, wl, player.damageMult || 1, player.critChance || 0)),
+                ehp: (player.maxHp || 0) + (player.shield || 0),
+                overheated: !!player.overheated
+            };
+        },
+        floorReport() {
+            const enemies = (typeof entities !== 'undefined' && entities) ? entities.filter(function (e) { return e !== player && e.alive && !e.isP; }) : [];
+            return {
+                gameState, gameMode, dungeonLevel,
+                kills: (typeof dungeonKills !== 'undefined') ? dungeonKills : 0,
+                killTarget: (typeof dungeonKillTarget !== 'undefined') ? dungeonKillTarget : 0,
+                enemiesAlive: enemies.length,
+                bossActive: !!bossActive,
+                dda: (typeof DifficultySystem !== 'undefined') ? DifficultySystem.getDDAInfo() : null,
+                day: new Date().toISOString().slice(0, 10)
+            };
+        },
+        spawnBoss() {
+            if (typeof map === 'undefined' || !map || typeof player === 'undefined' || !player) return false;
+            try {
+                const boss = new Boss(player.x + 120, player.y);
+                if (gameMode === 'dungeon' || gameMode === 'abyss') {
+                    const idx = (typeof BiomeSystem !== 'undefined' && BiomeSystem.getBossBlueprintIndex) ? BiomeSystem.getBossBlueprintIndex(dungeonLevel, gameMode) : 0;
+                    boss.applyFloorBlueprint(idx);
+                }
+                entities.push(boss); bossActive = true; shake = 20;
+                return true;
+            } catch (e) { console.error('[KrevathornDebug.spawnBoss]', e); return false; }
+        },
+        validateSave() {
+            try {
+                if (typeof SaveSystem === 'undefined' || !SaveSystem.hasSave || !SaveSystem.hasSave()) return { ok: true, empty: true };
+                const loaded = SaveSystem.load();
+                const p = loaded && loaded.player;
+                const ok = !!(p && typeof p.hp === 'number' && isFinite(p.hp) && typeof p.maxHp === 'number' && p.maxHp > 0);
+                return { ok: ok, hp: p && p.hp, maxHp: p && p.maxHp, level: loaded && loaded.dungeonLevel };
+            } catch (e) { return { ok: false, error: String(e && e.message || e) }; }
+        },
+        // Rough frame profiler: samples rAF deltas for `ms` and returns p50/p95.
+        profile(ms) {
+            return new Promise(function (resolve) {
+                const samples = []; let last = performance.now(); const t0 = last;
+                function step() {
+                    const now = performance.now(); samples.push(now - last); last = now;
+                    if (now - t0 < _num(ms, 1500)) requestAnimationFrame(step);
+                    else {
+                        samples.sort(function (a, b) { return a - b; });
+                        const pick = function (q) { return +samples[Math.min(samples.length - 1, Math.floor(samples.length * q))].toFixed(2); };
+                        resolve({ frames: samples.length, p50: pick(0.5), p95: pick(0.95), max: +samples[samples.length - 1].toFixed(2) });
+                    }
+                }
+                requestAnimationFrame(step);
+            });
+        }
+    };
+
+    // ---------------------------------------------------------------------
+    window.KrevathornTests = {
+        _results: [],
+        _assert(name, cond, detail) { this._results.push({ name: name, pass: !!cond, detail: detail || '' }); },
+        runAll() {
+            this._results = [];
+            const A = this._assert.bind(this);
+
+            // 1. Seeded RNG is reproducible.
+            try {
+                const first = (function () { SeedSystem.setSeedString('krev-tests'); return [SeedSystem.random(), SeedSystem.random(), SeedSystem.random()]; })();
+                const second = (function () { SeedSystem.setSeedString('krev-tests'); return [SeedSystem.random(), SeedSystem.random(), SeedSystem.random()]; })();
+                A('seed determinism', first.join('|') === second.join('|'), first.join(','));
+            } catch (e) { A('seed determinism', false, String(e)); }
+
+            // 2. Enemy HP scaling is monotonic with floor.
+            try {
+                DifficultySystem.dungeonLevel = 1; const h1 = DifficultySystem.getEnemyHpMult();
+                DifficultySystem.dungeonLevel = 6; const h6 = DifficultySystem.getEnemyHpMult();
+                A('hp scaling monotonic', h6 > h1, h1.toFixed(2) + ' -> ' + h6.toFixed(2));
+                DifficultySystem.dungeonLevel = 1;
+            } catch (e) { A('hp scaling monotonic', false, String(e)); }
+
+            // 3. DDA never exceeds 1.0 (must not punish a strong player).
+            try {
+                const saved = DifficultySystem.ddaMultiplier;
+                DifficultySystem.ddaMultiplier = 1.0;
+                const savedFrame = DifficultySystem.lastAdjustmentFrame;
+                DifficultySystem.killHistory = [];
+                for (let i = 0; i < 400; i++) DifficultySystem.killHistory.push(gameTime - i);
+                DifficultySystem.lastAdjustmentFrame = gameTime - CONFIG.DDA_ADJUSTMENT_COOLDOWN - 1;
+                DifficultySystem.updateDDA();
+                A('dda capped at 1.0', DifficultySystem.ddaMultiplier <= 1.0001, String(DifficultySystem.ddaMultiplier));
+                DifficultySystem.ddaMultiplier = saved; DifficultySystem.lastAdjustmentFrame = savedFrame;
+            } catch (e) { A('dda capped at 1.0', false, String(e)); }
+
+            // 4. Class crit identity is applied to the player, not just displayed.
+            try {
+                const p = new Player(0, 0, 'rogue');
+                A('rogue class crit', Math.abs((p.classCritChance || 0) - CONFIG.PLAYER.rogue.critChance) < 1e-9, String(p.classCritChance));
+            } catch (e) { A('rogue class crit', false, String(e)); }
+
+            // 5. Poison DoT hook exists (was referenced but undefined).
+            try {
+                A('updatePoison defined', typeof Entity.prototype.updatePoison === 'function', '');
+            } catch (e) { A('updatePoison defined', false, String(e)); }
+
+            // 6. Direct damage reduces HP by exactly the amount (no crit).
+            try {
+                const e = new Entity(0, 0, 10, 100, '#fff');
+                const savedRand = SeedSystem.random; SeedSystem.random = function () { return 1; }; // never crit
+                e.takeDamage(10, null, { critChance: 0, classCritChance: 0, damageMult: 1, damageBoost: 0 });
+                SeedSystem.random = savedRand;
+                A('flat damage', e.hp === 90, String(e.hp));
+            } catch (e) { A('flat damage', false, String(e)); }
+
+            // 7. Boss phase thresholds are ordered (no skipped phase window).
+            try {
+                const t = [CONFIG.BOSS_PHASE_2_THRESHOLD, CONFIG.BOSS_PHASE_3_THRESHOLD, 0.3, 0.2];
+                let ordered = true; for (let i = 1; i < t.length; i++) if (t[i] >= t[i - 1]) ordered = false;
+                A('boss phase thresholds ordered', ordered, t.join(','));
+            } catch (e) { A('boss phase thresholds ordered', false, String(e)); }
+
+            const passed = this._results.filter(function (r) { return r.pass; }).length;
+            return { passed: passed, total: this._results.length, results: this._results.slice() };
+        }
+    };
+})();
     </script>
 </body>
 </html>
