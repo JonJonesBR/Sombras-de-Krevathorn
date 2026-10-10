@@ -3812,6 +3812,8 @@ const I18n = {
             'update.entry.v38.l1': 'Heróis, inimigos comuns, elites, suporte e chefes foram redesenhados em 24x24: 189 desenhos e 26 paletas novas, com contorno escuro e leitura de silhueta no chão.',
             'update.entry.v38.l2': 'Cada família agora tem as 7 animações de verdade (incluindo aparar, conjurar e passos de caminhada 3 e 4), que antes caíam no desenho genérico do herói.',
             'update.entry.v38.l3': 'Só a arte mudou: vida, dano, velocidade e saves continuam iguais.',
+            'update.entry.v39.title': 'v39 — Fim do boot duplo',
+            'update.entry.v39.l1': 'Correção: ao entrar no jogo depois de uma atualização, a tela carregava duas vezes — a segunda alguns segundos depois. Agora o jogo só recarrega quando o que está na tela realmente está desatualizado.',
             'update.entry.v32.l1': 'O som que ficava preso na tela de fim de piso (ao escolher o que comprar antes de descer) parou de travar.',
             'update.entry.v32.l2': 'Morrer no mesmo instante em que o chefe morre não dá mais "continuar" e "próximo piso" ao mesmo tempo: a morte tem prioridade.',
             'update.entry.v31.l1': 'O motor de som foi refeito: bus mestre com limitador (nada mais estoura), reverb procedural e envelope em cada som — o estalo entre as notas acabou.',
@@ -5205,6 +5207,8 @@ const I18n = {
             'update.entry.v38.l1': 'Heroes, common enemies, elites, support and bosses were redrawn at 24x24: 189 drawings and 26 new palettes, with dark outlines and readable silhouettes on the floor.',
             'update.entry.v38.l2': 'Every family now has all 7 animations for real (including parry, casting and walk steps 3 and 4), which previously fell back to the generic hero drawing.',
             'update.entry.v38.l3': 'Only the art changed: health, damage, speed and saves stay the same.',
+            'update.entry.v39.title': 'v39 — No more double boot',
+            'update.entry.v39.l1': 'Fix: after an update, entering the game loaded twice — the second time a few seconds later. The game now reloads only when what is on screen is genuinely outdated.',
             'update.entry.v32.l1': 'The sound that got stuck on the floor-complete screen (while choosing what to buy before descending) no longer hangs.',
             'update.entry.v32.l2': 'Dying at the same moment the boss dies no longer gives you both "continue" and the next floor: death takes priority.',
             'update.entry.v31.l1': 'The sound engine was rebuilt: a master bus with a limiter (nothing clips any more), procedural reverb and an envelope on every sound — the click between notes is gone.',
@@ -6598,6 +6602,8 @@ const I18n = {
             'update.entry.v38.l1': 'Héroes, enemigos comunes, élites, soporte y jefes fueron rediseñados en 24x24: 189 dibujos y 26 paletas nuevas, con contorno oscuro y silueta legible sobre el suelo.',
             'update.entry.v38.l2': 'Cada familia ahora tiene las 7 animaciones de verdad (incluidos parada, conjuro y pasos de caminata 3 y 4), que antes caían en el dibujo genérico del héroe.',
             'update.entry.v38.l3': 'Solo cambió el arte: vida, daño, velocidad y partidas guardadas siguen igual.',
+            'update.entry.v39.title': 'v39 — Fin del arranque doble',
+            'update.entry.v39.l1': 'Corrección: tras una actualización, al entrar al juego la pantalla cargaba dos veces — la segunda unos segundos después. Ahora el juego solo recarga cuando lo que está en pantalla realmente está desactualizado.',
             'update.entry.v32.l1': 'El sonido que se quedaba pegado en la pantalla de fin de piso (al elegir qué comprar antes de bajar) ya no se traba.',
             'update.entry.v32.l2': 'Morir en el mismo instante en que muere el jefe ya no da "continuar" y "siguiente piso" a la vez: la muerte tiene prioridad.',
             'update.entry.v31.l1': 'El motor de sonido fue rehecho: bus maestro con limitador (ya nada satura), reverb procedural y envolvente en cada sonido — el chasquido entre notas se acabó.',
@@ -32810,7 +32816,7 @@ Input.init();
        current MUST stay in sync with the SW CACHE_VERSION suffix (sw.js).
     */
     window.UPDATE_LOG = {
-        current: 'v38',
+        current: 'v39',
         entries: [
             { v: 'v9', date: '2026-09-10', titleKey: 'update.entry.v9.title', title: 'v9 — Tutorial destravado',
               linesKeys: ['update.entry.v9.l1'],
@@ -32941,6 +32947,9 @@ Input.init();
               lines: ['Heróis, inimigos comuns, elites, suporte e chefes foram redesenhados em 24x24: 189 desenhos e 26 paletas novas, com contorno escuro e leitura de silhueta no chão.',
                       'Cada família agora tem as 7 animações de verdade (incluindo aparar, conjurar e passos de caminhada 3 e 4), que antes caíam no desenho genérico do herói.',
                       'Só a arte mudou: vida, dano, velocidade e saves continuam iguais.'] },
+            { v: 'v39', date: '2026-10-09', titleKey: 'update.entry.v39.title', title: 'v39 — Fim do boot duplo',
+              linesKeys: ['update.entry.v39.l1'],
+              lines: ['Correção: ao entrar no jogo depois de uma atualização, a tela carregava duas vezes — a segunda alguns segundos depois. Agora o jogo só recarrega quando o que está na tela realmente está desatualizado.'] },
         ]
     };
 
@@ -33032,9 +33041,11 @@ Input.init();
     // without offline caching).
     // updateViaCache:'none' makes the browser re-validate sw.js from the
     // network on every load, so a new release's worker is picked up fast.
-    // When a new worker takes over (skipWaiting + clients.claim), we reload
-    // the page once so the freshly-activated network-first worker serves the
-    // new HTML immediately (guarded to avoid reload loops, session-scoped).
+    // When a new worker takes over (skipWaiting + clients.claim) the page is
+    // NOT reloaded blindly: navigation is network-first, so the HTML on
+    // screen is already current. The controllerchange handler reloads only
+    // when the page is behind the deployed worker (offline-cached page),
+    // at most once per session (see below).
     // We also sweep leftover app caches from the page side (saves live in
     // localStorage and are never touched).
     if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.protocol === 'http:')) {
@@ -33062,12 +33073,33 @@ Input.init();
                     console.warn('[PWA] Service worker registration failed:', err);
                 });
             navigator.serviceWorker.addEventListener('controllerchange', function() {
-                var refreshKey = 'krev-sw-refresh-version';
-                var refreshVersion = window.UPDATE_LOG && window.UPDATE_LOG.current;
-                if (hadController && refreshVersion && sessionStorage.getItem(refreshKey) !== refreshVersion) {
-                    sessionStorage.setItem(refreshKey, refreshVersion);
-                    location.reload();
-                }
+                // Recarrega SOMENTE quando a pagina esta realmente atrasada.
+                // A navegacao e network-first, entao numa transicao de release
+                // o HTML que a pagina mostra ja e o novo: recarregar aqui seria
+                // so um segundo boot (o sintoma era "carrega 2 vezes").
+                // Comparamos a versao do worker publicado (lida de sw.js sem
+                // cache) com a versao que a pagina declara. Se o worker for
+                // mais novo — caso de pagina vinda do cache offline — recarrega
+                // no maximo uma vez por sessao.
+                var refreshKey = 'krev-sw-refresh-done';
+                var versaoPagina = window.UPDATE_LOG && window.UPDATE_LOG.current;
+                if (!hadController || !versaoPagina || sessionStorage.getItem(refreshKey)) return;
+                var num = function(v) { var m = /v(\d+)/i.exec(String(v)); return m ? parseInt(m[1], 10) : 0; };
+                var nPagina = num(versaoPagina);
+                // Query propria: o handler do worker serve sw.js por
+                // stale-while-revalidate; uma URL nova fura o cache e cai na
+                // rede. Sem isso a comparacao podia ler uma copia velha.
+                fetch('./sw.js?v=probe-' + Date.now(), { cache: 'no-store' })
+                    .then(function(r) { return r.ok ? r.text() : Promise.reject(new Error('sw ' + r.status)); })
+                    .then(function(txt) {
+                        var m = /CACHE_VERSION\s*=\s*['"]krevathorn-v(\d+)['"]/i.exec(txt);
+                        if (!m) return;
+                        if (parseInt(m[1], 10) > nPagina) {
+                            sessionStorage.setItem(refreshKey, String(nPagina));
+                            location.reload();
+                        }
+                    })
+                    .catch(function() {});
             });
         });
     }
