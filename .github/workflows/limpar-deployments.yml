@@ -1,12 +1,12 @@
 # Mantém só o deployment mais recente do ambiente github-pages.
-# Roda quando o build do Pages termina (e sob demanda). O deployment mais
-# recente nunca é tocado: é o ponteiro ativo do Pages.
+# Roda a cada push na main: espera o Pages criar o deployment do commit e então
+# desativa/apaga todos os outros. O mais recente nunca é tocado (é o ponteiro
+# ativo do Pages). Também pode ser rodado sob demanda.
 name: Limpar deployments antigos
 
 on:
-  workflow_run:
-    workflows: ["pages build and deployment"]
-    types: [completed]
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -20,16 +20,27 @@ concurrency:
 jobs:
   limpar:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Apagar deployments antigos do github-pages
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
-          # mais recente primeiro; pula o primeiro (ativo) e remove o resto
-          ids=$(gh api "repos/$REPO/deployments?environment=github-pages&per_page=100" \
-                  --jq 'sort_by(.created_at) | reverse | .[1:] | .[].id')
+          list() { gh api "repos/$REPO/deployments?environment=github-pages&per_page=100"; }
+          # em push, aguarda o deployment deste commit (o build do Pages leva ~1 min)
+          if [ "${GITHUB_EVENT_NAME}" = "push" ]; then
+            for i in $(seq 1 40); do
+              n=$(list | jq --arg sha "$SHA" '[.[] | select(.sha == $sha)] | length')
+              [ "$n" -ge 1 ] && break
+              echo "Aguardando deployment de $SHA ($i/40)..."; sleep 15
+            done
+            [ "$n" -ge 1 ] || { echo "Deployment do commit não apareceu; nada removido."; exit 0; }
+          fi
+          # mais recente primeiro; mantém o primeiro e remove o resto
+          ids=$(list | jq -r 'sort_by(.created_at) | reverse | .[1:] | .[].id')
           if [ -z "$ids" ]; then echo "Nada a limpar."; exit 0; fi
           for id in $ids; do
             echo "Removendo deployment $id"
@@ -37,4 +48,4 @@ jobs:
             gh api -X DELETE "repos/$REPO/deployments/$id" >/dev/null
           done
           echo "Restante:"
-          gh api "repos/$REPO/deployments?environment=github-pages" --jq '.[] | "\(.id) \(.sha[0:7])"'
+          list | jq -r '.[] | "\(.id) \(.sha[0:7])"'
