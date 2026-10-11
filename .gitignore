@@ -21,7 +21,10 @@ tests/
 package.json
 package-lock.json
 playwright.config.js
-.github/
+.github/*
+!.github/workflows/
+.github/workflows/*
+!.github/workflows/limpar-deployments.yml
 
 # Exportação/pasta do Google Drive e lixo de ferramentas
 graficos_melhores/
