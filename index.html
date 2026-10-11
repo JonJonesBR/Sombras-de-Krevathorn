@@ -3814,6 +3814,8 @@ const I18n = {
             'update.entry.v38.l3': 'Só a arte mudou: vida, dano, velocidade e saves continuam iguais.',
             'update.entry.v39.title': 'v39 — Fim do boot duplo',
             'update.entry.v39.l1': 'Correção: ao entrar no jogo depois de uma atualização, a tela carregava duas vezes — a segunda alguns segundos depois. Agora o jogo só recarrega quando o que está na tela realmente está desatualizado.',
+            'update.entry.v40.title': 'v40 — Mapas mais limpos',
+            'update.entry.v40.l1': 'Visual: as texturas de chão e parede foram refeitas — alvenaria contínua nas paredes, piso mais limpo e detalhes de cada bioma menos repetitivos. Só a arte mudou.',
             'update.entry.v32.l1': 'O som que ficava preso na tela de fim de piso (ao escolher o que comprar antes de descer) parou de travar.',
             'update.entry.v32.l2': 'Morrer no mesmo instante em que o chefe morre não dá mais "continuar" e "próximo piso" ao mesmo tempo: a morte tem prioridade.',
             'update.entry.v31.l1': 'O motor de som foi refeito: bus mestre com limitador (nada mais estoura), reverb procedural e envelope em cada som — o estalo entre as notas acabou.',
@@ -5209,6 +5211,8 @@ const I18n = {
             'update.entry.v38.l3': 'Only the art changed: health, damage, speed and saves stay the same.',
             'update.entry.v39.title': 'v39 — No more double boot',
             'update.entry.v39.l1': 'Fix: after an update, entering the game loaded twice — the second time a few seconds later. The game now reloads only when what is on screen is genuinely outdated.',
+            'update.entry.v40.title': 'v40 — Cleaner maps',
+            'update.entry.v40.l1': 'Visual: floor and wall textures were redone — continuous masonry on walls, a cleaner floor and less repetitive biome details. Only the art changed.',
             'update.entry.v32.l1': 'The sound that got stuck on the floor-complete screen (while choosing what to buy before descending) no longer hangs.',
             'update.entry.v32.l2': 'Dying at the same moment the boss dies no longer gives you both "continue" and the next floor: death takes priority.',
             'update.entry.v31.l1': 'The sound engine was rebuilt: a master bus with a limiter (nothing clips any more), procedural reverb and an envelope on every sound — the click between notes is gone.',
@@ -6604,6 +6608,8 @@ const I18n = {
             'update.entry.v38.l3': 'Solo cambió el arte: vida, daño, velocidad y partidas guardadas siguen igual.',
             'update.entry.v39.title': 'v39 — Fin del arranque doble',
             'update.entry.v39.l1': 'Corrección: tras una actualización, al entrar al juego la pantalla cargaba dos veces — la segunda unos segundos después. Ahora el juego solo recarga cuando lo que está en pantalla realmente está desactualizado.',
+            'update.entry.v40.title': 'v40 — Mapas más limpios',
+            'update.entry.v40.l1': 'Visual: las texturas de suelo y pared se rehicieron — mampostería continua en las paredes, suelo más limpio y detalles de cada bioma menos repetitivos. Solo cambió el arte.',
             'update.entry.v32.l1': 'El sonido que se quedaba pegado en la pantalla de fin de piso (al elegir qué comprar antes de bajar) ya no se traba.',
             'update.entry.v32.l2': 'Morir en el mismo instante en que muere el jefe ya no da "continuar" y "siguiente piso" a la vez: la muerte tiene prioridad.',
             'update.entry.v31.l1': 'El motor de sonido fue rehecho: bus maestro con limitador (ya nada satura), reverb procedural y envolvente en cada sonido — el chasquido entre notas se acabó.',
@@ -21141,20 +21147,7 @@ const BiomeSystem = {
 
         ctx.save();
         if (this.currentBiome === 'dungeon') {
-            // Tijolos de pedra encaixados + trincas ocasionais
-            ctx.globalAlpha = 0.22;
-            ctx.strokeStyle = 'rgba(0,0,0,0.5)';
-            ctx.lineWidth = 1;
-            ctx.strokeRect(px + 4, py + 4, ts - 8, ts - 8);
-            ctx.beginPath();
-            ctx.moveTo(px + ts * 0.5, py + (ty % 2 === 0 ? 0 : 4));
-            ctx.lineTo(px + ts * 0.5, py + ts * 0.5);
-            ctx.moveTo(px + ts * ((h % 7) * 0.1), py + ts * 0.5);
-            ctx.lineTo(px + ts * ((h % 7) * 0.1), py + ts - (ty % 2 === 0 ? 4 : 0));
-            ctx.stroke();
-            ctx.globalAlpha = 0.1;
-            ctx.fillStyle = '#64646e';
-            ctx.fillRect(px + ts * 0.5 - 1, py + ts * 0.5 - 1, 2, 2);
+            // A alvenaria vem do tile base; aqui só trincas ocasionais
             if (h % 100 < 12) {
                 ctx.globalAlpha = 0.4;
                 ctx.strokeStyle = 'rgba(0,0,0,0.6)';
@@ -21166,7 +21159,8 @@ const BiomeSystem = {
                 ctx.stroke();
             }
         } else if (this.currentBiome === 'lavaCave') {
-            // Glowing cracks in walls with pulsing animation
+            // Fendas brilhantes só em ~28% das paredes (antes: todas — ruído)
+            if (h % 100 >= 28) { ctx.restore(); return; }
             const glow = 0.25 + Math.sin(gameTime * 0.04 + px * 0.08 + py * 0.05) * 0.15;
             ctx.globalAlpha = glow;
             ctx.fillStyle = '#ff4400';
@@ -21185,7 +21179,8 @@ const BiomeSystem = {
             ctx.quadraticCurveTo(px + ts * 0.5, py + ts * 0.5, px + ts * 0.95, py + ts * ((h >> 9) % 60) * 0.008);
             ctx.stroke();
         } else if (this.currentBiome === 'crypt') {
-            // Glowing rune symbols on crypt walls
+            // Runas só em ~20% das paredes e teias em ~12% (antes: toda parede)
+            if (h % 100 >= 20 && ((h >> 5) % 100) >= 12) { ctx.restore(); return; }
             const runeAlpha = 0.15 + Math.sin(gameTime * 0.03 + px * 0.1) * 0.1;
             ctx.globalAlpha = runeAlpha;
             ctx.fillStyle = '#8888cc';
@@ -21207,7 +21202,7 @@ const BiomeSystem = {
             // Occasional cobweb draped from an upper corner (~35% of wall
             // tiles): 3 faint concentric quarter-arcs (r 10-16), with a 1px
             // spider dot on ~30% of the webs. Subtle vs the glowing runes.
-            if (((h >> 5) % 100) < 35) {
+            if (((h >> 5) % 100) < 12) {
                 const webRight = ((h >> 13) & 1) === 1;
                 const wxc = webRight ? px + ts - 1 : px + 1;
                 const wyc = py + 1;
@@ -21234,7 +21229,8 @@ const BiomeSystem = {
                 }
             }
         } else if (this.currentBiome === 'forest') {
-            // Vines hanging from walls with more detail
+            // Trepadeiras só em ~30% das paredes (antes: todas — ruído)
+            if (h % 100 >= 30) { ctx.restore(); return; }
             ctx.globalAlpha = 0.35;
             ctx.strokeStyle = '#2a6a2a';
             ctx.lineWidth = 2;
@@ -21272,14 +21268,7 @@ const BiomeSystem = {
 
         ctx.save();
         if (this.currentBiome === 'dungeon') {
-            // Juntas de lajes + musgo/trinca ocasional
-            ctx.globalAlpha = 0.13;
-            ctx.strokeStyle = 'rgba(0,0,0,0.7)';
-            ctx.lineWidth = 1;
-            ctx.strokeRect(px + 3, py + 3, ts - 6, ts - 6);
-            ctx.globalAlpha = 0.2;
-            ctx.fillStyle = 'rgba(255,255,255,0.07)';
-            ctx.fillRect(px + ts * 0.5 - 1, py + ts * 0.5 - 1, 2, 2);
+            // Juntas das lajes vêm do tile base; aqui só musgo/trinca ocasional
             if (h % 100 < 9) {
                 ctx.globalAlpha = 0.35;
                 ctx.strokeStyle = 'rgba(0,0,0,0.65)';
@@ -21296,7 +21285,8 @@ const BiomeSystem = {
                 ctx.fill();
             }
         } else if (this.currentBiome === 'lavaCave') {
-            // Lava glow spots with ember particles
+            // Brilho/veias de magma só em ~12% dos pisos (antes: todos — ruído)
+            if (h % 100 >= 12) { ctx.restore(); return; }
             const glow = 0.2 + Math.sin(gameTime * 0.06 + px * 0.05 + py * 0.04) * 0.12;
             ctx.globalAlpha = glow;
             ctx.fillStyle = '#ff6600';
@@ -21318,36 +21308,24 @@ const BiomeSystem = {
             ctx.stroke();
             ctx.shadowBlur = 0;
         } else if (this.currentBiome === 'crypt') {
-            // Cobblestone paralelepípedo joints: dark 24px cell seams at the
-            // tile mid AND far edge, so adjacent 48px tiles tile up into a
-            // uniform small-block grid. Drawn after the base floor, before
-            // any decor — crypt only.
-            ctx.globalAlpha = 1;
-            ctx.strokeStyle = 'rgba(0,0,0,0.12)';
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.moveTo(px + ts * 0.5, py); ctx.lineTo(px + ts * 0.5, py + ts);
-            ctx.moveTo(px + ts - 0.5, py); ctx.lineTo(px + ts - 0.5, py + ts);
-            ctx.moveTo(px, py + ts * 0.5); ctx.lineTo(px + ts, py + ts * 0.5);
-            ctx.moveTo(px, py + ts - 0.5); ctx.lineTo(px + ts, py + ts - 0.5);
-            ctx.stroke();
-
-            // Bone fragments and skull patterns on floor
-            ctx.globalAlpha = 0.12;
-            ctx.fillStyle = '#666688';
-            ctx.fillRect(px + ts * 0.3, py + ts * 0.35, ts * 0.15, ts * 0.04);
-            ctx.fillRect(px + ts * 0.6, py + ts * 0.5, ts * 0.12, ts * 0.03);
-            // Skull hint
-            ctx.fillStyle = '#777799';
-            ctx.beginPath();
-            ctx.arc(px + ts * 0.7, py + ts * 0.7, ts * 0.06, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillStyle = 'rgba(0,0,0,0.2)';
-            ctx.beginPath();
-            ctx.arc(px + ts * 0.68, py + ts * 0.69, 1.5, 0, Math.PI * 2);
-            ctx.arc(px + ts * 0.72, py + ts * 0.69, 1.5, 0, Math.PI * 2);
-            ctx.fill();
-            if (h % 100 < 7) {
+            // As juntas vêm do tile base. Ossos/caveira só em ~5% dos pisos
+            // (antes: em TODO tile, formando um padrão repetitivo confuso).
+            if (h % 100 < 5) {
+                ctx.globalAlpha = 0.14;
+                ctx.fillStyle = '#666688';
+                ctx.fillRect(px + ts * 0.3, py + ts * 0.35, ts * 0.15, ts * 0.04);
+                ctx.fillRect(px + ts * 0.6, py + ts * 0.5, ts * 0.12, ts * 0.03);
+                ctx.fillStyle = '#777799';
+                ctx.beginPath();
+                ctx.arc(px + ts * 0.7, py + ts * 0.7, ts * 0.06, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = 'rgba(0,0,0,0.2)';
+                ctx.beginPath();
+                ctx.arc(px + ts * 0.68, py + ts * 0.69, 1.5, 0, Math.PI * 2);
+                ctx.arc(px + ts * 0.72, py + ts * 0.69, 1.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            if (h % 100 >= 5 && h % 100 < 11) {
                 ctx.globalAlpha = 0.15;
                 ctx.fillStyle = '#8888aa';
                 for (let b = 0; b < 5; b++) {
@@ -21358,8 +21336,8 @@ const BiomeSystem = {
             }
         } else if (this.currentBiome === 'forest') {
             // Leaf litter with variety
-            ctx.globalAlpha = 0.2;
-            for (let i = 0; i < 4; i++) {
+            ctx.globalAlpha = 0.16;
+            for (let i = 0; i < 2; i++) {
                 const lx = px + ((i * 17 + tx * 5) % ts);
                 const ly = py + ((i * 23 + ty * 7) % ts);
                 const size = i % 2 === 0 ? 2 : 1.5;
@@ -21369,7 +21347,7 @@ const BiomeSystem = {
                 ctx.fill();
             }
             // Occasional flowers
-            if (tx % 3 === 0 && ty % 2 === 0) {
+            if (h % 100 >= 40 && h % 100 < 46) {
                 ctx.globalAlpha = 0.1;
                 ctx.fillStyle = '#6644aa';
                 ctx.beginPath();
@@ -22736,226 +22714,119 @@ class Map {
                 let px=x*ts, py=y*ts;
                 const h1 = (x * 374761393 + y * 668265263) & 0xFFFF;
                 if(this.tiles[x][y].t === 1) {
-                    // Wall tile with layered stone texture (base + tone + grain)
+                    // Wall tile: running-bond masonry (2 courses per tile, joints
+                    // aligned across neighbours so it reads as ONE wall, not a
+                    // grid of boxes), top-lit, with edge definition only where
+                    // the wall actually borders open floor. Baked once.
                     bctx.fillStyle=wallColor;
                     bctx.fillRect(px,py,ts,ts);
-                    
-                    // Full-tile value wash FIRST (dark ~9% @0.06, light ~5%),
-                    // so the per-tile tone variation, grime streaks and brick
-                    // detail that follow always paint OVER it and are never
-                    // flattened. Baked once into the tile buffer — zero cost.
-                    if ((h1 % 100) < 9) {
-                        bctx.fillStyle = 'rgba(0,0,0,0.06)';
-                        bctx.fillRect(px, py, ts, ts);
-                    } else if ((h1 % 100) < 14) {
-                        bctx.fillStyle = 'rgba(255,255,255,0.03)';
-                        bctx.fillRect(px, py, ts, ts);
-                    }
 
-                    // Per-tile tone variation (hash) — breaks the flat wall look
-                    const wtone = (h1 % 14) - 7;
-                    if (wtone > 0) { bctx.fillStyle = 'rgba(255,255,255,' + (wtone * 0.006) + ')'; bctx.fillRect(px, py, ts, ts); }
-                    else if (wtone < 0) { bctx.fillStyle = 'rgba(0,0,0,' + (-wtone * 0.006) + ')'; bctx.fillRect(px, py, ts, ts); }
+                    const wtone = (h1 % 7) - 3;
+                    if (wtone > 0) { bctx.fillStyle = 'rgba(255,255,255,' + (wtone * 0.008) + ')'; bctx.fillRect(px, py, ts, ts); }
+                    else if (wtone < 0) { bctx.fillStyle = 'rgba(0,0,0,' + (-wtone * 0.010) + ')'; bctx.fillRect(px, py, ts, ts); }
 
-                    // Mottled stone grain: tiny deterministic speckles
-                    let hq = h1;
-                    for (let g = 0; g < 7; g++) {
-                        hq = (hq * 1103515245 + 12345) & 0x7FFFFFFF;
-                        const gx = px + (hq % (ts - 3)), gy = py + ((hq >> 5) % (ts - 3));
-                        const gs = 1 + ((hq >> 9) % 2);
-                        bctx.fillStyle = (hq & 4) ? 'rgba(255,255,255,0.045)' : 'rgba(0,0,0,0.07)';
-                        bctx.fillRect(gx, gy, gs, gs);
-                    }
-
-                    // Directional top-light: a smooth vertical falloff so the
-                    // block reads as lit from above — bright face near the top,
-                    // shaded base. This replaces the old flat top/bottom bands
-                    // that left the wall looking like a uniform slab (and even
-                    // lighting the base brighter than the top, the inverted
-                    // signal measured in the tile buffer). Baked once, zero cost.
+                    // Soft top-light falloff
                     const wallGrad = bctx.createLinearGradient(px, py, px, py + ts);
-                    wallGrad.addColorStop(0.0, 'rgba(255,255,255,0.11)');
-                    wallGrad.addColorStop(0.32, 'rgba(255,255,255,0.035)');
-                    wallGrad.addColorStop(0.6, 'rgba(0,0,0,0.02)');
-                    wallGrad.addColorStop(1.0, 'rgba(0,0,0,0.14)');
+                    wallGrad.addColorStop(0.0, 'rgba(255,255,255,0.08)');
+                    wallGrad.addColorStop(0.5, 'rgba(255,255,255,0)');
+                    wallGrad.addColorStop(1.0, 'rgba(0,0,0,0.10)');
                     bctx.fillStyle = wallGrad;
                     bctx.fillRect(px, py, ts, ts);
 
-                    // Subtle stone block lines (staggered course joint so the
-                    // masonry reads as offset courses, not aligned mortar)
-                    bctx.strokeStyle = 'rgba(0,0,0,0.38)';
-                    bctx.lineWidth = 1;
-                    bctx.strokeRect(px+2, py+2, ts-4, ts-4);
-                    // Staggered horizontal head-joint (running bond feel)
-                    bctx.beginPath();
-                    bctx.moveTo(px + (x % 2 === 0 ? ts*0.35 : ts*0.65), py + ts*0.5);
-                    bctx.lineTo(px + (x % 2 === 0 ? ts*0.65 : ts*0.35), py + ts*0.5);
-                    bctx.stroke();
+                    // Brick courses: horizontal mortar at the tile top and middle,
+                    // vertical joints staggered between the two courses.
+                    const half = ts / 2;
+                    bctx.fillStyle = 'rgba(0,0,0,0.26)';
+                    bctx.fillRect(px, py, ts, 1);
+                    bctx.fillRect(px, py + half, ts, 1);
+                    bctx.fillRect(px + ts * 0.25, py + 1, 1, half - 1);
+                    bctx.fillRect(px + ts * 0.75, py + half + 1, 1, half - 1);
+                    bctx.fillStyle = 'rgba(255,255,255,0.05)';
+                    bctx.fillRect(px, py + 1, ts, 1);
+                    bctx.fillRect(px, py + half + 1, ts, 1);
 
-                    // Bright outer edge so walls read clearly against the floor
-                    bctx.strokeStyle = 'rgba(255,255,255,0.22)';
-                    bctx.lineWidth = 2;
-                    bctx.strokeRect(px+1, py+1, ts-2, ts-2);
+                    // A few stones a touch lighter/darker so courses are not uniform
+                    const bh = (h1 >> 3) % 4;
+                    bctx.fillStyle = (h1 & 1) ? 'rgba(255,255,255,0.045)' : 'rgba(0,0,0,0.07)';
+                    if (bh === 0) bctx.fillRect(px + 2, py + 2, ts * 0.25 - 3, half - 3);
+                    else if (bh === 1) bctx.fillRect(px + ts * 0.25 + 2, py + 2, ts * 0.5 - 3, half - 3);
+                    else if (bh === 2) bctx.fillRect(px + 2, py + half + 2, ts * 0.75 - 3, half - 3);
+                    else bctx.fillRect(px + ts * 0.75 + 2, py + half + 2, ts * 0.25 - 3, half - 3);
 
-                    // Inner highlight (top-left edge)
-                    bctx.fillStyle = 'rgba(255,255,255,0.13)';
-                    bctx.fillRect(px+2, py+2, ts-4, 2);
-                    bctx.fillRect(px+2, py+2, 2, ts-4);
-
-                    // Inner shadow (bottom-right edge)
-                    bctx.fillStyle = 'rgba(0,0,0,0.24)';
-                    bctx.fillRect(px+ts-4, py+2, 2, ts-4);
-                    bctx.fillRect(px+2, py+ts-4, ts-4, 2);
-                    
-                    // Random small detail (moss/crack)
-                    const hash = (x * 374761393 + y * 668265263) & 0xFFFF;
-                    if (hash % 100 < 20) {
-                        bctx.fillStyle = hash % 2 === 0 ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)';
-                        bctx.beginPath();
-                        bctx.arc(px + ts*(0.15 + (hash%70)/100), py + ts*(0.15 + ((hash>>8)%70)/100), 2 + hash%3, 0, Math.PI*2);
-                        bctx.fill();
-                    }
-                    if (hash % 100 < 9) {
-                        // Diagonal crack across the block
-                        bctx.strokeStyle = 'rgba(0,0,0,0.16)';
+                    // Rare crack
+                    if (h1 % 100 < 6) {
+                        bctx.strokeStyle = 'rgba(0,0,0,0.20)';
                         bctx.lineWidth = 1;
                         bctx.beginPath();
-                        bctx.moveTo(px + ts*0.25, py + ts*0.3);
-                        bctx.lineTo(px + ts*0.7, py + ts*0.65);
-                        bctx.lineTo(px + ts*0.82, py + ts*0.9);
+                        bctx.moveTo(px + ts*0.3, py + ts*0.15);
+                        bctx.lineTo(px + ts*0.5, py + ts*0.45);
+                        bctx.lineTo(px + ts*0.42, py + ts*0.8);
                         bctx.stroke();
                     }
 
-                    // ~12%: short vertical grime/moisture streak running down from
-                    // the block top (2-3px wide, 12-20px tall) — reads as water
-                    // staining on the masonry. Deterministic, baked once.
-                    if (((hash >> 7) % 100) < 12) {
-                        const stW = 2 + ((hash >> 11) % 2);
-                        const stH = 12 + ((hash >> 9) % 9);
-                        const stX = px + 3 + ((hash >> 3) % (ts - stW - 6));
-                        bctx.fillStyle = 'rgba(0,0,0,0.09)';
-                        bctx.fillRect(stX, py + 2, stW, stH);
+                    // Edge definition only where the wall meets open floor
+                    const fN = y > 0 && this.tiles[x][y-1].t !== 1;
+                    const fS = y < this.height-1 && this.tiles[x][y+1].t !== 1;
+                    const fW = x > 0 && this.tiles[x-1][y].t !== 1;
+                    const fE = x < this.width-1 && this.tiles[x+1][y].t !== 1;
+                    if (fN) { bctx.fillStyle = 'rgba(255,255,255,0.16)'; bctx.fillRect(px, py, ts, 2); }
+                    if (fS) {
+                        bctx.fillStyle = 'rgba(0,0,0,0.30)'; bctx.fillRect(px, py + ts - 5, ts, 5);
+                        bctx.fillStyle = 'rgba(0,0,0,0.25)'; bctx.fillRect(px, py + ts - 1, ts, 1);
                     }
-                    
+                    if (fW) { bctx.fillStyle = 'rgba(255,255,255,0.09)'; bctx.fillRect(px, py, 2, ts); }
+                    if (fE) { bctx.fillStyle = 'rgba(0,0,0,0.20)'; bctx.fillRect(px + ts - 2, py, 2, ts); }
+
                     try { BiomeSystem.drawWallDetail(bctx, px, py, ts, x, y); } catch(e) {}
                 }
                 else {
-                    // Floor tile with subtle pattern
+                    // Floor tile: calm, cohesive stone. One subtle per-tile tone,
+                    // sparse pebbles/cracks, a uniform grout grid and a smooth
+                    // wall-contact shadow. No overlapping washes/patches (that is
+                    // what made the old floor read as a noisy patchwork).
                     bctx.fillStyle=floorColor;
                     bctx.fillRect(px,py,ts,ts);
-                    
-                    // Per-tile tone variation (hash) + speckles — adds texture depth
-                    const ftone = (h1 % 12) - 6;
-                    if (ftone > 0) { bctx.fillStyle = 'rgba(255,255,255,' + (ftone * 0.004) + ')'; bctx.fillRect(px, py, ts, ts); }
-                    else if (ftone < 0) { bctx.fillStyle = 'rgba(0,0,0,' + (-ftone * 0.004) + ')'; bctx.fillRect(px, py, ts, ts); }
-                    // Large 2x2 patch tone so whole areas breathe together
-                    const p2 = ((x >> 1) * 374761393 + (y >> 1) * 668265263) & 0xFFFF;
-                    const ptone = (p2 % 9) - 4;
-                    if (ptone > 0) { bctx.fillStyle = 'rgba(255,255,255,' + (ptone * 0.006) + ')'; bctx.fillRect(px, py, ts, ts); }
-                    else if (ptone < 0) { bctx.fillStyle = 'rgba(0,0,0,' + (-ptone * 0.007) + ')'; bctx.fillRect(px, py, ts, ts); }
-                    if (h1 % 100 < 26) {
-                        bctx.fillStyle = (h1 % 2 === 0) ? 'rgba(255,255,255,0.036)' : 'rgba(0,0,0,0.072)';
-                        const sx2 = px + (h1 % ts), sy2 = py + ((h1 >> 4) % ts);
+
+                    const ftone = (h1 % 5) - 2;
+                    if (ftone > 0) { bctx.fillStyle = 'rgba(255,255,255,' + (ftone * 0.007) + ')'; bctx.fillRect(px, py, ts, ts); }
+                    else if (ftone < 0) { bctx.fillStyle = 'rgba(0,0,0,' + (-ftone * 0.009) + ')'; bctx.fillRect(px, py, ts, ts); }
+
+                    if (h1 % 100 < 14) {
+                        bctx.fillStyle = (h1 % 2 === 0) ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.10)';
+                        const sx2 = px + 4 + (h1 % (ts - 8)), sy2 = py + 4 + ((h1 >> 4) % (ts - 8));
                         bctx.beginPath(); bctx.arc(sx2, sy2, 1 + (h1 >> 8) % 2, 0, Math.PI * 2); bctx.fill();
                     }
-                    if (h1 % 100 < 12) {
-                        // Small rubble/pebble cluster
-                        bctx.fillStyle = 'rgba(255,255,255,0.04)';
-                        const rx0 = px + (h1 % (ts - 8)), ry0 = py + ((h1 >> 4) % (ts - 8));
-                        bctx.fillRect(rx0, ry0, 2, 2);
-                        bctx.fillRect(rx0 + 4, ry0 + 3, 1, 1);
-                        bctx.fillStyle = 'rgba(0,0,0,0.10)';
-                        bctx.fillRect(rx0 + 1, ry0 + 2, 2, 2);
-                    }
-                    if (h1 % 100 < 8) {
-                        // Crack line
-                        bctx.strokeStyle = 'rgba(0,0,0,0.12)';
+                    if (h1 % 100 >= 14 && h1 % 100 < 20) {
+                        bctx.strokeStyle = 'rgba(0,0,0,0.14)';
                         bctx.lineWidth = 1;
                         bctx.beginPath();
-                        bctx.moveTo(px + ts * 0.2, py + ts * (0.2 + (h1 >> 3) % 5 * 0.1));
-                        bctx.lineTo(px + ts * 0.85, py + ts * (0.6 + (h1 >> 6) % 4 * 0.08));
+                        bctx.moveTo(px + ts * 0.2, py + ts * (0.25 + (h1 >> 3) % 5 * 0.08));
+                        bctx.lineTo(px + ts * 0.55, py + ts * (0.45 + (h1 >> 6) % 4 * 0.06));
+                        bctx.lineTo(px + ts * 0.8, py + ts * 0.7);
                         bctx.stroke();
                     }
 
-                    // Broad mottled patches (independent hash slices): ~12% of
-                    // tiles get a faint dark wash, ~7% a faint light one, so big
-                    // open floor areas breathe instead of reading as one flat
-                    // slab. Baked once into the tile buffer — no per-frame cost.
-                    if ((h1 % 17) < 2) {
-                        bctx.fillStyle = 'rgba(0,0,0,0.05)';
-                        bctx.fillRect(px, py, ts, ts);
-                    } else if ((h1 % 13) === 0) {
-                        bctx.fillStyle = 'rgba(255,255,255,0.03)';
-                        bctx.fillRect(px, py, ts, ts);
-                    }
+                    // Uniform grout on the bottom/right edge + faint light catch
+                    // on the top edge: reads as flagstones with one consistent
+                    // light direction (same as the walls).
+                    bctx.fillStyle = 'rgba(0,0,0,0.13)';
+                    bctx.fillRect(px, py + ts - 1, ts, 1);
+                    bctx.fillRect(px + ts - 1, py, 1, ts);
+                    bctx.fillStyle = 'rgba(255,255,255,0.035)';
+                    bctx.fillRect(px, py, ts, 1);
 
-                    // Worn slab bevel: hash-selected tiles get a faint 1px
-                    // top-left light catch, so the floor reads as chamfered
-                    // stone plates instead of a uniform matte fill.
-                    if (((h1 >> 4) % 100) < 40) {
-                        bctx.fillStyle = 'rgba(255,255,255,0.05)';
-                        bctx.fillRect(px, py, ts, 1);
-                        bctx.fillRect(px, py, 1, ts);
-                    }
+                    // Wall-contact shadow: smooth falloff (gradient) instead of
+                    // hard stepped bands.
+                    const wN = y > 0 && this.tiles[x][y-1].t === 1;
+                    const wS = y < this.height-1 && this.tiles[x][y+1].t === 1;
+                    const wW = x > 0 && this.tiles[x-1][y].t === 1;
+                    const wE = x < this.width-1 && this.tiles[x+1][y].t === 1;
+                    const AO = 12;
+                    if (wN) { const g = bctx.createLinearGradient(0, py, 0, py + AO); g.addColorStop(0, 'rgba(0,0,0,0.30)'); g.addColorStop(1, 'rgba(0,0,0,0)'); bctx.fillStyle = g; bctx.fillRect(px, py, ts, AO); }
+                    if (wS) { const g = bctx.createLinearGradient(0, py + ts, 0, py + ts - AO); g.addColorStop(0, 'rgba(0,0,0,0.20)'); g.addColorStop(1, 'rgba(0,0,0,0)'); bctx.fillStyle = g; bctx.fillRect(px, py + ts - AO, ts, AO); }
+                    if (wW) { const g = bctx.createLinearGradient(px, 0, px + AO, 0); g.addColorStop(0, 'rgba(0,0,0,0.22)'); g.addColorStop(1, 'rgba(0,0,0,0)'); bctx.fillStyle = g; bctx.fillRect(px, py, AO, ts); }
+                    if (wE) { const g = bctx.createLinearGradient(px + ts, 0, px + ts - AO, 0); g.addColorStop(0, 'rgba(0,0,0,0.22)'); g.addColorStop(1, 'rgba(0,0,0,0)'); bctx.fillStyle = g; bctx.fillRect(px + ts - AO, py, AO, ts); }
 
-                    // Wall-adjacent shadow bands (AO): darken the exact edge
-                    // touching a wall for a smooth depth falloff around rooms.
-                    let wallN = false, wallS = false, wallW = false, wallE = false;
-                    if (y > 0 && this.tiles[x][y-1].t === 1) wallN = true;
-                    if (y < this.height-1 && this.tiles[x][y+1].t === 1) wallS = true;
-                    if (x > 0 && this.tiles[x-1][y].t === 1) wallW = true;
-                    if (x < this.width-1 && this.tiles[x+1][y].t === 1) wallE = true;
-                    const wallCount = (wallN?1:0)+(wallS?1:0)+(wallW?1:0)+(wallE?1:0);
-                    if (wallCount > 0) {
-                        // Immediate 6px contact band against the wall — raised to
-                        // 0.15 so room perimeters read as grounded against walls.
-                        bctx.fillStyle = 'rgba(0,0,0,0.15)';
-                        if (wallN) { bctx.fillRect(px, py, ts, 6); }
-                        if (wallS) { bctx.fillRect(px, py + ts - 6, ts, 6); }
-                        if (wallW) { bctx.fillRect(px, py, 6, ts); }
-                        if (wallE) { bctx.fillRect(px + ts - 6, py, 6, ts); }
-                        // Soft falloff extension just past the band (unchanged)
-                        bctx.fillStyle = 'rgba(0,0,0,0.13)';
-                        if (wallN) { bctx.fillRect(px, py + 6, ts, 2); }
-                        if (wallS) { bctx.fillRect(px, py + ts - 8, ts, 2); }
-                        if (wallW) { bctx.fillRect(px + 6, py, 2, ts); }
-                        if (wallE) { bctx.fillRect(px + ts - 8, py, 2, ts); }
-                        if (wallCount >= 2) {
-                            // Inner corner/shared fill — unchanged
-                            bctx.fillStyle = 'rgba(0,0,0,0.08)';
-                            bctx.fillRect(px + 4, py + 4, ts - 8, ts - 8);
-                        }
-                    }
-                    
-                    // Recessed flagstone joint: 2x2 slab groups with a subtle
-                    // chamfer — each slab carries a faint top-light bevel and a
-                    // darker recessed seam, so the floor reads as stone plates
-                    // laid in a staggered grid (consistent light direction with
-                    // the walls above). Baked once, zero cost.
-                    const slabX = x & ~1, slabY = y & ~1;
-                    const sh = (slabX * 374761393 + slabY * 668265263) & 0xFFFF;
-                    const isNewSlabRow = ((x & 1) === 0) && ((y & 1) === 0);
-                    // Seam is drawn on the top/left edge of each even slab cell
-                    bctx.strokeStyle = 'rgba(0,0,0,0.05)';
-                    bctx.lineWidth = 1;
-                    if ((x & 1) === 0) { bctx.beginPath(); bctx.moveTo(px+0.5, py); bctx.lineTo(px+0.5, py+ts); bctx.stroke(); }
-                    if ((y & 1) === 0) { bctx.beginPath(); bctx.moveTo(px, py+0.5); bctx.lineTo(px+ts, py+0.5); bctx.stroke(); }
-                    // Subtle top-lit sheen on the slab centre (breaks flatness)
-                    if (isNewSlabRow && ((sh % 5) < 2)) {
-                        bctx.fillStyle = 'rgba(255,255,255,0.02)';
-                        bctx.fillRect(px+1, py+1, ts-1, ts-1);
-                    }
-
-                    // Legacy drawn signal: a faint directional wipe so the whole
-                    // floor trends lighter toward the top of the screen (matches
-                    // the wall top-light). Was the near-invisible flat cross.
-                    bctx.strokeStyle = 'rgba(255,255,255,0.02)';
-                    bctx.lineWidth = 0.5;
-                    bctx.beginPath();
-                    bctx.moveTo(px + ts*0.5, py);
-                    bctx.lineTo(px + ts*0.5, py + ts);
-                    bctx.stroke();
-                    
                     try { BiomeSystem.drawFloorDetail(bctx, px, py, ts, x, y); } catch(e) {}
                     
                     if (this.tiles[x][y].t === 2) {
@@ -32816,7 +32687,7 @@ Input.init();
        current MUST stay in sync with the SW CACHE_VERSION suffix (sw.js).
     */
     window.UPDATE_LOG = {
-        current: 'v39',
+        current: 'v40',
         entries: [
             { v: 'v9', date: '2026-09-10', titleKey: 'update.entry.v9.title', title: 'v9 — Tutorial destravado',
               linesKeys: ['update.entry.v9.l1'],
@@ -32950,6 +32821,9 @@ Input.init();
             { v: 'v39', date: '2026-10-09', titleKey: 'update.entry.v39.title', title: 'v39 — Fim do boot duplo',
               linesKeys: ['update.entry.v39.l1'],
               lines: ['Correção: ao entrar no jogo depois de uma atualização, a tela carregava duas vezes — a segunda alguns segundos depois. Agora o jogo só recarrega quando o que está na tela realmente está desatualizado.'] },
+            { v: 'v40', date: '2026-10-11', titleKey: 'update.entry.v40.title', title: 'v40 — Mapas mais limpos',
+              linesKeys: ['update.entry.v40.l1'],
+              lines: ['Visual: as texturas de chão e parede foram refeitas — alvenaria contínua nas paredes, piso mais limpo e detalhes de cada bioma menos repetitivos. Só a arte mudou.'] },
         ]
     };
 
