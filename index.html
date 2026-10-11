@@ -3824,6 +3824,10 @@ const I18n = {
             'update.entry.v43.l1': 'Visual: los 12 jefes y más criaturas — el mímico, la trampa y el mercader — se redibujaron, cada uno con identidad propia y animaciones de caminar, atacar y lanzar. Solo cambió el arte.',
             'update.entry.v44.title': 'v44 — Animación y 8 direcciones',
             'update.entry.v44.l1': 'Visual: todos los personajes, enemigos y jefes ahora miran en 8 direcciones y tienen animaciones nuevas — respiración en reposo, caminata de 6 cuadros, ataque por etapas (preparación, golpe, impacto) y voltereta. El pixel art ganó sombreado tonal, esquinas redondeadas y contorno de color. Solo cambió el arte.',
+            'update.entry.v45.title': 'v45 — Diagonales más marcadas',
+            'update.entry.v45.l1': 'Visual: al moverse o apuntar en diagonal, personajes, enemigos y jefes giran más el cuerpo y el rostro, dejando la dirección mucho más clara. Solo cambió el arte.',
+            'update.entry.v45.title': 'v45 — Diagonais mais marcadas',
+            'update.entry.v45.l1': 'Visual: ao andar ou mirar na diagonal, personagens, inimigos e chefes agora giram mais o corpo e o rosto, deixando a direção bem mais clara. Só a arte mudou.',
             'update.entry.v43.title': 'v43 — Chefes e criaturas renovados',
             'update.entry.v43.l1': 'Visual: os 12 chefes e mais criaturas — mímico, armadilha e mercador — foram redesenhados, cada um com identidade própria e animações de andar, atacar e lançar. Só a arte mudou.',
             'update.entry.v44.title': 'v44 — Animação e 8 direções',
@@ -5233,6 +5237,8 @@ const I18n = {
             'update.entry.v43.l1': 'Visual: all 12 bosses and more creatures — the mimic, the trap and the merchant — were redrawn, each with its own identity and walk, attack and cast animations. Only the art changed.',
             'update.entry.v44.title': 'v44 — Animation and 8 directions',
             'update.entry.v44.l1': 'Visual: every character, enemy and boss now faces 8 directions and has new animations — idle breathing, a 6-frame walk, a staged attack (wind-up, strike, impact) and roll. The pixel art gained tonal shading, rounded corners and colored outlines. Only the art changed.',
+            'update.entry.v45.title': 'v45 — Clearer diagonals',
+            'update.entry.v45.l1': 'Visual: when moving or aiming diagonally, characters, enemies and bosses now turn their body and face more, making the facing direction much clearer. Only the art changed.',
             'update.entry.v32.l1': 'The sound that got stuck on the floor-complete screen (while choosing what to buy before descending) no longer hangs.',
             'update.entry.v32.l2': 'Dying at the same moment the boss dies no longer gives you both "continue" and the next floor: death takes priority.',
             'update.entry.v31.l1': 'The sound engine was rebuilt: a master bus with a limiter (nothing clips any more), procedural reverb and an envelope on every sound — the click between notes is gone.',
@@ -15541,6 +15547,26 @@ const SpriteCore = (() => {
         return out;
     }
 
+    // Versão para grades já sombreadas (renderizador 3D): roles + tons prontos, só aplica contorno.
+    function finishTones(roles, tones) {
+        const out = Array.from({ length: N }, () => Array(N).fill(0));
+        for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+            const r = roles[y][x];
+            if (r !== '.') out[y][x] = idxOf(r, tones[y][x]);
+        }
+        const around = [[0, 1], [1, 0], [-1, 0], [0, -1]];
+        for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+            if (roles[y][x] !== '.') continue;
+            for (const [dx, dy] of around) {
+                const r = get(roles, x + dx, y + dy);
+                if (r === '.') continue;
+                out[y][x] = (r === 'G' || r === 'O') ? 1 : idxOf(r, 0);
+                break;
+            }
+        }
+        return out;
+    }
+
     // ---------- giro (direções intermediárias) ----------
     // a = quanto girar (0.5 = ¾, 1 = perfil); dir +1 = virado para a direita. ref = {top,bot} da pose idle.
     function modeRole(g, x, y, skip) {
@@ -15556,7 +15582,7 @@ const SpriteCore = (() => {
     function turn(g, a, ref) {
         const out = blank(), span = ref.bot - ref.top + 1;
         const headEnd = ref.top + Math.round(span * 0.36), hipY = ref.top + Math.round(span * 0.72);
-        const sc = 1 - 0.14 * a, cx = 11.5, hs = Math.round(1.6 * a), ms = Math.round(0.8 * a);
+        const sc = 1 - 0.2 * a, cx = 11.5, hs = Math.round(2.4 * a), ms = Math.round(1.2 * a);
         for (let y = 0; y < N; y++) {
             const dx = y <= headEnd ? hs : (y < hipY ? ms : 0);
             for (let x = 0; x < N; x++) {
@@ -15626,7 +15652,7 @@ const SpriteCore = (() => {
         return row === undefined ? [0, 1, 2, 3, 4, 5, 6, 7].map(pick) : pick(row);
     }
 
-    return { N, blank, bbox, mirror, finish, turn, back, directions, buildPalette, decode, encode, copy };
+    return { N, blank, bbox, mirror, finish, finishTones, turn, back, directions, buildPalette, decode, encode, copy };
 })();
 
 // Arte v44: quadros desenhados 24x24 por vista (f frente, b costas, s lado); linhas separadas por "|",
@@ -28747,7 +28773,7 @@ Input.init();
        current MUST stay in sync with the SW CACHE_VERSION suffix (sw.js).
     */
     window.UPDATE_LOG = {
-        current: 'v44',
+        current: 'v45',
         entries: [
             { v: 'v9', date: '2026-09-10', titleKey: 'update.entry.v9.title', title: 'v9 — Tutorial destravado',
               linesKeys: ['update.entry.v9.l1'],
@@ -28896,6 +28922,9 @@ Input.init();
             { v: 'v44', date: '2026-10-11', titleKey: 'update.entry.v44.title', title: 'v44 — Animação e 8 direções',
               linesKeys: ['update.entry.v44.l1'],
               lines: ['Visual: todos os personagens, inimigos e chefes agora olham nas 8 direções e têm animações novas — respirar parado, caminhada de 6 quadros, ataque em etapas (preparo, golpe, impacto) e rolagem. O pixel art ganhou sombreamento em tons, cantos arredondados e contorno colorido. Só a arte mudou.'] },
+            { v: 'v45', date: '2026-10-11', titleKey: 'update.entry.v45.title', title: 'v45 — Diagonais mais marcadas',
+              linesKeys: ['update.entry.v45.l1'],
+              lines: ['Visual: ao andar ou mirar na diagonal, personagens, inimigos e chefes agora giram mais o corpo e o rosto, deixando a direção bem mais clara. Só a arte mudou.'] },
         ]
     };
 
