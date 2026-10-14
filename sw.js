@@ -26,7 +26,9 @@ const APP_SHELL = ['./', './index.html'];
 
 self.addEventListener('install', (event) => {
     event.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)).then(() => self.skipWaiting())
+        caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL))
+            .catch(() => { /* offline na instalação: segue sem pré-cache; a navegação é network-first */ })
+            .then(() => self.skipWaiting())
     );
 });
 

@@ -2327,7 +2327,12 @@ function resize() {
     _mmDirty = true;
 }
 
-window.addEventListener('resize', resize);
+// Coalesce rajadas de resize (arrastar a janela, barra do navegador mobile) em uma por quadro.
+let _resizeRaf = 0;
+window.addEventListener('resize', function () {
+    if (_resizeRaf) return;
+    _resizeRaf = requestAnimationFrame(function () { _resizeRaf = 0; resize(); });
+});
 // Don't call resize() here - it will be called after canvas is initialized
 
 
@@ -3846,6 +3851,7 @@ const I18n = {
             'update.entry.v50.l1': 'Visual: el Guardián Final y el Titán de Magma se redibujaron con una figura más alta y estrecha — ahora muestran las piernas, con hombreras, escudo y espada bien definidos, y la llama del Titán sube de su cabeza. Vale para las tres vistas: frente, perfil y espalda. Solo cambió el arte.',
             'update.entry.v51.title': 'v51 — Muertes animadas',
             'update.entry.v51.l1': 'Visual: enemigos y jefes ahora caen, se desmoronan y se desvanecen en cinco cuadros en lugar de desaparecer de golpe, y la mancha del suelo se volvió un charco irregular. Solo cambiaron el arte y la animación.',
+            'update.entry.v53.l2': 'Los paneles ahora se pueden usar con el teclado (Tab y Enter), el Campamento y la MetaTienda respetan el idioma, el texto atenuado tiene más contraste y los números de daño siguen el tamaño de fuente.',
             'update.entry.v53.title': 'v53 — Oro que crece y desafío del Atirador',
             'update.entry.v53.l1': 'Las monedas del suelo ahora valen más en pisos profundos (6% por piso), para acompañar el precio de la tienda. Además, el desafío diario del Atirador ya se puede iniciar con el mago aún bloqueado.',
             'update.entry.v52.title': 'v52 — Desafío diario opcional',
@@ -3864,6 +3870,7 @@ const I18n = {
             'update.entry.v50.l1': 'Visual: o Guardião Final e o Titã de Magma foram redesenhados com proporção mais alta e estreita — agora têm pernas à mostra, ombreiras, escudo e espada bem definidos, e a chama do Titã sobe da cabeça. Valem as três vistas: frente, perfil e costas. Só a arte mudou.',
             'update.entry.v51.title': 'v51 — Mortes animadas',
             'update.entry.v51.l1': 'Visual: inimigos e chefes agora tombam, desmancham e somem em cinco quadros em vez de desaparecer de uma vez, e a mancha no chão virou uma poça irregular. Só a arte e a animação mudaram.',
+            'update.entry.v53.l2': 'Os painéis agora podem ser usados pelo teclado (Tab e Enter), o Acampamento e a MetaLoja respeitam o idioma, o texto apagado tem mais contraste e os números de dano seguem o tamanho da fonte.',
             'update.entry.v53.title': 'v53 — Ouro que cresce e desafio do Atirador',
             'update.entry.v53.l1': 'As moedas do chão agora valem mais em andares profundos (6% por andar), acompanhando o preço da loja. Além disso, o desafio diário do Atirador agora pode ser iniciado mesmo com o mago ainda bloqueado.',
             'update.entry.v52.title': 'v52 — Desafio diário opcional',
@@ -5296,6 +5303,7 @@ const I18n = {
             'update.entry.v50.l1': 'Visual: the Final Guardian and the Magma Titan were redrawn with a taller, narrower build — they now show their legs, with well-defined pauldrons, shield and sword, and the Titan flame rises from its head. This applies to the front, side and back views. Only the art changed.',
             'update.entry.v51.title': 'v51 — Animated deaths',
             'update.entry.v51.l1': 'Visual: enemies and bosses now collapse, crumble and fade away over five frames instead of vanishing at once, and the stain on the floor became an irregular puddle. Only the art and animation changed.',
+            'update.entry.v53.l2': 'Panels can now be used with the keyboard (Tab and Enter), the Camp and Meta Shop follow the chosen language, dimmed text has better contrast and damage numbers follow the font size setting.',
             'update.entry.v53.title': 'v53 — Growing gold and the Sniper challenge',
             'update.entry.v53.l1': 'Floor coins are now worth more on deeper floors (6% per floor), keeping pace with shop prices. Also, the Sniper daily challenge can now be started even while the mage is still locked.',
             'update.entry.v52.title': 'v52 — Optional daily challenge',
@@ -10810,10 +10818,16 @@ const BossHPBar = {
             }
         }
         if (!boss) { this.hide(); return; }
-        this.show(boss.name || 'CHEFE');
+        // Só escreve no DOM quando algo mudou (update roda todo frame).
+        var nm = boss.name || 'CHEFE';
+        if (this._shownName !== nm || this.container.classList.contains('hidden')) { this.show(nm); this._shownName = nm; }
         var pct = Math.max(0, (boss.hp / boss.maxHp) * 100);
-        this.barEl.style.width = pct + '%';
-        this.textEl.textContent = Math.ceil(boss.hp) + ' / ' + boss.maxHp;
+        var txt = Math.ceil(boss.hp) + ' / ' + boss.maxHp;
+        if (txt !== this._lastText) {
+            this._lastText = txt;
+            this.barEl.style.width = pct + '%';
+            this.textEl.textContent = txt;
+        }
     }
 };
 
@@ -10823,7 +10837,10 @@ const CurrencyHUD = {
     init() { this.el = document.getElementById('currency-amount'); },
     update() {
         if (!player || !this.el) return;
-        this.el.textContent = player.currency || 0;
+        const v = player.currency || 0;
+        if (v === this._last) return; // evita escrita de DOM a cada frame
+        this._last = v;
+        this.el.textContent = v;
     }
 };
 window.CurrencyHUD = CurrencyHUD;
@@ -30530,8 +30547,9 @@ Input.init();
               linesKeys: ['update.entry.v51.l1'],
               lines: ['Visual: inimigos e chefes agora tombam, desmancham e somem em cinco quadros em vez de desaparecer de uma vez, e a mancha no chão virou uma poça irregular. Só a arte e a animação mudaram.'] },
             { v: 'v53', date: '2026-10-14', titleKey: 'update.entry.v53.title', title: 'v53 — Ouro que cresce e desafio do Atirador',
-              linesKeys: ['update.entry.v53.l1'],
-              lines: ['As moedas do chão agora valem mais em andares profundos (6% por andar), acompanhando o preço da loja. Além disso, o desafio diário do Atirador agora pode ser iniciado mesmo com o mago ainda bloqueado.'] },
+              linesKeys: ['update.entry.v53.l1', 'update.entry.v53.l2'],
+              lines: ['As moedas do chão agora valem mais em andares profundos (6% por andar), acompanhando o preço da loja. Além disso, o desafio diário do Atirador agora pode ser iniciado mesmo com o mago ainda bloqueado.',
+                      'Os painéis agora podem ser usados pelo teclado (Tab e Enter), o Acampamento e a MetaLoja respeitam o idioma, o texto apagado tem mais contraste e os números de dano seguem o tamanho da fonte.'] },
             { v: 'v52', date: '2026-10-13', titleKey: 'update.entry.v52.title', title: 'v52 — Desafio diário opcional',
               linesKeys: ['update.entry.v52.l1'],
               lines: ['Agora o desafio diário é opcional: as partidas normais não recebem mais o modificador do dia. Para jogá-lo, toque no aviso do menu ou no botão Diário e escolha Jogar desafio de hoje. Se você recarregar a página e continuar uma partida diária, ela não terá mais os modificadores.'] },
