@@ -1986,6 +1986,10 @@ const COLORS = {
     PICKUP_SPEED: '#ff66cc',
     PICKUP_CURRENCY: '#ffdd00',
     PICKUP_ESSENCE: '#b26cff',
+    PICKUP_FURY: '#ff2d3d',
+    PICKUP_FRENZY: '#ffee00',
+    PICKUP_MAGNET: '#2f7dff',
+    PICKUP_AEGIS: '#ffc21a',
 
     // Enemy type
     ELITE: '#ff8800',
@@ -2755,6 +2759,8 @@ const SaveSystem = {
 
     save() {
         return Debug.safe(() => {
+            // Dentro da sala secreta o mapa ativo é o bolso: não grava (o save do andar fica intacto)
+            if (_secretRoom) return false;
             const data = this._serialize();
             if (!data) return false;
             if (!this._validate(data)) throw new Error('invalid-fields');
@@ -3407,6 +3413,27 @@ const I18n = {
             'skills.unlocked': 'DESBLOQUEADO',
             'skills.ability': 'HABILIDADE',
             'skills.requires': 'Requer: ',
+            'skills.blockedBy': 'Bloqueado por ',
+            'skill.warrior.quake.name': 'Terremoto', 'skill.warrior.quake.desc': 'Ground Slam dá um segundo pulso de dano',
+            'skill.warrior.bloodlust.name': 'Sede de Sangue', 'skill.warrior.bloodlust.desc': 'Abates curam 2 HP e dão velocidade curta',
+            'skill.warrior.bulwark.name': 'Muralha', 'skill.warrior.bulwark.desc': 'Sofre 40% menos dano enquanto houver escudo',
+            'skill.warrior.brutal.name': 'Brutalidade', 'skill.warrior.brutal.desc': 'O finalizador causa sangramento',
+            'skill.warrior.thunderEcho.name': 'Eco do Trovão', 'skill.warrior.thunderEcho.desc': 'O finalizador deixa uma onda de choque extra',
+            'skill.rogue.twinBlades.name': 'Lâminas Gêmeas', 'skill.rogue.twinBlades.desc': 'O passo 2 dispara um projétil extra',
+            'skill.rogue.isolatedKill.name': 'Execução Silenciosa', 'skill.rogue.isolatedKill.desc': '+35% de dano em inimigo isolado',
+            'skill.rogue.venomTrail.name': 'Rastro Venenoso', 'skill.rogue.venomTrail.desc': 'O dash deixa uma poça de veneno',
+            'skill.rogue.shadowPass.name': 'Passo Sombrio', 'skill.rogue.shadowPass.desc': 'Invulnerabilidade do dash +20 quadros',
+            'skill.rogue.pilfer.name': 'Furto', 'skill.rogue.pilfer.desc': '8% de chance de ouro extra ao acertar',
+            'skill.mage.frostWave.name': 'Onda Gélida', 'skill.mage.frostWave.desc': 'O finalizador congela inimigos ao redor',
+            'skill.mage.cyclicOverload.name': 'Sobrecarga Cíclica', 'skill.mage.cyclicOverload.desc': 'A cada 4º ataque, o disparo sai com dano dobrado',
+            'skill.mage.manaWell.name': 'Fonte de Mana', 'skill.mage.manaWell.desc': 'Abates reduzem o superaquecimento',
+            'skill.mage.darkPact.name': 'Pacto Sombrio', 'skill.mage.darkPact.desc': 'Ao superaquecer, sacrifica 15% de HP para resfriar pela metade',
+            'skill.mage.meteorRain.name': 'Chuva de Meteoros', 'skill.mage.meteorRain.desc': 'Meteoro vira chuva: impactos extras ao redor',
+            'skill.elf.homingArrow.name': 'Flecha Teleguiada', 'skill.elf.homingArrow.desc': 'A primeira flecha de cada rajada curva ao alvo',
+            'skill.elf.thorns.name': 'Espinhos', 'skill.elf.thorns.desc': 'Raízes também causam veneno contínuo',
+            'skill.elf.galeBurst.name': 'Rajada do Vento', 'skill.elf.galeBurst.desc': 'Cada 5º disparo empurra com força e causa +30% de dano',
+            'skill.elf.huntMark.name': 'Marca da Caçadora', 'skill.elf.huntMark.desc': 'Alvos atingidos recebem +25% de dano por 5s',
+            'skill.elf.petSynergy.name': 'Sinergia Animal', 'skill.elf.petSynergy.desc': 'Pets causam +30% de dano',
             'skills.tier': 'Grau ',
             'skills.copyBuild': '📋 Copiar código do build',
             'skills.tapHint': 'Toque em um nó para ver detalhes e desbloquear.',
@@ -3870,6 +3897,10 @@ const I18n = {
             'update.entry.v51.title': 'v51 — Muertes animadas',
             'update.entry.v51.l1': 'Visual: enemigos y jefes ahora caen, se desmoronan y se desvanecen en cinco cuadros en lugar de desaparecer de golpe, y la mancha del suelo se volvió un charco irregular. Solo cambiaron el arte y la animación.',
             'update.entry.v53.l2': 'Los paneles ahora se pueden usar con el teclado (Tab y Enter), el Campamento y la MetaTienda respetan el idioma, el texto atenuado tiene más contraste y los números de daño siguen el tamaño de fuente.',
+            'update.entry.v56.title': 'v56 — Combos, salas secretas y más poder',
+            'update.entry.v56.l1': 'Combos de 3 golpes en las 4 clases, cada uno con un movimiento distinto y un golpe final más fuerte. Cuatro potenciadores raros (Furia, Frenesí, Imán y Égida) caen de cofres y jefes. Los eventos de Portal Secreto ahora abren una sala de verdad, de tesoro o de desafío.',
+            'update.entry.v56.l2': 'El árbol de habilidades ganó 20 nodos nuevos con efectos de combate y elecciones exclusivas: al comprar uno, el otro se bloquea.',
+            'update.entry.v56.l3': 'Las mascotas fueron redibujadas en pixel art, más grandes y animadas. El águila y el dragón también cambiaron.',
             'update.entry.v55.title': 'v55 — Poderes que se ven y se sienten',
             'update.entry.v55.l1': 'El escudo ahora aparece como una burbuja alrededor del héroe y estalla al romperse; la velocidad deja una estela de viento. Los avisos del HUD muestran el valor del escudo y los segundos que quedan de cada efecto.',
             'update.entry.v55.l2': 'Vida, XP, esencia y mutaciones tienen su propio destello al recogerlos, y los objetos del suelo son más fáciles de distinguir. El Boost de Velocidad de la tienda ahora dice +50%, que es lo que realmente da.',
@@ -3895,6 +3926,10 @@ const I18n = {
             'update.entry.v51.title': 'v51 — Mortes animadas',
             'update.entry.v51.l1': 'Visual: inimigos e chefes agora tombam, desmancham e somem em cinco quadros em vez de desaparecer de uma vez, e a mancha no chão virou uma poça irregular. Só a arte e a animação mudaram.',
             'update.entry.v53.l2': 'Os painéis agora podem ser usados pelo teclado (Tab e Enter), o Acampamento e a MetaLoja respeitam o idioma, o texto apagado tem mais contraste e os números de dano seguem o tamanho da fonte.',
+            'update.entry.v56.title': 'v56 — Combos, salas secretas e mais poder',
+            'update.entry.v56.l1': 'Combos de 3 golpes nas 4 classes, cada um com um movimento diferente e um golpe final mais forte. Quatro powerups raros (Fúria, Frenesi, Ímã e Égide) caem de baús e chefes. O evento Portal Secreto agora abre uma sala de verdade, de tesouro ou de desafio.',
+            'update.entry.v56.l2': 'A árvore de skills ganhou 20 nós novos com efeitos de combate e escolhas exclusivas: ao comprar um, o outro fica bloqueado.',
+            'update.entry.v56.l3': 'Os pets foram redesenhados em pixel art, maiores e animados. A águia e o dragão também mudaram.',
             'update.entry.v55.title': 'v55 — Poderes que se veem e se sentem',
             'update.entry.v55.l1': 'O escudo agora aparece como uma bolha ao redor do herói e estoura ao quebrar; a velocidade deixa um rastro de vento. Os avisos do HUD mostram o valor do escudo e os segundos que faltam de cada efeito.',
             'update.entry.v55.l2': 'Vida, XP, essência e mutações têm brilho próprio ao serem coletados, e os itens do chão ficam mais fáceis de distinguir. O Boost de Velocidade da loja agora diz +50%, que é o que ele realmente dá.',
@@ -3997,6 +4032,12 @@ const I18n = {
             'event.treasureGoblin.desc': 'Derrote para loot massivo!',
             'event.secretPortal.name': ' PORTAL SECRETO',
             'event.secretPortal.desc': 'Sala secreta com rewards!',
+            'log.secretPortalOpened': 'Um portal secreto se abriu neste andar! Encontre-o antes que feche.',
+            'log.secretEnterTreasure': 'Você entrou na Câmara do Tesouro!',
+            'log.secretEnterChallenge': 'Você entrou na Câmara do Desafio! Sobreviva às ondas.',
+            'log.secretWave': 'Segunda onda de inimigos!',
+            'log.secretCleared': 'Sala limpa! Um baú lendário apareceu no centro.',
+            'log.secretExit': 'Você voltou ao andar.',
             'event.doubleXP.name': ' XP DUPLO',
             'event.doubleXP.desc': '2x XP por 15s!',
             'event.bossRush.name': ' BOSS RUSH',
@@ -4078,6 +4119,14 @@ const I18n = {
             'shop.damageBoost.name': 'Boost de Dano',
             'shop.damageBoost.desc': '+25% dmg 30s',
             'shop.speedBoost.name': 'Boost de Velocidade',
+            'powerup.fury.pick': 'FÚRIA!',
+            'powerup.frenzy.pick': 'FRENESI!',
+            'powerup.aegis.pick': 'ÉGIDE!',
+            'powerup.aegis.block': 'BLOQUEADO!',
+            'powerup.magnet.pick': 'ÍMÃ!',
+            'chip.fury': 'FÚRIA',
+            'chip.frenzy': 'FRENESI',
+            'chip.aegis': 'ÉGIDE',
             'shop.speedBoost.desc': '+50% velocidade 30s',
             'shop.fullHeal.name': 'Cura Completa',
             'shop.fullHeal.desc': 'Full HP',
@@ -4888,6 +4937,27 @@ const I18n = {
             'skills.unlocked': 'UNLOCKED',
             'skills.ability': 'ABILITY',
             'skills.requires': 'Requires: ',
+            'skills.blockedBy': 'Blocked by ',
+            'skill.warrior.quake.name': 'Earthquake', 'skill.warrior.quake.desc': 'Ground Slam gets a second damage pulse',
+            'skill.warrior.bloodlust.name': 'Bloodlust', 'skill.warrior.bloodlust.desc': 'Kills heal 2 HP and grant short speed',
+            'skill.warrior.bulwark.name': 'Bulwark', 'skill.warrior.bulwark.desc': 'Takes 40% less damage while a shield is up',
+            'skill.warrior.brutal.name': 'Brutality', 'skill.warrior.brutal.desc': 'The finisher causes bleeding',
+            'skill.warrior.thunderEcho.name': 'Thunder Echo', 'skill.warrior.thunderEcho.desc': 'The finisher leaves an extra shockwave',
+            'skill.rogue.twinBlades.name': 'Twin Blades', 'skill.rogue.twinBlades.desc': 'Step 2 fires one extra projectile',
+            'skill.rogue.isolatedKill.name': 'Silent Execution', 'skill.rogue.isolatedKill.desc': '+35% damage against isolated enemies',
+            'skill.rogue.venomTrail.name': 'Venom Trail', 'skill.rogue.venomTrail.desc': 'The dash leaves a poison pool',
+            'skill.rogue.shadowPass.name': 'Shadow Pass', 'skill.rogue.shadowPass.desc': 'Dash invulnerability +20 frames',
+            'skill.rogue.pilfer.name': 'Pilfer', 'skill.rogue.pilfer.desc': '8% chance of extra gold on hit',
+            'skill.mage.frostWave.name': 'Frost Wave', 'skill.mage.frostWave.desc': 'The finisher freezes enemies around you',
+            'skill.mage.cyclicOverload.name': 'Cyclic Overload', 'skill.mage.cyclicOverload.desc': 'Every 4th attack fires with doubled damage',
+            'skill.mage.manaWell.name': 'Mana Well', 'skill.mage.manaWell.desc': 'Kills reduce overheating',
+            'skill.mage.darkPact.name': 'Dark Pact', 'skill.mage.darkPact.desc': 'On overheat, sacrifice 15% HP to cool down by half',
+            'skill.mage.meteorRain.name': 'Meteor Rain', 'skill.mage.meteorRain.desc': 'The meteor becomes a rain: extra impacts around',
+            'skill.elf.homingArrow.name': 'Homing Arrow', 'skill.elf.homingArrow.desc': 'The first arrow of each volley curves toward the target',
+            'skill.elf.thorns.name': 'Thorns', 'skill.elf.thorns.desc': 'Roots also cause continuous poison',
+            'skill.elf.galeBurst.name': 'Wind Gust', 'skill.elf.galeBurst.desc': 'Every 5th shot pushes hard and deals +30% damage',
+            'skill.elf.huntMark.name': 'Huntress Mark', 'skill.elf.huntMark.desc': 'Hit targets take +25% damage for 5s',
+            'skill.elf.petSynergy.name': 'Animal Synergy', 'skill.elf.petSynergy.desc': 'Pets deal +30% damage',
             'skills.tier': 'Tier ',
             'skills.copyBuild': '📋 Copy build code',
             'skills.tapHint': 'Tap a node to see details and unlock it.',
@@ -5351,6 +5421,10 @@ const I18n = {
             'update.entry.v51.title': 'v51 — Animated deaths',
             'update.entry.v51.l1': 'Visual: enemies and bosses now collapse, crumble and fade away over five frames instead of vanishing at once, and the stain on the floor became an irregular puddle. Only the art and animation changed.',
             'update.entry.v53.l2': 'Panels can now be used with the keyboard (Tab and Enter), the Camp and Meta Shop follow the chosen language, dimmed text has better contrast and damage numbers follow the font size setting.',
+            'update.entry.v56.title': 'v56 — Combos, secret rooms and more power',
+            'update.entry.v56.l1': '3-hit combos for all 4 classes, each with a different move and a stronger finisher. Four rare power-ups (Fury, Frenzy, Magnet and Aegis) drop from chests and bosses. The Secret Portal event now opens a real room, either treasure or challenge.',
+            'update.entry.v56.l2': 'The skill tree gained 20 new nodes with combat effects and exclusive choices: buying one locks the other.',
+            'update.entry.v56.l3': 'Pets were redrawn in pixel art, bigger and animated. The eagle and the dragon changed too.',
             'update.entry.v55.title': 'v55 — Powers you can see and feel',
             'update.entry.v55.l1': 'The shield now shows as a bubble around the hero and bursts when it breaks; speed leaves a wind trail. HUD badges show the shield value and the seconds left on each effect.',
             'update.entry.v55.l2': 'Health, XP, essence and mutations each have their own glow when picked up, and floor items are easier to tell apart. The shop Speed Boost now says +50%, which is what it actually gives.',
@@ -5449,6 +5523,12 @@ const I18n = {
             'event.treasureGoblin.desc': 'Defeat it for massive loot!',
             'event.secretPortal.name': ' SECRET PORTAL',
             'event.secretPortal.desc': 'Secret room with rewards!',
+            'log.secretPortalOpened': 'A secret portal opened on this floor! Find it before it closes.',
+            'log.secretEnterTreasure': 'You entered the Treasure Chamber!',
+            'log.secretEnterChallenge': 'You entered the Challenge Chamber! Survive the waves.',
+            'log.secretWave': 'Second wave of enemies!',
+            'log.secretCleared': 'Room cleared! A legendary chest appeared in the center.',
+            'log.secretExit': 'You returned to the floor.',
             'event.doubleXP.name': ' DOUBLE XP',
             'event.doubleXP.desc': '2x XP for 15s!',
             'event.bossRush.name': ' BOSS RUSH',
@@ -5530,6 +5610,14 @@ const I18n = {
             'shop.damageBoost.name': 'Damage Boost',
             'shop.damageBoost.desc': '+25% dmg 30s',
             'shop.speedBoost.name': 'Speed Boost',
+            'powerup.fury.pick': 'FURY!',
+            'powerup.frenzy.pick': 'FRENZY!',
+            'powerup.aegis.pick': 'AEGIS!',
+            'powerup.aegis.block': 'BLOCKED!',
+            'powerup.magnet.pick': 'MAGNET!',
+            'chip.fury': 'FURY',
+            'chip.frenzy': 'FRENZY',
+            'chip.aegis': 'AEGIS',
             'shop.speedBoost.desc': '+50% speed 30s',
             'shop.fullHeal.name': 'Full Heal',
             'shop.fullHeal.desc': 'Full HP',
@@ -6340,6 +6428,27 @@ const I18n = {
             'skills.unlocked': 'DESBLOQUEADO',
             'skills.ability': 'HABILIDAD',
             'skills.requires': 'Requiere: ',
+            'skills.blockedBy': 'Bloqueado por ',
+            'skill.warrior.quake.name': 'Terremoto', 'skill.warrior.quake.desc': 'Ground Slam da un segundo pulso de daño',
+            'skill.warrior.bloodlust.name': 'Sed de Sangre', 'skill.warrior.bloodlust.desc': 'Los abates curan 2 HP y dan velocidad breve',
+            'skill.warrior.bulwark.name': 'Muralla', 'skill.warrior.bulwark.desc': 'Recibe 40% menos daño mientras haya escudo',
+            'skill.warrior.brutal.name': 'Brutalidad', 'skill.warrior.brutal.desc': 'El finalizador causa sangrado',
+            'skill.warrior.thunderEcho.name': 'Eco del Trueno', 'skill.warrior.thunderEcho.desc': 'El finalizador deja una onda de choque extra',
+            'skill.rogue.twinBlades.name': 'Hojas Gemelas', 'skill.rogue.twinBlades.desc': 'El paso 2 dispara un proyectil extra',
+            'skill.rogue.isolatedKill.name': 'Ejecución Silenciosa', 'skill.rogue.isolatedKill.desc': '+35% de daño contra enemigo aislado',
+            'skill.rogue.venomTrail.name': 'Rastro Venenoso', 'skill.rogue.venomTrail.desc': 'El dash deja un charco de veneno',
+            'skill.rogue.shadowPass.name': 'Paso Sombrío', 'skill.rogue.shadowPass.desc': 'Invulnerabilidad del dash +20 cuadros',
+            'skill.rogue.pilfer.name': 'Hurto', 'skill.rogue.pilfer.desc': '8% de probabilidad de oro extra al acertar',
+            'skill.mage.frostWave.name': 'Ola Gélida', 'skill.mage.frostWave.desc': 'El finalizador congela enemigos alrededor',
+            'skill.mage.cyclicOverload.name': 'Sobrecarga Cíclica', 'skill.mage.cyclicOverload.desc': 'Cada 4º ataque dispara con daño doble',
+            'skill.mage.manaWell.name': 'Fuente de Maná', 'skill.mage.manaWell.desc': 'Los abates reducen el sobrecalentamiento',
+            'skill.mage.darkPact.name': 'Pacto Sombrío', 'skill.mage.darkPact.desc': 'Al sobrecalentar, sacrifica 15% de HP para enfriar a la mitad',
+            'skill.mage.meteorRain.name': 'Lluvia de Meteoros', 'skill.mage.meteorRain.desc': 'El meteoro se vuelve lluvia: impactos extra alrededor',
+            'skill.elf.homingArrow.name': 'Flecha Teledirigida', 'skill.elf.homingArrow.desc': 'La primera flecha de cada ráfaga se curva al objetivo',
+            'skill.elf.thorns.name': 'Espinas', 'skill.elf.thorns.desc': 'Las raíces también causan veneno continuo',
+            'skill.elf.galeBurst.name': 'Ráfaga del Viento', 'skill.elf.galeBurst.desc': 'Cada 5º disparo empuja con fuerza y causa +30% de daño',
+            'skill.elf.huntMark.name': 'Marca de la Cazadora', 'skill.elf.huntMark.desc': 'Los objetivos alcanzados reciben +25% de daño por 5s',
+            'skill.elf.petSynergy.name': 'Sinergia Animal', 'skill.elf.petSynergy.desc': 'Las mascotas causan +30% de daño',
             'skills.tier': 'Grado ',
             'skills.copyBuild': '📋 Copiar código de build',
             'skills.tapHint': 'Toca un nodo para ver detalles y desbloquearlo.',
@@ -6871,6 +6980,12 @@ const I18n = {
             'event.treasureGoblin.desc': '¡Derrótalo para botín masivo!',
             'event.secretPortal.name': ' PORTAL SECRETO',
             'event.secretPortal.desc': '¡Sala secreta con recompensas!',
+            'log.secretPortalOpened': '¡Un portal secreto se abrió en este piso! Encuéntralo antes de que se cierre.',
+            'log.secretEnterTreasure': '¡Entraste en la Cámara del Tesoro!',
+            'log.secretEnterChallenge': '¡Entraste en la Cámara del Desafío! Sobrevive a las oleadas.',
+            'log.secretWave': '¡Segunda oleada de enemigos!',
+            'log.secretCleared': '¡Sala despejada! Un cofre legendario apareció en el centro.',
+            'log.secretExit': 'Volviste al piso.',
             'event.doubleXP.name': ' XP DOBLE',
             'event.doubleXP.desc': '¡2x XP por 15s!',
             'event.bossRush.name': ' BOSS RUSH',
@@ -6952,6 +7067,14 @@ const I18n = {
             'shop.damageBoost.name': 'Impulso de Daño',
             'shop.damageBoost.desc': '+25% dmg 30s',
             'shop.speedBoost.name': 'Impulso de Velocidad',
+            'powerup.fury.pick': '¡FURIA!',
+            'powerup.frenzy.pick': '¡FRENESÍ!',
+            'powerup.aegis.pick': '¡ÉGIDA!',
+            'powerup.aegis.block': '¡BLOQUEADO!',
+            'powerup.magnet.pick': '¡IMÁN!',
+            'chip.fury': 'FURIA',
+            'chip.frenzy': 'FRENESÍ',
+            'chip.aegis': 'ÉGIDA',
             'shop.speedBoost.desc': '+50% velocidad 30s',
             'shop.fullHeal.name': 'Cura Completa',
             'shop.fullHeal.desc': 'HP completo',
@@ -8035,6 +8158,50 @@ var CONFIG = {
     WARRIOR_FURY_DMG_PER_STACK: 0.25,   // +20% dmg per stack
     WARRIOR_MELEE_ARC_DEG: 120,
     WARRIOR_MELEE_RANGE: 80,
+    // Combo de golpes (3 passos por classe; passo 3 = finalizador). Janela em frames sem atacar -> volta ao passo 1.
+    COMBO_CHAIN_WINDOW: 36,                 // ~0.6 s
+    // Dano por golpe em cada passo. Soma por ciclo de 3 golpes = 3.1 (média ~1.03x do ataque base).
+    COMBO_CHAIN_MULT: { warrior: [0.9, 0.9, 1.3], rogue: [0.9, 0.45, 1.2], elf: [0.9, 0.45, 1.2], mage: [0.9, 1.0, 0.4] },
+    // Ângulo (rad) de cada projétil por passo (leque no passo 2; mago: rajada no passo 3)
+    COMBO_CHAIN_SHOTS: { rogue: [[0], [-0.08, 0.08], [0]], elf: [[0], [-0.1, 0.1], [0]], mage: [[0], [0], [-0.12, 0, 0.12]] },
+    COMBO_CHAIN_WARRIOR_ARC: [120, 150, 360],     // graus do arco por passo
+    COMBO_CHAIN_WARRIOR_REACH: [1.0, 1.05, 1.25], // alcance (x WARRIOR_MELEE_RANGE) por passo
+    COMBO_CHAIN_WARRIOR_KB: [1.0, 1.1, 1.8],      // knockback (x) por passo
+    COMBO_CHAIN_BLAST_RADIUS: 70,                 // mago passo 2: área da explosão (px)
+    COMBO_CHAIN_BLAST_MULT: 0.5,                  // dano da explosão nos outros inimigos (x dano do golpe)
+    // Nós de comportamento da árvore de skills (v56)
+    SKILL_PULSE_RADIUS: 130,                      // onda extra do guerreiro (Eco do Trovão / Terremoto), px
+    SKILL_PULSE_DELAY: 14,                        // quadros até a onda/pulso extra
+    SKILL_PULSE_MULT: 0.5,                        // dano da onda extra (x dano base do golpe)
+    BULWARK_DMG_MULT: 0.6,                        // Muralha: dano recebido com escudo ativo (40% menos)
+    BLOODLUST_HEAL: 2,                            // Sede de Sangue: HP curado por abate
+    BLOODLUST_SPEED_FRAMES: 120,                  // Sede de Sangue: velocidade curta após abate
+    BRUTAL_BLEED_STACKS: 2,                       // Brutalidade: stacks de sangramento no finalizador
+    SHADOW_PASS_EXTRA_FRAMES: 20,                 // Passo Sombrio: i-frames extras do dash
+    ISOLATED_RADIUS: 150,                         // Execução Silenciosa: raio para considerar inimigo isolado
+    ISOLATED_DMG_MULT: 1.35,                      // Execução Silenciosa: dano em inimigo isolado
+    PILFER_CHANCE: 0.08,                          // Furto: chance de ouro extra por acerto
+    PILFER_GOLD: 3,                               // Furto: ouro extra por proc
+    CYCLIC_OVERLOAD_EVERY: 4,                     // Sobrecarga Cíclica: a cada N ataques...
+    CYCLIC_OVERLOAD_MULT: 2,                      // ...o disparo sai com este dano (x)
+    MANA_WELL_HEAT_CUT: 12,                       // Fonte de Mana: superaquecimento removido por abate
+    DARK_PACT_HP_COST: 0.15,                      // Pacto Sombrio: fração do HP máximo sacrificada
+    FROST_WAVE_RADIUS: 110,                       // Onda Gélida: raio do congelamento do finalizador, px
+    FROST_WAVE_FRAMES: 60,                        // Onda Gélida: duração do congelamento
+    METEOR_RAIN_COUNT: 4,                         // Chuva de Meteoros: impactos extras
+    METEOR_RAIN_RADIUS: 70,                       // Chuva de Meteoros: raio de cada impacto extra, px
+    METEOR_RAIN_MULT: 0.35,                       // Chuva de Meteoros: dano de cada impacto (x dano do meteoro)
+    HOMING_TURN: 0.08,                            // Flecha Teleguiada: giro máximo por quadro (rad)
+    HOMING_RANGE: 320,                            // Flecha Teleguiada: alcance de busca do alvo, px
+    GALE_BURST_EVERY: 5,                          // Rajada do Vento: a cada N disparos...
+    GALE_BURST_MULT: 1.3,                         // ...o disparo tem este dano (x) e knockback forte
+    HUNT_MARK_FRAMES: 300,                        // Marca da Caçadora: duração da marca (5s)
+    HUNT_MARK_MULT: 1.25,                         // Marca da Caçadora: dano recebido por alvos marcados (x)
+    PET_SYNERGY_MULT: 1.3,                        // Sinergia Animal: dano dos pets (x)
+    VENOM_POOL_FRAMES: 180,                       // Rastro Venenoso: duração da poça (3s)
+    VENOM_POOL_RADIUS: 60,                        // Rastro Venenoso: raio da poça, px
+    VENOM_POOL_TICK: 30,                          // Rastro Venenoso: intervalo entre pulsos de dano
+    VENOM_POOL_DMG: 8,                            // Rastro Venenoso: dano por pulso (antes do damageMult do jogador)
     WARRIOR_PARRY_FRAMES: 8,          // janela de aparo no inicio do dash (guerreiro)
     WARRIOR_PARRY_REFLECT: 0.6,       // fracao do dano aparado devolvida em arco
     WARRIOR_PARRY_FURY: 3,            // stacks de furia ganhas ao aparar
@@ -8210,6 +8377,13 @@ var CONFIG = {
     PICKUP_XP_VALUE: 50,
     PICKUP_SHIELD_VALUE: 50,
     PICKUP_SPEED_VALUE: 3,
+    // Powerups raros (só de baús e chefes): Fúria, Frenesi, Ímã, Égide
+    POWERUP_FURY_FRAMES: 600,          // 10 s
+    POWERUP_FURY_DAMAGE_MULT: 1.3,     // +30% dano causado pelo herói
+    POWERUP_FRENZY_FRAMES: 480,        // 8 s
+    POWERUP_FRENZY_FIRERATE_MULT: 1.4, // cadência +40% (cooldown de tiro / 1.4)
+    POWERUP_AEGIS_FRAMES: 120,         // 2 s de invulnerabilidade
+    POWERUP_CHEST_CHANCE: 0.08,        // chance por baú aberto
     PICKUP_CURRENCY_VALUE: 8, // increased from 10
     PICKUP_RADIUS_GLOW: 12,
     PICKUP_RADIUS_CORE: 8,
@@ -9227,6 +9401,17 @@ function _drawMinimapDots(c, scaleX, scaleY, dotMult) {
         }
     }
     
+    // Sala secreta: entrada (roxo) no andar e saída (laranja) dentro do bolso
+    if (secretPortal) {
+        c.fillStyle = SECRET_ROOM.COLOR; c.globalAlpha = 0.9;
+        c.beginPath(); c.arc((secretPortal.x/CONFIG.TILE_SIZE)*scaleX, (secretPortal.y/CONFIG.TILE_SIZE)*scaleY, 3 * dotMult, 0, 6.28); c.fill();
+        c.globalAlpha = 1;
+    }
+    if (_secretRoom && _secretRoom.exit) {
+        c.fillStyle = SECRET_ROOM.EXIT_COLOR; c.globalAlpha = 0.9;
+        c.beginPath(); c.arc((_secretRoom.exit.x/CONFIG.TILE_SIZE)*scaleX, (_secretRoom.exit.y/CONFIG.TILE_SIZE)*scaleY, 3 * dotMult, 0, 6.28); c.fill();
+        c.globalAlpha = 1;
+    }
     // Portal indicator
     if (dungeonPortal) {
         const px2 = (dungeonPortal.x/CONFIG.TILE_SIZE)*scaleX;
@@ -9437,16 +9622,17 @@ function _updateWorldSim() {
         }
     }
     DifficultySystem.updateDDA();
-    if (!currentEvent && gameTime % CONFIG.EVENT_SPAWN_INTERVAL === 0 && SeedSystem.random() < CONFIG.EVENT_SPAWN_CHANCE) {
+    if (!currentEvent && !_secretRoom && gameTime % CONFIG.EVENT_SPAWN_INTERVAL === 0 && SeedSystem.random() < CONFIG.EVENT_SPAWN_CHANCE) {
         const eventType = getWeightedEventType(dungeonLevel);
         currentEvent = new ActiveEvent(eventType);
         if (window.SND) SND.playEvent(); addLog(window._L ? _L(currentEvent.nameKey, currentEvent.name) : currentEvent.name);
         if (eventType === 'treasureGoblin') { const pos = map.getSafeSpawn(350); entities.push(new TreasureGoblin(pos.x, pos.y)); }
         else if (eventType === 'bossRush') { for (let i = 0; i < 3; i++) { const pos = map.getSafeSpawn(300); entities.push(new Enemy(pos.x, pos.y, true)); } }
         else if (eventType === 'petSpawn') { const petTypes = Object.keys(PET_TYPES); pets.push(new Pet(petTypes[Math.floor(SeedSystem.random()*petTypes.length)])); Statistics.data.petsSpawned++; }
+        else if (eventType === 'secretPortal') { _spawnSecretPortal(); }
     }
     // Random Pet Encounter
-    if (!currentEvent && gameTime > 1800 && gameTime % 1800 === 0 && SeedSystem.random() < 0.3) {
+    if (!currentEvent && !_secretRoom && gameTime > 1800 && gameTime % 1800 === 0 && SeedSystem.random() < 0.3) {
         const petTypes = Object.keys(PET_TYPES);
         const type = petTypes[Math.floor(SeedSystem.random() * petTypes.length)];
         const pos = map.getSafeSpawn(200);
@@ -9455,7 +9641,7 @@ function _updateWorldSim() {
         SND.play(500, 'sine', 0.2, 0.2);
     }
 
-    if(currentEvent) { if(!currentEvent.update()) { currentEvent = null; addLog(window.I18n ? I18n.t('log.eventEnded') : 'Evento terminado!'); } }
+    if(currentEvent && !_secretRoom) { if(!currentEvent.update()) { currentEvent = null; addLog(window.I18n ? I18n.t('log.eventEnded') : 'Evento terminado!'); } }
 
     _updateWeather();
 }
@@ -9533,6 +9719,9 @@ function _handlePlayerDeath() {
         // a failure in Statistics/NarrativeSystem/StorageManager does not
         // silently prevent the game-over/continue flow from executing.
         shake = 0;
+        // Morte na sala secreta: o andar volta e o portal secreto é zerado
+        if (_secretRoom) _leaveSecretRoom(false);
+        secretPortal = null;
         if (continuesLeft > 0) {
             if (typeof ScreenEffects !== 'undefined' && ScreenEffects.onPlayerDeath) ScreenEffects.onPlayerDeath();
             gameState = 'CONTINUE';
@@ -9628,6 +9817,8 @@ function _updateEntitySimulation() {
         const pdSq = pdx * pdx + pdy * pdy;
         const collectDist = player.radius + CONFIG.PICKUP_RADIUS;
         const collectDistSq = collectDist * collectDist;
+        // Powerup Ímã: ouro/XP marcados voam até o herói (aproximação exponencial; some ao coletar)
+        if (p.homing) { p.x -= pdx * 0.15; p.y -= pdy * 0.15; }
         // --- Phase 4: Coin magnet  attract currency pickups passively ---
         if (p.type === 'currency' && pdSq < CONFIG.PICKUP_MAGNET_RADIUS * CONFIG.PICKUP_MAGNET_RADIUS && pdSq > collectDistSq) {
             const inv = 1 / Math.sqrt(pdSq);
@@ -9654,6 +9845,18 @@ function _updateEntitySimulation() {
                 else if (p.type === 'speed') { player.speedBoost = p.value * 60; }
                 else if (p.type === 'mutation') { player.addMutation(p.mutationType); }
                 else if (p.type === 'essence') { player.essence = (player.essence || 0) + 1; DamageNumbers.add(player.x, player.y, 'ESSÊNCIA!', 'normal'); }
+                // Powerups raros: coletar de novo renova a duração (não soma)
+                else if (p.type === 'fury') { player.furyTimer = CONFIG.POWERUP_FURY_FRAMES; DamageNumbers.add(player.x, player.y, window.I18n ? I18n.t('powerup.fury.pick') : 'FÚRIA!', 'crit'); }
+                else if (p.type === 'frenzy') { player.frenzyTimer = CONFIG.POWERUP_FRENZY_FRAMES; DamageNumbers.add(player.x, player.y, window.I18n ? I18n.t('powerup.frenzy.pick') : 'FRENESI!', 'normal'); }
+                else if (p.type === 'aegis') { player.aegisTimer = CONFIG.POWERUP_AEGIS_FRAMES; DamageNumbers.add(player.x, player.y, window.I18n ? I18n.t('powerup.aegis.pick') : 'ÉGIDE!', 'normal'); }
+                else if (p.type === 'magnet') {
+                    // Puxão instantâneo: todo ouro e XP do andar passam a voar até o herói
+                    for (let q = 0; q < pickups.length; q++) {
+                        const pq = pickups[q];
+                        if (pq.alive && (pq.type === 'currency' || pq.type === 'xp')) { pq.homing = true; if (pq.timer < 300) pq.timer = 300; }
+                    }
+                    DamageNumbers.add(player.x, player.y, window.I18n ? I18n.t('powerup.magnet.pick') : 'ÍMÃ!', 'normal');
+                }
             }
         }
     }
@@ -9717,7 +9920,7 @@ function _updateEntitySimulation() {
     if (gameTime % CONFIG.HAZARD_SPAWN_INTERVAL === 0 && hazards.length < CONFIG.HAZARD_MAX_COUNT) map.spawnHazard();
     if (window.NPCSystem) {
         NPCSystem.update();
-        if (gameTime % 600 === 0 && SeedSystem.random() < 0.25) NPCSystem.spawnNPC();
+        if (gameTime % 600 === 0 && !_secretRoom && SeedSystem.random() < 0.25) NPCSystem.spawnNPC();
     }
     for (let i = entities.length - 1; i >= 0; i--) {
         if (!entities[i].alive && entities[i] !== player) {
@@ -9777,6 +9980,7 @@ class Portal {
 
 function _startFloorTransition() {
     if (typeof CampSystem !== 'undefined') CampSystem._descend = false;
+    secretPortal = null; _secretRoom = null;
     dungeonLevel++; dungeonKills = 0; dungeonKillTarget = 18 + dungeonLevel * 2;
     if (window.RunStats) RunStats.recordFloor();
     if (window.RunObjectiveSystem) RunObjectiveSystem.onFloor(dungeonLevel);
@@ -9828,6 +10032,222 @@ function _updatePortalAndFloor() {
     }
 }
 
+// ============================================================
+// SALA SECRETA: bolso fechado trocado com o andar atual. Ao entrar, o andar
+// (mapa, entidades, projéteis, baús, pets, NPCs, portal de descida, contagem
+// de abates) vai para um snapshot; a saída ou a morte restaura tudo na posição
+// de entrada. Estado zerado no início de run (_resetState) e na morte.
+// ============================================================
+const SECRET_ROOM = {
+    x0: 5, y0: 7, w: 15, h: 11,          // interior do bolso (grade 25x25)
+    COLOR: '#b44bff', EXIT_COLOR: '#ffa040',
+    PORTAL_LIFE: 1800,                   // ticks (~30 s), independe do banner do evento
+    SPAWN_MIN_TILES: 6, SPAWN_MAX_TILES: 14,
+    ENTER_DIST: 46
+};
+let secretPortal = null;                 // portal de entrada no andar principal
+let _secretRoom = null;                  // estado da sala ativa (null = andar normal)
+let _secretFloorUsed = -1;               // andar cuja sala já foi usada (no máximo 1 por andar)
+
+class SecretPortal {
+    constructor(x, y, color, life) {
+        this.x = x; this.y = y; this.color = color;
+        this.life = life; this.angle = 0; this.radius = 30; this.alive = true;
+    }
+    update() {
+        if (--this.life <= 0) { this.alive = false; return; }
+        const rm = !!(window.GameSettings && GameSettings.reducedMotion);
+        if (rm) return;
+        this.angle += 0.05;
+        if (gameTime % 4 === 0) {
+            const a = Math.random() * Math.PI * 2;
+            spawnParticles(this.x + Math.cos(a) * this.radius * 1.3, this.y + Math.sin(a) * this.radius * 1.3, this.color, 1, 2);
+        }
+    }
+    draw(ctx, cx, cy) {
+        const sx = this.x - cx, sy = this.y - cy;
+        const rm = !!(window.GameSettings && GameSettings.reducedMotion);
+        const pulse = rm ? 0 : Math.sin(gameTime * 0.15);
+        ctx.save();
+        drawGlow(ctx, sx, sy, this.radius * 2.6, this.color, 0.7 + pulse * 0.15);
+        ctx.translate(sx, sy);
+        ctx.rotate(this.angle);
+        ctx.globalAlpha = 0.45 + pulse * 0.15;
+        ctx.fillStyle = this.color;
+        ctx.beginPath(); ctx.arc(0, 0, this.radius + 4, 0, Math.PI * 2); ctx.fill();
+        ctx.globalAlpha = 0.9;
+        ctx.strokeStyle = '#f3e6ff'; ctx.lineWidth = 3;
+        for (let i = 0; i < 3; i++) {
+            ctx.rotate(Math.PI * 2 / 3);
+            ctx.beginPath(); ctx.ellipse(0, 0, this.radius, this.radius * 0.3, 0, 0, Math.PI); ctx.stroke();
+        }
+        ctx.restore();
+    }
+}
+
+// Escolhe um tile de chão alcançável a 6-14 tiles do jogador, fora de parede.
+// Usa Map._floodFill (BFS local): não mexe no cache global do FlowField dos inimigos.
+function _spawnSecretPortal() {
+    if (_secretRoom || secretPortal || !map || !player || _secretFloorUsed === dungeonLevel) return false;
+    const T = CONFIG.TILE_SIZE, W = map.width, H = map.height, R = SECRET_ROOM;
+    const ptx = Math.floor(player.x / T), pty = Math.floor(player.y / T);
+    if (!map.tiles[ptx] || !map.tiles[ptx][pty] || map.tiles[ptx][pty].t !== 0) return false;
+    const reach = map._floodFill(ptx, pty);
+    const cands = [];
+    for (let x = 1; x < W - 1; x++) for (let y = 1; y < H - 1; y++) {
+        if (map.tiles[x][y].t !== 0 || !reach[x * H + y]) continue;
+        const d = Math.hypot(x - ptx, y - pty);
+        if (d < R.SPAWN_MIN_TILES || d > R.SPAWN_MAX_TILES) continue;
+        let clear = true;
+        for (let dx = -1; dx <= 1 && clear; dx++) for (let dy = -1; dy <= 1 && clear; dy++) {
+            if (map.tiles[x + dx][y + dy].t !== 0) clear = false;
+        }
+        if (clear) cands.push([x, y]);
+    }
+    if (!cands.length) return false;
+    const pick = cands[Math.floor(SeedSystem.random() * cands.length)];
+    secretPortal = new SecretPortal(pick[0] * T + T / 2, pick[1] * T + T / 2, R.COLOR, R.PORTAL_LIFE);
+    spawnParticles(secretPortal.x, secretPortal.y, R.COLOR, 20, 4);
+    triggerCamZoom(0.04, 24);
+    if (window.SND && SND.playAchievement) SND.playAchievement();
+    addLog(window.I18n ? I18n.t('log.secretPortalOpened') : 'Um portal secreto se abriu neste andar! Encontre-o antes que feche.');
+    return true;
+}
+
+function _updateSecretRoom() {
+    if (_transitioning || !player) return;
+    if (_secretRoom) { _secretRoomStep(); return; }
+    if (!secretPortal) return;
+    secretPortal.update();
+    if (!secretPortal.alive) { secretPortal = null; return; }
+    if (Math.hypot(player.x - secretPortal.x, player.y - secretPortal.y) < SECRET_ROOM.ENTER_DIST) _enterSecretRoom();
+}
+
+function _secretFreeTile() {
+    const R = SECRET_ROOM, T = CONFIG.TILE_SIZE, ex = _secretRoom && _secretRoom.exit;
+    for (let tries = 0; tries < 200; tries++) {
+        const tx = R.x0 + 1 + Math.floor(SeedSystem.random() * (R.w - 2));
+        const ty = R.y0 + 1 + Math.floor(SeedSystem.random() * (R.h - 2));
+        if (map.tiles[tx][ty].t !== 0) continue;
+        const x = tx * T + T / 2, y = ty * T + T / 2;
+        if (Math.hypot(x - player.x, y - player.y) < 3 * T) continue;
+        if (ex && Math.hypot(x - ex.x, y - ex.y) < 2.5 * T) continue;
+        return { x: x, y: y };
+    }
+    return { x: (R.x0 + 7) * T + T / 2, y: (R.y0 + 5) * T + T / 2 };
+}
+
+function _secretSpawnWave(count) {
+    const pool = _buildSpawnPool();
+    let total = 0; for (const o of pool) total += o[1];
+    for (let i = 0; i < count; i++) {
+        let r = SeedSystem.random() * total, chosen = 'normal';
+        for (const o of pool) { r -= o[1]; if (r <= 0) { chosen = o[0]; break; } }
+        if (chosen === 'swarm') chosen = 'normal';
+        const p = map.getSafeSpawn(120);
+        const e = (ENEMY_SPAWN_FACTORIES[chosen] || ENEMY_SPAWN_FACTORIES.normal)(p.x, p.y);
+        if ((chosen === 'elite' || chosen === 'normal') && typeof BiomeSystem !== 'undefined' && BiomeSystem.applyEnemyVariant) BiomeSystem.applyEnemyVariant(e);
+        entities.push(e);
+    }
+}
+
+function _enterSecretRoom(forcedKind) {
+    if (_secretRoom || !map || !player) return false;
+    const T = CONFIG.TILE_SIZE, R = SECRET_ROOM;
+    const kind = forcedKind || (SeedSystem.random() < 0.5 ? 'tesouro' : 'desafio');
+    // Snapshot do andar principal: é restaurado na saída ou na morte.
+    _secretRoom = {
+        kind: kind, wave: 0, cleared: false, exit: null,
+        snap: {
+            map: map, entities: entities, bullets: bullets, particles: particles, pickups: pickups,
+            hazards: hazards, chests: chests, pets: pets, weaponPickups: weaponPickups,
+            equipmentPickups: equipmentPickups, guidedBullets: guidedBullets, rogueClones: rogueClones,
+            dungeonPortal: dungeonPortal, dungeonKills: dungeonKills, dungeonKillTarget: dungeonKillTarget,
+            bossActive: bossActive, cachedAlive: _cachedAliveEnemies,
+            npcs: (typeof NPCSystem !== 'undefined') ? NPCSystem.npcs : null,
+            retX: player.x, retY: player.y
+        }
+    };
+    _secretFloorUsed = dungeonLevel;
+    secretPortal = null;
+    map = new Map({ x0: R.x0, y0: R.y0, w: R.w, h: R.h });
+    _mmDirty = true; _cachedLightCanvas = null; _lightingThrottle = 0;
+    entities = [player]; bullets = []; particles = []; pickups = []; hazards = []; chests = [];
+    pets = []; weaponPickups = []; equipmentPickups = []; guidedBullets = []; rogueClones = [];
+    dungeonPortal = null; bossActive = false; _cachedAliveEnemies = 0;
+    if (typeof NPCSystem !== 'undefined') NPCSystem.npcs = [];
+    player.x = (R.x0 + 2) * T + T / 2;
+    player.y = (R.y0 + Math.floor(R.h / 2)) * T + T / 2;
+    camX = player.x - width / 2; camY = player.y - height / 2; // sem pan longo no teletransporte
+    _secretRoom.exit = new SecretPortal((R.x0 + 1) * T + T / 2, (R.y0 + R.h - 3) * T + T / 2, R.EXIT_COLOR, 999999);
+    if (kind === 'tesouro') {
+        const n = 3 + Math.floor(SeedSystem.random() * 2);
+        const rarityPool = ['comum', 'raro', 'raro', 'epico'];
+        for (let i = 0; i < n; i++) {
+            const p = _secretFreeTile();
+            chests.push(new Chest(p.x, p.y, rarityPool[Math.floor(SeedSystem.random() * rarityPool.length)]));
+        }
+        for (let i = 0; i < 6; i++) { const p = _secretFreeTile(); pickups.push(new Pickup(p.x, p.y, 'currency')); }
+        addLog(window.I18n ? I18n.t('log.secretEnterTreasure') : 'Você entrou na Câmara do Tesouro!');
+    } else {
+        _secretSpawnWave(4);
+        _secretRoom.wave = 1;
+        addLog(window.I18n ? I18n.t('log.secretEnterChallenge') : 'Você entrou na Câmara do Desafio! Sobreviva às ondas.');
+    }
+    spawnParticles(player.x, player.y, R.COLOR, 20, 4);
+    triggerCamZoom(0.06, 30);
+    if (window.ScreenEffects && ScreenEffects.triggerFlash) ScreenEffects.triggerFlash(0.4, R.COLOR, 10);
+    if (window.SND) SND.play(660, 'sine', 0.2, 0.25);
+    return true;
+}
+
+// Por quadro dentro da sala: saída por proximidade e, no desafio, as ondas e a recompensa final.
+function _secretRoomStep() {
+    const s = _secretRoom;
+    const ex = s.exit;
+    ex.update();
+    if (Math.hypot(player.x - ex.x, player.y - ex.y) < SECRET_ROOM.ENTER_DIST) { _leaveSecretRoom(true); return; }
+    if (s.kind !== 'desafio' || s.cleared) return;
+    let alive = 0;
+    for (let i = 0; i < entities.length; i++) { const e = entities[i]; if (e !== player && e.alive) alive++; }
+    if (alive > 0) return;
+    if (s.wave < 2) {
+        s.wave = 2;
+        _secretSpawnWave(6);
+        addLog(window.I18n ? I18n.t('log.secretWave') : 'Segunda onda de inimigos!');
+        return;
+    }
+    s.cleared = true;
+    const T = CONFIG.TILE_SIZE, R = SECRET_ROOM;
+    const cx = (R.x0 + Math.floor(R.w / 2)) * T + T / 2, cy = (R.y0 + Math.floor(R.h / 2)) * T + T / 2;
+    chests.push(new Chest(cx, cy, SeedSystem.random() < 0.35 ? 'lendario' : 'epico'));
+    // Powerup raro garantido no baú final (1 dos 4, igualmente)
+    const rareTypes = ['fury', 'frenzy', 'magnet', 'aegis'];
+    pickups.push(new Pickup(cx + 30, cy, rareTypes[Math.floor(SeedSystem.random() * rareTypes.length)]));
+    addLog(window.I18n ? I18n.t('log.secretCleared') : 'Sala limpa! Um baú lendário apareceu no centro.');
+}
+
+// Restaura o andar principal (mesmo mapa, entidades, posição de entrada).
+// byExit=false é a morte: o andar volta e o portal de entrada já foi consumido.
+function _leaveSecretRoom(byExit) {
+    const s = _secretRoom;
+    if (!s) return;
+    const sn = s.snap;
+    _secretRoom = null;
+    map = sn.map; _mmDirty = true; _cachedLightCanvas = null; _lightingThrottle = 0;
+    entities = sn.entities; bullets = sn.bullets; particles = sn.particles; pickups = sn.pickups;
+    hazards = sn.hazards; chests = sn.chests; pets = sn.pets; weaponPickups = sn.weaponPickups;
+    equipmentPickups = sn.equipmentPickups; guidedBullets = sn.guidedBullets; rogueClones = sn.rogueClones;
+    dungeonPortal = sn.dungeonPortal; dungeonKills = sn.dungeonKills; dungeonKillTarget = sn.dungeonKillTarget;
+    bossActive = sn.bossActive; _cachedAliveEnemies = sn.cachedAlive;
+    if (typeof NPCSystem !== 'undefined' && sn.npcs) NPCSystem.npcs = sn.npcs;
+    if (player) { player.x = sn.retX; player.y = sn.retY; camX = player.x - width / 2; camY = player.y - height / 2; }
+    if (byExit) {
+        addLog(window.I18n ? I18n.t('log.secretExit') : 'Você voltou ao andar.');
+        if (player) spawnParticles(player.x, player.y, SECRET_ROOM.COLOR, 12, 3);
+    }
+}
+
 // Single source of truth for the enemy types the spawner can roll. A type added
 // to the pool without a matching factory would otherwise silently fall through to
 // a normal enemy — which is exactly how `summoner` spent a release unreachable.
@@ -9860,7 +10280,7 @@ const ENEMY_SPAWN_FACTORIES = {
 if (typeof window !== 'undefined') window.ENEMY_SPAWN_FACTORIES = ENEMY_SPAWN_FACTORIES;
 
 function _updateEnemySpawning() {
-    if (_transitioning) return;
+    if (_transitioning || _secretRoom) return;
     // Only recount alive enemies on spawn ticks (spawning is throttled to gameTime % 60)
     if (gameTime % 60 === 0) {
         _cachedAliveEnemies = 0;
@@ -9924,6 +10344,8 @@ function _updateEnemySpawning() {
         addLog(window.I18n ? I18n.t('log.bossDefeated') : 'Chefe abatido!'); player.gainXP(CONFIG.XP_BOSS_REWARD + CONFIG.BOSS_XP_BONUS); ScreenEffects.onBossDeath();
         const bossPos = map.getSafeSpawn(0);
         chests.push(new Chest(bossPos.x, bossPos.y, SeedSystem.random() < 0.35 ? 'lendario' : 'epico'));
+        // Powerup raro garantido ao abater o chefe: 1 dos 4 igualmente
+        { const rareTypes = ['fury', 'frenzy', 'magnet', 'aegis']; pickups.push(new Pickup(bossPos.x, bossPos.y, rareTypes[Math.floor(SeedSystem.random() * rareTypes.length)])); }
         addLog(window.I18n ? I18n.t('log.bossChest') : 'Bau do Chefe apareceu!');
         dungeonKills = Math.max(dungeonKills, dungeonKillTarget);
     }
@@ -9995,6 +10417,7 @@ function update() {
     Debug.safe(() => _updateWorldSim(), 'updateWorldSim');
     Debug.safe(() => Debug.time('entities', _updateEntitySimulation), 'updateEntitySimulation');
     Debug.safe(() => _updatePortalAndFloor(), 'updatePortalAndFloor');
+    Debug.safe(() => _updateSecretRoom(), 'secretRoom');
     Debug.safe(() => _updateEnemySpawning(), 'updateEnemySpawning');
     Debug.safe(() => { if (window.QuestSystem) QuestSystem.update(); }, 'questSystem');
     // Achievements are defined but checkAchievements() was never invoked, so no
@@ -10084,6 +10507,10 @@ function _drawWorldLayer() {
     if (map && map.draw) {
         map.draw(wctx, camX, camY);
     }
+    // Sala secreta: tinta roxa do bolso + portal de entrada (andar) ou de saída (sala)
+    if (_secretRoom) { wctx.fillStyle = 'rgba(90,30,150,0.22)'; wctx.fillRect(0, 0, width, height); }
+    if (secretPortal) secretPortal.draw(wctx, camX, camY);
+    if (_secretRoom && _secretRoom.exit) _secretRoom.exit.draw(wctx, camX, camY);
     
     // Draw weather overlay if active
     if (weather && weather.draw) weather.draw(wctx);
@@ -10183,15 +10610,24 @@ function _drawWorldLayer() {
     bullets.forEach(b => { if(b.x > vL && b.x < vR && b.y > vT && b.y < vB) b.draw(wctx, camX, camY); });
     
     if (player) {
+        // (v57) Pet montado é desenhado ANTES do jogador: o corcel/dragão/águia fica sob o cavaleiro
+        if (typeof pets !== 'undefined') {
+            for (let _pi = 0; _pi < pets.length; _pi++) {
+                const _pet = pets[_pi];
+                if (!_pet || !_pet.alive || !_pet.mounted) continue;
+                // Sombra do conjunto já é a do jogador; o pet montado só é desenhado sob ele
+                _pet.draw(wctx, camX, camY);
+            }
+        }
         drawGroundShadow(wctx, player.x, player.y, player.radius * 1.1, camX, camY);
         player.draw(wctx, camX, camY);
-        // Draw pets (companions) on top of the player so mounted pets and their
-        // status indicators are always visible. Cheap: few pets, culled by viewport.
+        // Draw pets (companions) on top of the player so unmounted pets and the
+        // mount indicators are always visible. Cheap: few pets, culled by viewport.
         if (typeof pets !== 'undefined') {
             for (let _pi = 0; _pi < pets.length; _pi++) {
                 const _pet = pets[_pi];
                 if (!_pet || !_pet.alive) continue;
-                if (_pet.x > vL && _pet.x < vR && _pet.y > vT && _pet.y < vB) {
+                if (!_pet.mounted && _pet.x > vL && _pet.x < vR && _pet.y > vT && _pet.y < vB) {
                     drawGroundShadow(wctx, _pet.x, _pet.y, _pet.radius * 1.1, camX, camY);
                     _pet.draw(wctx, camX, camY);
                 }
@@ -10756,6 +11192,9 @@ function _drawNavArrows(ctx) {
     if(gameState !== 'PLAYING' || !player) return;
     // Portal arrow  bright purple
     if(dungeonPortal) _drawNavArrow(ctx, dungeonPortal.x, dungeonPortal.y, COLORS.PORTAL);
+    // Sala secreta: seta para o portal de entrada (andar) e para a saída (sala)
+    if(secretPortal) _drawNavArrow(ctx, secretPortal.x, secretPortal.y, SECRET_ROOM.COLOR);
+    if(_secretRoom && _secretRoom.exit) _drawNavArrow(ctx, _secretRoom.exit.x, _secretRoom.exit.y, SECRET_ROOM.EXIT_COLOR);
     // Weapon pickup arrows  cyan (at most 3, to keep cost low)
     let wCount = 0;
     for(const wp of weaponPickups) {
@@ -12990,7 +13429,13 @@ const SkillTree = {
             { id: 'greed', name: 'Ganância', desc: '+15% de ouro coletado', cost: 55, tier: 1, greedBonus: true },
             { id: 'stun', name: 'Impacto Atordoante', desc: '10% de chance de atordoar no golpe', cost: 75, tier: 2, stun: true, requires: 'slam' },
             { id: 'finisher', name: 'Golpe Final', desc: 'Executa inimigos abaixo de 20% de HP', cost: 140, tier: 3, execute: true, requires: 'berserk' },
-            { id: 'berserk', name: 'Berserker Rage', desc: 'Habilidade: fúria (+50% dmg, +30% vel, 15s)', cost: 130, tier: 3, ability: 'berserk', requires: 'slam' }
+            { id: 'berserk', name: 'Berserker Rage', desc: 'Habilidade: fúria (+50% dmg, +30% vel, 15s)', cost: 130, tier: 3, ability: 'berserk', requires: 'slam' },
+            // v56: nós de comportamento
+            { id: 'quake', name: 'Terremoto', desc: 'Ground Slam dá um segundo pulso de dano', cost: 90, tier: 2, flag: 'quake', requires: 'slam' },
+            { id: 'bloodlust', name: 'Sede de Sangue', desc: 'Abates curam 2 HP e dão velocidade curta', cost: 80, tier: 2, flag: 'bloodlust', requires: 'vamp1' },
+            { id: 'bulwark', name: 'Muralha', desc: 'Sofre 40% menos dano enquanto houver escudo', cost: 90, tier: 2, flag: 'bulwark', requires: 'guard', excludes: ['brutal'] },
+            { id: 'brutal', name: 'Brutalidade', desc: 'O finalizador causa sangramento', cost: 130, tier: 3, flag: 'brutal', requires: 'finisher', excludes: ['bulwark'] },
+            { id: 'thunderEcho', name: 'Eco do Trovão', desc: 'O finalizador deixa uma onda de choque extra', cost: 150, tier: 3, flag: 'thunderEcho', requires: 'finisher' }
         ],
         rogue: [
             { id: 'speed1', name: 'Swift I', desc: '+10% speed', cost: 25, tier: 1, cat: 'speed', speedMult: 0.1 },
@@ -13008,7 +13453,13 @@ const SkillTree = {
             { id: 'evasion2', name: 'Dodge Master II', desc: '+10% dodge', cost: 80, tier: 3, dodge: 0.1, requires: 'evasion' },
             { id: 'sharpshooter', name: 'Atirador de Elite', desc: '+15% dano', cost: 55, tier: 1, dmgMult: 0.15 },
             { id: 'bleed', name: 'Sangramento', desc: '12% de chance de sangrar no golpe', cost: 60, tier: 2, bleed: true, requires: 'crit1' },
-            { id: 'deathmark', name: 'Death Mark', desc: 'Habilidade: alvos marcados tomam +50% dmg', cost: 130, tier: 3, ability: 'deathmark', requires: 'shadow' }
+            { id: 'deathmark', name: 'Death Mark', desc: 'Habilidade: alvos marcados tomam +50% dmg', cost: 130, tier: 3, ability: 'deathmark', requires: 'shadow' },
+            // v56: nós de comportamento
+            { id: 'twinBlades', name: 'Lâminas Gêmeas', desc: 'O passo 2 dispara um projétil extra', cost: 80, tier: 2, flag: 'twinBlades', requires: 'crit1' },
+            { id: 'isolatedKill', name: 'Execução Silenciosa', desc: '+35% de dano em inimigo isolado', cost: 110, tier: 3, flag: 'isolatedKill', requires: 'shadow' },
+            { id: 'venomTrail', name: 'Rastro Venenoso', desc: 'O dash deixa uma poça de veneno', cost: 80, tier: 2, flag: 'venomTrail', requires: 'poison2', excludes: ['shadowPass'] },
+            { id: 'shadowPass', name: 'Passo Sombrio', desc: 'Invulnerabilidade do dash +20 quadros', cost: 80, tier: 2, flag: 'shadowPass', requires: 'evasion', excludes: ['venomTrail'] },
+            { id: 'pilfer', name: 'Furto', desc: '8% de chance de ouro extra ao acertar', cost: 50, tier: 1, flag: 'pilfer' }
         ],
         mage: [
             { id: 'mana1', name: 'Arcane Focus I', desc: '+20 mana', cost: 30, tier: 1, maxMana: 20 },
@@ -13029,7 +13480,13 @@ const SkillTree = {
             { id: 'frostTouch', name: 'Toque Gélido', desc: '15% de chance de congelar no golpe', cost: 75, tier: 2, frostTouch: true, requires: 'freeze' },
             { id: 'overload', name: 'Sobrecarga Arcana', desc: '+20% dano', cost: 90, tier: 2, dmgMult: 0.20, requires: 'dmg2' },
             { id: 'manaSpring2', name: 'Mana Spring II', desc: '+3 mana/sec', cost: 100, tier: 3, manaRegen: 3, requires: 'regen' },
-            { id: 'barrier', name: 'Arcane Barrier', desc: 'Habilidade: escudo +75 e onda de dano', cost: 130, tier: 3, ability: 'barrier', requires: 'meteor' }
+            { id: 'barrier', name: 'Arcane Barrier', desc: 'Habilidade: escudo +75 e onda de dano', cost: 130, tier: 3, ability: 'barrier', requires: 'meteor' },
+            // v56: nós de comportamento
+            { id: 'frostWave', name: 'Onda Gélida', desc: 'O finalizador congela inimigos ao redor', cost: 125, tier: 3, flag: 'frostWave', requires: 'frostTouch' },
+            { id: 'cyclicOverload', name: 'Sobrecarga Cíclica', desc: 'A cada 4º ataque, o disparo sai com dano dobrado', cost: 80, tier: 2, flag: 'cyclicOverload', requires: 'dmg1' },
+            { id: 'manaWell', name: 'Fonte de Mana', desc: 'Abates reduzem o superaquecimento', cost: 80, tier: 2, flag: 'manaWell', requires: 'regen', excludes: ['darkPact'] },
+            { id: 'darkPact', name: 'Pacto Sombrio', desc: 'Ao superaquecer, sacrifica 15% de HP para resfriar pela metade', cost: 75, tier: 2, flag: 'darkPact', requires: 'mana2', excludes: ['manaWell'] },
+            { id: 'meteorRain', name: 'Chuva de Meteoros', desc: 'Meteoro vira chuva: impactos extras ao redor', cost: 130, tier: 3, flag: 'meteorRain', requires: 'meteor' }
         ],
         elf: [
             { id: 'aim1', name: 'Mira Precisa I', desc: '+10% crítico', cost: 40, tier: 1, critChance: 0.10 },
@@ -13047,7 +13504,13 @@ const SkillTree = {
             { id: 'wind2', name: 'Vento Veloz II', desc: '+10% velocidade', cost: 70, tier: 2, cat: 'speed', speedMult: 0.10, requires: 'wind1' },
             { id: 'roots', name: 'Raízes da Natureza', desc: '15% de chance de enraizar no golpe', cost: 75, tier: 2, rootTouch: true, requires: 'seed1' },
             { id: 'tempest', name: 'Tempestade de Vento', desc: 'Habilidade: rajada que empurra inimigos', cost: 110, tier: 2, ability: 'tempest', requires: 'gale2' },
-            { id: 'naturesFury', name: 'Fúria da Natureza', desc: 'Habilidade: flechas que enraízam e envenenam', cost: 140, tier: 3, ability: 'naturesFury', requires: 'tempest' }
+            { id: 'naturesFury', name: 'Fúria da Natureza', desc: 'Habilidade: flechas que enraízam e envenenam', cost: 140, tier: 3, ability: 'naturesFury', requires: 'tempest' },
+            // v56: nós de comportamento
+            { id: 'homingArrow', name: 'Flecha Teleguiada', desc: 'A primeira flecha de cada rajada curva ao alvo', cost: 70, tier: 2, flag: 'homingArrow', requires: 'aim1' },
+            { id: 'thorns', name: 'Espinhos', desc: 'Raízes também causam veneno contínuo', cost: 110, tier: 3, flag: 'thorns', requires: 'roots' },
+            { id: 'galeBurst', name: 'Rajada do Vento', desc: 'Cada 5º disparo empurra com força e causa +30% de dano', cost: 80, tier: 2, flag: 'galeBurst', requires: 'gale1', excludes: ['huntMark'] },
+            { id: 'huntMark', name: 'Marca da Caçadora', desc: 'Alvos atingidos recebem +25% de dano por 5s', cost: 80, tier: 2, flag: 'huntMark', requires: 'gale1', excludes: ['galeBurst'] },
+            { id: 'petSynergy', name: 'Sinergia Animal', desc: 'Pets causam +30% de dano', cost: 70, tier: 2, flag: 'petSynergy', requires: 'wind1' }
         ]
     },
 
@@ -13062,11 +13525,28 @@ const SkillTree = {
     _floorSeen: -1,
     floorPurchaseCount: 0,
 
+    // Retorna o id do nó já comprado que excluí este (escolha exclusiva), ou null
+    blockedBy(player, skill) {
+        if (!skill || !skill.excludes) return null;
+        for (let i = 0; i < skill.excludes.length; i++) {
+            if (player.unlockedSkills.includes(skill.excludes[i])) return skill.excludes[i];
+        }
+        // Simetria: se outro nó já comprado exclui este, também está bloqueado
+        const nodes = this.getNodes(player.type);
+        for (let j = 0; j < nodes.length; j++) {
+            const n = nodes[j];
+            if (n.excludes && n.excludes.indexOf(skill.id) !== -1 && player.unlockedSkills.includes(n.id)) return n.id;
+        }
+        return null;
+    },
+
     unlock(player, skillId, bypassLimit) {
         if (player.unlockedSkills.includes(skillId)) return false; // Já tem
         const cls = player.type;
         const skill = this.getNodes(cls).find(s => s.id === skillId);
         if (!skill) return false;
+        // Escolha exclusiva: não compra se um irmão excludente já foi comprado
+        if (this.blockedBy(player, skill)) return false;
 
         // Teto por andar (arquétipos/build-codes ignoram para aplicar o preset inteiro)
         if (!bypassLimit) {
@@ -13120,6 +13600,8 @@ const SkillTree = {
             if (skill.ability === 'barrier') { player.skills.barrier = true; player.skills.ult1 = true; }
             if (skill.ability === 'tempest') { player.skills.tempest = true; }
             if (skill.ability === 'naturesFury') { player.skills.naturesFury = true; player.skills.ult1 = true; }
+            // Nós de comportamento (v56): flag booleana em player.skills (persistida pelo save)
+            if (skill.flag) player.skills[skill.flag] = true;
 
             player.unlockedSkills.push(skillId);
             if (!bypassLimit) this.floorPurchaseCount++;
@@ -13880,6 +14362,8 @@ const WeaponSystem = {
         const baseRate = cls.fireRate;
         let rate = Math.max(3, Math.floor(baseRate / (player.weaponFireRateMult || 1.0)));
         if (player.overheated) rate = Math.floor(rate * CONFIG.OVERHEAT_FIRERATE_MULT);
+        // Powerup Frenesi (raro): cadência +40% = cooldown dividido por 1.4
+        if (player.frenzyTimer > 0) rate = Math.max(3, Math.floor(rate / CONFIG.POWERUP_FRENZY_FIRERATE_MULT));
         return rate;
     },
 
@@ -15369,6 +15853,19 @@ const ScreenEffects = {
             if (m && typeof DamageNumbers !== 'undefined') {
                 DamageNumbers.add(px, py - 30, window._L ? _L(m.nameKey, m.name) : m.name, 'normal');
             }
+        } else if (type === 'fury') {
+            this._addRing(px, py, COLORS.PICKUP_FURY, 34, 14, 3, 0);
+            this._collectSparks(px, py, COLORS.PICKUP_FURY, 8, false, 3);
+        } else if (type === 'frenzy') {
+            this._collectSparks(px, py, COLORS.PICKUP_FRENZY, 8, false, 3);
+            this._addRing(px, py, COLORS.PICKUP_FRENZY, 30, 12, 2, 0);
+        } else if (type === 'magnet') {
+            // Anel azul expandindo; as moedas/XP voam até o herói (movimento em Pickup, no update)
+            this._addRing(px, py, COLORS.PICKUP_MAGNET, 90, 26, 3, 0);
+            this._pullSparks(px, py, COLORS.PICKUP_MAGNET, 10);
+        } else if (type === 'aegis') {
+            this._addRing(px, py, COLORS.PICKUP_AEGIS, 40, 16, 4, 0);
+            this._collectSparks(px, py, COLORS.PICKUP_AEGIS, 10, false, 3);
         }
     },
 
@@ -19606,6 +20103,10 @@ class Pickup {
             this.value = this.mutationType;
         } else if(type === 'currency') { this.color=COLORS.PICKUP_CURRENCY; this.value=Math.round(CONFIG.PICKUP_CURRENCY_VALUE * (1 + 0.06 * Math.max(0, (typeof dungeonLevel === 'number' ? dungeonLevel : 1) - 1))); }
         else if(type === 'essence') { this.color=COLORS.PICKUP_ESSENCE; }
+        else if(type === 'fury') { this.color=COLORS.PICKUP_FURY; }
+        else if(type === 'frenzy') { this.color=COLORS.PICKUP_FRENZY; }
+        else if(type === 'magnet') { this.color=COLORS.PICKUP_MAGNET; }
+        else if(type === 'aegis') { this.color=COLORS.PICKUP_AEGIS; }
         this.radius = 8;
     }
     update() {
@@ -19647,6 +20148,42 @@ class Pickup {
         }
         // Pulso leve (desligado com reducedMotion) e marca própria por tipo para distinguir de longe
         const pulse = (window.GameSettings && GameSettings.reducedMotion) ? 0 : Math.sin(gameTime * 0.12 + this.bobOffset) * 0.12;
+        if(this.type === 'fury' || this.type === 'frenzy' || this.type === 'magnet' || this.type === 'aegis') {
+            // Powerups raros: formas próprias (estrela, raio, ímã em U, brasão) e brilho pulsante (desligado com reducedMotion)
+            const pk = (window.GameSettings && GameSettings.reducedMotion) ? 0 : Math.sin(gameTime * 0.15 + this.bobOffset) * 0.3;
+            drawGlow(ctx, px, py, 10, this.color, 0.4 + pk);
+            ctx.fillStyle = this.color;
+            ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            if(this.type === 'fury') {
+                for(let k = 0; k < 10; k++) {
+                    const rr = (k % 2 === 0) ? 9 : 4;
+                    const aa = -Math.PI / 2 + k * Math.PI / 5;
+                    const spx = px + Math.cos(aa) * rr, spy = py + Math.sin(aa) * rr;
+                    if(k === 0) ctx.moveTo(spx, spy); else ctx.lineTo(spx, spy);
+                }
+                ctx.closePath(); ctx.fill(); ctx.stroke();
+            } else if(this.type === 'frenzy') {
+                ctx.moveTo(px + 2, py - 9); ctx.lineTo(px - 5, py + 1); ctx.lineTo(px - 0.5, py + 1);
+                ctx.lineTo(px - 2, py + 9); ctx.lineTo(px + 5, py - 1); ctx.lineTo(px + 0.5, py - 1);
+                ctx.closePath(); ctx.fill(); ctx.stroke();
+            } else if(this.type === 'magnet') {
+                ctx.lineWidth = 3.5; ctx.strokeStyle = this.color;
+                ctx.moveTo(px - 6, py + 5); ctx.lineTo(px - 6, py - 1);
+                ctx.arc(px, py - 1, 6, Math.PI, 0);
+                ctx.lineTo(px + 6, py + 5);
+                ctx.stroke();
+                ctx.fillStyle = 'rgba(255,255,255,0.9)';
+                ctx.fillRect(px - 8, py + 3, 4, 3); ctx.fillRect(px + 4, py + 3, 4, 3);
+            } else {
+                ctx.moveTo(px, py - 9); ctx.lineTo(px + 7, py - 5); ctx.lineTo(px + 6, py + 2);
+                ctx.lineTo(px, py + 9); ctx.lineTo(px - 6, py + 2); ctx.lineTo(px - 7, py - 5);
+                ctx.closePath(); ctx.fill(); ctx.stroke();
+            }
+            ctx.restore();
+            return;
+        }
         if(this.type === 'essence') {
             // Losango brilhante
             drawGlow(ctx, px, py, 11, this.color, 0.5 + pulse);
@@ -19974,6 +20511,11 @@ class Chest {
         if (this.opened) return;
         this.opened = true; this.openAnim = 50;
         if (typeof RelicSystem !== 'undefined') RelicSystem.openChest(this, player);
+        // Powerup raro: ~8% por baú aberto, sorteando 1 dos 4 igualmente (nunca entra na tabela de inimigos)
+        if (SeedSystem.random() < CONFIG.POWERUP_CHEST_CHANCE) {
+            const rareTypes = ['fury', 'frenzy', 'magnet', 'aegis'];
+            pickups.push(new Pickup(this.x, this.y, rareTypes[Math.floor(SeedSystem.random() * rareTypes.length)]));
+        }
     }
 
     draw(ctx, cx, cy) {
@@ -20106,9 +20648,9 @@ window.PoolManager = PoolManager;
     <script>
 // === js/world/map.js ===
 class Map {
-    constructor() {
+    constructor(pocket) {
         this.tiles = []; this.width = CONFIG.MAP_WIDTH; this.height = CONFIG.MAP_HEIGHT;
-        this.generate(); // generate() runs _ensureConnectivity() last
+        if (pocket) this._buildPocket(pocket); else this.generate(); // generate() runs _ensureConnectivity() last
         this.buffer = (() => {
             try {
                 if (typeof OffscreenCanvas !== 'undefined') {
@@ -20126,6 +20668,23 @@ class Map {
         }
         this.bufferCtx = this.buffer.getContext('2d');
         this.needsRedraw = true; // always draw after fresh generation
+    }
+    // Sala secreta: grade do mesmo tamanho do andar (minimapa e FlowField dependem
+    // disso), toda parede exceto um retângulo interior fechado. Sem geração procedural.
+    _buildPocket(p) {
+        const W = this.width, H = this.height, T = CONFIG.TILE_SIZE;
+        for (let x = 0; x < W; x++) { this.tiles[x] = []; for (let y = 0; y < H; y++) this.tiles[x][y] = { t: 1, b: 0 }; }
+        for (let x = p.x0; x < p.x0 + p.w; x++) for (let y = p.y0; y < p.y0 + p.h; y++) this.tiles[x][y].t = 0;
+        // Cobertura: dois pilares isolados (props) em posições fixas
+        this.tiles[p.x0 + 5][p.y0 + 2].t = 2;
+        this.tiles[p.x0 + 9][p.y0 + 8].t = 2;
+        // Tochas nos cantos para a sala ler bem
+        this.litProps = [];
+        const corners = [[p.x0 + 1, p.y0 + 1], [p.x0 + p.w - 2, p.y0 + 1], [p.x0 + 1, p.y0 + p.h - 2], [p.x0 + p.w - 2, p.y0 + p.h - 2]];
+        for (const [tx, ty] of corners) {
+            this.tiles[tx][ty].lit = true;
+            this.litProps.push({ tx: tx, ty: ty, x: tx * T + T / 2, y: ty * T + T / 2 });
+        }
     }
     generate() {
         const W = this.width, H = this.height;
@@ -20794,7 +21353,7 @@ class Entity {
         if(source && source.skills && source.skills.bleed && SeedSystem.random() < 0.12) { this.poisonStacks = (this.poisonStacks || 0) + 2; spawnParticles(this.x, this.y, '#ff2222', 6, 3); if(typeof DamageNumbers !== 'undefined') DamageNumbers.add(this.x, this.y, 'SANGRIA!', 'bleed'); if(typeof Statistics !== 'undefined' && source === player) Statistics.data.bleedsApplied = (Statistics.data.bleedsApplied || 0) + 1; }
         if(source && source.skills && source.skills.frostTouch && SeedSystem.random() < 0.15) { this.frozen = Math.max(this.frozen || 0, Math.floor(60 * (this.elite ? 0.5 : this.isB ? 0.25 : 1))); spawnParticles(this.x, this.y, '#66ccff', 8, 4); if(typeof DamageNumbers !== 'undefined') DamageNumbers.add(this.x, this.y, 'GEADA!', 'frost'); if(typeof Statistics !== 'undefined' && source === player) Statistics.data.frostsApplied = (Statistics.data.frostsApplied || 0) + 1; }
         // Elfa: raízes da natureza enraízam inimigos no golpe (mesma mecânica do gelo, visual verde)
-        if(source && source.skills && source.skills.rootTouch && SeedSystem.random() < 0.15) { this.frozen = Math.max(this.frozen || 0, Math.floor(60 * (this.elite ? 0.5 : this.isB ? 0.25 : 1))); spawnParticles(this.x, this.y, '#58e08a', 8, 4); if(typeof DamageNumbers !== 'undefined') DamageNumbers.add(this.x, this.y, 'RAÍZES!', 'frost'); if(typeof Statistics !== 'undefined' && source === player) Statistics.data.frostsApplied = (Statistics.data.frostsApplied || 0) + 1; }
+        if(source && source.skills && source.skills.rootTouch && SeedSystem.random() < 0.15) { this.frozen = Math.max(this.frozen || 0, Math.floor(60 * (this.elite ? 0.5 : this.isB ? 0.25 : 1))); spawnParticles(this.x, this.y, '#58e08a', 8, 4); if(typeof DamageNumbers !== 'undefined') DamageNumbers.add(this.x, this.y, 'RAÍZES!', 'frost'); if(source.skills.thorns) { this.poisonStacks = Math.min(CONFIG.ROGUE_POISON_MAX_STACKS, (this.poisonStacks || 0) + 1); this.poisonTimer = Math.max(this.poisonTimer || 0, CONFIG.ROGUE_POISON_DURATION); spawnParticles(this.x, this.y, '#58e08a', 5, 3); DamageNumbers.add(this.x, this.y, 'ESPINHOS!', 'bleed'); }if(typeof Statistics !== 'undefined' && source === player) Statistics.data.frostsApplied = (Statistics.data.frostsApplied || 0) + 1; }
         if(this.frozen > 0) { 
             finalDmg *= CONFIG.FROZEN_DAMAGE_MULT; 
             dmgType = 'crit'; 
@@ -20832,8 +21391,26 @@ class Entity {
             }
         }
         if(source && source.damageBoost > 0) finalDmg *= CONFIG.DAMAGE_BOOST_MULTIPLIER;
+        // Powerup Fúria (raro): mesmo ponto do damageBoost, aplicado uma única vez aqui
+        if(source && source.furyTimer > 0) finalDmg *= CONFIG.POWERUP_FURY_DAMAGE_MULT;
         if(currentEvent && currentEvent.type === 'bloodMoon' && source === player) finalDmg *= CONFIG.BLOOD_MOON_DAMAGE_BOOST;
         if(source === player && player && player.damageMult > 1) finalDmg *= player.damageMult;
+        // Nós de comportamento v56 (só dano do jogador; multiplicadores de alvo, não de dano do jogador)
+        if(source === player && this !== player && player.skills) {
+            if(player.skills.isolatedKill) {
+                let _isoOk = true;
+                for(let _ii = 0; _ii < entities.length && _isoOk; _ii++) {
+                    const _o = entities[_ii];
+                    if(_o !== this && _o !== player && _o.alive && typeof Enemy !== 'undefined' && (_o instanceof Enemy || _o.isEnemy)) {
+                        const _ox = _o.x - this.x, _oy = _o.y - this.y;
+                        if(_ox * _ox + _oy * _oy < CONFIG.ISOLATED_RADIUS * CONFIG.ISOLATED_RADIUS) _isoOk = false;
+                    }
+                }
+                if(_isoOk) finalDmg *= CONFIG.ISOLATED_DMG_MULT;
+            }
+            if(this._huntMarkT > 0) finalDmg *= CONFIG.HUNT_MARK_MULT;
+            if(player.skills.huntMark) this._huntMarkT = CONFIG.HUNT_MARK_FRAMES;
+        }
         // Track lifetime damage dealt by the player (used by achievements + stats)
         if (source === player && typeof Statistics !== 'undefined') { Statistics.data.totalDamageDealt = (Statistics.data.totalDamageDealt || 0) + finalDmg; if (window.RunStats) RunStats.damageDealt += finalDmg; }
         if(this.shield > 0) { this.shield -= finalDmg; if(this.shield < 0) { this.hp += this.shield; this.shield = 0; } } else { this.hp -= finalDmg; if(source === player || (source && source.owner === player)) DamageNumbers.add(this.x, this.y, finalDmg, dmgType); }
@@ -20928,7 +21505,12 @@ class Entity {
             ScreenEffects.impactHit(finalDmg, source.x, source.y, this.x, this.y, dmgType === 'crit');
         }
         
-                // Relic: Espinhos de Escudo
+                // Furto (ladino, v56): chance de ouro extra ao acertar um inimigo
+        if(source === player && this !== player && !this.isP && player.skills && player.skills.pilfer && SeedSystem.random() < CONFIG.PILFER_CHANCE) {
+            player.currency = (player.currency || 0) + CONFIG.PILFER_GOLD;
+            DamageNumbers.add(this.x, this.y, '+' + CONFIG.PILFER_GOLD + '$', 'heal');
+        }
+        // Relic: Espinhos de Escudo
         if(window.RelicSystem && this === player) RelicSystem.espinhosReflect(this, source, finalDmg);
         
         if(this.hp <= 0) {
@@ -21447,6 +22029,7 @@ class Enemy extends Entity {
         
         if(this.ft > 0) this.ft--;
         if(this._deathMarkT > 0) this._deathMarkT--;
+        if(this._huntMarkT > 0) this._huntMarkT--;
         if(this.frozen > 0) { 
             ctx.globalAlpha = 0.6;
             ctx.fillStyle = 'rgba(51,204,255,0.35)';
@@ -23218,6 +23801,199 @@ const PET_TYPES = {
 // Map class  pet type
 const CLASS_PET = { warrior: 'horse', mage: 'dragon', rogue: 'eagle' };
 
+// ---- Arte dos pets (v57): pixel-art 32x32 montado por código, em cache lazy ----
+// Cada pet desenha formas (elipse, retângulo, triângulo) numa grade; contorno colorido e
+// sombreamento de 4 tons saem da cor-base do próprio pet. Gerado UMA vez por (pet, pose,
+// direção, flash) e guardado em PET_SPR_CACHE. Poses: 0-3 quadros de movimento, 4 ataque, 5 piscada.
+const PET_ART_KEYS = ['horse', 'dragon', 'eagle', 'wolf', 'owl', 'spirit'];
+const PET_FLY_ALT = { dragon: 7, eagle: 9, owl: 6, spirit: 5 }; // altura visual de voo (px)
+const PET_ART_ACC = {
+    horse:  { S: '#8a2a22', Y: '#e8b845' },
+    dragon: { F: '#ff9a2e', Y: '#ffe36e', A: '#fff2a8' },
+    eagle:  { Y: '#f5c02a' },
+    wolf:   { Y: '#ffd23a', A: '#d9534f' },
+    owl:    { Y: '#f0b040' },
+    spirit: { G: '#e8fff6' }
+};
+const PET_SPR_CACHE = [];
+function _petRGB(hex) { const n = parseInt(hex.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }
+function _petMix(c, t, k) { return [Math.round(c[0] + (t[0] - c[0]) * k), Math.round(c[1] + (t[1] - c[1]) * k), Math.round(c[2] + (t[2] - c[2]) * k)]; }
+
+// Desenhos (voltados para a direita; a esquerda é espelhada na composição)
+const PET_ART_DEF = {
+    horse(E, R, T, F, p) {
+        const dy = [0, -1, 0, -1, 0, 0][p];
+        const L = p % 2 === 0 ? [[6, 26], [8, 27], [21, 26], [24, 27]] : [[8, 25], [10, 26], [19, 25], [21, 26]];
+        const leg = (x, ly, adj) => { R(x, 19 + dy, 2, ly - 19 - dy, adj); R(x, ly - 1, 2, 1, -2); };
+        leg(L[0][0], L[0][1], -1); leg(L[2][0], L[2][1], -1);
+        E(4.5, 15, 2.6, 3.6, -1); E(3.5, 20.5, 2, 3, -2);
+        E(15, 16 + dy, 8.5, 4.8, 0);
+        leg(L[1][0], L[1][1], 0); leg(L[3][0], L[3][1], 0);
+        E(21.5, 11 + dy, 3.2, 4.8, 0);
+        E(19, 7.5 + dy, 2.8, 2.3, -1);
+        E(25.3, 8 + dy, 3, 2.6, 1);
+        E(28.4, 10 + dy, 1.8, 1.6, 0);
+        T([[23, 5.5 + dy], [23.6, 2.2 + dy], [25.4, 5.2 + dy]], 0);
+        R(10, 12 + dy, 7, 3, 0, 'S');
+        R(10, 15 + dy, 7, 1, 0, 'Y');
+        F(26, 7 + dy, 'K');
+        F(29, 9 + dy, 'K');
+    },
+    dragon(E, R, T, F, p) {
+        const wt = [4, 9, 14, 9, 9, 9][p];
+        T([[13, 13], [6, wt + 1], [17, 11]], -1);
+        E(3.8, 23.5, 3.8, 1.9, -1);
+        E(2.2, 21.2, 1.6, 1.4, -2);
+        R(11, 22, 2, 3, -1); R(18, 22, 2, 3, -1);
+        E(14, 19, 6.5, 5, 0);
+        E(14, 21.2, 4, 2.4, 1);
+        T([[11, 14], [3, wt], [16, 11]], 2);            // membrana da asa de perto (tom claro)
+        T([[11, 13], [3, wt], [12, 14]], -2);           // osso principal da asa (escuro)
+        T([[13, 12], [7, wt + 3], [11, 13]], -1);       // osso secundário
+        E(20.5, 13, 4, 3.2, 0);
+        E(25.2, 14.2, 2.6, 1.9, 0);
+        T([[19, 9.4], [18.8, 5], [21.8, 9]], -1);
+        T([[22, 9], [23.6, 5], [24.6, 9.5]], -1);
+        F(22, 12, 'Y');
+        F(27, 15, p % 2 === 0 ? 'Y' : 'F');
+        if (p === 4) { F(28, 15, 'F'); F(29, 15, 'Y'); F(29, 14, 'F'); F(30, 14, 'A'); }
+    },
+    eagle(E, R, T, F, p) {
+        // Batida: meio (0), cima (1), baixo (2), meio (3); ataque (4) com asas meio abertas
+        const tip = [8, 1, 16, 8, 8, 8][p];
+        T([[16, 11], [1, tip - 2], [10, 19]], -1);      // asa de longe (escura)
+        T([[16, 11], [10, 19], [20, 17]], -2);
+        T([[12, 21], [6, 28], [17, 24]], -1);           // leque da cauda
+        E(14.5, 17, 4.6, 6, -1);                        // corpo marrom escuro
+        E(16.5, 18.5, 2.6, 3.8, 1);                     // peito claro
+        T([[15, 11], [0, tip], [9, 22]], 1);            // asa de perto, tom claro
+        T([[15, 11], [9, 22], [17, 19]], 0);            // cobertoras, tom médio
+        T([[6, tip + 3], [0, tip], [3, tip + 7]], 2);   // penas primárias (ponta mais clara)
+        E(19.5, 10, 3.2, 3.2, 2, 'W');                  // cabeça branca de rapina
+        F(20, 9, 'K');                                  // olho escuro
+        T([[21.5, 8], [27, 9.5], [22, 12]], 0, 'Y');    // bico amarelo, curvo
+        R(12, 24, 2, 2, 0, 'Y'); R(16, 24, 2, 2, 0, 'Y'); // garras amarelas
+    },
+    wolf(E, R, T, F, p) {
+        const dy = [0, -1, 0, -1, 0, 0][p];
+        const L = p % 2 === 0 ? [[6, 26], [9, 27], [18, 26], [21, 27]] : [[7, 27], [10, 25], [19, 27], [22, 25]];
+        const leg = (x, ly, adj) => { R(x, 21 + dy, 2, ly - 21 - dy, adj); R(x, ly - 1, 2, 1, -2); };
+        T([[6, 15 + dy], [1, 9 + dy], [5, 21 + dy]], 0);
+        leg(L[0][0], L[0][1], -1); leg(L[2][0], L[2][1], -1);
+        E(14, 18 + dy, 8, 4.8, 0);
+        E(14, 20.6 + dy, 6, 2, 1);
+        leg(L[1][0], L[1][1], 0); leg(L[3][0], L[3][1], 0);
+        T([[20.5, 10.4 + dy], [19.8, 6.2 + dy], [22.2, 10.2 + dy]], -1);
+        E(24, 13 + dy, 4, 3.6, 0);
+        T([[22.2, 10.2 + dy], [22.8, 4.8 + dy], [25.2, 9.6 + dy]], 0);
+        E(28.4, 14.5 + dy, 2.6, 1.9, 0);
+        F(24, 12 + dy, 'Y');
+        F(31, 14 + dy, 'K');
+        if (p === 4) { R(26, 16 + dy, 4, 1, -2, 'K'); F(27, 15 + dy, 'W'); F(29, 15 + dy, 'W'); F(28, 17 + dy, 'A'); }
+    },
+    owl(E, R, T, F, p) {
+        const wy = [0, -2, 0, 2, 0, 0][p];
+        E(7.6, 18 + wy, 2.6, 5.4, -1);
+        E(24.4, 18 + wy, 2.6, 5.4, -1);
+        T([[9, 10], [7, 3], [13, 8.5]], 0);
+        T([[23, 10], [25, 3], [19, 8.5]], 0);
+        E(16, 18, 7.6, 8.6, 0);
+        E(16, 12.5, 6.8, 5.2, 1);
+        E(16, 21.4, 4.4, 4, 1);
+        T([[15, 14], [17, 14], [16, 17.2]], 0, 'Y');
+        if (p === 5) { R(9, 12, 6, 1, 0, 'K'); R(17, 12, 6, 1, 0, 'K'); }
+        else {
+            E(12, 12, 3, 3, 0, 'W'); E(20, 12, 3, 3, 0, 'W');
+            const pk = p === 4 ? 'Y' : 'K';
+            F(12, 12, pk); F(13, 12, pk); F(12, 13, pk); F(13, 13, pk);
+            F(20, 12, pk); F(21, 12, pk); F(20, 13, pk); F(21, 13, pk);
+        }
+        R(13, 25, 2, 2, 0, 'Y'); R(17, 25, 2, 2, 0, 'Y');
+    },
+    spirit(E, R, T, F, p) {
+        const wv = [0, 2, 0, -2, 0, 0][p];
+        E(16, 13, 8.4, 8.4, 0);
+        R(8, 15, 16, 7, 0);
+        E(9, 21 + wv, 2.8, 3.6, 0);
+        E(16, 22 - wv, 2.8, 3.8, 0);
+        E(23, 21 + wv, 2.8, 3.6, 0);
+        F(11, 8, 'W');
+        if (p === 4) {
+            R(11, 12, 2, 1, 0, 'K'); R(19, 12, 2, 1, 0, 'K');
+            F(4, 10, 'G'); F(27, 9, 'G'); F(16, 2, 'G'); F(5, 17, 'G'); F(27, 17, 'G');
+        } else {
+            R(11, 11, 2, 3, 0, 'K'); R(19, 11, 2, 3, 0, 'K');
+        }
+        R(15, 16, 2, 1, 0, 'K');
+    }
+};
+
+// Monta o canvas 32x32 de um pet: sombreamento em 4 tons, contorno colorido, espelho e flash branco
+function _petMakeSprite(type, pose, face, flash) {
+    const N = 32;
+    const base = _petRGB(PET_TYPES[type].color);
+    const black = [0, 0, 0], white = [255, 255, 255];
+    const tones = [null, _petMix(base, black, 0.6), _petMix(base, black, 0.3), base, _petMix(base, white, 0.4)];
+    const outline = _petMix(base, black, 0.82);
+    const acc = { K: [20, 20, 20], W: white };
+    const accSrc = PET_ART_ACC[type] || {};
+    for (const k in accSrc) acc[k] = _petRGB(accSrc[k]);
+    const tone = new Uint8Array(N * N), det = new Array(N * N).fill(null);
+    const put = (x, y, t, k) => {
+        if (x < 0 || y < 0 || x >= N || y >= N) return;
+        const i = y * N + x; tone[i] = t; det[i] = k || null;
+    };
+    const shade = (nx, ny, adj) => { const t = -0.55 * nx - 0.75 * ny + adj * 0.45; return t > 0.6 ? 4 : t > -0.05 ? 3 : t > -0.7 ? 2 : 1; };
+    const E = (cx, cy, rx, ry, adj, k) => {
+        for (let y = Math.floor(cy - ry) - 1; y <= Math.ceil(cy + ry) + 1; y++)
+            for (let x = Math.floor(cx - rx) - 1; x <= Math.ceil(cx + rx) + 1; x++) {
+                const nx = (x + 0.5 - cx) / rx, ny = (y + 0.5 - cy) / ry;
+                if (nx * nx + ny * ny <= 1) put(x, y, k ? 3 : shade(nx, ny, adj), k);
+            }
+    };
+    const R = (x0, y0, w, h, adj, k) => {
+        for (let y = y0; y < y0 + h; y++)
+            for (let x = x0; x < x0 + w; x++) {
+                const nx = (x + 0.5 - (x0 + w / 2)) / (w / 2), ny = (y + 0.5 - (y0 + h / 2)) / (h / 2);
+                put(x, y, k ? 3 : shade(nx, ny, adj), k);
+            }
+    };
+    const T = (pts, adj, k) => {
+        const xs = pts.map(q => q[0]), ys = pts.map(q => q[1]);
+        const x0 = Math.floor(Math.min(...xs)), x1 = Math.ceil(Math.max(...xs));
+        const y0 = Math.floor(Math.min(...ys)), y1 = Math.ceil(Math.max(...ys));
+        const cx = (xs[0] + xs[1] + xs[2]) / 3, cy = (ys[0] + ys[1] + ys[2]) / 3;
+        const hw = Math.max((x1 - x0) / 2, 0.5), hh = Math.max((y1 - y0) / 2, 0.5);
+        const A = pts[0], B = pts[1], C = pts[2];
+        const sg = (px, py, a, b) => (px - b[0]) * (a[1] - b[1]) - (a[0] - b[0]) * (py - b[1]);
+        for (let y = y0; y < y1; y++)
+            for (let x = x0; x < x1; x++) {
+                const px = x + 0.5, py = y + 0.5;
+                const d1 = sg(px, py, A, B), d2 = sg(px, py, B, C), d3 = sg(px, py, C, A);
+                const neg = d1 < 0 || d2 < 0 || d3 < 0, pos = d1 > 0 || d2 > 0 || d3 > 0;
+                if (!(neg && pos)) put(x, y, k ? 3 : shade((px - cx) / hw, (py - cy) / hh, adj), k);
+            }
+    };
+    const F = (x, y, k) => put(Math.round(x), Math.round(y), 3, k);
+    PET_ART_DEF[type](E, R, T, F, pose);
+
+    const cv = document.createElement('canvas'); cv.width = N; cv.height = N;
+    const g = cv.getContext('2d');
+    const img = g.createImageData(N, N), px = img.data;
+    const filled = (x, y) => x >= 0 && y >= 0 && x < N && y < N && tone[y * N + x] !== 0;
+    for (let y = 0; y < N; y++)
+        for (let x = 0; x < N; x++) {
+            const sx = face > 0 ? x : N - 1 - x; // espelha para a esquerda
+            const i = y * N + sx;
+            let c = null;
+            if (tone[i]) c = flash ? white : (det[i] ? acc[det[i]] : tones[tone[i]]);
+            else if (filled(sx - 1, y) || filled(sx + 1, y) || filled(sx, y - 1) || filled(sx, y + 1)) c = outline;
+            if (c) { const o = (y * N + x) * 4; px[o] = c[0]; px[o + 1] = c[1]; px[o + 2] = c[2]; px[o + 3] = 255; }
+        }
+    g.putImageData(img, 0, 0);
+    return cv;
+}
+
 class Pet {
     constructor(type, x, y) {
         const data = PET_TYPES[type];
@@ -23236,6 +24012,7 @@ class Pet {
         this.timer = 0;
         this._abilityTimer = 0;
         this._diveTarget = null;
+        this._face = 1; this._atkT = 0; this._hitT = 0; // visuais (v57): direção, animação de ataque e flash de dano
         SND.playPetSpawn();
         spawnParticles(this.x, this.y, this.color, 20, 5);
         addLog((window._L ? _L(this.nameKey, this.name) : this.name) + (window.I18n ? I18n.t('log.petAppeared') : ' apareceu! Toque nele para montar.'));
@@ -23294,6 +24071,8 @@ class Pet {
     update(m) {
         if(!this.alive) return;
         this.timer++; this._abilityTimer++;
+        if(this._atkT > 0) this._atkT--;
+        if(this._hitT > 0) this._hitT--;
 
         if(this.mounted) {
             const angle = Math.atan2(player.y - this.y, player.x - this.x);
@@ -23322,8 +24101,9 @@ class Pet {
                 }
             }
             if(nearest) {
-                nearest.takeDamage(this.damage, m, player);
+                nearest.takeDamage(this.damage * this._synMult(), m, player);
                 spawnParticles(nearest.x, nearest.y, '#ff6600', 12, 4);
+                this._atkT = 14;
                 const steps = 6, dx2 = (nearest.x - this.x) / steps, dy2 = (nearest.y - this.y) / steps;
                 for(let i = 1; i < steps; i++) spawnParticles(this.x + dx2*i, this.y + dy2*i, '#ff4400', 3, 3);
             }
@@ -23340,8 +24120,9 @@ class Pet {
                 }
             }
             if(nearest) {
-                nearest.takeDamage(this.data.diveDamage, m, player);
+                nearest.takeDamage(this.data.diveDamage * this._synMult(), m, player);
                 spawnParticles(nearest.x, nearest.y, this.color, 10, 3);
+                this._atkT = 14;
                 this.x = nearest.x; this.y = nearest.y;
             }
         }
@@ -23354,7 +24135,8 @@ class Pet {
                     if((e instanceof Enemy || e.isEnemy) && e.alive) {
                         const edx = e.x-this.x, edy = e.y-this.y;
                         if(edx*edx + edy*edy < trampleSq) {
-                            e.takeDamage(this.damage * 0.5, m, player);
+                            e.takeDamage(this.damage * 0.5 * this._synMult(), m, player);
+                            this._atkT = 14;
                         }
                     }
                 }
@@ -23373,8 +24155,9 @@ class Pet {
                 }
             }
             if(nearest) {
-                nearest.takeDamage(this.damage, m, player);
+                nearest.takeDamage(this.damage * this._synMult(), m, player);
                 spawnParticles(nearest.x, nearest.y, this.color, 8, 3);
+                this._atkT = 14;
             }
         }
 
@@ -23391,9 +24174,12 @@ class Pet {
         }
     }
 
+    // Sinergia Animal (v56): pets causam mais dano quando o jogador tem o nó
+    _synMult() { return (window.player && player.skills && player.skills.petSynergy) ? CONFIG.PET_SYNERGY_MULT : 1; }
     takeDamage(a, m) {
         // If mounted, transfer 40% of damage to pet
         const dmg = this.mounted ? a * 0.4 : a;
+        this._hitT = 6;
         this.hp -= dmg;
         if(this.hp <= 0) {
             this.alive = false;
@@ -23405,8 +24191,11 @@ class Pet {
 
     draw(ctx, cx, cy) {
         if(!this.alive) return;
-        const sx = this.x - cx, sy = this.y - cy;
+        // Montado: a montaria é desenhada sob o cavaleiro (só visual; a posição lógica do pet não muda)
+        const sx = (this.mounted ? player.x : this.x) - cx, sy = (this.mounted ? player.y : this.y) - cy;
         const bob = this.mounted ? 0 : Math.sin(this.timer * 0.07) * 2;
+        // Topo do sprite (escala 1.3x = 42 px, centro no pet; altura de voo incluída). Barra e prompt ficam acima dele.
+        const ptop = sy + bob - (this.mounted ? 0 : (PET_FLY_ALT[this.type] || 0)) - 21;
 
         if(!this.mounted) {
             const pdx = player.x - this.x, pdy = player.y - this.y;
@@ -23417,42 +24206,69 @@ class Pet {
                 ctx.beginPath(); ctx.arc(sx, sy + bob, this.radius + 7, 0, Math.PI*2); ctx.fill();
                 ctx.globalAlpha = 1;
                 ctx.fillStyle = '#fff'; ctx.font = 'bold 12px ' + COLORS.CANVAS_FONT; ctx.textAlign = 'center';
-                ctx.fillText('^', sx, sy + bob - this.radius - 6);
+                ctx.fillText('^', sx, ptop - 8);
             }
         }
 
-        // Body
-        ctx.globalAlpha = 1;
-        ctx.fillStyle = this.color;
-        ctx.beginPath(); ctx.arc(sx, sy + bob, this.radius, 0, Math.PI*2); ctx.fill();
+        // Pose e direção: quadros de movimento (galope, batida de asas, ondulação), ataque (4) e piscada (5)
+        const dpx = this._dpx != null ? this._dpx : this.x, dpy = this._dpy != null ? this._dpy : this.y;
+        const mvx = this.x - dpx, mvy = this.y - dpy;
+        this._dpx = this.x; this._dpy = this.y;
+        if(mvx > 0.25) this._face = 1; else if(mvx < -0.25) this._face = -1;
+        const moving = mvx * mvx + mvy * mvy > 0.09;
+        const flyAlt = this.mounted ? 0 : (PET_FLY_ALT[this.type] || 0);
+        let pose;
+        if(this._atkT > 0) pose = 4;
+        else if(this.type === 'owl' && this.timer % 240 >= 228) pose = 5;
+        else if(moving || flyAlt > 0) pose = Math.floor(this.timer / (moving ? 4 : 6)) % 4;
+        else pose = 0;
+        const flash = this._hitT > 0 ? 1 : 0;
+        const sIdx = ((PET_ART_KEYS.indexOf(this.type) * 6 + pose) * 2 + (this._face > 0 ? 0 : 1)) * 2 + flash;
+        const spr = PET_SPR_CACHE[sIdx] || (PET_SPR_CACHE[sIdx] = _petMakeSprite(this.type, pose, this._face, flash));
+        const rmV = !!(window.GameSettings && GameSettings.reducedMotion);
 
-        // Type marker  geometric shapes (no emoji, for perf)
-        ctx.fillStyle = '#fff';
-        ctx.strokeStyle = 'rgba(0,0,0,0)'; ctx.lineWidth = 1;
-        if(this.type === 'horse') {
-            // Four legs = small rectangles
-            ctx.fillRect(sx-5, sy+bob+2, 3, 6);
-            ctx.fillRect(sx+2, sy+bob+2, 3, 6);
-        } else if(this.type === 'dragon') {
-            // Wing triangles
-            ctx.beginPath(); ctx.moveTo(sx-this.radius, sy+bob); ctx.lineTo(sx-this.radius-8, sy+bob-8); ctx.lineTo(sx-this.radius+2, sy+bob-4); ctx.closePath(); ctx.fill();
-            ctx.beginPath(); ctx.moveTo(sx+this.radius, sy+bob); ctx.lineTo(sx+this.radius+8, sy+bob-8); ctx.lineTo(sx+this.radius-2, sy+bob-4); ctx.closePath(); ctx.fill();
-        } else if(this.type === 'eagle') {
-            // Wing spread line
-            ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
-            ctx.beginPath(); ctx.moveTo(sx-this.radius-6, sy+bob-4); ctx.lineTo(sx, sy+bob); ctx.lineTo(sx+this.radius+6, sy+bob-4); ctx.stroke();
-        } else if(this.type === 'wolf') {
-            // Ear triangles
-            ctx.beginPath(); ctx.moveTo(sx-6, sy+bob-this.radius+2); ctx.lineTo(sx-9, sy+bob-this.radius-6); ctx.lineTo(sx-3, sy+bob-this.radius-2); ctx.closePath(); ctx.fill();
-            ctx.beginPath(); ctx.moveTo(sx+6, sy+bob-this.radius+2); ctx.lineTo(sx+9, sy+bob-this.radius-6); ctx.lineTo(sx+3, sy+bob-this.radius-2); ctx.closePath(); ctx.fill();
-        } else if(this.type === 'owl') {
-            // Round eyes
-            ctx.beginPath(); ctx.arc(sx-4, sy+bob-2, 2.5, 0, Math.PI*2); ctx.fill();
-            ctx.beginPath(); ctx.arc(sx+4, sy+bob-2, 2.5, 0, Math.PI*2); ctx.fill();
-        } else if(this.type === 'spirit') {
-            // Faint halo ring
-            ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.5 + Math.sin(this.timer * 0.1) * 0.3;
-            ctx.beginPath(); ctx.arc(sx, sy+bob-this.radius-6, 5, 0, Math.PI*2); ctx.stroke();
+        // Sombra projetada deslocada (voadores): sensação de altura
+        ctx.globalAlpha = 1;
+        if(flyAlt > 0) {
+            ctx.globalAlpha = 0.22; ctx.fillStyle = '#000';
+            ctx.beginPath(); ctx.ellipse(sx + 5, sy + 9, this.radius * 0.9, this.radius * 0.4, 0, 0, Math.PI*2); ctx.fill();
+            ctx.globalAlpha = 1;
+        }
+
+        // Sprite (investida de ataque: avanço curto na direção em que o pet olha)
+        const lunge = this._atkT > 0 ? Math.sin((this._atkT / 14) * Math.PI) * 3 * this._face : 0;
+        const smOld = ctx.imageSmoothingEnabled;
+        ctx.imageSmoothingEnabled = false;
+        ctx.globalAlpha = this.type === 'spirit' ? 0.85 : 1;
+        ctx.drawImage(spr, Math.round(sx - 21 + lunge), Math.round(ptop), 42, 42);
+        ctx.globalAlpha = 1;
+        ctx.imageSmoothingEnabled = smOld;
+
+        // Sopro de fogo do dragão (v57): cone laranja com miolo amarelo de ~12 px durante os 14 ticks do ataque
+        if(this.type === 'dragon' && this._atkT > 0) {
+            const _t = this._atkT / 14, _f = this._face;
+            const _ox = sx + _f * 18 + lunge, _oy = sy + bob - flyAlt - 3;
+            ctx.globalAlpha = 0.5 + 0.5 * _t;
+            ctx.fillStyle = '#ff7a1a';
+            ctx.beginPath(); ctx.moveTo(_ox, _oy - 2); ctx.lineTo(_ox + _f * 12, _oy - 6); ctx.lineTo(_ox + _f * 12, _oy + 6); ctx.lineTo(_ox, _oy + 2); ctx.closePath(); ctx.fill();
+            ctx.fillStyle = '#ffe36e';
+            ctx.beginPath(); ctx.moveTo(_ox, _oy - 1); ctx.lineTo(_ox + _f * 8, _oy - 3); ctx.lineTo(_ox + _f * 8, _oy + 3); ctx.lineTo(_ox, _oy + 1); ctx.closePath(); ctx.fill();
+            ctx.globalAlpha = 1;
+        }
+
+        // Detalhes extras do espírito: halo que pulsa e partículas leves (sem reducedMotion)
+        if(this.type === 'spirit') {
+            ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5;
+            ctx.globalAlpha = rmV ? 0.4 : 0.35 + Math.sin(this.timer * 0.1) * 0.25;
+            ctx.beginPath(); ctx.arc(sx, sy + bob - flyAlt - 21, 4, 0, Math.PI*2); ctx.stroke();
+            if(!rmV) {
+                ctx.fillStyle = this.color;
+                for(let _k = 0; _k < 2; _k++) {
+                    const _a = this.timer * 0.05 + _k * Math.PI;
+                    ctx.globalAlpha = 0.7;
+                    ctx.fillRect(Math.round(sx + Math.cos(_a) * (this.radius + 6)), Math.round(sy + bob - flyAlt - 8 + Math.sin(_a) * 6), 2, 2);
+                }
+            }
             ctx.globalAlpha = 1;
         }
         // Label text (ASCII only, fast)
@@ -23469,15 +24285,16 @@ class Pet {
 
         // HP bar
         const hpPct = this.hp / this.maxHp;
-        ctx.fillStyle = '#333'; ctx.fillRect(sx - 14, sy + bob - this.radius - 8, 28, 4);
+        ctx.fillStyle = '#333'; ctx.fillRect(sx - 14, ptop - 6, 28, 4);
         ctx.fillStyle = hpPct > 0.5 ? '#33ff33' : (hpPct > 0.25 ? '#ffaa00' : '#ff3333');
-        ctx.fillRect(sx - 14, sy + bob - this.radius - 8, 28 * hpPct, 4);
+        ctx.fillRect(sx - 14, ptop - 6, 28 * hpPct, 4);
     }
 
     // Called on player takeDamage  pet absorbs some when mounted
     onPlayerHit(dmg) {
         if(!this.mounted || !this.alive) return dmg;
         const absorbed = dmg * (this.data.mountArmorBonus || 0);
+        this._hitT = 6;
         this.hp = Math.max(1, this.hp - absorbed);
         return dmg - absorbed;
     }
@@ -23589,6 +24406,15 @@ window.FlowField = FlowField;
 function awardKillRewards(player, target, source) {
     const xpReward = target.xpReward || (target.isB ? CONFIG.XP_BOSS_REWARD : CONFIG.XP_ENEMY_REWARD);
     player.gainXP(xpReward); player.kills++; player.comboCount++; player.comboTimer = CONFIG.COMBO_DECAY_TIME;
+    // Nós de abate (v56): Sede de Sangue (cura + velocidade curta) e Fonte de Mana (reduz superaquecimento)
+    if (player.skills) {
+        if (player.skills.bloodlust) {
+            player.hp = Math.min(player.maxHp, player.hp + CONFIG.BLOODLUST_HEAL);
+            player.speedBoost = Math.max(player.speedBoost || 0, CONFIG.BLOODLUST_SPEED_FRAMES);
+            DamageNumbers.add(player.x, player.y, '+' + CONFIG.BLOODLUST_HEAL, 'heal');
+        }
+        if (player.skills.manaWell && player.attackHeat > 0) player.attackHeat = Math.max(0, player.attackHeat - CONFIG.MANA_WELL_HEAT_CUT);
+    }
     if (window.RunObjectiveSystem && RunObjectiveSystem.onKill) RunObjectiveSystem.onKill();
     // Track lifetime kill/combo stats (used by achievements + death screen)
     if (typeof Statistics !== 'undefined') {
@@ -23645,6 +24471,13 @@ class Bullet {
         // argument, so a recycled bullet must not inherit them from its past owner.
         this.trail = null;
         this.element = null;
+        // Combo de golpes: perfuração (finalizador ladino/elfa) e explosão (passo 2 do mago); pooled, zerar sempre
+        this.chainPierce = false;
+        this.chainBlast = false;
+        this.chainLastHit = null;
+        // Nós v56 (elfa): flecha teleguiada e empurrão da rajada; pooled, zerar sempre
+        this.homing = false;
+        this.galeKb = false;
         this.spd = Math.sqrt(vx * vx + vy * vy);
         this.poisonDmg = weapon && weapon.poison ? Math.floor(dmg * 0.3) : 0;
         this.hitCount = 0;
@@ -23656,7 +24489,27 @@ class Bullet {
         }
         return this;
     }
+    // Flecha Teleguiada (v56): curva suavemente (até HOMING_TURN rad/quadro) para o inimigo mais próximo no alcance
+    _steer(ents) {
+        const list = ents || [];
+        let best = null, bestSq = CONFIG.HOMING_RANGE * CONFIG.HOMING_RANGE;
+        for (let i = 0; i < list.length; i++) {
+            const e = list[i];
+            if (e.alive && typeof Enemy !== 'undefined' && (e instanceof Enemy || e.isEnemy)) {
+                const dx = e.x - this.x, dy = e.y - this.y, d = dx * dx + dy * dy;
+                if (d < bestSq) { bestSq = d; best = e; }
+            }
+        }
+        if (!best) return;
+        const cur = Math.atan2(this.vy, this.vx);
+        let diff = Math.atan2(best.y - this.y, best.x - this.x) - cur;
+        while (diff > Math.PI) diff -= Math.PI * 2;
+        while (diff < -Math.PI) diff += Math.PI * 2;
+        const na = cur + Math.max(-CONFIG.HOMING_TURN, Math.min(CONFIG.HOMING_TURN, diff));
+        this.vx = Math.cos(na) * this.spd; this.vy = Math.sin(na) * this.spd;
+    }
     update(m, ents, source=null) {
+        if (this.homing) this._steer(ents);
         this.x += this.vx; this.y += this.vy;
         this.distTraveled += this.spd;
         if (this.trail) this.trail.addPoint(this.x, this.y);
@@ -23678,6 +24531,8 @@ class Bullet {
                     const edx = e.x-this.x, edy = e.y-this.y;
                     const hitDist = e.radius + 5;
                     if(edx * edx + edy * edy < hitDist * hitDist) {
+                    // Perfuração do finalizador (ladino/elfa): não acerta duas vezes o mesmo inimigo ao atravessá-lo
+                    if(this.chainPierce && e === this.chainLastHit) continue;
 
                     // --- Phase 4: ShieldEnemy blocks frontal hits ---
                     if(this.isP && typeof ShieldEnemy !== 'undefined' && e instanceof ShieldEnemy && e.shieldActive) {
@@ -23699,6 +24554,9 @@ class Bullet {
                     // inimigos danificam o jogador. (source=null no lado inimigo para
                     // não inflar dano recebido com damageMult/damageBoost do jogador.)
                     e.takeDamage(this.dmg, m, this.isP ? source : null); this.hitCount++;
+                    // Rajada do Vento (v56): empurrão forte na direção do disparo (só se o caminho não for parede)
+                    if(this.galeKb && e.alive && !m.isWall(e.x + this.vx * 4, e.y + this.vy * 4)) { e.x += this.vx * 4; e.y += this.vy * 4; }
+                    if(this.chainPierce) this.chainLastHit = e;
                     // Elemento do bioma no projétil inimigo atinge o jogador
                     if(!this.isP && this.element && typeof ElementalSystem !== 'undefined') ElementalSystem.applyStatus(e, this.element, 1, 120, source || this);
                     // Apply elemental status from weapon
@@ -23801,8 +24659,22 @@ class Bullet {
                         e._baseSpeed = e._baseSpeed || e.s;
                         e.s = Math.max(minSpeed, e.s * 0.85);
                     }
-                    // Bullet alive state  pierce continues up to 3 hits
-                    if(!(this.weapon && this.weapon.pierce && this.hitCount < 3)) {
+                    // Combo (mago, passo 2): a bola explode e fere os outros inimigos da área (dano via takeDamage)
+                    if(this.chainBlast && this.isP && typeof entities !== 'undefined') {
+                        const _bR2 = CONFIG.COMBO_CHAIN_BLAST_RADIUS * CONFIG.COMBO_CHAIN_BLAST_RADIUS;
+                        const _bDmg = Math.max(1, Math.floor(this.dmg * CONFIG.COMBO_CHAIN_BLAST_MULT));
+                        for(let _bi = 0; _bi < entities.length; _bi++) {
+                            const _be = entities[_bi];
+                            if(_be !== e && _be.alive && typeof Enemy !== 'undefined' && (_be instanceof Enemy || _be.isEnemy)) {
+                                const _bdx = _be.x - e.x, _bdy = _be.y - e.y;
+                                if(_bdx * _bdx + _bdy * _bdy < _bR2) _be.takeDamage(_bDmg, m, source);
+                            }
+                        }
+                        ScreenEffects._addRing(e.x, e.y, this.color, CONFIG.COMBO_CHAIN_BLAST_RADIUS, 12, 3, 0);
+                        spawnParticles(e.x, e.y, this.color, 10, 4);
+                    }
+                    // Bullet alive state  pierce continues up to 3 hits (weapon.pierce ou perfuração do finalizador)
+                    if(!(((this.weapon && this.weapon.pierce) || this.chainPierce) && this.hitCount < 3)) {
                         this.alive = false;
                     }
                     if(!this.alive) break;
@@ -23892,11 +24764,18 @@ class Bullet {
             ctx.stroke();
             ctx.globalAlpha = 1;
         }
-        if(this.weapon && this.weapon.pierce) {
+        if((this.weapon && this.weapon.pierce) || this.chainPierce) {
             ctx.globalAlpha = 0.5; ctx.strokeStyle = '#00ffff'; ctx.lineWidth = 1.5;
             const pr = r+3;
             ctx.fillRect(sx - pr, sy - pr, pr * 2, pr * 2);
             ctx.globalAlpha = 1;
+            // Rastro do golpe perfurante do finalizador (elfa): faixa atrás da flecha, sem alocação
+            if(this.chainPierce && this.projType === 'arrow') {
+                ctx.save(); ctx.translate(sx, sy); ctx.rotate(vAng);
+                ctx.globalAlpha = 0.3; ctx.fillStyle = drawColor;
+                ctx.fillRect(-34, -1.5, 22, 3);
+                ctx.restore();
+            }
         }
         if(this.weapon && this.weapon.lifesteal) {
             ctx.globalAlpha = 0.4; ctx.fillStyle = '#ff0055';
@@ -23927,6 +24806,7 @@ class Player extends Entity {
         this.heatMaxBonus = 0;
         this.runBoons = []; this.damageTakenMult = 1; this.runRegen = 0; this.goldMult = 1;
         this.shadowShieldTimer = 0; this.speedBoost = 0; this.shield = 0; this._shieldPrev = 0;
+        this.furyTimer = 0; this.frenzyTimer = 0; this.aegisTimer = 0; // powerups raros (zerados a cada run)
         this.combatTimer = 9999;
         // Weapon system
         this.currentWeapon = null;
@@ -23968,7 +24848,11 @@ class Player extends Entity {
         this.walkTimer = 0;
         this.angle = Math.PI / 2; // Default South
         this.spriteAngle = this.angle;
-        
+        // Combo de golpes (estado próprio; comboCount é kill-streak): passo atual 0-3, frames desde o último golpe, giro do finalizador
+        this.chainStep = 0;
+        this.chainTimer = CONFIG.COMBO_CHAIN_WINDOW;
+        this.chainSpinT = 0;
+
         // Cloak Physics Setup
     }
 
@@ -23980,6 +24864,14 @@ class Player extends Entity {
     }
 
     updateMutations() { Object.keys(this.mutations).forEach(key => { if(!this.mutations[key].update()) delete this.mutations[key]; }); }
+
+    // Combo de golpes: avança o passo (1 -> 2 -> 3 -> 1) a cada golpe. Mais de COMBO_CHAIN_WINDOW frames sem golpe reinicia no passo 1.
+    _chainAdvance() {
+        if(this.chainTimer >= CONFIG.COMBO_CHAIN_WINDOW || this.chainStep >= 3) this.chainStep = 0;
+        this.chainStep++;
+        this.chainTimer = 0;
+        return this.chainStep;
+    }
 
     // XP required to reach the next level. gainXP() spends exactly this much
     // (CONFIG.XP_LEVEL_MULTIPLIER = 100 per level), so the HUD must read the
@@ -24018,6 +24910,55 @@ class Player extends Entity {
                 requestAnimationFrame(() => window.uiLv.classList.add('level-up'));
             }
             if(this.lvl > Statistics.data.maxLevel) Statistics.data.maxLevel = this.lvl;
+        }
+    }
+
+    // Ondas extras com atraso (v56): Eco do Trovão (finalizador) e Terremoto (slam).
+    // Transitório (não entra no save); cada onda causa dano uma vez a inimigos no raio.
+    _schedulePulse(x, y, dmg, color, radius, delay) {
+        if(!this._pulses) this._pulses = [];
+        this._pulses.push({ t: delay || CONFIG.SKILL_PULSE_DELAY, r: radius || CONFIG.SKILL_PULSE_RADIUS, x: x, y: y, dmg: dmg, color: color });
+    }
+    _tickPulses() {
+        for(let i = this._pulses.length - 1; i >= 0; i--) {
+            const pu = this._pulses[i];
+            if(--pu.t > 0) continue;
+            this._pulses.splice(i, 1);
+            this._firePulse(pu);
+        }
+    }
+    // Poça de veneno do Rastro Venenoso (v56): fere só inimigos no raio, a cada VENOM_POOL_TICK quadros
+    _tickVenom() {
+        const rSq = CONFIG.VENOM_POOL_RADIUS * CONFIG.VENOM_POOL_RADIUS;
+        for(let i = this._venomPools.length - 1; i >= 0; i--) {
+            const pl = this._venomPools[i];
+            if(--pl.t <= 0) { this._venomPools.splice(i, 1); continue; }
+            if(pl.t % CONFIG.VENOM_POOL_TICK !== 0) continue;
+            spawnParticles(pl.x, pl.y, '#66cc33', 3, 2);
+            for(let j = 0; j < entities.length; j++) {
+                const e = entities[j];
+                if(e !== this && e.alive && typeof Enemy !== 'undefined' && (e instanceof Enemy || e.isEnemy)) {
+                    const dx = e.x - pl.x, dy = e.y - pl.y;
+                    if(dx * dx + dy * dy < rSq) {
+                        e.takeDamage(CONFIG.VENOM_POOL_DMG, map, this);
+                        e.poisonStacks = Math.min(CONFIG.ROGUE_POISON_MAX_STACKS, (e.poisonStacks || 0) + 1);
+                        e.poisonTimer = Math.max(e.poisonTimer || 0, CONFIG.ROGUE_POISON_DURATION);
+                    }
+                }
+            }
+        }
+    }
+    _firePulse(pu) {
+        const rSq = pu.r * pu.r;
+        ScreenEffects._addRing(pu.x, pu.y, pu.color, pu.r, 14, 4, 0);
+        ScreenEffects.triggerShake(6);
+        SND.play(90, 'sawtooth', 0.12, 0.18);
+        for(let i = 0; i < entities.length; i++) {
+            const e = entities[i];
+            if(e !== this && e.alive && typeof Enemy !== 'undefined' && (e instanceof Enemy || e.isEnemy)) {
+                const dx = e.x - pu.x, dy = e.y - pu.y;
+                if(dx * dx + dy * dy < rSq) { e.takeDamage(pu.dmg, map, this); spawnParticles(e.x, e.y, pu.color, 6, 4); }
+            }
         }
     }
 
@@ -24069,7 +25010,10 @@ class Player extends Entity {
             // I-frames: a dash must beat an attack it visibly passes through,
             // otherwise dodging feels like it "didn't work". Short window so the
             // 60-frame cooldown still prices the safety.
-            this.invincibleTimer = Math.max(this.invincibleTimer || 0, CONFIG.DODGE_INVULN_FRAMES);
+            // Passo Sombrio (v56): i-frames do dash estendidos (excludente com Rastro Venenoso)
+            this.invincibleTimer = Math.max(this.invincibleTimer || 0, CONFIG.DODGE_INVULN_FRAMES + (this.skills && this.skills.shadowPass ? CONFIG.SHADOW_PASS_EXTRA_FRAMES : 0));
+            // Rastro Venenoso (v56): o dash deixa uma poça de veneno no ponto de chegada (excludente com Passo Sombrio)
+            if (this.skills && this.skills.venomTrail) { if(!this._venomPools) this._venomPools = []; this._venomPools.push({ x: this.x, y: this.y, t: CONFIG.VENOM_POOL_FRAMES }); spawnParticles(this.x, this.y, '#66cc33', 10, 4); }
             if (this.type === 'warrior') this.parryWindow = CONFIG.WARRIOR_PARRY_FRAMES;
             Vibrate.trigger('dodge');
             this.stealth = 20;
@@ -24129,6 +25073,8 @@ class Player extends Entity {
                 }
             }
             shake = CONFIG.SHAKE_BOSS_SPAWN; addLog(this.skills.ult1 ? " WAR CRY!" : " GROUND SLAM!");
+            // Terremoto (v56): o slam dá um segundo pulso com atraso
+            if(this.skills.quake) this._schedulePulse(this.x, this.y, Math.max(1, Math.floor(CONFIG.WARRIOR_SLAM_DAMAGE * CONFIG.SKILL_PULSE_MULT)), '#ff8800');
             if(this.skills.berserk) {
                 this.damageBoost = Math.max(this.damageBoost || 0, 900);
                 this.speedBoost = Math.max(this.speedBoost || 0, 900);
@@ -24217,6 +25163,13 @@ class Player extends Entity {
                 }
                 if (typeof ScreenEffects !== "undefined" && ScreenEffects.onMeteor) ScreenEffects.onMeteor();
                 ScreenEffects.specialFX(this.x, this.y, '#ff6600', CONFIG.MAGE_METEOR_RANGE, 'double', 4, 10);
+                // Chuva de Meteoros (v56): impactos extras espalhados, com atraso
+                if(this.skills.meteorRain) {
+                    for(let _mr = 0; _mr < CONFIG.METEOR_RAIN_COUNT; _mr++) {
+                        const _ma = SeedSystem.random() * Math.PI * 2, _md = SeedSystem.random() * CONFIG.MAGE_METEOR_RANGE * 0.8;
+                        this._schedulePulse(this.x + Math.cos(_ma) * _md, this.y + Math.sin(_ma) * _md, Math.max(1, Math.floor(CONFIG.MAGE_METEOR_DAMAGE * CONFIG.METEOR_RAIN_MULT)), '#ff6600', CONFIG.METEOR_RAIN_RADIUS, 8 + _mr * 5);
+                    }
+                }
                 addLog(I18n.t('log.meteor'));
             } else {
                 SND.play(500, 'sine', 0.5, 0.2);
@@ -24355,6 +25308,9 @@ class Player extends Entity {
         } else { this.walkTimer = 0; this._footstepTimer = 0; this._pvx = 0; this._pvy = 0; }
 
         if(this.scd > 0) this.scd--; if(this.skillCooldown > 0) this.skillCooldown--; if(this.speedBoost > 0) this.speedBoost--;
+        if(this.furyTimer > 0) this.furyTimer--;
+        if(this.frenzyTimer > 0) this.frenzyTimer--;
+        if(this.aegisTimer > 0) { this.aegisTimer--; if(this.aegisTimer === 0) ScreenEffects._addRing(this.x, this.y, COLORS.PICKUP_AEGIS, 44, 16, 4, 0); } // anel dourado ao acabar (_addRing já respeita reducedMotion)
         // Rastro de velocidade: últimas 2 posições em array fixo (sem alocar por tick)
         if (!this._trail) this._trail = new Float32Array(6);
         const _tr = this._trail;
@@ -24374,6 +25330,11 @@ class Player extends Entity {
         if(!_noRegen && this.regenerating && this.hp < this.maxHp) this.hp = Math.min(this.maxHp, this.hp + 1 / 60);
         if(!_noRegen && this.runRegen > 0 && this.hp < this.maxHp) this.hp = Math.min(this.maxHp, this.hp + this.runRegen / 60);
         if(this.comboTimer > 0) { this.comboTimer--; if(this.comboTimer <= 0) this.comboCount = 0; }
+        // Combo de golpes: contadores andam só no update (com o jogo pausado a cadeia congela)
+        if(this.chainTimer < CONFIG.COMBO_CHAIN_WINDOW) this.chainTimer++;
+        if(this.chainSpinT > 0) this.chainSpinT--;
+        if(this._pulses && this._pulses.length) this._tickPulses(); // ondas extras v56 (Eco do Trovão / Terremoto)
+        if(this._venomPools && this._venomPools.length) this._tickVenom(); // poças de veneno do dash (v56)
 
         if(this.type === 'warrior') {
             if(this.furyDecayTimer > 0) this.furyDecayTimer--;
@@ -24401,10 +25362,18 @@ class Player extends Entity {
         const deadzoneSq = CONFIG.JOYSTICK_DEADZONE * CONFIG.JOYSTICK_DEADZONE;
         if(joystickMagSq > deadzoneSq && this.scd <= 0 && !this.overheated) {
             this.combatTimer = 0; this.shootAnim = 12;
+            const chainStep = this._chainAdvance(); // 1, 2 ou 3 (finalizador)
+            if(chainStep === 3) this.chainSpinT = (this.type === 'warrior') ? 18 : 0;
             const cls = CONFIG.PLAYER[this.type];
             const effectiveHeatMax = CONFIG.HEAT_MAX + (this.heatMaxBonus || 0);
             this.attackHeat = Math.min(effectiveHeatMax, this.attackHeat + CONFIG.HEAT_PER_SHOT);
-            if(this.attackHeat >= effectiveHeatMax && !this.overheated) {
+            if(this.attackHeat >= effectiveHeatMax && !this.overheated && this.skills.darkPact && this.hp > this.maxHp * CONFIG.DARK_PACT_HP_COST + 1) {
+                // Pacto Sombrio (v56, mago): em vez de superaquecer, sacrifica HP e resfria pela metade
+                this.hp -= this.maxHp * CONFIG.DARK_PACT_HP_COST;
+                this.attackHeat = effectiveHeatMax * 0.5;
+                spawnParticles(this.x, this.y, '#aa2255', 14, 5);
+                DamageNumbers.add(this.x, this.y, 'PACTO!', 'crit');
+            } else if(this.attackHeat >= effectiveHeatMax && !this.overheated) {
                 this.overheated = true;
                 SND.play(180, 'sawtooth', 0.2, 0.15);
                 DamageNumbers.add(this.x, this.y, 'SUPERAQUECIDO!', 'normal');
@@ -24445,14 +25414,18 @@ class Player extends Entity {
 
             if(this.type === 'warrior') {
                 this.walkTimer = 48; // Attack frame
-                const attackAngle = Math.atan2(sy, sx), arcHalf = (CONFIG.WARRIOR_MELEE_ARC_DEG / 2) * Math.PI / 180;
-                DamageNumbers.addSlash(this.x, this.y, attackAngle, CONFIG.WARRIOR_MELEE_RANGE * 0.9, '#ffcc00');
-                // Spawn swing trail particles along the arc
+                const attackAngle = Math.atan2(sy, sx);
+                // Combo: passo 1 = corte da direita p/ esquerda (120°); passo 2 = volta, esquerda p/ direita, mais largo (150°);
+                // passo 3 = giro de 360° com alcance e knockback maiores
+                const arcHalf = (CONFIG.COMBO_CHAIN_WARRIOR_ARC[chainStep - 1] / 2) * Math.PI / 180;
+                const reach = CONFIG.WARRIOR_MELEE_RANGE * CONFIG.COMBO_CHAIN_WARRIOR_REACH[chainStep - 1];
+                DamageNumbers.addSlash(this.x, this.y, attackAngle, reach * 0.9, '#ffcc00');
+                // Spawn swing trail particles along the arc (no sentido do passo)
                 const arcStart = attackAngle - arcHalf, arcEnd = attackAngle + arcHalf;
                 for (let _a = 0; _a < 12; _a++) {
-                    const t = _a / 11, ang = arcStart + (arcEnd - arcStart) * t;
-                    const px = this.x + Math.cos(ang) * CONFIG.WARRIOR_MELEE_RANGE * 0.7;
-                    const py = this.y + Math.sin(ang) * CONFIG.WARRIOR_MELEE_RANGE * 0.7;
+                    const t = _a / 11, ang = arcStart + (arcEnd - arcStart) * (chainStep === 1 ? 1 - t : t);
+                    const px = this.x + Math.cos(ang) * reach * 0.7;
+                    const py = this.y + Math.sin(ang) * reach * 0.7;
                     spawnParticles(px, py, '#ffaa00', 2, 3 + Math.random() * 2);
                 }
                 ScreenEffects.triggerShake(CONFIG.SHAKE_HIT * 0.5, sx, sy);
@@ -24462,9 +25435,17 @@ class Player extends Entity {
                 let dmg = Math.floor(cls.baseDmg * this.weaponLevel * this.weaponDamageMult * furyMult);
                 if(this.mutations.berserk) dmg *= CONFIG.BERSERK_DAMAGE_MULT;
                 if(window.RelicSystem) dmg = Math.floor(dmg * RelicSystem.berserkerMult(this));
+                dmg = Math.max(1, Math.floor(dmg * CONFIG.COMBO_CHAIN_MULT.warrior[chainStep - 1]));
+                if(chainStep === 3) { // finalizador: anel, flash, shake, hit-stop e som mais grave (anel/shake/flash já respeitam reducedMotion)
+                    ScreenEffects._addRing(this.x, this.y, '#ffcc00', reach * 1.2, 18, 6, 0);
+                    ScreenEffects.triggerFlash(0.2, '#ffcc00');
+                    ScreenEffects.triggerShake(16);
+                    ScreenEffects._hitstop(3);
+                    SND.play(70, 'sawtooth', 0.18, 0.25);
+                }
                 let hitAny = false;
                 if (this.fireTrail && typeof hazards !== 'undefined') { const fx = this.x + Math.cos(attackAngle) * 40, fy = this.y + Math.sin(attackAngle) * 40; if (!m.isWall(fx, fy)) hazards.push(new Hazard(fx, fy, 'fire', true)); }
-                const meleeRangeSq = CONFIG.WARRIOR_MELEE_RANGE * CONFIG.WARRIOR_MELEE_RANGE;
+                const meleeRangeSq = reach * reach;
                 for(let i = 0; i < entities.length; i++) {
                     const e = entities[i];
                     if(e !== this && e.alive && typeof Enemy !== 'undefined' && (e instanceof Enemy || e.isEnemy)) {
@@ -24476,6 +25457,8 @@ class Player extends Entity {
                             if(diff > Math.PI) diff = Math.PI * 2 - diff;
                             if(diff <= arcHalf) {
                                 e.takeDamage(dmg, m, this); hitAny = true;
+                                // Brutalidade (v56): o finalizador abre sangramento nos inimigos atingidos
+                                if(chainStep === 3 && this.skills.brutal) { e.poisonStacks = Math.min(CONFIG.ROGUE_POISON_MAX_STACKS, (e.poisonStacks || 0) + CONFIG.BRUTAL_BLEED_STACKS); e.poisonTimer = Math.max(e.poisonTimer || 0, CONFIG.ROGUE_POISON_DURATION); spawnParticles(e.x, e.y, '#ff2222', 5, 3); }
                                 // VIBRATION FEEDBACK
                                 if(window.Vibrate) Vibrate.trigger('normalHit');
                                 ScreenEffects.triggerShake(CONFIG.SHAKE_HIT, sx, sy);
@@ -24484,13 +25467,15 @@ class Player extends Entity {
                                 this.furyStacks = Math.min(CONFIG.WARRIOR_FURY_MAX_STACKS, this.furyStacks + 1);
                                 this.furyDecayTimer = CONFIG.WARRIOR_FURY_DECAY_FRAMES;
                                 const ed = distSq > 0 ? Math.sqrt(distSq) : 1;
-                                const kbMult = (e.elite || e.isB) ? CONFIG.KNOCKBACK_HEAVY_MULT : 1.0;
+                                const kbMult = ((e.elite || e.isB) ? CONFIG.KNOCKBACK_HEAVY_MULT : 1.0) * CONFIG.COMBO_CHAIN_WARRIOR_KB[chainStep - 1];
                                 const kbx = (edx/ed) * (CONFIG.KNOCKBACK_STRENGTH * 1.5) * kbMult, kby = (edy/ed) * (CONFIG.KNOCKBACK_STRENGTH * 1.5) * kbMult;
                                 if(!m.isWall(e.x + kbx, e.y + kby)) { e.x += kbx; e.y += kby; }
                             }
                         }
                     }
                 }
+                // Eco do Trovão (v56): o finalizador deixa uma onda de choque extra com atraso
+                if(chainStep === 3 && this.skills.thunderEcho) this._schedulePulse(this.x, this.y, Math.max(1, Math.floor(dmg * CONFIG.SKILL_PULSE_MULT)), '#ffcc00');
                 this.scd = effectiveFireRate; if(hitAny) SND.play(150, 'sawtooth', 0.15, 0.3); else SND.play(80, 'triangle', 0.04, 0.08);
             } else {
                 this.walkTimer = 60;
@@ -24524,8 +25509,55 @@ class Player extends Entity {
                     }
                 }
                 const projType = this.type === 'elf' ? 'arrow' : this.type === 'rogue' ? 'knife' : this.type === 'mage' ? 'magic' : null;
-                const mainBullet = window.PoolManager ? PoolManager.acquire('Bullet', this.x, this.y, sx*bulletSpeed, sy*bulletSpeed, this.color, dmg, true, this.currentWeapon, range, projType) : new Bullet(this.x, this.y, sx*bulletSpeed, sy*bulletSpeed, this.color, dmg, true, this.currentWeapon, range, projType);
-                bullets.push(mainBullet);
+                // Combo de golpes: ângulos (leque/rajada) e dano por golpe conforme o passo. Vetor girado preserva a magnitude do analógico.
+                const chainOffs = CONFIG.COMBO_CHAIN_SHOTS[this.type] ? CONFIG.COMBO_CHAIN_SHOTS[this.type][chainStep - 1] : [0];
+                let chainDmg = Math.max(1, Math.floor(dmg * CONFIG.COMBO_CHAIN_MULT[this.type][chainStep - 1]));
+                // Sobrecarga Cíclica (v56, mago): a cada N ataques, o disparo sai com dano dobrado
+                if(this.type === 'mage' && this.skills.cyclicOverload) {
+                    this._castN = (this._castN || 0) + 1;
+                    if(this._castN >= CONFIG.CYCLIC_OVERLOAD_EVERY) { this._castN = 0; chainDmg = Math.floor(chainDmg * CONFIG.CYCLIC_OVERLOAD_MULT); DamageNumbers.add(this.x, this.y, 'SOBRECARGA!', 'crit'); }
+                }
+                // Lâminas Gêmeas (v56, ladino): o passo 2 dispara um projétil extra, no centro do leque
+                const _twin = (chainStep === 2 && this.type === 'rogue' && this.skills.twinBlades) ? 1 : 0;
+                // Rajada do Vento (v56, elfa): a cada N disparos, o volley sai com mais dano e empurra
+                let _gale = false;
+                if(this.type === 'elf' && this.skills.galeBurst) {
+                    this._galeN = (this._galeN || 0) + 1;
+                    if(this._galeN >= CONFIG.GALE_BURST_EVERY) { this._galeN = 0; _gale = true; chainDmg = Math.floor(chainDmg * CONFIG.GALE_BURST_MULT); DamageNumbers.add(this.x, this.y, 'RAJADA!', 'crit'); }
+                }
+                let mainBullet = null;
+                for (let ci = 0; ci < chainOffs.length + _twin; ci++) {
+                    const _off = ci < chainOffs.length ? chainOffs[ci] : 0;
+                    const cco = Math.cos(_off), cso = Math.sin(_off);
+                    const cvx = (sx*cco - sy*cso)*bulletSpeed, cvy = (sx*cso + sy*cco)*bulletSpeed;
+                    const shot = window.PoolManager ? PoolManager.acquire('Bullet', this.x, this.y, cvx, cvy, this.color, chainDmg, true, this.currentWeapon, range, projType) : new Bullet(this.x, this.y, cvx, cvy, this.color, chainDmg, true, this.currentWeapon, range, projType);
+                    if(chainStep === 3 && this.type !== 'mage') shot.chainPierce = true;   // finalizador ladino/elfa: perfurante
+                    if(chainStep === 2 && this.type === 'mage') shot.chainBlast = true;
+                    if(_gale) shot.galeKb = true; // Rajada do Vento (v56): empurrão no acerto
+                    if(ci === 0 && chainStep === 1 && this.type === 'elf' && this.skills.homingArrow) shot.homing = true; // Flecha Teleguiada (v56)    // mago passo 2: bola explode
+                    if(this.type === 'rogue' || (this.type === 'elf' && this.skills.poison)) shot.applyPoison = true;
+                    bullets.push(shot);
+                    if(!mainBullet) mainBullet = shot;
+                }
+                if(chainStep === 3) { // finalizador: anel, flash, shake, hit-stop e som mais grave
+                    // Onda Gélida (v56, mago): o finalizador congela inimigos ao redor
+                    if(this.type === 'mage' && this.skills.frostWave) {
+                        ScreenEffects._addRing(this.x, this.y, '#66ccff', CONFIG.FROST_WAVE_RADIUS, 16, 4, 0);
+                        const _fwSq = CONFIG.FROST_WAVE_RADIUS * CONFIG.FROST_WAVE_RADIUS;
+                        for(let _fi = 0; _fi < entities.length; _fi++) {
+                            const _fe = entities[_fi];
+                            if(_fe !== this && _fe.alive && typeof Enemy !== 'undefined' && (_fe instanceof Enemy || _fe.isEnemy)) {
+                                const _fdx = _fe.x - this.x, _fdy = _fe.y - this.y;
+                                if(_fdx * _fdx + _fdy * _fdy < _fwSq) { _fe.frozen = Math.max(_fe.frozen || 0, CONFIG.FROST_WAVE_FRAMES); spawnParticles(_fe.x, _fe.y, '#66ccff', 6, 3); }
+                            }
+                        }
+                    }
+                    ScreenEffects._addRing(this.x, this.y, this.color, 40, 14, 3, 0);
+                    ScreenEffects.triggerFlash(0.18, this.color);
+                    ScreenEffects.triggerShake(8);
+                    ScreenEffects._hitstop(2);
+                    SND.play(90, 'triangle', 0.15, 0.2);
+                }
                 if(this.spellEcho) {
                     const spreadAngle = Math.atan2(sy, sx) + 0.25;
                     const echo = window.PoolManager ? PoolManager.acquire('Bullet', this.x, this.y, Math.cos(spreadAngle)*bulletSpeed, Math.sin(spreadAngle)*bulletSpeed, this.color, Math.max(1, Math.floor(dmg * 0.6)), true, this.currentWeapon, range, projType) : new Bullet(this.x, this.y, Math.cos(spreadAngle)*bulletSpeed, Math.sin(spreadAngle)*bulletSpeed, this.color, Math.max(1, Math.floor(dmg * 0.6)), true, this.currentWeapon, range, projType);
@@ -24630,6 +25662,66 @@ class Player extends Entity {
             ctx.restore();
         }
 
+        // Powerups raros: Fúria (aura vermelha + brilho na ponta da arma), Frenesi (faíscas amarelas), Égide (aura dourada pulsante)
+        const rmPw = window.GameSettings && GameSettings.reducedMotion;
+        if (this.furyTimer > 0) {
+            const fp = rmPw ? 0 : Math.sin(gameTime * 0.2) * 0.15;
+            drawGlow(ctx, sx, sy, this.radius * 2.2, COLORS.PICKUP_FURY, 0.5 + fp);
+            const fa = this.angle || 0;
+            drawGlow(ctx, sx + Math.cos(fa) * this.radius * 1.4, sy + Math.sin(fa) * this.radius * 1.4, 8, COLORS.PICKUP_FURY, 0.6 + fp);
+        }
+        if (this.frenzyTimer > 0) {
+            drawGlow(ctx, sx, sy, this.radius * 1.8, COLORS.PICKUP_FRENZY, 0.35);
+            if (!rmPw) {
+                ctx.save();
+                ctx.fillStyle = COLORS.PICKUP_FRENZY;
+                for (let k = 0; k < 2; k++) {
+                    const fa2 = gameTime * 0.3 + k * Math.PI;
+                    ctx.globalAlpha = 0.5 + 0.5 * Math.sin(gameTime * 0.4 + k * 2);
+                    ctx.beginPath();
+                    ctx.arc(sx + Math.cos(fa2) * this.radius * 1.1, sy + Math.sin(fa2) * this.radius * 0.7, 2.2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.restore();
+            }
+        }
+        if (this.aegisTimer > 0) {
+            // Égide: preenchimento dourado translúcido (sprite radial em cache, sem gradiente por quadro),
+            // contorno grosso, faíscas orbitando e pisca nos últimos 30 ticks. Com reducedMotion: só preenchimento e contorno estáticos.
+            const R = this.radius * 2.4; // ~1.6x a bolha do escudo comum (radius * 1.5)
+            const blinkOff = !rmPw && this.aegisTimer <= 30 && (this.aegisTimer % 6) < 3;
+            if (!blinkOff) {
+                if (!Player._aegisSprite) {
+                    const c = document.createElement('canvas'); c.width = 64; c.height = 64;
+                    const g = c.getContext('2d');
+                    const gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+                    gr.addColorStop(0, 'rgba(255,236,140,0.9)');
+                    gr.addColorStop(0.6, 'rgba(255,194,26,0.5)');
+                    gr.addColorStop(1, 'rgba(255,194,26,0)');
+                    g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
+                    Player._aegisSprite = c;
+                }
+                ctx.save();
+                ctx.globalAlpha = rmPw ? 0.42 : 0.35 + 0.15 * Math.sin(gameTime * 0.5);
+                ctx.drawImage(Player._aegisSprite, sx - R, sy - R, R * 2, R * 2);
+                ctx.globalAlpha = 0.95;
+                ctx.strokeStyle = COLORS.PICKUP_AEGIS;
+                ctx.lineWidth = 3.5;
+                ctx.beginPath();
+                ctx.arc(sx, sy, R, 0, Math.PI * 2);
+                ctx.stroke();
+                if (!rmPw) {
+                    ctx.fillStyle = '#fff3a0';
+                    for (let k = 0; k < 5; k++) {
+                        const ang = gameTime * 0.12 + k * (Math.PI * 2 / 5);
+                        ctx.beginPath();
+                        ctx.arc(sx + Math.cos(ang) * R, sy + Math.sin(ang) * R, 2, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+                ctx.restore();
+            }
+        }
         ctx.save();
         const shooting = this.shootAnim > 0;
         const dodging = this.dodgeAnim > 0;
@@ -24649,6 +25741,8 @@ class Player extends Entity {
         }
         if (shooting) { this.shootAnim--; ctx.translate(Math.random()*4 - 2, Math.random()*4 - 2); }
         if (dodging) this.dodgeAnim--;
+        // Combo finalizador do guerreiro: giro de 360° durante o golpe (desligado com reducedMotion; contador andado em update)
+        if (this.chainSpinT > 0 && !(window.GameSettings && GameSettings.reducedMotion)) { ctx.translate(sx, sy); ctx.rotate((1 - this.chainSpinT / 18) * Math.PI * 2); ctx.translate(-sx, -sy); }
         if (this.levelUpAnim > 0) { this.levelUpAnim--; const sc = 1 + Math.sin(this.levelUpAnim * 0.5) * 0.5; ctx.translate(sx, sy); ctx.scale(sc, sc); ctx.translate(-sx, -sy); }
         if (this.invincibleTimer > 0) { ctx.globalAlpha = (this.invincibleTimer % 4 < 2) ? 0.4 : 1; }
         SpriteRenderer.drawCharacter.call(this, ctx, sx, sy, this.type, {
@@ -24676,6 +25770,15 @@ class Player extends Entity {
             ctx.textAlign = 'center';
             ctx.fillText('+' + this.weaponLevel, sx, sy - this.radius - 10);
             ctx.globalAlpha = 1;
+        }
+        // Indicador do combo: 3 pontinhos que acendem conforme o passo (somem após a janela sem atacar)
+        if (this.chainStep > 0 && this.chainTimer < CONFIG.COMBO_CHAIN_WINDOW) {
+            const cdy = sy + this.radius + 8;
+            ctx.globalAlpha = 1;
+            for (let cdi = 0; cdi < 3; cdi++) {
+                ctx.fillStyle = cdi < this.chainStep ? (this.chainStep === 3 ? '#ffcc00' : '#ffffff') : 'rgba(255,255,255,0.25)';
+                ctx.fillRect(sx - 6 + cdi * 6, cdy, 3, 3);
+            }
         }
         ctx.restore();
 
@@ -24773,6 +25876,12 @@ class Player extends Entity {
     takeDamage(a, m, source=null) {
         if (!Number.isFinite(a)) return; // NaN jamais: hp viraria NaN e a guarda isNaN fixaria o HP no máximo
         if (this.invincibleTimer > 0) return;
+        // Powerup Égide (raro): bloqueia todo dano enquanto aegisTimer > 0; não toca no invincibleTimer
+        if (this.aegisTimer > 0 && a > 0) {
+            DamageNumbers.add(this.x, this.y, window.I18n ? I18n.t('powerup.aegis.block') : 'ÉGIDE!', 'heal');
+            if (!(window.GameSettings && GameSettings.reducedMotion)) spawnParticles(this.x, this.y, COLORS.PICKUP_AEGIS, 4, 2);
+            return;
+        }
         // Warrior parry: a hit landing inside the dash parry window is negated,
         // feeds Fury and answers with an arc riposte in the facing direction.
         if(this.type === 'warrior' && this.parryWindow > 0 && a > 0) {
@@ -24817,6 +25926,8 @@ class Player extends Entity {
         // VIBRATION FEEDBACK
         if(window.Vibrate) Vibrate.trigger('normalHit');
         
+        // Muralha (v56): enquanto houver escudo, o dano recebido cai (sem tocar no dano do jogador)
+        if (this.skills && this.skills.bulwark && this.shield > 0 && dmg > 0) dmg *= CONFIG.BULWARK_DMG_MULT;
         this.invincibleTimer = 15;
         super.takeDamage(dmg, m, source);
         this.stealth = 0;
@@ -26804,7 +27915,7 @@ const SkillTreeUI = {
         const skills = SkillTree.getNodes(p.type);
         skills.forEach(s => {
             const isUnlocked = p.unlockedSkills.includes(s.id);
-            const canUnlock = !isUnlocked && (p.currency || 0) >= s.cost && (!s.requires || p.unlockedSkills.includes(s.requires));
+            const canUnlock = !isUnlocked && (p.currency || 0) >= s.cost && (!s.requires || p.unlockedSkills.includes(s.requires)) && !SkillTree.blockedBy(p, s);
             
             const btn = document.createElement('button');
             btn.className = `settings-opt ${isUnlocked ? 'active' : ''}`;
@@ -27563,14 +28674,16 @@ window.SkillTreeUI = SkillTreeUI;
                 const speedLocked = s.cat === 'speed' && !isUnlocked && speedBought >= speedLimit;
                 const reqOk = !s.requires || p.unlockedSkills.includes(s.requires);
                 const fundsOk = p.currency >= s.cost;
+                // Escolha exclusiva (v56): id do irmão já comprado que bloqueia este nó, ou null
+                const blocker = isUnlocked ? null : SkillTree.blockedBy(p, s);
                 // Estado explícito do nó (G2): state-bought | state-affordable |
                 // state-locked-req | state-locked-funds | state-speed-locked
                 const state = isUnlocked ? 'state-bought'
                     : speedLocked ? 'state-speed-locked'
-                    : !reqOk ? 'state-locked-req'
+                    : !reqOk || blocker ? 'state-locked-req'
                     : fundsOk ? 'state-affordable'
                     : 'state-locked-funds';
-                const canUnlock = !isUnlocked && !speedLocked && reqOk && fundsOk;
+                const canUnlock = !isUnlocked && !speedLocked && reqOk && fundsOk && !blocker;
                 const locked = !isUnlocked && !canUnlock;
                 const isAbility = !!s.ability;
                 const limitBadge = speedLocked
@@ -27588,6 +28701,7 @@ window.SkillTreeUI = SkillTreeUI;
                             </div>
                         </div>
                         <div style="font-size:10px;color:${COLORS.TEXT_DIM};line-height:1.3">${_L('skill.' + p.type + '.' + s.id + '.desc', s.desc)}</div>
+                        ${blocker ? `<div style="font-size:9px;color:#f87171;margin-top:3px">${_L('skills.blockedBy', 'Bloqueado por ')}${_L('skill.' + p.type + '.' + blocker + '.name', (byId[blocker] || {}).name || blocker)} (escolha exclusiva)</div>` : ''}
                         <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
                             <div style="font-size:9px;color:${COLORS.TEXT_MUTED}">${s.requires ? _L('skills.requires', 'Requer: ') + (byId[s.requires] ? _L('skill.' + p.type + '.' + byId[s.requires].id + '.name', byId[s.requires].name) : '?') : _L('skills.tier', 'Tier ') + (s.tier || 1)}</div>
                             <div class="sk-status">${isUnlocked ? _L('skills.unlocked', 'DESBLOQUEADO') : (speedLocked ? 'LIMITE' : (locked ? '<svg class="lock-s" width="10" height="10" style="color:#9ca3af;flex:none"><use href="#ic-lock"/></svg> ' + s.cost + ' <svg class="coin-s" width="10" height="10" style="color:#ffcc00;flex:none"><use href="#ic-coin"/></svg>' : s.cost + ' <svg class="coin-s" width="10" height="10" style="color:#ffcc00;flex:none"><use href="#ic-coin"/></svg>'))}</div>
@@ -27644,13 +28758,17 @@ window.SkillTreeUI = SkillTreeUI;
             }).length;
             const speedLimit = SkillTree.SPEED_LIMIT[p.type] || 99;
             const speedLocked = s.cat === 'speed' && !isUnlocked && speedCount >= speedLimit;
-            const canUnlock = !isUnlocked && !speedLocked && p.currency >= s.cost && reqOk;
+            // Escolha exclusiva (v56): irmão já comprado que bloqueia este nó
+            const blocker = isUnlocked ? null : SkillTree.blockedBy(p, s);
+            const canUnlock = !isUnlocked && !speedLocked && p.currency >= s.cost && reqOk && !blocker;
             const isAbility = !!s.ability;
 
             const statusLine = isUnlocked
                 ? '<div style="text-align:center;color:#4ade80;font-weight:bold;font-size:13px">✓ Já desbloqueado</div>'
                 : speedLocked
                     ? `<div style="text-align:center;color:#f87171;font-weight:bold;font-size:12px;padding:10px;border-radius:10px;background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3)">⛔ Limite de velocidade atingido (${speedCount}/${speedLimit}) — o ladino já é naturalmente veloz!</div>`
+                    : blocker
+                        ? '<div style="text-align:center;color:#f87171;font-weight:bold;font-size:12px;padding:10px;border-radius:10px;background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3)">' + _L('skills.blockedBy', 'Bloqueado por ') + _L('skill.' + p.type + '.' + blocker + '.name', (SkillTree.getNodes(p.type).find(x => x.id === blocker) || { name: blocker }).name) + ' (escolha exclusiva)</div>'
                     : canUnlock
                         ? `<button style="width:100%;padding:14px;border-radius:12px;font-weight:bold;font-size:14px;color:#1a0e00;background:linear-gradient(90deg,#ffdd00,#ffb800);cursor:pointer;border:none;transition:transform 0.15s"
                             onclick="UIManager.unlockSkill('${s.id}')">${_L('skills.unlock', '⚡ DESBLOQUEAR')} (${s.cost} <svg class="coin-s" width="11" height="11" style="color:#7a5200;vertical-align:-1px"><use href="#ic-coin"/></svg>)</button>`
@@ -28408,6 +29526,10 @@ renderAchievementsContent() {
                 if (player.regenerating > 0) chips.push({ icon: '💚', label: 'REGEN', color: '#44ff88', pct: Math.min(1, player.regenerating / 300) });
                 if (player.goldRushTimer > 0) chips.push({ icon: '💰', label: 'GOLD RUSH ' + Math.ceil(player.goldRushTimer / GAME_TICKS_PER_SECOND) + 's', color: '#ffdd44', pct: Math.min(1, player.goldRushTimer / 600) });
                 if (player.speedBoost > 0) chips.push({ icon: '💨', label: 'VELOCIDADE ' + Math.ceil(player.speedBoost / GAME_TICKS_PER_SECOND) + 's', color: '#88ccff', pct: Math.min(1, player.speedBoost / 8) });
+                // Powerups raros (Fúria, Frenesi, Égide); o Ímã é instantâneo e não tem chip
+                if (player.furyTimer > 0) chips.push({ icon: '🔥', label: (window.I18n ? I18n.t('chip.fury') : 'FÚRIA') + ' ' + Math.ceil(player.furyTimer / GAME_TICKS_PER_SECOND) + 's', color: '#ff2d3d', pct: Math.min(1, player.furyTimer / CONFIG.POWERUP_FURY_FRAMES) });
+                if (player.frenzyTimer > 0) chips.push({ icon: '⚡', label: (window.I18n ? I18n.t('chip.frenzy') : 'FRENESI') + ' ' + Math.ceil(player.frenzyTimer / GAME_TICKS_PER_SECOND) + 's', color: '#ffee00', pct: Math.min(1, player.frenzyTimer / CONFIG.POWERUP_FRENZY_FRAMES) });
+                if (player.aegisTimer > 0) chips.push({ icon: '🛡', label: (window.I18n ? I18n.t('chip.aegis') : 'ÉGIDE') + ' ' + Math.ceil(player.aegisTimer / GAME_TICKS_PER_SECOND) + 's', color: '#ffc21a', pct: Math.min(1, player.aegisTimer / CONFIG.POWERUP_AEGIS_FRAMES) });
                 const cacheKey = chips.map(c => c.label + ':' + Math.floor(c.pct * 20)).join('|');
                 if (cache.chips !== cacheKey) {
                     cache.chips = cacheKey;
@@ -28595,6 +29717,7 @@ window.GameBootstrap = {
         if (window.BossRewardSystem) BossRewardSystem.reset();
         gameTime = 0; bossActive = false; currentEvent = null;
         dungeonKills = 0; dungeonKillTarget = 18; dungeonPortal = null;
+        secretPortal = null; _secretRoom = null; _secretFloorUsed = -1;
         continuesLeft = 3; _continueActive = false; minimapExpanded = false;
         weather = null; weatherTimer = 0;
 
@@ -30740,7 +31863,7 @@ Input.init();
        current MUST stay in sync with the SW CACHE_VERSION suffix (sw.js).
     */
     window.UPDATE_LOG = {
-        current: 'v55',
+        current: 'v56',
         entries: [
             { v: 'v9', date: '2026-09-10', titleKey: 'update.entry.v9.title', title: 'v9 — Tutorial destravado',
               linesKeys: ['update.entry.v9.l1'],
@@ -30910,6 +32033,11 @@ Input.init();
             { v: 'v51', date: '2026-10-11', titleKey: 'update.entry.v51.title', title: 'v51 — Mortes animadas',
               linesKeys: ['update.entry.v51.l1'],
               lines: ['Visual: inimigos e chefes agora tombam, desmancham e somem em cinco quadros em vez de desaparecer de uma vez, e a mancha no chão virou uma poça irregular. Só a arte e a animação mudaram.'] },
+            { v: 'v56', date: '2026-10-14', titleKey: 'update.entry.v56.title', title: 'v56 — Combos, salas secretas e mais poder',
+              linesKeys: ['update.entry.v56.l1', 'update.entry.v56.l2', 'update.entry.v56.l3'],
+              lines: ['Combos de 3 golpes nas 4 classes, cada um com um movimento diferente e um golpe final mais forte. Quatro powerups raros (Fúria, Frenesi, Ímã e Égide) caem de baús e chefes. O evento Portal Secreto agora abre uma sala de verdade, de tesouro ou de desafio.',
+                      'A árvore de skills ganhou 20 nós novos com efeitos de combate e escolhas exclusivas: ao comprar um, o outro fica bloqueado.',
+                      'Os pets foram redesenhados em pixel art, maiores e animados. A águia e o dragão também mudaram.'] },
             { v: 'v55', date: '2026-10-14', titleKey: 'update.entry.v55.title', title: 'v55 — Poderes que se veem e se sentem',
               linesKeys: ['update.entry.v55.l1', 'update.entry.v55.l2'],
               lines: ['O escudo agora aparece como uma bolha ao redor do herói e estoura ao quebrar; a velocidade deixa um rastro de vento. Os avisos do HUD mostram o valor do escudo e os segundos que faltam de cada efeito.',
