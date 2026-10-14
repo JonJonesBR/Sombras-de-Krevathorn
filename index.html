@@ -3366,6 +3366,23 @@ const I18n = {
             'panel.camp': 'Acampamento do Mercador',
             'panel.skills': 'Habilidades',
             'panel.stats': 'Estatísticas',
+            'stats.chart.kills': 'KILLS',
+            'stats.chart.floor': 'ANDAR',
+            'stats.chart.gold': 'OURO',
+            'stats.chart.bosses': 'CHEFES',
+            'stats.chart.achievements': 'CONQ.',
+            'stats.chart.prestige': 'PREST.',
+            'stats.career': 'CARREIRA',
+            'stats.card.baseDmg': 'DANO BASE',
+            'stats.card.kills': 'KILLS',
+            'stats.playTime': 'Tempo jogado: ',
+            'stats.runsPlayed': 'Run atuais: ',
+            'stats.clearConfirm': 'Limpar TODAS as estatísticas de carreira?',
+            'stats.clearBtn': '🗑 LIMPAR ESTATÍSTICAS',
+            'stats.reward.dmgPct': '% dano',
+            'stats.reward.critPct': '% crítico',
+            'stats.reward.speedPct': '% velocidade',
+            'stats.reward.priceDiscount': '% preço',
             'panel.settings': 'Configurações',
             'panel.achievements': 'Conquistas',
             'panel.lore': 'Grimório de Krevathorn',
@@ -4818,6 +4835,23 @@ const I18n = {
             'panel.camp': 'Merchant Camp',
             'panel.skills': 'Skills',
             'panel.stats': 'Stats',
+            'stats.chart.kills': 'KILLS',
+            'stats.chart.floor': 'FLOOR',
+            'stats.chart.gold': 'GOLD',
+            'stats.chart.bosses': 'BOSSES',
+            'stats.chart.achievements': 'ACH.',
+            'stats.chart.prestige': 'PREST.',
+            'stats.career': 'CAREER',
+            'stats.card.baseDmg': 'BASE DMG',
+            'stats.card.kills': 'KILLS',
+            'stats.playTime': 'Play time: ',
+            'stats.runsPlayed': 'Runs played: ',
+            'stats.clearConfirm': 'Clear ALL career statistics?',
+            'stats.clearBtn': '🗑 CLEAR STATISTICS',
+            'stats.reward.dmgPct': '% dmg',
+            'stats.reward.critPct': '% crit',
+            'stats.reward.speedPct': '% speed',
+            'stats.reward.priceDiscount': '% price',
             'panel.settings': 'Settings',
             'panel.achievements': 'Achievements',
             'panel.lore': 'Krevathorn Grimoire',
@@ -6247,6 +6281,23 @@ const I18n = {
             'panel.camp': 'Campamento del Mercader',
             'panel.skills': 'Habilidades',
             'panel.stats': 'Estadísticas',
+            'stats.chart.kills': 'BAJAS',
+            'stats.chart.floor': 'PISO',
+            'stats.chart.gold': 'ORO',
+            'stats.chart.bosses': 'JEFES',
+            'stats.chart.achievements': 'LOGROS',
+            'stats.chart.prestige': 'PREST.',
+            'stats.career': 'CARRERA',
+            'stats.card.baseDmg': 'DAÑO BASE',
+            'stats.card.kills': 'BAJAS',
+            'stats.playTime': 'Tiempo jugado: ',
+            'stats.runsPlayed': 'Partidas jugadas: ',
+            'stats.clearConfirm': '¿Borrar TODAS las estadísticas de carrera?',
+            'stats.clearBtn': '🗑 BORRAR ESTADÍSTICAS',
+            'stats.reward.dmgPct': '% daño',
+            'stats.reward.critPct': '% crítico',
+            'stats.reward.speedPct': '% velocidad',
+            'stats.reward.priceDiscount': '% precio',
             'panel.settings': 'Configuración',
             'panel.achievements': 'Logros',
             'panel.lore': 'Grimorio de Krevathorn',
@@ -27506,17 +27557,17 @@ renderStatsContent() {
             // Gráfico de barras com estatísticas de carreira (P11)
             const S = Statistics.data;
             const bars = [
-                { label: 'KILLS', value: S.totalKills || 0, color: '#f87171' },
-                { label: 'ANDAR', value: S.maxLevel || 0, color: '#60a5fa' },
-                { label: 'OURO', value: Math.min(S.totalCurrencyEarned || 0, 9999), color: '#fbbf24' },
-                { label: 'CHEFES', value: S.bossKills || 0, color: '#a78bfa' },
-                { label: 'CONQ.', value: S.achievementsUnlocked || 0, color: '#4ade80' },
-                { label: 'PREST.', value: (typeof prestigeLevel !== 'undefined' ? prestigeLevel : 0), color: '#ff8c42' }
+                { label: _L('stats.chart.kills', 'KILLS'), value: S.totalKills || 0, color: '#f87171' },
+                { label: _L('stats.chart.floor', 'ANDAR'), value: S.maxLevel || 0, color: '#60a5fa' },
+                { label: _L('stats.chart.gold', 'OURO'), value: Math.min(S.totalCurrencyEarned || 0, 9999), color: '#fbbf24' },
+                { label: _L('stats.chart.bosses', 'CHEFES'), value: S.bossKills || 0, color: '#a78bfa' },
+                { label: _L('stats.chart.achievements', 'CONQ.'), value: S.achievementsUnlocked || 0, color: '#4ade80' },
+                { label: _L('stats.chart.prestige', 'PREST.'), value: (typeof prestigeLevel !== 'undefined' ? prestigeLevel : 0), color: '#ff8c42' }
             ];
             const maxBar = Math.max(1, ...bars.map(b => b.value));
             const barHtml = `
                 <div style="margin-top:14px;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,0.08);background:rgba(20,15,30,0.5)">
-                    <div style="font-size:10px;color:${COLORS.TEXT_MUTED};font-weight:bold;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px;text-align:center">CARREIRA</div>
+                    <div style="font-size:10px;color:${COLORS.TEXT_MUTED};font-weight:bold;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px;text-align:center">${_L('stats.career', 'CARREIRA')}</div>
                     <div style="display:flex;align-items:flex-end;gap:8px;height:90px;padding:0 4px">
                         ${bars.map(b => `
                             <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:4px">
@@ -27532,21 +27583,22 @@ renderStatsContent() {
             const playSeconds = Math.floor((S.totalPlayTime || 0) / GAME_TICKS_PER_SECOND);
             const hours = Math.floor(playSeconds / 3600);
             const mins = Math.floor((playSeconds % 3600) / 60);
+            const clearMsg = JSON.stringify(_L('stats.clearConfirm', 'Limpar TODAS as estatísticas de carreira?')).replace(/"/g, '&quot;');
             return tabs + `
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-                    ${statCard('DANO BASE', dmg)}
-                    ${statCard('VELOCIDADE', p.speed.toFixed(1))}
-                    ${statCard('CRÍTICO', (p.critChance * 100).toFixed(0) + '%')}
-                    ${statCard('KILLS', p.kills || 0)}
+                    ${statCard(_L('stats.card.baseDmg', 'DANO BASE'), dmg)}
+                    ${statCard(_L('eqStat.speedMult', 'Velocidade'), p.speed.toFixed(1))}
+                    ${statCard(_L('eqStat.critChance', 'Crítico'), (p.critChance * 100).toFixed(0) + '%')}
+                    ${statCard(_L('stats.card.kills', 'KILLS'), p.kills || 0)}
                 </div>
                 ${barHtml}
                 <div style="margin-top:10px;display:flex;justify-content:space-between;font-size:10px;color:${COLORS.TEXT_MUTED};padding:0 6px">
-                    <span>Tempo jogado: ${hours}h ${mins}m</span>
-                    <span>Run atuais: ${S.gamesPlayed || 0}</span>
+                    <span>${_L('stats.playTime', 'Tempo jogado: ')}${hours}h ${mins}m</span>
+                    <span>${_L('stats.runsPlayed', 'Run atuais: ')}${S.gamesPlayed || 0}</span>
                 </div>
                 <button style="width:100%;margin-top:16px;padding:12px;border-radius:12px;font-size:12px;font-weight:bold;color:#f87171;background:rgba(220,38,38,0.1);border:1.5px solid rgba(220,38,38,0.35);cursor:pointer"
-                    onclick="if (window.confirm('Limpar TODAS as estatísticas de carreira?')) { Statistics.reset(); UIManager.openPanel('stats'); }">
-                    🗑 LIMPAR ESTATÍSTICAS
+                    onclick="if (window.confirm(${clearMsg})) { Statistics.reset(); UIManager.openPanel('stats'); }">
+                    ${_L('stats.clearBtn', '🗑 LIMPAR ESTATÍSTICAS')}
                 </button>
             `;
         },
@@ -27559,11 +27611,11 @@ _rewardText(ach) {
     const parts = [];
     if (r.currency) parts.push('💰 +' + r.currency);
     if (r.maxHp) parts.push('❤ +' + r.maxHp + ' HP');
-    if (r.dmgMult) parts.push('⚔ +' + Math.round(r.dmgMult * 100) + '% dano');
-    if (r.prestigeBonus) parts.push('⚔ +' + Math.round(r.prestigeBonus * 100) + '% dano');
-    if (r.critChance) parts.push('✦ +' + Math.round(r.critChance * 100) + '% crítico');
-    if (r.speedMult) parts.push('» +' + Math.round(r.speedMult * 100) + '% velocidade');
-    if (r.shopDiscount) parts.push('🏷 -' + Math.round(r.shopDiscount * 100) + '% preço');
+    if (r.dmgMult) parts.push('⚔ +' + Math.round(r.dmgMult * 100) + _L('stats.reward.dmgPct', '% dano'));
+    if (r.prestigeBonus) parts.push('⚔ +' + Math.round(r.prestigeBonus * 100) + _L('stats.reward.dmgPct', '% dano'));
+    if (r.critChance) parts.push('✦ +' + Math.round(r.critChance * 100) + _L('stats.reward.critPct', '% crítico'));
+    if (r.speedMult) parts.push('» +' + Math.round(r.speedMult * 100) + _L('stats.reward.speedPct', '% velocidade'));
+    if (r.shopDiscount) parts.push('🏷 -' + Math.round(r.shopDiscount * 100) + _L('stats.reward.priceDiscount', '% preço'));
     return parts.join(' · ');
 },
 
