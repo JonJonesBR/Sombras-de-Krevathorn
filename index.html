@@ -3897,6 +3897,10 @@ const I18n = {
             'update.entry.v51.title': 'v51 — Muertes animadas',
             'update.entry.v51.l1': 'Visual: enemigos y jefes ahora caen, se desmoronan y se desvanecen en cinco cuadros en lugar de desaparecer de golpe, y la mancha del suelo se volvió un charco irregular. Solo cambiaron el arte y la animación.',
             'update.entry.v53.l2': 'Los paneles ahora se pueden usar con el teclado (Tab y Enter), el Campamento y la MetaTienda respetan el idioma, el texto atenuado tiene más contraste y los números de daño siguen el tamaño de fuente.',
+            'update.entry.v57.title': 'v57 — Sin parpadeos',
+            'update.entry.v57.l1': 'Corregido el parpadeo blanco rápido que aparecía en la pantalla al caminar y en combate.',
+            'update.entry.v57.l2': 'La iluminación y el tono del bioma ahora se mantienen estables en todos los cuadros.',
+            'update.entry.v57.l3': 'Los saves y el progreso no cambian.',
             'update.entry.v56.title': 'v56 — Combos, salas secretas y más poder',
             'update.entry.v56.l1': 'Combos de 3 golpes en las 4 clases, cada uno con un movimiento distinto y un golpe final más fuerte. Cuatro potenciadores raros (Furia, Frenesí, Imán y Égida) caen de cofres y jefes. Los eventos de Portal Secreto ahora abren una sala de verdad, de tesoro o de desafío.',
             'update.entry.v56.l2': 'El árbol de habilidades ganó 20 nodos nuevos con efectos de combate y elecciones exclusivas: al comprar uno, el otro se bloquea.',
@@ -3926,6 +3930,10 @@ const I18n = {
             'update.entry.v51.title': 'v51 — Mortes animadas',
             'update.entry.v51.l1': 'Visual: inimigos e chefes agora tombam, desmancham e somem em cinco quadros em vez de desaparecer de uma vez, e a mancha no chão virou uma poça irregular. Só a arte e a animação mudaram.',
             'update.entry.v53.l2': 'Os painéis agora podem ser usados pelo teclado (Tab e Enter), o Acampamento e a MetaLoja respeitam o idioma, o texto apagado tem mais contraste e os números de dano seguem o tamanho da fonte.',
+            'update.entry.v57.title': 'v57 — Sem piscadas',
+            'update.entry.v57.l1': 'Corrigido o flash branco rápido que piscava na tela ao andar e em combate.',
+            'update.entry.v57.l2': 'A iluminação e o tom do bioma agora ficam estáveis em todos os quadros.',
+            'update.entry.v57.l3': 'Seus saves e progresso não mudam.',
             'update.entry.v56.title': 'v56 — Combos, salas secretas e mais poder',
             'update.entry.v56.l1': 'Combos de 3 golpes nas 4 classes, cada um com um movimento diferente e um golpe final mais forte. Quatro powerups raros (Fúria, Frenesi, Ímã e Égide) caem de baús e chefes. O evento Portal Secreto agora abre uma sala de verdade, de tesouro ou de desafio.',
             'update.entry.v56.l2': 'A árvore de skills ganhou 20 nós novos com efeitos de combate e escolhas exclusivas: ao comprar um, o outro fica bloqueado.',
@@ -5421,6 +5429,10 @@ const I18n = {
             'update.entry.v51.title': 'v51 — Animated deaths',
             'update.entry.v51.l1': 'Visual: enemies and bosses now collapse, crumble and fade away over five frames instead of vanishing at once, and the stain on the floor became an irregular puddle. Only the art and animation changed.',
             'update.entry.v53.l2': 'Panels can now be used with the keyboard (Tab and Enter), the Camp and Meta Shop follow the chosen language, dimmed text has better contrast and damage numbers follow the font size setting.',
+            'update.entry.v57.title': 'v57 — No more flicker',
+            'update.entry.v57.l1': 'Fixed the quick white flashing on screen while walking and in combat.',
+            'update.entry.v57.l2': 'Lighting and biome tint now stay steady on every frame.',
+            'update.entry.v57.l3': 'Your saves and progress are unchanged.',
             'update.entry.v56.title': 'v56 — Combos, secret rooms and more power',
             'update.entry.v56.l1': '3-hit combos for all 4 classes, each with a different move and a stronger finisher. Four rare power-ups (Fury, Frenzy, Magnet and Aegis) drop from chests and bosses. The Secret Portal event now opens a real room, either treasure or challenge.',
             'update.entry.v56.l2': 'The skill tree gained 20 new nodes with combat effects and exclusive choices: buying one locks the other.',
@@ -10721,9 +10733,12 @@ function _drawLightingLayer() {
         // the map screen draws directly on the main canvas.
         const T = (gameState === 'WORLD_MAP') ? ctx : wctx;
         _lightingThrottle++;
+        // Quadros em cache também precisam receber tint, "ar" colorido e raios abaixo:
+        // pular essa parte fazia a cena clarear só a cada LIGHTING_THROTTLE quadros (flash periódico).
+        light: {
         if (_lightingThrottle % CONFIG.LIGHTING_THROTTLE !== 0 && _cachedLightCanvas) {
             T.drawImage(_cachedLightCanvas, 0, 0, width, height);
-            return;
+            break light;
         }
         // Larger cells = fewer pixels touched by the radial-gradient shadows; on LOW
         // quality this roughly halves the per-recompute cost of the light layer.
@@ -10786,6 +10801,7 @@ function _drawLightingLayer() {
         cctx.clearRect(0, 0, width, height);
         cctx.drawImage(lightCanvas, 0, 0, width, height);
         T.drawImage(_cachedLightCanvas, 0, 0, width, height);
+        }
         
         // Ambient biome tint (color grade the whole scene)
         if (window.GFX === undefined || window.GFX.tint) {
@@ -31863,7 +31879,7 @@ Input.init();
        current MUST stay in sync with the SW CACHE_VERSION suffix (sw.js).
     */
     window.UPDATE_LOG = {
-        current: 'v56',
+        current: 'v57',
         entries: [
             { v: 'v9', date: '2026-09-10', titleKey: 'update.entry.v9.title', title: 'v9 — Tutorial destravado',
               linesKeys: ['update.entry.v9.l1'],
@@ -32033,6 +32049,11 @@ Input.init();
             { v: 'v51', date: '2026-10-11', titleKey: 'update.entry.v51.title', title: 'v51 — Mortes animadas',
               linesKeys: ['update.entry.v51.l1'],
               lines: ['Visual: inimigos e chefes agora tombam, desmancham e somem em cinco quadros em vez de desaparecer de uma vez, e a mancha no chão virou uma poça irregular. Só a arte e a animação mudaram.'] },
+            { v: 'v57', date: '2026-10-14', titleKey: 'update.entry.v57.title', title: 'v57 — Sem piscadas',
+              linesKeys: ['update.entry.v57.l1', 'update.entry.v57.l2', 'update.entry.v57.l3'],
+              lines: ['Corrigido o flash branco rápido que piscava na tela ao andar e em combate.',
+                      'A iluminação e o tom do bioma agora ficam estáveis em todos os quadros.',
+                      'Seus saves e progresso não mudam.'] },
             { v: 'v56', date: '2026-10-14', titleKey: 'update.entry.v56.title', title: 'v56 — Combos, salas secretas e mais poder',
               linesKeys: ['update.entry.v56.l1', 'update.entry.v56.l2', 'update.entry.v56.l3'],
               lines: ['Combos de 3 golpes nas 4 classes, cada um com um movimento diferente e um golpe final mais forte. Quatro powerups raros (Fúria, Frenesi, Ímã e Égide) caem de baús e chefes. O evento Portal Secreto agora abre uma sala de verdade, de tesouro ou de desafio.',
