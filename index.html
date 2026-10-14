@@ -3121,7 +3121,13 @@ window.MetaSystem = MetaSystem;
 
 // Handler unificado de seleção de classe: abre a MetaLoja se estiver bloqueada
 window._tryStartClass = function (cls) {
-    if (window.MetaSystem && !MetaSystem.isClassUnlocked(cls)) {
+    // Desafio diário aceito que exige esta classe concede a classe (bypass), como em GameBootstrap.start.
+    var _dailyGrant = false;
+    if (window._dailyOptIn === true && window.DailyChallenge && DailyChallenge.canPlay()) {
+        var _tdc = DailyChallenge.getTodayChallenge();
+        _dailyGrant = !!(_tdc && _tdc.modifiers && _tdc.modifiers.forceClass === cls);
+    }
+    if (window.MetaSystem && !MetaSystem.isClassUnlocked(cls) && !_dailyGrant) {
         var u = MetaSystem.UNLOCKS['class_' + cls];
         if (typeof showToast === 'function') showToast((u ? (window._L ? _L(u.nameKey, u.name) : u.name) : cls) + (window.I18n ? I18n.t('meta.lockedSuffix') : ': desbloqueie na MetaLoja.'), 'error');
         if (window.UIManager) window.UIManager.openPanel('meta');
@@ -3840,6 +3846,8 @@ const I18n = {
             'update.entry.v50.l1': 'Visual: el Guardián Final y el Titán de Magma se redibujaron con una figura más alta y estrecha — ahora muestran las piernas, con hombreras, escudo y espada bien definidos, y la llama del Titán sube de su cabeza. Vale para las tres vistas: frente, perfil y espalda. Solo cambió el arte.',
             'update.entry.v51.title': 'v51 — Muertes animadas',
             'update.entry.v51.l1': 'Visual: enemigos y jefes ahora caen, se desmoronan y se desvanecen en cinco cuadros en lugar de desaparecer de golpe, y la mancha del suelo se volvió un charco irregular. Solo cambiaron el arte y la animación.',
+            'update.entry.v53.title': 'v53 — Oro que crece y desafío del Atirador',
+            'update.entry.v53.l1': 'Las monedas del suelo ahora valen más en pisos profundos (6% por piso), para acompañar el precio de la tienda. Además, el desafío diario del Atirador ya se puede iniciar con el mago aún bloqueado.',
             'update.entry.v52.title': 'v52 — Desafío diario opcional',
             'update.entry.v52.l1': 'Ahora el desafío diario es opcional: las partidas normales ya no reciben el modificador del día. Para jugarlo, toca el aviso del menú o el botón Diario y elige Jugar desafío de hoy. Si recargas la página y continúas una partida diaria, ya no tendrá los modificadores.',
             'update.entry.v45.title': 'v45 — Diagonais mais marcadas',
@@ -3856,6 +3864,8 @@ const I18n = {
             'update.entry.v50.l1': 'Visual: o Guardião Final e o Titã de Magma foram redesenhados com proporção mais alta e estreita — agora têm pernas à mostra, ombreiras, escudo e espada bem definidos, e a chama do Titã sobe da cabeça. Valem as três vistas: frente, perfil e costas. Só a arte mudou.',
             'update.entry.v51.title': 'v51 — Mortes animadas',
             'update.entry.v51.l1': 'Visual: inimigos e chefes agora tombam, desmancham e somem em cinco quadros em vez de desaparecer de uma vez, e a mancha no chão virou uma poça irregular. Só a arte e a animação mudaram.',
+            'update.entry.v53.title': 'v53 — Ouro que cresce e desafio do Atirador',
+            'update.entry.v53.l1': 'As moedas do chão agora valem mais em andares profundos (6% por andar), acompanhando o preço da loja. Além disso, o desafio diário do Atirador agora pode ser iniciado mesmo com o mago ainda bloqueado.',
             'update.entry.v52.title': 'v52 — Desafio diário opcional',
             'update.entry.v52.l1': 'Agora o desafio diário é opcional: as partidas normais não recebem mais o modificador do dia. Para jogá-lo, toque no aviso do menu ou no botão Diário e escolha Jogar desafio de hoje. Se você recarregar a página e continuar uma partida diária, ela não terá mais os modificadores.',
             'update.entry.v43.title': 'v43 — Chefes e criaturas renovados',
@@ -5284,6 +5294,8 @@ const I18n = {
             'update.entry.v50.l1': 'Visual: the Final Guardian and the Magma Titan were redrawn with a taller, narrower build — they now show their legs, with well-defined pauldrons, shield and sword, and the Titan flame rises from its head. This applies to the front, side and back views. Only the art changed.',
             'update.entry.v51.title': 'v51 — Animated deaths',
             'update.entry.v51.l1': 'Visual: enemies and bosses now collapse, crumble and fade away over five frames instead of vanishing at once, and the stain on the floor became an irregular puddle. Only the art and animation changed.',
+            'update.entry.v53.title': 'v53 — Growing gold and the Sniper challenge',
+            'update.entry.v53.l1': 'Floor coins are now worth more on deeper floors (6% per floor), keeping pace with shop prices. Also, the Sniper daily challenge can now be started even while the mage is still locked.',
             'update.entry.v52.title': 'v52 — Optional daily challenge',
             'update.entry.v52.l1': 'The daily challenge is now optional: normal runs no longer get the modifier of the day. To play it, tap the notice on the menu or the Daily button and choose Play the daily challenge. If you reload the page and continue a daily run, it will no longer have the modifiers.',
             'update.entry.v32.l1': 'The sound that got stuck on the floor-complete screen (while choosing what to buy before descending) no longer hangs.',
@@ -19315,7 +19327,7 @@ class Pickup {
             this.mutationType = types[Math.floor(SeedSystem.random() * types.length)];
             this.color = MUTATIONS[this.mutationType].color;
             this.value = this.mutationType;
-        } else if(type === 'currency') { this.color=COLORS.PICKUP_CURRENCY; this.value=CONFIG.PICKUP_CURRENCY_VALUE; }
+        } else if(type === 'currency') { this.color=COLORS.PICKUP_CURRENCY; this.value=Math.round(CONFIG.PICKUP_CURRENCY_VALUE * (1 + 0.06 * Math.max(0, (typeof dungeonLevel === 'number' ? dungeonLevel : 1) - 1))); }
         this.radius = 8;
     }
     update() {
@@ -30312,7 +30324,7 @@ Input.init();
        current MUST stay in sync with the SW CACHE_VERSION suffix (sw.js).
     */
     window.UPDATE_LOG = {
-        current: 'v52',
+        current: 'v53',
         entries: [
             { v: 'v9', date: '2026-09-10', titleKey: 'update.entry.v9.title', title: 'v9 — Tutorial destravado',
               linesKeys: ['update.entry.v9.l1'],
@@ -30482,6 +30494,9 @@ Input.init();
             { v: 'v51', date: '2026-10-11', titleKey: 'update.entry.v51.title', title: 'v51 — Mortes animadas',
               linesKeys: ['update.entry.v51.l1'],
               lines: ['Visual: inimigos e chefes agora tombam, desmancham e somem em cinco quadros em vez de desaparecer de uma vez, e a mancha no chão virou uma poça irregular. Só a arte e a animação mudaram.'] },
+            { v: 'v53', date: '2026-10-14', titleKey: 'update.entry.v53.title', title: 'v53 — Ouro que cresce e desafio do Atirador',
+              linesKeys: ['update.entry.v53.l1'],
+              lines: ['As moedas do chão agora valem mais em andares profundos (6% por andar), acompanhando o preço da loja. Além disso, o desafio diário do Atirador agora pode ser iniciado mesmo com o mago ainda bloqueado.'] },
             { v: 'v52', date: '2026-10-13', titleKey: 'update.entry.v52.title', title: 'v52 — Desafio diário opcional',
               linesKeys: ['update.entry.v52.l1'],
               lines: ['Agora o desafio diário é opcional: as partidas normais não recebem mais o modificador do dia. Para jogá-lo, toque no aviso do menu ou no botão Diário e escolha Jogar desafio de hoje. Se você recarregar a página e continuar uma partida diária, ela não terá mais os modificadores.'] },
