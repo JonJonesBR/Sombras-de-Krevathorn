@@ -3869,6 +3869,9 @@ const I18n = {
             'update.entry.v51.title': 'v51 — Muertes animadas',
             'update.entry.v51.l1': 'Visual: enemigos y jefes ahora caen, se desmoronan y se desvanecen en cinco cuadros en lugar de desaparecer de golpe, y la mancha del suelo se volvió un charco irregular. Solo cambiaron el arte y la animación.',
             'update.entry.v53.l2': 'Los paneles ahora se pueden usar con el teclado (Tab y Enter), el Campamento y la MetaTienda respetan el idioma, el texto atenuado tiene más contraste y los números de daño siguen el tamaño de fuente.',
+            'update.entry.v54.title': 'v54 — Golpes y especiales con impacto',
+            'update.entry.v54.l1': 'Los golpes ahora tienen chispas, ondas de choque y una pausa de impacto; los críticos se notan más. Los jefes también retroceden un poco al ser golpeados.',
+            'update.entry.v54.l2': 'Los especiales de cada clase tienen onda de choque de color, destello, temblor y cámara lenta corta. Solo efectos visuales y de sensación; el daño no cambió.',
             'update.entry.v53.title': 'v53 — Oro que crece y desafío del Atirador',
             'update.entry.v53.l1': 'Las monedas del suelo ahora valen más en pisos profundos (6% por piso), para acompañar el precio de la tienda. Además, el desafío diario del Atirador ya se puede iniciar con el mago aún bloqueado.',
             'update.entry.v52.title': 'v52 — Desafío diario opcional',
@@ -3888,6 +3891,9 @@ const I18n = {
             'update.entry.v51.title': 'v51 — Mortes animadas',
             'update.entry.v51.l1': 'Visual: inimigos e chefes agora tombam, desmancham e somem em cinco quadros em vez de desaparecer de uma vez, e a mancha no chão virou uma poça irregular. Só a arte e a animação mudaram.',
             'update.entry.v53.l2': 'Os painéis agora podem ser usados pelo teclado (Tab e Enter), o Acampamento e a MetaLoja respeitam o idioma, o texto apagado tem mais contraste e os números de dano seguem o tamanho da fonte.',
+            'update.entry.v54.title': 'v54 — Golpes e especiais com impacto',
+            'update.entry.v54.l1': 'Os golpes agora têm faíscas, ondas de choque e pausa de impacto; os críticos aparecem mais. Chefes também recuam um pouco ao serem atingidos.',
+            'update.entry.v54.l2': 'Os especiais de cada classe têm onda de choque colorida, flash, tremor e câmera lenta curta. Só efeitos visuais e de sensação; o dano não mudou.',
             'update.entry.v53.title': 'v53 — Ouro que cresce e desafio do Atirador',
             'update.entry.v53.l1': 'As moedas do chão agora valem mais em andares profundos (6% por andar), acompanhando o preço da loja. Além disso, o desafio diário do Atirador agora pode ser iniciado mesmo com o mago ainda bloqueado.',
             'update.entry.v52.title': 'v52 — Desafio diário opcional',
@@ -5338,6 +5344,9 @@ const I18n = {
             'update.entry.v51.title': 'v51 — Animated deaths',
             'update.entry.v51.l1': 'Visual: enemies and bosses now collapse, crumble and fade away over five frames instead of vanishing at once, and the stain on the floor became an irregular puddle. Only the art and animation changed.',
             'update.entry.v53.l2': 'Panels can now be used with the keyboard (Tab and Enter), the Camp and Meta Shop follow the chosen language, dimmed text has better contrast and damage numbers follow the font size setting.',
+            'update.entry.v54.title': 'v54 — Hits and specials with impact',
+            'update.entry.v54.l1': 'Hits now have sparks, shockwaves and an impact pause; crits stand out more. Bosses also recoil slightly when hit.',
+            'update.entry.v54.l2': 'Each class special has a colored shockwave, flash, shake and a short slow-motion. Visual and feel effects only; damage did not change.',
             'update.entry.v53.title': 'v53 — Growing gold and the Sniper challenge',
             'update.entry.v53.l1': 'Floor coins are now worth more on deeper floors (6% per floor), keeping pace with shop prices. Also, the Sniper daily challenge can now be started even while the mage is still locked.',
             'update.entry.v52.title': 'v52 — Optional daily challenge',
@@ -10135,6 +10144,7 @@ function _drawWorldLayer() {
     
     DeathAnimations.drawAnimations(wctx, camX, camY);
     DamageNumbers.draw(wctx, camX, camY);
+    ScreenEffects.drawRings(wctx, camX, camY);
     
     entities.forEach(e => {
         if(e === player) return;
@@ -10642,7 +10652,7 @@ function draw() {
                 const sp = map.getSafeSpawn(); if (player) { player.x = sp.x; player.y = sp.y; }
                 entities = [player]; bullets = []; particles = []; pickups = [];
                 hazards = []; chests = []; pets = []; weaponPickups = []; equipmentPickups = [];
-                guidedBullets = []; rogueClones = []; hitstopFrames = 0;
+                guidedBullets = []; rogueClones = []; hitstopFrames = 0; ScreenEffects.resetImpact();
                 if (window.NPCSystem) NPCSystem.reset();
                 if (window.RelicSystem) RelicSystem.onNewDungeon(player);
                 DifficultySystem.dungeonLevel = dungeonLevel;
@@ -11394,7 +11404,7 @@ function loop(timestamp) {
     }
 
     Debug.beginFrame();
-    _advanceSimulation(dt);
+    _advanceSimulation(dt * ScreenEffects.timeScale());
     Debug.safe(() => draw(), 'draw');
     Debug.endFrame();
 
@@ -15241,7 +15251,12 @@ const ScreenEffects = {
     _transitionAlpha: 0,
     _transitioning: false,
     _deathFlashTimer: 0,
-    
+    // Game feel: anéis de choque, slow-motion de especial e cadências (zerados em resetImpact)
+    _rings: [],
+    _slowTicks: 0,
+    _hitstopCd: 0,
+    _ringCd: 0,
+
     // Blood splatter on edges
     _bloodSplatterAlpha: 0,
     _bloodSplatterColor: '#ff0000',
@@ -15383,6 +15398,16 @@ const ScreenEffects = {
             this.triggerShake(3);
         }
         
+        // Game feel: anéis de choque e cadências avançam por tick de simulação
+        for (let _ri = this._rings.length - 1; _ri >= 0; _ri--) {
+            const _ring = this._rings[_ri];
+            _ring.r += (_ring.maxR - _ring.r) * 0.3;
+            if (--_ring.life <= 0) this._rings.splice(_ri, 1);
+        }
+        if (this._slowTicks > 0) this._slowTicks--;
+        if (this._hitstopCd > 0) this._hitstopCd--;
+        if (this._ringCd > 0) this._ringCd--;
+
         // Blood splatter decay
         if (this._bloodSplatterAlpha > 0.01) {
             this._bloodSplatterAlpha *= 0.94;
@@ -15392,6 +15417,114 @@ const ScreenEffects = {
         }
     },
     
+    // ---- Game feel: impacto de acerto, especiais e slow-motion (só visual/sensação) ----
+    // Contadores andam só em update() (tick de simulação), então nada avança com o jogo pausado.
+    resetImpact() {
+        this._rings.length = 0;
+        this._slowTicks = 0;
+        this._hitstopCd = 0;
+        this._ringCd = 0;
+    },
+
+    // Escala de tempo da simulação: 0.5 enquanto o slow-motion de especial estiver ativo.
+    timeScale() {
+        if (this._slowTicks > 0 && gameState === 'PLAYING' && !(window.GameSettings && GameSettings.reducedMotion)) return 0.5;
+        return 1;
+    },
+
+    _hitstop(frames) {
+        if (window.GameSettings && GameSettings.hitstopEnabled === false) return;
+        if (frames > hitstopFrames) hitstopFrames = frames;
+    },
+
+    _addRing(x, y, color, maxR, life, width, spokes) {
+        if (window.GameSettings && GameSettings.reducedMotion) return;
+        if (this._rings.length >= 10) this._rings.shift();
+        this._rings.push({ x: x, y: y, r: 4, maxR: maxR, life: life, maxLife: life, color: color, width: width, spokes: spokes || 0 });
+    },
+
+    // Acerto comum do jogador em inimigo/boss: faíscas direcionais, anel curto (com cadência)
+    // e hit-stop escalado por dano (1 frame leve, 2 a partir de 8, 3 a partir de 20 ou crítico).
+    impactHit(damage, fromX, fromY, x, y, isCrit) {
+        const ang = Math.atan2(y - fromY, x - fromX);
+        const before = particles.length;
+        spawnParticles(x, y, isCrit ? '#ffee88' : '#ffdd88', isCrit ? 7 : 3, isCrit ? 4 : 3);
+        for (let i = before; i < particles.length; i++) {
+            const p = particles[i];
+            const a = ang + (Math.random() - 0.5) * 1.1;
+            const sp = (isCrit ? 3.2 : 2.2) * (0.6 + Math.random() * 0.6);
+            p.vx = Math.cos(a) * sp; p.vy = Math.sin(a) * sp;
+        }
+        if (isCrit || this._ringCd <= 0) {
+            this._addRing(x, y, isCrit ? '#ffee88' : '#ffcc66', isCrit ? 34 : 22, isCrit ? 12 : 8, isCrit ? 4 : 2, 0);
+            if (isCrit) this._addRing(x, y, '#ffffff', 46, 14, 2, 0);
+            this._ringCd = 4;
+        }
+        if (this._hitstopCd <= 0) {
+            this._hitstop(isCrit || damage >= 20 ? 3 : damage >= 8 ? 2 : 1);
+            this._hitstopCd = 10;
+        }
+    },
+
+    // Especial que acerta: onda de choque com forma da classe ('ring', 'double', 'spokes'),
+    // flash curto, shake e hit-stop maiores e slow-motion de poucos ticks (0.5x).
+    specialFX(x, y, color, radius, style, hitstopN, slowTicks) {
+        if (!(window.GameSettings && GameSettings.reducedMotion)) {
+            if (style === 'double') {
+                this._addRing(x, y, color, radius, 18, 6, 0);
+                this._addRing(x, y, '#ffffff', radius * 0.7, 12, 2, 0);
+            } else if (style === 'spokes') {
+                this._addRing(x, y, color, radius, 20, 4, 8);
+            } else {
+                this._addRing(x, y, color, radius, 18, 8, 0);
+            }
+            this._slowTicks = Math.max(this._slowTicks, slowTicks);
+            this.triggerShake(12);
+            this.triggerFlash(0.22, color);
+        }
+        this._hitstop(hitstopN);
+        if (window.SND && SND.play) SND.play(70, 'sine', 0.25, 0.3);
+    },
+
+    // Inimigo atingido por especial: flash curto e recuo maior. Boss recebe só uma fração.
+    specialHit(e, dx, dy) {
+        if (!e || e === player || e.isP) return;
+        const d = Math.hypot(dx, dy) || 1;
+        const mag = CONFIG.KNOCKBACK_STRENGTH * (e.isB ? 0.1 : 0.6);
+        e.ft = Math.max(e.ft || 0, 6);
+        e.flinchTimer = Math.max(e.flinchTimer || 0, e.isB ? 3 : 6);
+        e.flinchVx = (dx / d) * mag;
+        e.flinchVy = (dy / d) * mag;
+    },
+
+    drawRings(ctx, cx, cy) {
+        const rs = this._rings;
+        if (!rs.length) return;
+        ctx.save();
+        for (let i = 0; i < rs.length; i++) {
+            const r = rs[i];
+            const a = Math.max(0, r.life / r.maxLife);
+            const px = r.x - cx, py = r.y - cy;
+            ctx.globalAlpha = a * 0.85;
+            ctx.strokeStyle = r.color;
+            ctx.lineWidth = Math.max(1, r.width * a + 1);
+            ctx.beginPath();
+            ctx.arc(px, py, r.r, 0, Math.PI * 2);
+            ctx.stroke();
+            if (r.spokes) {
+                const inner = r.r * 0.35;
+                ctx.beginPath();
+                for (let s = 0; s < r.spokes; s++) {
+                    const sa = (s / r.spokes) * Math.PI * 2;
+                    ctx.moveTo(px + Math.cos(sa) * inner, py + Math.sin(sa) * inner);
+                    ctx.lineTo(px + Math.cos(sa) * r.r, py + Math.sin(sa) * r.r);
+                }
+                ctx.stroke();
+            }
+        }
+        ctx.restore();
+    },
+
     drawPostProcess(ctx) {
         // Lazy-init film grain noise canvas (pre-rendered once)
         if (!this._grainCanvas) {
@@ -20661,8 +20794,14 @@ class Entity {
                 this.flinchVy = Math.sin(angle) * kbMag;
                 // Brief material flash
                 this.hitFlashTimer = 4;
+            } else if (this !== player) {
+                // Boss: recuo leve (fração pequena do recuo normal), sem squash
+                const kbBoss = Math.min(CONFIG.KNOCKBACK_STRENGTH, 1 + finalDmg * 0.03) * 0.15;
+                this.flinchTimer = 3;
+                this.flinchVx = Math.cos(angle) * kbBoss;
+                this.flinchVy = Math.sin(angle) * kbBoss;
             }
-            
+
             // Screen shake for ANY significant hit
             if (finalDmg > 8) {
                 ScreenEffects.triggerShake(Math.min(1 + finalDmg * 0.01, 5));
@@ -20681,6 +20820,7 @@ class Entity {
         // projectiles never reach this branch as damage targets.
         if (source === player && this !== player && !this.isP && typeof ScreenEffects !== 'undefined') {
             ScreenEffects.onHitEnemy(finalDmg, source.x, source.y, this.x, this.y);
+            ScreenEffects.impactHit(finalDmg, source.x, source.y, this.x, this.y, dmgType === 'crit');
         }
         
                 // Relic: Espinhos de Escudo
@@ -23863,6 +24003,7 @@ class Player extends Entity {
             ScreenEffects.triggerFlash(0.4, '#ff8800', 15);
             ScreenEffects.triggerChromatic(4);
             SND.play(120, 'sawtooth', 0.3, 0.3);
+            ScreenEffects.specialFX(this.x, this.y, '#ff8800', slamRange, 'ring', 4, 8);
             const slamRangeSq = slamRange * slamRange;
             for(let i = 0; i < entities.length; i++) {
                 const e = entities[i];
@@ -23873,6 +24014,7 @@ class Player extends Entity {
                         spawnParticles(e.x, e.y, '#ff6600', 12, 5);
                         spawnParticles(e.x, e.y, '#ffcc00', 6, 8);
                         ScreenEffects.triggerShake(8);
+                        ScreenEffects.specialHit(e, dx, dy);
                         // Knockback from slam center
                         const _dist = Math.sqrt(dx*dx + dy*dy) || 1;
                         const _kbx = (dx/_dist) * 8, _kby = (dy/_dist) * 8;
@@ -23924,11 +24066,12 @@ class Player extends Entity {
                     if(e !== this && e.alive) {
                         const edx = e.x - this.x, edy = e.y - this.y;
                         const execDmg = e.isB ? Math.min(e.maxHp * 0.10, Math.max(10, e.maxHp * CONFIG.ROGUE_ASSASSINATE_DAMAGE_PCT)) : Math.max(10, e.maxHp * CONFIG.ROGUE_ASSASSINATE_DAMAGE_PCT);
-                        if(edx*edx + edy*edy < assassRangeSq && e.hp / e.maxHp < threshold) e.takeDamage(execDmg, map, this);
+                        if(edx*edx + edy*edy < assassRangeSq && e.hp / e.maxHp < threshold) { e.takeDamage(execDmg, map, this); ScreenEffects.specialHit(e, edx, edy); }
                     }
                 }
             }
             spawnParticles(this.x, this.y, '#33ff33', 25, 5); SND.play(600, 'square', 0.1, 0.25); SND.schedule(() => SND.play(800, 'square', 0.08, 0.2), 60); shake = 5; addLog(this.skills.ult1 ? " ARROW STORM!" : " ARROW BARRAGE!");
+            ScreenEffects.specialFX(this.x, this.y, '#33ff33', 150, 'spokes', 3, 6);
             if(this.skills.deathmark) {
                 const markRangeSq = 300 * 300;
                 for(let i = 0; i < entities.length; i++) {
@@ -23963,10 +24106,12 @@ class Player extends Entity {
                             e.takeDamage(CONFIG.MAGE_METEOR_DAMAGE, map, this);
                             spawnParticles(e.x, e.y, '#ff4400', 10, 5);
                             ScreenEffects.triggerShake(6);
+                            ScreenEffects.specialHit(e, edx, edy);
                         }
                     }
                 }
                 if (typeof ScreenEffects !== "undefined" && ScreenEffects.onMeteor) ScreenEffects.onMeteor();
+                ScreenEffects.specialFX(this.x, this.y, '#ff6600', CONFIG.MAGE_METEOR_RANGE, 'double', 4, 10);
                 addLog(I18n.t('log.meteor'));
             } else {
                 SND.play(500, 'sine', 0.5, 0.2);
@@ -23982,6 +24127,7 @@ class Player extends Entity {
                     bullets.push(window.PoolManager ? PoolManager.acquire('Bullet', this.x, this.y, Math.cos(sa)*sp, Math.sin(sa)*sp, col, CONFIG.MAGE_ARCANE_STORM_DAMAGE, true) : new Bullet(this.x, this.y, Math.cos(sa)*sp, Math.sin(sa)*sp, col, CONFIG.MAGE_ARCANE_STORM_DAMAGE, true));
                 }
                 spawnParticles(this.x, this.y, '#cc66ff', 15, 5);
+                ScreenEffects.specialFX(this.x, this.y, '#9966ff', 110, 'double', 3, 6);
                 shake = CONFIG.SHAKE_STORM; addLog(I18n.t('log.arcaneStorm'));
             }
             if (this.slowAura && typeof IceBarrier !== 'undefined') {
@@ -23999,6 +24145,7 @@ class Player extends Entity {
                         const edx = e.x - this.x, edy = e.y - this.y;
                         if(edx*edx + edy*edy < burstSq) {
                             e.takeDamage(45, map, this);
+                            ScreenEffects.specialHit(e, edx, edy);
                             spawnParticles(e.x, e.y, '#66ccff', 8, 4);
                         }
                     }
@@ -24006,6 +24153,7 @@ class Player extends Entity {
                 ScreenEffects.triggerFlash(0.25, '#66ccff', 12);
                 ScreenEffects.triggerShake(10);
                 SND.play(200, 'sine', 0.35, 0.3);
+                ScreenEffects.specialFX(this.x, this.y, '#66ccff', 210, 'double', 3, 6);
                 addLog(I18n.t('log.arcaneBarrier'));
             }
         } else if(this.type === 'elf') {
@@ -24035,9 +24183,11 @@ class Player extends Entity {
                             e.frozen = Math.max(e.frozen || 0, 90);
                             e.poisonStacks = (e.poisonStacks || 0) + 2;
                             spawnParticles(e.x, e.y, '#58e08a', 8, 4);
+                            ScreenEffects.specialHit(e, edx, edy);
                         }
                     }
                 }
+                ScreenEffects.specialFX(this.x, this.y, '#58e08a', 240, 'spokes', 3, 6);
                 addLog(I18n.t('log.natureFury'));
             } else {
                 // Tempestade de Vento: empurra inimigos e dispara flechas cortantes
@@ -24058,6 +24208,7 @@ class Player extends Entity {
                             const kbx = (edx / d) * 9, kby = (edy / d) * 9;
                             if(!map.isWall(e.x + kbx, e.y + kby)) { e.x += kbx; e.y += kby; }
                             spawnParticles(e.x, e.y, '#7fffd4', 6, 4);
+                            ScreenEffects.specialHit(e, edx, edy);
                         }
                     }
                 }
@@ -24067,6 +24218,7 @@ class Player extends Entity {
                     const b = window.PoolManager ? PoolManager.acquire('Bullet', this.x, this.y, Math.cos(a)*wSpd, Math.sin(a)*wSpd, '#7fffd4', Math.floor(CONFIG.ELF_WIND_DAMAGE * 0.7 * this.weaponLevel * this.weaponDamageMult * (this.damageMult || 1)), true, null, 320, 'arrow') : new Bullet(this.x, this.y, Math.cos(a)*wSpd, Math.sin(a)*wSpd, '#7fffd4', Math.floor(CONFIG.ELF_WIND_DAMAGE * 0.7 * this.weaponLevel * this.weaponDamageMult * (this.damageMult || 1)), true, null, 320, 'arrow');
                     bullets.push(b);
                 }
+                ScreenEffects.specialFX(this.x, this.y, '#7fffd4', CONFIG.ELF_WIND_RANGE, 'ring', 3, 8);
                 shake = CONFIG.SHAKE_STORM; addLog(I18n.t('log.windGust'));
             }
         }
@@ -28275,7 +28427,7 @@ window.GameBootstrap = {
 
         entities = [player]; bullets = []; particles = []; pickups = [];
         hazards = []; chests = []; pets = []; weaponPickups = []; equipmentPickups = [];
-        guidedBullets = []; rogueClones = []; hitstopFrames = 0;
+        guidedBullets = []; rogueClones = []; hitstopFrames = 0; ScreenEffects.resetImpact();
 
         if (window.ShopSystem) ShopSystem.reset();
         if (window.CampSystem) CampSystem.reset();
@@ -30428,7 +30580,7 @@ Input.init();
        current MUST stay in sync with the SW CACHE_VERSION suffix (sw.js).
     */
     window.UPDATE_LOG = {
-        current: 'v53',
+        current: 'v54',
         entries: [
             { v: 'v9', date: '2026-09-10', titleKey: 'update.entry.v9.title', title: 'v9 — Tutorial destravado',
               linesKeys: ['update.entry.v9.l1'],
@@ -30598,6 +30750,10 @@ Input.init();
             { v: 'v51', date: '2026-10-11', titleKey: 'update.entry.v51.title', title: 'v51 — Mortes animadas',
               linesKeys: ['update.entry.v51.l1'],
               lines: ['Visual: inimigos e chefes agora tombam, desmancham e somem em cinco quadros em vez de desaparecer de uma vez, e a mancha no chão virou uma poça irregular. Só a arte e a animação mudaram.'] },
+            { v: 'v54', date: '2026-10-14', titleKey: 'update.entry.v54.title', title: 'v54 — Golpes e especiais com impacto',
+              linesKeys: ['update.entry.v54.l1', 'update.entry.v54.l2'],
+              lines: ['Os golpes agora têm faíscas, ondas de choque e pausa de impacto; os críticos aparecem mais. Chefes também recuam um pouco ao serem atingidos.',
+                      'Os especiais de cada classe têm onda de choque colorida, flash, tremor e câmera lenta curta. Só efeitos visuais e de sensação; o dano não mudou.'] },
             { v: 'v53', date: '2026-10-14', titleKey: 'update.entry.v53.title', title: 'v53 — Ouro que cresce e desafio do Atirador',
               linesKeys: ['update.entry.v53.l1', 'update.entry.v53.l2'],
               lines: ['As moedas do chão agora valem mais em andares profundos (6% por andar), acompanhando o preço da loja. Além disso, o desafio diário do Atirador agora pode ser iniciado mesmo com o mago ainda bloqueado.',
