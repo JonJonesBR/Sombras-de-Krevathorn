@@ -1985,6 +1985,7 @@ const COLORS = {
     PICKUP_SHIELD: '#33ccff',
     PICKUP_SPEED: '#ff66cc',
     PICKUP_CURRENCY: '#ffdd00',
+    PICKUP_ESSENCE: '#b26cff',
 
     // Enemy type
     ELITE: '#ff8800',
@@ -3869,6 +3870,9 @@ const I18n = {
             'update.entry.v51.title': 'v51 — Muertes animadas',
             'update.entry.v51.l1': 'Visual: enemigos y jefes ahora caen, se desmoronan y se desvanecen en cinco cuadros en lugar de desaparecer de golpe, y la mancha del suelo se volvió un charco irregular. Solo cambiaron el arte y la animación.',
             'update.entry.v53.l2': 'Los paneles ahora se pueden usar con el teclado (Tab y Enter), el Campamento y la MetaTienda respetan el idioma, el texto atenuado tiene más contraste y los números de daño siguen el tamaño de fuente.',
+            'update.entry.v55.title': 'v55 — Poderes que se ven y se sienten',
+            'update.entry.v55.l1': 'El escudo ahora aparece como una burbuja alrededor del héroe y estalla al romperse; la velocidad deja una estela de viento. Los avisos del HUD muestran el valor del escudo y los segundos que quedan de cada efecto.',
+            'update.entry.v55.l2': 'Vida, XP, esencia y mutaciones tienen su propio destello al recogerlos, y los objetos del suelo son más fáciles de distinguir. El Boost de Velocidad de la tienda ahora dice +50%, que es lo que realmente da.',
             'update.entry.v54.title': 'v54 — Golpes y especiales con impacto',
             'update.entry.v54.l1': 'Los golpes ahora tienen chispas, ondas de choque y una pausa de impacto; los críticos se notan más. Los jefes también retroceden un poco al ser golpeados.',
             'update.entry.v54.l2': 'Los especiales de cada clase tienen onda de choque de color, destello, temblor y cámara lenta corta. Solo efectos visuales y de sensación; el daño no cambió.',
@@ -3891,6 +3895,9 @@ const I18n = {
             'update.entry.v51.title': 'v51 — Mortes animadas',
             'update.entry.v51.l1': 'Visual: inimigos e chefes agora tombam, desmancham e somem em cinco quadros em vez de desaparecer de uma vez, e a mancha no chão virou uma poça irregular. Só a arte e a animação mudaram.',
             'update.entry.v53.l2': 'Os painéis agora podem ser usados pelo teclado (Tab e Enter), o Acampamento e a MetaLoja respeitam o idioma, o texto apagado tem mais contraste e os números de dano seguem o tamanho da fonte.',
+            'update.entry.v55.title': 'v55 — Poderes que se veem e se sentem',
+            'update.entry.v55.l1': 'O escudo agora aparece como uma bolha ao redor do herói e estoura ao quebrar; a velocidade deixa um rastro de vento. Os avisos do HUD mostram o valor do escudo e os segundos que faltam de cada efeito.',
+            'update.entry.v55.l2': 'Vida, XP, essência e mutações têm brilho próprio ao serem coletados, e os itens do chão ficam mais fáceis de distinguir. O Boost de Velocidade da loja agora diz +50%, que é o que ele realmente dá.',
             'update.entry.v54.title': 'v54 — Golpes e especiais com impacto',
             'update.entry.v54.l1': 'Os golpes agora têm faíscas, ondas de choque e pausa de impacto; os críticos aparecem mais. Chefes também recuam um pouco ao serem atingidos.',
             'update.entry.v54.l2': 'Os especiais de cada classe têm onda de choque colorida, flash, tremor e câmera lenta curta. Só efeitos visuais e de sensação; o dano não mudou.',
@@ -4071,7 +4078,7 @@ const I18n = {
             'shop.damageBoost.name': 'Boost de Dano',
             'shop.damageBoost.desc': '+25% dmg 30s',
             'shop.speedBoost.name': 'Boost de Velocidade',
-            'shop.speedBoost.desc': '+30% speed 30s',
+            'shop.speedBoost.desc': '+50% velocidade 30s',
             'shop.fullHeal.name': 'Cura Completa',
             'shop.fullHeal.desc': 'Full HP',
             'shop.goldRush.name': 'Fome de Ouro',
@@ -5344,6 +5351,9 @@ const I18n = {
             'update.entry.v51.title': 'v51 — Animated deaths',
             'update.entry.v51.l1': 'Visual: enemies and bosses now collapse, crumble and fade away over five frames instead of vanishing at once, and the stain on the floor became an irregular puddle. Only the art and animation changed.',
             'update.entry.v53.l2': 'Panels can now be used with the keyboard (Tab and Enter), the Camp and Meta Shop follow the chosen language, dimmed text has better contrast and damage numbers follow the font size setting.',
+            'update.entry.v55.title': 'v55 — Powers you can see and feel',
+            'update.entry.v55.l1': 'The shield now shows as a bubble around the hero and bursts when it breaks; speed leaves a wind trail. HUD badges show the shield value and the seconds left on each effect.',
+            'update.entry.v55.l2': 'Health, XP, essence and mutations each have their own glow when picked up, and floor items are easier to tell apart. The shop Speed Boost now says +50%, which is what it actually gives.',
             'update.entry.v54.title': 'v54 — Hits and specials with impact',
             'update.entry.v54.l1': 'Hits now have sparks, shockwaves and an impact pause; crits stand out more. Bosses also recoil slightly when hit.',
             'update.entry.v54.l2': 'Each class special has a colored shockwave, flash, shake and a short slow-motion. Visual and feel effects only; damage did not change.',
@@ -5520,7 +5530,7 @@ const I18n = {
             'shop.damageBoost.name': 'Damage Boost',
             'shop.damageBoost.desc': '+25% dmg 30s',
             'shop.speedBoost.name': 'Speed Boost',
-            'shop.speedBoost.desc': '+30% speed 30s',
+            'shop.speedBoost.desc': '+50% speed 30s',
             'shop.fullHeal.name': 'Full Heal',
             'shop.fullHeal.desc': 'Full HP',
             'shop.goldRush.name': 'Gold Rush',
@@ -6942,7 +6952,7 @@ const I18n = {
             'shop.damageBoost.name': 'Impulso de Daño',
             'shop.damageBoost.desc': '+25% dmg 30s',
             'shop.speedBoost.name': 'Impulso de Velocidad',
-            'shop.speedBoost.desc': '+30% speed 30s',
+            'shop.speedBoost.desc': '+50% velocidad 30s',
             'shop.fullHeal.name': 'Cura Completa',
             'shop.fullHeal.desc': 'HP completo',
             'shop.goldRush.name': 'Hambre de Oro',
@@ -9633,7 +9643,7 @@ function _updateEntitySimulation() {
                 if (player.goldRushTimer > 0) DamageNumbers.add(player.x, player.y, 'x2!', 'crit');
             } else {
                 SND.playPickup();
-                ScreenEffects.onBuff(p.type);
+                ScreenEffects.onBuff(p.type, p.mutationType);
                 if (p.type === 'health') { 
                     const healVal = (typeof prestigeLevel !== 'undefined' && prestigeLevel >= 2) ? Math.ceil(p.value * 0.5) : p.value;
                     player.hp = Math.min(player.maxHp, player.hp + healVal); 
@@ -12815,7 +12825,7 @@ const SHOP_ITEMS = [
     { id: 'healthPotion', nameKey: 'shop.healthPotion.name', name: 'Poção de Vida', descKey: 'shop.healthPotion.desc', desc: '+50 HP', cost: 25, cat: 'consumable', maxStock: 3, effect: (p) => { p.hp = Math.min(p.maxHp, p.hp + 50); } },
     { id: 'shieldPotion', nameKey: 'shop.shieldPotion.name', name: 'Poção de Escudo', descKey: 'shop.shieldPotion.desc', desc: '+50 shield', cost: 35, cat: 'consumable', maxStock: 3, effect: (p) => { p.shield += 50; } },
     { id: 'damageBoost', nameKey: 'shop.damageBoost.name', name: 'Boost de Dano', descKey: 'shop.damageBoost.desc', desc: '+25% dmg 30s', cost: 75, cat: 'consumable', maxStock: 2, effect: (p) => { p.damageBoost = 1800; } },
-    { id: 'speedBoost', nameKey: 'shop.speedBoost.name', name: 'Boost de Velocidade', descKey: 'shop.speedBoost.desc', desc: '+30% speed 30s', cost: 60, cat: 'consumable', maxStock: 2, effect: (p) => { p.speedBoost = 1800; } },
+    { id: 'speedBoost', nameKey: 'shop.speedBoost.name', name: 'Boost de Velocidade', descKey: 'shop.speedBoost.desc', desc: '+50% speed 30s', cost: 60, cat: 'consumable', maxStock: 2, effect: (p) => { p.speedBoost = 1800; } },
     { id: 'fullHeal', nameKey: 'shop.fullHeal.name', name: 'Cura Completa', descKey: 'shop.fullHeal.desc', desc: 'Full HP', cost: 200, cat: 'consumable', maxStock: 1, effect: (p) => { p.hp = p.maxHp; } },
     { id: 'goldRush', nameKey: 'shop.goldRush.name', name: 'Fome de Ouro', descKey: 'shop.goldRush.desc', desc: '2x ouro por 60s', cost: 90, cat: 'consumable', maxStock: 2, effect: (p) => { p.goldRushTimer = 3600; } },
     { id: 'torch', nameKey: 'shop.torch.name', name: 'Tocha Eterna', descKey: 'shop.torch.desc', desc: '+60 de raio de luz', cost: 55, cat: 'consumable', maxStock: 2, effect: (p) => { p.lr += 60; } },
@@ -15335,8 +15345,66 @@ const ScreenEffects = {
         this._bloodSplatterAlpha = Math.min(this._bloodSplatterAlpha + 0.2, 0.5);
     },
     
-    onBuff(type) {
+    onBuff(type, mutationType) {
         this.triggerFlash(0.2, type === 'health' ? COLORS.DMG_HEAL : COLORS.DMG_LIGHTNING);
+        // Feedback de coleta no herói: anel e faíscas por tipo (nada disso com reducedMotion)
+        if (window.GameSettings && GameSettings.reducedMotion) return;
+        if (typeof player === 'undefined' || !player) return;
+        const px = player.x, py = player.y;
+        if (type === 'health') {
+            this._collectSparks(px, py, COLORS.PICKUP_HEALTH, 8, true, 3);
+            this._addRing(px, py, COLORS.PICKUP_HEALTH, 26, 10, 2, 0);
+        } else if (type === 'xp') {
+            this._pullSparks(px, py, COLORS.PICKUP_XP, 6);
+        } else if (type === 'shield') {
+            this._addRing(px, py, COLORS.PICKUP_SHIELD, 30, 12, 2, 0);
+        } else if (type === 'speed') {
+            this._addRing(px, py, COLORS.PICKUP_SPEED, 28, 10, 2, 0);
+        } else if (type === 'essence') {
+            this._collectSparks(px, py, COLORS.PICKUP_ESSENCE, 6, false, 3);
+            this._addRing(px, py, COLORS.PICKUP_ESSENCE, 26, 10, 2, 0);
+        } else if (type === 'mutation') {
+            const m = mutationType && MUTATIONS[mutationType];
+            this._addRing(px, py, m ? m.color : '#b26cff', 34, 14, 3, 0);
+            if (m && typeof DamageNumbers !== 'undefined') {
+                DamageNumbers.add(px, py - 30, window._L ? _L(m.nameKey, m.name) : m.name, 'normal');
+            }
+        }
+    },
+
+    // Escudo estourado (player.shield chegou a 0): anel e faíscas ciano
+    onShieldBreak(x, y) {
+        if (window.GameSettings && GameSettings.reducedMotion) return;
+        this._addRing(x, y, COLORS.PICKUP_SHIELD, 40, 12, 3, 0);
+        this._collectSparks(x, y, COLORS.PICKUP_SHIELD, 10, false, 3);
+    },
+
+    // Partículas do pool existente; sobem (up=true) ou se espalham. Ajusta só a velocidade.
+    _collectSparks(x, y, color, n, up, size) {
+        const before = particles.length;
+        spawnParticles(x, y, color, n, size);
+        for (let i = before; i < particles.length; i++) {
+            const p = particles[i];
+            if (up) {
+                p.vx = (Math.random() - 0.5) * 1.2;
+                p.vy = -(0.8 + Math.random() * 1.4);
+            } else {
+                const a = Math.random() * Math.PI * 2, sp = 0.8 + Math.random() * 1.2;
+                p.vx = Math.cos(a) * sp; p.vy = Math.sin(a) * sp;
+            }
+        }
+    },
+
+    // Faíscas de XP: nascem em volta do herói e são puxadas para o centro
+    _pullSparks(x, y, color, n) {
+        const before = particles.length;
+        spawnParticles(x, y, color, n, 2);
+        for (let i = before; i < particles.length; i++) {
+            const p = particles[i];
+            const a = Math.random() * Math.PI * 2, r = 12 + Math.random() * 6;
+            p.x = x + Math.cos(a) * r; p.y = y + Math.sin(a) * r;
+            p.vx = -Math.cos(a) * 1.2; p.vy = -Math.sin(a) * 1.2;
+        }
     },
     
     onMeteor() {
@@ -19537,6 +19605,7 @@ class Pickup {
             this.color = MUTATIONS[this.mutationType].color;
             this.value = this.mutationType;
         } else if(type === 'currency') { this.color=COLORS.PICKUP_CURRENCY; this.value=Math.round(CONFIG.PICKUP_CURRENCY_VALUE * (1 + 0.06 * Math.max(0, (typeof dungeonLevel === 'number' ? dungeonLevel : 1) - 1))); }
+        else if(type === 'essence') { this.color=COLORS.PICKUP_ESSENCE; }
         this.radius = 8;
     }
     update() {
@@ -19576,11 +19645,47 @@ class Pickup {
             ctx.restore();
             return;
         }
-        drawGlow(ctx, px, py, 9, this.color, 0.4);
+        // Pulso leve (desligado com reducedMotion) e marca própria por tipo para distinguir de longe
+        const pulse = (window.GameSettings && GameSettings.reducedMotion) ? 0 : Math.sin(gameTime * 0.12 + this.bobOffset) * 0.12;
+        if(this.type === 'essence') {
+            // Losango brilhante
+            drawGlow(ctx, px, py, 11, this.color, 0.5 + pulse);
+            ctx.fillStyle = this.color;
+            ctx.beginPath();
+            ctx.moveTo(px, py - 8); ctx.lineTo(px + 6, py); ctx.lineTo(px, py + 8); ctx.lineTo(px - 6, py);
+            ctx.closePath();
+            ctx.fill();
+            ctx.fillStyle = 'rgba(255,255,255,0.7)';
+            ctx.fillRect(px - 1.5, py - 4, 2, 3);
+            ctx.restore();
+            return;
+        }
+        drawGlow(ctx, px, py, 9, this.color, 0.4 + pulse);
         ctx.fillStyle = this.color;
         ctx.beginPath();
         ctx.arc(px, py, 6, 0, Math.PI * 2);
         ctx.fill();
+        if(this.type === 'shield') {
+            // Anel externo
+            ctx.globalAlpha = 0.6;
+            ctx.strokeStyle = this.color;
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.arc(px, py, 9.5, 0, Math.PI * 2);
+            ctx.stroke();
+        } else if(this.type === 'health') {
+            // Cruz branca
+            ctx.fillStyle = 'rgba(255,255,255,0.85)';
+            ctx.fillRect(px - 1, py - 3.5, 2, 7);
+            ctx.fillRect(px - 3.5, py - 1, 7, 2);
+        } else if(this.type === 'speed') {
+            // Chevron (seta dupla)
+            ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(px - 3, py - 2.5); ctx.lineTo(px, py); ctx.lineTo(px - 3, py + 2.5);
+            ctx.stroke();
+        }
         ctx.restore();
     }
 }
@@ -23821,7 +23926,7 @@ class Player extends Entity {
         this.critBoost = 0; this.shopDiscountTimer = 0; this.regenerating = false; this.greedBonus = false;
         this.heatMaxBonus = 0;
         this.runBoons = []; this.damageTakenMult = 1; this.runRegen = 0; this.goldMult = 1;
-        this.shadowShieldTimer = 0; this.speedBoost = 0; this.shield = 0;
+        this.shadowShieldTimer = 0; this.speedBoost = 0; this.shield = 0; this._shieldPrev = 0;
         this.combatTimer = 9999;
         // Weapon system
         this.currentWeapon = null;
@@ -24250,6 +24355,13 @@ class Player extends Entity {
         } else { this.walkTimer = 0; this._footstepTimer = 0; this._pvx = 0; this._pvy = 0; }
 
         if(this.scd > 0) this.scd--; if(this.skillCooldown > 0) this.skillCooldown--; if(this.speedBoost > 0) this.speedBoost--;
+        // Rastro de velocidade: últimas 2 posições em array fixo (sem alocar por tick)
+        if (!this._trail) this._trail = new Float32Array(6);
+        const _tr = this._trail;
+        _tr[4] = _tr[2]; _tr[5] = _tr[3]; _tr[2] = _tr[0]; _tr[3] = _tr[1]; _tr[0] = this.x; _tr[1] = this.y;
+        // Escudo que zera (absorveu dano) estoura com faíscas; só visual
+        if (this._shieldPrev > 0 && !(this.shield > 0)) ScreenEffects.onShieldBreak(this.x, this.y);
+        this._shieldPrev = this.shield > 0 ? this.shield : 0;
         // Buffered input: fire what was pressed during cooldown as soon as it is ready.
         if(this._dodgeBuffer > 0) { this._dodgeBuffer--; if(this.dodgeCooldown <= 0) { this._dodgeBuffer = 0; this.dodge(); } }
         if(this._skillBuffer > 0) { this._skillBuffer--; if(this.skillCooldown <= 0) { this._skillBuffer = 0; this.useSkill(); } }
@@ -24470,6 +24582,53 @@ class Player extends Entity {
         ctx.arc(sx, sy, auraRadius, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
+
+        // Escudo: bolha ciano que enfraquece conforme player.shield cai (some em 0)
+        if (this.shield > 0) {
+            const shStr = Math.min(1, this.shield / 50);
+            ctx.save();
+            ctx.globalAlpha = 0.05 + 0.14 * shStr;
+            ctx.fillStyle = COLORS.PICKUP_SHIELD;
+            ctx.beginPath();
+            ctx.arc(sx, sy, this.radius * 1.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = 0.2 + 0.5 * shStr;
+            ctx.strokeStyle = COLORS.PICKUP_SHIELD;
+            ctx.lineWidth = 1 + shStr;
+            ctx.stroke();
+            ctx.restore();
+        }
+        // Velocidade: rastro (2 fantasmas) e faixas de vento atrás do herói enquanto speedBoost > 0
+        if (this.speedBoost > 0 && this._trail && !(window.GameSettings && GameSettings.reducedMotion)) {
+            const tr = this._trail;
+            const rr = this.radius * 1.1;
+            ctx.save();
+            ctx.fillStyle = this.color;
+            ctx.globalAlpha = 0.14;
+            ctx.beginPath();
+            ctx.arc(tr[2] - cx, tr[3] - cy, rr, 0, Math.PI * 2);
+            ctx.moveTo(tr[4] - cx + rr, tr[5] - cy);
+            ctx.arc(tr[4] - cx, tr[5] - cy, rr, 0, Math.PI * 2);
+            ctx.fill();
+            const mvx = this._pvx || 0, mvy = this._pvy || 0;
+            const mm = Math.hypot(mvx, mvy);
+            if (mm > 0.01) {
+                const bx = -mvx / mm, by = -mvy / mm, nx = -by, ny = bx;
+                ctx.strokeStyle = '#88ccff';
+                ctx.lineWidth = 1.5;
+                ctx.globalAlpha = 0.35;
+                ctx.beginPath();
+                for (let k = 0; k < 3; k++) {
+                    const off = (k - 1) * 7 + Math.sin(gameTime * 0.2 + k) * 2;
+                    const d0 = this.radius * 1.2 + k * 3;
+                    const x0 = sx + bx * d0 + nx * off, y0 = sy + by * d0 + ny * off;
+                    ctx.moveTo(x0, y0);
+                    ctx.lineTo(x0 + bx * 10, y0 + by * 10);
+                }
+                ctx.stroke();
+            }
+            ctx.restore();
+        }
 
         ctx.save();
         const shooting = this.shootAnim > 0;
@@ -28242,12 +28401,13 @@ renderAchievementsContent() {
             // Active status chips (buffs with timers)
             if (this._statusEl || (this._statusEl = document.getElementById('status-chips'))) {
                 const chips = [];
-                if (player.shield > 0) chips.push({ icon: '🛡', label: 'ESCUDO', color: '#33ccff', pct: Math.min(1, player.shield / 50) });
-                if (player.critBoost > 0) chips.push({ icon: '💥', label: 'CRIT', color: '#ffcc00', pct: Math.min(1, player.critBoost / 10) });
-                if (player.shopDiscountTimer > 0) chips.push({ icon: '🏷', label: 'DESCONTO', color: '#ff8844', pct: Math.min(1, player.shopDiscountTimer / 300) });
+                // Rótulo leva o valor/tempo atual (segundos); o cache abaixo só reescreve o DOM quando o texto muda
+                if (player.shield > 0) chips.push({ icon: '🛡', label: 'ESCUDO ' + Math.ceil(player.shield), color: '#33ccff', pct: Math.min(1, player.shield / 50) });
+                if (player.critBoost > 0) chips.push({ icon: '💥', label: 'CRIT ' + Math.ceil(player.critBoost / GAME_TICKS_PER_SECOND) + 's', color: '#ffcc00', pct: Math.min(1, player.critBoost / 10) });
+                if (player.shopDiscountTimer > 0) chips.push({ icon: '🏷', label: 'DESCONTO ' + Math.ceil(player.shopDiscountTimer / GAME_TICKS_PER_SECOND) + 's', color: '#ff8844', pct: Math.min(1, player.shopDiscountTimer / 300) });
                 if (player.regenerating > 0) chips.push({ icon: '💚', label: 'REGEN', color: '#44ff88', pct: Math.min(1, player.regenerating / 300) });
-                if (player.goldRushTimer > 0) chips.push({ icon: '💰', label: 'GOLD RUSH', color: '#ffdd44', pct: Math.min(1, player.goldRushTimer / 600) });
-                if (player.speedBoost > 0) chips.push({ icon: '💨', label: 'VELOCIDADE', color: '#88ccff', pct: Math.min(1, player.speedBoost / 8) });
+                if (player.goldRushTimer > 0) chips.push({ icon: '💰', label: 'GOLD RUSH ' + Math.ceil(player.goldRushTimer / GAME_TICKS_PER_SECOND) + 's', color: '#ffdd44', pct: Math.min(1, player.goldRushTimer / 600) });
+                if (player.speedBoost > 0) chips.push({ icon: '💨', label: 'VELOCIDADE ' + Math.ceil(player.speedBoost / GAME_TICKS_PER_SECOND) + 's', color: '#88ccff', pct: Math.min(1, player.speedBoost / 8) });
                 const cacheKey = chips.map(c => c.label + ':' + Math.floor(c.pct * 20)).join('|');
                 if (cache.chips !== cacheKey) {
                     cache.chips = cacheKey;
@@ -30580,7 +30740,7 @@ Input.init();
        current MUST stay in sync with the SW CACHE_VERSION suffix (sw.js).
     */
     window.UPDATE_LOG = {
-        current: 'v54',
+        current: 'v55',
         entries: [
             { v: 'v9', date: '2026-09-10', titleKey: 'update.entry.v9.title', title: 'v9 — Tutorial destravado',
               linesKeys: ['update.entry.v9.l1'],
@@ -30750,6 +30910,10 @@ Input.init();
             { v: 'v51', date: '2026-10-11', titleKey: 'update.entry.v51.title', title: 'v51 — Mortes animadas',
               linesKeys: ['update.entry.v51.l1'],
               lines: ['Visual: inimigos e chefes agora tombam, desmancham e somem em cinco quadros em vez de desaparecer de uma vez, e a mancha no chão virou uma poça irregular. Só a arte e a animação mudaram.'] },
+            { v: 'v55', date: '2026-10-14', titleKey: 'update.entry.v55.title', title: 'v55 — Poderes que se veem e se sentem',
+              linesKeys: ['update.entry.v55.l1', 'update.entry.v55.l2'],
+              lines: ['O escudo agora aparece como uma bolha ao redor do herói e estoura ao quebrar; a velocidade deixa um rastro de vento. Os avisos do HUD mostram o valor do escudo e os segundos que faltam de cada efeito.',
+                      'Vida, XP, essência e mutações têm brilho próprio ao serem coletados, e os itens do chão ficam mais fáceis de distinguir. O Boost de Velocidade da loja agora diz +50%, que é o que ele realmente dá.'] },
             { v: 'v54', date: '2026-10-14', titleKey: 'update.entry.v54.title', title: 'v54 — Golpes e especiais com impacto',
               linesKeys: ['update.entry.v54.l1', 'update.entry.v54.l2'],
               lines: ['Os golpes agora têm faíscas, ondas de choque e pausa de impacto; os críticos aparecem mais. Chefes também recuam um pouco ao serem atingidos.',
