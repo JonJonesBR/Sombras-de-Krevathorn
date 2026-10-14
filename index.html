@@ -4289,6 +4289,7 @@ const I18n = {
             // Meta system
             // ============================================================
             'meta.essence': 'Essência',
+            'meta.level': 'Nível',
             'meta.lockedSuffix': ': desbloqueie na MetaLoja.',
             'meta.unlockHint': ' (desbloqueie a classe na MetaLoja)',
             'meta.hp.name': 'Vitalidade',
@@ -5716,6 +5717,7 @@ const I18n = {
             // Meta system
             // ============================================================
             'meta.essence': 'Essence',
+            'meta.level': 'Level',
             'meta.lockedSuffix': ': unlock it in the Meta Shop.',
             'meta.unlockHint': ' (unlock the class in the Meta Shop)',
             'meta.hp.name': 'Vitality',
@@ -7120,6 +7122,7 @@ const I18n = {
             // Meta system
             // ============================================================
             'meta.essence': 'Esencia',
+            'meta.level': 'Nivel',
             'meta.lockedSuffix': ': desbloquéala en la Tienda Meta.',
             'meta.unlockHint': ' (desbloquea la clase en la Tienda Meta)',
             'meta.hp.name': 'Vitalidad',
@@ -27708,11 +27711,11 @@ renderAchievementsContent() {
                     <div style="padding:12px;border-radius:12px;border:1.5px solid ${maxed ? 'rgba(74,222,128,0.3)' : (canBuy ? COLORS.PRIMARY : 'rgba(255,255,255,0.1)')};background:${maxed ? 'rgba(74,222,128,0.08)' : (canBuy ? 'rgba(224,182,255,0.1)' : 'rgba(35,28,48,0.5)')};${maxed ? '' : (canBuy ? 'cursor:pointer' : 'opacity:0.65')};transition:all 0.2s"
                          onclick="${maxed ? '' : `UIManager.metaBuy('${id}')`}">
                         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-                            <div style="font-weight:bold;font-size:14px;color:${maxed ? '#4ade80' : (canBuy ? COLORS.PRIMARY : COLORS.TEXT_DIM)}">${p.icon} ${p.name}</div>
+                            <div style="font-weight:bold;font-size:14px;color:${maxed ? '#4ade80' : (canBuy ? COLORS.PRIMARY : COLORS.TEXT_DIM)}">${p.icon} ${_L(p.nameKey, p.name)}</div>
                             <div style="font-size:11px;font-weight:800;color:${maxed ? '#4ade80' : (canBuy ? COLORS.GOLD : COLORS.TEXT_MUTED)}">${maxed ? 'MAX' : cost + ' ✨'}</div>
                         </div>
-                        <div style="font-size:11px;color:${COLORS.TEXT_DIM};line-height:1.3">${p.desc}</div>
-                        <div style="font-size:10px;color:${COLORS.TEXT_MUTED};margin-top:5px">Nível ${tier}/${p.max}</div>
+                        <div style="font-size:11px;color:${COLORS.TEXT_DIM};line-height:1.3">${_L(p.descKey, p.desc)}</div>
+                        <div style="font-size:10px;color:${COLORS.TEXT_MUTED};margin-top:5px">${_L('meta.level', 'Nível')} ${tier}/${p.max}</div>
                     </div>`;
             }).join('');
 
@@ -27726,10 +27729,10 @@ renderAchievementsContent() {
                     <div style="padding:12px;border-radius:12px;border:1.5px solid ${owned ? 'rgba(74,222,128,0.4)' : (canBuy ? COLORS.PRIMARY : 'rgba(255,255,255,0.1)')};background:${owned ? 'rgba(74,222,128,0.08)' : (canBuy ? 'rgba(224,182,255,0.1)' : 'rgba(35,28,48,0.5)')};${owned ? '' : (canBuy ? 'cursor:pointer' : 'opacity:0.65')};transition:all 0.2s"
                           onclick="${owned ? '' : `UIManager.metaUnlock('${id}')`}">
                         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-                            <div style="font-weight:bold;font-size:14px;color:${owned ? '#4ade80' : (canBuy ? COLORS.PRIMARY : COLORS.TEXT_DIM)}">${u.icon} ${u.name}</div>
+                            <div style="font-weight:bold;font-size:14px;color:${owned ? '#4ade80' : (canBuy ? COLORS.PRIMARY : COLORS.TEXT_DIM)}">${u.icon} ${_L(u.nameKey, u.name)}</div>
                             <div style="font-size:11px;font-weight:800;color:${owned ? '#4ade80' : (canBuy ? COLORS.GOLD : COLORS.TEXT_MUTED)}">${owned ? '✓' : u.cost + ' ✨'}</div>
                         </div>
-                        <div style="font-size:11px;color:${COLORS.TEXT_DIM};line-height:1.3">${u.desc}</div>
+                        <div style="font-size:11px;color:${COLORS.TEXT_DIM};line-height:1.3">${_L(u.descKey, u.desc)}</div>
                     </div>`;
             });
 
