@@ -26762,6 +26762,7 @@ window.SkillTreeUI = SkillTreeUI;
              contentEl.style.cssText = 'flex:1;min-height:0;overflow-y:auto;padding-right:4px;-webkit-overflow-scrolling:touch;touch-action:pan-y';
              contentEl.innerHTML = contentHtml;
              this._contentEl = contentEl;
+             this._bindKeyboardClickables(contentEl);
 
              panel.innerHTML = `
                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
@@ -26780,6 +26781,32 @@ window.SkillTreeUI = SkillTreeUI;
              // Restaura a posição de rolagem após o re-render (mesmo painel)
              if (isRefresh && contentEl) contentEl.scrollTop = scrollTop;
          },
+
+        // Cards clicáveis que não são <button> (loja, skills, lore, MetaLoja) viram
+        // role="button" com foco por Tab e ativação por Enter/Espaço. Um observer
+        // refaz a marcação quando o painel troca o conteúdo interno.
+        _bindKeyboardClickables(root) {
+            const SKIP = /^(BUTTON|A|INPUT|SELECT|TEXTAREA)$/;
+            const mark = () => {
+                root.querySelectorAll('[onclick]').forEach(el => {
+                    if (SKIP.test(el.tagName) || el.hasAttribute('tabindex')) return;
+                    if (!(el.getAttribute('onclick') || '').trim()) return;
+                    el.setAttribute('role', 'button');
+                    el.setAttribute('tabindex', '0');
+                });
+            };
+            mark();
+            root.addEventListener('keydown', ev => {
+                if (ev.key !== 'Enter' && ev.key !== ' ') return;
+                const el = ev.target;
+                if (!el || el.getAttribute('role') !== 'button' || SKIP.test(el.tagName)) return;
+                ev.preventDefault();
+                el.click();
+            });
+            if (typeof MutationObserver === 'function') {
+                new MutationObserver(mark).observe(root, { childList: true, subtree: true });
+            }
+        },
 
         renderCampContent() {
             const st = (typeof CampSystem !== 'undefined' && CampSystem.state) ? CampSystem.state : null;
