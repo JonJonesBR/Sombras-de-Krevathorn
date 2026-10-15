@@ -3901,6 +3901,10 @@ const I18n = {
             'update.entry.v57.l1': 'Corregido el parpadeo blanco rápido que aparecía en la pantalla al caminar y en combate.',
             'update.entry.v57.l2': 'La iluminación y el tono del bioma ahora se mantienen estables en todos los cuadros.',
             'update.entry.v57.l3': 'Los saves y el progreso no cambian.',
+            'update.entry.v58.title': 'v58 — Correcciones y oro',
+            'update.entry.v58.l1': 'Sangrado, veneno de la nube, marca de la muerte y raíces de la elfa ahora hacen daño con el tiempo; el rastro de fuego del guerrero ya no lo quema a él.',
+            'update.entry.v58.l2': 'El oro del suelo crece con el piso al mismo ritmo que los precios de la tienda; los poderes raros ya no alteran la secuencia del desafío diario.',
+            'update.entry.v58.l3': 'Textos de la tienda, habilidades y logros ya no muestran código suelto. Los saves no cambian.',
             'update.entry.v56.title': 'v56 — Combos, salas secretas y más poder',
             'update.entry.v56.l1': 'Combos de 3 golpes en las 4 clases, cada uno con un movimiento distinto y un golpe final más fuerte. Cuatro potenciadores raros (Furia, Frenesí, Imán y Égida) caen de cofres y jefes. Los eventos de Portal Secreto ahora abren una sala de verdad, de tesoro o de desafío.',
             'update.entry.v56.l2': 'El árbol de habilidades ganó 20 nodos nuevos con efectos de combate y elecciones exclusivas: al comprar uno, el otro se bloquea.',
@@ -3934,6 +3938,10 @@ const I18n = {
             'update.entry.v57.l1': 'Corrigido o flash branco rápido que piscava na tela ao andar e em combate.',
             'update.entry.v57.l2': 'A iluminação e o tom do bioma agora ficam estáveis em todos os quadros.',
             'update.entry.v57.l3': 'Seus saves e progresso não mudam.',
+            'update.entry.v58.title': 'v58 — Correções e ouro',
+            'update.entry.v58.l1': 'Sangramento, veneno da nuvem, marca da morte e raízes da elfa agora causam dano ao longo do tempo; o rastro de fogo do guerreiro não queima mais o próprio dono.',
+            'update.entry.v58.l2': 'O ouro do chão cresce com o andar na mesma taxa dos preços da loja; os powerups raros não alteram mais a sequência do desafio diário.',
+            'update.entry.v58.l3': 'Textos da loja, habilidades e conquistas não mostram mais código solto. Seus saves não mudam.',
             'update.entry.v56.title': 'v56 — Combos, salas secretas e mais poder',
             'update.entry.v56.l1': 'Combos de 3 golpes nas 4 classes, cada um com um movimento diferente e um golpe final mais forte. Quatro powerups raros (Fúria, Frenesi, Ímã e Égide) caem de baús e chefes. O evento Portal Secreto agora abre uma sala de verdade, de tesouro ou de desafio.',
             'update.entry.v56.l2': 'A árvore de skills ganhou 20 nós novos com efeitos de combate e escolhas exclusivas: ao comprar um, o outro fica bloqueado.',
@@ -5433,6 +5441,10 @@ const I18n = {
             'update.entry.v57.l1': 'Fixed the quick white flashing on screen while walking and in combat.',
             'update.entry.v57.l2': 'Lighting and biome tint now stay steady on every frame.',
             'update.entry.v57.l3': 'Your saves and progress are unchanged.',
+            'update.entry.v58.title': 'v58 — Fixes and gold',
+            'update.entry.v58.l1': 'Bleed, poison cloud, death mark and the elf roots now deal damage over time; the warrior fire trail no longer burns its owner.',
+            'update.entry.v58.l2': 'Floor gold grows with the floor at the same rate as shop prices; rare powerups no longer shift the daily challenge sequence.',
+            'update.entry.v58.l3': 'Shop, skills and achievements text no longer shows stray code. Your saves are unchanged.',
             'update.entry.v56.title': 'v56 — Combos, secret rooms and more power',
             'update.entry.v56.l1': '3-hit combos for all 4 classes, each with a different move and a stronger finisher. Four rare power-ups (Fury, Frenzy, Magnet and Aegis) drop from chests and bosses. The Secret Portal event now opens a real room, either treasure or challenge.',
             'update.entry.v56.l2': 'The skill tree gained 20 new nodes with combat effects and exclusive choices: buying one locks the other.',
@@ -8397,6 +8409,7 @@ var CONFIG = {
     POWERUP_AEGIS_FRAMES: 120,         // 2 s de invulnerabilidade
     POWERUP_CHEST_CHANCE: 0.08,        // chance por baú aberto
     PICKUP_CURRENCY_VALUE: 8, // increased from 10
+    PICKUP_CURRENCY_FLOOR_SCALE: 0.08, // ouro do pickup cresce +8% por andar (mesma taxa da loja, SHOP_PRICE_DUNGEON_SCALE)
     PICKUP_RADIUS_GLOW: 12,
     PICKUP_RADIUS_CORE: 8,
 
@@ -10233,9 +10246,9 @@ function _secretRoomStep() {
     const T = CONFIG.TILE_SIZE, R = SECRET_ROOM;
     const cx = (R.x0 + Math.floor(R.w / 2)) * T + T / 2, cy = (R.y0 + Math.floor(R.h / 2)) * T + T / 2;
     chests.push(new Chest(cx, cy, SeedSystem.random() < 0.35 ? 'lendario' : 'epico'));
-    // Powerup raro garantido no baú final (1 dos 4, igualmente)
+    // Powerup raro garantido no baú final (1 dos 4, igualmente). Math.random: não consome o stream semeado (v56).
     const rareTypes = ['fury', 'frenzy', 'magnet', 'aegis'];
-    pickups.push(new Pickup(cx + 30, cy, rareTypes[Math.floor(SeedSystem.random() * rareTypes.length)]));
+    pickups.push(new Pickup(cx + 30, cy, rareTypes[Math.floor(Math.random() * rareTypes.length)]));
     addLog(window.I18n ? I18n.t('log.secretCleared') : 'Sala limpa! Um baú lendário apareceu no centro.');
 }
 
@@ -10357,7 +10370,8 @@ function _updateEnemySpawning() {
         const bossPos = map.getSafeSpawn(0);
         chests.push(new Chest(bossPos.x, bossPos.y, SeedSystem.random() < 0.35 ? 'lendario' : 'epico'));
         // Powerup raro garantido ao abater o chefe: 1 dos 4 igualmente
-        { const rareTypes = ['fury', 'frenzy', 'magnet', 'aegis']; pickups.push(new Pickup(bossPos.x, bossPos.y, rareTypes[Math.floor(SeedSystem.random() * rareTypes.length)])); }
+        // Math.random: sorteio da v56, não consome o stream semeado (SeedSystem)
+        { const rareTypes = ['fury', 'frenzy', 'magnet', 'aegis']; pickups.push(new Pickup(bossPos.x, bossPos.y, rareTypes[Math.floor(Math.random() * rareTypes.length)])); }
         addLog(window.I18n ? I18n.t('log.bossChest') : 'Bau do Chefe apareceu!');
         dungeonKills = Math.max(dungeonKills, dungeonKillTarget);
     }
@@ -13561,6 +13575,8 @@ const SkillTree = {
         const cls = player.type;
         const skill = this.getNodes(cls).find(s => s.id === skillId);
         if (!skill) return false;
+        // Pré-requisito: o nó `requires` precisa estar comprado (UI e applyBuild já checam; aqui vale para qualquer chamada)
+        if (skill.requires && !player.unlockedSkills.includes(skill.requires)) return false;
         // Escolha exclusiva: não compra se um irmão excludente já foi comprado
         if (this.blockedBy(player, skill)) return false;
 
@@ -13678,7 +13694,8 @@ const BuildSystem = {
         player.currency = 999999;
         var ids = skillIds.slice();
         var granted = 0;
-        for (var pass = 0; pass < ids.length + 1; pass++) {
+        // Repete enquanto houver progresso (cada passe que concede remove um id, então termina)
+        for (var pass = 0; ids.length > 0; pass++) {
             var any = false;
             for (var i = 0; i < ids.length; i++) {
                 var node = SkillTree.getNodes(player.type).find(function (s) { return s.id === ids[i]; });
@@ -19845,6 +19862,7 @@ const ElementalSystem = {
             case 'neurotoxin':
                 // Damage over time + brief stun
                 entity.poisonStacks = (entity.poisonStacks || 0) + 5;
+                entity.poisonTimer = Math.max(entity.poisonTimer || 0, CONFIG.ROGUE_POISON_DURATION);
                 entity.frozen = Math.max(entity.frozen, 30);
                 if (typeof spawnParticles !== 'undefined') {
                     spawnParticles(entity.x, entity.y, '#ff00ff', 12, 6);
@@ -20117,7 +20135,7 @@ class Pickup {
             this.mutationType = types[Math.floor(SeedSystem.random() * types.length)];
             this.color = MUTATIONS[this.mutationType].color;
             this.value = this.mutationType;
-        } else if(type === 'currency') { this.color=COLORS.PICKUP_CURRENCY; this.value=Math.round(CONFIG.PICKUP_CURRENCY_VALUE * (1 + 0.06 * Math.max(0, (typeof dungeonLevel === 'number' ? dungeonLevel : 1) - 1))); }
+        } else if(type === 'currency') { this.color=COLORS.PICKUP_CURRENCY; this.value=Math.round(CONFIG.PICKUP_CURRENCY_VALUE * (1 + CONFIG.PICKUP_CURRENCY_FLOOR_SCALE * Math.max(0, (typeof dungeonLevel === 'number' ? dungeonLevel : 1) - 1))); }
         else if(type === 'essence') { this.color=COLORS.PICKUP_ESSENCE; }
         else if(type === 'fury') { this.color=COLORS.PICKUP_FURY; }
         else if(type === 'frenzy') { this.color=COLORS.PICKUP_FRENZY; }
@@ -20244,8 +20262,10 @@ class Pickup {
 }
 
 class Hazard {
-    constructor(x,y,type) {
+    constructor(x,y,type,fromPlayer) {
         this.x=x; this.y=y; this.type=type; this.alive=true; this.timer=180; this.radius=20;
+        // fromPlayer: laid by the player (fireTrail). Hurts enemies, never the owner.
+        this.fromPlayer = fromPlayer === true;
         if(type === 'fire') { this.color='#ff6600'; this.damage=CONFIG.HAZARD_FIRE_DAMAGE; this.size=25; this.tickInterval=30; }
         else if(type === 'spikes') { this.color='#888899'; this.damage=CONFIG.HAZARD_SPIKE_DAMAGE; this.size=18; this.radius=20; this.tickInterval=30; }
         else if(type === 'ice') { this.color='#88ddff'; this.damage=0; this.size=22; this.tickInterval=0; }
@@ -20256,6 +20276,18 @@ class Hazard {
         this.timer--;
         if(this.timer <= 0) { this.alive = false; return; }
         if(!p) return;
+        if(this.fromPlayer) {
+            // Player's trail: damages enemies in range (source=p, so damageMult applies once in takeDamage), never p.
+            if(this.damage > 0 && gameTime % this.tickInterval === 0) {
+                for(let i = 0; i < entities.length; i++) {
+                    const e = entities[i];
+                    if(e === p || !e.alive || e.isBarrier || e.isP) continue;
+                    const edx = e.x-this.x, edy = e.y-this.y;
+                    if(edx*edx + edy*edy < this.size * this.size) e.takeDamage(this.damage, m, p);
+                }
+            }
+            return;
+        }
         const dx = p.x-this.x, dy = p.y-this.y;
         const inRange = dx*dx + dy*dy < this.size * this.size;
         if(this.type === 'ice') {
@@ -20527,10 +20559,11 @@ class Chest {
         if (this.opened) return;
         this.opened = true; this.openAnim = 50;
         if (typeof RelicSystem !== 'undefined') RelicSystem.openChest(this, player);
-        // Powerup raro: ~8% por baú aberto, sorteando 1 dos 4 igualmente (nunca entra na tabela de inimigos)
-        if (SeedSystem.random() < CONFIG.POWERUP_CHEST_CHANCE) {
+        // Powerup raro: ~8% por baú aberto, sorteando 1 dos 4 igualmente (nunca entra na tabela de inimigos).
+        // Math.random de propósito: este sorteio é da v56 e não pode consumir o stream semeado (SeedSystem), senão a sequência do seed muda após o primeiro baú.
+        if (Math.random() < CONFIG.POWERUP_CHEST_CHANCE) {
             const rareTypes = ['fury', 'frenzy', 'magnet', 'aegis'];
-            pickups.push(new Pickup(this.x, this.y, rareTypes[Math.floor(SeedSystem.random() * rareTypes.length)]));
+            pickups.push(new Pickup(this.x, this.y, rareTypes[Math.floor(Math.random() * rareTypes.length)]));
         }
     }
 
@@ -21366,7 +21399,7 @@ class Entity {
         if(source && source.skills && source.skills.execute && this.hp < this.maxHp * CONFIG.ROGUE_ASSASSINATE_THRESHOLD) { finalDmg = this.isB ? Math.min(this.maxHp * 0.10, Math.max(10, this.maxHp * CONFIG.ROGUE_ASSASSINATE_DAMAGE_PCT)) : Math.max(10, this.maxHp * CONFIG.ROGUE_ASSASSINATE_DAMAGE_PCT); dmgType = 'crit'; if(typeof DamageNumbers !== 'undefined') DamageNumbers.add(this.x, this.y, 'EXEC!', 'execute'); }
         if(source && source.skills && source.skills.deathmark && this._deathMarkT > 0) { finalDmg = Math.floor(finalDmg * 1.5); dmgType = 'crit'; }
         if(source && source.skills && source.skills.stun && SeedSystem.random() < 0.10) { this.frozen = Math.max(this.frozen || 0, Math.floor(40 * (this.elite ? 0.5 : this.isB ? 0.25 : 1))); spawnParticles(this.x, this.y, '#ffcc00', 6, 3); if(typeof DamageNumbers !== 'undefined') DamageNumbers.add(this.x, this.y, 'STUN!', 'stun'); if(typeof Statistics !== 'undefined' && source === player) Statistics.data.stunsApplied = (Statistics.data.stunsApplied || 0) + 1; }
-        if(source && source.skills && source.skills.bleed && SeedSystem.random() < 0.12) { this.poisonStacks = (this.poisonStacks || 0) + 2; spawnParticles(this.x, this.y, '#ff2222', 6, 3); if(typeof DamageNumbers !== 'undefined') DamageNumbers.add(this.x, this.y, 'SANGRIA!', 'bleed'); if(typeof Statistics !== 'undefined' && source === player) Statistics.data.bleedsApplied = (Statistics.data.bleedsApplied || 0) + 1; }
+        if(source && source.skills && source.skills.bleed && SeedSystem.random() < 0.12) { this.poisonStacks = (this.poisonStacks || 0) + 2; this.poisonTimer = Math.max(this.poisonTimer || 0, CONFIG.ROGUE_POISON_DURATION); spawnParticles(this.x, this.y, '#ff2222', 6, 3); if(typeof DamageNumbers !== 'undefined') DamageNumbers.add(this.x, this.y, 'SANGRIA!', 'bleed'); if(typeof Statistics !== 'undefined' && source === player) Statistics.data.bleedsApplied = (Statistics.data.bleedsApplied || 0) + 1; }
         if(source && source.skills && source.skills.frostTouch && SeedSystem.random() < 0.15) { this.frozen = Math.max(this.frozen || 0, Math.floor(60 * (this.elite ? 0.5 : this.isB ? 0.25 : 1))); spawnParticles(this.x, this.y, '#66ccff', 8, 4); if(typeof DamageNumbers !== 'undefined') DamageNumbers.add(this.x, this.y, 'GEADA!', 'frost'); if(typeof Statistics !== 'undefined' && source === player) Statistics.data.frostsApplied = (Statistics.data.frostsApplied || 0) + 1; }
         // Elfa: raízes da natureza enraízam inimigos no golpe (mesma mecânica do gelo, visual verde)
         if(source && source.skills && source.skills.rootTouch && SeedSystem.random() < 0.15) { this.frozen = Math.max(this.frozen || 0, Math.floor(60 * (this.elite ? 0.5 : this.isB ? 0.25 : 1))); spawnParticles(this.x, this.y, '#58e08a', 8, 4); if(typeof DamageNumbers !== 'undefined') DamageNumbers.add(this.x, this.y, 'RAÍZES!', 'frost'); if(source.skills.thorns) { this.poisonStacks = Math.min(CONFIG.ROGUE_POISON_MAX_STACKS, (this.poisonStacks || 0) + 1); this.poisonTimer = Math.max(this.poisonTimer || 0, CONFIG.ROGUE_POISON_DURATION); spawnParticles(this.x, this.y, '#58e08a', 5, 3); DamageNumbers.add(this.x, this.y, 'ESPINHOS!', 'bleed'); }if(typeof Statistics !== 'undefined' && source === player) Statistics.data.frostsApplied = (Statistics.data.frostsApplied || 0) + 1; }
@@ -21566,6 +21599,7 @@ class Entity {
                             const dx = e.x - this.x, dy = e.y - this.y;
                             if(dx * dx + dy * dy < cloudSq) {
                                 e.poisonStacks = (e.poisonStacks || 0) + Math.max(1, Math.ceil(this.poisonStacks / 2));
+                                e.poisonTimer = Math.max(e.poisonTimer || 0, CONFIG.ROGUE_POISON_DURATION);
                             }
                         }
                     }
@@ -25148,6 +25182,7 @@ class Player extends Entity {
                         if(edx*edx + edy*edy < markRangeSq) {
                             e._deathMarkT = Math.max(e._deathMarkT || 0, 360);
                             e.poisonStacks = (e.poisonStacks || 0) + 1;
+                            e.poisonTimer = Math.max(e.poisonTimer || 0, CONFIG.ROGUE_POISON_DURATION);
                             spawnParticles(e.x, e.y, '#ff00ff', 8, 4);
                         }
                     }
@@ -25256,6 +25291,7 @@ class Player extends Entity {
                         if(edx*edx + edy*edy < rootSq) {
                             e.frozen = Math.max(e.frozen || 0, 90);
                             e.poisonStacks = (e.poisonStacks || 0) + 2;
+                            e.poisonTimer = Math.max(e.poisonTimer || 0, CONFIG.ROGUE_POISON_DURATION);
                             spawnParticles(e.x, e.y, '#58e08a', 8, 4);
                             ScreenEffects.specialHit(e, edx, edy);
                         }
@@ -28466,7 +28502,7 @@ window.SkillTreeUI = SkillTreeUI;
         },
 
         renderShopContent() {
-            if (!window.ShopSystem || !window.player) return '<p style="text-align:center;color:${COLORS.TEXT_DIM}">Loja indisponível</p>';
+            if (!window.ShopSystem || !window.player) return `<p style="text-align:center;color:${COLORS.TEXT_DIM}">Loja indisponível</p>`;
             const level = window.dungeonLevel || 1;
             const items = ShopSystem.getActiveItems(level);
             const flash = ShopSystem.getFlashOffer(level);
@@ -28641,7 +28677,7 @@ window.SkillTreeUI = SkillTreeUI;
         },
 
         renderSkillsContent() {
-            if (!window.SkillTree || !window.player) return '<p style="text-align:center;color:${COLORS.TEXT_DIM}">Habilidades indisponíveis</p>';
+            if (!window.SkillTree || !window.player) return `<p style="text-align:center;color:${COLORS.TEXT_DIM}">Habilidades indisponíveis</p>`;
 
             if (this._skillDetail) {
                 return this.renderSkillDetail(this._skillDetail);
@@ -29089,9 +29125,9 @@ renderAchievementsContent() {
                             : '';
                         return `
                             <div style="padding:16px;border-radius:16px;border:1px solid ${border};background:${bg};transition:all 0.2s;${isUnlocked ? '' : 'opacity:0.6'};display:flex;align-items:center;gap:12px">
-                                <span style="font-size:24px;${isUnlocked ? 'color:${COLORS.GOLD}' : 'color:#4b5563'}">${isUnlocked ? '🏆' : '🔒'}</span>
+                                <span style="font-size:24px;${isUnlocked ? `color:${COLORS.GOLD}` : 'color:#4b5563'}">${isUnlocked ? '🏆' : '🔒'}</span>
                                 <div style="flex:1">
-                                    <h3 style="font-size:14px;font-weight:bold;${isUnlocked ? 'color:#fff' : 'color:${COLORS.TEXT_DIM}'}">${_L(ach.nameKey, ach.name)} ${reward}</h3>
+                                    <h3 style="font-size:14px;font-weight:bold;${isUnlocked ? 'color:#fff' : `color:${COLORS.TEXT_DIM}`}">${_L(ach.nameKey, ach.name)} ${reward}</h3>
                                     <p style="font-size:11px;color:${COLORS.TEXT_MUTED};line-height:1.3">${_L(ach.descKey, ach.desc)}</p>
                                 </div>
                                 ${isUnlocked ? `<span style="font-size:10px;color:#4ade80;font-weight:bold;text-transform:uppercase;letter-spacing:0.05em;white-space:nowrap">${_L('ui.achievementDone', 'Concluído')}</span>` : ''}
@@ -29103,7 +29139,7 @@ renderAchievementsContent() {
         },
 
         renderLoreContent() {
-            if (typeof NarrativeSystem === 'undefined' || !window.CONFIG) return '<p style="text-align:center;color:${COLORS.TEXT_DIM}">Indisponível</p>';
+            if (typeof NarrativeSystem === 'undefined' || !window.CONFIG) return `<p style="text-align:center;color:${COLORS.TEXT_DIM}">Indisponível</p>`;
             const ns = NarrativeSystem;
             const fragments = CONFIG.LORE_FRAGMENTS;
             const activeTab = ns._activeTab || 'all';
@@ -29150,7 +29186,7 @@ renderAchievementsContent() {
                         <span style="font-size:10px;color:${discovered ? '#6b7280' : '#374151'}">${categoryLabels[f.category] || f.category}</span>
                     </div>
                 `;
-            }).join('') || '<p style="text-align:center;color:${COLORS.TEXT_MUTED};padding:20px 0">' + ((loreLocale && loreLocale.empty) || 'Nenhum fragmento encontrado') + '</p>';
+            }).join('') || `<p style="text-align:center;color:${COLORS.TEXT_MUTED};padding:20px 0">` + ((loreLocale && loreLocale.empty) || 'Nenhum fragmento encontrado') + '</p>';
 
             return `
                 <div style="text-align:center;margin-bottom:12px;color:${COLORS.TEXT_MUTED};font-size:12px">
@@ -29203,7 +29239,7 @@ renderAchievementsContent() {
         },
 
         renderDailyContent() {
-            if (typeof window.DailyChallenge === 'undefined') return '<p style="text-align:center;color:${COLORS.TEXT_DIM}">Indisponível</p>';
+            if (typeof window.DailyChallenge === 'undefined') return `<p style="text-align:center;color:${COLORS.TEXT_DIM}">Indisponível</p>`;
             const dc = window.DailyChallenge;
             const ch = dc.getTodayChallenge();
             const stats = dc.getTodayStats();
@@ -31879,7 +31915,7 @@ Input.init();
        current MUST stay in sync with the SW CACHE_VERSION suffix (sw.js).
     */
     window.UPDATE_LOG = {
-        current: 'v57',
+        current: 'v58',
         entries: [
             { v: 'v9', date: '2026-09-10', titleKey: 'update.entry.v9.title', title: 'v9 — Tutorial destravado',
               linesKeys: ['update.entry.v9.l1'],
@@ -32054,6 +32090,11 @@ Input.init();
               lines: ['Corrigido o flash branco rápido que piscava na tela ao andar e em combate.',
                       'A iluminação e o tom do bioma agora ficam estáveis em todos os quadros.',
                       'Seus saves e progresso não mudam.'] },
+            { v: 'v58', date: '2026-10-15', titleKey: 'update.entry.v58.title', title: 'v58 — Correções e ouro',
+              linesKeys: ['update.entry.v58.l1', 'update.entry.v58.l2', 'update.entry.v58.l3'],
+              lines: ['Sangramento, veneno da nuvem, marca da morte e raízes da elfa agora causam dano ao longo do tempo; o rastro de fogo do guerreiro não queima mais o próprio dono.',
+                      'O ouro do chão cresce com o andar na mesma taxa dos preços da loja; os powerups raros não alteram mais a sequência do desafio diário.',
+                      'Textos da loja, habilidades e conquistas não mostram mais código solto. Seus saves não mudam.'] },
             { v: 'v56', date: '2026-10-14', titleKey: 'update.entry.v56.title', title: 'v56 — Combos, salas secretas e mais poder',
               linesKeys: ['update.entry.v56.l1', 'update.entry.v56.l2', 'update.entry.v56.l3'],
               lines: ['Combos de 3 golpes nas 4 classes, cada um com um movimento diferente e um golpe final mais forte. Quatro powerups raros (Fúria, Frenesi, Ímã e Égide) caem de baús e chefes. O evento Portal Secreto agora abre uma sala de verdade, de tesouro ou de desafio.',

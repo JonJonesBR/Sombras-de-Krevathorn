@@ -30,3 +30,6 @@ playwright.config.js
 graficos_melhores/
 %LOCALAPPDATA%/
 ERROS CONSOLE.txt
+
+# Ferramenta externa (Command Code)
+.commandcode/
