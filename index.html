@@ -10421,6 +10421,8 @@ function update() {
     // --- Phase 4: Hitstop  freeze world for N frames on kill ---
     // Brief hitstop for punchy combat (2 frames)
     if (hitstopFrames > 0) { if (window.GameSettings && GameSettings.hitstopEnabled === false) { hitstopFrames = 0; } else { hitstopFrames--; return; } }
+    // Gamepad no menu de NPC: lido antes do bloqueio, pois o painel congela a simulação
+    Input.pollGamepadMenu();
     if (_anyPanelOpen()) return;
     Debug.safe(() => _updateSystems(), 'updateSystems');
     Debug.safe(() => _updateWorldSim(), 'updateWorldSim');
@@ -26043,12 +26045,43 @@ const CanvasMenuNav = {
     sel: 0,
     kb: false, // destaque aparece depois do uso do teclado (não muda o uso por ponteiro)
 
+    // Menu ativo para navegação (aberto, com botões, fora do tutorial) ou null
+    _menu() {
+        const m = (typeof NPCInteractionPanel !== 'undefined') ? NPCInteractionPanel : null;
+        if (!m || !m.visible || !m.buttons.length) return null;
+        if (typeof TutorialSystem !== 'undefined' && TutorialSystem.active) return null;
+        return m;
+    },
+
+    isOpen() {
+        return !!this._menu();
+    },
+
+    // Mesma lógica para teclado e gamepad: move a seleção (com volta ao início)
+    move(step) {
+        const m = this._menu();
+        if (!m) return;
+        const n = m.buttons.length;
+        this.kb = true;
+        this.sel = (((this.sel + step) % n) + n) % n;
+    },
+
+    confirm() {
+        const m = this._menu();
+        if (!m) return;
+        this.kb = true;
+        this._run(m.buttons[this.sel]);
+    },
+
+    cancel() {
+        const m = this._menu();
+        if (!m) return;
+        this._run(m.buttons.find(b => b.cancel) || m.buttons[m.buttons.length - 1]);
+    },
+
     // Retorna true quando a tecla foi consumida pelo menu
     handleKey(e) {
-        const m = (typeof NPCInteractionPanel !== 'undefined') ? NPCInteractionPanel : null;
-        if (!m || !m.visible || !m.buttons.length) return false;
-        if (typeof TutorialSystem !== 'undefined' && TutorialSystem.active) return false;
-        const n = m.buttons.length;
+        if (!this._menu()) return false;
         const k = e.key;
         let step = 0;
         if (k === 'ArrowLeft' || k === 'ArrowUp') step = -1;
@@ -26056,18 +26089,17 @@ const CanvasMenuNav = {
         else if (k === 'Tab') step = e.shiftKey ? -1 : 1;
         if (step) {
             e.preventDefault();
-            this.kb = true;
-            this.sel = (((this.sel + step) % n) + n) % n;
+            this.move(step);
             return true;
         }
         if (k === 'Enter' || k === ' ') {
             e.preventDefault();
-            if (!e.repeat) { this.kb = true; this._run(m.buttons[this.sel]); }
+            if (!e.repeat) this.confirm();
             return true;
         }
         if (k === 'Escape') {
             e.preventDefault();
-            this._run(m.buttons.find(b => b.cancel) || m.buttons[n - 1]);
+            this.cancel();
             return true;
         }
         return false;
@@ -31215,6 +31247,7 @@ const Input = {
     right: { active: false, id: -1, ox: 0, oy: 0, dx: 0, dy: 0 },
     mouse: { x: 0, y: 0, down: false },
     _gamepadButtons: [],
+    _menuStick: 0, // direção do stick esquerdo já aplicada ao menu (-1, 0 ou 1): uma por empurrão
 
     // Fixed joystick base positions (computed from canvas size each frame)
     get _lx() { return width  * 0.20; },
@@ -31456,6 +31489,45 @@ const Input = {
             if (dodgePressed && player.dodge) player.dodge();
             if (pausePressed && window.PauseSystem) PauseSystem.toggle();
         }
+    },
+
+    // ---- GAMEPAD NO MENU DE NPC (chamado em update(), antes do bloqueio por painel) ----
+    // Com o menu aberto o painel congela a simulação, então pollGamepad() não roda.
+    // Aqui o pad é lido só para o menu, com a mesma CanvasMenuNav do teclado: D-pad e
+    // stick esquerdo movem (um passo por empurrão), A (0) confirma, B (1) fecha. Os
+    // sticks não movem o herói enquanto o menu está aberto. _gamepadButtons é atualizado
+    // aqui; se A fechar o menu neste frame, o pollGamepad() seguinte já vê A como segurado
+    // e não dispara habilidade no mesmo frame.
+    pollGamepadMenu() {
+        if (this._ctrlType !== 'gamepad' || !CanvasMenuNav.isOpen()) return;
+        const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+        let pad = null;
+        for (let i = 0; i < pads.length; i++) { if (pads[i]) { pad = pads[i]; break; } }
+        if (!pad) { this._menuStick = 0; return; }
+        const buttons = pad.buttons || [];
+        const pressed = (index) => !!(buttons[index] && (buttons[index].pressed || buttons[index].value > 0.5));
+        const justPressed = (index) => pressed(index) && !this._gamepadButtons[index];
+        const ly = pad.axes[1] || 0;
+
+        this.left.active = false; this.left.dx = 0; this.left.dy = 0;
+        this.right.active = false; this.right.dx = 0; this.right.dy = 0;
+
+        // D-pad (12 cima, 13 baixo, 14 esquerda, 15 direita) e stick: uma borda por vez
+        if (justPressed(12) || justPressed(14)) CanvasMenuNav.move(-1);
+        if (justPressed(13) || justPressed(15)) CanvasMenuNav.move(1);
+        const stickDir = ly <= -0.6 ? -1 : (ly >= 0.6 ? 1 : 0);
+        if (stickDir !== 0) {
+            if (stickDir !== this._menuStick) CanvasMenuNav.move(stickDir);
+            this._menuStick = stickDir;
+        } else if (Math.abs(ly) < 0.3) {
+            this._menuStick = 0; // voltou ao centro: o próximo empurrão conta de novo
+        }
+
+        const confirm = justPressed(0);
+        const cancel = justPressed(1);
+        this._gamepadButtons = Array.from(buttons, button => !!(button && (button.pressed || button.value > 0.5)));
+        if (confirm) CanvasMenuNav.confirm();
+        else if (cancel) CanvasMenuNav.cancel();
     },
 
     // ---- DRAW ----
