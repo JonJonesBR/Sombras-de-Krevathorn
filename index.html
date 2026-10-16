@@ -406,7 +406,7 @@ body.mm-hidden #top-bar .top-right-chips { margin-right: 0; }
     left: 50%;
     transform: translateX(-50%);
     text-align: center;
-    font-size: 13px;
+    font-size: calc(13px * var(--font-scale, 1));
     font-weight: 700;
     color: #fff;
     text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9);
@@ -445,7 +445,7 @@ body.mm-hidden #top-bar .top-right-chips { margin-right: 0; }
     border-radius: 16px;
     padding: 10px 24px;
     color: #f0d6ff;
-    font-size: 13px;
+    font-size: calc(13px * var(--font-scale, 1));
     font-weight: 700;
     pointer-events: none;
     z-index: 200;
@@ -682,6 +682,10 @@ body.font-large :is(#modal-overlay, #settings-panel, #pause-overlay, #game-over-
 }
 /* Fonte grande: as linhas de botões da tela inicial (classes, tutorial/diário/meta) quebram em vez de vazar. */
 body.font-large #start-screen [style*="gap:6px"] { flex-wrap: wrap; }
+/* Toasts, logs, cartões de item e banner de update fora dos painéis usam o mesmo fator, mas no
+   próprio font-size: `calc(Npx * var(--font-scale, 1))`. Não é `zoom`: zoom não muda o font-size
+   computado, e o texto px inline não herda o em do #hud. Sem classe de fonte, o valor é o px de antes. */
+body.font-small .notification, body.font-large .notification { white-space: normal; max-width: 88vw; }
 
 /* Fase B: accessibility - honor prefers-reduced-motion via toggle class */
 body.reduce-motion, body.reduce-motion * { animation-duration: 0.001s !important; animation-iteration-count: 1 !important; transition-duration: 0.001s !important; }
@@ -1647,20 +1651,20 @@ body.gfx-low #start-screen::after { animation: none !important; opacity: 0.5 !im
         <!-- ACHIEVEMENT TOAST -->
         <div id="achievement-toast" class="hidden" style="position:absolute;top:max(50px,calc(env(safe-area-inset-top,50px) + 8px));left:50%;transform:translateX(-50%);z-index:250;pointer-events:none;text-align:center;transition:all 0.4s cubic-bezier(0.34,1.56,0.64,1);">
             <div style="background:rgba(30,20,50,0.95);border:1.5px solid rgba(255,215,0,0.4);border-radius:14px;padding:8px 16px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 6px 25px rgba(0,0,0,0.5);">
-                <div data-i18n="ui.achievementToast" style="font-size:7px;letter-spacing:0.15em;text-transform:uppercase;color:rgba(255,215,0,0.7);margin-bottom:1px;">🏆 Conquista!</div>
-                <div id="achievement-toast-text" style="font-size:11px;font-weight:700;color:#ffcc00;"></div>
+                <div data-i18n="ui.achievementToast" style="font-size:calc(7px * var(--font-scale, 1));letter-spacing:0.15em;text-transform:uppercase;color:rgba(255,215,0,0.7);margin-bottom:1px;">🏆 Conquista!</div>
+                <div id="achievement-toast-text" style="font-size:calc(11px * var(--font-scale, 1));font-weight:700;color:#ffcc00;"></div>
             </div>
         </div>
 
         <!-- LOOT CARD POPUP -->
         <div id="loot-card" class="hidden" style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:250;pointer-events:auto;transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1);">
             <div id="loot-card-inner" style="background:rgba(20,15,30,0.97);border-radius:16px;padding:14px 18px;min-width:180px;max-width:240px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 8px 30px rgba(0,0,0,0.6);border:1.5px solid rgba(224,182,255,0.25);text-align:center;">
-                <div id="loot-rarity" data-i18n="ui.lootCommon" style="font-size:7px;letter-spacing:0.2em;text-transform:uppercase;color:#9ca3af;margin-bottom:3px;">COMUM</div>
-                <div id="loot-name" data-i18n="ui.lootWeapon" style="font-size:13px;font-weight:700;color:#e0b6ff;margin-bottom:3px;">Arma</div>
-                <div id="loot-stats" style="font-size:9px;color:rgba(255,255,255,0.5);margin-bottom:6px;">+10 Dano</div>
+                <div id="loot-rarity" data-i18n="ui.lootCommon" style="font-size:calc(7px * var(--font-scale, 1));letter-spacing:0.2em;text-transform:uppercase;color:#9ca3af;margin-bottom:3px;">COMUM</div>
+                <div id="loot-name" data-i18n="ui.lootWeapon" style="font-size:calc(13px * var(--font-scale, 1));font-weight:700;color:#e0b6ff;margin-bottom:3px;">Arma</div>
+                <div id="loot-stats" style="font-size:calc(9px * var(--font-scale, 1));color:rgba(255,255,255,0.5);margin-bottom:6px;">+10 Dano</div>
                 <div style="display:flex;gap:6px;">
-                    <button id="loot-equip-btn" data-i18n="ui.lootEquip" style="flex:1;padding:7px;border-radius:8px;font-size:9px;font-weight:700;background:rgba(100,60,200,0.25);border:1px solid rgba(157,78,221,0.35);color:#c084fc;cursor:pointer;touch-action:manipulation;">EQUIPAR</button>
-                    <button id="loot-sell-btn" data-i18n="ui.lootSell" style="flex:1;padding:7px;border-radius:8px;font-size:9px;font-weight:700;background:rgba(255,180,0,0.15);border:1px solid rgba(255,215,0,0.25);color:#ffcc00;cursor:pointer;touch-action:manipulation;">VENDER</button>
+                    <button id="loot-equip-btn" data-i18n="ui.lootEquip" style="flex:1;padding:7px;border-radius:8px;font-size:calc(9px * var(--font-scale, 1));font-weight:700;background:rgba(100,60,200,0.25);border:1px solid rgba(157,78,221,0.35);color:#c084fc;cursor:pointer;touch-action:manipulation;">EQUIPAR</button>
+                    <button id="loot-sell-btn" data-i18n="ui.lootSell" style="flex:1;padding:7px;border-radius:8px;font-size:calc(9px * var(--font-scale, 1));font-weight:700;background:rgba(255,180,0,0.15);border:1px solid rgba(255,215,0,0.25);color:#ffcc00;cursor:pointer;touch-action:manipulation;">VENDER</button>
                 </div>
             </div>
         </div>
@@ -1672,10 +1676,10 @@ body.gfx-low #start-screen::after { animation: none !important; opacity: 0.5 !im
         <div id="equip-card" class="hidden" style="position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,12px) + 152px);transform:translateX(-50%);z-index:240;pointer-events:none;width:min(280px,86vw);">
             <div id="equip-card-inner" style="background:rgba(20,15,30,0.97);border-radius:14px;padding:10px 12px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 6px 22px rgba(0,0,0,0.55);border:1.5px solid rgba(224,182,255,0.25);transition:opacity 0.3s,transform 0.3s;">
                 <div style="display:flex;align-items:center;justify-content:space-between;gap:6px">
-                    <span id="eqc-rarity" style="font-size:8px;letter-spacing:0.15em;text-transform:uppercase;color:#9ca3af;">COMUM</span>
-                    <span id="eqc-verdict" style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;"></span>
+                    <span id="eqc-rarity" style="font-size:calc(8px * var(--font-scale, 1));letter-spacing:0.15em;text-transform:uppercase;color:#9ca3af;">COMUM</span>
+                    <span id="eqc-verdict" style="font-size:calc(8px * var(--font-scale, 1));font-weight:700;text-transform:uppercase;letter-spacing:0.05em;"></span>
                 </div>
-                <div id="eqc-name" style="font-size:12px;font-weight:700;color:#e0b6ff;margin:2px 0 6px;">Equipamento</div>
+                <div id="eqc-name" style="font-size:calc(12px * var(--font-scale, 1));font-weight:700;color:#e0b6ff;margin:2px 0 6px;">Equipamento</div>
                 <div id="eqc-stats" style="display:flex;flex-direction:column;gap:3px;"></div>
             </div>
         </div>
@@ -1869,7 +1873,7 @@ const Debug = {
                 this._shownErrors.add(key);
                 // Non-intrusive error toast (safe for Play Store WebView)
                 var toast = document.createElement('div');
-                toast.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(140,0,0,0.9);color:#fff;padding:8px 16px;border-radius:12px;z-index:99999;font-size:11px;max-width:80vw;text-align:center;font-family:monospace;border:1px solid rgba(255,0,0,0.3);backdrop-filter:blur(8px);';
+                toast.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(140,0,0,0.9);color:#fff;padding:8px 16px;border-radius:12px;z-index:99999;font-size:calc(11px * var(--font-scale, 1));max-width:80vw;text-align:center;font-family:monospace;border:1px solid rgba(255,0,0,0.3);backdrop-filter:blur(8px);';
                 toast.textContent = context + ': ' + e.message;
                 document.body.appendChild(toast);
                 setTimeout(function() { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.3s'; setTimeout(function() { toast.remove(); }, 300); }, 3000);
@@ -1894,7 +1898,7 @@ const Debug = {
                         ScreenEffects._chromaIntensity = 0;
                     }
                     var recoverToast = document.createElement('div');
-                    recoverToast.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:rgba(140,90,0,0.9);color:#fff;padding:8px 16px;border-radius:12px;z-index:99999;font-size:11px;max-width:80vw;text-align:center;font-family:monospace;';
+                    recoverToast.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:rgba(140,90,0,0.9);color:#fff;padding:8px 16px;border-radius:12px;z-index:99999;font-size:calc(11px * var(--font-scale, 1));max-width:80vw;text-align:center;font-family:monospace;';
                     recoverToast.textContent = 'O jogo travou e foi recuperado automaticamente.';
                     document.body.appendChild(recoverToast);
                     setTimeout(function() { recoverToast.remove(); }, 4000);
@@ -11484,6 +11488,7 @@ const ToastSystem = {
     init() {
         if (this.container) return;
         this.container = document.createElement('div');
+        this.container.className = 'toast-stack';
         this.container.style.cssText = 'position:fixed;top:max(12px,env(safe-area-inset-top,12px));left:50%;transform:translateX(-50%);z-index:99990;display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none;width:min(88vw,360px);';
         document.body.appendChild(this.container);
     },
@@ -11492,7 +11497,7 @@ const ToastSystem = {
         this.init();
         const el = document.createElement('div');
         const colors = { success: 'rgba(0,136,54,0.92)', error: 'rgba(180,0,15,0.92)', info: 'rgba(60,40,110,0.94)' };
-        el.style.cssText = 'background:' + (colors[type] || colors.info) + ';color:#fff;padding:10px 16px;border-radius:14px;font-size:12px;font-weight:600;line-height:1.35;text-align:center;max-width:100%;box-shadow:0 4px 18px rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.15);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);opacity:0;transform:translateY(-8px);transition:opacity 0.25s ease, transform 0.25s ease;';
+        el.style.cssText = 'background:' + (colors[type] || colors.info) + ';color:#fff;padding:10px 16px;border-radius:14px;font-size:calc(12px * var(--font-scale, 1));font-weight:600;line-height:1.35;text-align:center;max-width:100%;box-shadow:0 4px 18px rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.15);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);opacity:0;transform:translateY(-8px);transition:opacity 0.25s ease, transform 0.25s ease;';
         el.textContent = message;
         this.container.appendChild(el);
         requestAnimationFrame(() => { el.style.opacity = '1'; el.style.transform = 'translateY(0)'; });
@@ -32078,10 +32083,10 @@ Input.init();
                     : (e.lines || []);
                 return '<div style="margin-bottom:12px">' +
                     '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px">' +
-                        '<span style="font-weight:800;color:#e0b6ff;font-size:13px">' + L(e.titleKey, e.title) + '</span>' +
-                        '<span style="font-size:10px;color:rgba(255,255,255,0.4);white-space:nowrap">' + (e.date || '') + '</span>' +
+                        '<span style="font-weight:800;color:#e0b6ff;font-size:calc(13px * var(--font-scale, 1))">' + L(e.titleKey, e.title) + '</span>' +
+                        '<span style="font-size:calc(10px * var(--font-scale, 1));color:rgba(255,255,255,0.4);white-space:nowrap">' + (e.date || '') + '</span>' +
                     '</div>' +
-                    ls.map((t) => t ? '<div style="font-size:12px;color:#c8cedf;line-height:1.5;padding-left:10px;border-left:2px solid rgba(255,204,0,0.35);margin-bottom:3px">' + t + '</div>' : '').join('') +
+                    ls.map((t) => t ? '<div style="font-size:calc(12px * var(--font-scale, 1));color:#c8cedf;line-height:1.5;padding-left:10px;border-left:2px solid rgba(255,204,0,0.35);margin-bottom:3px">' + t + '</div>' : '').join('') +
                 '</div>';
             }).join('');
             const ov = document.createElement('div');
@@ -32089,12 +32094,12 @@ Input.init();
             ov.style.cssText = 'position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;background:rgba(4,2,8,0.85);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);padding:20px;';
             ov.innerHTML = '<div style="background:rgba(22,17,32,0.98);border:1.5px solid rgba(224,182,255,0.3);border-radius:24px;padding:22px 20px;max-width:360px;width:100%;box-shadow:0 10px 50px rgba(0,0,0,0.6);text-align:left;">' +
                 '<div style="text-align:center;margin-bottom:4px;">' +
-                    '<div style="font-size:1.15rem;font-weight:900;color:#ffcc00;margin-bottom:2px;">' + L('update.title', '✨ Novidades') + '</div>' +
-                    '<div style="font-size:11px;color:rgba(255,255,255,0.55);">' + L('update.newVersion', 'Nova versão instalada!') + '</div>' +
+                    '<div style="font-size:calc(1.15rem * var(--font-scale, 1));font-weight:900;color:#ffcc00;margin-bottom:2px;">' + L('update.title', '✨ Novidades') + '</div>' +
+                    '<div style="font-size:calc(11px * var(--font-scale, 1));color:rgba(255,255,255,0.55);">' + L('update.newVersion', 'Nova versão instalada!') + '</div>' +
                 '</div>' +
                 '<div style="margin:12px 0 14px;height:1px;background:linear-gradient(90deg,transparent,rgba(255,204,0,0.5),transparent);"></div>' +
                 '<div style="max-height:52vh;overflow-y:auto;padding-right:2px;">' + rows + '</div>' +
-                '<button id="update-close-btn" style="width:100%;margin-top:14px;padding:12px;border-radius:14px;font-size:0.85rem;font-weight:800;letter-spacing:0.05em;text-transform:uppercase;background:linear-gradient(135deg,rgba(100,60,200,0.35),rgba(157,78,221,0.22));border:1.5px solid rgba(157,78,221,0.45);color:#c084fc;cursor:pointer;touch-action:manipulation;">' + L('update.close', 'Entendi') + '</button>' +
+                '<button id="update-close-btn" style="width:100%;margin-top:14px;padding:12px;border-radius:14px;font-size:calc(0.85rem * var(--font-scale, 1));font-weight:800;letter-spacing:0.05em;text-transform:uppercase;background:linear-gradient(135deg,rgba(100,60,200,0.35),rgba(157,78,221,0.22));border:1.5px solid rgba(157,78,221,0.45);color:#c084fc;cursor:pointer;touch-action:manipulation;">' + L('update.close', 'Entendi') + '</button>' +
             '</div>';
             document.body.appendChild(ov);
             const btn = ov.querySelector('#update-close-btn');
