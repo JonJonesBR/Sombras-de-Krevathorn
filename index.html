@@ -8100,12 +8100,12 @@ var CONFIG = {
     // Scaling Difficulty - Enemy stat growth per dungeon level
     DIFFICULTY_HP_PER_LEVEL: 0.19,     // +19% HP per dungeon level (rebalanced: player procs buffed)
     DIFFICULTY_DAMAGE_PER_LEVEL: 0.115, // +11.5% damage per dungeon level
-    DIFFICULTY_MAX_SCALING_LEVEL: 50,  // scaling caps at dungeon 50
+    DIFFICULTY_MAX_SCALING_LEVEL: 50,  // linear up to dungeon 50, logarithmic beyond (DifficultySystem.effectiveLevelFor)
     DIFFICULTY_ELITE_BONUS_PER_LEVEL: 0.05, // +5% elite bonus per level
 
     // Boss scaling - extra power at high dungeons
     BOSS_SCALING_HP_PER_LEVEL: 100,    // legacy flat bonus (kept for compatibility)
-    BOSS_HP_PER_LEVEL: 0.38,           // +30% HP per dungeon level (multiplicative - keeps pace with the player's multiplicative damage growth so bosses stop melting in late floors)
+    BOSS_HP_PER_LEVEL: 0.38,           // +38% HP per dungeon level (multiplicative - keeps pace with the player's multiplicative damage growth so bosses stop melting in late floors)
     BOSS_SCALING_PHASE4_THRESHOLD: 10, // phase 4 starts at dungeon 10
     BOSS_SCALING_PHASE4_SPEED_MULT: 1.8,
     BOSS_SCALING_PHASE4_DAMAGE_MULT: 1.8,
@@ -14708,7 +14708,14 @@ const DifficultySystem = {
     // Get the effective dungeon level for scaling (capped)
     // ============================================================
     getEffectiveLevel() {
-        return Math.min(this.dungeonLevel, CONFIG.DIFFICULTY_MAX_SCALING_LEVEL);
+        return this.effectiveLevelFor(this.dungeonLevel);
+    },
+
+    // Linear até DIFFICULTY_MAX_SCALING_LEVEL (pisos 1-50 inalterados); acima dele
+    // cresce em log, para a dificuldade continuar subindo sem explodir no Abismo.
+    effectiveLevelFor(level) {
+        const cap = CONFIG.DIFFICULTY_MAX_SCALING_LEVEL;
+        return level <= cap ? level : cap + 25 * Math.log(1 + (level - cap) / 25);
     },
 
     // ============================================================
@@ -14739,8 +14746,8 @@ const DifficultySystem = {
             // Multiplicative boss HP growth: keeps bosses tanky relative to the
             // player's multiplicative damage scaling. The old flat +100/level
             // fell behind and made bosses melt faster than common enemies.
-            // Boss scaling caps at the same floor as regulars (50): during an
-            // Abyss run this keeps deep bosses finite instead of growing forever.
+            // Boss scaling uses the same effective level as regulars (log beyond 50):
+            // deep bosses keep growing, but slower, instead of unbounded linear growth.
             hp *= 1 + (this.getEffectiveLevel() - 1) * CONFIG.BOSS_HP_PER_LEVEL;
         } else {
             hp *= this.getEnemyHpMult();
@@ -22645,9 +22652,11 @@ class Boss extends Enemy {
         const tier = level >= 50 ? 3 : (level >= 20 ? 2 : 1);
         this._abyssalTier = tier;
         if (tier < 2) return tier;
-        const hpBonus = tier === 3 ? 0.75 : 0.35;
-        const dmgBonus = tier === 3 ? 0.30 : 0.15;
-        const spdBonus = tier === 3 ? 0.18 : 0.10;
+        // Tier 3 escala de 50 a 100 (k: 0 -> 1) e satura a partir daí.
+        const k = Math.min(1, Math.max(0, (level - 50) / 50));
+        const hpBonus = tier === 3 ? 0.75 + 0.25 * k : 0.35;
+        const dmgBonus = tier === 3 ? 0.30 + 0.10 * k : 0.15;
+        const spdBonus = tier === 3 ? 0.18 + 0.07 * k : 0.10;
         const armor = tier === 3 ? 0.25 : 0.15;
         this.maxHp = Math.floor(this.maxHp * (1 + hpBonus));
         this.hp = this.maxHp;
@@ -32379,12 +32388,12 @@ Input.init();
     }
 
     function floorScale(floor, ddaMult, presetHpMult) {
-        const lvl = Math.min(floor, CONFIG.DIFFICULTY_MAX_SCALING_LEVEL);
+        const lvl = DifficultySystem.effectiveLevelFor(floor);
         return (1 + (lvl - 1) * CONFIG.DIFFICULTY_HP_PER_LEVEL) * _num(ddaMult, 1) * _num(presetHpMult, 1);
     }
 
     function bossHpAtFloor(floor, ddaMult, presetBossHpMult, blueprintHpMult) {
-        const lvl = Math.min(floor, CONFIG.DIFFICULTY_MAX_SCALING_LEVEL);
+        const lvl = DifficultySystem.effectiveLevelFor(floor);
         return CONFIG.BOSS_HP * (1 + (lvl - 1) * CONFIG.BOSS_HP_PER_LEVEL) * _num(ddaMult, 1) * _num(presetBossHpMult, 1) * _num(blueprintHpMult, 1);
     }
 
