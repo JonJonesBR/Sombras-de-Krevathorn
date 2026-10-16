@@ -25,6 +25,7 @@ playwright.config.js
 !.github/workflows/
 .github/workflows/*
 !.github/workflows/limpar-deployments.yml
+!.github/workflows/validar-jogo.yml
 
 # Exportação/pasta do Google Drive e lixo de ferramentas
 graficos_melhores/

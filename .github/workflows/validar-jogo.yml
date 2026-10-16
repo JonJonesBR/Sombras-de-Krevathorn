@@ -1,0 +1,43 @@
+# Gate mínimo de regressão que roda no próprio repositório publicado (que só tem
+# index.html, sw.js, README, LICENSE): sintaxe do JS inline, sintaxe do sw.js e
+# paridade CACHE_VERSION <-> UPDATE_LOG.current. Os testes E2E completos continuam locais.
+name: Validar jogo
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Sintaxe do JS inline e paridade de versão
+        run: |
+          node - <<'JS'
+          const fs = require('fs'), vm = require('vm');
+          const html = fs.readFileSync('index.html', 'utf8');
+          const re = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi;
+          let m, n = 0, bad = 0;
+          while ((m = re.exec(html))) {
+            if (/\bsrc\s*=/.test(m[1]) || !m[2].trim()) continue;
+            n++;
+            try { new vm.Script(m[2]); } catch (e) { bad++; console.error('ERRO DE SINTAXE no script', n, e.message); }
+          }
+          console.log(n + ' scripts validados, ' + bad + ' erros');
+          if (!n || bad) process.exit(1);
+          const sw = fs.readFileSync('sw.js', 'utf8').match(/CACHE_VERSION\s*=\s*['"]krevathorn-(v\d+)['"]/);
+          const cur = html.match(/UPDATE_LOG\s*=\s*\{[\s\S]*?current:\s*['"](v\d+)['"]/);
+          console.log('sw.js:', sw && sw[1], '| index.html:', cur && cur[1]);
+          if (!sw || !cur || sw[1] !== cur[1]) { console.error('Versão dessincronizada entre sw.js e index.html'); process.exit(1); }
+          JS
+      - name: Sintaxe do sw.js
+        run: node --check sw.js
