@@ -10174,9 +10174,9 @@ function _secretRoomStep() {
     const T = CONFIG.TILE_SIZE, R = SECRET_ROOM;
     const cx = (R.x0 + Math.floor(R.w / 2)) * T + T / 2, cy = (R.y0 + Math.floor(R.h / 2)) * T + T / 2;
     chests.push(new Chest(cx, cy, SeedSystem.random() < 0.35 ? 'lendario' : 'epico'));
-    // Powerup raro garantido no baú final (1 dos 4, igualmente). Math.random: não consome o stream semeado (v56).
+    // Powerup raro garantido no baú final (1 dos 4, igualmente). rareRandom: não consome o stream principal (v56/v59).
     const rareTypes = ['fury', 'frenzy', 'magnet', 'aegis'];
-    pickups.push(new Pickup(cx + 30, cy, rareTypes[Math.floor(Math.random() * rareTypes.length)]));
+    pickups.push(new Pickup(cx + 30, cy, rareTypes[Math.floor(rareRandom() * rareTypes.length)]));
     addLog(window.I18n ? I18n.t('log.secretCleared') : 'Sala limpa! Um baú lendário apareceu no centro.');
 }
 
@@ -10298,8 +10298,8 @@ function _updateEnemySpawning() {
         const bossPos = map.getSafeSpawn(0);
         chests.push(new Chest(bossPos.x, bossPos.y, SeedSystem.random() < 0.35 ? 'lendario' : 'epico'));
         // Powerup raro garantido ao abater o chefe: 1 dos 4 igualmente
-        // Math.random: sorteio da v56, não consome o stream semeado (SeedSystem)
-        { const rareTypes = ['fury', 'frenzy', 'magnet', 'aegis']; pickups.push(new Pickup(bossPos.x, bossPos.y, rareTypes[Math.floor(Math.random() * rareTypes.length)])); }
+        // rareRandom: sorteio da v56/v59, não consome o stream principal (SeedSystem)
+        { const rareTypes = ['fury', 'frenzy', 'magnet', 'aegis']; pickups.push(new Pickup(bossPos.x, bossPos.y, rareTypes[Math.floor(rareRandom() * rareTypes.length)])); }
         addLog(window.I18n ? I18n.t('log.bossChest') : 'Bau do Chefe apareceu!');
         dungeonKills = Math.max(dungeonKills, dungeonKillTarget);
     }
@@ -15175,6 +15175,9 @@ function createMulberry32(seed) {
 // Current seed state
 let _currentSeed = 0;
 let _rndFn = null;
+// Stream próprio dos powerups raros (baú, chefe, sala secreta): derivado da seed da run
+// com salt 'rarePowerup'. Não consome _rndFn, então mapas e loot seeded não mudam.
+let _rareRng = null;
 
 // Set seed for reproducible generation
 function setSeed(seed) {
@@ -15184,6 +15187,7 @@ function setSeed(seed) {
     }
     _currentSeed = seed;
     _rndFn = createMulberry32(seed);
+    _rareRng = null;
     Debug.info('[Seed] Seed set:', seed);
 }
 
@@ -15191,6 +15195,7 @@ function setSeed(seed) {
 function clearSeed() {
     _currentSeed = 0;
     _rndFn = null;
+    _rareRng = null;
 }
 
 // Get current seed value
@@ -15244,6 +15249,7 @@ function setSeedString(str) {
     if (!str) { clearSeed(); return 0; }
     _currentSeed = hashSeedString(String(str).trim());
     _rndFn = createMulberry32(_currentSeed);
+    _rareRng = null;
     Debug.info('[Seed] Seed set from string:', str, '=>', _currentSeed);
     return _currentSeed;
 }
@@ -15253,6 +15259,14 @@ function setSeedString(str) {
 function reseedForFloor(floor) {
     if (!isSeeded()) { _rndFn = null; return; }
     _rndFn = createMulberry32(mixFloorIntoSeed(_currentSeed, floor || 1));
+}
+
+// Sorteio dos powerups raros. Com seed: PRNG próprio (salt 'rarePowerup'), mesma seed =>
+// mesma sequência, sem consumir _rndFn. Sem seed: Math.random.
+function rareRandom() {
+    if (!isSeeded()) return Math.random();
+    if (!_rareRng) _rareRng = createMulberry32((_currentSeed ^ hashSeedString('rarePowerup')) >>> 0);
+    return _rareRng();
 }
 
 // Presets for common testing scenarios
@@ -20363,10 +20377,10 @@ class Chest {
         this.opened = true; this.openAnim = 50;
         if (typeof RelicSystem !== 'undefined') RelicSystem.openChest(this, player);
         // Powerup raro: ~8% por baú aberto, sorteando 1 dos 4 igualmente (nunca entra na tabela de inimigos).
-        // Math.random de propósito: este sorteio é da v56 e não pode consumir o stream semeado (SeedSystem), senão a sequência do seed muda após o primeiro baú.
-        if (Math.random() < CONFIG.POWERUP_CHEST_CHANCE) {
+        // rareRandom de propósito: este sorteio é da v56 e não pode consumir o stream principal (SeedSystem), senão a sequência do seed muda após o primeiro baú.
+        if (rareRandom() < CONFIG.POWERUP_CHEST_CHANCE) {
             const rareTypes = ['fury', 'frenzy', 'magnet', 'aegis'];
-            pickups.push(new Pickup(this.x, this.y, rareTypes[Math.floor(Math.random() * rareTypes.length)]));
+            pickups.push(new Pickup(this.x, this.y, rareTypes[Math.floor(rareRandom() * rareTypes.length)]));
         }
     }
 
