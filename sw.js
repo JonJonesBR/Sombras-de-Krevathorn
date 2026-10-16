@@ -20,14 +20,14 @@
  * Save data lives in localStorage and is NEVER touched by this worker — only
  * Cache Storage entries with the krevathorn- prefix are cleaned on activate.
  */
-const CACHE_VERSION = 'krevathorn-v58';
+const CACHE_VERSION = 'krevathorn-v59';
 const CACHE_NAME = CACHE_VERSION;
 const APP_SHELL = ['./', './index.html'];
 
 self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL))
-            .catch(() => { /* offline na instalação: segue sem pré-cache; a navegação é network-first */ })
+            .catch((err) => { console.warn('[sw] pré-cache falhou na instalação; segue sem pré-cache (navegação é network-first):', err); })
             .then(() => self.skipWaiting())
     );
 });

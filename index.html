@@ -650,20 +650,42 @@ body.gfx-low #modal-overlay.hidden {
 #settings-panel .settings-box select { color-scheme: dark; }
 #settings-panel .settings-box select option { color: #ffffff; background-color: #1e1628; }
 
-/* Fase B: proportional UI scaling on body (canvas text handled via getFontScale) */
+/* Fase B + "Tamanho da Fonte" (GameSettings.fontSize). Fatores iguais a FONT_SCALE no JS (small 0.9, large 1.15).
+   HUD: escala o texto (em). Telas/painéis: `zoom` escala tudo dentro, inclusive font-size px inline.
+   Medido: zoom multiplica comprimentos (px, vw) mas NÃO porcentagens; por isso o overlay usa 100%
+   e o painel usa 92vw/fator (já multiplicado pelo zoom, fica em 92vw na tela). Canvas: installCanvasFontScale no JS. */
+body.font-small { --font-scale: 0.9; }
+body.font-large { --font-scale: 1.15; }
 body.font-small #hud,   body.font-small #top-bar,
 body.font-small #actions-right,
 body.font-small #bottom-controls, body.font-small #minimap-container,
 body.font-small #combo-display, body.font-small #status-chips,
-body.font-small #boss-hp-container, body.font-small #xp-strip { font-size: 0.88em; }
+body.font-small #boss-hp-container, body.font-small #xp-strip { font-size: 0.9em; }
 body.font-large #hud,   body.font-large #top-bar,
 body.font-large #actions-right,
 body.font-large #bottom-controls, body.font-large #minimap-container,
 body.font-large #combo-display, body.font-large #status-chips,
-body.font-large #boss-hp-container, body.font-large #xp-strip { font-size: 1.12em; }
+body.font-large #boss-hp-container, body.font-large #xp-strip { font-size: 1.15em; }
+body.font-small :is(#modal-overlay, #settings-panel, #pause-overlay, #game-over-screen, #start-screen),
+body.font-large :is(#modal-overlay, #settings-panel, #pause-overlay, #game-over-screen, #start-screen) {
+    zoom: var(--font-scale);
+    width: 100%;
+    height: 100%;
+}
+body.font-small #modal-overlay > .glass-panel, body.font-large #modal-overlay > .glass-panel {
+    width: calc(92vw / var(--font-scale)) !important;
+    max-height: calc(85vh / var(--font-scale)) !important;
+}
+body.font-small :is(#modal-overlay, #settings-panel, #pause-overlay, #game-over-screen, #start-screen) button,
+body.font-large :is(#modal-overlay, #settings-panel, #pause-overlay, #game-over-screen, #start-screen) button {
+    min-height: calc(24px / var(--font-scale));
+}
+/* Fonte grande: as linhas de botões da tela inicial (classes, tutorial/diário/meta) quebram em vez de vazar. */
+body.font-large #start-screen [style*="gap:6px"] { flex-wrap: wrap; }
 
 /* Fase B: accessibility - honor prefers-reduced-motion via toggle class */
 body.reduce-motion, body.reduce-motion * { animation-duration: 0.001s !important; animation-iteration-count: 1 !important; transition-duration: 0.001s !important; }
+[role="button"][tabindex]:focus-visible { outline: 2px solid #ffcc00; outline-offset: 2px; }
 .sr-only { position:absolute !important; width:1px !important; height:1px !important; padding:0 !important; margin:-1px !important; overflow:hidden !important; clip:rect(0,0,0,0) !important; white-space:nowrap !important; border:0 !important; }
 
 /* Fase B: colorblind simulation filters (whole page, covers canvas + HTML) */
@@ -1213,6 +1235,17 @@ body.gfx-low #start-screen::after { animation: none !important; opacity: 0.5 !im
 .class-mini-card.rogue .hero-canvas { filter: drop-shadow(0 0 6px rgba(224, 90, 69, 0.5)); }
 .class-mini-card.mage .hero-canvas { filter: drop-shadow(0 0 6px rgba(58, 208, 255, 0.45)); }
 .class-mini-card.elf .hero-canvas { filter: drop-shadow(0 0 6px rgba(219, 181, 92, 0.45)); }
+
+/* prefers-reduced-motion (global): encurta animações e transições CSS decorativas do DOM.
+   Não afeta o canvas (lógica de jogo e screen shake continuam iguais). */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
 
 </style>
 
@@ -1906,23 +1939,10 @@ const Debug = {
     },
 
     // Clear errors
-    clearErrors() {
-        this.errors = [];
-        this.errorCount = 0;
-        this.warnCount = 0;
-    },
 
     // Toggle debug level
-    cycleLevel() {
-        this.level = (this.level + 1) % 4;
-        console.log(`[Krevathorn] Debug level changed to ${['DEBUG','INFO','WARN','ERROR'][this.level]}`);
-        return this.level;
-    },
 
     // Get recent logs
-    getRecentLogs(count = 10) {
-        return this.logs.slice(-count);
-    }
 };
 
 Debug.init();
@@ -2083,6 +2103,21 @@ function _initCanvas() {
     // Assign to global variables (no 'var' here - we want to assign to the outer scope)
     canvas = document.getElementById('gameCanvas');
     ctx = canvas ? canvas.getContext('2d') : null;
+    // Perda de contexto 2D (GPU/driver): preventDefault permite a restauração. Ao voltar,
+    // invalida os caches pelos mesmos pontos que já existem (map.needsRedraw, _mmDirty, luz).
+    if (canvas) {
+        canvas.addEventListener('contextlost', (e) => {
+            e.preventDefault();
+            console.warn('[Canvas] contexto 2D perdido; aguardando restauração.');
+        });
+        canvas.addEventListener('contextrestored', () => {
+            console.warn('[Canvas] contexto 2D restaurado; invalidando caches.');
+            try {
+                if (typeof map !== 'undefined' && map) map.needsRedraw = true;
+                _mmDirty = true; _cachedLightCanvas = null; _lightingThrottle = 0;
+            } catch (err) { console.warn('[Canvas] falha ao invalidar caches:', err); }
+        });
+    }
     lightCanvas = document.createElement('canvas');
     lctx = lightCanvas ? lightCanvas.getContext('2d') : null;
     // World layer cache for performance
@@ -2148,15 +2183,38 @@ window._toggleExpandedMinimap = function() {
 
 var gameMode = 'dungeon';
 
+// "Tamanho da Fonte": fatores únicos. Os mesmos valores estão nas regras CSS
+// `body.font-small` / `body.font-large` (bloco "Fase B"); se mudar um, mude os dois.
+const FONT_SCALE = { small: 0.9, medium: 1, large: 1.15 };
+
 function getFontScale() {
     try {
         if (!window.GameSettings) return 1.0;
-        const s = window.GameSettings.fontSize;
-        if (s === 'small') return 0.8;
-        if (s === 'large') return 1.6;
+        const s = FONT_SCALE[window.GameSettings.fontSize];
+        if (s) return s;
     } catch(e) {}
     return 1.0;
 }
+
+// Escala central do texto do canvas: todo `ctx.font = 'Npx ...'` tem o N multiplicado
+// por getFontScale(). Quem já escala por conta própria usa `_fontScaleBypass = true`
+// em volta da atribuição (evita escala dupla).
+let _fontScaleBypass = false;
+(function installCanvasFontScale() {
+    if (typeof CanvasRenderingContext2D === 'undefined') return;
+    const proto = CanvasRenderingContext2D.prototype;
+    const desc = Object.getOwnPropertyDescriptor(proto, 'font');
+    if (!desc || !desc.set) return;
+    Object.defineProperty(proto, 'font', {
+        configurable: true,
+        enumerable: desc.enumerable,
+        get: desc.get,
+        set(value) {
+            const k = (_fontScaleBypass || typeof value !== 'string') ? 1 : getFontScale();
+            desc.set.call(this, k === 1 ? value : value.replace(/(\d*\.?\d+)px/g, (m, n) => (parseFloat(n) * k).toFixed(2) + 'px'));
+        }
+    });
+})();
 
 // Dynamic resolution scaler - lowers internal resolution when FPS drops so the
 // game keeps a stable framerate on weak devices, then recovers when performance allows.
@@ -3021,12 +3079,6 @@ const MetaSystem = {
     isUnlocked(id) { this._ensure(); return !!(this.data && this.data.unlocked[id]); },
     purchases(id) { this._ensure(); return (this.data && this.data.purchases && this.data.purchases[id]) || 0; },
 
-    purchaseCost(id) {
-        this._ensure();
-        const p = this.PURCHASES[id];
-        if (!p) return null;
-        return p.cost(this.purchases(id));
-    },
 
     unlock(id) {
         this._ensure();
@@ -3218,22 +3270,53 @@ const I18n = {
 
     STRINGS: {
         pt: {
-            // Game title
-            'game.title': 'Krevathorn',
+            // Textos de combate, loot, Camp e MetaLoja (ligados ao código na T2)
+            'ui.unavailable': 'Indisponível',
+            'hud.x2': 'x2!',
+            'hud.essence': 'ESSÊNCIA!',
+            'hud.nocoins': 'Moedas insuficientes!',
+            'hud.bleed': 'SANGRIA!',
+            'hud.frost': 'GEADA!',
+            'hud.shatter': 'SHATTER!',
+            'hud.block': 'BLOQUEIO',
+            'hud.combo': 'COMBO!',
+            'hud.dash': 'DASH!',
+            'hud.overheated': 'SUPERAQUECIDO!',
+            'hud.spellCombo': 'SPELL COMBO!',
+            'hud.dodge': 'ESQUIVA!',
+            'hud.orbShield': 'ORB SHIELD!',
+            'combat.thorns': 'ESPINHOS!',
+            'combat.pact': 'PACTO!',
+            'combat.overload': 'SOBRECARGA!',
+            'combat.gale': 'RAJADA!',
+            'combat.relicFury': 'FÚRIA!',
+            'loot.uncommon': 'INCOMUM',
+            'loot.rare': 'RARO',
+            'loot.epic': 'EPICO',
+            'loot.legendary': 'LENDARIO',
+            'loot.statDmg': ' Dano  ',
+            'loot.statSpeed': '% Vel  ',
+            'loot.statRange': '% Alcance',
+            'loot.baseWeapon': 'Arma base',
+            'panel.quitToMenu': 'Desistir e retornar ao menu inicial',
+            'log.eventCoins': ' moedas',
+            'log.eventHp': ' HP',
+            'log.eventMaxHp': ' HP máximo',
+            'log.eventDmg': '% dano',
+            'log.eventSpeed': '% velocidade',
+            'log.eventShield': ' de escudo',
+            'log.eventCursePre': 'Maldição: +',
+            'log.eventCursePost': '% dano recebido',
+            'log.eventResultNothing': 'Nada aconteceu.',
+            'log.eventNoCoins': 'Moedas insuficientes.',
+            'log.bossRewardPre': ' 🏆 ',
+            'log.bossRewardPost': ' derrotado! Escolha sua recompensa.',
 
             // Start screen
-            'start.chooseClass': 'Escolha sua Classe:',
-            'start.tapToStart': 'Toque na classe para iniciar',
-            'start.tutorial': 'Como Jogar / Tutorial',
-            'start.settings': 'Configurações',
             'start.seedOptions': 'Opções — Seed',
             'start.buildOptions': 'Opções — Build (código e arquétipos)',
 
             // Class names
-            'class.warrior': 'GUERREIRO',
-            'class.rogue': 'LADINO',
-            'class.mage': 'MAGO',
-            'class.elf': 'ELFA',
 
             // Class descriptions
             'class.warrior.desc': 'Muita vida, dano pesado.',
@@ -3243,11 +3326,6 @@ const I18n = {
 
             // HUD labels
             'hud.level': 'Nível',
-            'hud.xp': 'XP',
-            'hud.coins': 'Moedas',
-            'hud.portal': 'PORTAL!',
-            'hud.kills': 'Abates',
-            'hud.weapon': 'Arma',
 
             // Game over
             'gameover.title': 'VOCÊ MORREU',
@@ -3255,15 +3333,12 @@ const I18n = {
             'gameover.confirmHint': 'Toque de novo para confirmar',
             'gameover.level': 'Nível',
             'gameover.kills': 'Abates',
-            'gameover.dungeon': 'Dungeon',
             'gameover.prestige': 'Prestígio',
-            'gameover.coins': 'Moedas',
             'gameover.runDamage': 'Dano causado',
             'gameover.runDamageTaken': 'Dano sofrido',
             'gameover.runGold': 'Ouro ganho',
             'gameover.runCombo': 'Combo máx.',
             'gameover.runBosses': 'Chefes',
-            'gameover.runScope': 'desta run',
             'gameover.resumedNote': 'Números desde a retomada no Piso {floor}.',
             'gameover.newRecord': 'Novo recorde!',
             'gameover.prestigeBtn': 'Prestígio',
@@ -3347,28 +3422,13 @@ const I18n = {
             'settings.musicOn': 'Ligada',
             'settings.musicOff': 'Desligada',
             'settings.close': 'Fechar',
-            'settings.audio': 'Áudio',
-            'settings.visuals': 'Visuais',
             'settings.graphicsQuality': 'Qualidade Gráfica',
-            'settings.fontSize': 'Tamanho da Fonte',
             'settings.fontSmall': 'Pequena',
             'settings.fontMedium': 'Média',
             'settings.fontLarge': 'Grande',
-            'settings.accessibility': 'Acessibilidade',
-            'settings.dangerZone': 'Zona de Perigo',
             'settings.joystick': 'Modo Joystick',
-            'settings.sensitivity': 'Sensibilidade',
             'settings.on': 'LIG',
             'settings.off': 'DES',
-            'settings.particles': 'Partículas',
-            'settings.shake': 'Treme-Treme',
-            'settings.hitstop': 'Hitstop',
-            'settings.aimAssist': 'Mira Automática',
-            'settings.reducedMotion': 'Menos Movimento',
-            'settings.low': 'Baixa',
-            'settings.medium': 'Média',
-            'settings.high': 'Alta',
-            'settings.resetSave': '🗑 Resetar Save Completo',
             'panel.shop': 'Mercador',
             'panel.camp': 'Acampamento do Mercador',
             'panel.skills': 'Habilidades',
@@ -3437,7 +3497,6 @@ const I18n = {
             'skills.tier': 'Grau ',
             'skills.copyBuild': '📋 Copiar código do build',
             'skills.tapHint': 'Toque em um nó para ver detalhes e desbloquear.',
-            'skills.speedLimit': '⛔ Limite de velocidade atingido (',
             // Skill tree nodes (per-class keys — some ids repeat across class
             // trees, so the class prefix keeps each node's label correct)
             'skill.warrior.tank1.name': 'Pele de Ferro I',
@@ -3594,12 +3653,6 @@ const I18n = {
             'meta.unlocks': 'Desbloqueios',
 
             // Menu button tooltips
-            'btn.shop': 'Loja',
-            'btn.skills': 'Skills',
-            'btn.stats': 'Estatísticas',
-            'btn.achievements': 'Conquistas',
-            'btn.lore': 'Grimório',
-            'btn.settings': 'Configurações',
 
             // NPC dialog buttons
             'npc.ok': 'OK',
@@ -3624,8 +3677,6 @@ const I18n = {
             'pause.hint': 'Toque para continuar',
             'pause.resume': 'Continuar',
             'pause.quit': 'Desistir e voltar ao menu inicial',
-            'pause.export': 'Exportar Save',
-            'pause.import': 'Importar Save',
             'pause.settings': 'Ajustes',
             'ui.exportSave': 'Exportar Jogo',
             'ui.importSave': 'Importar Jogo',
@@ -3878,47 +3929,6 @@ const I18n = {
             'update.entry.v41.l1': 'Visual: os quatro heróis foram redesenhados, com vista de frente, costas e lado, e animações novas de caminhada, ataque, magia, rolagem e dano. Passos levantam poeira e a rolagem deixa rastro. Só a arte mudou.',
             'update.entry.v42.title': 'v42 — Inimigos com personalidade',
             'update.entry.v42.l1': 'Visual: seis inimigos comuns foram redesenhados — brutamontes chifrudo, goblin atirador, slime, esqueleto, escudeiro e curandeiro — com rosto, armas e animações de andar e atacar. Só a arte mudou.',
-            'update.entry.v43.title': 'v43 — Jefes y criaturas renovados',
-            'update.entry.v43.l1': 'Visual: los 12 jefes y más criaturas — el mímico, la trampa y el mercader — se redibujaron, cada uno con identidad propia y animaciones de caminar, atacar y lanzar. Solo cambió el arte.',
-            'update.entry.v44.title': 'v44 — Animación y 8 direcciones',
-            'update.entry.v44.l1': 'Visual: todos los personajes, enemigos y jefes ahora miran en 8 direcciones y tienen animaciones nuevas — respiración en reposo, caminata de 6 cuadros, ataque por etapas (preparación, golpe, impacto) y voltereta. El pixel art ganó sombreado tonal, esquinas redondeadas y contorno de color. Solo cambió el arte.',
-            'update.entry.v45.title': 'v45 — Diagonales más marcadas',
-            'update.entry.v45.l1': 'Visual: al moverse o apuntar en diagonal, personajes, enemigos y jefes giran más el cuerpo y el rostro, dejando la dirección mucho más clara. Solo cambió el arte.',
-            'update.entry.v46.title': 'v46 — Héroes redibujados en las diagonales',
-            'update.entry.v46.l1': 'Visual: los cuatro héroes ganaron vistas diagonales dibujadas a mano — de frente y de espalda — y el arma ahora aparece en la mano correcta cuando el héroe está de espaldas. Solo cambió el arte.',
-            'update.entry.v47.title': 'v47 — Enemigos y jefes de perfil',
-            'update.entry.v47.l1': 'Visual: 18 enemigos y jefes ganaron un perfil dibujado a mano — bruto, goblin, esqueleto, escudero, curandero y los jefes — y los héroes recibieron rostros y armas con más detalle (cejas, destellos, dagas curvas, bastón con creciente, arco con puntas). Solo cambió el arte.',
-            'update.entry.v48.title': 'v48 — Espaldas dibujadas y armas refinadas',
-            'update.entry.v48.l1': 'Visual: 18 enemigos y jefes ganaron una vista de espaldas dibujada a mano — columna, capa, mochila, alas, espinas — y las armas de los héroes (espada, dagas, bastón y arco) quedaron más detalladas en las vistas laterales y diagonales. Solo cambió el arte.',
-            'update.entry.v49.title': 'v49 — Espaldas para todos',
-            'update.entry.v49.l1': 'Visual: el slime, el mímico, el Devorador de Almas y la trampa también ganaron su propia vista de espaldas — brillo en el lomo, cofre con bisagras y correas, cresta de espinas y ojos en la espalda. Ahora todos los enemigos tienen espaldas dibujadas. Solo cambió el arte.',
-            'update.entry.v50.title': 'v50 — Jefes con nueva silueta',
-            'update.entry.v50.l1': 'Visual: el Guardián Final y el Titán de Magma se redibujaron con una figura más alta y estrecha — ahora muestran las piernas, con hombreras, escudo y espada bien definidos, y la llama del Titán sube de su cabeza. Vale para las tres vistas: frente, perfil y espalda. Solo cambió el arte.',
-            'update.entry.v51.title': 'v51 — Muertes animadas',
-            'update.entry.v51.l1': 'Visual: enemigos y jefes ahora caen, se desmoronan y se desvanecen en cinco cuadros en lugar de desaparecer de golpe, y la mancha del suelo se volvió un charco irregular. Solo cambiaron el arte y la animación.',
-            'update.entry.v53.l2': 'Los paneles ahora se pueden usar con el teclado (Tab y Enter), el Campamento y la MetaTienda respetan el idioma, el texto atenuado tiene más contraste y los números de daño siguen el tamaño de fuente.',
-            'update.entry.v57.title': 'v57 — Sin parpadeos',
-            'update.entry.v57.l1': 'Corregido el parpadeo blanco rápido que aparecía en la pantalla al caminar y en combate.',
-            'update.entry.v57.l2': 'La iluminación y el tono del bioma ahora se mantienen estables en todos los cuadros.',
-            'update.entry.v57.l3': 'Los saves y el progreso no cambian.',
-            'update.entry.v58.title': 'v58 — Correcciones y oro',
-            'update.entry.v58.l1': 'Sangrado, veneno de la nube, marca de la muerte y raíces de la elfa ahora hacen daño con el tiempo; el rastro de fuego del guerrero ya no lo quema a él.',
-            'update.entry.v58.l2': 'El oro del suelo crece con el piso al mismo ritmo que los precios de la tienda; los poderes raros ya no alteran la secuencia del desafío diario.',
-            'update.entry.v58.l3': 'Textos de la tienda, habilidades y logros ya no muestran código suelto. Los saves no cambian.',
-            'update.entry.v56.title': 'v56 — Combos, salas secretas y más poder',
-            'update.entry.v56.l1': 'Combos de 3 golpes en las 4 clases, cada uno con un movimiento distinto y un golpe final más fuerte. Cuatro potenciadores raros (Furia, Frenesí, Imán y Égida) caen de cofres y jefes. Los eventos de Portal Secreto ahora abren una sala de verdad, de tesoro o de desafío.',
-            'update.entry.v56.l2': 'El árbol de habilidades ganó 20 nodos nuevos con efectos de combate y elecciones exclusivas: al comprar uno, el otro se bloquea.',
-            'update.entry.v56.l3': 'Las mascotas fueron redibujadas en pixel art, más grandes y animadas. El águila y el dragón también cambiaron.',
-            'update.entry.v55.title': 'v55 — Poderes que se ven y se sienten',
-            'update.entry.v55.l1': 'El escudo ahora aparece como una burbuja alrededor del héroe y estalla al romperse; la velocidad deja una estela de viento. Los avisos del HUD muestran el valor del escudo y los segundos que quedan de cada efecto.',
-            'update.entry.v55.l2': 'Vida, XP, esencia y mutaciones tienen su propio destello al recogerlos, y los objetos del suelo son más fáciles de distinguir. El Boost de Velocidad de la tienda ahora dice +50%, que es lo que realmente da.',
-            'update.entry.v54.title': 'v54 — Golpes y especiales con impacto',
-            'update.entry.v54.l1': 'Los golpes ahora tienen chispas, ondas de choque y una pausa de impacto; los críticos se notan más. Los jefes también retroceden un poco al ser golpeados.',
-            'update.entry.v54.l2': 'Los especiales de cada clase tienen onda de choque de color, destello, temblor y cámara lenta corta. Solo efectos visuales y de sensación; el daño no cambió.',
-            'update.entry.v53.title': 'v53 — Oro que crece y desafío del Atirador',
-            'update.entry.v53.l1': 'Las monedas del suelo ahora valen más en pisos profundos (6% por piso), para acompañar el precio de la tienda. Además, el desafío diario del Atirador ya se puede iniciar con el mago aún bloqueado.',
-            'update.entry.v52.title': 'v52 — Desafío diario opcional',
-            'update.entry.v52.l1': 'Ahora el desafío diario es opcional: las partidas normales ya no reciben el modificador del día. Para jugarlo, toca el aviso del menú o el botón Diario y elige Jugar desafío de hoy. Si recargas la página y continúas una partida diaria, ya no tendrá los modificadores.',
             'update.entry.v45.title': 'v45 — Diagonais mais marcadas',
             'update.entry.v45.l1': 'Visual: ao andar ou mirar na diagonal, personagens, inimigos e chefes agora giram mais o corpo e o rosto, deixando a direção bem mais clara. Só a arte mudou.',
             'update.entry.v46.title': 'v46 — Heróis redesenhados nas diagonais',
@@ -3938,6 +3948,10 @@ const I18n = {
             'update.entry.v57.l1': 'Corrigido o flash branco rápido que piscava na tela ao andar e em combate.',
             'update.entry.v57.l2': 'A iluminação e o tom do bioma agora ficam estáveis em todos os quadros.',
             'update.entry.v57.l3': 'Seus saves e progresso não mudam.',
+            'update.entry.v59.title': 'v59 — Acessibilidade e fonte',
+            'update.entry.v59.l1': 'A opção Tamanho da Fonte agora muda o texto de todo o jogo, inclusive menus e o que é desenhado na tela. Lojas, habilidades, lore e diário funcionam pelo teclado, e o foco não se perde ao comprar.',
+            'update.entry.v59.l2': 'Diálogos de NPC podem ser usados com setas, Enter e Esc. Contraste de textos do minimapa, chefes e tutorial melhorado, e menos animação para quem prefere movimento reduzido.',
+            'update.entry.v59.l3': 'Textos de combate, loot, acampamento e changelog traduzidos em mais idiomas. Seus saves não mudam.',
             'update.entry.v58.title': 'v58 — Correções e ouro',
             'update.entry.v58.l1': 'Sangramento, veneno da nuvem, marca da morte e raízes da elfa agora causam dano ao longo do tempo; o rastro de fogo do guerreiro não queima mais o próprio dono.',
             'update.entry.v58.l2': 'O ouro do chão cresce com o andar na mesma taxa dos preços da loja; os powerups raros não alteram mais a sequência do desafio diário.',
@@ -4313,7 +4327,6 @@ const I18n = {
             // ============================================================
             // Bosses
             // ============================================================
-            'boss.hpLabel': 'CHEFE',
             'boss.shadow_warden.name': 'Guarda das Sombras',
             'boss.dark_lord.name': 'Senhor das Trevas',
             'boss.death_herald.name': 'Arauto da Morte',
@@ -4326,15 +4339,7 @@ const I18n = {
             'boss.final_guardian.name': 'O Guardião Final',
             'boss.magma_titan.name': 'Titã de Magma',
             'boss.thorn_king.name': 'Rei dos Espinhos',
-            'boss.rewardTitle': '🏆 Troféu do Guardião',
-            'boss.rewardSub': 'O chefe caiu — escolha uma recompensa para a run.',
-            'boss.rewardDismiss': 'Dispensar agora',
-            'boss.guardianName': 'Guardião',
             'boss.fallbackName': 'O Guardião',
-            'boss.rewardSubPre': 'O ',
-            'boss.rewardSubPost': ' caiu — escolha uma recompensa para o resto da run:',
-            'boss.rewardLogPre': ' 🏆 ',
-            'boss.rewardLogPost': ' derrotado! Escolha sua recompensa.',
 
             // ============================================================
             // NPC system
@@ -4483,39 +4488,22 @@ const I18n = {
             'camp.soldOut': 'O mercador não tem mais nada para vender.',
             'camp.dismantled': 'O acampamento já foi desmontado. O portal aguarda.',
             'camp.boonExhausted': 'BÊNÇÃO ESGOTADA (máx. 2)',
-            'ui.objTitle': '🎯 Objetivo:',
-            'ui.objOngoing': 'em andamento',
-            'ui.objFailed': 'não alcançado',
-            'ui.objDoneSuffix': ' — concluído',
-            'ui.objFailedSuffix': ' — falhou',
-            'ui.done': 'Concluído',
-            'ui.unavailable': 'Indisponível',
-            'ui.max': 'MAX',
-            'ui.tierLevel': 'Nível ',
-            'ui.points': 'pts',
             'ui.questLoreReward': 'Recompensa: fragmento de lore — ',
 
             // ============================================================
             // HUD / DamageNumbers
             // ============================================================
-            'hud.essence': 'ESSÊNCIA!',
-            'hud.x2': 'x2!',
-            'hud.nocoins': 'Moedas insuficientes!',
-            'hud.exec': 'EXEC!',
-            'hud.stun': 'STUN!',
-            'hud.bleed': 'SANGRIA!',
-            'hud.frost': 'GEADA!',
-            'hud.shatter': 'SHATTER!',
-            'hud.block': 'BLOQUEIO',
             'hud.levelUp': 'LEVEL UP!',
-            'hud.dash': 'DASH!',
-            'hud.overheated': 'SUPERAQUECIDO!',
-            'hud.spellCombo': 'SPELL COMBO!',
-            'hud.dodge': 'ESQUIVA!',
-            'hud.orbShield': 'ORB SHIELD!',
-            'hud.fury': 'FRIA!',
-            'hud.bonus': '  BNUS!',
-            'hud.combo': 'COMBO!',
+            'hud.bonus': '  BÔNUS!',
+            'run.obj.label': 'Objetivo:',
+            'run.obj.done': 'concluído',
+            'run.obj.failed': 'não alcançado',
+            'run.obj.inProgress': 'em andamento',
+            'run.obj.failedShort': 'falhou',
+            'run.obj.floor': 'piso',
+            'run.obj.dmg': 'dano',
+            'run.obj.min': 'min',
+            'quests.none': 'Nenhuma missão ativa nesta partida.',
 
             // ============================================================
             // Logs
@@ -4523,7 +4511,6 @@ const I18n = {
             'log.gfxReduced': ' Qualidade visual reduzida (desempenho)',
             'log.gfxRestored': ' Qualidade visual restaurada',
             'log.autoPerfOn': ' Modo automático de desempenho ativado (efeitos desligados)',
-            'log.autoPerfOff': ' Desempenho recuperado - efeitos restaurados',
             'log.saveCreated': ' Ponto de save criado!',
             'log.saveUnavailable': 'Não é possível salvar agora.',
             'log.copyResult': ' Resultado copiado!',
@@ -4567,7 +4554,6 @@ const I18n = {
             'log.boonApplied': ' Bênção da run: ',
             'log.campEstablished': ' O mercador monta acampamento: compre, descanse ou escolha uma bênção antes de descer.',
             'log.objectiveStart': ' Objetivo da run: ',
-            'log.objectiveComplete': ' 🎯 Objetivo concluído: ',
             'log.loreDiscovered': ' Lore descoberta: ',
             'log.seedActivePre': 'Seed ativa (#',
             'log.seedActivePost': ') - nova partida terá mapa e encontros determinísticos por piso.',
@@ -4589,7 +4575,6 @@ const I18n = {
             'log.bossPhase4': ' - FASE 4!',
             'log.bossPhase3': ' - FASE 3!',
             'log.bossPhase2': ' - FASE 2!',
-            'log.bossCharge': ' vai carregar! CUIDADO!',
             'log.bossGuided': ' lançou projétil guiado!',
             'log.bossTeleported': ' teleportou!',
             'log.firePillars': ' Pilares de fogo!',
@@ -4608,15 +4593,11 @@ const I18n = {
             'hud.mapExpanded': 'MAPA EXPANDIDO',
             'hud.parry': 'APARO!',
             'hud.tapOutside': 'Toque fora para fechar',
-            'tutorial.pressSpace': '  PRESIONE ESPAÇO',
-            'tutorial.pressShift': '  PRESIONE SHIFT',
+            'tutorial.pressSpace': '  PRESSIONE ESPAÇO',
+            'tutorial.pressShift': '  PRESSIONE SHIFT',
             'tutorial.targetDummy': ' ALVO: BONECO DE TREINO',
             'log.levelUp': ' Nível UP! ',
-            'log.warCry': ' WAR CRY!',
-            'log.groundSlam': ' GROUND SLAM!',
             'log.berserkerRage': ' BERSERKER RAGE!',
-            'log.arrowStorm': ' ARROW STORM!',
-            'log.arrowBarrage': ' ARROW BARRAGE!',
             'log.deathMark': ' DEATH MARK!',
             'log.meteor': ' METEOR!',
             'log.arcaneStorm': ' ARCANE STORM!',
@@ -4638,22 +4619,9 @@ const I18n = {
             'log.tutorialCompletePre': ' Tutorial completo! +',
             'log.tutorialCompletePost': ' moedas. Boa sorte!',
             'log.trainingDummy': ' Boneco de treino apareceu!',
-            'log.trainingItem': ' Item de treino apareceu!',
-            'log.trainingXp': ' XP de treino apareceu!',
             'log.trainingWeapon': ' Equipamento de treino apareceu!',
             'log.pressBack': 'Pressione Voltar novamente para sair.',
             'log.itemBought': ' comprado!',
-            'log.eventResultNothing': 'Nada aconteceu.',
-            'log.eventNoCoins': 'Moedas insuficientes.',
-            'log.eventCoins': ' moedas',
-            'log.eventHp': ' HP',
-            'log.eventMaxHp': ' HP máximo',
-            'log.eventDmg': '% dano',
-            'log.eventSpeed': '% velocidade',
-            'log.eventShield': ' de escudo',
-            'log.eventCursePre': 'Maldição: +',
-            'log.eventCursePost': '% dano recebido',
-            'log.prestigeRewardName': 'Prestige ',
 
             // ============================================================
             // Toasts
@@ -4670,7 +4638,6 @@ const I18n = {
 
             // Start screen (static labels)
             'start.modeDesc': 'Evolua seu personagem em masmorras cada vez mais difíceis.',
-            'start.dailyActive': '⚡ Desafio de hoje ativo: ',
             'start.dailyInvite': 'Desafio de hoje: {name} — toque para jogar',
             'start.tagline': 'O Abismo Aguarda',
             'start.modeDungeon': 'Masmorra',
@@ -4751,6 +4718,7 @@ const I18n = {
             'gameover.share': '🔗 COMPARTILHAR RESULTADO',
             'bossReward.title': '🏆 Troféu do Guardião',
             'bossReward.sub': 'O chefe caiu — escolha uma recompensa para a run.',
+            'bossReward.subNamed': 'O {n} caiu — escolha uma recompensa para o resto da run:',
             'bossReward.dismiss': 'Dispensar agora',
             'continue.in': 'Continue em',
             'win.title': 'SUPERFÍCIE ALCANÇADA!',
@@ -4758,22 +4726,53 @@ const I18n = {
         },
 
         en: {
-            // Game title
-            'game.title': 'Krevathorn',
+            // Combat, loot, Camp and MetaLoja texts (wired to the code in T2)
+            'ui.unavailable': 'Unavailable',
+            'hud.x2': 'x2!',
+            'hud.essence': 'ESSENCE!',
+            'hud.nocoins': 'Not enough coins!',
+            'hud.bleed': 'BLEED!',
+            'hud.frost': 'FROST!',
+            'hud.shatter': 'SHATTER!',
+            'hud.block': 'BLOCKED',
+            'hud.combo': 'COMBO!',
+            'hud.dash': 'DASH!',
+            'hud.overheated': 'OVERHEATED!',
+            'hud.spellCombo': 'SPELL COMBO!',
+            'hud.dodge': 'DODGE!',
+            'hud.orbShield': 'ORB SHIELD!',
+            'combat.thorns': 'THORNS!',
+            'combat.pact': 'PACT!',
+            'combat.overload': 'OVERLOAD!',
+            'combat.gale': 'GALE BURST!',
+            'combat.relicFury': 'FURY!',
+            'loot.uncommon': 'UNCOMMON',
+            'loot.rare': 'RARE',
+            'loot.epic': 'EPIC',
+            'loot.legendary': 'LEGENDARY',
+            'loot.statDmg': ' Dmg  ',
+            'loot.statSpeed': '% Spd  ',
+            'loot.statRange': '% Range',
+            'loot.baseWeapon': 'Base weapon',
+            'panel.quitToMenu': 'Give up and return to the main menu',
+            'log.eventCoins': ' coins',
+            'log.eventHp': ' HP',
+            'log.eventMaxHp': ' max HP',
+            'log.eventDmg': '% damage',
+            'log.eventSpeed': '% speed',
+            'log.eventShield': ' shield',
+            'log.eventCursePre': 'Curse: +',
+            'log.eventCursePost': '% damage taken',
+            'log.eventResultNothing': 'Nothing happened.',
+            'log.eventNoCoins': 'Not enough coins.',
+            'log.bossRewardPre': ' 🏆 ',
+            'log.bossRewardPost': ' defeated! Choose your reward.',
 
             // Start screen
-            'start.chooseClass': 'Choose your Class:',
-            'start.tapToStart': 'Tap a class to start',
-            'start.tutorial': 'How to Play / Tutorial',
-            'start.settings': 'Settings',
             'start.seedOptions': 'Options — Seed',
             'start.buildOptions': 'Options — Build (code & archetypes)',
 
             // Class names
-            'class.warrior': 'WARRIOR',
-            'class.rogue': 'ROGUE',
-            'class.mage': 'MAGE',
-            'class.elf': 'ELF',
 
             // Class descriptions
             'class.warrior.desc': 'High HP, heavy damage.',
@@ -4783,11 +4782,6 @@ const I18n = {
 
             // HUD labels
             'hud.level': 'Level',
-            'hud.xp': 'XP',
-            'hud.coins': 'Coins',
-            'hud.portal': 'PORTAL!',
-            'hud.kills': 'Kills',
-            'hud.weapon': 'Weapon',
 
             // Game over
             'gameover.title': 'YOU DIED',
@@ -4795,15 +4789,12 @@ const I18n = {
             'gameover.confirmHint': 'Tap again to confirm',
             'gameover.level': 'Level',
             'gameover.kills': 'Kills',
-            'gameover.dungeon': 'Dungeon',
             'gameover.prestige': 'Prestige',
-            'gameover.coins': 'Coins',
             'gameover.runDamage': 'Damage dealt',
             'gameover.runDamageTaken': 'Damage taken',
             'gameover.runGold': 'Gold earned',
             'gameover.runCombo': 'Max combo',
             'gameover.runBosses': 'Bosses',
-            'gameover.runScope': 'this run',
             'gameover.resumedNote': 'Numbers since resuming on Floor {floor}.',
             'gameover.newRecord': 'New record!',
             'gameover.prestigeBtn': 'Prestige',
@@ -4887,28 +4878,13 @@ const I18n = {
             'settings.musicOn': 'On',
             'settings.musicOff': 'Off',
             'settings.close': 'Close',
-            'settings.audio': 'Audio',
-            'settings.visuals': 'Visuals',
             'settings.graphicsQuality': 'Graphics Quality',
-            'settings.fontSize': 'Font Size',
             'settings.fontSmall': 'Small',
             'settings.fontMedium': 'Medium',
             'settings.fontLarge': 'Large',
-            'settings.accessibility': 'Accessibility',
-            'settings.dangerZone': 'Danger Zone',
             'settings.joystick': 'Joystick Mode',
-            'settings.sensitivity': 'Sensitivity',
             'settings.on': 'ON',
             'settings.off': 'OFF',
-            'settings.particles': 'Particles',
-            'settings.shake': 'Screen Shake',
-            'settings.hitstop': 'Hitstop',
-            'settings.aimAssist': 'Aim Assist',
-            'settings.reducedMotion': 'Reduced Motion',
-            'settings.low': 'Low',
-            'settings.medium': 'Medium',
-            'settings.high': 'High',
-            'settings.resetSave': '🗑 Full Save Reset',
             'panel.shop': 'Merchant',
             'panel.camp': 'Merchant Camp',
             'panel.skills': 'Skills',
@@ -4977,7 +4953,6 @@ const I18n = {
             'skills.tier': 'Tier ',
             'skills.copyBuild': '📋 Copy build code',
             'skills.tapHint': 'Tap a node to see details and unlock it.',
-            'skills.speedLimit': '⛔ Speed limit reached (',
             // Skill tree nodes (per-class keys — some ids repeat across class
             // trees, so the class prefix keeps each node's label correct)
             'skill.warrior.tank1.name': 'Iron Skin I',
@@ -5134,12 +5109,6 @@ const I18n = {
             'meta.unlocks': 'Unlocks',
 
             // Menu button tooltips
-            'btn.shop': 'Shop',
-            'btn.skills': 'Skills',
-            'btn.stats': 'Stats',
-            'btn.achievements': 'Achievements',
-            'btn.lore': 'Grimoire',
-            'btn.settings': 'Settings',
 
             // NPC dialog buttons
             'npc.ok': 'OK',
@@ -5164,8 +5133,6 @@ const I18n = {
             'pause.hint': 'Tap to resume',
             'pause.resume': 'Resume',
             'pause.quit': 'Give up and return to main menu',
-            'pause.export': 'Export Save',
-            'pause.import': 'Import Save',
             'pause.settings': 'Settings',
             'ui.exportSave': 'Export Save',
             'ui.importSave': 'Import Save',
@@ -5441,6 +5408,10 @@ const I18n = {
             'update.entry.v57.l1': 'Fixed the quick white flashing on screen while walking and in combat.',
             'update.entry.v57.l2': 'Lighting and biome tint now stay steady on every frame.',
             'update.entry.v57.l3': 'Your saves and progress are unchanged.',
+            'update.entry.v59.title': 'v59 — Accessibility and font size',
+            'update.entry.v59.l1': 'The Font Size option now changes text across the whole game, including menus and on-screen drawn text. Shop, skills, lore and daily work with the keyboard, and focus is kept after buying.',
+            'update.entry.v59.l2': 'NPC dialogs can be used with arrows, Enter and Esc. Better text contrast on the minimap, bosses and tutorial, and less animation if you prefer reduced motion.',
+            'update.entry.v59.l3': 'Combat, loot, camp and changelog text translated in more languages. Your saves are unchanged.',
             'update.entry.v58.title': 'v58 — Fixes and gold',
             'update.entry.v58.l1': 'Bleed, poison cloud, death mark and the elf roots now deal damage over time; the warrior fire trail no longer burns its owner.',
             'update.entry.v58.l2': 'Floor gold grows with the floor at the same rate as shop prices; rare powerups no longer shift the daily challenge sequence.',
@@ -5812,7 +5783,6 @@ const I18n = {
             // ============================================================
             // Bosses
             // ============================================================
-            'boss.hpLabel': 'BOSS',
             'boss.shadow_warden.name': 'Shadow Warden',
             'boss.dark_lord.name': 'Lord of Darkness',
             'boss.death_herald.name': 'Herald of Death',
@@ -5825,15 +5795,7 @@ const I18n = {
             'boss.final_guardian.name': 'The Final Guardian',
             'boss.magma_titan.name': 'Magma Titan',
             'boss.thorn_king.name': 'King of Thorns',
-            'boss.rewardTitle': '🏆 Guardian Trophy',
-            'boss.rewardSub': 'The boss fell — choose a reward for the run.',
-            'boss.rewardDismiss': 'Dismiss now',
-            'boss.guardianName': 'Guardian',
             'boss.fallbackName': 'The Guardian',
-            'boss.rewardSubPre': 'The ',
-            'boss.rewardSubPost': ' fell — choose a reward for the rest of the run:',
-            'boss.rewardLogPre': ' 🏆 ',
-            'boss.rewardLogPost': ' defeated! Choose your reward.',
 
             // ============================================================
             // NPC system
@@ -5982,39 +5944,22 @@ const I18n = {
             'camp.soldOut': 'The merchant has nothing left to sell.',
             'camp.dismantled': 'The camp has been dismantled. The portal awaits.',
             'camp.boonExhausted': 'BLESSING EXHAUSTED (max 2)',
-            'ui.objTitle': '🎯 Objective:',
-            'ui.objOngoing': 'in progress',
-            'ui.objFailed': 'not reached',
-            'ui.objDoneSuffix': ' — completed',
-            'ui.objFailedSuffix': ' — failed',
-            'ui.done': 'Completed',
-            'ui.unavailable': 'Unavailable',
-            'ui.max': 'MAX',
-            'ui.tierLevel': 'Level ',
-            'ui.points': 'pts',
             'ui.questLoreReward': 'Reward: lore fragment — ',
 
             // ============================================================
             // HUD / DamageNumbers
             // ============================================================
-            'hud.essence': 'ESSENCE!',
-            'hud.x2': 'x2!',
-            'hud.nocoins': 'Not enough coins!',
-            'hud.exec': 'EXEC!',
-            'hud.stun': 'STUN!',
-            'hud.bleed': 'BLEED!',
-            'hud.frost': 'FROST!',
-            'hud.shatter': 'SHATTER!',
-            'hud.block': 'BLOCKED',
             'hud.levelUp': 'LEVEL UP!',
-            'hud.dash': 'DASH!',
-            'hud.overheated': 'OVERHEATED!',
-            'hud.spellCombo': 'SPELL COMBO!',
-            'hud.dodge': 'DODGE!',
-            'hud.orbShield': 'ORB SHIELD!',
-            'hud.fury': 'FURY!',
             'hud.bonus': '  BONUS!',
-            'hud.combo': 'COMBO!',
+            'run.obj.label': 'Objective:',
+            'run.obj.done': 'completed',
+            'run.obj.failed': 'not reached',
+            'run.obj.inProgress': 'in progress',
+            'run.obj.failedShort': 'failed',
+            'run.obj.floor': 'floor',
+            'run.obj.dmg': 'dmg',
+            'run.obj.min': 'min',
+            'quests.none': 'No active quests in this run.',
 
             // ============================================================
             // Logs
@@ -6022,7 +5967,6 @@ const I18n = {
             'log.gfxReduced': ' Reduced visual quality (performance)',
             'log.gfxRestored': ' Visual quality restored',
             'log.autoPerfOn': ' Auto performance mode enabled (effects off)',
-            'log.autoPerfOff': ' Performance recovered - effects restored',
             'log.saveCreated': ' Save point created!',
             'log.saveUnavailable': 'Cannot save right now.',
             'log.copyResult': ' Result copied!',
@@ -6066,7 +6010,6 @@ const I18n = {
             'log.boonApplied': ' Run blessing: ',
             'log.campEstablished': ' The merchant sets up camp: buy, rest or choose a blessing before descending.',
             'log.objectiveStart': ' Run objective: ',
-            'log.objectiveComplete': ' 🎯 Objective complete: ',
             'log.loreDiscovered': ' Lore discovered: ',
             'log.seedActivePre': 'Seed active (#',
             'log.seedActivePost': ') - new game will have deterministic map and encounters per floor.',
@@ -6088,7 +6031,6 @@ const I18n = {
             'log.bossPhase4': ' - PHASE 4!',
             'log.bossPhase3': ' - PHASE 3!',
             'log.bossPhase2': ' - PHASE 2!',
-            'log.bossCharge': ' is about to charge! WATCH OUT!',
             'log.bossGuided': ' fired a guided projectile!',
             'log.bossTeleported': ' teleported!',
             'log.firePillars': ' Pillars of fire!',
@@ -6111,11 +6053,7 @@ const I18n = {
             'tutorial.pressShift': '  PRESS SHIFT',
             'tutorial.targetDummy': ' TARGET: TRAINING DUMMY',
             'log.levelUp': ' LEVEL UP! ',
-            'log.warCry': ' WAR CRY!',
-            'log.groundSlam': ' GROUND SLAM!',
             'log.berserkerRage': ' BERSERKER RAGE!',
-            'log.arrowStorm': ' ARROW STORM!',
-            'log.arrowBarrage': ' ARROW BARRAGE!',
             'log.deathMark': ' DEATH MARK!',
             'log.meteor': ' METEOR!',
             'log.arcaneStorm': ' ARCANE STORM!',
@@ -6137,22 +6075,9 @@ const I18n = {
             'log.tutorialCompletePre': ' Tutorial complete! +',
             'log.tutorialCompletePost': ' coins. Good luck!',
             'log.trainingDummy': ' Training dummy appeared!',
-            'log.trainingItem': ' Training item appeared!',
-            'log.trainingXp': ' Training XP appeared!',
             'log.trainingWeapon': ' Training equipment appeared!',
             'log.pressBack': 'Press Back again to exit.',
             'log.itemBought': ' purchased!',
-            'log.eventResultNothing': 'Nothing happened.',
-            'log.eventNoCoins': 'Not enough coins.',
-            'log.eventCoins': ' coins',
-            'log.eventHp': ' HP',
-            'log.eventMaxHp': ' max HP',
-            'log.eventDmg': '% damage',
-            'log.eventSpeed': '% speed',
-            'log.eventShield': ' shield',
-            'log.eventCursePre': 'Curse: +',
-            'log.eventCursePost': '% damage taken',
-            'log.prestigeRewardName': 'Prestige ',
 
             // ============================================================
             // Toasts
@@ -6169,7 +6094,6 @@ const I18n = {
 
             // Start screen (static labels)
             'start.modeDesc': 'Evolve your character through ever-harder dungeons.',
-            'start.dailyActive': '⚡ Today\'s challenge active: ',
             'start.dailyInvite': 'Today\'s challenge: {name} — tap to play',
             'start.tagline': 'The Abyss Awaits',
             'start.modeDungeon': 'Dungeon',
@@ -6250,6 +6174,7 @@ const I18n = {
             'gameover.share': '🔗 SHARE RESULT',
             'bossReward.title': '🏆 Guardian Trophy',
             'bossReward.sub': 'The boss fell — choose a run reward.',
+            'bossReward.subNamed': '{n} has fallen — choose a reward for the rest of the run:',
             'bossReward.dismiss': 'Dismiss now',
             'continue.in': 'Continue in',
             'win.title': 'SURFACE REACHED!',
@@ -6257,22 +6182,53 @@ const I18n = {
         },
 
         es: {
-            // Game title
-            'game.title': 'Krevathorn',
+            // Textos de combate, botín, Campamento y MetaLoja (ligados al código en T2)
+            'ui.unavailable': 'No disponible',
+            'hud.x2': '¡x2!',
+            'hud.essence': '¡ESENCIA!',
+            'hud.nocoins': '¡Monedas insuficientes!',
+            'hud.bleed': '¡SANGRADO!',
+            'hud.frost': '¡ESCARCHA!',
+            'hud.shatter': '¡DESTRUCCIÓN!',
+            'hud.block': 'BLOQUEO',
+            'hud.combo': '¡COMBO!',
+            'hud.dash': '¡DASH!',
+            'hud.overheated': '¡SOBRECALENTADO!',
+            'hud.spellCombo': '¡COMBO DE HECHIZOS!',
+            'hud.dodge': '¡ESQUIVA!',
+            'hud.orbShield': '¡ESCUDO ORBE!',
+            'combat.thorns': '¡ESPINAS!',
+            'combat.pact': '¡PACTO!',
+            'combat.overload': '¡SOBRECARGA!',
+            'combat.gale': '¡RÁFAGA!',
+            'combat.relicFury': '¡FURIA!',
+            'loot.uncommon': 'INCOMÚN',
+            'loot.rare': 'RARO',
+            'loot.epic': 'ÉPICO',
+            'loot.legendary': 'LEGENDARIO',
+            'loot.statDmg': ' Daño  ',
+            'loot.statSpeed': '% Vel  ',
+            'loot.statRange': '% Alcance',
+            'loot.baseWeapon': 'Arma base',
+            'panel.quitToMenu': 'Rendirse y volver al menú principal',
+            'log.eventCoins': ' monedas',
+            'log.eventHp': ' HP',
+            'log.eventMaxHp': ' HP máximo',
+            'log.eventDmg': '% de daño',
+            'log.eventSpeed': '% de velocidad',
+            'log.eventShield': ' de escudo',
+            'log.eventCursePre': 'Maldición: +',
+            'log.eventCursePost': '% de daño recibido',
+            'log.eventResultNothing': 'No pasó nada.',
+            'log.eventNoCoins': 'Monedas insuficientes.',
+            'log.bossRewardPre': ' 🏆 ',
+            'log.bossRewardPost': ' derrotado! Elige tu recompensa.',
 
             // Start screen
-            'start.chooseClass': 'Elige tu Clase:',
-            'start.tapToStart': 'Toca una clase para empezar',
-            'start.tutorial': 'Cómo Jugar / Tutorial',
-            'start.settings': 'Configuración',
             'start.seedOptions': 'Opciones — Semilla',
             'start.buildOptions': 'Opciones — Build (código y arquetipos)',
 
             // Class names
-            'class.warrior': 'GUERRERO',
-            'class.rogue': 'LADRON',
-            'class.mage': 'MAGO',
-            'class.elf': 'ELFA',
 
             // Class descriptions
             'class.warrior.desc': 'Mucha vida, daño pesado.',
@@ -6282,11 +6238,6 @@ const I18n = {
 
             // HUD labels
             'hud.level': 'Nivel',
-            'hud.xp': 'XP',
-            'hud.coins': 'Monedas',
-            'hud.portal': 'PORTAL!',
-            'hud.kills': 'Bajas',
-            'hud.weapon': 'Arma',
 
             // Game over
             'gameover.title': 'HAS MUERTO',
@@ -6294,15 +6245,12 @@ const I18n = {
             'gameover.confirmHint': 'Toca otra vez para confirmar',
             'gameover.level': 'Nivel',
             'gameover.kills': 'Bajas',
-            'gameover.dungeon': 'Mazmorra',
             'gameover.prestige': 'Prestigio',
-            'gameover.coins': 'Monedas',
             'gameover.runDamage': 'Daño causado',
             'gameover.runDamageTaken': 'Daño recibido',
             'gameover.runGold': 'Oro ganado',
             'gameover.runCombo': 'Combo máx.',
             'gameover.runBosses': 'Jefes',
-            'gameover.runScope': 'de esta partida',
             'gameover.resumedNote': 'Números desde la reanudación en el piso {floor}.',
             'gameover.newRecord': '¡Nuevo récord!',
             'gameover.prestigeBtn': 'Prestigio',
@@ -6386,28 +6334,13 @@ const I18n = {
             'settings.musicOn': 'Activada',
             'settings.musicOff': 'Desactivada',
             'settings.close': 'Cerrar',
-            'settings.audio': 'Audio',
-            'settings.visuals': 'Visuales',
             'settings.graphicsQuality': 'Calidad Gráfica',
-            'settings.fontSize': 'Tamaño de Fuente',
             'settings.fontSmall': 'Pequeña',
             'settings.fontMedium': 'Mediana',
             'settings.fontLarge': 'Grande',
-            'settings.accessibility': 'Accesibilidad',
-            'settings.dangerZone': 'Zona de Peligro',
             'settings.joystick': 'Modo Joystick',
-            'settings.sensitivity': 'Sensibilidad',
             'settings.on': 'SÍ',
             'settings.off': 'NO',
-            'settings.particles': 'Partículas',
-            'settings.shake': 'Sacudida',
-            'settings.hitstop': 'Hitstop',
-            'settings.aimAssist': 'Mira Automática',
-            'settings.reducedMotion': 'Menos Movimiento',
-            'settings.low': 'Baja',
-            'settings.medium': 'Media',
-            'settings.high': 'Alta',
-            'settings.resetSave': '🗑 Reiniciar Guardado Completo',
             'panel.shop': 'Mercader',
             'panel.camp': 'Campamento del Mercader',
             'panel.skills': 'Habilidades',
@@ -6476,7 +6409,6 @@ const I18n = {
             'skills.tier': 'Grado ',
             'skills.copyBuild': '📋 Copiar código de build',
             'skills.tapHint': 'Toca un nodo para ver detalles y desbloquearlo.',
-            'skills.speedLimit': '⛔ Límite de velocidad alcanzado (',
             // Skill tree nodes (per-class keys — some ids repeat across class
             // trees, so the class prefix keeps each node's label correct)
             'skill.warrior.tank1.name': 'Piel de Hierro I',
@@ -6633,12 +6565,6 @@ const I18n = {
             'meta.unlocks': 'Desbloqueos',
 
             // Menu button tooltips
-            'btn.shop': 'Tienda',
-            'btn.skills': 'Habilidades',
-            'btn.stats': 'Estadísticas',
-            'btn.achievements': 'Logros',
-            'btn.lore': 'Grimorio',
-            'btn.settings': 'Configuración',
 
             // NPC dialog buttons
             'npc.ok': 'OK',
@@ -6663,8 +6589,6 @@ const I18n = {
             'pause.hint': 'Toca para continuar',
             'pause.resume': 'Continuar',
             'pause.quit': 'Rendirse y volver al menú inicial',
-            'pause.export': 'Exportar Partida',
-            'pause.import': 'Importar Partida',
             'pause.settings': 'Ajustes',
             'ui.exportSave': 'Exportar partida',
             'ui.importSave': 'Importar partida',
@@ -6917,6 +6841,51 @@ const I18n = {
             'update.entry.v41.l1': 'Visual: los cuatro héroes se redibujaron, con vista de frente, espalda y lado, y animaciones nuevas de caminar, ataque, magia, rodar y daño. Los pasos levantan polvo y la voltereta deja estela. Solo cambió el arte.',
             'update.entry.v42.title': 'v42 — Enemigos con personalidad',
             'update.entry.v42.l1': 'Visual: seis enemigos comunes se redibujaron — bruto con cuernos, goblin ballestero, slime, esqueleto, escudero y curandero — con rostro, armas y animaciones de caminar y atacar. Solo cambió el arte.',
+            'update.entry.v43.title': 'v43 — Jefes y criaturas renovados',
+            'update.entry.v43.l1': 'Visual: los 12 jefes y más criaturas — el mímico, la trampa y el mercader — se redibujaron, cada uno con identidad propia y animaciones de caminar, atacar y lanzar. Solo cambió el arte.',
+            'update.entry.v44.title': 'v44 — Animación y 8 direcciones',
+            'update.entry.v44.l1': 'Visual: todos los personajes, enemigos y jefes ahora miran en 8 direcciones y tienen animaciones nuevas — respiración en reposo, caminata de 6 cuadros, ataque por etapas (preparación, golpe, impacto) y voltereta. El pixel art ganó sombreado tonal, esquinas redondeadas y contorno de color. Solo cambió el arte.',
+            'update.entry.v45.title': 'v45 — Diagonales más marcadas',
+            'update.entry.v45.l1': 'Visual: al moverse o apuntar en diagonal, personajes, enemigos y jefes giran más el cuerpo y el rostro, dejando la dirección mucho más clara. Solo cambió el arte.',
+            'update.entry.v46.title': 'v46 — Héroes redibujados en las diagonales',
+            'update.entry.v46.l1': 'Visual: los cuatro héroes ganaron vistas diagonales dibujadas a mano — de frente y de espalda — y el arma ahora aparece en la mano correcta cuando el héroe está de espaldas. Solo cambió el arte.',
+            'update.entry.v47.title': 'v47 — Enemigos y jefes de perfil',
+            'update.entry.v47.l1': 'Visual: 18 enemigos y jefes ganaron un perfil dibujado a mano — bruto, goblin, esqueleto, escudero, curandero y los jefes — y los héroes recibieron rostros y armas con más detalle (cejas, destellos, dagas curvas, bastón con creciente, arco con puntas). Solo cambió el arte.',
+            'update.entry.v48.title': 'v48 — Espaldas dibujadas y armas refinadas',
+            'update.entry.v48.l1': 'Visual: 18 enemigos y jefes ganaron una vista de espaldas dibujada a mano — columna, capa, mochila, alas, espinas — y las armas de los héroes (espada, dagas, bastón y arco) quedaron más detalladas en las vistas laterales y diagonales. Solo cambió el arte.',
+            'update.entry.v49.title': 'v49 — Espaldas para todos',
+            'update.entry.v49.l1': 'Visual: el slime, el mímico, el Devorador de Almas y la trampa también ganaron su propia vista de espaldas — brillo en el lomo, cofre con bisagras y correas, cresta de espinas y ojos en la espalda. Ahora todos los enemigos tienen espaldas dibujadas. Solo cambió el arte.',
+            'update.entry.v50.title': 'v50 — Jefes con nueva silueta',
+            'update.entry.v50.l1': 'Visual: el Guardián Final y el Titán de Magma se redibujaron con una figura más alta y estrecha — ahora muestran las piernas, con hombreras, escudo y espada bien definidos, y la llama del Titán sube de su cabeza. Vale para las tres vistas: frente, perfil y espalda. Solo cambió el arte.',
+            'update.entry.v51.title': 'v51 — Muertes animadas',
+            'update.entry.v51.l1': 'Visual: enemigos y jefes ahora caen, se desmoronan y se desvanecen en cinco cuadros en lugar de desaparecer de golpe, y la mancha del suelo se volvió un charco irregular. Solo cambiaron el arte y la animación.',
+            'update.entry.v53.title': 'v53 — Oro que crece y desafío del Atirador',
+            'update.entry.v53.l1': 'Las monedas del suelo ahora valen más en pisos profundos (6% por piso), para acompañar el precio de la tienda. Además, el desafío diario del Atirador ya se puede iniciar con el mago aún bloqueado.',
+            'update.entry.v53.l2': 'Los paneles ahora se pueden usar con el teclado (Tab y Enter), el Campamento y la MetaTienda respetan el idioma, el texto atenuado tiene más contraste y los números de daño siguen el tamaño de fuente.',
+            'update.entry.v52.title': 'v52 — Desafío diario opcional',
+            'update.entry.v52.l1': 'Ahora el desafío diario es opcional: las partidas normales ya no reciben el modificador del día. Para jugarlo, toca el aviso del menú o el botón Diario y elige Jugar desafío de hoy. Si recargas la página y continúas una partida diaria, ya no tendrá los modificadores.',
+            'update.entry.v54.title': 'v54 — Golpes y especiales con impacto',
+            'update.entry.v54.l1': 'Los golpes ahora tienen chispas, ondas de choque y una pausa de impacto; los críticos se notan más. Los jefes también retroceden un poco al ser golpeados.',
+            'update.entry.v54.l2': 'Los especiales de cada clase tienen onda de choque de color, destello, temblor y cámara lenta corta. Solo efectos visuales y de sensación; el daño no cambió.',
+            'update.entry.v55.title': 'v55 — Poderes que se ven y se sienten',
+            'update.entry.v55.l1': 'El escudo ahora aparece como una burbuja alrededor del héroe y estalla al romperse; la velocidad deja una estela de viento. Los avisos del HUD muestran el valor del escudo y los segundos que quedan de cada efecto.',
+            'update.entry.v55.l2': 'Vida, XP, esencia y mutaciones tienen su propio destello al recogerlos, y los objetos del suelo son más fáciles de distinguir. El Boost de Velocidad de la tienda ahora dice +50%, que es lo que realmente da.',
+            'update.entry.v56.title': 'v56 — Combos, salas secretas y más poder',
+            'update.entry.v56.l1': 'Combos de 3 golpes en las 4 clases, cada uno con un movimiento distinto y un golpe final más fuerte. Cuatro potenciadores raros (Furia, Frenesí, Imán y Égida) caen de cofres y jefes. Los eventos de Portal Secreto ahora abren una sala de verdad, de tesoro o de desafío.',
+            'update.entry.v56.l2': 'El árbol de habilidades ganó 20 nodos nuevos con efectos de combate y elecciones exclusivas: al comprar uno, el otro se bloquea.',
+            'update.entry.v56.l3': 'Las mascotas fueron redibujadas en pixel art, más grandes y animadas. El águila y el dragón también cambiaron.',
+            'update.entry.v57.title': 'v57 — Sin parpadeos',
+            'update.entry.v57.l1': 'Corregido el parpadeo blanco rápido que aparecía en la pantalla al caminar y en combate.',
+            'update.entry.v57.l2': 'La iluminación y el tono del bioma ahora se mantienen estables en todos los cuadros.',
+            'update.entry.v57.l3': 'Los saves y el progreso no cambian.',
+            'update.entry.v59.title': 'v59 — Accesibilidad y fuente',
+            'update.entry.v59.l1': 'La opción Tamaño de fuente ahora cambia el texto de todo el juego, incluidos los menús y lo dibujado en pantalla. Tienda, habilidades, lore y diario funcionan con el teclado, y el foco no se pierde al comprar.',
+            'update.entry.v59.l2': 'Los diálogos de NPC se manejan con flechas, Enter y Esc. Mejor contraste de textos en el minimapa, jefes y tutorial, y menos animación si prefieres movimiento reducido.',
+            'update.entry.v59.l3': 'Textos de combate, botín, campamento y registro de cambios traducidos a más idiomas. Los saves no cambian.',
+            'update.entry.v58.title': 'v58 — Correcciones y oro',
+            'update.entry.v58.l1': 'Sangrado, veneno de la nube, marca de la muerte y raíces de la elfa ahora hacen daño con el tiempo; el rastro de fuego del guerrero ya no lo quema a él.',
+            'update.entry.v58.l2': 'El oro del suelo crece con el piso al mismo ritmo que los precios de la tienda; los poderes raros ya no alteran la secuencia del desafío diario.',
+            'update.entry.v58.l3': 'Textos de la tienda, habilidades y logros ya no muestran código suelto. Los saves no cambian.',
             'update.entry.v32.l1': 'El sonido que se quedaba pegado en la pantalla de fin de piso (al elegir qué comprar antes de bajar) ya no se traba.',
             'update.entry.v32.l2': 'Morir en el mismo instante en que muere el jefe ya no da "continuar" y "siguiente piso" a la vez: la muerte tiene prioridad.',
             'update.entry.v31.l1': 'El motor de sonido fue rehecho: bus maestro con limitador (ya nada satura), reverb procedural y envolvente en cada sonido — el chasquido entre notas se acabó.',
@@ -7269,7 +7238,6 @@ const I18n = {
             // ============================================================
             // Bosses
             // ============================================================
-            'boss.hpLabel': 'JEFE',
             'boss.shadow_warden.name': 'Guardián de las Sombras',
             'boss.dark_lord.name': 'Señor de las Tinieblas',
             'boss.death_herald.name': 'Heraldo de la Muerte',
@@ -7282,15 +7250,7 @@ const I18n = {
             'boss.final_guardian.name': 'El Guardián Final',
             'boss.magma_titan.name': 'Titán de Magma',
             'boss.thorn_king.name': 'Rey de las Espinas',
-            'boss.rewardTitle': '🏆 Trofeo del Guardián',
-            'boss.rewardSub': 'El jefe cayó — elige una recompensa para la run.',
-            'boss.rewardDismiss': 'Descartar ahora',
-            'boss.guardianName': 'Guardián',
             'boss.fallbackName': 'El Guardián',
-            'boss.rewardSubPre': 'El ',
-            'boss.rewardSubPost': ' cayó — elige una recompensa para el resto de la run:',
-            'boss.rewardLogPre': ' 🏆 ',
-            'boss.rewardLogPost': ' derrotado! Elige tu recompensa.',
 
             // ============================================================
             // NPC system
@@ -7439,39 +7399,22 @@ const I18n = {
             'camp.soldOut': 'El mercader no tiene nada más que vender.',
             'camp.dismantled': 'El campamento ya fue desmontado. El portal espera.',
             'camp.boonExhausted': 'BENDICIÓN AGOTADA (máx. 2)',
-            'ui.objTitle': '🎯 Objetivo:',
-            'ui.objOngoing': 'en curso',
-            'ui.objFailed': 'no alcanzado',
-            'ui.objDoneSuffix': ' — completado',
-            'ui.objFailedSuffix': ' — fallido',
-            'ui.done': 'Completado',
-            'ui.unavailable': 'No disponible',
-            'ui.max': 'MAX',
-            'ui.tierLevel': 'Nivel ',
-            'ui.points': 'pts',
             'ui.questLoreReward': 'Recompensa: fragmento de tradición — ',
 
             // ============================================================
             // HUD / DamageNumbers
             // ============================================================
-            'hud.essence': '¡ESENCIA!',
-            'hud.x2': '¡x2!',
-            'hud.nocoins': '¡Monedas insuficientes!',
-            'hud.exec': '¡EJEC!',
-            'hud.stun': '¡ATURDIDO!',
-            'hud.bleed': '¡SANGRADO!',
-            'hud.frost': '¡ESCARCHA!',
-            'hud.shatter': '¡DESTRUCCIÓN!',
-            'hud.block': 'BLOQUEO',
             'hud.levelUp': '¡SUBIDA DE NIVEL!',
-            'hud.dash': '¡DASH!',
-            'hud.overheated': '¡SOBRECALENTADO!',
-            'hud.spellCombo': '¡COMBO DE HECHIZOS!',
-            'hud.dodge': '¡ESQUIVA!',
-            'hud.orbShield': '¡ESCUDO ORBE!',
-            'hud.fury': '¡FURIA!',
             'hud.bonus': '  ¡BONUS!',
-            'hud.combo': '¡COMBO!',
+            'run.obj.label': 'Objetivo:',
+            'run.obj.done': 'completado',
+            'run.obj.failed': 'no alcanzado',
+            'run.obj.inProgress': 'en curso',
+            'run.obj.failedShort': 'fallido',
+            'run.obj.floor': 'piso',
+            'run.obj.dmg': 'daño',
+            'run.obj.min': 'min',
+            'quests.none': 'No hay misiones activas en esta partida.',
 
             // ============================================================
             // Logs
@@ -7479,7 +7422,6 @@ const I18n = {
             'log.gfxReduced': ' Calidad visual reducida (rendimiento)',
             'log.gfxRestored': ' Calidad visual restaurada',
             'log.autoPerfOn': ' Modo automático de rendimiento activado (efectos desactivados)',
-            'log.autoPerfOff': ' Rendimiento recuperado - efectos restaurados',
             'log.saveCreated': ' ¡Punto de guardado creado!',
             'log.saveUnavailable': 'No es posible guardar ahora.',
             'log.copyResult': ' ¡Resultado copiado!',
@@ -7523,7 +7465,6 @@ const I18n = {
             'log.boonApplied': ' Bendición de la run: ',
             'log.campEstablished': ' El mercader monta campamento: compra, descansa o elige una bendición antes de bajar.',
             'log.objectiveStart': ' Objetivo de la run: ',
-            'log.objectiveComplete': ' 🎯 Objetivo cumplido: ',
             'log.loreDiscovered': ' Tradición descubierta: ',
             'log.seedActivePre': 'Semilla activa (#',
             'log.seedActivePost': ') - la nueva partida tendrá mapa y encuentros determinísticos por piso.',
@@ -7545,7 +7486,6 @@ const I18n = {
             'log.bossPhase4': ' - FASE 4!',
             'log.bossPhase3': ' - FASE 3!',
             'log.bossPhase2': ' - FASE 2!',
-            'log.bossCharge': ' ¡va a cargar! ¡CUIDADO!',
             'log.bossGuided': ' lanzó un proyectil guiado!',
             'log.bossTeleported': ' ¡se teletransportó!',
             'log.firePillars': ' ¡Pilares de fuego!',
@@ -7568,11 +7508,7 @@ const I18n = {
             'tutorial.pressShift': '  PULSA SHIFT',
             'tutorial.targetDummy': ' OBJETIVO: MUÑECO DE ENTRENAMIENTO',
             'log.levelUp': ' ¡NIVEL SUBIDO! ',
-            'log.warCry': ' ¡GRITO DE GUERRA!',
-            'log.groundSlam': ' ¡GOLPE DE SUELO!',
             'log.berserkerRage': ' ¡FURIA BERSERKER!',
-            'log.arrowStorm': ' ¡LLUVIA DE FLECHAS!',
-            'log.arrowBarrage': ' ¡RÁFAGA DE FLECHAS!',
             'log.deathMark': ' ¡MARCA DE MUERTE!',
             'log.meteor': ' ¡METEORITO!',
             'log.arcaneStorm': ' ¡TORMENTA ARCANO!',
@@ -7594,22 +7530,9 @@ const I18n = {
             'log.tutorialCompletePre': ' ¡Tutorial completado! +',
             'log.tutorialCompletePost': ' monedas. ¡Buena suerte!',
             'log.trainingDummy': ' ¡Apareció el muñeco de entrenamiento!',
-            'log.trainingItem': ' ¡Apareció el objeto de entrenamiento!',
-            'log.trainingXp': ' ¡Apareció el XP de entrenamiento!',
             'log.trainingWeapon': ' ¡Apareció el equipo de entrenamiento!',
             'log.pressBack': 'Pulsa Volver de nuevo para salir.',
             'log.itemBought': ' comprado!',
-            'log.eventResultNothing': 'No pasó nada.',
-            'log.eventNoCoins': 'Monedas insuficientes.',
-            'log.eventCoins': ' monedas',
-            'log.eventHp': ' HP',
-            'log.eventMaxHp': ' HP máximo',
-            'log.eventDmg': '% de daño',
-            'log.eventSpeed': '% de velocidad',
-            'log.eventShield': ' de escudo',
-            'log.eventCursePre': 'Maldición: +',
-            'log.eventCursePost': '% de daño recibido',
-            'log.prestigeRewardName': 'Prestigio ',
 
             // Toasts (meta/loja/diário)
             'toast.essenceInsufficient': 'Esencia insuficiente.',
@@ -7624,7 +7547,6 @@ const I18n = {
 
             // Start screen (static labels)
             'start.modeDesc': 'Evoluciona tu personaje en mazmorras cada vez más difíciles.',
-            'start.dailyActive': '⚡ Desafío de hoy activo: ',
             'start.dailyInvite': 'Desafío de hoy: {name} — toca para jugar',
             'start.tagline': 'El Abismo Aguarda',
             'start.modeDungeon': 'Masmorra',
@@ -7705,6 +7627,7 @@ const I18n = {
             'gameover.share': '🔗 COMPARTIR RESULTADO',
             'bossReward.title': '🏆 Trofeo del Guardián',
             'bossReward.sub': 'El jefe cayó: elige una recompensa para la partida.',
+            'bossReward.subNamed': '{n} ha caído: elige una recompensa para el resto de la partida:',
             'bossReward.dismiss': 'Descartar ahora',
             'continue.in': 'Continúa en',
             'win.title': '¡SUPERFICIE ALCANZADA!',
@@ -8847,15 +8770,6 @@ window.GameAssets = GameAssets;
 // ============================================================
 // UI Toggle helpers – HTML panels manage themselves
 // ============================================================
-function _openPanel(panel) {
-    if (window.UIManager && window.UIManager.openPanel) window.UIManager.openPanel(panel);
-    merchantActive = (panel === 'shop');
-    skillTreeOpen = (panel === 'skills');
-    statsOpen = (panel === 'stats');
-    achievementsOpen = (panel === 'achievements');
-    if (typeof NarrativeSystem !== 'undefined') NarrativeSystem.uiOpen = (panel === 'lore');
-    if (panel === 'skills' && window.SkillTreeUI) SkillTreeUI.render();
-}
 
 function _closePanel(panel) {
     if (window.UIManager && window.UIManager.closePanel) window.UIManager.closePanel();
@@ -8902,6 +8816,17 @@ window.toggleSave = function() {
         addLog(window.I18n ? I18n.t('log.saveUnavailable') : 'Não é possível salvar agora.');
     }
 };
+
+// Acessibilidade: elementos não-semânticos com role="button" e tabindex (loja, árvore de skills,
+// meta, lore, desafio diário) ativam com Enter/Espaço por este único listener delegado.
+document.addEventListener('keydown', (e) => {
+    if (e.repeat || (e.key !== 'Enter' && e.key !== ' ')) return;
+    const t = e.target;
+    if (!t || t.nodeType !== 1 || !t.matches || !t.matches('[role="button"][tabindex]')) return;
+    if (/^(BUTTON|A|INPUT|SELECT|TEXTAREA)$/.test(t.tagName)) return; // nativos já tratam
+    e.preventDefault();
+    t.click();
+});
 
 // Keyboard shortcuts for closing UIs
 window.addEventListener('keydown', (e) => {
@@ -9556,13 +9481,16 @@ function _drawExpandedMinimap() {
     ctx.restore();
 
     // Title
-    ctx.fillStyle = 'rgba(224,182,255,0.6)';
+    ctx.fillStyle = 'rgba(224,182,255,0.85)';
     ctx.font = 'bold 13px ' + COLORS.CANVAS_FONT;
     ctx.textAlign = 'center';
     ctx.fillText(I18n.t('hud.mapExpanded'), width / 2, mmY - 10);
 
     // Legend row
     const legendY = mmY + mmSize + 14;
+    // Plaquinha escura atras da legenda: garante contraste do texto sobre o cenario
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    ctx.fillRect(mmX, legendY - 12, mmSize, 18);
     ctx.font = '10px ' + COLORS.CANVAS_FONT;
     ctx.textAlign = 'left';
     const legItems = [
@@ -9577,7 +9505,7 @@ function _drawExpandedMinimap() {
         ctx.fillText(item.label, legX, legendY);
         legX += 70;
     });
-    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
     ctx.fillText(I18n.t('hud.tapOutside'), mmX + mmSize - 120, legendY);
 
     // Close button "X"
@@ -9856,7 +9784,7 @@ function _updateEntitySimulation() {
                 const gained = Math.round(p.value * (player.goldRushTimer > 0 ? 2 : 1) * (player.greedBonus ? 1.15 : 1) * (player.goldMult || 1));
                 player.currency += gained; Statistics.data.totalCurrencyEarned += gained; DamageNumbers.add(player.x, player.y, `+${gained} `, 'normal');
                 if (window.RunObjectiveSystem) RunObjectiveSystem.onGold(gained);
-                if (player.goldRushTimer > 0) DamageNumbers.add(player.x, player.y, 'x2!', 'crit');
+                if (player.goldRushTimer > 0) DamageNumbers.add(player.x, player.y, window.I18n ? I18n.t('hud.x2') : 'x2!', 'crit');
             } else {
                 SND.playPickup();
                 ScreenEffects.onBuff(p.type, p.mutationType);
@@ -9869,7 +9797,7 @@ function _updateEntitySimulation() {
                 else if (p.type === 'shield') { player.shield = p.value; }
                 else if (p.type === 'speed') { player.speedBoost = p.value * 60; }
                 else if (p.type === 'mutation') { player.addMutation(p.mutationType); }
-                else if (p.type === 'essence') { player.essence = (player.essence || 0) + 1; DamageNumbers.add(player.x, player.y, 'ESSÊNCIA!', 'normal'); }
+                else if (p.type === 'essence') { player.essence = (player.essence || 0) + 1; DamageNumbers.add(player.x, player.y, window.I18n ? I18n.t('hud.essence') : 'ESSÊNCIA!', 'normal'); }
                 // Powerups raros: coletar de novo renova a duração (não soma)
                 else if (p.type === 'fury') { player.furyTimer = CONFIG.POWERUP_FURY_FRAMES; DamageNumbers.add(player.x, player.y, window.I18n ? I18n.t('powerup.fury.pick') : 'FÚRIA!', 'crit'); }
                 else if (p.type === 'frenzy') { player.frenzyTimer = CONFIG.POWERUP_FRENZY_FRAMES; DamageNumbers.add(player.x, player.y, window.I18n ? I18n.t('powerup.frenzy.pick') : 'FRENESI!', 'normal'); }
@@ -10457,7 +10385,6 @@ function update() {
 // ============================================================
 // DRAW  helpers + dispatcher
 // ============================================================
-const _fpsEl = document.getElementById('fps-counter');
 
 function drawGroundShadow(ctx2, wx, wy, r, cx, cy) {
     if (window.GFX !== undefined && window.GFX.shadows === false) return;
@@ -10906,7 +10833,6 @@ function _drawScreenSpaceHUD() {
     // --- ATUALIZACAO DE COOLDOWNS NA UI ---
     // PERF: Throttle to every 5 frames to reduce DOM writes
     if (player && gameTime % 10 === 0) {
-        const dashBtn = document.getElementById('dodge-btn');
         const specialBtn = document.getElementById('special-btn');
         const dashCd = document.getElementById('dodge-cd');
         const specCd = document.getElementById('special-cd');
@@ -11343,6 +11269,7 @@ const BossHPBar = {
         this.nameEl.textContent = name || 'CHEFE';
     },
     hide() {
+        if (this.container.classList.contains('hidden')) return; // evita escrita de DOM a cada frame
         this.container.classList.add('hidden');
     },
     update() {
@@ -11362,10 +11289,14 @@ const BossHPBar = {
         var nm = boss.name || 'CHEFE';
         if (this._shownName !== nm || this.container.classList.contains('hidden')) { this.show(nm); this._shownName = nm; }
         var pct = Math.max(0, (boss.hp / boss.maxHp) * 100);
+        var w = pct + '%';
+        if (w !== this._lastWidth) {
+            this._lastWidth = w;
+            this.barEl.style.width = w;
+        }
         var txt = Math.ceil(boss.hp) + ' / ' + boss.maxHp;
         if (txt !== this._lastText) {
             this._lastText = txt;
-            this.barEl.style.width = pct + '%';
             this.textEl.textContent = txt;
         }
     }
@@ -11619,18 +11550,18 @@ const LootCard = {
         this.pendingWeapon = weapon;
         this.active = true;
         var rarityColors = { common: '#9ca3af', uncommon: '#4ade80', rare: '#60a5fa', epic: '#c084fc', legendary: '#ffcc00' };
-        var rarityNames = { common: 'COMUM', uncommon: 'INCOMUM', rare: 'RARO', epic: 'EPICO', legendary: 'LENDARIO' };
+        var rarityNames = { common: (window.I18n ? I18n.t('ui.lootCommon') : 'COMUM'), uncommon: (window.I18n ? I18n.t('loot.uncommon') : 'INCOMUM'), rare: (window.I18n ? I18n.t('loot.rare') : 'RARO'), epic: (window.I18n ? I18n.t('loot.epic') : 'EPICO'), legendary: (window.I18n ? I18n.t('loot.legendary') : 'LENDARIO') };
         var rarity = weapon.rarity || 'common';
         document.getElementById('loot-rarity').textContent = rarityNames[rarity] || rarity.toUpperCase();
         document.getElementById('loot-rarity').style.color = rarityColors[rarity] || '#9ca3af';
-        document.getElementById('loot-name').textContent = weapon.name || 'Arma';
+        document.getElementById('loot-name').textContent = weapon.name || (window.I18n ? I18n.t('ui.lootWeapon') : 'Arma');
         var border = rarityColors[rarity] || 'rgba(224,182,255,0.25)';
         document.getElementById('loot-card-inner').style.borderColor = border;
         var statsText = '';
-        if (weapon.damage) statsText += '+' + weapon.damage + ' Dano  ';
-        if (weapon.fireRate) statsText += weapon.fireRate < 0 ? Math.round(weapon.fireRate * 100) + '% Vel  ' : '+' + Math.round(weapon.fireRate * 100) + '% Vel  ';
-        if (weapon.range) statsText += '+' + Math.round(weapon.range * 100) + '% Alcance';
-        document.getElementById('loot-stats').textContent = statsText || 'Arma base';
+        if (weapon.damage) statsText += '+' + weapon.damage + (window.I18n ? I18n.t('loot.statDmg') : ' Dano  ');
+        if (weapon.fireRate) statsText += weapon.fireRate < 0 ? Math.round(weapon.fireRate * 100) + (window.I18n ? I18n.t('loot.statSpeed') : '% Vel  ') : '+' + Math.round(weapon.fireRate * 100) + (window.I18n ? I18n.t('loot.statSpeed') : '% Vel  ');
+        if (weapon.range) statsText += '+' + Math.round(weapon.range * 100) + (window.I18n ? I18n.t('loot.statRange') : '% Alcance');
+        document.getElementById('loot-stats').textContent = statsText || (window.I18n ? I18n.t('loot.baseWeapon') : 'Arma base');
         this.el.classList.remove('hidden');
         this.el.style.transform = 'translateX(-50%) translateY(0)';
         this.el.style.opacity = '1';
@@ -12333,46 +12264,16 @@ window.SND = {
         Vibrate.trigger('hit');
     },
 
-    playEnemyHit(type = 'normal') {
-        switch(type) {
-            case 'melee': return this.playMeleeHit();
-            case 'ranged': return this.playRangedHit();
-            case 'charge': return this.playChargeHit();
-            case 'spell': return this.playSpellCast();
-            case 'lightning': return this.playLightning();
-            case 'freeze': return this.playFreeze();
-            default: return this.playHit();
-        }
-    },
 
-    playMeleeHit() {
-        this.play(170 + Math.random() * 25, 'square', 0.09, 0.18);
-        this.playNoise(0.06, 0.012, 2600, 'highpass'); // transient attack
-    },
 
-    playRangedHit() {
-        this.play(260 + Math.random() * 35, 'triangle', 0.07, 0.16);
-    },
 
-    playChargeHit() {
-        this.play(120 + Math.random() * 20, 'sawtooth', 0.14, 0.24);
-        this.schedule(() => this.playNoise(0.14, 0.08, 180, 'lowpass'), 40);
-    },
 
-    playSpellCast() {
-        this.play(520 + Math.random() * 60, 'sine', 0.12, 0.16);
-        this.schedule(() => this.play(760 + Math.random() * 50, 'triangle', 0.08, 0.12), 50);
-    },
 
     playLightning() {
         this.playNoise(0.18, 0.09, 1200, 'bandpass');
         this.play(880 + Math.random() * 90, 'square', 0.06, 0.12);
     },
 
-    playFreeze() {
-        this.play(300 + Math.random() * 30, 'triangle', 0.1, 0.14);
-        this.schedule(() => this.play(220, 'sine', 0.12, 0.1), 40);
-    },
 
     playKill() {
         this.play(180, 'sawtooth', 0.35, 0.26, 'sfx', null, null, 45);
@@ -12653,15 +12554,6 @@ window.SND = {
     },
 
     // Crossfade ambient sounds
-    transitionAmbient(newBiome) {
-        if (!this.ctx) return;
-        const targetGain = 0.08;
-        this._ambientGain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.5);
-        this.schedule(() => {
-            BiomeSystem.currentBiome = newBiome;
-            this._ambientGain.gain.exponentialRampToValueAtTime(targetGain, this.ctx.currentTime + 0.5);
-        }, 500);
-    },
     playShoot(type) {
         if (!this.ctx) return;
         const pitchVar = (Math.random() - 0.5) * 60;
@@ -12701,10 +12593,6 @@ window.SND = {
         this.schedule(() => this.play(600, 'sine', 0.15, 0.2), 150);
     },
 
-    playSkillUnlock() {
-        this.play(700, 'sine', 0.1, 0.25);
-        this.schedule(() => this.play(900, 'sine', 0.15, 0.2), 120);
-    },
 
     playBoss() {
         this.playBossSpawn();
@@ -12715,10 +12603,6 @@ window.SND = {
         this.schedule(() => this.play(280, 'triangle', 0.4, 0.2), 200);
     },
 
-    playShopOpen() {
-        this.playScrollOpen();
-        this.playUI();
-    },
 
     playWeatherChange(type = 'rain') {
         switch(type) {
@@ -12768,12 +12652,6 @@ window.SND = {
         }
     },
 
-    playDeath() {
-        this.play(120, 'sawtooth', 0.4, 0.3);
-        this.schedule(() => this.play(60, 'sawtooth', 0.6, 0.3), 150);
-        this.schedule(() => this.playNoise(0.4, 0.3, 100, 'lowpass'), 300);
-        Vibrate.trigger('boss');
-    },
 
     playCrit() {
         this.play(800, 'square', 0.05, 0.2);
@@ -12920,11 +12798,6 @@ window.SND = {
         this.schedule(() => this.play(bellFreq, 'sine', 0.6, 0.025), 600);
     },
 
-    playScrollOpen() {
-        if (!this.ctx) return;
-        this.playNoise(0.12, 0.08, 1200, 'highpass');
-        this.schedule(() => this.play(400, 'sine', 0.06, 0.08), 50);
-    },
 
     playBossPhase2() {
         if (!this.ctx) return;
@@ -13812,7 +13685,7 @@ const CampSystem = {
         const item = st.offers[idx];
         if (!item) return;
         if (player.currency < item.cost) {
-            if (typeof DamageNumbers !== 'undefined') DamageNumbers.add(player.x, player.y, 'Moedas insuficientes!', 'normal');
+            if (typeof DamageNumbers !== 'undefined') DamageNumbers.add(player.x, player.y, window.I18n ? I18n.t('hud.nocoins') : 'Moedas insuficientes!', 'normal');
             return;
         }
         player.currency -= item.cost;
@@ -13852,7 +13725,7 @@ const CampSystem = {
         const choice = ev && ev.choices[idx];
         if (!ev || !choice) return;
         if (choice.requireGold && (!player || (player.currency || 0) < choice.requireGold)) {
-            if (typeof DamageNumbers !== 'undefined') DamageNumbers.add(player.x, player.y, 'Moedas insuficientes!', 'normal');
+            if (typeof DamageNumbers !== 'undefined') DamageNumbers.add(player.x, player.y, window.I18n ? I18n.t('hud.nocoins') : 'Moedas insuficientes!', 'normal');
             if (window.UIManager) window.UIManager.openPanel('camp');
             return;
         }
@@ -13964,61 +13837,61 @@ const RunEventSystem = {
             if (o.gold) {
                 const g = Math.round(o.gold);
                 p.currency = Math.max(0, (p.currency || 0) + g);
-                log.push((g >= 0 ? '+' : '') + g + ' moedas');
+                log.push((g >= 0 ? '+' : '') + g + (window.I18n ? I18n.t('log.eventCoins') : ' moedas'));
                 if (g > 0 && window.RunObjectiveSystem && RunObjectiveSystem.onGold) RunObjectiveSystem.onGold(g);
             }
             if (o.goldRange) {
                 const g = Math.round(o.goldRange[0] + SeedSystem.random() * (o.goldRange[1] - o.goldRange[0]));
                 p.currency = (p.currency || 0) + g;
-                log.push('+' + g + ' moedas');
+                log.push('+' + g + (window.I18n ? I18n.t('log.eventCoins') : ' moedas'));
                 if (window.RunObjectiveSystem && RunObjectiveSystem.onGold) RunObjectiveSystem.onGold(g);
             }
             if (o.healPct) {
                 const h = Math.floor(p.maxHp * o.healPct);
                 p.hp = Math.min(p.maxHp, p.hp + h);
-                log.push('+' + h + ' HP');
+                log.push('+' + h + (window.I18n ? I18n.t('log.eventHp') : ' HP'));
             }
             if (o.healFlat) {
                 const h = Math.round(o.healFlat);
                 p.hp = Math.min(p.maxHp, p.hp + h);
-                log.push('+' + h + ' HP');
+                log.push('+' + h + (window.I18n ? I18n.t('log.eventHp') : ' HP'));
             }
             if (o.damageFlat) {
                 const d = Math.round(o.damageFlat);
                 p.hp = Math.max(1, p.hp - d);
-                log.push('-' + d + ' HP');
+                log.push('-' + d + (window.I18n ? I18n.t('log.eventHp') : ' HP'));
             }
             if (o.damagePct) {
                 const d = Math.max(1, Math.floor(p.maxHp * o.damagePct));
                 p.hp = Math.max(1, p.hp - d);
-                log.push('-' + d + ' HP');
+                log.push('-' + d + (window.I18n ? I18n.t('log.eventHp') : ' HP'));
             }
             if (o.damageRange) {
                 const d = Math.round(o.damageRange[0] + SeedSystem.random() * (o.damageRange[1] - o.damageRange[0]));
                 p.hp = Math.max(1, p.hp - d);
-                log.push('-' + d + ' HP');
+                log.push('-' + d + (window.I18n ? I18n.t('log.eventHp') : ' HP'));
             }
             if (o.maxHpFlat) {
                 const m = Math.round(o.maxHpFlat);
                 p.maxHp += m;
                 p.hp = Math.min(p.maxHp, p.hp + m);
-                log.push('+' + m + ' HP máximo');
+                log.push('+' + m + (window.I18n ? I18n.t('log.eventMaxHp') : ' HP máximo'));
             }
             if (o.dmgBuff) {
                 p.damageMult = (p.damageMult || 1) + o.dmgBuff;
-                log.push('+' + Math.round(o.dmgBuff * 100) + '% dano');
+                log.push('+' + Math.round(o.dmgBuff * 100) + (window.I18n ? I18n.t('log.eventDmg') : '% dano'));
             }
             if (o.speedBuff) {
                 p.speed = (p.speed || 1) * (1 + o.speedBuff);
-                log.push('+' + Math.round(o.speedBuff * 100) + '% velocidade');
+                log.push('+' + Math.round(o.speedBuff * 100) + (window.I18n ? I18n.t('log.eventSpeed') : '% velocidade'));
             }
             if (o.shield) {
                 p.shield = (p.shield || 0) + Math.round(o.shield);
-                log.push('+' + Math.round(o.shield) + ' de escudo');
+                log.push('+' + Math.round(o.shield) + (window.I18n ? I18n.t('log.eventShield') : ' de escudo'));
             }
             if (o.curseDmg) {
                 p.damageTakenMult = (p.damageTakenMult || 1) * (1 + o.curseDmg);
-                log.push('Maldição: +' + Math.round(o.curseDmg * 100) + '% dano recebido');
+                log.push((window.I18n ? I18n.t('log.eventCursePre') : 'Maldição: +') + Math.round(o.curseDmg * 100) + (window.I18n ? I18n.t('log.eventCursePost') : '% dano recebido'));
             }
             if (o.combo) { for (const c of o.combo) applyOne(c); }
             if (o.type === 'gamble') {
@@ -14029,14 +13902,14 @@ const RunEventSystem = {
         };
         applyOne(outcome);
         if (typeof Statistics !== 'undefined') Statistics.data.eventsResolved = (Statistics.data.eventsResolved || 0) + 1;
-        return log.length ? log.join(', ') : 'Nada aconteceu.';
+        return log.length ? log.join(', ') : (window.I18n ? I18n.t('log.eventResultNothing') : 'Nada aconteceu.');
     },
 
     apply(ev, idx) {
         const p = window.player;
         const choice = ev.choices[idx];
-        if (!p || !choice) return 'Nada aconteceu.';
-        if (choice.requireGold && (p.currency || 0) < choice.requireGold) return 'Moedas insuficientes.';
+        if (!p || !choice) return (window.I18n ? I18n.t('log.eventResultNothing') : 'Nada aconteceu.');
+        if (choice.requireGold && (p.currency || 0) < choice.requireGold) return (window.I18n ? I18n.t('log.eventNoCoins') : 'Moedas insuficientes.');
         return this._apply(choice.outcome, p);
     }
 };
@@ -14156,9 +14029,9 @@ const RunObjectiveSystem = {
     summaryLine() {
         const o = this.current;
         if (!o) return '';
-        const status = this.completed ? '<span style="color:#4ade80;">concluído</span>'
-            : (this.failed ? '<span style="color:#f87171;">não alcançado</span>' : '<span style="color:#ffd86b;">em andamento</span>');
-        return '<span style="color:#e0b6ff;">🎯 Objetivo:</span> ' + o.icon + ' ' + o.name + ' — ' + status;
+        const status = this.completed ? '<span style="color:#4ade80;">' + (window.I18n ? I18n.t('run.obj.done') : 'concluído') + '</span>'
+            : (this.failed ? '<span style="color:#f87171;">' + (window.I18n ? I18n.t('run.obj.failed') : 'não alcançado') + '</span>' : '<span style="color:#ffd86b;">' + (window.I18n ? I18n.t('run.obj.inProgress') : 'em andamento') + '</span>');
+        return '<span style="color:#e0b6ff;">🎯 ' + (window.I18n ? I18n.t('run.obj.label') : 'Objetivo:') + '</span> ' + o.icon + ' ' + o.name + ' — ' + status;
     },
 
     syncHUD() {
@@ -14183,8 +14056,8 @@ const RunObjectiveSystem = {
         let progText;
         if (o.metric === 'gold') progText = cur.toLocaleString('pt-BR') + '/' + this.target.toLocaleString('pt-BR');
         else if (o.metric === 'floor' && o.timeLimit) {
-            progText = 'piso ' + cur + '/' + this.target + ' · ' + Math.floor(elapsedS / 60) + 'min';
-        } else if (o.metric === 'damage') progText = 'dano ' + cur + '/' + this.target + ' · piso ' + ((typeof dungeonLevel !== 'undefined') ? dungeonLevel : 1);
+            progText = (window.I18n ? I18n.t('run.obj.floor') : 'piso') + ' ' + cur + '/' + this.target + ' · ' + Math.floor(elapsedS / 60) + (window.I18n ? I18n.t('run.obj.min') : 'min');
+        } else if (o.metric === 'damage') progText = (window.I18n ? I18n.t('run.obj.dmg') : 'dano') + ' ' + cur + '/' + this.target + ' · ' + (window.I18n ? I18n.t('run.obj.floor') : 'piso') + ' ' + ((typeof dungeonLevel !== 'undefined') ? dungeonLevel : 1);
         else progText = cur + '/' + this.target;
         if (this.completed) { pct = 100; progText = '✓ ' + progText; }
         else if (this.failed) { pct = 100; progText = '✗ ' + progText; }
@@ -14194,7 +14067,7 @@ const RunObjectiveSystem = {
         this._el.classList.remove('hidden');
         this._iconEl.innerHTML = '<svg class="icon-inline" width="11" height="11"><use href="#' + (_RUN_OBJECTIVE_SYMBOLS[o.id] || 'ic-target') + '"/></svg>';
         this._iconEl.style.color = this.completed ? '#4ade80' : (this.failed ? '#f87171' : '');
-        this._titleEl.textContent = this.completed ? o.name + ' — concluído' : (this.failed ? o.name + ' — falhou' : o.name);
+        this._titleEl.textContent = this.completed ? o.name + ' — ' + (window.I18n ? I18n.t('run.obj.done') : 'concluído') : (this.failed ? o.name + ' — ' + (window.I18n ? I18n.t('run.obj.failedShort') : 'falhou') : o.name);
         this._titleEl.style.color = this.completed ? '#4ade80' : (this.failed ? '#f87171' : '#e0b6ff');
         this._progEl.textContent = progText;
         this._progEl.style.color = this.completed ? '#4ade80' : (this.failed ? '#f87171' : '#ffd86b');
@@ -14229,7 +14102,7 @@ const BossRewardSystem = {
         this.pending = boons;
         this.active = true;
         this._el.classList.remove('hidden');
-        if (this._subEl) this._subEl.textContent = 'O ' + (boss.name || 'Guardião') + ' caiu — escolha uma recompensa para o resto da run:';
+        if (this._subEl) this._subEl.textContent = (window.I18n ? I18n.t('bossReward.subNamed') : 'O {n} caiu — escolha uma recompensa para o resto da run:').replace('{n}', boss.name || 'Guardião');
         if (this._optionsEl) {
             this._optionsEl.innerHTML = boons.map((b, i) =>
                 '<button onclick="window.BossRewardSystem.choose(' + i + ')" style="display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;padding:10px 12px;border-radius:12px;font-weight:700;font-size:13px;text-align:left;border:1.5px solid rgba(255,216,107,0.4);background:rgba(255,216,107,0.08);color:#ffd86b;cursor:pointer;touch-action:manipulation;transition:transform 0.15s;">' +
@@ -14406,10 +14279,6 @@ const WeaponSystem = {
     },
 
     // Get effective damage
-    getEffectiveDamage(player) {
-        const cls = CONFIG.PLAYER[player.type];
-        return Math.floor(cls.baseDmg * player.weaponLevel * (player.weaponDamageMult || 1.0));
-    },
 
     // Movement-speed multiplier from the equipped weapon (weapons advertise
     // "+X% speed" / "-X% speed" in their desc; getSpeedMult was called from
@@ -14420,23 +14289,6 @@ const WeaponSystem = {
     },
 
     // Draw weapon pickup
-    drawWeaponPickup(ctx, x, y, weapon, camX, camY, bobOffset, frame) {
-        const bob = Math.sin((frame + bobOffset) * 0.1) * 3;
-        // Glow
-        ctx.globalAlpha = 0.4;
-        ctx.fillStyle = weapon.color;
-        ctx.beginPath(); ctx.arc(x-camX, y-camY+bob, 16, 0, Math.PI*2); ctx.fill();
-        ctx.globalAlpha = 1;
-        // Core
-        ctx.fillStyle = weapon.color;
-        ctx.beginPath(); ctx.arc(x-camX, y-camY+bob, 10, 0, Math.PI*2); ctx.fill();
-        // Icon
-        ctx.fillStyle = '#000'; ctx.font = 'bold 12px ' + COLORS.CANVAS_FONT; ctx.textAlign = 'center';
-        ctx.fillText('', x-camX, y-camY+bob+1);
-        // Name tag
-        ctx.fillStyle = weapon.color; ctx.font = 'bold 9px ' + COLORS.CANVAS_FONT;
-        ctx.fillText(weapon.name, x-camX, y-camY-18+bob);
-    }
 };
 
 
@@ -14664,23 +14516,6 @@ const NarrativeSystem = {
     uiOpen: false,
     // Scroll offset for lore journal
     scrollOffset: 0,
-
-    // ============================================================
-    // Get all lore fragments for a category
-    // ============================================================
-    getByCategory(category) {
-        return CONFIG.LORE_FRAGMENTS.filter(f => f.category === category);
-    },
-
-    // Get all discovered lore fragments
-    getDiscovered() {
-        return CONFIG.LORE_FRAGMENTS.filter(f => this.discovered[f.id]);
-    },
-
-    // Get total discoverable count
-    getTotalCount() {
-        return CONFIG.LORE_FRAGMENTS.length;
-    },
 
     // Get discovered count
     getDiscoveredCount() {
@@ -15287,7 +15122,7 @@ const QuestSystem = {
         const panel = document.getElementById('quest-panel');
         if (!list || !panel) return;
         if (!this.active.length) {
-            list.innerHTML = '<div style="color:rgba(255,255,255,0.35);">Nenhuma missão ativa nesta partida.</div>';
+            list.innerHTML = '<div style="color:rgba(255,255,255,0.35);">' + (window.I18n ? I18n.t('quests.none') : 'Nenhuma missão ativa nesta partida.') + '</div>';
             return;
         }
         let html = '';
@@ -15751,6 +15586,7 @@ const Bestiary = {
     getKills(type) {
         return this._entries[type] ? this._entries[type].kills : 0;
     },
+
 
     _persist() {
         try {
@@ -19156,12 +18992,11 @@ const DamageNumbers = {
     },
     draw(ctx, cx, cy) {
         this.slashes.forEach(s => s.draw(ctx, cx, cy));
-        // "Tamanho da Fonte" também vale para os números de dano (limitado para não poluir a tela).
-        const _fs = Math.max(0.85, Math.min(1.3, getFontScale()));
+        // "Tamanho da Fonte" vale para os números de dano pelo setter de ctx.font (uma vez só).
         this.numbers.forEach(n => {
             ctx.save();
             ctx.translate(n.x - cx, n.y - cy);
-            ctx.scale(n.scale * _fs, n.scale * _fs);
+            ctx.scale(n.scale, n.scale);
             ctx.globalAlpha = Math.min(1, Math.max(0, n.life * 1.5));
             ctx.font = `bold ${n.baseSize}px ${COLORS.CANVAS_FONT}`; 
             ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; 
@@ -19218,26 +19053,8 @@ const BiomeSystem = {
     },
 
     // Get a random variant for current biome
-    rollVariant() {
-        const biomeKeys = Object.keys(this.biomeData);
-        // 40% chance to have a variant
-        if(SeedSystem.random() > 0.4) {
-            this.currentVariant = null;
-            return null;
-        }
-        
-        const variantKeys = Object.keys(this._variants);
-        const variant = variantKeys[Math.floor(SeedSystem.random() * variantKeys.length)];
-        this.currentVariant = variant;
-        Debug.info('[Biome] Variant:', this._variants[variant].name);
-        return this.currentVariant;
-    },
 
     // Get active variant data
-    getVariant() {
-        if(!this.currentVariant) return null;
-        return this._variants[this.currentVariant];
-    },
 
     // Aplica uma variação de bioma em inimigos comuns (estatísticas + visual + elemento)
     applyEnemyVariant(e) {
@@ -19285,11 +19102,6 @@ const BiomeSystem = {
     },
 
     // Get current biome with variant applied
-    getRules() {
-        const variant = this.getVariant();
-        if(!variant) return {};
-        return variant;
-    },
 
     // Display name with variant
     getDisplayName() {
@@ -19481,12 +19293,6 @@ const BiomeSystem = {
     },
 
     // Force a specific biome (used for testing or events)
-    setBiome(biomeName) {
-        if (this.biomeData[biomeName]) {
-            this.currentBiome = biomeName;
-            if (typeof map !== 'undefined' && map) map.needsRedraw = true;
-        }
-    },
 
     // Reset to default (used on game restart)
     reset() {
@@ -19502,9 +19308,6 @@ const BiomeSystem = {
     },
 
     // Get biome index (for cycling)
-    getCurrentIndex() {
-        return CONFIG.BIOME_NAMES.indexOf(this.currentBiome);
-    },
 
     // Guardiões favoritos de cada bioma temático (dungeon mantém o ciclo clássico de 10 pisos)
     _bossOrder: {
@@ -20612,6 +20415,10 @@ class Chest {
         if (sx > 40 && sx < width - 40 && (sy + bob) > 44 && (sy + bob) < height - 16) {
             ctx.globalAlpha = 0.9; ctx.fillStyle = this.color;
             ctx.font = 'bold 9px ' + COLORS.CANVAS_FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            const _chestLw = ctx.lineWidth;
+            ctx.strokeStyle = 'rgba(0,0,0,0.8)'; ctx.lineWidth = 2;
+            ctx.strokeText(this.label, sx, sy + bob - 34);
+            ctx.lineWidth = _chestLw;
             ctx.fillText(this.label, sx, sy + bob - 34);
             ctx.globalAlpha = 1;
         }
@@ -21399,16 +21206,16 @@ class Entity {
         if(source && source.skills && source.skills.execute && this.hp < this.maxHp * CONFIG.ROGUE_ASSASSINATE_THRESHOLD) { finalDmg = this.isB ? Math.min(this.maxHp * 0.10, Math.max(10, this.maxHp * CONFIG.ROGUE_ASSASSINATE_DAMAGE_PCT)) : Math.max(10, this.maxHp * CONFIG.ROGUE_ASSASSINATE_DAMAGE_PCT); dmgType = 'crit'; if(typeof DamageNumbers !== 'undefined') DamageNumbers.add(this.x, this.y, 'EXEC!', 'execute'); }
         if(source && source.skills && source.skills.deathmark && this._deathMarkT > 0) { finalDmg = Math.floor(finalDmg * 1.5); dmgType = 'crit'; }
         if(source && source.skills && source.skills.stun && SeedSystem.random() < 0.10) { this.frozen = Math.max(this.frozen || 0, Math.floor(40 * (this.elite ? 0.5 : this.isB ? 0.25 : 1))); spawnParticles(this.x, this.y, '#ffcc00', 6, 3); if(typeof DamageNumbers !== 'undefined') DamageNumbers.add(this.x, this.y, 'STUN!', 'stun'); if(typeof Statistics !== 'undefined' && source === player) Statistics.data.stunsApplied = (Statistics.data.stunsApplied || 0) + 1; }
-        if(source && source.skills && source.skills.bleed && SeedSystem.random() < 0.12) { this.poisonStacks = (this.poisonStacks || 0) + 2; this.poisonTimer = Math.max(this.poisonTimer || 0, CONFIG.ROGUE_POISON_DURATION); spawnParticles(this.x, this.y, '#ff2222', 6, 3); if(typeof DamageNumbers !== 'undefined') DamageNumbers.add(this.x, this.y, 'SANGRIA!', 'bleed'); if(typeof Statistics !== 'undefined' && source === player) Statistics.data.bleedsApplied = (Statistics.data.bleedsApplied || 0) + 1; }
-        if(source && source.skills && source.skills.frostTouch && SeedSystem.random() < 0.15) { this.frozen = Math.max(this.frozen || 0, Math.floor(60 * (this.elite ? 0.5 : this.isB ? 0.25 : 1))); spawnParticles(this.x, this.y, '#66ccff', 8, 4); if(typeof DamageNumbers !== 'undefined') DamageNumbers.add(this.x, this.y, 'GEADA!', 'frost'); if(typeof Statistics !== 'undefined' && source === player) Statistics.data.frostsApplied = (Statistics.data.frostsApplied || 0) + 1; }
+        if(source && source.skills && source.skills.bleed && SeedSystem.random() < 0.12) { this.poisonStacks = (this.poisonStacks || 0) + 2; this.poisonTimer = Math.max(this.poisonTimer || 0, CONFIG.ROGUE_POISON_DURATION); spawnParticles(this.x, this.y, '#ff2222', 6, 3); if(typeof DamageNumbers !== 'undefined') DamageNumbers.add(this.x, this.y, window.I18n ? I18n.t('hud.bleed') : 'SANGRIA!', 'bleed'); if(typeof Statistics !== 'undefined' && source === player) Statistics.data.bleedsApplied = (Statistics.data.bleedsApplied || 0) + 1; }
+        if(source && source.skills && source.skills.frostTouch && SeedSystem.random() < 0.15) { this.frozen = Math.max(this.frozen || 0, Math.floor(60 * (this.elite ? 0.5 : this.isB ? 0.25 : 1))); spawnParticles(this.x, this.y, '#66ccff', 8, 4); if(typeof DamageNumbers !== 'undefined') DamageNumbers.add(this.x, this.y, window.I18n ? I18n.t('hud.frost') : 'GEADA!', 'frost'); if(typeof Statistics !== 'undefined' && source === player) Statistics.data.frostsApplied = (Statistics.data.frostsApplied || 0) + 1; }
         // Elfa: raízes da natureza enraízam inimigos no golpe (mesma mecânica do gelo, visual verde)
-        if(source && source.skills && source.skills.rootTouch && SeedSystem.random() < 0.15) { this.frozen = Math.max(this.frozen || 0, Math.floor(60 * (this.elite ? 0.5 : this.isB ? 0.25 : 1))); spawnParticles(this.x, this.y, '#58e08a', 8, 4); if(typeof DamageNumbers !== 'undefined') DamageNumbers.add(this.x, this.y, 'RAÍZES!', 'frost'); if(source.skills.thorns) { this.poisonStacks = Math.min(CONFIG.ROGUE_POISON_MAX_STACKS, (this.poisonStacks || 0) + 1); this.poisonTimer = Math.max(this.poisonTimer || 0, CONFIG.ROGUE_POISON_DURATION); spawnParticles(this.x, this.y, '#58e08a', 5, 3); DamageNumbers.add(this.x, this.y, 'ESPINHOS!', 'bleed'); }if(typeof Statistics !== 'undefined' && source === player) Statistics.data.frostsApplied = (Statistics.data.frostsApplied || 0) + 1; }
+        if(source && source.skills && source.skills.rootTouch && SeedSystem.random() < 0.15) { this.frozen = Math.max(this.frozen || 0, Math.floor(60 * (this.elite ? 0.5 : this.isB ? 0.25 : 1))); spawnParticles(this.x, this.y, '#58e08a', 8, 4); if(typeof DamageNumbers !== 'undefined') DamageNumbers.add(this.x, this.y, 'RAÍZES!', 'frost'); if(source.skills.thorns) { this.poisonStacks = Math.min(CONFIG.ROGUE_POISON_MAX_STACKS, (this.poisonStacks || 0) + 1); this.poisonTimer = Math.max(this.poisonTimer || 0, CONFIG.ROGUE_POISON_DURATION); spawnParticles(this.x, this.y, '#58e08a', 5, 3); DamageNumbers.add(this.x, this.y, window.I18n ? I18n.t('combat.thorns') : 'ESPINHOS!', 'bleed'); }if(typeof Statistics !== 'undefined' && source === player) Statistics.data.frostsApplied = (Statistics.data.frostsApplied || 0) + 1; }
         if(this.frozen > 0) { 
             finalDmg *= CONFIG.FROZEN_DAMAGE_MULT; 
             dmgType = 'crit'; 
             if (source && source.type === 'warrior') {
                 finalDmg *= 1.5;
-                DamageNumbers.add(this.x, this.y, 'SHATTER!', 'crit');
+                DamageNumbers.add(this.x, this.y, window.I18n ? I18n.t('hud.shatter') : 'SHATTER!', 'crit');
                 SND.play(400, 'square', 0.1, 0.2);
             }
         }
@@ -23499,7 +23306,11 @@ class Boss extends Enemy {
         // Phase indicator
         ctx.fillStyle = this.phase === 3 ? '#ff0000' : '#fff';
         ctx.font = 'bold 8px ' + COLORS.CANVAS_FONT;
+        ctx.strokeStyle = 'rgba(0,0,0,0.9)';
+        ctx.lineWidth = 2;
+        ctx.strokeText(`FASE ${this.phase}`, this.x-cx, this.y-cy-this.radius-8);
         ctx.fillText(`FASE ${this.phase}`, this.x-cx, this.y-cy-this.radius-8);
+        ctx.lineWidth = 1;
 
         // Telegraph: projectile burst warning circles
         if(this._burstTelegraph && this._burstTelegraph > 0) {
@@ -23543,7 +23354,11 @@ class Boss extends Enemy {
             ctx.fillStyle = '#ff0000';
             ctx.font = `bold ${Math.floor(11 + (1-t)*5)}px ${COLORS.CANVAS_FONT}`;
             ctx.textAlign = 'center';
+            ctx.strokeStyle = 'rgba(0,0,0,0.9)';
+            ctx.lineWidth = 3;
+            ctx.strokeText(I18n.t('boss.chargeWarn'), this.x-cx, this.y-cy-this.radius-34);
             ctx.fillText(I18n.t('boss.chargeWarn'), this.x-cx, this.y-cy-this.radius-34);
+            ctx.lineWidth = 1;
         }
 
         // Telegraph: soul drain danger radius (the channel is otherwise invisible)
@@ -23596,7 +23411,7 @@ class Boss extends Enemy {
             a = Math.max(1, a - blocked);
             this._armorHp -= a;
             spawnParticles(this.x, this.y, '#d0d0d0', 3, 2);
-            if (typeof DamageNumbers !== 'undefined') DamageNumbers.add(this.x, this.y, 'BLOQUEIO', 'stun');
+            if (typeof DamageNumbers !== 'undefined') DamageNumbers.add(this.x, this.y, window.I18n ? I18n.t('hud.block') : 'BLOQUEIO', 'stun');
             if(this._armorHp <= 0) {
                 this._armorHp = 0;
                 spawnParticles(this.x, this.y, '#e0e0e0', 22, 6);
@@ -23849,7 +23664,6 @@ const PET_TYPES = {
 };
 
 // Map class  pet type
-const CLASS_PET = { warrior: 'horse', mage: 'dragon', rogue: 'eagle' };
 
 // ---- Arte dos pets (v57): pixel-art 32x32 montado por código, em cache lazy ----
 // Cada pet desenha formas (elipse, retângulo, triângulo) numa grade; contorno colorido e
@@ -24351,21 +24165,6 @@ class Pet {
 }
 
 // Tap-to-mount: detect tap near pet
-function petHandleTap(wx, wy) {
-    if(!pets || !player) return false;
-    for(let i = 0; i < pets.length; i++) {
-        const pet = pets[i];
-        if(!pet.alive) continue;
-        const dx = wx - pet.x, dy = wy - pet.y;
-        const tapDistSq = (pet.radius + 30) * (pet.radius + 30);
-        if(dx*dx + dy*dy < tapDistSq) {
-            if(pet.mounted) pet.dismount();
-            else pet.mount();
-            return true;
-        }
-    }
-    return false;
-}
 
 
 </script>
@@ -24472,7 +24271,7 @@ function awardKillRewards(player, target, source) {
         Statistics.data.maxCombo = Math.max(Statistics.data.maxCombo || 0, player.comboCount); if (window.RunStats) RunStats.maxCombo = Math.max(RunStats.maxCombo || 0, player.comboCount);
     }
     SND.playKill();
-    if(player.comboCount > CONFIG.COMBO_DISPLAY_MIN) DamageNumbers.add(player.x, player.y, `${player.comboCount}x COMBO!`, 'crit');
+    if(player.comboCount > CONFIG.COMBO_DISPLAY_MIN) DamageNumbers.add(player.x, player.y, `${player.comboCount}x ${window.I18n ? I18n.t('hud.combo') : 'COMBO!'}`, 'crit');
     if (player.comboCount % 10 === 0) triggerCamZoom(0.05, 18);
     if(SeedSystem.random() < CONFIG.LOOT_DROP_CHANCE) {
         const types = ['health', 'xp', 'shield', 'speed', 'essence'];
@@ -25067,7 +24866,7 @@ class Player extends Entity {
             if (this.type === 'warrior') this.parryWindow = CONFIG.WARRIOR_PARRY_FRAMES;
             Vibrate.trigger('dodge');
             this.stealth = 20;
-            DamageNumbers.add(this.x, this.y, 'DASH!', 'heal');
+            DamageNumbers.add(this.x, this.y, window.I18n ? I18n.t('hud.dash') : 'DASH!', 'heal');
             if (typeof triggerCamZoom === 'function') triggerCamZoom(0.04, 12);
             if (typeof spawnParticles !== 'undefined') {
                 spawnParticles(this.x, this.y, '#55ffaa', 8, 4);
@@ -25424,11 +25223,11 @@ class Player extends Entity {
                 this.hp -= this.maxHp * CONFIG.DARK_PACT_HP_COST;
                 this.attackHeat = effectiveHeatMax * 0.5;
                 spawnParticles(this.x, this.y, '#aa2255', 14, 5);
-                DamageNumbers.add(this.x, this.y, 'PACTO!', 'crit');
+                DamageNumbers.add(this.x, this.y, window.I18n ? I18n.t('combat.pact') : 'PACTO!', 'crit');
             } else if(this.attackHeat >= effectiveHeatMax && !this.overheated) {
                 this.overheated = true;
                 SND.play(180, 'sawtooth', 0.2, 0.15);
-                DamageNumbers.add(this.x, this.y, 'SUPERAQUECIDO!', 'normal');
+                DamageNumbers.add(this.x, this.y, window.I18n ? I18n.t('hud.overheated') : 'SUPERAQUECIDO!', 'normal');
                 // Guerreiro: ao superaquecer, ergue o escudo (absorve dano até esfriar)
                 if(this.type === 'warrior' && !this._overheatShieldGranted) {
                     this._overheatShieldGranted = true;
@@ -25556,7 +25355,7 @@ class Player extends Entity {
                                 }
                             }
                         }
-                        DamageNumbers.add(this.x, this.y, 'SPELL COMBO!', 'crit');
+                        DamageNumbers.add(this.x, this.y, window.I18n ? I18n.t('hud.spellCombo') : 'SPELL COMBO!', 'crit');
                         SND.play(660, 'sine', 0.3, 0.15);
                     }
                 }
@@ -25567,7 +25366,7 @@ class Player extends Entity {
                 // Sobrecarga Cíclica (v56, mago): a cada N ataques, o disparo sai com dano dobrado
                 if(this.type === 'mage' && this.skills.cyclicOverload) {
                     this._castN = (this._castN || 0) + 1;
-                    if(this._castN >= CONFIG.CYCLIC_OVERLOAD_EVERY) { this._castN = 0; chainDmg = Math.floor(chainDmg * CONFIG.CYCLIC_OVERLOAD_MULT); DamageNumbers.add(this.x, this.y, 'SOBRECARGA!', 'crit'); }
+                    if(this._castN >= CONFIG.CYCLIC_OVERLOAD_EVERY) { this._castN = 0; chainDmg = Math.floor(chainDmg * CONFIG.CYCLIC_OVERLOAD_MULT); DamageNumbers.add(this.x, this.y, window.I18n ? I18n.t('combat.overload') : 'SOBRECARGA!', 'crit'); }
                 }
                 // Lâminas Gêmeas (v56, ladino): o passo 2 dispara um projétil extra, no centro do leque
                 const _twin = (chainStep === 2 && this.type === 'rogue' && this.skills.twinBlades) ? 1 : 0;
@@ -25575,7 +25374,7 @@ class Player extends Entity {
                 let _gale = false;
                 if(this.type === 'elf' && this.skills.galeBurst) {
                     this._galeN = (this._galeN || 0) + 1;
-                    if(this._galeN >= CONFIG.GALE_BURST_EVERY) { this._galeN = 0; _gale = true; chainDmg = Math.floor(chainDmg * CONFIG.GALE_BURST_MULT); DamageNumbers.add(this.x, this.y, 'RAJADA!', 'crit'); }
+                    if(this._galeN >= CONFIG.GALE_BURST_EVERY) { this._galeN = 0; _gale = true; chainDmg = Math.floor(chainDmg * CONFIG.GALE_BURST_MULT); DamageNumbers.add(this.x, this.y, window.I18n ? I18n.t('combat.gale') : 'RAJADA!', 'crit'); }
                 }
                 let mainBullet = null;
                 for (let ci = 0; ci < chainOffs.length + _twin; ci++) {
@@ -25965,8 +25764,8 @@ class Player extends Entity {
             if(window.Vibrate) Vibrate.trigger('normalHit');
             return;
         }
-        if (this.dodgeChance && a > 0 && SeedSystem.random() < Math.min(0.75, this.dodgeChance)) { spawnParticles(this.x, this.y, '#33ff33', 8, 4); DamageNumbers.add(this.x, this.y, 'ESQUIVA!', 'heal'); return; }
-        if(this.type === 'mage' && this.orbShieldReady && a > 0) { this.orbShieldReady = false; this.orbShieldTimer = 0; spawnParticles(this.x, this.y, COLORS.CLASS_MAGE, 15, 4); SND.play(440, 'sine', 0.2, 0.2); DamageNumbers.add(this.x, this.y, 'ORB SHIELD!', 'heal'); return; }
+        if (this.dodgeChance && a > 0 && SeedSystem.random() < Math.min(0.75, this.dodgeChance)) { spawnParticles(this.x, this.y, '#33ff33', 8, 4); DamageNumbers.add(this.x, this.y, window.I18n ? I18n.t('hud.dodge') : 'ESQUIVA!', 'heal'); return; }
+        if(this.type === 'mage' && this.orbShieldReady && a > 0) { this.orbShieldReady = false; this.orbShieldTimer = 0; spawnParticles(this.x, this.y, COLORS.CLASS_MAGE, 15, 4); SND.play(440, 'sine', 0.2, 0.2); DamageNumbers.add(this.x, this.y, window.I18n ? I18n.t('hud.orbShield') : 'ORB SHIELD!', 'heal'); return; }
         if(this.type === 'rogue' || this.type === 'mage') this.mageComboCount = 0;
         let dmg = a;
         // Daily challenge 'oneshot': the player dies in a single hit
@@ -26047,10 +25846,12 @@ const NPCInteractionPanel = {
     feedbackTimer: 0,
 
     show(npc, message, buttons) {
+        const wasVisible = this.visible;
         this.visible = true;
         this.npc = npc;
         this.message = message;
         this.buttons = buttons || [];
+        CanvasMenuNav.sel = wasVisible ? Math.min(CanvasMenuNav.sel, Math.max(0, this.buttons.length - 1)) : 0;
         this.feedback = '';
         this.feedbackTimer = 0;
     },
@@ -26144,6 +25945,7 @@ const NPCInteractionPanel = {
             _roundRect(ctx, bx, btnY, btnW, btnH, 6);
             ctx.fill();
             ctx.stroke();
+            if (i === CanvasMenuNav.sel) CanvasMenuNav.highlight(ctx, bx, btnY, btnW, btnH);
             ctx.fillStyle = '#eee';
             ctx.font = 'bold 12px ' + COLORS.CANVAS_FONT;
             ctx.textAlign = 'center';
@@ -26154,6 +25956,57 @@ const NPCInteractionPanel = {
 
         // Return panel bounds for hit testing
         return { panelX, panelY, panelW, panelH };
+    }
+};
+
+// Navegação por teclado para menus de botões desenhados no canvas. Hoje só o
+// NPCInteractionPanel usa: a lista de botões é o próprio menu.buttons; aqui ficam o
+// índice selecionado e o destaque. Consome teclas só enquanto o menu está aberto,
+// então setas/WASD/Espaço continuam controlando o herói no resto do jogo.
+const CanvasMenuNav = {
+    sel: 0,
+    kb: false, // destaque aparece depois do uso do teclado (não muda o uso por ponteiro)
+
+    // Retorna true quando a tecla foi consumida pelo menu
+    handleKey(e) {
+        const m = (typeof NPCInteractionPanel !== 'undefined') ? NPCInteractionPanel : null;
+        if (!m || !m.visible || !m.buttons.length) return false;
+        if (typeof TutorialSystem !== 'undefined' && TutorialSystem.active) return false;
+        const n = m.buttons.length;
+        const k = e.key;
+        let step = 0;
+        if (k === 'ArrowLeft' || k === 'ArrowUp') step = -1;
+        else if (k === 'ArrowRight' || k === 'ArrowDown') step = 1;
+        else if (k === 'Tab') step = e.shiftKey ? -1 : 1;
+        if (step) {
+            e.preventDefault();
+            this.kb = true;
+            this.sel = (((this.sel + step) % n) + n) % n;
+            return true;
+        }
+        if (k === 'Enter' || k === ' ') {
+            e.preventDefault();
+            if (!e.repeat) { this.kb = true; this._run(m.buttons[this.sel]); }
+            return true;
+        }
+        if (k === 'Escape') {
+            e.preventDefault();
+            this._run(m.buttons.find(b => b.cancel) || m.buttons[n - 1]);
+            return true;
+        }
+        return false;
+    },
+
+    _run(button) {
+        if (button && button.action) button.action();
+    },
+
+    highlight(ctx, x, y, w, h) {
+        if (!this.kb) return;
+        ctx.strokeStyle = '#ffcc00';
+        ctx.lineWidth = 2.5;
+        _roundRect(ctx, x - 2, y - 2, w + 4, h + 4, 8);
+        ctx.stroke();
     }
 };
 
@@ -26345,7 +26198,7 @@ class NPC {
             const okLabel = window.I18n ? I18n.t('npc.ok') : 'OK';
             const self = this;
             NPCInteractionPanel.show(this, this._tip, [
-                { label: okLabel, action: () => {
+                { label: okLabel, cancel: true, action: () => {
                     NPCInteractionPanel.hide();
                     self.interacted = true;
                     self.alive = false;
@@ -26392,7 +26245,7 @@ class NPC {
             }
         });
         if (idx < this._merchantItems.length - 1) buttons.push({ label: '>', action: () => self._showMerchantItem(idx + 1) });
-        buttons.push({ label: closeLabel, action: () => {
+        buttons.push({ label: closeLabel, cancel: true, action: () => {
             NPCInteractionPanel.hide();
             self.interacted = true;
         } });
@@ -26431,7 +26284,7 @@ class NPC {
                     }
                 }
             },
-            { label: closeLabel, action: () => { NPCInteractionPanel.hide(); self.interacted = true; } }
+            { label: closeLabel, cancel: true, action: () => { NPCInteractionPanel.hide(); self.interacted = true; } }
         ]);
     }
 
@@ -26543,6 +26396,7 @@ const NPCSystem = {
     // Handle touch/click on canvas for NPC panel buttons
     handleTouch(tx, ty) {
         if (!NPCInteractionPanel.visible) return false;
+        CanvasMenuNav.kb = false; // toque/clique volta a ser o modo principal: some o destaque do teclado
         const screenW = width || 800;
         const panelW = Math.min(320, screenW - 20);
         const panelX = (screenW - panelW) / 2;
@@ -27029,7 +26883,7 @@ const RelicSystem = {
         if (player._furiaCounter >= 10) {
             player._furiaCounter = 0;
             spawnParticles(player.x, player.y, '#ff8800', 12, 4);
-            DamageNumbers.add(player.x, player.y, 'FRIA!', 'crit');
+            DamageNumbers.add(player.x, player.y, window.I18n ? I18n.t('combat.relicFury') : 'FÚRIA!', 'crit');
             return baseDmg * 5;
         }
         return baseDmg;
@@ -27840,6 +27694,9 @@ var SettingsUI = {
         this._render();
     },
 
+
+
+
     _setGamepadAction(action, index) {
         GameSettings.setGamepadAction(action, index);
         this._render();
@@ -28260,7 +28117,9 @@ window.SkillTreeUI = SkillTreeUI;
              }
              let scrollTop = 0;
              if (isRefresh && this._contentEl) scrollTop = this._contentEl.scrollTop;
-             
+             // Foco do teclado: guarda o elemento focado antes do re-render (ver _captureFocus)
+             const focusKey = isRefresh ? this._captureFocus(this.overlay) : null;
+
              this.currentPanel = panelId;
              merchantActive = (panelId === 'shop');
              skillTreeOpen = (panelId === 'skills');
@@ -28318,11 +28177,41 @@ window.SkillTreeUI = SkillTreeUI;
              this.overlay.appendChild(panel);
 
              const initialFocus = panel.querySelector('button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled])');
-             (initialFocus || panel).focus();
+             this._restoreFocus(panel, focusKey, initialFocus);
 
              // Restaura a posição de rolagem após o re-render (mesmo painel)
              if (isRefresh && contentEl) contentEl.scrollTop = scrollTop;
          },
+
+        // Foco do teclado através do re-render do painel (openPanel recria o DOM inteiro).
+        // Identificador estável: o onclick do elemento focado (ex.: buyItem('id', 1, false))
+        // e, como plano B, a posição entre os focáveis do painel.
+        _FOCUSABLE_SEL: 'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [role="button"][tabindex]',
+        _captureFocus(container) {
+            const active = document.activeElement;
+            if (!active || !container || !container.contains(active) || active === container) return null;
+            const list = Array.from(container.querySelectorAll(this._FOCUSABLE_SEL));
+            return { onclick: active.getAttribute('onclick') || '', index: list.indexOf(active) };
+        },
+        _restoreFocus(panel, key, fallback) {
+            let target = null;
+            if (key) {
+                const list = Array.from(panel.querySelectorAll(this._FOCUSABLE_SEL));
+                if (key.onclick) target = list.find(el => el.getAttribute('onclick') === key.onclick) || null;
+                if (!target && key.onclick && key.index >= 0) {
+                    // Item sumiu/ficou indisponível: card mais próximo da mesma ação (ex.: outro buyItem)
+                    const fn = key.onclick.split('(')[0];
+                    let best = -1;
+                    list.forEach((el, i) => {
+                        if ((el.getAttribute('onclick') || '').split('(')[0] !== fn) return;
+                        if (best < 0 || Math.abs(i - key.index) < Math.abs(best - key.index)) best = i;
+                    });
+                    if (best >= 0) target = list[best];
+                }
+                if (!target && key.index >= 0 && list.length) target = list[Math.min(key.index, list.length - 1)];
+            }
+            (target || fallback || panel).focus();
+        },
 
         // Cards clicáveis que não são <button> (loja, skills, lore, MetaLoja) viram
         // role="button" com foco por Tab e ativação por Enter/Espaço. Um observer
@@ -28375,7 +28264,7 @@ window.SkillTreeUI = SkillTreeUI;
                                 <div style="font-weight:bold;font-size:13px;color:${COLORS.GOLD}">${(window._L ? _L(it.nameKey, it.name) : it.name)}</div>
                                 <div style="font-size:10px;color:${COLORS.TEXT_DIM};line-height:1.3">${(window._L ? _L(it.descKey, it.desc) : it.desc)}</div>
                             </div>
-                            <button onclick="window.UIManager.campBuy(${i})" style="flex-shrink:0;padding:8px 12px;border-radius:10px;font-weight:bold;font-size:12px;border:1.5px solid ${canBuy ? 'rgba(250,204,21,0.6)' : 'rgba(255,255,255,0.15)'};background:${canBuy ? 'rgba(250,204,21,0.18)' : 'rgba(255,255,255,0.05)'};color:${canBuy ? COLORS.GOLD : COLORS.TEXT_MUTED};cursor:pointer;touch-action:manipulation">
+                            <button aria-label="${(window._L ? _L(it.nameKey, it.name) : it.name)}" onclick="window.UIManager.campBuy(${i})" style="flex-shrink:0;padding:8px 12px;border-radius:10px;font-weight:bold;font-size:12px;border:1.5px solid ${canBuy ? 'rgba(250,204,21,0.6)' : 'rgba(255,255,255,0.15)'};background:${canBuy ? 'rgba(250,204,21,0.18)' : 'rgba(255,255,255,0.05)'};color:${canBuy ? COLORS.GOLD : COLORS.TEXT_MUTED};cursor:pointer;touch-action:manipulation">
                                 ${it.cost} 💰
                             </button>
                         </div>`;
@@ -28387,8 +28276,8 @@ window.SkillTreeUI = SkillTreeUI;
                 if (picked) {
                     return `
                         <div style="padding:10px;border-radius:12px;border:1.5px solid rgba(110,231,183,0.6);background:rgba(110,231,183,0.12);margin-bottom:8px">
-                            <div style="font-weight:bold;font-size:13px;color:#86efac">${b.icon} ${b.name} <span style="color:#4ade80">✓</span></div>
-                            <div style="font-size:10px;color:${COLORS.TEXT_DIM};line-height:1.3">${b.desc}</div>
+                            <div style="font-weight:bold;font-size:13px;color:#86efac">${b.icon} ${_L(b.nameKey, b.name)} <span style="color:#4ade80">✓</span></div>
+                            <div style="font-size:10px;color:${COLORS.TEXT_DIM};line-height:1.3">${_L(b.descKey, b.desc)}</div>
                         </div>`;
                 }
                 const chosen = st.shrinePicked !== null;
@@ -28397,8 +28286,8 @@ window.SkillTreeUI = SkillTreeUI;
                 const exhausted = !chosen && p && p.runBoons && p.runBoons.filter(x => x === b.id).length >= 2;
                 return `
                     <div style="padding:10px;border-radius:12px;border:1.5px solid ${chosen ? 'rgba(255,255,255,0.08)' : (exhausted ? 'rgba(255,255,255,0.1)' : 'rgba(255,216,107,0.35)')};background:${chosen ? 'rgba(255,255,255,0.03)' : (exhausted ? 'rgba(255,255,255,0.02)' : 'rgba(255,216,107,0.07)')};margin-bottom:8px;opacity:${chosen ? 0.5 : (exhausted ? 0.45 : 1)}">
-                        <div style="font-weight:bold;font-size:13px;color:${chosen ? COLORS.TEXT_DIM : (exhausted ? COLORS.TEXT_MUTED : '#ffd86b')}">${b.icon} ${b.name}</div>
-                        <div style="font-size:10px;color:${COLORS.TEXT_DIM};line-height:1.3;margin-bottom:6px">${b.desc}</div>
+                        <div style="font-weight:bold;font-size:13px;color:${chosen ? COLORS.TEXT_DIM : (exhausted ? COLORS.TEXT_MUTED : '#ffd86b')}">${b.icon} ${_L(b.nameKey, b.name)}</div>
+                        <div style="font-size:10px;color:${COLORS.TEXT_DIM};line-height:1.3;margin-bottom:6px">${_L(b.descKey, b.desc)}</div>
                         ${chosen ? '' : (exhausted
                             ? `<div style="width:100%;padding:7px;border-radius:9px;text-align:center;font-weight:bold;font-size:11px;border:1.5px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.03);color:${COLORS.TEXT_MUTED}">${_L('camp.boonExhausted', 'BÊNÇÃO ESGOTADA (máx. 2)')}</div>`
                             : `<button onclick="window.UIManager.campShrine(${i})" style="width:100%;padding:7px;border-radius:9px;font-weight:bold;font-size:11px;border:1.5px solid rgba(255,216,107,0.5);background:rgba(255,216,107,0.15);color:#ffd86b;cursor:pointer;touch-action:manipulation">${_L('camp.chooseBoon', 'ESCOLHER BÊNÇÃO')}</button>`)}
@@ -28415,15 +28304,15 @@ window.SkillTreeUI = SkillTreeUI;
                         const picked = resolved && st.eventChoice === i;
                         return `
                             <div style="padding:10px;border-radius:12px;border:1.5px solid ${picked ? 'rgba(224,182,255,0.6)' : (resolved ? 'rgba(255,255,255,0.08)' : 'rgba(224,182,255,0.35)')};background:${picked ? 'rgba(224,182,255,0.12)' : (resolved ? 'rgba(255,255,255,0.03)' : 'rgba(224,182,255,0.07)')};margin-bottom:8px;opacity:${resolved && !picked ? 0.5 : 1}">
-                                <div style="font-weight:bold;font-size:12px;color:${picked ? COLORS.PRIMARY : '#c9a8ff'}">${c.label}${c.requireGold ? ` <span style="color:${COLORS.GOLD};font-size:10px">(${c.requireGold}💰)</span>` : ''}</div>
-                                <div style="font-size:10px;color:${COLORS.TEXT_DIM};line-height:1.3;margin-bottom:6px">${c.desc}</div>
+                                <div style="font-weight:bold;font-size:12px;color:${picked ? COLORS.PRIMARY : '#c9a8ff'}">${_L(c.labelKey, c.label)}${c.requireGold ? ` <span style="color:${COLORS.GOLD};font-size:10px">(${c.requireGold}💰)</span>` : ''}</div>
+                                <div style="font-size:10px;color:${COLORS.TEXT_DIM};line-height:1.3;margin-bottom:6px">${_L(c.descKey, c.desc)}</div>
                                 ${resolved ? '' : `<button onclick="window.UIManager.campEvent(${i})" style="width:100%;padding:7px;border-radius:9px;font-weight:bold;font-size:11px;border:1.5px solid ${canPick ? 'rgba(224,182,255,0.5)' : 'rgba(255,255,255,0.12)'};background:${canPick ? 'rgba(224,182,255,0.14)' : 'rgba(255,255,255,0.04)'};color:${canPick ? '#e6d0ff' : COLORS.TEXT_MUTED};cursor:${canPick ? 'pointer' : 'not-allowed'};touch-action:manipulation">${canPick ? _L('camp.choose', 'ESCOLHER') : (c.requireGold ? _L('camp.noCoinsBtn', 'MOEDAS INSUFICIENTES') : _L('camp.unavailable', 'INDISPONÍVEL'))}</button>`}
                             </div>`;
                     }).join('');
                     eventSection = `
                         <div style="margin-bottom:12px;padding:12px;border-radius:12px;background:rgba(30,20,40,0.55);border:1.5px solid rgba(224,182,255,0.3)">
-                            <div style="font-size:12px;font-weight:bold;color:#e0b6ff;letter-spacing:0.05em;margin-bottom:2px">${ev.icon} ${_L('camp.eventLabel', 'EVENTO: ')}${ev.title}</div>
-                            <div style="font-size:11px;color:${COLORS.TEXT_DIM};line-height:1.4;margin-bottom:8px">${ev.text}</div>
+                            <div style="font-size:12px;font-weight:bold;color:#e0b6ff;letter-spacing:0.05em;margin-bottom:2px">${ev.icon} ${_L('camp.eventLabel', 'EVENTO: ')}${_L(ev.titleKey, ev.title)}</div>
+                            <div style="font-size:11px;color:${COLORS.TEXT_DIM};line-height:1.4;margin-bottom:8px">${_L(ev.textKey, ev.text)}</div>
                             ${resolved
                                 ? `<div style="font-size:11px;padding:8px 10px;border-radius:9px;background:rgba(224,182,255,0.08);color:#e6d0ff;font-weight:bold;margin-bottom:4px">${st.eventResult}</div>`
                                 : cards}
@@ -28557,7 +28446,7 @@ window.SkillTreeUI = SkillTreeUI;
                     : `<span style="font-weight:bold;font-size:12px;color:${canBuy ? COLORS.GOLD : COLORS.TEXT_MUTED}">💰 ${effCost}${merchantOn && !soldOut ? ' <span style="font-size:9px;color:#4ade80">(−' + merchantPct + '%)</span>' : ''}</span>`;
                 return `
                     <div style="padding:12px;border-radius:12px;border:1.5px solid ${opts.flash ? '#ffcc00' : (canBuy ? COLORS.PRIMARY : 'rgba(255,255,255,0.1)')};background:${opts.flash ? 'linear-gradient(135deg, rgba(255,200,0,0.14), rgba(255,120,0,0.10))' : (canBuy ? 'rgba(224,182,255,0.1)' : 'rgba(35,28,48,0.5)')};${canBuy ? 'cursor:pointer' : 'opacity:0.6'};transition:all 0.2s;box-shadow:${opts.flash ? '0 0 18px rgba(255,200,0,0.15)' : 'none'}"
-                         onclick="${canBuy ? `UIManager.buyItem('${item.id}', 1, ${opts.flash ? 'true' : 'false'})` : ''}">
+                         ${canBuy ? 'role="button" tabindex="0" ' : ''}onclick="${canBuy ? `UIManager.buyItem('${item.id}', 1, ${opts.flash ? 'true' : 'false'})` : ''}">
                         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
                             <div style="font-weight:bold;font-size:14px;color:${opts.flash ? '#ffcc00' : (canBuy ? COLORS.PRIMARY : COLORS.TEXT_DIM)}">${(window._L ? _L(item.nameKey, item.name) : item.name)}</div>
                             <div style="display:flex;align-items:center;gap:6px">
@@ -28743,7 +28632,7 @@ window.SkillTreeUI = SkillTreeUI;
                     : '';
                 return `
                     <div class="skill-node ${state}" style="width:100%;padding:10px;border-radius:12px;cursor:pointer;transition:all 0.2s"
-                         onclick="UIManager.showSkillDetail('${s.id}')">
+                         role="button" tabindex="0" onclick="UIManager.showSkillDetail('${s.id}')">
                         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
                             <div class="sk-name">${_L('skill.' + p.type + '.' + s.id + '.name', s.name)} ${isUnlocked ? '<span class="sk-check">✓</span>' : ''}</div>
                             <div style="display:flex;gap:4px;align-items:center">
@@ -29176,7 +29065,7 @@ renderAchievementsContent() {
                 const borderColor = discovered ? (rarityColors[f.rarity] || 'rgba(255,255,255,0.2)') : 'rgba(255,255,255,0.08)';
                 const bgColor = discovered ? 'rgba(30,20,60,0.6)' : 'rgba(255,255,255,0.03)';
                 const cursor = discovered ? 'cursor:pointer' : '';
-                const click = discovered ? `onclick="UIManager.viewLoreEntry('${f.id}')"` : '';
+                const click = discovered ? `role="button" tabindex="0" onclick="UIManager.viewLoreEntry('${f.id}')"` : '';
                 return `
                     <div ${click} style="padding:10px 14px;border-radius:12px;border:1px solid ${borderColor};background:${bgColor};${cursor};transition:all 0.2s;display:flex;flex-direction:column;gap:2px">
                         <div style="display:flex;justify-content:space-between;align-items:center">
@@ -29272,7 +29161,7 @@ renderAchievementsContent() {
         },
 
         renderMetaContent() {
-            if (!window.MetaSystem) return '<p style="text-align:center;color:' + COLORS.TEXT_DIM + '">Indisponível</p>';
+            if (!window.MetaSystem) return '<p style="text-align:center;color:' + COLORS.TEXT_DIM + '">' + (window.I18n ? I18n.t('ui.unavailable') : 'Indisponível') + '</p>';
             const M = window.MetaSystem;
             const profile = M.profile();
             const ess = profile.essence;
@@ -29286,7 +29175,7 @@ renderAchievementsContent() {
                 const canBuy = !maxed && ess >= cost;
                 return `
                     <div style="padding:12px;border-radius:12px;border:1.5px solid ${maxed ? 'rgba(74,222,128,0.3)' : (canBuy ? COLORS.PRIMARY : 'rgba(255,255,255,0.1)')};background:${maxed ? 'rgba(74,222,128,0.08)' : (canBuy ? 'rgba(224,182,255,0.1)' : 'rgba(35,28,48,0.5)')};${maxed ? '' : (canBuy ? 'cursor:pointer' : 'opacity:0.65')};transition:all 0.2s"
-                         onclick="${maxed ? '' : `UIManager.metaBuy('${id}')`}">
+                         ${maxed ? '' : 'role="button" tabindex="0" '}onclick="${maxed ? '' : `UIManager.metaBuy('${id}')`}">
                         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
                             <div style="font-weight:bold;font-size:14px;color:${maxed ? '#4ade80' : (canBuy ? COLORS.PRIMARY : COLORS.TEXT_DIM)}">${p.icon} ${_L(p.nameKey, p.name)}</div>
                             <div style="font-size:11px;font-weight:800;color:${maxed ? '#4ade80' : (canBuy ? COLORS.GOLD : COLORS.TEXT_MUTED)}">${maxed ? 'MAX' : cost + ' ✨'}</div>
@@ -29304,7 +29193,7 @@ renderAchievementsContent() {
                 const canBuy = !owned && ess >= u.cost;
                 unlockCards += `
                     <div style="padding:12px;border-radius:12px;border:1.5px solid ${owned ? 'rgba(74,222,128,0.4)' : (canBuy ? COLORS.PRIMARY : 'rgba(255,255,255,0.1)')};background:${owned ? 'rgba(74,222,128,0.08)' : (canBuy ? 'rgba(224,182,255,0.1)' : 'rgba(35,28,48,0.5)')};${owned ? '' : (canBuy ? 'cursor:pointer' : 'opacity:0.65')};transition:all 0.2s"
-                          onclick="${owned ? '' : `UIManager.metaUnlock('${id}')`}">
+                          ${owned ? '' : 'role="button" tabindex="0" '}onclick="${owned ? '' : `UIManager.metaUnlock('${id}')`}">
                         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
                             <div style="font-weight:bold;font-size:14px;color:${owned ? '#4ade80' : (canBuy ? COLORS.PRIMARY : COLORS.TEXT_DIM)}">${u.icon} ${_L(u.nameKey, u.name)}</div>
                             <div style="font-size:11px;font-weight:800;color:${owned ? '#4ade80' : (canBuy ? COLORS.GOLD : COLORS.TEXT_MUTED)}">${owned ? '✓' : u.cost + ' ✨'}</div>
@@ -30759,7 +30648,7 @@ get totalBonus() { return this.BONUS_COMPLETE + (this.mode === 'full' ? this.BON
         if(typeof player !== 'undefined' && player) {
             player.currency += bonus;
             if(typeof DamageNumbers !== 'undefined') {
-                DamageNumbers.add(player.x, player.y - 40, '+' + bonus + (window.I18n ? I18n.t('hud.bonus') : '  BNUS!'), 'normal');
+                DamageNumbers.add(player.x, player.y - 40, '+' + bonus + (window.I18n ? I18n.t('hud.bonus') : '  BÔNUS!'), 'normal');
             }
         }
         if(typeof addLog !== 'undefined') addLog((window.I18n ? I18n.t('log.tutorialCompletePre') : ' Tutorial completo! +') + bonus + (window.I18n ? I18n.t('log.tutorialCompletePost') : ' moedas. Boa sorte!'));
@@ -30807,55 +30696,7 @@ get totalBonus() { return this.BONUS_COMPLETE + (this.mode === 'full' ? this.BON
         }
     },
 
-    _spawnTutorialPickup() {
-        if(this._tutPickup || typeof player === 'undefined' || !player) return;
-        try {
-            var px = player.x + 90, py = player.y;
-            if(typeof map !== 'undefined' && map && typeof map.isWall === 'function') {
-                var attempts = [[90,0], [0,90], [-90,0], [0,-90], [90,90], [-90,90], [90,-90], [-90,-90]];
-                for(var i = 0; i < attempts.length; i++) {
-                    var tx = player.x + attempts[i][0], ty = player.y + attempts[i][1];
-                    if(!map.isWall(tx, ty)) { px = tx; py = ty; break; }
-                }
-            }
-            const p = new Pickup(px, py, 'health');
-            p.timer = 1800;
-            pickups.push(p);
-            this._tutPickup = p;
-            if(typeof addLog !== 'undefined') addLog(window.I18n ? I18n.t('log.trainingItem') : ' Item de treino apareceu!');
-        } catch(e) {}
-    },
 
-    _spawnXPPickups() {
-        if(this._xpSpawned || !player) return;
-        this._xpSpawned = true;
-        var spawned = 0;
-        for(let i = 0; i < 8; i++) {
-            const a = (i / 8) * Math.PI * 2;
-            const d = 80 + Math.random() * 70;
-            const px = player.x + Math.cos(a) * d;
-            const py = player.y + Math.sin(a) * d;
-            if(typeof map === 'undefined' || !map || !map.isWall(px, py)) {
-                const p = new Pickup(px, py, 'xp');
-                p.value = 70; p.timer = 1800;
-                pickups.push(p);
-                spawned++;
-            }
-        }
-        // Fallback: if too few spawned in circle, drop some near the player
-        if(spawned < 3 && typeof map !== 'undefined' && map) {
-            for(let i = 0; i < 5; i++) {
-                const fx = player.x + (Math.random() - 0.5) * 120;
-                const fy = player.y + (Math.random() - 0.5) * 120;
-                if(!map.isWall(fx, fy)) {
-                    const p = new Pickup(fx, fy, 'xp');
-                    p.value = 70; p.timer = 1800;
-                    pickups.push(p);
-                }
-            }
-        }
-        if(typeof addLog !== 'undefined') addLog(window.I18n ? I18n.t('log.trainingXp') : ' XP de treino apareceu!');
-    },
 
     _spawnWeaponDrop() {
         if(this._weaponDropSpawned || !player) return;
@@ -30922,7 +30763,7 @@ get totalBonus() { return this.BONUS_COMPLETE + (this.mode === 'full' ? this.BON
         ctx.beginPath(); ctx.moveTo(15, pY + 2); ctx.lineTo(W - 15, pY + 2); ctx.stroke();
 
         // Stage progress (top-left)
-        ctx.fillStyle = '#334466';
+        ctx.fillStyle = '#7f93c4';
         ctx.font = Math.round(14 * sc) + 'px ' + COLORS.CANVAS_FONT;
         ctx.textAlign = 'left';
         ctx.fillText((window.I18n ? I18n.t('tutorial.stageProgress') : 'Etapa ') + (this.stage + 1) + (window.I18n ? I18n.t('tutorial.stageOf') : ' de ') + this.activeStages.length, 20, pY + Math.round(17 * sc));
@@ -30985,7 +30826,7 @@ get totalBonus() { return this.BONUS_COMPLETE + (this.mode === 'full' ? this.BON
             ctx.strokeStyle = ready ? '#5588ff' : '#222244'; ctx.lineWidth = 2;
             _tutRoundRect(ctx, c.x, c.y, c.w, c.h, 10); ctx.stroke();
             ctx.globalAlpha = 1;
-            ctx.fillStyle = ready ? '#cce0ff' : '#334455';
+            ctx.fillStyle = ready ? '#cce0ff' : '#7a8ca3';
             ctx.font = 'bold ' + Math.round(16 * sc) + 'px ' + COLORS.CANVAS_FONT;
             ctx.textAlign = 'center';
             ctx.fillText(ready ? (window.I18n ? I18n.t('tutorial.tapAnywhere') : '  Toque em qualquer lugar') : '...', W / 2, c.y + Math.round(28 * sc));
@@ -31350,6 +31191,8 @@ const Input = {
         // Keyboard
         const _movementKeys = ['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '];
         window.addEventListener('keydown', e => {
+            // Menu de botões do canvas aberto consome a tecla (não vira comando do herói)
+            if (CanvasMenuNav.handleKey(e)) return;
             const k = e.key.toLowerCase();
             this.keys[k] = true;
             // Prevent the browser's default handling (page scroll on space,
@@ -31659,9 +31502,6 @@ Input.init();
                 }
             } catch(err) { /* Wake lock not supported or denied */ }
         }
-        function releaseWakeLock() {
-            if (wakeLock) { wakeLock.release(); wakeLock = null; }
-        }
         function _refreshContinueButton() {
             var btn = document.getElementById('continue-run-btn');
             if (!btn) return;
@@ -31685,6 +31525,7 @@ Input.init();
             el.textContent = tpl.replace('{name}', name);
             el.style.cursor = 'pointer';
             el.onclick = function () { if (window.UIManager) window.UIManager.openPanel('daily'); };
+            el.setAttribute('role', 'button'); el.tabIndex = 0;
             el.style.display = 'block';
         }
         _refreshDailyBadge();
@@ -31915,7 +31756,7 @@ Input.init();
        current MUST stay in sync with the SW CACHE_VERSION suffix (sw.js).
     */
     window.UPDATE_LOG = {
-        current: 'v58',
+        current: 'v59',
         entries: [
             { v: 'v9', date: '2026-09-10', titleKey: 'update.entry.v9.title', title: 'v9 — Tutorial destravado',
               linesKeys: ['update.entry.v9.l1'],
@@ -31926,6 +31767,7 @@ Input.init();
                       'Seus saves e progresso são preservados.',
                       'Estas notas aparecem uma única vez a cada nova versão.'] },
             { v: 'v11', date: '2026-09-10', titleKey: 'update.entry.v11.title', title: 'v11 — Textos nítidos',
+              linesKeys: ['update.entry.v11.l1', 'update.entry.v11.l2'],
               lines: ['Os textos dentro do jogo agora ficam nítidos e legíveis mesmo com a resolução dinâmica ativa.',
                       'A redução automática de resolução agora afeta só o mundo; o texto é renderizado em resolução cheia.'] },
             { v: 'v12', date: '2026-09-10', titleKey: 'update.entry.v12.title', title: 'v12 — Cenário com volume',
@@ -32090,6 +31932,11 @@ Input.init();
               lines: ['Corrigido o flash branco rápido que piscava na tela ao andar e em combate.',
                       'A iluminação e o tom do bioma agora ficam estáveis em todos os quadros.',
                       'Seus saves e progresso não mudam.'] },
+            { v: 'v59', date: '2026-10-16', titleKey: 'update.entry.v59.title', title: 'v59 — Acessibilidade e fonte',
+              linesKeys: ['update.entry.v59.l1', 'update.entry.v59.l2', 'update.entry.v59.l3'],
+              lines: ['A opção Tamanho da Fonte agora muda o texto de todo o jogo, inclusive menus e o que é desenhado na tela. Lojas, habilidades, lore e diário funcionam pelo teclado, e o foco não se perde ao comprar.',
+                      'Diálogos de NPC podem ser usados com setas, Enter e Esc. Contraste de textos do minimapa, chefes e tutorial melhorado, e menos animação para quem prefere movimento reduzido.',
+                      'Textos de combate, loot, acampamento e changelog traduzidos em mais idiomas. Seus saves não mudam.'] },
             { v: 'v58', date: '2026-10-15', titleKey: 'update.entry.v58.title', title: 'v58 — Correções e ouro',
               linesKeys: ['update.entry.v58.l1', 'update.entry.v58.l2', 'update.entry.v58.l3'],
               lines: ['Sangramento, veneno da nuvem, marca da morte e raízes da elfa agora causam dano ao longo do tempo; o rastro de fogo do guerreiro não queima mais o próprio dono.',
