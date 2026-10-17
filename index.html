@@ -10531,41 +10531,63 @@ const PixelFX = (() => {
         }
         ctx.globalAlpha = prev;
     };
-    const get = key => cache[key] || null;
-    return { bake, draw, snap, shade, tones, tonal, line, get };
-})();
-
-// Pre-rendered radial glow sprite (no per-frame shadowBlur)
-const GlowSprite = (() => {
-    let cache = null;
-    const get = () => {
-        if (!cache) {
-            const cv = document.createElement('canvas');
-            cv.width = 64; cv.height = 64;
-            const g = cv.getContext('2d');
-            const grd = g.createRadialGradient(32, 32, 0, 32, 32, 32);
-            grd.addColorStop(0, 'rgba(255,255,255,0.85)');
-            grd.addColorStop(0.35, 'rgba(255,255,255,0.35)');
-            grd.addColorStop(1, 'rgba(255,255,255,0)');
-            g.fillStyle = grd;
-            g.fillRect(0, 0, 64, 64);
-            cache = cv;
+    // Anel em degraus de 3 px (quadrados alinhados à grade, sem arco). espessura em px; alpha = ctx.globalAlpha.
+    // opts: a0/a1 = arco parcial (rad); dash = células ligadas/desligadas alternadas (0 = contínuo).
+    const ring = (ctx, x, y, r, color, espessura = 3, opts) => {
+        if (!(r > 0)) return;
+        const o = opts || {};
+        const a0 = o.a0 === undefined ? 0 : o.a0, span = o.a1 === undefined ? Math.PI * 2 : (o.a1 - a0), dash = o.dash || 0;
+        const layers = Math.max(1, Math.round(espessura / 3));
+        const seen = Object.create(null);
+        const steps = Math.max(8, Math.ceil(Math.abs(span) * r / 3));
+        ctx.fillStyle = color;
+        for (let l = 0; l < layers; l++) {
+            const rr = r + (l - (layers - 1) / 2) * 3;
+            if (rr <= 0) continue;
+            for (let i = 0; i <= steps; i++) {
+                if (dash && (Math.floor(i / dash) % 2)) continue;
+                const a = a0 + (span * i) / steps;
+                const gx = snap(x + Math.cos(a) * rr, 3), gy = snap(y + Math.sin(a) * rr, 3);
+                const k = gx + ',' + gy;
+                if (seen[k]) continue;
+                seen[k] = true;
+                ctx.fillRect(gx, gy, 3, 3);
+            }
         }
-        return cache;
     };
-    return { get };
+    // Disco em pixel: sprite baked por raio em células (cache por tamanho, não por frame).
+    // edge (opcional): cor da borda em xadrez, para contorno mais suave em auras.
+    const disc = (r, color, edge) => {
+        const rc = Math.max(1, Math.round(r / 3));
+        const key = 'disc|' + rc + '|' + color + '|' + (edge || '');
+        if (cache[key]) return cache[key];
+        const rows = [];
+        for (let y = -rc; y <= rc; y++) {
+            let row = '';
+            for (let x = -rc; x <= rc; x++) {
+                const d = Math.hypot(x, y);
+                if (d > rc + 0.3) row += '.';
+                else if (edge && d > rc - 0.7 && ((x + y) & 1) === 0) row += 'e';
+                else row += 'c';
+            }
+            rows.push(row);
+        }
+        return bake(key, rows, { c: color, e: edge || color }, 3);
+    };
+    const drawDisc = (ctx, x, y, r, color, edge) => draw(ctx, disc(r, color, edge), x, y);
+    const get = key => cache[key] || null;
+    return { bake, draw, snap, shade, tones, tonal, line, ring, disc, drawDisc, get };
 })();
 
 function drawGlow(ctx2, px, py, r, color, intensity = 0.35) {
     if (window.GFX !== undefined && window.GFX.glows === false) return;
     const prev = ctx2.globalCompositeOperation;
     ctx2.globalCompositeOperation = 'lighter';
-    ctx2.globalAlpha = intensity;
-    ctx2.fillStyle = color;
-    ctx2.beginPath();
-    ctx2.arc(px, py, r * 2.2, 0, Math.PI * 2);
-    ctx2.fill();
-    ctx2.drawImage(GlowSprite.get(), px - r, py - r, r * 2, r * 2);
+    // Halo em pixel: dois discos concêntricos em degraus (sem gradiente radial)
+    ctx2.globalAlpha = intensity * 0.5;
+    PixelFX.drawDisc(ctx2, px, py, r * 2.2, color);
+    ctx2.globalAlpha = intensity * 0.6;
+    PixelFX.drawDisc(ctx2, px, py, r * 1.1, color);
     ctx2.globalCompositeOperation = prev;
     ctx2.globalAlpha = 1;
 }
@@ -16108,20 +16130,18 @@ const ScreenEffects = {
             const a = Math.max(0, r.life / r.maxLife);
             const px = r.x - cx, py = r.y - cy;
             ctx.globalAlpha = a * 0.85;
-            ctx.strokeStyle = r.color;
-            ctx.lineWidth = Math.max(1, r.width * a + 1);
-            ctx.beginPath();
-            ctx.arc(px, py, r.r, 0, Math.PI * 2);
-            ctx.stroke();
+            // Onda de choque em degraus de 3 px (espessura segue a antiga lineWidth)
+            PixelFX.ring(ctx, px, py, r.r, r.color, Math.max(3, Math.round((r.width * a + 1) / 3) * 3));
             if (r.spokes) {
+                // Raios internos em células de 3 px alinhadas à grade
                 const inner = r.r * 0.35;
-                ctx.beginPath();
+                ctx.fillStyle = r.color;
                 for (let s = 0; s < r.spokes; s++) {
-                    const sa = (s / r.spokes) * Math.PI * 2;
-                    ctx.moveTo(px + Math.cos(sa) * inner, py + Math.sin(sa) * inner);
-                    ctx.lineTo(px + Math.cos(sa) * r.r, py + Math.sin(sa) * r.r);
+                    const sa = (s / r.spokes) * Math.PI * 2, ca = Math.cos(sa), sn = Math.sin(sa);
+                    for (let d = inner; d <= r.r; d += 3) {
+                        ctx.fillRect(PixelFX.snap(px + ca * d, 3), PixelFX.snap(py + sn * d, 3), 3, 3);
+                    }
                 }
-                ctx.stroke();
             }
         }
         ctx.restore();
@@ -16240,9 +16260,12 @@ const ScreenEffects = {
                 const sx = Math.random() * width;
                 const sy = isTop ? Math.random() * height * 0.15 : height - Math.random() * height * 0.15;
                 const size = 2 + Math.random() * 6;
-                ctx.beginPath();
-                ctx.arc(sx, sy, size, 0, Math.PI * 2);
-                ctx.fill();
+                // Gota de sangue em células de 3 px (raio de 1 a 4 células)
+                const nC = Math.max(1, Math.round(size / 3));
+                const gx0 = PixelFX.snap(sx, 3), gy0 = PixelFX.snap(sy, 3);
+                for (let dy = -nC; dy <= nC; dy++) for (let dx = -nC; dx <= nC; dx++) {
+                    if (dx * dx + dy * dy <= nC * nC) ctx.fillRect(gx0 + dx * 3, gy0 + dy * 3, 3, 3);
+                }
             }
             
             ctx.restore();
@@ -19523,117 +19546,81 @@ const BiomeSystem = {
         const biome = this.getBiome();
         if (!biome.wallDetail) return;
         const h = (tx * 374761393 + ty * 668265263) & 0xFFFF;
+        // Detalhes em pixel art: células de 3 px no grid do tile (MapTileArt.px3/pxLine/pxArc)
+        const A = MapTileArt;
 
         ctx.save();
         if (this.currentBiome === 'dungeon') {
-            // A alvenaria vem do tile base; aqui só trincas ocasionais
+            // A alvenaria vem do tile base; aqui só trincas ocasionais em degraus
             if (h % 100 < 12) {
-                ctx.globalAlpha = 0.4;
-                ctx.strokeStyle = 'rgba(0,0,0,0.6)';
-                ctx.lineWidth = 1;
-                ctx.beginPath();
-                ctx.moveTo(px + ts * (0.06 + ((h >> 5) % 40) * 0.01), py + 2);
-                ctx.lineTo(px + ts * 0.4, py + ts * (0.4 + ((h >> 8) % 40) * 0.01));
-                ctx.lineTo(px + ts * 0.7, py + ts * 0.85);
-                ctx.stroke();
+                const x0 = 1 + ((h >> 5) % 6), ym = 6 + ((h >> 8) % 6);
+                A.pxLine(ctx, px, py, x0, 0, 6, ym, '#000000', 0.45);
+                A.pxLine(ctx, px, py, 6, ym, 11, 13, '#000000', 0.45);
             }
         } else if (this.currentBiome === 'lavaCave') {
-            // Fendas brilhantes só em ~28% das paredes (antes: todas — ruído)
+            // Fendas brilhantes só em ~28% das paredes: 3 fissuras de células com halo
             if (h % 100 >= 28) { ctx.restore(); return; }
             const glow = 0.25 + Math.sin(gameTime * 0.04 + px * 0.08 + py * 0.05) * 0.15;
-            ctx.globalAlpha = glow;
-            ctx.fillStyle = '#ff4400';
-            ctx.shadowColor = '#ff4400';
-            ctx.shadowBlur = 8;
-            ctx.fillRect(px + ts * 0.3, py + ts * 0.2, ts * 0.06, ts * 0.4);
-            ctx.fillRect(px + ts * 0.6, py + ts * 0.35, ts * 0.05, ts * 0.25);
-            ctx.fillRect(px + ts * 0.45, py + ts * 0.1, ts * 0.04, ts * 0.3);
-            ctx.shadowBlur = 0;
-            // Veios de lava brilhante (variação por tile)
-            ctx.globalAlpha = 0.14 + glow * 0.35;
-            ctx.strokeStyle = '#ff6611';
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.moveTo(px + ts * 0.1, py + ts * ((h >> 3) % 60) * 0.008);
-            ctx.quadraticCurveTo(px + ts * 0.5, py + ts * 0.5, px + ts * 0.95, py + ts * ((h >> 9) % 60) * 0.008);
-            ctx.stroke();
-        } else if (this.currentBiome === 'crypt') {
-            // Runas só em ~20% das paredes e teias em ~12% (antes: toda parede)
-            if (h % 100 >= 20 && ((h >> 5) % 100) >= 12) { ctx.restore(); return; }
-            const runeAlpha = 0.15 + Math.sin(gameTime * 0.03 + px * 0.1) * 0.1;
-            ctx.globalAlpha = runeAlpha;
-            ctx.fillStyle = '#8888cc';
-            ctx.shadowColor = '#6666ff';
-            ctx.shadowBlur = 6;
-            ctx.font = `${ts * 0.35}px ${COLORS.CANVAS_FONT_MONO}`;
-            const runes = ['ᚠ','ᚢ','ᚦ','ᚨ','ᚱ','ᚲ','ᚷ','ᚹ'];
-            const ri = Math.floor((tx + ty * 3) % runes.length);
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(runes[ri], px + ts/2, py + ts/2);
-            ctx.shadowBlur = 0;
-            if (h % 100 < 8) {
-                ctx.globalAlpha = 0.16;
-                ctx.fillStyle = '#9999bb';
-                ctx.fillRect(px + ts * 0.2, py + ts * 0.6, ts * 0.18, ts * 0.05);
-                ctx.fillRect(px + ts * 0.42, py + ts * 0.52, ts * 0.14, ts * 0.04);
+            const fis = [[4, 3, 6], [10, 5, 4], [7, 2, 3]]; // [coluna, linha inicial, altura]
+            for (const [fx, fy, fl] of fis) {
+                for (let k = 0; k < fl; k++) {
+                    A.px3(ctx, px, py, fx - 1, fy + k, '#ff4400', glow * 0.35);
+                    A.px3(ctx, px, py, fx + 1, fy + k, '#ff4400', glow * 0.35);
+                    A.px3(ctx, px, py, fx, fy + k, '#ff7a2a', glow + 0.25);
+                }
             }
-            // Occasional cobweb draped from an upper corner (~35% of wall
-            // tiles): 3 faint concentric quarter-arcs (r 10-16), with a 1px
-            // spider dot on ~30% of the webs. Subtle vs the glowing runes.
+            // Veios de lava brilhante (variação por tile)
+            const va = 0.14 + glow * 0.35;
+            const ya = Math.floor(((h >> 3) % 60) * 0.128), yb = Math.floor(((h >> 9) % 60) * 0.128);
+            A.pxLine(ctx, px, py, 1, ya, 8, 8, '#ff6611', va);
+            A.pxLine(ctx, px, py, 8, 8, 14, yb, '#ff6611', va);
+        } else if (this.currentBiome === 'crypt') {
+            // Runas (glifo 3x5 em células) só em ~20% das paredes; teias em ~12%
+            if (h % 100 >= 20 && ((h >> 5) % 100) >= 12) { ctx.restore(); return; }
+            if (h % 100 < 20) {
+                const runeAlpha = 0.15 + Math.sin(gameTime * 0.03 + px * 0.1) * 0.1;
+                const GLY = [['.#.', '#.#', '###', '#.#', '#.#'], ['##.', '#.#', '##.', '#.#', '##.'],
+                    ['###', '#..', '#..', '#..', '###'], ['#.#', '#.#', '.#.', '.#.', '.#.']][(tx + ty * 3) & 3];
+                for (let gy = 0; gy < 5; gy++) for (let gx = 0; gx < 3; gx++) {
+                    if (GLY[gy][gx] === '#') A.px3(ctx, px, py, 6 + gx, 5 + gy, '#8888cc', runeAlpha);
+                }
+            }
+            if (h % 100 < 8) {
+                A.px3(ctx, px, py, 3, 11, '#9999bb', 0.16);
+                A.px3(ctx, px, py, 4, 11, '#9999bb', 0.16);
+                A.px3(ctx, px, py, 5, 11, '#9999bb', 0.16);
+                A.px3(ctx, px, py, 7, 8, '#9999bb', 0.16);
+                A.px3(ctx, px, py, 8, 8, '#9999bb', 0.16);
+            }
+            // Teia pendurada de um canto superior (~12% das paredes): 3 arcos e 2 fios radiais
             if (((h >> 5) % 100) < 12) {
                 const webRight = ((h >> 13) & 1) === 1;
-                const wxc = webRight ? px + ts - 1 : px + 1;
-                const wyc = py + 1;
-                const a0 = webRight ? Math.PI * 0.5 : 0;
-                ctx.globalAlpha = 1;
-                ctx.strokeStyle = 'rgba(224,224,255,0.22)';
-                ctx.lineWidth = 1;
-                for (let wr = 10; wr <= 16; wr += 3) {
-                    ctx.beginPath();
-                    ctx.arc(wxc, wyc, wr, a0, a0 + Math.PI * 0.5);
-                    ctx.stroke();
-                }
-                // Two radial guide threads so the web reads as a web, not noise
+                const wx = webRight ? 15 : 0, wy = 0;
+                const a0 = webRight ? Math.PI * 0.5 : 0, a1 = a0 + Math.PI * 0.5;
+                for (let r = 3; r <= 5; r++) A.pxArc(ctx, px, py, wx, wy, r, a0, a1, '#e0e0ff', 0.22);
                 for (const aT of [0.35, 0.75]) {
-                    ctx.beginPath();
-                    ctx.moveTo(wxc, wyc);
-                    ctx.lineTo(wxc + Math.cos(a0 + Math.PI * 0.5 * aT) * 16, wyc + Math.sin(a0 + Math.PI * 0.5 * aT) * 16);
-                    ctx.stroke();
+                    const a = a0 + Math.PI * 0.5 * aT;
+                    A.pxLine(ctx, px, py, wx, wy, Math.round(wx + Math.cos(a) * 5), Math.round(wy + Math.sin(a) * 5), '#e0e0ff', 0.22);
                 }
                 if (((h >> 9) % 100) < 30) {
                     const aMid = a0 + Math.PI * 0.25;
-                    ctx.fillStyle = 'rgba(25,25,40,0.9)';
-                    ctx.fillRect(Math.round(wxc + Math.cos(aMid) * 12.5), Math.round(wyc + Math.sin(aMid) * 12.5), 1, 1);
+                    A.px3(ctx, px, py, Math.round(wx + Math.cos(aMid) * 4), Math.round(wy + Math.sin(aMid) * 4), '#191928', 0.9);
                 }
             }
         } else if (this.currentBiome === 'forest') {
-            // Trepadeiras só em ~30% das paredes (antes: todas — ruído)
+            // Trepadeiras só em ~30% das paredes
             if (h % 100 >= 30) { ctx.restore(); return; }
-            ctx.globalAlpha = 0.35;
-            ctx.strokeStyle = '#2a6a2a';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            const vineX = px + ts * (0.15 + ((tx * 7 + ty * 13) % 6) * 0.1);
-            ctx.moveTo(vineX, py);
-            ctx.quadraticCurveTo(vineX + 4, py + ts * 0.5, vineX - 2, py + ts * 0.8);
-            ctx.stroke();
-            // Small leaf dots
-            ctx.fillStyle = '#3a8a3a';
-            ctx.globalAlpha = 0.3;
-            ctx.beginPath();
-            ctx.arc(vineX + 3, py + ts * 0.3, 2, 0, Math.PI * 2);
-            ctx.arc(vineX - 2, py + ts * 0.5, 1.5, 0, Math.PI * 2);
-            ctx.fill();
+            const vx = Math.floor(2 + ((tx * 7 + ty * 13) % 6) * 1.6);
+            A.pxLine(ctx, px, py, vx, 0, vx + 1, 8, '#2a6a2a', 0.35);
+            A.pxLine(ctx, px, py, vx + 1, 8, vx - 1, 13, '#2a6a2a', 0.35);
+            // Folhinhas da trepadeira
+            A.px3(ctx, px, py, vx + 2, 4, '#3a8a3a', 0.3);
+            A.px3(ctx, px, py, vx + 2, 5, '#3a8a3a', 0.3);
+            A.px3(ctx, px, py, vx - 2, 9, '#3a8a3a', 0.3);
             // Raízes expostas ocasionais
             if (h % 100 < 15) {
-                ctx.globalAlpha = 0.2;
-                ctx.strokeStyle = '#5a3a22';
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.moveTo(px + ts * 0.1, py + ts * 0.9);
-                ctx.quadraticCurveTo(px + ts * 0.5, py + ts * 0.7, px + ts * 0.95, py + ts * 0.85);
-                ctx.stroke();
+                A.pxLine(ctx, px, py, 1, 14, 7, 12, '#5a3a22', 0.2);
+                A.pxLine(ctx, px, py, 7, 12, 14, 13, '#5a3a22', 0.2);
             }
         }
         ctx.restore();
@@ -19644,103 +19631,67 @@ const BiomeSystem = {
         const biome = this.getBiome();
         if (!biome.floorDetail) return;
         const h = (tx * 374761393 + ty * 668265263) & 0xFFFF;
+        const A = MapTileArt;
 
         ctx.save();
         if (this.currentBiome === 'dungeon') {
             // Juntas das lajes vêm do tile base; aqui só musgo/trinca ocasional
             if (h % 100 < 9) {
-                ctx.globalAlpha = 0.35;
-                ctx.strokeStyle = 'rgba(0,0,0,0.65)';
-                ctx.lineWidth = 1;
-                ctx.beginPath();
-                ctx.moveTo(px + ts * ((h >> 4) % 50) * 0.01, py + ts * ((h >> 8) % 50) * 0.01);
-                ctx.lineTo(px + ts * 0.6, py + ts * 0.55);
-                ctx.stroke();
+                A.pxLine(ctx, px, py, Math.floor(((h >> 4) % 50) * 0.16), Math.floor(((h >> 8) % 50) * 0.16), 10, 9, '#000000', 0.35);
             } else if (h % 100 < 14) {
-                ctx.globalAlpha = 0.18;
-                ctx.fillStyle = '#35604f';
-                ctx.beginPath();
-                ctx.arc(px + ts * 0.7, py + ts * 0.3, 2 + (h >> 10) % 3, 0, Math.PI * 2);
-                ctx.fill();
+                A.px3(ctx, px, py, 11, 5, '#35604f', 0.18);
+                if (((h >> 10) % 3) === 0) {
+                    A.px3(ctx, px, py, 12, 5, '#35604f', 0.18);
+                    A.px3(ctx, px, py, 11, 6, '#35604f', 0.18);
+                }
             }
         } else if (this.currentBiome === 'lavaCave') {
-            // Brilho/veias de magma só em ~12% dos pisos (antes: todos — ruído)
+            // Brilho/veias de magma só em ~12% dos pisos
             if (h % 100 >= 12) { ctx.restore(); return; }
             const glow = 0.2 + Math.sin(gameTime * 0.06 + px * 0.05 + py * 0.04) * 0.12;
-            ctx.globalAlpha = glow;
-            ctx.fillStyle = '#ff6600';
-            ctx.shadowColor = '#ff4400';
-            ctx.shadowBlur = 6;
-            ctx.beginPath();
-            ctx.arc(px + ts * (0.3 + ((tx * 13 + ty * 7) % 5) * 0.1), py + ts * (0.4 + ((tx * 17 + ty * 11) % 4) * 0.1), ts * 0.05, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.shadowBlur = 0;
-            // Veia de magma cruzando o tile
-            ctx.globalAlpha = glow * 0.8;
-            ctx.strokeStyle = '#ff4400';
-            ctx.lineWidth = 1.5;
-            ctx.shadowColor = '#ff4400';
-            ctx.shadowBlur = 4;
-            ctx.beginPath();
-            ctx.moveTo(px + ts * 0.1, py + ts * 0.85);
-            ctx.quadraticCurveTo(px + ts * 0.5, py + ts * 0.3, px + ts * 0.9, py + ts * 0.7);
-            ctx.stroke();
-            ctx.shadowBlur = 0;
+            // Poça de magma (2x2 células)
+            const sx = 4 + ((tx * 13 + ty * 7) % 5) * 2, sy = 6 + ((tx * 17 + ty * 11) % 4) * 2;
+            A.px3(ctx, px, py, sx, sy, '#ff6600', glow);
+            A.px3(ctx, px, py, sx + 1, sy, '#ff6600', glow);
+            A.px3(ctx, px, py, sx, sy + 1, '#ff6600', glow);
+            A.px3(ctx, px, py, sx + 1, sy + 1, '#ff6600', glow);
+            // Veia de magma cruzando o tile (com halo de 1 célula abaixo)
+            A.pxLine(ctx, px, py, 1, 14, 8, 6, '#ff4400', glow * 0.3);
+            A.pxLine(ctx, px, py, 8, 6, 14, 12, '#ff4400', glow * 0.3);
+            A.pxLine(ctx, px, py, 1, 13, 8, 5, '#ff4400', glow * 0.8);
+            A.pxLine(ctx, px, py, 8, 5, 14, 11, '#ff4400', glow * 0.8);
         } else if (this.currentBiome === 'crypt') {
             // As juntas vêm do tile base. Ossos/caveira só em ~5% dos pisos
-            // (antes: em TODO tile, formando um padrão repetitivo confuso).
             if (h % 100 < 5) {
-                ctx.globalAlpha = 0.14;
-                ctx.fillStyle = '#666688';
-                ctx.fillRect(px + ts * 0.3, py + ts * 0.35, ts * 0.15, ts * 0.04);
-                ctx.fillRect(px + ts * 0.6, py + ts * 0.5, ts * 0.12, ts * 0.03);
-                ctx.fillStyle = '#777799';
-                ctx.beginPath();
-                ctx.arc(px + ts * 0.7, py + ts * 0.7, ts * 0.06, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.fillStyle = 'rgba(0,0,0,0.2)';
-                ctx.beginPath();
-                ctx.arc(px + ts * 0.68, py + ts * 0.69, 1.5, 0, Math.PI * 2);
-                ctx.arc(px + ts * 0.72, py + ts * 0.69, 1.5, 0, Math.PI * 2);
-                ctx.fill();
+                A.pxLine(ctx, px, py, 5, 5, 6, 5, '#666688', 0.14);
+                A.pxLine(ctx, px, py, 10, 8, 11, 8, '#666688', 0.14);
+                A.px3(ctx, px, py, 11, 11, '#777799', 0.14);
+                A.px3(ctx, px, py, 12, 11, '#777799', 0.14);
+                A.px3(ctx, px, py, 11, 12, '#777799', 0.14);
+                A.px3(ctx, px, py, 12, 12, '#777799', 0.14);
+                A.px3(ctx, px, py, 11, 11, '#000000', 0.2);
+                A.px3(ctx, px, py, 12, 11, '#000000', 0.2);
             }
             if (h % 100 >= 5 && h % 100 < 11) {
-                ctx.globalAlpha = 0.15;
-                ctx.fillStyle = '#8888aa';
                 for (let b = 0; b < 5; b++) {
-                    const bx = px + ts * (0.15 + ((h >> (b * 3)) % 70) * 0.01);
-                    const by = py + ts * (0.15 + ((h >> (b * 3 + 2)) % 70) * 0.01);
-                    ctx.fillRect(bx, by, ts * 0.1, ts * 0.035);
+                    const bx = 2 + Math.floor(((h >> (b * 3)) % 70) * 0.16);
+                    const by = 2 + Math.floor(((h >> (b * 3 + 2)) % 70) * 0.16);
+                    A.px3(ctx, px, py, bx, by, '#8888aa', 0.15);
+                    A.px3(ctx, px, py, bx + 1, by, '#8888aa', 0.15);
                 }
             }
         } else if (this.currentBiome === 'forest') {
-            // Leaf litter with variety
-            ctx.globalAlpha = 0.16;
+            // Folhas caídas: 2 células por tile
             for (let i = 0; i < 2; i++) {
-                const lx = px + ((i * 17 + tx * 5) % ts);
-                const ly = py + ((i * 23 + ty * 7) % ts);
-                const size = i % 2 === 0 ? 2 : 1.5;
-                ctx.fillStyle = i % 2 === 0 ? '#2a5a2a' : '#3a6a3a';
-                ctx.beginPath();
-                ctx.ellipse(lx, ly, size, size * 0.6, i * 0.4, 0, Math.PI * 2);
-                ctx.fill();
+                const lx = (i * 17 + tx * 5) % 16, ly = (i * 23 + ty * 7) % 16;
+                A.px3(ctx, px, py, lx, ly, i % 2 === 0 ? '#2a5a2a' : '#3a6a3a', 0.16);
             }
-            // Occasional flowers
-            if (h % 100 >= 40 && h % 100 < 46) {
-                ctx.globalAlpha = 0.1;
-                ctx.fillStyle = '#6644aa';
-                ctx.beginPath();
-                ctx.arc(px + ts * 0.2, py + ts * 0.8, 2, 0, Math.PI * 2);
-                ctx.fill();
-            }
+            // Flores ocasionais
+            if (h % 100 >= 40 && h % 100 < 46) A.px3(ctx, px, py, 3, 13, '#6644aa', 0.1);
+            // Capim: linha de 2 trechos em degraus
             if (h % 100 < 10) {
-                ctx.globalAlpha = 0.16;
-                ctx.strokeStyle = '#3a5a2a';
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.moveTo(px + ts * 0.05, py + ts * ((h >> 6) % 40) * 0.015);
-                ctx.quadraticCurveTo(px + ts * 0.5, py + ts * 0.6, px + ts * 0.95, py + ts * ((h >> 10) % 40) * 0.015);
-                ctx.stroke();
+                A.pxLine(ctx, px, py, 0, Math.floor(((h >> 6) % 40) * 0.24), 8, 10, '#3a5a2a', 0.16);
+                A.pxLine(ctx, px, py, 8, 10, 15, Math.floor(((h >> 10) % 40) * 0.24), '#3a5a2a', 0.16);
             }
         }
         ctx.restore();
@@ -20182,6 +20133,145 @@ class Pickup {
     }
 }
 
+// Sprites pixel art dos objetos do mundo (armadilhas, gelo, baús, pickups). Bakeados uma vez por
+// tipo/cor/quadro via PixelFX: contorno escuro ('k'), 3-4 tons (PixelFX.tones) e halo de 1 célula
+// no lugar do glow radial. Cada desenho por frame só copia o sprite; a animação troca de quadro.
+const WorldSprites = (() => {
+    const pad = (g, n) => {
+        const e = '.'.repeat(g[0].length + 2 * n), rows = [];
+        for (let i = 0; i < n; i++) rows.push(e);
+        for (const r of g) rows.push('.'.repeat(n) + r + '.'.repeat(n));
+        for (let i = 0; i < n; i++) rows.push(e);
+        return rows;
+    };
+    // Há célula sólida vizinha? diag: considera também as 4 diagonais
+    const near = (g, x, y, diag) => {
+        const H = g.length, W = g[0].length;
+        for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+            if (!dx && !dy) continue;
+            if (!diag && dx && dy) continue;
+            const yy = y + dy, xx = x + dx;
+            if (yy >= 0 && yy < H && xx >= 0 && xx < W && g[yy][xx] !== '.') return true;
+        }
+        return false;
+    };
+    // Contorno escuro (4 direções) em volta do corpo
+    const outline = g => g.map((row, y) => [...row].map((c, x) => (c === '.' && near(g, x, y, false)) ? 'k' : c).join(''));
+    // Halo: células vazias (8 direções) encostadas no corpo viram 'h'
+    const halo = g => g.map((row, y) => [...row].map((c, x) => (c === '.' && near(g, x, y, true)) ? 'h' : '.').join(''));
+    // Bake do corpo (com contorno) e do halo, uma vez por chave
+    const build = (key, body, pal, scale, haloColor) => {
+        if (!PixelFX.get(key)) {
+            const rows = outline(pad(body, 2));
+            PixelFX.bake(key, rows, pal, scale);
+            PixelFX.bake(key + '|h', halo(rows), { h: haloColor }, scale);
+        }
+        return { body: PixelFX.get(key), halo: PixelFX.get(key + '|h') };
+    };
+
+    // Chama de fogo: 4 quadros (sway e ponta variam), núcleo claro na base
+    const fireBody = frame => {
+        const W = 15, H = 14, c = 7, sway = [0, 1, 0, -1][frame & 3], g = [];
+        for (let y = 0; y < H; y++) {
+            const t = (H - 1 - y) / (H - 1);
+            const hw = 6.4 * Math.pow(1 - t, 0.75);
+            const cc = c + Math.round(sway * t);
+            let row = '';
+            for (let x = 0; x < W; x++) {
+                const d = Math.abs(x - cc);
+                const dn = d / Math.max(hw, 1);
+                if (d > hw) row += '.';
+                else row += (t < 0.3 && dn < 0.5) ? 'c' : ((t < 0.55 && dn < 0.8) ? 'y' : 'o');
+            }
+            g.push(row);
+        }
+        return g;
+    };
+    const fire = (color, frame) => build('hz|fire|' + color + '|' + (frame & 3), fireBody(frame),
+        { k: '#3a0e00', o: color, y: '#ffaa00', c: '#fff2b0' }, 3, '#ff4400');
+
+    // Cristal triangular (gelo): lado escuro à esquerda, claro à direita, faísca em quadros 1 e 3
+    const crystalBody = (W, H, frame) => {
+        const c = (W - 1) / 2, g = [];
+        for (let y = 0; y < H; y++) {
+            const hw = (y / (H - 1)) * c, r = [];
+            for (let x = 0; x < W; x++) r.push(Math.abs(x - c) > hw + 0.01 ? '.' : (x < c ? 's' : (x > c ? 'b' : 'l')));
+            g.push(r);
+        }
+        const sp = (frame & 3) === 1 ? [Math.floor(c) - 1, Math.round(H * 0.4)] : ((frame & 3) === 3 ? [Math.ceil(c) + 1, Math.round(H * 0.6)] : null);
+        if (sp && g[sp[1]] && g[sp[1]][sp[0]] !== '.') g[sp[1]][sp[0]] = 'w';
+        return g.map(r => r.join(''));
+    };
+    const crystal = (W, H, color, frame, haloColor) => {
+        const t = PixelFX.tones(color);
+        return build('hz|cry|' + W + 'x' + H + '|' + color + '|' + (frame & 3), crystalBody(W, H, frame),
+            { k: t.o, s: t.s, b: t.b, l: t.l, w: '#ffffff' }, 3, haloColor);
+    };
+
+    // Nuvem de veneno: círculo com luz no alto-esquerda e sombra embaixo (R = raio em células)
+    const blob = (R, color) => {
+        const t = PixelFX.tones(color), g = [];
+        for (let y = 0; y <= 2 * R; y++) {
+            const r = [];
+            for (let x = 0; x <= 2 * R; x++) {
+                const dx = x - R, dy = y - R;
+                if (Math.hypot(dx, dy) > R + 0.2) { r.push('.'); continue; }
+                r.push(dx + dy < -R * 0.6 ? 'l' : (dx + dy > R * 0.7 ? 's' : 'b'));
+            }
+            g.push(r.join(''));
+        }
+        return build('hz|blob|' + R + '|' + color, g, { k: t.o, s: t.s, b: t.b, l: t.l }, 3, color);
+    };
+
+    // Espinhos: placa de 6x2 células e 3 pontas que sobem e descem (4 quadros)
+    const spikes = (color, frame) => {
+        const t = PixelFX.tones(color), hs = [4, 3, 1, 3][frame & 3], g = [];
+        for (let y = 0; y < 6; y++) g.push(new Array(6).fill('.'));
+        for (const x of [1, 3, 5]) for (let k = 0; k < hs; k++) g[3 - k][x] = (k === hs - 1) ? 'l' : 'b';
+        for (let x = 0; x < 6; x++) { g[4][x] = 's'; g[5][x] = 's'; }
+        return build('hz|spk|' + color + '|' + (frame & 3), g.map(r => r.join('')),
+            { k: t.o, s: t.s, b: t.b, l: t.l }, 3, color);
+    };
+
+    // Medalhão de item: anel na cor da raridade, miolo escuro e letra em pixel (W ou E)
+    const GLYPH = { W: ['#...#', '#...#', '#.#.#', '#.#.#', '.#.#.'], E: ['###', '#..', '###', '#..', '###'] };
+    const medal = (letter, color) => {
+        const R = 6.4, Ri = 4.4, C = 7, gl = GLYPH[letter], gw = gl[0].length, gh = gl.length;
+        const gx0 = C - Math.floor(gw / 2), gy0 = C - Math.floor(gh / 2), g = [];
+        for (let y = 0; y <= 2 * C; y++) {
+            const r = [];
+            for (let x = 0; x <= 2 * C; x++) {
+                const d = Math.hypot(x - C, y - C);
+                let ch = '.';
+                if (d <= R) ch = d <= Ri ? 'd' : 'c';
+                const gxx = x - gx0, gyy = y - gy0;
+                if (ch === 'd' && gxx >= 0 && gxx < gw && gyy >= 0 && gyy < gh && gl[gyy][gxx] === '#') ch = 'c';
+                r.push(ch);
+            }
+            g.push(r.join(''));
+        }
+        return build('pk|' + letter + '|' + color, g, { k: PixelFX.shade(color, -0.6), c: color, d: '#14141c' }, 2, color);
+    };
+
+    // Baú fechado: tampa, faixa metálica na cor da raridade e fecho; faísca piscando em 4 quadros
+    const CHEST_ROWS = ['...kkkkkk...', '..kwwwwwwk..', '.kwhhhhhhwk.', 'kwwwwwwwwwwk', 'kmmmmmmmmmmk',
+        'kddddmmddddk', 'kddddmnmdddk', 'kddddmmddddk', 'kddddmmddddk', 'kkkkkkkkkkkk'];
+    const chest = (color, frame) => {
+        const f = frame & 3, rows = CHEST_ROWS.map(r => r.split(''));
+        if (f === 1) rows[2][4] = 's';
+        if (f === 3) rows[1][8] = 's';
+        const body = rows.map(r => r.join(''));
+        const key = 'chest|' + color + '|' + f;
+        if (!PixelFX.get(key)) {
+            PixelFX.bake(key, body, { k: '#1a0e02', d: '#4a2e0a', w: '#6a4520', h: '#8a5f30', m: color, n: '#111111', s: '#ffffff' }, 3);
+            PixelFX.bake(key + '|h', halo(pad(body, 1)), { h: color }, 3);
+        }
+        return { body: PixelFX.get(key), halo: PixelFX.get(key + '|h') };
+    };
+
+    return { fire, crystal, blob, spikes, medal, chest };
+})();
+
 class Hazard {
     constructor(x,y,type,fromPlayer) {
         this.x=x; this.y=y; this.type=type; this.alive=true; this.timer=180; this.radius=20;
@@ -20219,96 +20309,48 @@ class Hazard {
     }
     draw(ctx, cx, cy) {
         const px = this.x-cx, py = this.y-cy;
+        const glows = window.GFX === undefined || window.GFX.glows;
         if(this.type === 'fire') {
-            const flicker = Math.sin(gameTime*0.2)*0.15+0.85;
             const alpha = 0.5 + Math.sin(gameTime*0.1)*0.2;
-            // Soft outer glow (additive)
-            if (window.GFX === undefined || window.GFX.glows) {
+            // Chama pixel art em 4 quadros (troca a cada 5 ticks, desfasada por posição) + halo de 1 célula
+            const sp = WorldSprites.fire(this.color, ((gameTime / 5) | 0) + (this.x | 0));
+            if (glows) {
                 ctx.globalCompositeOperation = 'lighter';
-                ctx.globalAlpha = alpha * 0.35;
-                ctx.fillStyle = '#ff4400';
-                ctx.beginPath();
-                ctx.arc(px, py, this.size * 1.7, 0, Math.PI*2);
-                ctx.fill();
+                ctx.globalAlpha = alpha * 0.5;
+                PixelFX.draw(ctx, sp.halo, px, py);
                 ctx.globalCompositeOperation = 'source-over';
             }
-            ctx.globalAlpha = alpha;
-            ctx.fillStyle = this.color;
-            ctx.beginPath();
-            ctx.arc(px, py, this.size * flicker, 0, Math.PI*2);
-            ctx.fill();
-            ctx.fillStyle = '#ffaa00';
-            ctx.beginPath();
-            ctx.arc(px, py, this.size*0.4, 0, Math.PI*2);
-            ctx.fill();
-            // Inner flame core
-            ctx.fillStyle = '#fff2b0';
-            ctx.beginPath();
-            ctx.arc(px, py, this.size*0.2 + Math.sin(gameTime*0.3)*this.size*0.05, 0, Math.PI*2);
-            ctx.fill();
+            ctx.globalAlpha = 0.9;
+            PixelFX.draw(ctx, sp.body, px, py);
             ctx.globalAlpha = 1;
         } else if(this.type === 'ice') {
             const pulse = 0.6 + Math.sin(gameTime*0.08)*0.15;
-            if (window.GFX === undefined || window.GFX.glows) {
-                ctx.globalCompositeOperation = 'lighter';
-                ctx.globalAlpha = pulse * 0.25;
-                ctx.fillStyle = '#44aaff';
-                ctx.beginPath();
-                ctx.arc(px, py, this.size * 1.5, 0, Math.PI*2);
-                ctx.fill();
-                ctx.globalCompositeOperation = 'source-over';
-            }
+            const sp = WorldSprites.crystal(9, 9, this.color, ((gameTime / 12) | 0) + (this.x | 0), '#44aaff');
+            if (glows) { ctx.globalAlpha = pulse * 0.6; PixelFX.draw(ctx, sp.halo, px, py); }
             ctx.globalAlpha = pulse;
-            ctx.fillStyle = this.color;
-            ctx.beginPath();
-            ctx.moveTo(px, py - this.size/2);
-            ctx.lineTo(px + this.size/2, py + this.size/2);
-            ctx.lineTo(px - this.size/2, py + this.size/2);
-            ctx.closePath();
-            ctx.fill();
-            // Crystal facets
-            ctx.globalAlpha = pulse * 0.7;
-            ctx.fillStyle = '#dff5ff';
-            ctx.beginPath();
-            ctx.moveTo(px, py - this.size/2);
-            ctx.lineTo(px + this.size/5, py + this.size/2);
-            ctx.lineTo(px - this.size/5, py + this.size/2);
-            ctx.closePath();
-            ctx.fill();
+            PixelFX.draw(ctx, sp.body, px, py);
             ctx.globalAlpha = 1;
         } else if(this.type === 'poison') {
             const puff = Math.sin(gameTime*0.15)*0.1+0.9;
             const alpha = 0.4 + Math.sin(gameTime*0.12)*0.15;
-            if (window.GFX === undefined || window.GFX.glows) {
-                ctx.globalCompositeOperation = 'lighter';
-                ctx.globalAlpha = alpha * 0.3;
-                ctx.fillStyle = '#33aa22';
-                ctx.beginPath();
-                ctx.arc(px, py, this.size * 1.6, 0, Math.PI*2);
-                ctx.fill();
-                ctx.globalCompositeOperation = 'source-over';
-            }
+            const sp = WorldSprites.blob(puff > 0.95 ? 8 : 7, this.color);
+            if (glows) { ctx.globalAlpha = alpha * 0.3; PixelFX.draw(ctx, sp.halo, px, py); }
             ctx.globalAlpha = alpha;
-            ctx.fillStyle = this.color;
-            ctx.beginPath();
-            ctx.arc(px, py, this.size * puff, 0, Math.PI*2);
-            ctx.fill();
-            // Rising bubbles
+            PixelFX.draw(ctx, sp.body, px, py);
+            // Bolhas subindo, em células de 3 px alinhadas à grade
             ctx.fillStyle = '#aaff88';
-            ctx.globalAlpha = alpha * 0.8;
+            ctx.globalAlpha = alpha*0.8;
             for(let bi = 0; bi < 3; bi++) {
                 const bx = px + Math.sin(gameTime*0.1 + bi*2.1)*this.size*0.35;
                 const by = py - ((gameTime*0.3 + bi*9) % (this.size*1.2));
-                ctx.beginPath();
-                ctx.arc(bx, by, 1.5 + bi*0.7, 0, Math.PI*2);
-                ctx.fill();
+                const s = bi === 2 ? 6 : 3;
+                ctx.fillRect(PixelFX.snap(bx, 3), PixelFX.snap(by, 3), s, s);
             }
             ctx.globalAlpha = 1;
         } else {
-            ctx.fillStyle = this.color;
-            ctx.fillRect(px-this.size/2, py-this.size/2, this.size, this.size);
-            ctx.fillStyle = '#666677';
-            ctx.fillRect(px-this.size/4, py-this.size/4, this.size/2, this.size/2);
+            // Espinhos: placa com 3 pontas que sobem e descem (4 quadros)
+            const sp = WorldSprites.spikes(this.color, ((gameTime / 8) | 0) + (this.x | 0));
+            PixelFX.draw(ctx, sp.body, px, py);
         }
     }
 }
@@ -20358,29 +20400,11 @@ class IceBarrier {
     draw(ctx, cx, cy) {
         const px = this.x - cx, py = this.y - cy;
         const pulse = 0.65 + Math.sin(gameTime * 0.1) * 0.2;
-        if (window.GFX === undefined || window.GFX.glows) {
-            ctx.globalCompositeOperation = 'lighter';
-            ctx.globalAlpha = pulse * 0.25;
-            ctx.fillStyle = '#44aaff';
-            ctx.beginPath(); ctx.arc(px, py, this.size * 1.4, 0, Math.PI * 2); ctx.fill();
-            ctx.globalCompositeOperation = 'source-over';
-        }
+        // Cristal em pixel art (11x11 células), faísca em quadros e halo de 1 célula
+        const sp = WorldSprites.crystal(11, 11, this.color, ((gameTime / 12) | 0) + (this.x | 0), '#44aaff');
+        if (window.GFX === undefined || window.GFX.glows) { ctx.globalAlpha = pulse * 0.6; PixelFX.draw(ctx, sp.halo, px, py); }
         ctx.globalAlpha = pulse;
-        ctx.fillStyle = this.color;
-        ctx.beginPath();
-        ctx.moveTo(px, py - this.size / 2);
-        ctx.lineTo(px + this.size / 2, py + this.size / 2);
-        ctx.lineTo(px - this.size / 2, py + this.size / 2);
-        ctx.closePath();
-        ctx.fill();
-        ctx.globalAlpha = pulse * 0.7;
-        ctx.fillStyle = '#dff5ff';
-        ctx.beginPath();
-        ctx.moveTo(px, py - this.size / 2);
-        ctx.lineTo(px + this.size / 5, py + this.size / 2);
-        ctx.lineTo(px - this.size / 5, py + this.size / 2);
-        ctx.closePath();
-        ctx.fill();
+        PixelFX.draw(ctx, sp.body, px, py);
         ctx.globalAlpha = 1;
     }
 }
@@ -20395,35 +20419,14 @@ class WeaponPickup {
     }
     draw(ctx, cx, cy) {
         const px = this.x - cx, py = this.y - cy + Math.sin(gameTime * 0.05 + this.bobOffset) * 4;
-        ctx.save();
         const rarityColors = { common: '#9ca3af', uncommon: '#4ade80', rare: '#60a5fa', epic: '#c084fc', legendary: '#ffcc00' };
         const rarity = this.weapon.rarity || 'common';
         const borderCol = rarityColors[rarity] || '#9ca3af';
-        // Cheap glow (translucent halo) instead of shadowBlur - shadowBlur is the most
-        // expensive canvas op and this runs every frame for every onscreen pickup.
-        if (window.GFX === undefined || window.GFX.glows) {
-            ctx.globalAlpha = 0.35;
-            ctx.fillStyle = borderCol;
-            ctx.beginPath();
-            ctx.arc(px, py, 15, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.globalAlpha = 1;
-        }
-        ctx.strokeStyle = borderCol;
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(px, py, 12, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.fillStyle = 'rgba(0,0,0,0.7)';
-        ctx.beginPath();
-        ctx.arc(px, py, 10, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = borderCol;
-        ctx.font = 'bold 14px ' + COLORS.CANVAS_FONT;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('W', px, py);
-        ctx.restore();
+        // Medalhão em pixel art (anel na cor da raridade, letra W); halo de 1 célula no lugar do glow
+        const sp = WorldSprites.medal('W', borderCol);
+        if (window.GFX === undefined || window.GFX.glows) { ctx.globalAlpha = 0.35; PixelFX.draw(ctx, sp.halo, px, py); }
+        ctx.globalAlpha = 1;
+        PixelFX.draw(ctx, sp.body, px, py);
     }
 }
 
@@ -20437,24 +20440,10 @@ class EquipmentPickup {
     }
     draw(ctx, cx, cy) {
         const px = this.x - cx, py = this.y - cy + Math.sin(gameTime * 0.05 + this.bobOffset) * 4;
-        ctx.save();
         const rarityColors = { common: '#9ca3af', uncommon: '#4ade80', rare: '#60a5fa', epic: '#c084fc', legendary: '#ffcc00' };
         const rarity = this.equip.rarity || 'common';
-        ctx.strokeStyle = rarityColors[rarity] || '#9ca3af';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(px, py, 12, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.fillStyle = 'rgba(0,0,0,0.7)';
-        ctx.beginPath();
-        ctx.arc(px, py, 10, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = rarityColors[rarity] || '#9ca3af';
-        ctx.font = 'bold 14px ' + COLORS.CANVAS_FONT;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('E', px, py);
-        ctx.restore();
+        // Medalhão em pixel art (anel na cor da raridade, letra E)
+        PixelFX.draw(ctx, WorldSprites.medal('E', rarityColors[rarity] || '#9ca3af').body, px, py);
     }
 }
 
@@ -20493,39 +20482,20 @@ class Chest {
         const sx = this.x - cx, sy = this.y - cy;
 
         if (this.opened) {
+            // Anel de pixels que se expande ao abrir (sem arco)
             const t = this.openAnim / 50;
             ctx.globalAlpha = t * 0.5;
-            ctx.fillStyle = this.color;
-            ctx.beginPath(); ctx.arc(sx, sy, 28 * (1 - t) + 8, 0, Math.PI * 2); ctx.fill();
+            PixelFX.ring(ctx, sx, sy, 28 * (1 - t) + 8, this.color, 3);
             ctx.globalAlpha = 1; return;
         }
 
         const bob = Math.sin((gameTime + this.bobOffset) * 0.08) * 3;
         const glow = 0.25 + Math.sin(gameTime * 0.12 + this.glowPhase) * 0.15;
 
-        // Outer glow
-        ctx.globalAlpha = glow; ctx.fillStyle = this.color;
-        ctx.beginPath(); ctx.arc(sx, sy + bob, 26, 0, Math.PI * 2); ctx.fill();
-
-        // Body
-        ctx.globalAlpha = 1; ctx.fillStyle = '#4a2e0a';
-        ctx.fillRect(sx - 18, sy + bob - 8, 36, 20);
-
-        // Lid
-        ctx.fillStyle = '#6a4520';
-        ctx.fillRect(sx - 18, sy + bob - 20, 36, 14);
-        ctx.beginPath(); ctx.arc(sx, sy + bob - 20, 18, Math.PI, 0); ctx.fill();
-
-        // Metal band
-        ctx.globalAlpha = 0.9; ctx.fillStyle = this.color;
-        ctx.fillRect(sx - 18, sy + bob - 10, 36, 4);
-        ctx.fillRect(sx - 4, sy + bob - 20, 8, 32);
-
-        // Lock
-        ctx.globalAlpha = 1; ctx.fillStyle = this.color;
-        ctx.beginPath(); ctx.arc(sx, sy + bob - 2, 5, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#111';
-        ctx.beginPath(); ctx.arc(sx, sy + bob - 2, 2, 0, Math.PI * 2); ctx.fill();
+        // Baú em pixel art: brilho piscante em 4 quadros (faísca na tampa) e halo de 1 célula
+        const sp = WorldSprites.chest(this.color, Math.floor(gameTime / 10) + Math.floor(this.glowPhase * 2));
+        ctx.globalAlpha = glow; PixelFX.draw(ctx, sp.halo, sx, sy + bob - 4);
+        ctx.globalAlpha = 1;    PixelFX.draw(ctx, sp.body, sx, sy + bob - 4);
 
         // Label — only when it fits on screen: skip within ~40px of either
         // side edge (or near top/bottom) so the text never clips at the
@@ -20746,7 +20716,44 @@ const MapTileArt = (() => {
             for (const [dx, dy] of [[0, 0], [1, 0], [1, 1], [2, 1], [2, 2]]) cell(ctx, px, py, ax + dx, ay + dy, color, 's');
         }
     };
-    return { wall, floor, rock, wallCrack, floorDetail };
+    // Helpers de detalhe (bioma, decor, luz): 1 célula = 1 px de arte (P px reais) no grid local
+    // do tile (ax/ay em 0..15; valores fora cruzam para o tile vizinho, como o decal de lava).
+    const px3 = (ctx, px, py, ax, ay, color, alpha = 1) => {
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = color;
+        ctx.fillRect(px + ax * P, py + ay * P, P, P);
+    };
+    // Linha de células (Bresenham) entre dois pontos de arte
+    const pxLine = (ctx, px, py, x0, y0, x1, y1, color, alpha = 1) => {
+        const dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0);
+        const sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1;
+        let err = dx + dy, x = x0, y = y0;
+        for (let guard = 0; guard < 256; guard++) {
+            px3(ctx, px, py, x, y, color, alpha);
+            if (x === x1 && y === y1) break;
+            const e2 = 2 * err;
+            if (e2 >= dy) { err += dy; x += sx; }
+            if (e2 <= dx) { err += dx; y += sy; }
+        }
+    };
+    // Arco em células: centro (cx,cy) em células, raio r em células, de a0 a a1 (radianos)
+    const pxArc = (ctx, px, py, cx, cy, r, a0, a1, color, alpha = 1) => {
+        const n = Math.max(4, Math.ceil(r * Math.abs(a1 - a0) * 3));
+        for (let i = 0; i <= n; i++) {
+            const a = a0 + (a1 - a0) * (i / n);
+            px3(ctx, px, py, Math.round(cx + Math.cos(a) * r), Math.round(cy + Math.sin(a) * r), color, alpha);
+        }
+    };
+    // Chama em 4 quadros (pixel art, 3 tons: o=externo, f=chama, c=núcleo). Só o quadro muda por tempo.
+    const FLAME = {
+        torch: [['.o.', 'ofo', 'ofc', '.f.'], ['o..', 'ofo', 'fcf', '.f.'], ['.o.', 'ofo', 'fcf', '.f.'], ['..o', 'ofo', 'ofc', '.f.']],
+        brazier: [['..o..', '.ofo.', 'ofcfo', 'ffcff'], ['.o...', '.ofo.', 'ofcfo', 'ffcff'], ['..o..', '..ofo', '.ofcf', 'ffcff'], ['...o.', '.ofo.', 'ofcfo', 'ffcff']]
+    };
+    const flameFrame = (kind, frame, p3) => {
+        const key = 'flame|' + kind + '|' + frame + '|' + p3.o + p3.f + p3.c;
+        return PixelFX.get(key) || PixelFX.bake(key, FLAME[kind][frame], p3, P);
+    };
+    return { wall, floor, rock, wallCrack, floorDetail, px3, pxLine, pxArc, flameFrame };
 })();
 
 class Map {
@@ -20980,104 +20987,80 @@ class Map {
         return { flame:'#ffd27a', core:'#fff3c4', outer:'#ff8a3c', body:'#6b4a2f', glow:'rgba(255,190,90,' };
     }
 
-    // Light prop art baked into the world buffer (once per floor)
+    // Light prop art baked into the world buffer (once per floor). Pixel art em células de 3 px
+    // (tile = 16x16 células): halo em anéis de células (aditivo, borda em xadrez) e corpo do prop.
+    // A chama de tochas/braseiros não é baked: Map._drawFlames desenha um dos 4 quadros por tempo.
     _drawLightProp(bctx, px, py, ts, x, y) {
         const b = (typeof BiomeSystem !== 'undefined' && BiomeSystem.currentBiome) || 'dungeon';
-        let pal = this._lightPalette();
+        const pal = this._lightPalette();
         const h3 = (x * 374761393 + y * 668265263) & 0xFF;
+        const A = MapTileArt;
         // Apenas o bioma Cripta mantém cristais azuis; a Masmorra usa
         // exclusivamente tochas quentes (pedido do usuário).
         const crystalProp = (b === 'crypt');
-        const cx3 = px + ts/2, by3 = py + ts - 7;
-        // Baked colored halo on the floor around the prop: a soft additive
-        // ('lighter') radial in the prop's glow color, baked once into the
-        // tile buffer (no per-frame cost, no shadowBlur). Radius ~2.2x the
-        // tile body, peak alpha ~0.18 so a generous ring of adjacent floor
-        // is visibly tinted in the prop's color.
+        const p3 = { o: pal.outer, f: pal.flame, c: pal.core };
         if (window.GFX === undefined || window.GFX.glows !== false) {
-            const haloR = ts * 2.4;
-            const glow = bctx.createRadialGradient(cx3, py + ts*0.5, 2, cx3, py + ts*0.5, haloR);
-            glow.addColorStop(0, pal.glow + '0.18)');
-            glow.addColorStop(0.55, pal.glow + '0.06)');
-            glow.addColorStop(1, pal.glow + '0)');
             bctx.save();
             bctx.globalCompositeOperation = 'lighter';
-            bctx.fillStyle = glow;
-            bctx.fillRect(px - ts*2.3, py - ts*2.3, ts*5.6, ts*5.6);
+            for (let i = -9; i <= 9; i++) {
+                for (let j = -9; j <= 9; j++) {
+                    const d = Math.max(Math.abs(i), Math.abs(j));
+                    if (d > 6 && ((i + j) & 1)) continue; // borda externa em xadrez
+                    bctx.fillStyle = pal.glow + (d <= 3 ? '0.1)' : (d <= 6 ? '0.07)' : '0.05)'));
+                    bctx.fillRect(px + (8 + i) * 3, py + (8 + j) * 3, 3, 3);
+                }
+            }
             bctx.restore();
         }
-        // Soft highlight under the prop
-        bctx.fillStyle = 'rgba(255,255,255,0.05)';
-        bctx.beginPath(); bctx.ellipse(cx3, by3, ts*0.28, ts*0.1, 0, 0, Math.PI*2); bctx.fill();
-        // Dark ground-contact ellipse at the prop base (all variants): grounds
-        // the prop in its tile instead of floating on the halo. Baked once,
-        // mirrors the entity ground-shadow look.
-        bctx.fillStyle = 'rgba(0,0,0,0.25)';
-        bctx.beginPath(); bctx.ellipse(cx3, by3, ts*0.3, ts*0.09, 0, 0, Math.PI*2); bctx.fill();
+        // Sombra de contato na base (todas as variantes)
+        for (let k = 5; k <= 10; k++) A.px3(bctx, px, py, k, 14, '#000000', 0.25);
         if (crystalProp) {
-            // Crystal cluster: tapered shards with bright cores
-            const shards = [[-ts*0.16, ts*0.14, ts*0.13, 0.9], [0, ts*0.20, ts*0.18, 1.15], [ts*0.17, ts*0.12, ts*0.11, 0.75]];
-            for (let si = 0; si < shards.length; si++) {
-                const sx4 = cx3 + shards[si][0], sw = shards[si][2], sh2 = shards[si][1], sk = shards[si][3];
-                bctx.fillStyle = si === 1 ? pal.flame : pal.outer;
-                bctx.beginPath();
-                bctx.moveTo(sx4 - sw/2, by3);
-                bctx.lineTo(sx4, by3 - ts*sh2*sk);
-                bctx.lineTo(sx4 + sw/2, by3);
-                bctx.closePath(); bctx.fill();
-                bctx.fillStyle = pal.core;
-                bctx.beginPath();
-                bctx.moveTo(sx4 - sw/5, by3);
-                bctx.lineTo(sx4, by3 - ts*sh2*sk + 3);
-                bctx.lineTo(sx4 + sw/5, by3);
-                bctx.closePath(); bctx.fill();
+            // Cristais: 3 lascas em degraus (ponta de 1 célula, corpo de 3)
+            const shards = [[5, 4, pal.outer], [8, 6, pal.flame], [11, 3, pal.outer]];
+            for (const [sxU, hU, col] of shards) {
+                for (let k = 0; k < hU; k++) {
+                    const tip = k === hU - 1;
+                    for (let dx = tip ? 0 : -1; dx <= (tip ? 0 : 1); dx++) {
+                        A.px3(bctx, px, py, sxU + dx, 13 - k, (dx === 0 && !tip) ? pal.core : col);
+                    }
+                }
             }
         } else if (b === 'forest') {
-            // Glowing mushroom pair
-            const shroom = [[-ts*0.10, ts*0.20, ts*0.16], [ts*0.14, ts*0.27, ts*0.12]];
-            for (let si = 0; si < shroom.length; si++) {
-                const st = shroom[si];
-                bctx.fillStyle = pal.body;
-                bctx.fillRect(cx3 + st[0] - ts*0.035, by3 - ts*st[1], ts*0.07, ts*st[1]);
-                bctx.fillStyle = pal.flame;
-                bctx.beginPath(); bctx.ellipse(cx3 + st[0], by3 - ts*st[1], ts*st[2]/2, ts*st[2]*0.32, 0, 0, Math.PI*2); bctx.fill();
-                bctx.fillStyle = pal.core;
-                bctx.beginPath(); bctx.ellipse(cx3 + st[0] - ts*0.02, by3 - ts*st[1] - ts*0.02, ts*st[2]/5, ts*st[2]*0.14, 0, 0, Math.PI*2); bctx.fill();
+            // Par de cogumelos brilhantes: haste de 1 célula e chapéu em degraus
+            for (const [cxU, hU] of [[6, 4], [10, 3]]) {
+                const stemTop = 14 - hU;
+                for (let r = stemTop; r <= 13; r++) A.px3(bctx, px, py, cxU, r, pal.body);
+                const capT = stemTop - 2;
+                for (let dx = -1; dx <= 1; dx++) A.px3(bctx, px, py, cxU + dx, capT, pal.flame);
+                for (let dx = -2; dx <= 2; dx++) A.px3(bctx, px, py, cxU + dx, capT + 1, (dx === -2 || dx === 2) ? pal.outer : pal.flame);
+                A.px3(bctx, px, py, cxU - 1, capT, pal.core);
             }
         } else if (b === 'lavaCave') {
-            // Brazier: stone bowl over a pedestal with a tall flame
-            bctx.fillStyle = pal.body;
-            bctx.fillRect(cx3 - ts*0.08, by3 - ts*0.22, ts*0.16, ts*0.22);
-            bctx.fillRect(cx3 - ts*0.16, by3 - ts*0.16, ts*0.32, ts*0.1);
-            // Ember bed
-            bctx.fillStyle = '#883300';
-            bctx.fillRect(cx3 - ts*0.13, by3 - ts*0.24, ts*0.26, ts*0.05);
-            // Flame with motion-bent tip
-            const sway = (h3 % 5) - 2;
-            for (let fi = 0; fi < 3; fi++) {
-                bctx.fillStyle = fi === 2 ? pal.core : (fi === 1 ? pal.flame : pal.outer);
-                bctx.beginPath();
-                bctx.moveTo(cx3 - ts*(0.09 - fi*0.02), by3 - ts*0.18);
-                bctx.quadraticCurveTo(cx3 + sway + fi*2, by3 - ts*(0.34 + fi*0.1), cx3 + sway*2 + fi*3, by3 - ts*(0.48 + fi*0.08));
-                bctx.quadraticCurveTo(cx3 + sway + fi*2, by3 - ts*(0.30 + fi*0.08), cx3 + ts*(0.09 - fi*0.02), by3 - ts*0.18);
-                bctx.closePath(); bctx.fill();
-            }
+            // Braseiro: base e pedestal de pedra, bacia com brasa; a chama é animada em _drawFlames
+            for (let k = 5; k <= 10; k++) A.px3(bctx, px, py, k, 13, pal.body);
+            for (let r = 11; r <= 12; r++) for (let k = 7; k <= 8; k++) A.px3(bctx, px, py, k, r, pal.body);
+            for (let k = 4; k <= 11; k++) { A.px3(bctx, px, py, k, 9, pal.body); A.px3(bctx, px, py, k, 10, pal.body); }
+            for (let k = 5; k <= 10; k++) A.px3(bctx, px, py, k, 8, '#883300');
+            this._flames.push({ x: px + 15, y: py + 12, kind: 'brazier', seed: h3, p3: p3 });
         } else {
-            // Wall torch: wooden post + warm flame
-            bctx.fillStyle = pal.body;
-            bctx.fillRect(cx3 - ts*0.045, by3 - ts*0.30, ts*0.09, ts*0.32);
-            // Metal collar
-            bctx.fillStyle = '#9a8a70';
-            bctx.fillRect(cx3 - ts*0.07, by3 - ts*0.26, ts*0.14, ts*0.045);
-            const sway = (h3 % 5) - 2;
-            for (let fi = 0; fi < 3; fi++) {
-                bctx.fillStyle = fi === 2 ? pal.core : (fi === 1 ? pal.flame : pal.outer);
-                bctx.beginPath();
-                bctx.moveTo(cx3 - ts*0.075, by3 - ts*0.30);
-                bctx.quadraticCurveTo(cx3 + sway + fi*1.5, by3 - ts*(0.44 + fi*0.11), cx3 + sway*2 + fi*2, by3 - ts*(0.56 + fi*0.09));
-                bctx.quadraticCurveTo(cx3 + sway + fi*1.5, by3 - ts*(0.40 + fi*0.09), cx3 + ts*0.075, by3 - ts*0.30);
-                bctx.closePath(); bctx.fill();
-            }
+            // Tocha de parede: poste de madeira e colar de metal; a chama é animada em _drawFlames
+            for (let r = 9; r <= 13; r++) A.px3(bctx, px, py, 8, r, pal.body);
+            for (let k = 7; k <= 9; k++) A.px3(bctx, px, py, k, 8, '#9a8a70');
+            this._flames.push({ x: px + 21, y: py + 12, kind: 'torch', seed: h3, p3: p3 });
+        }
+    }
+
+    // Chamas animadas (4 quadros pixel art por tempo de jogo) desenhadas por frame sobre o buffer
+    _drawFlames(ctx, cx, cy) {
+        const fl = this._flames;
+        if (!fl || !fl.length || typeof gameTime !== 'number') return;
+        for (let i = 0; i < fl.length; i++) {
+            const f = fl[i];
+            const sx = Math.round(f.x - cx), sy = Math.round(f.y - cy);
+            if (sx < -60 || sx > width + 60 || sy < -60 || sy > height + 60) continue;
+            const frame = (((gameTime / 6) | 0) + f.seed) & 3;
+            const cv = MapTileArt.flameFrame(f.kind, frame, f.p3);
+            ctx.drawImage(cv, sx, sy);
         }
     }
 
@@ -21089,6 +21072,7 @@ class Map {
     // light prop. All choices are deterministic slices of the same per-tile
     // hash (h1) the bake loop already computes — a floor never changes
     // between redraws, and there is zero per-frame cost.
+    // Desenho em células de 3 px (16x16 por tile), sem arco nem traço suave.
     _drawFloorDecor(bctx, px, py, ts, x, y, h1) {
         // Reject tiles touching a wall orthogonally (same test as the AO
         // pass) or diagonally, so decor keeps fully open floor around it.
@@ -21097,39 +21081,31 @@ class Map {
             (x > 0 && y > 0 && this.tiles[x-1][y-1].t === 1) || (x < this.width - 1 && y > 0 && this.tiles[x+1][y-1].t === 1) ||
             (x > 0 && y < this.height - 1 && this.tiles[x-1][y+1].t === 1) || (x < this.width - 1 && y < this.height - 1 && this.tiles[x+1][y+1].t === 1)) return;
         const b = (typeof BiomeSystem !== 'undefined' && BiomeSystem.currentBiome) || 'dungeon';
+        const A = MapTileArt;
         let hq = h1;
         if (b === 'dungeon') {
-            // Rubble: 2-4 small gray pebbles clustered near a tile corner
-            // (~10%) + one lighter highlight stone so the cluster reads at 1x.
+            // Entulho: 2-4 pedrinhas em um canto do tile (~10%) + uma pedra clara
             if ((h1 % 100) < 10) {
                 const n = 2 + ((h1 >> 9) % 3);
                 for (let i = 0; i < n; i++) {
                     hq = (hq * 1103515245 + 12345) & 0x7FFFFFFF;
-                    const cI = (hq >> 5) % 4; // corner: 0 TL, 1 TR, 2 BL, 3 BR
-                    const jx = 3 + ((hq >> 2) % 9);
-                    const jy = 3 + ((hq >> 11) % 9);
-                    const gx = px + (cI === 1 || cI === 3 ? ts - jx : jx);
-                    const gy = py + (cI >= 2 ? ts - jy : jy);
-                    bctx.globalAlpha = 0.5;
-                    bctx.fillStyle = (hq & 4) ? '#3a3f4e' : '#3f4453';
-                    bctx.beginPath(); bctx.arc(gx, gy, 1 + ((hq >> 16) & 1), 0, Math.PI * 2); bctx.fill();
-                    // Occasional darker 1px chip beside a pebble
+                    const cI = (hq >> 5) % 4; // canto: 0 TL, 1 TR, 2 BL, 3 BR
+                    const jx = 1 + ((hq >> 2) % 4), jy = 1 + ((hq >> 11) % 4);
+                    const gx = (cI === 1 || cI === 3) ? 15 - jx : jx;
+                    const gy = cI >= 2 ? 15 - jy : jy;
+                    A.px3(bctx, px, py, gx, gy, (hq & 4) ? '#3a3f4e' : '#3f4453', 0.5);
+                    if ((hq >> 16) & 1) A.px3(bctx, px, py, gx + 1, gy, (hq & 4) ? '#3a3f4e' : '#3f4453', 0.5);
+                    // Lasquinha mais escura ao lado de uma pedra
                     if ((hq & 32) === 0) {
                         hq = (hq * 1103515245 + 12345) & 0x7FFFFFFF;
-                        bctx.fillStyle = '#2e3342';
-                        bctx.fillRect(gx + ((hq >> 3) % 5) - 2, gy + ((hq >> 8) % 5) - 2, 1, 1);
+                        A.px3(bctx, px, py, gx + ((hq >> 3) % 3) - 1, gy + ((hq >> 8) % 3) - 1, '#2e3342', 0.5);
                     }
                 }
-                // Lighter highlight pebble (alpha 0.25) mixed into the cluster
+                // Pedra clara de destaque, misturada ao grupo
                 hq = (hq * 1103515245 + 12345) & 0x7FFFFFFF;
                 const cI2 = (hq >> 5) % 4;
-                const jx2 = 3 + ((hq >> 2) % 9);
-                const jy2 = 3 + ((hq >> 11) % 9);
-                const gx2 = px + (cI2 === 1 || cI2 === 3 ? ts - jx2 : jx2);
-                const gy2 = py + (cI2 >= 2 ? ts - jy2 : jy2);
-                bctx.globalAlpha = 1;
-                bctx.fillStyle = 'rgba(200,205,230,0.25)';
-                bctx.beginPath(); bctx.arc(gx2, gy2, 1 + ((hq >> 16) & 1), 0, Math.PI * 2); bctx.fill();
+                const jx2 = 1 + ((hq >> 2) % 4), jy2 = 1 + ((hq >> 11) % 4);
+                A.px3(bctx, px, py, (cI2 === 1 || cI2 === 3) ? 15 - jx2 : jx2, cI2 >= 2 ? 15 - jy2 : jy2, 'rgba(200,205,230,0.25)', 1);
             }
             return;
         }
@@ -21140,53 +21116,37 @@ class Map {
             // in a decorated crypt tile. Deterministic per tile.
             const kind = (h1 >> 10) % 5;
             if (kind === 0) {
-                // Bone shards: two thin crossed lines
-                bctx.strokeStyle = 'rgba(139,147,184,0.5)';
-                bctx.lineWidth = 1;
-                const bx = px + 8 + ((h1 >> 3) % (ts - 16)), by = py + 8 + ((h1 >> 7) % (ts - 16));
+                // Lascas de osso: duas linhas cruzadas em células
+                const bx = 3 + ((h1 >> 3) % 8), by = 3 + ((h1 >> 7) % 8);
                 hq = (hq * 1103515245 + 12345) & 0x7FFFFFFF;
                 const a1 = (hq % 628) / 100;
                 const a2 = a1 + 1.15;
-                const ln = 6 + ((hq >> 8) % 5);
-                bctx.beginPath();
-                bctx.moveTo(bx, by);
-                bctx.lineTo(bx + Math.cos(a1) * ln, by + Math.sin(a1) * ln);
-                bctx.moveTo(bx, by);
-                bctx.lineTo(bx + Math.cos(a2) * ln * 0.7, by + Math.sin(a2) * ln * 0.7);
-                bctx.stroke();
+                const ln = 2 + ((hq >> 8) % 3);
+                A.pxLine(bctx, px, py, bx, by, Math.round(bx + Math.cos(a1) * ln), Math.round(by + Math.sin(a1) * ln), 'rgb(139,147,184)', 0.5);
+                A.pxLine(bctx, px, py, bx, by, Math.round(bx + Math.cos(a2) * ln * 0.7), Math.round(by + Math.sin(a2) * ln * 0.7), 'rgb(139,147,184)', 0.5);
             } else if (kind === 1) {
-                // Small urn silhouette: rounded body + lid
-                const ux = px + 10 + ((h1 >> 4) % (ts - 20)), uy = py + 12 + ((h1 >> 8) % (ts - 22));
-                bctx.globalAlpha = 0.5;
-                bctx.fillStyle = '#4a4a5e';
-                bctx.fillRect(ux, uy - 6, 6, 10);
-                bctx.fillRect(ux - 2, uy + 1, 10, 4);
-                // Lid
-                bctx.fillRect(ux - 1, uy - 9, 8, 3);
-                bctx.fillRect(ux + 1, uy - 10, 4, 1);
-                bctx.globalAlpha = 1;
-            } else if (kind === 2) {
-                // Web corner: 3 faint concentric quarter-arcs in a tile corner
-                const q = (h1 >> 5) & 3;
-                const wx = px + (q === 1 || q === 3 ? ts - 10 : 10);
-                const wy = py + (q >= 2 ? ts - 10 : 10);
-                const a0 = q === 0 ? Math.PI : (q === 1 ? Math.PI * 1.5 : (q === 2 ? Math.PI * 0.5 : 0));
-                bctx.strokeStyle = 'rgba(200,200,255,0.10)';
-                bctx.lineWidth = 0.6;
-                for (let r = 3; r <= 9; r += 3) {
-                    bctx.beginPath();
-                    bctx.arc(wx, wy, r, a0, a0 + Math.PI * 0.5);
-                    bctx.stroke();
+                // Urna pequena: corpo, ombros e tampa em células
+                const ux = 3 + ((h1 >> 4) % 9), uy = 6 + ((h1 >> 8) % 6);
+                for (let r = uy - 2; r <= uy + 1; r++) {
+                    A.px3(bctx, px, py, ux, r, '#4a4a5e', 0.5);
+                    A.px3(bctx, px, py, ux + 1, r, '#4a4a5e', 0.5);
                 }
+                for (let k = ux - 1; k <= ux + 2; k++) A.px3(bctx, px, py, k, uy + 2, '#4a4a5e', 0.5);
+                for (let k = ux - 1; k <= ux + 2; k++) A.px3(bctx, px, py, k, uy - 3, '#4a4a5e', 0.5);
+                A.px3(bctx, px, py, ux + 1, uy - 4, '#4a4a5e', 0.5);
+            } else if (kind === 2) {
+                // Canto de teia: 3 arcos finos em uma quina
+                const q = (h1 >> 5) & 3;
+                const cxU = (q === 1 || q === 3) ? 11 : 4, cyU = q >= 2 ? 11 : 4;
+                const a0 = q === 0 ? Math.PI : (q === 1 ? Math.PI * 1.5 : (q === 2 ? Math.PI * 0.5 : 0));
+                for (let r = 1; r <= 3; r++) A.pxArc(bctx, px, py, cxU, cyU, r, a0, a0 + Math.PI * 0.5, 'rgb(200,200,255)', 0.10);
             } else {
-                // Rare candle: warm 2x3 flame over a wax stub — a subtle warm
-                // point against the cold blue crypt stone (~40% of decor slots).
-                const cx = px + 8 + ((h1 >> 4) % (ts - 18));
-                const cy = py + 10 + ((h1 >> 8) % (ts - 18));
-                bctx.fillStyle = 'rgba(230,225,210,0.5)'; // wax stub
-                bctx.fillRect(cx - 1, cy - 1, 4, 2);
-                bctx.fillStyle = 'rgba(255,190,90,0.85)'; // flame 2x3
-                bctx.fillRect(cx, cy - 4, 2, 3);
+                // Vela rara: chama de 1 célula sobre um toco de cera (ponto quente no azul da cripta)
+                const cx = 2 + ((h1 >> 4) % 12), cy = 4 + ((h1 >> 8) % 10);
+                A.px3(bctx, px, py, cx, cy, 'rgba(230,225,210,0.5)', 1);
+                A.px3(bctx, px, py, cx + 1, cy, 'rgba(230,225,210,0.5)', 1);
+                A.px3(bctx, px, py, cx, cy - 1, 'rgba(255,190,90,0.85)', 1);
+                A.px3(bctx, px, py, cx, cy - 2, 'rgba(255,190,90,0.4)', 1);
             }
             return;
         }
@@ -21194,35 +21154,24 @@ class Map {
             if ((h1 % 100) >= 9) return;
             const kind = (h1 >> 10) % 3;
             if (kind === 0) {
-                // Root curl: short brown curve hugging the floor
-                const rx0 = px + 6 + ((h1 >> 3) % (ts - 14)), ry0 = py + 8 + ((h1 >> 8) % (ts - 16));
-                bctx.strokeStyle = 'rgba(74,59,40,0.55)';
-                bctx.lineWidth = 1;
-                bctx.beginPath();
-                bctx.moveTo(rx0, ry0);
-                bctx.quadraticCurveTo(rx0 + 3 + ((h1 >> 5) % 6), ry0 - 6 + ((h1 >> 6) % 5), rx0 + 8 + ((h1 >> 11) % 6), ry0 + 1);
-                bctx.stroke();
+                // Curva de raiz: 3-4 células em degrau, rente ao chão
+                const rx0 = 1 + ((h1 >> 3) % 9), ry0 = 4 + ((h1 >> 8) % 10);
+                A.pxLine(bctx, px, py, rx0, ry0, rx0 + 2, ry0 - 2, 'rgb(74,59,40)', 0.55);
+                A.pxLine(bctx, px, py, rx0 + 2, ry0 - 2, rx0 + 4 + ((h1 >> 11) % 2), ry0 - 1, 'rgb(74,59,40)', 0.55);
             } else if (kind === 1) {
-                // Moss tuft: 3-4 1px green specks
-                const mx = px + 4 + ((h1 >> 3) % (ts - 8)), my = py + 4 + ((h1 >> 9) % (ts - 8));
-                bctx.globalAlpha = 0.5;
-                bctx.fillStyle = '#2f5e35';
+                // Tufo de musgo: 3-4 células verdes
+                const mx = 1 + ((h1 >> 3) % 13), my = 1 + ((h1 >> 9) % 13);
                 const mn = 3 + ((h1 >> 13) & 1);
                 for (let i = 0; i < mn; i++) {
                     hq = (hq * 1103515245 + 12345) & 0x7FFFFFFF;
-                    bctx.fillRect(mx + ((hq >> 2) % 4), my + ((hq >> 7) % 4), 1, 1);
+                    A.px3(bctx, px, py, mx + ((hq >> 2) % 3), my + ((hq >> 7) % 3), '#2f5e35', 0.5);
                 }
-                bctx.globalAlpha = 1;
             } else {
-                // Fallen leaf: tiny rotated rect
-                const lx = px + 8 + ((h1 >> 3) % (ts - 18)), ly = py + 8 + ((h1 >> 8) % (ts - 18));
-                bctx.save();
-                bctx.translate(lx, ly);
-                bctx.rotate(((h1 >> 12) % 628) / 100);
-                bctx.globalAlpha = 0.5;
-                bctx.fillStyle = '#6a7a35';
-                bctx.fillRect(-3, -1, 6, 2);
-                bctx.restore();
+                // Folha caída: 2 células (horizontal ou vertical)
+                const lx = 2 + ((h1 >> 3) % 11), ly = 2 + ((h1 >> 8) % 11);
+                const vert = ((h1 >> 12) & 1) === 1;
+                A.px3(bctx, px, py, lx, ly, '#6a7a35', 0.5);
+                A.px3(bctx, px, py, vert ? lx : lx + 1, vert ? ly + 1 : ly, '#6a7a35', 0.5);
             }
             return;
         }
@@ -21230,43 +21179,24 @@ class Map {
             if ((h1 % 100) >= 7) return;
             const kind = (h1 >> 10) & 3;
             if (kind === 3) {
-                // Lava crack decal: thin glowing polyline crossing this tile,
-                // extending a second tile into the west neighbour when that is
-                // open floor (already baked, so the overhang stays visible).
-                const yc = py + ts * (0.22 + (((h1 >> 4) % 45) / 100));
-                const x0 = (x > 0 && this.tiles[x-1][y].t === 0 && !this.tiles[x-1][y].lit) ? px - ts : px;
+                // Fenda de lava: linha em degraus cruzando o tile, estendida 1 tile para a oeste
+                // quando o vizinho é piso aberto (já baked, então o trecho sobre ele fica visível)
+                const yc = 3 + ((h1 >> 4) % 8);
+                const x0 = (x > 0 && this.tiles[x-1][y].t === 0 && !this.tiles[x-1][y].lit) ? -16 : 0;
                 const jog = ((h1 >> 11) % 5) - 2;
-                bctx.beginPath();
-                bctx.moveTo(x0 + 6, yc);
-                bctx.lineTo(px + ts * 0.38, yc + jog);
-                bctx.lineTo(px + ts * 0.68, yc - jog);
-                bctx.lineTo(px + ts - 6, yc);
-                bctx.strokeStyle = 'rgba(255,85,0,0.10)';
-                bctx.lineWidth = 2.5;
-                bctx.stroke();
-                bctx.strokeStyle = 'rgba(255,85,0,0.45)';
-                bctx.lineWidth = 0.8;
-                bctx.stroke();
+                const segs = [[x0 + 2, yc, 6, yc + jog], [6, yc + jog, 11, yc - jog], [11, yc - jog, 13, yc]];
+                for (const [ax0, ay0, ax1, ay1] of segs) A.pxLine(bctx, px, py, ax0, ay0 + 1, ax1, ay1 + 1, 'rgb(255,85,0)', 0.10);
+                for (const [ax0, ay0, ax1, ay1] of segs) A.pxLine(bctx, px, py, ax0, ay0, ax1, ay1, 'rgb(255,85,0)', 0.45);
                 return;
             }
-            // Ash rock cluster (2-4 blobs) + occasional ember speck
-            const ax = px + 8 + ((h1 >> 3) % (ts - 16)), ay = py + 8 + ((h1 >> 8) % (ts - 16));
+            // Aglomerado de cinza (2-4 células) + brasa ocasional
+            const ax = 2 + ((h1 >> 3) % 12), ay = 2 + ((h1 >> 8) % 12);
             const an = 2 + ((h1 >> 13) % 3);
-            bctx.globalAlpha = 0.5;
-            bctx.fillStyle = '#3d3330';
             for (let i = 0; i < an; i++) {
                 hq = (hq * 1103515245 + 12345) & 0x7FFFFFFF;
-                bctx.beginPath();
-                bctx.arc(ax + ((hq >> 2) % 9) - 4, ay + ((hq >> 8) % 9) - 4, 1 + ((hq >> 16) & 1), 0, Math.PI * 2);
-                bctx.fill();
+                A.px3(bctx, px, py, ax + ((hq >> 2) % 3) - 1, ay + ((hq >> 8) % 3) - 1, '#3d3330', 0.5);
             }
-            if (((h1 >> 15) % 100) < 30) {
-                // Ember speck still warm in the ash
-                bctx.globalAlpha = 0.8;
-                bctx.fillStyle = '#ff7a3c';
-                bctx.fillRect(ax + ((h1 >> 6) % 7) - 3, ay + ((h1 >> 11) % 7) - 3, 1, 1);
-            }
-            bctx.globalAlpha = 1;
+            if (((h1 >> 15) % 100) < 30) A.px3(bctx, px, py, ax + ((h1 >> 6) % 3), ay + ((h1 >> 11) % 3), '#ff7a3c', 0.8);
             return;
         }
     }
@@ -21274,6 +21204,7 @@ class Map {
     draw(ctx, cx, cy) {
         if (this.needsRedraw) {
             this.bufferCtx.clearRect(0, 0, this.buffer.width, this.buffer.height);
+            this._flames = []; // chamas animadas registradas pelo bake de _drawLightProp
             const ts = CONFIG.TILE_SIZE;
             const wallColor = BiomeSystem.getWallColor();
             const floorColor = BiomeSystem.getFloorColor();
@@ -21326,6 +21257,7 @@ class Map {
         }
 
         ctx.drawImage(this.buffer, -cx, -cy);
+        this._drawFlames(ctx, cx, cy);
     }
 }
 
@@ -21893,19 +21825,19 @@ class Enemy extends Entity {
                 ctx.globalCompositeOperation = 'lighter';
                 ctx.globalAlpha = 0.25 + pulse;
                 ctx.fillStyle = this.isB ? '#ff2244' : CONFIG.ELITE_COLOR;
-                ctx.beginPath(); ctx.arc(px, py, this.radius + 8, 0, Math.PI*2); ctx.fill();
+                PixelFX.drawDisc(ctx, px, py, this.radius + 8, ctx.fillStyle);
                 ctx.globalCompositeOperation = 'source-over';
             }
             ctx.globalAlpha = CONFIG.ELITE_GLOW_ALPHA + pulse;
             ctx.fillStyle = CONFIG.ELITE_COLOR;
-            ctx.beginPath(); ctx.arc(px, py, this.radius + 5, 0, Math.PI*2); ctx.fill();
+            PixelFX.drawDisc(ctx, px, py, this.radius + 5, CONFIG.ELITE_COLOR);
             ctx.globalAlpha = 1;
             // Crown indicator for elite, ring for boss
             if(this.isB) {
                 ctx.strokeStyle = '#ff4444';
                 ctx.lineWidth = 2;
                 ctx.globalAlpha = 0.6 + pulse;
-                ctx.beginPath(); ctx.arc(px, py, this.radius + 12 + Math.sin(gameTime * 0.2) * 2, 0, Math.PI * 2); ctx.stroke();
+                PixelFX.ring(ctx, px, py, this.radius + 12 + Math.sin(gameTime * 0.2) * 2, '#ff4444', 3);
                 ctx.globalAlpha = 1;
             } else if(this.elite) {
                 ctx.fillStyle = '#ffcc44';
@@ -21928,9 +21860,7 @@ class Enemy extends Entity {
             ctx.strokeStyle = this._telegraph ? '#ff0000' : '#ff6666';
             ctx.lineWidth = this._telegraph ? 2 : 1;
             const ri = this.radius + (this._telegraph ? 15 : 10);
-            ctx.beginPath();
-            ctx.arc(px, py, ri, 0, Math.PI * 2);
-            ctx.stroke();
+            PixelFX.ring(ctx, px, py, ri, ctx.strokeStyle, 3);
             ctx.beginPath();
             ctx.moveTo(px - ri - 3, py);
             ctx.lineTo(px + ri + 3, py);
@@ -21961,7 +21891,7 @@ class Enemy extends Entity {
         if(this.enemyType === 'swarm' && isNear) {
             ctx.globalAlpha = 0.15 + Math.sin(gameTime * 0.15) * 0.1;
             ctx.fillStyle = '#ff66ff';
-            ctx.beginPath(); ctx.arc(px, py, this.radius + 4, 0, Math.PI*2); ctx.fill();
+            PixelFX.drawDisc(ctx, px, py, this.radius + 4, '#ff66ff');
             ctx.globalAlpha = 1;
         }
         
@@ -21978,8 +21908,7 @@ class Enemy extends Entity {
         // Berserker indicator (red glow pulse)
         if(this._berserk && isNear) {
             ctx.globalAlpha = 0.15 + Math.sin(gameTime * 0.2) * 0.1;
-            ctx.fillStyle = '#ff0000';
-            ctx.beginPath(); ctx.arc(px, py, this.radius + 8, 0, Math.PI*2); ctx.fill();
+            PixelFX.drawDisc(ctx, px, py, this.radius + 8, '#ff0000');
             ctx.globalAlpha = 1;
         }
         
@@ -21990,12 +21919,11 @@ class Enemy extends Entity {
         if(this._variant && isNear) {
             ctx.save();
             ctx.globalAlpha = 0.13 + Math.sin(gameTime * 0.13 + px) * 0.05;
-            ctx.fillStyle = this.variantAura || 'rgba(255,200,100,0.25)';
-            ctx.beginPath(); ctx.arc(px, py, this.radius + 7, 0, Math.PI * 2); ctx.fill();
+            PixelFX.drawDisc(ctx, px, py, this.radius + 7, this.variantAura || 'rgba(255,200,100,0.25)');
             ctx.globalAlpha = 0.5;
             ctx.strokeStyle = this.variantColor || '#fff';
             ctx.lineWidth = 1.5;
-            ctx.beginPath(); ctx.arc(px, py, this.radius + 3, 0, Math.PI * 2); ctx.stroke();
+            PixelFX.ring(ctx, px, py, this.radius + 3, this.variantColor || '#fff', 3);
             ctx.restore();
             ctx.globalAlpha = 1;
         }
@@ -22910,7 +22838,7 @@ class Boss extends Enemy {
             ctx.strokeStyle = this._abyssalTier >= 3 ? '#b026ff' : '#7a3cff';
             ctx.lineWidth = 2;
             ctx.globalAlpha = 0.5 + Math.sin(gameTime * 0.12) * 0.25;
-            ctx.beginPath(); ctx.arc(px, py, R + 12 + pulse * 0.5, 0, Math.PI * 2); ctx.stroke();
+            PixelFX.ring(ctx, px, py, R + 12 + pulse * 0.5, ctx.strokeStyle, 3);
             ctx.globalAlpha = 1;
         }
         switch(key) {
@@ -22927,27 +22855,27 @@ class Boss extends Enemy {
             }
             case 'death_herald': {
                 ctx.strokeStyle = '#eceff1'; ctx.lineWidth = 3; ctx.globalAlpha = 0.9;
-                ctx.beginPath(); ctx.arc(px + R * 0.2, py - R, R * 0.8, -Math.PI * 0.9, -Math.PI * 0.2); ctx.stroke();
+                PixelFX.ring(ctx, px + R * 0.2, py - R, R * 0.8, '#eceff1', 3, { a0: -Math.PI * 0.9, a1: -Math.PI * 0.2 });
                 ctx.globalAlpha = 1; break;
             }
             case 'stone_colossus': {
                 ctx.strokeStyle = '#ffb84d'; ctx.lineWidth = 2; ctx.globalAlpha = 0.7;
-                ctx.beginPath(); ctx.arc(px, py, R, 0, Math.PI * 2); ctx.stroke();
+                PixelFX.ring(ctx, px, py, R, '#ffb84d', 3);
                 ctx.globalAlpha = 1; break;
             }
             case 'specter': {
                 ctx.fillStyle = '#9ff7ff'; ctx.globalAlpha = 0.5;
-                for(let i = 0; i < 3; i++) { const w = Math.sin(gameTime * 0.2 + i); ctx.beginPath(); ctx.arc(px - w * R * 0.8, py + R + i * 4, 3 - i * 0.7, 0, Math.PI * 2); ctx.fill(); }
+                for(let i = 0; i < 3; i++) { const w = Math.sin(gameTime * 0.2 + i); PixelFX.drawDisc(ctx, px - w * R * 0.8, py + R + i * 4, 3 - i * 0.7, '#9ff7ff'); }
                 ctx.globalAlpha = 1; break;
             }
             case 'soul_devourer': {
                 ctx.strokeStyle = '#ff5e7d'; ctx.lineWidth = 2; ctx.globalAlpha = 0.8;
-                for(let i = 0; i < 3; i++) { ctx.beginPath(); ctx.arc(px, py, R * 0.5 + i * R * 0.28, i * (Math.PI / 2) + gameTime * 0.1, i * (Math.PI / 2) + Math.PI * 1.4 + gameTime * 0.1); ctx.stroke(); }
+                for(let i = 0; i < 3; i++) { const a0 = i * (Math.PI / 2) + gameTime * 0.1; PixelFX.ring(ctx, px, py, R * 0.5 + i * R * 0.28, '#ff5e7d', 3, { a0: a0, a1: a0 + Math.PI * 1.4 }); }
                 ctx.globalAlpha = 1; break;
             }
             case 'bone_lord': {
                 ctx.strokeStyle = '#fff3d6'; ctx.lineWidth = 2; ctx.globalAlpha = 0.9;
-                for(let i = 0; i < 3; i++) { ctx.beginPath(); ctx.arc(px - R * 0.3 + i * R * 0.3, py - R * 0.2, R * 0.18, Math.PI * 1.15, Math.PI * 1.85); ctx.stroke(); }
+                for(let i = 0; i < 3; i++) { PixelFX.ring(ctx, px - R * 0.3 + i * R * 0.3, py - R * 0.2, R * 0.18, '#fff3d6', 3, { a0: Math.PI * 1.15, a1: Math.PI * 1.85 }); }
                 ctx.globalAlpha = 1; break;
             }
             case 'deep_demon': {
@@ -22958,7 +22886,7 @@ class Boss extends Enemy {
             }
             case 'corrupted': {
                 ctx.fillStyle = '#7fd612';
-                for(let i = 0; i < 4; i++) { const a = i * Math.PI / 2 + gameTime * 0.05; ctx.beginPath(); ctx.arc(px + Math.cos(a) * R * 0.85, py + Math.sin(a) * R * 0.85, 3, 0, Math.PI * 2); ctx.fill(); }
+                for(let i = 0; i < 4; i++) { const a = i * Math.PI / 2 + gameTime * 0.05; PixelFX.drawDisc(ctx, px + Math.cos(a) * R * 0.85, py + Math.sin(a) * R * 0.85, 3, ctx.fillStyle); }
                 break;
             }
             case 'magma_titan': {
@@ -22969,14 +22897,14 @@ class Boss extends Enemy {
             }
             case 'thorn_king': {
                 ctx.fillStyle = '#7fd612';
-                for(let i = 0; i < 5; i++) { const a = i * Math.PI * 2 / 5 + gameTime * 0.05; ctx.beginPath(); ctx.arc(px + Math.cos(a) * R * 0.95, py + Math.sin(a) * R * 0.95, 2.5, 0, Math.PI * 2); ctx.fill(); }
+                for(let i = 0; i < 5; i++) { const a = i * Math.PI * 2 / 5 + gameTime * 0.05; PixelFX.drawDisc(ctx, px + Math.cos(a) * R * 0.95, py + Math.sin(a) * R * 0.95, 2.5, ctx.fillStyle); }
                 break;
             }
             case 'final_guardian': {
                 ctx.fillStyle = '#ff8c00';
                 ctx.beginPath(); ctx.moveTo(px - R * 0.9, py - R * 0.3); ctx.lineTo(px - R * 0.4, py - R * 1.2 - pulse); ctx.lineTo(px, py - R * 0.4); ctx.closePath(); ctx.fill();
                 ctx.beginPath(); ctx.moveTo(px + R * 0.9, py - R * 0.3); ctx.lineTo(px + R * 0.4, py - R * 1.2 - pulse); ctx.lineTo(px, py - R * 0.4); ctx.closePath(); ctx.fill();
-                ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(px, py, R * 0.2, 0, Math.PI * 2); ctx.fill();
+                PixelFX.drawDisc(ctx, px, py, R * 0.2, '#fff');
                 break;
             }
         }
@@ -23622,27 +23550,22 @@ class BossArenaHazard {
     }
     draw(ctx, cx, cy) {
         if(this.warningTimer > 0) {
-            // Warning indicator
+            // Telegrafia: anel tracejado em pixels (só o desenho; raio e tempo continuam iguais)
             ctx.globalAlpha = 0.3 + Math.sin(gameTime * 0.3) * 0.2;
-            ctx.strokeStyle = '#ff4400';
-            ctx.lineWidth = 2;
-            ctx.setLineDash([5, 5]);
-            ctx.beginPath(); ctx.arc(this.x-cx, this.y-cy, this.radius, 0, Math.PI*2); ctx.stroke();
-            ctx.setLineDash([]);
+            PixelFX.ring(ctx, this.x-cx, this.y-cy, this.radius, '#ff4400', 3, { dash: 3 });
             ctx.globalAlpha = 1;
             return;
         }
-        // Active hazard
+        // Active hazard: disco de pixels e miolo mais claro
         const alpha = Math.min(1, this.timer / 60);
         ctx.globalAlpha = alpha * 0.5;
-        ctx.fillStyle = this.color || '#ff4400';
-        ctx.beginPath(); ctx.arc(this.x-cx, this.y-cy, this.radius, 0, Math.PI*2); ctx.fill();
+        PixelFX.drawDisc(ctx, this.x-cx, this.y-cy, this.radius, this.color || '#ff4400');
         ctx.globalAlpha = alpha;
-        ctx.fillStyle = '#ff8800';
-        ctx.beginPath(); ctx.arc(this.x-cx, this.y-cy, this.radius * 0.6, 0, Math.PI*2); ctx.fill();
+        PixelFX.drawDisc(ctx, this.x-cx, this.y-cy, this.radius * 0.6, '#ff8800');
         ctx.globalAlpha = 1;
     }
 }
+
 
 // SUMMONER ENEMY - Keeps distance and spawns swarms
 class SummonerEnemy extends Enemy {
@@ -25587,33 +25510,24 @@ class Player extends Entity {
         
         const sx = this.x - cx, sy = this.y - cy;
         
-        // Prestige Aura (expanding ring behind player)
+        // Prestige Aura (expanding ring behind player): anel de pixels
         if (typeof prestigeLevel !== 'undefined' && prestigeLevel > 0) {
             const pa = 0.08 + Math.sin(gameTime * 0.03) * 0.04;
             const pr = this.radius * (1.5 + Math.sin(gameTime * 0.05) * 0.2);
             ctx.save();
             ctx.globalAlpha = pa;
-            ctx.strokeStyle = this.color;
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.arc(sx, sy, pr, 0, Math.PI * 2);
-            ctx.stroke();
+            PixelFX.ring(ctx, sx, sy, pr, this.color, 3);
             ctx.restore();
         }
-        
-        // Class-specific Hero Aura VFX
+
+        // Class-specific Hero Aura VFX: disco de pixels em 2 tons (no lugar do gradiente radial)
         const auraAlpha = 0.15 + Math.sin(gameTime * 0.05) * 0.05;
         const auraRadius = this.radius * (1.3 + Math.sin(gameTime * 0.08) * 0.15);
         ctx.save();
         ctx.globalAlpha = auraAlpha;
-        const grad = ctx.createRadialGradient(sx, sy, 0, sx, sy, auraRadius);
-        grad.addColorStop(0, this.color + '80');
-        grad.addColorStop(0.5, this.color + '40');
-        grad.addColorStop(1, this.color + '00');
-        ctx.fillStyle = grad;
-        ctx.beginPath();
-        ctx.arc(sx, sy, auraRadius, 0, Math.PI * 2);
-        ctx.fill();
+        PixelFX.drawDisc(ctx, sx, sy, auraRadius, this.color, PixelFX.shade(this.color, 0.4));
+        ctx.globalAlpha = auraAlpha * 0.6;
+        PixelFX.drawDisc(ctx, sx, sy, auraRadius * 0.5, this.color);
         ctx.restore();
 
         // Escudo: bolha ciano que enfraquece conforme player.shield cai (some em 0)
@@ -25621,14 +25535,9 @@ class Player extends Entity {
             const shStr = Math.min(1, this.shield / 50);
             ctx.save();
             ctx.globalAlpha = 0.05 + 0.14 * shStr;
-            ctx.fillStyle = COLORS.PICKUP_SHIELD;
-            ctx.beginPath();
-            ctx.arc(sx, sy, this.radius * 1.5, 0, Math.PI * 2);
-            ctx.fill();
+            PixelFX.drawDisc(ctx, sx, sy, this.radius * 1.5, COLORS.PICKUP_SHIELD);
             ctx.globalAlpha = 0.2 + 0.5 * shStr;
-            ctx.strokeStyle = COLORS.PICKUP_SHIELD;
-            ctx.lineWidth = 1 + shStr;
-            ctx.stroke();
+            PixelFX.ring(ctx, sx, sy, this.radius * 1.5, COLORS.PICKUP_SHIELD, 3);
             ctx.restore();
         }
         // Velocidade: rastro (2 fantasmas) e faixas de vento atrás do herói enquanto speedBoost > 0
@@ -25638,11 +25547,8 @@ class Player extends Entity {
             ctx.save();
             ctx.fillStyle = this.color;
             ctx.globalAlpha = 0.14;
-            ctx.beginPath();
-            ctx.arc(tr[2] - cx, tr[3] - cy, rr, 0, Math.PI * 2);
-            ctx.moveTo(tr[4] - cx + rr, tr[5] - cy);
-            ctx.arc(tr[4] - cx, tr[5] - cy, rr, 0, Math.PI * 2);
-            ctx.fill();
+            PixelFX.drawDisc(ctx, tr[2] - cx, tr[3] - cy, rr, this.color);
+            PixelFX.drawDisc(ctx, tr[4] - cx, tr[5] - cy, rr, this.color);
             const mvx = this._pvx || 0, mvy = this._pvy || 0;
             const mm = Math.hypot(mvx, mvy);
             if (mm > 0.01) {
@@ -25679,9 +25585,7 @@ class Player extends Entity {
                 for (let k = 0; k < 2; k++) {
                     const fa2 = gameTime * 0.3 + k * Math.PI;
                     ctx.globalAlpha = 0.5 + 0.5 * Math.sin(gameTime * 0.4 + k * 2);
-                    ctx.beginPath();
-                    ctx.arc(sx + Math.cos(fa2) * this.radius * 1.1, sy + Math.sin(fa2) * this.radius * 0.7, 2.2, 0, Math.PI * 2);
-                    ctx.fill();
+                    PixelFX.drawDisc(ctx, sx + Math.cos(fa2) * this.radius * 1.1, sy + Math.sin(fa2) * this.radius * 0.7, 2.2, COLORS.PICKUP_FRENZY);
                 }
                 ctx.restore();
             }
@@ -25692,32 +25596,16 @@ class Player extends Entity {
             const R = this.radius * 2.4; // ~1.6x a bolha do escudo comum (radius * 1.5)
             const blinkOff = !rmPw && this.aegisTimer <= 30 && (this.aegisTimer % 6) < 3;
             if (!blinkOff) {
-                if (!Player._aegisSprite) {
-                    const c = document.createElement('canvas'); c.width = 64; c.height = 64;
-                    const g = c.getContext('2d');
-                    const gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
-                    gr.addColorStop(0, 'rgba(255,236,140,0.9)');
-                    gr.addColorStop(0.6, 'rgba(255,194,26,0.5)');
-                    gr.addColorStop(1, 'rgba(255,194,26,0)');
-                    g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
-                    Player._aegisSprite = c;
-                }
                 ctx.save();
                 ctx.globalAlpha = rmPw ? 0.42 : 0.35 + 0.15 * Math.sin(gameTime * 0.5);
-                ctx.drawImage(Player._aegisSprite, sx - R, sy - R, R * 2, R * 2);
+                // Preenchimento em 2 tons (disco de pixels) e contorno em degraus de 3 px
+                PixelFX.drawDisc(ctx, sx, sy, R, '#ffc21a', '#ffec8c');
                 ctx.globalAlpha = 0.95;
-                ctx.strokeStyle = COLORS.PICKUP_AEGIS;
-                ctx.lineWidth = 3.5;
-                ctx.beginPath();
-                ctx.arc(sx, sy, R, 0, Math.PI * 2);
-                ctx.stroke();
+                PixelFX.ring(ctx, sx, sy, R, COLORS.PICKUP_AEGIS, 4);
                 if (!rmPw) {
-                    ctx.fillStyle = '#fff3a0';
                     for (let k = 0; k < 5; k++) {
                         const ang = gameTime * 0.12 + k * (Math.PI * 2 / 5);
-                        ctx.beginPath();
-                        ctx.arc(sx + Math.cos(ang) * R, sy + Math.sin(ang) * R, 2, 0, Math.PI * 2);
-                        ctx.fill();
+                        PixelFX.drawDisc(ctx, sx + Math.cos(ang) * R, sy + Math.sin(ang) * R, 2, '#fff3a0');
                     }
                 }
                 ctx.restore();
