@@ -3952,6 +3952,10 @@ const I18n = {
             'update.entry.v57.l1': 'Corrigido o flash branco rápido que piscava na tela ao andar e em combate.',
             'update.entry.v57.l2': 'A iluminação e o tom do bioma agora ficam estáveis em todos os quadros.',
             'update.entry.v57.l3': 'Seus saves e progresso não mudam.',
+            'update.entry.v61.title': 'v61 — Visual em pixel art',
+            'update.entry.v61.l1': 'Itens, golpes, projéteis, partículas, chão, paredes, tochas, baús, portais, auras e ícones de status agora seguem o estilo pixel art dos heróis e inimigos.',
+            'update.entry.v61.l2': 'Armadilhas de fogo, gelo, veneno e espinhos agora aparecem no chão, e as tochas ganharam chama animada. Os números de dano ficaram mais nítidos.',
+            'update.entry.v61.l3': 'Seus saves não mudam.',
             'update.entry.v60.title': 'v60 — Abismo sem teto e gamepad',
             'update.entry.v60.l1': 'O Abismo agora continua ficando mais difícil depois do andar 50, e o chefe evolui até o andar 100. Powerups raros de baú, chefe e sala secreta passam a seguir a seed.',
             'update.entry.v60.l2': 'O menu de NPC também funciona com o direcional e o analógico do controle (A confirma, B fecha). Nomes de armas traduzidos e Tamanho da Fonte aplicado a avisos e dicas de item.',
@@ -5433,6 +5437,10 @@ const I18n = {
             'update.entry.v57.l1': 'Fixed the quick white flashing on screen while walking and in combat.',
             'update.entry.v57.l2': 'Lighting and biome tint now stay steady on every frame.',
             'update.entry.v57.l3': 'Your saves and progress are unchanged.',
+            'update.entry.v61.title': 'v61 — Pixel art visuals',
+            'update.entry.v61.l1': 'Items, strikes, projectiles, particles, floors, walls, torches, chests, portals, auras and status icons now match the pixel art style of the heroes and enemies.',
+            'update.entry.v61.l2': 'Fire, ice, poison and spike traps are now visible on the floor, and torches have an animated flame. Damage numbers are crisper.',
+            'update.entry.v61.l3': 'Your saves are unchanged.',
             'update.entry.v60.title': 'v60 — Endless Abyss and gamepad menus',
             'update.entry.v60.l1': 'The Abyss now keeps getting harder past floor 50, and the boss keeps evolving up to floor 100. Rare powerups from chests, bosses and secret rooms now follow the seed.',
             'update.entry.v60.l2': 'The NPC menu also works with the d-pad and stick (A confirms, B closes). Weapon names are translated and Font Size now applies to notices and item tips.',
@@ -6924,6 +6932,10 @@ const I18n = {
             'update.entry.v57.l1': 'Corregido el parpadeo blanco rápido que aparecía en la pantalla al caminar y en combate.',
             'update.entry.v57.l2': 'La iluminación y el tono del bioma ahora se mantienen estables en todos los cuadros.',
             'update.entry.v57.l3': 'Los saves y el progreso no cambian.',
+            'update.entry.v61.title': 'v61 — Estilo pixel art',
+            'update.entry.v61.l1': 'Objetos, golpes, proyectiles, partículas, suelos, paredes, antorchas, cofres, portales, auras e iconos de estado ahora siguen el estilo pixel art de los héroes y enemigos.',
+            'update.entry.v61.l2': 'Las trampas de fuego, hielo, veneno y pinchos ahora se ven en el suelo, y las antorchas tienen llama animada. Los números de daño son más nítidos.',
+            'update.entry.v61.l3': 'Tus partidas guardadas no cambian.',
             'update.entry.v60.title': 'v60 — Abismo sin techo y menús con mando',
             'update.entry.v60.l1': 'El Abismo sigue haciéndose más difícil después del piso 50, y el jefe evoluciona hasta el piso 100. Los potenciadores raros de cofres, jefes y salas secretas ahora siguen la semilla.',
             'update.entry.v60.l2': 'El menú de NPC también funciona con la cruceta y el stick (A confirma, B cierra). Nombres de armas traducidos y Tamaño de fuente aplicado a avisos y consejos de objetos.',
@@ -10699,6 +10711,8 @@ function _drawWorldLayer() {
     
     // Draw ground shadows for scenery (depth cue)
     hazards.forEach(h => { if(h.x > vL && h.x < vR && h.y > vT && h.y < vB) drawGroundShadow(wctx, h.x, h.y, h.size * 0.6, camX, camY); });
+    // Armadilhas/fogo em pixel art: depois das sombras, antes de baús, pickups e entidades
+    hazards.forEach(h => { if(h.x > vL && h.x < vR && h.y > vT && h.y < vB) h.draw(wctx, camX, camY); });
     chests.forEach(c => { if(c.x > vL && c.x < vR && c.y > vT && c.y < vB) { drawGroundShadow(wctx, c.x, c.y, 16, camX, camY); c.draw(wctx, camX, camY); } });
     pickups.forEach(p => { if(p.x > vL && p.x < vR && p.y > vT && p.y < vB) { drawGroundShadow(wctx, p.x, p.y, 7, camX, camY); p.draw(wctx, camX, camY); } });
     weaponPickups.forEach(wp => { if(wp.x > vL && wp.x < vR && wp.y > vT && wp.y < vB) { drawGroundShadow(wctx, wp.x, wp.y, 8, camX, camY); wp.draw(wctx, camX, camY); } });
@@ -14281,7 +14295,7 @@ const RunObjectiveSystem = {
         if (o.metric === 'gold') progText = cur.toLocaleString('pt-BR') + '/' + this.target.toLocaleString('pt-BR');
         else if (o.metric === 'floor' && o.timeLimit) {
             progText = (window.I18n ? I18n.t('run.obj.floor') : 'piso') + ' ' + cur + '/' + this.target + ' · ' + Math.floor(elapsedS / 60) + (window.I18n ? I18n.t('run.obj.min') : 'min');
-        } else if (o.metric === 'damage') progText = (window.I18n ? I18n.t('run.obj.dmg') : 'dano') + ' ' + cur + '/' + this.target + ' · ' + (window.I18n ? I18n.t('run.obj.floor') : 'piso') + ' ' + ((typeof dungeonLevel !== 'undefined') ? dungeonLevel : 1);
+        } else if (o.metric === 'damage') progText = (window.I18n ? I18n.t('run.obj.dmg') : 'dano') + ' ' + Math.floor(cur) + '/' + this.target + ' · ' + (window.I18n ? I18n.t('run.obj.floor') : 'piso') + ' ' + ((typeof dungeonLevel !== 'undefined') ? dungeonLevel : 1);
         else progText = cur + '/' + this.target;
         if (this.completed) { pct = 100; progText = '✓ ' + progText; }
         else if (this.failed) { pct = 100; progText = '✗ ' + progText; }
@@ -31856,7 +31870,7 @@ Input.init();
        current MUST stay in sync with the SW CACHE_VERSION suffix (sw.js).
     */
     window.UPDATE_LOG = {
-        current: 'v60',
+        current: 'v61',
         entries: [
             { v: 'v9', date: '2026-09-10', titleKey: 'update.entry.v9.title', title: 'v9 — Tutorial destravado',
               linesKeys: ['update.entry.v9.l1'],
@@ -32032,6 +32046,11 @@ Input.init();
               lines: ['Corrigido o flash branco rápido que piscava na tela ao andar e em combate.',
                       'A iluminação e o tom do bioma agora ficam estáveis em todos os quadros.',
                       'Seus saves e progresso não mudam.'] },
+            { v: 'v61', date: '2026-10-17', titleKey: 'update.entry.v61.title', title: 'v61 — Visual em pixel art',
+              linesKeys: ['update.entry.v61.l1', 'update.entry.v61.l2', 'update.entry.v61.l3'],
+              lines: ['Itens, golpes, projéteis, partículas, chão, paredes, tochas, baús, portais, auras e ícones de status agora seguem o estilo pixel art dos heróis e inimigos.',
+                      'Armadilhas de fogo, gelo, veneno e espinhos agora aparecem no chão, e as tochas ganharam chama animada. Os números de dano ficaram mais nítidos.',
+                      'Seus saves não mudam.'] },
             { v: 'v60', date: '2026-10-16', titleKey: 'update.entry.v60.title', title: 'v60 — Abismo sem teto e gamepad',
               linesKeys: ['update.entry.v60.l1', 'update.entry.v60.l2', 'update.entry.v60.l3'],
               lines: ['O Abismo agora continua ficando mais difícil depois do andar 50, e o chefe evolui até o andar 100. Powerups raros de baú, chefe e sala secreta passam a seguir a seed.',
