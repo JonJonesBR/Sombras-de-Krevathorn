@@ -9972,27 +9972,31 @@ class Portal {
         }
     }
     draw(ctx, cx, cy) {
-        const sx = this.x - cx, sy = this.y - cy;
+        const sx = this.x - cx, sy = this.y - cy, R = this.radius;
+        // Vórtice gira em passos de 30 graus (pixel), não de forma contínua
+        const step = Math.floor(this.angle / (Math.PI / 6)) * (Math.PI / 6);
+        // Núcleo pulsa em 3 quadros (cresce em degraus de 3 px)
+        const pf = Math.floor((Math.sin(gameTime * 0.1) + 1) * 1.5);
         ctx.save();
-        drawGlow(ctx, sx, sy, this.radius * 2, COLORS.PORTAL, 0.6);
-        ctx.translate(sx, sy);
-        ctx.rotate(this.angle);
-        
-        // Outer glow (pre-rendered sprite)
-        const glow = 0.5 + Math.sin(gameTime * 0.1) * 0.2;
-        ctx.globalAlpha = glow;
-        ctx.fillStyle = COLORS.PORTAL;
-        ctx.beginPath(); ctx.arc(0, 0, this.radius + 5, 0, Math.PI * 2); ctx.fill();
-        
-        // Vortex effect
+        drawGlow(ctx, sx, sy, R * 2, COLORS.PORTAL, 0.6);
+        // Halo externo em disco de pixels
+        ctx.globalAlpha = 0.3 + Math.sin(gameTime * 0.1) * 0.1;
+        PixelFX.drawDisc(ctx, sx, sy, R + 5, COLORS.PORTAL, null, true);
+        // Vórtice: 3 braços em meia-elipse achatada, girando em passos
         ctx.globalAlpha = 0.8;
-        for(let i=0; i<3; i++) {
-            ctx.rotate(Math.PI * 2 / 3);
-            ctx.strokeStyle = '#fff';
-            ctx.lineWidth = 3;
-            ctx.beginPath(); ctx.ellipse(0, 0, this.radius, this.radius * 0.3, 0, 0, Math.PI); ctx.stroke();
+        for (let i = 0; i < 3; i++) {
+            const a0 = step + i * Math.PI * 2 / 3;
+            PixelFX.ringE(ctx, sx, sy, R, R * 0.3, '#ffffff', a0, a0 + Math.PI);
         }
-        
+        // Runas em pixel no anel externo: 6 marcas que acompanham o passo do vórtice
+        ctx.globalAlpha = 0.9;
+        for (let k = 0; k < 6; k++) {
+            const a = step + k * Math.PI / 3;
+            PixelFX.drawDisc(ctx, sx + Math.cos(a) * (R + 10), sy + Math.sin(a) * (R + 10) * 0.6, 2, COLORS.PORTAL);
+        }
+        // Núcleo pulsante
+        ctx.globalAlpha = 0.9;
+        PixelFX.drawDisc(ctx, sx, sy, R * 0.3 + pf * 3, '#ffffff');
         ctx.restore();
         ctx.globalAlpha = 1;
     }
@@ -10085,21 +10089,30 @@ class SecretPortal {
         }
     }
     draw(ctx, cx, cy) {
-        const sx = this.x - cx, sy = this.y - cy;
+        const sx = this.x - cx, sy = this.y - cy, R = this.radius;
         const rm = !!(window.GameSettings && GameSettings.reducedMotion);
         const pulse = rm ? 0 : Math.sin(gameTime * 0.15);
+        // Losango que gira em passos de 45 graus; núcleo em xadrez (dithering), distinto do portal comum
+        const step = rm ? 0 : Math.floor(this.angle / (Math.PI / 4)) * (Math.PI / 4);
         ctx.save();
-        drawGlow(ctx, sx, sy, this.radius * 2.6, this.color, 0.7 + pulse * 0.15);
-        ctx.translate(sx, sy);
-        ctx.rotate(this.angle);
-        ctx.globalAlpha = 0.45 + pulse * 0.15;
-        ctx.fillStyle = this.color;
-        ctx.beginPath(); ctx.arc(0, 0, this.radius + 4, 0, Math.PI * 2); ctx.fill();
+        drawGlow(ctx, sx, sy, R * 2.6, this.color, 0.7 + pulse * 0.15);
+        ctx.globalAlpha = 0.3 + pulse * 0.1;
+        PixelFX.drawDisc(ctx, sx, sy, R + 4, this.color, '#f3e6ff');
+        // Contorno do losango em células de 3 px
         ctx.globalAlpha = 0.9;
-        ctx.strokeStyle = '#f3e6ff'; ctx.lineWidth = 3;
-        for (let i = 0; i < 3; i++) {
-            ctx.rotate(Math.PI * 2 / 3);
-            ctx.beginPath(); ctx.ellipse(0, 0, this.radius, this.radius * 0.3, 0, 0, Math.PI); ctx.stroke();
+        const V = [];
+        for (let k = 0; k < 4; k++) {
+            const a = step + k * Math.PI / 2;
+            V.push([sx + Math.cos(a) * (R + 2), sy + Math.sin(a) * (R + 2)]);
+        }
+        for (let k = 0; k < 4; k++) {
+            const p0 = V[k], p1 = V[(k + 1) % 4];
+            PixelFX.seg3(ctx, p0[0], p0[1], p1[0], p1[1], '#f3e6ff');
+        }
+        // Runas internas: um ponto em cada vértice, dentro do losango
+        ctx.globalAlpha = 0.8;
+        for (let k = 0; k < 4; k++) {
+            PixelFX.drawDisc(ctx, sx + (V[k][0] - sx) * 0.5, sy + (V[k][1] - sy) * 0.5, 2, '#ffffff');
         }
         ctx.restore();
     }
@@ -10457,10 +10470,9 @@ function update() {
 
 function drawGroundShadow(ctx2, wx, wy, r, cx, cy) {
     if (window.GFX !== undefined && window.GFX.shadows === false) return;
-    ctx2.fillStyle = 'rgba(0,0,0,0.22)';
-    ctx2.beginPath();
-    ctx2.ellipse(wx - cx, wy - cy + r * 0.72, r * 0.85, r * 0.32, 0, 0, Math.PI * 2);
-    ctx2.fill();
+    // Elipse pixelada em 2 tons: borda externa mais clara, núcleo mais escuro
+    PixelFX.drawEllipse(ctx2, wx - cx, wy - cy + r * 0.72, r * 0.85, r * 0.32, 'rgba(0,0,0,0.16)');
+    PixelFX.drawEllipse(ctx2, wx - cx, wy - cy + r * 0.72, r * 0.5, r * 0.19, 'rgba(0,0,0,0.26)');
 }
 
 // PixelFX: sprites pixel art pré-renderizados (itens, partículas). Cache por key em objeto puro
@@ -10557,9 +10569,9 @@ const PixelFX = (() => {
     };
     // Disco em pixel: sprite baked por raio em células (cache por tamanho, não por frame).
     // edge (opcional): cor da borda em xadrez, para contorno mais suave em auras.
-    const disc = (r, color, edge) => {
+    const disc = (r, color, edge, dither) => {
         const rc = Math.max(1, Math.round(r / 3));
-        const key = 'disc|' + rc + '|' + color + '|' + (edge || '');
+        const key = 'disc|' + rc + '|' + color + '|' + (edge || '') + (dither ? '|dz' : '');
         if (cache[key]) return cache[key];
         const rows = [];
         for (let y = -rc; y <= rc; y++) {
@@ -10567,6 +10579,7 @@ const PixelFX = (() => {
             for (let x = -rc; x <= rc; x++) {
                 const d = Math.hypot(x, y);
                 if (d > rc + 0.3) row += '.';
+                else if (dither && d > rc - 1.2 && ((x + y) & 1) === 0) row += '.';
                 else if (edge && d > rc - 0.7 && ((x + y) & 1) === 0) row += 'e';
                 else row += 'c';
             }
@@ -10574,20 +10587,67 @@ const PixelFX = (() => {
         }
         return bake(key, rows, { c: color, e: edge || color }, 3);
     };
-    const drawDisc = (ctx, x, y, r, color, edge) => draw(ctx, disc(r, color, edge), x, y);
+    const drawDisc = (ctx, x, y, r, color, edge, dither) => draw(ctx, disc(r, color, edge, dither), x, y);
+    // Elipse em células (sprite baked por tamanho e cor; cache). rx/ry em px.
+    const ellipse = (rx, ry, color) => {
+        const nx = Math.max(1, Math.round(rx / 3)), ny = Math.max(1, Math.round(ry / 3));
+        const key = 'ell|' + nx + '|' + ny + '|' + color;
+        if (cache[key]) return cache[key];
+        const rows = [];
+        for (let y = -ny; y <= ny; y++) {
+            let row = '';
+            for (let x = -nx; x <= nx; x++) row += ((x * x) / ((nx + 0.3) * (nx + 0.3)) + (y * y) / ((ny + 0.3) * (ny + 0.3)) <= 1) ? 'c' : '.';
+            rows.push(row);
+        }
+        return bake(key, rows, { c: color }, 3);
+    };
+    const drawEllipse = (ctx, x, y, rx, ry, color) => draw(ctx, ellipse(rx, ry, color), x, y);
+    // Setor circular preenchido em células (de a0 a a1, radianos, no sentido do canvas)
+    const sector = (ctx, x, y, r, a0, a1, color) => {
+        ctx.fillStyle = color;
+        const rc = Math.max(1, Math.round(r / 3)), TAU = Math.PI * 2;
+        const span = ((a1 - a0) % TAU + TAU) % TAU;
+        const gx0 = snap(x, 3), gy0 = snap(y, 3);
+        for (let dy = -rc; dy <= rc; dy++) for (let dx = -rc; dx <= rc; dx++) {
+            if (Math.hypot(dx, dy) > rc + 0.3 || (!dx && !dy)) continue;
+            const d = ((Math.atan2(dy, dx) - a0) % TAU + TAU) % TAU;
+            if (d <= span) ctx.fillRect(gx0 + dx * 3, gy0 + dy * 3, 3, 3);
+        }
+    };
+    // Anel elíptico em degraus de 3 px (arco de a0 a a1). Usado nos braços do portal.
+    const ringE = (ctx, x, y, rx, ry, color, a0, a1) => {
+        const span = a1 - a0, seen = Object.create(null);
+        const steps = Math.max(8, Math.ceil(Math.abs(span) * Math.max(rx, ry) / 3));
+        ctx.fillStyle = color;
+        for (let i = 0; i <= steps; i++) {
+            const a = a0 + (span * i) / steps;
+            const gx = snap(x + Math.cos(a) * rx, 3), gy = snap(y + Math.sin(a) * ry, 3);
+            const k = gx + ',' + gy;
+            if (seen[k]) continue;
+            seen[k] = true;
+            ctx.fillRect(gx, gy, 3, 3);
+        }
+    };
+    // Segmento de reta em células de 3 px alinhadas à grade (sem traço suave)
+    const seg3 = (ctx, x0, y0, x1, y1, color) => {
+        const n = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0) / 3));
+        ctx.fillStyle = color;
+        for (let i = 0; i <= n; i++) {
+            const t = i / n;
+            ctx.fillRect(snap(x0 + (x1 - x0) * t, 3), snap(y0 + (y1 - y0) * t, 3), 3, 3);
+        }
+    };
     const get = key => cache[key] || null;
-    return { bake, draw, snap, shade, tones, tonal, line, ring, disc, drawDisc, get };
+    return { bake, draw, snap, shade, tones, tonal, line, ring, disc, drawDisc, ellipse, drawEllipse, sector, ringE, seg3, get };
 })();
 
 function drawGlow(ctx2, px, py, r, color, intensity = 0.35) {
     if (window.GFX !== undefined && window.GFX.glows === false) return;
     const prev = ctx2.globalCompositeOperation;
     ctx2.globalCompositeOperation = 'lighter';
-    // Halo em pixel: dois discos concêntricos em degraus (sem gradiente radial)
-    ctx2.globalAlpha = intensity * 0.5;
-    PixelFX.drawDisc(ctx2, px, py, r * 2.2, color);
-    ctx2.globalAlpha = intensity * 0.6;
-    PixelFX.drawDisc(ctx2, px, py, r * 1.1, color);
+    // Brilho discreto em pixel: 1 disco com só a borda externa em xadrez (~0.55x do raio anterior)
+    ctx2.globalAlpha = intensity * 0.3;
+    PixelFX.drawDisc(ctx2, px, py, r * 1.2, color, null, true);
     ctx2.globalCompositeOperation = prev;
     ctx2.globalAlpha = 1;
 }
@@ -18929,10 +18989,7 @@ const SpriteManager = {
 
         // Sombra no chão
         ctx.save();
-        ctx.fillStyle = 'rgba(0,0,0,0.3)';
-        ctx.beginPath();
-        ctx.ellipse(ix, feetY - 2, halfD * 0.8, halfD * 0.3, 0, 0, TAU);
-        ctx.fill();
+        PixelFX.drawEllipse(ctx, ix, feetY - 2, halfD * 0.8, halfD * 0.3, 'rgba(0,0,0,0.3)');
         ctx.restore();
 
         // Poeira de passo (heróis): 2 puffs atrás, alternando o pé que tocou
@@ -18942,16 +18999,10 @@ const SpriteManager = {
             const aA = 0.35 * (1 - sn), aB = 0.35 * sn;
             ctx.save();
             if (aA > 0.03) {
-                ctx.fillStyle = 'rgba(200,190,170,' + aA.toFixed(2) + ')';
-                ctx.beginPath();
-                ctx.ellipse(bx + px, by + py, sc * (1.5 + 1.5 * (1 - sn)), sc * 0.7, 0, 0, TAU);
-                ctx.fill();
+                PixelFX.drawEllipse(ctx, bx + px, by + py, sc * (1.5 + 1.5 * (1 - sn)), sc * 0.7, 'rgba(200,190,170,' + aA.toFixed(2) + ')');
             }
             if (aB > 0.03) {
-                ctx.fillStyle = 'rgba(200,190,170,' + aB.toFixed(2) + ')';
-                ctx.beginPath();
-                ctx.ellipse(bx - px, by - py, sc * (1.5 + 1.5 * sn), sc * 0.7, 0, 0, TAU);
-                ctx.fill();
+                PixelFX.drawEllipse(ctx, bx - px, by - py, sc * (1.5 + 1.5 * sn), sc * 0.7, 'rgba(200,190,170,' + aB.toFixed(2) + ')');
             }
             ctx.restore();
         }
@@ -18976,24 +19027,11 @@ const SpriteManager = {
 
         // Brilho de magia nas mãos (círculo radial em cache)
         if (castT >= 0) {
-            if (!this._glowCanvas) {
-                const gc = document.createElement('canvas');
-                gc.width = 32;
-                gc.height = 32;
-                const gx = gc.getContext('2d');
-                const gr = gx.createRadialGradient(16, 16, 0, 16, 16, 16);
-                gr.addColorStop(0, 'rgba(150,200,255,1)');
-                gr.addColorStop(1, 'rgba(150,200,255,0)');
-                gx.fillStyle = gr;
-                gx.fillRect(0, 0, 32, 32);
-                this._glowCanvas = gc;
-            }
             const gs = d * 0.7;
             ctx.save();
             ctx.globalCompositeOperation = 'lighter';
             ctx.globalAlpha *= 0.35 * (1 - castT);
-            ctx.imageSmoothingEnabled = true;
-            ctx.drawImage(this._glowCanvas, -gs / 2, -d * 0.55 - gs / 2, gs, gs);
+            PixelFX.drawDisc(ctx, 0, -d * 0.55, gs / 2, 'rgb(150,200,255)', null, true);
             ctx.restore();
         }
         ctx.restore();
@@ -19205,9 +19243,11 @@ const DamageNumbers = {
             ctx.shadowBlur = 0;
 
             // Outline
-            ctx.strokeStyle = 'rgba(0,0,0,0.8)';
-            ctx.lineWidth = 3;
-            ctx.strokeText(n.value, 0, 0);
+            ctx.fillStyle = 'rgba(0,0,0,0.85)';
+            ctx.fillText(n.value, -1, 0);
+            ctx.fillText(n.value, 1, 0);
+            ctx.fillText(n.value, 0, -1);
+            ctx.fillText(n.value, 0, 1);
 
             // Fill
             ctx.fillStyle = color;
@@ -19902,18 +19942,6 @@ const ElementalSystem = {
             crystal: '#88ffff'
         };
         
-        const icons = {
-            fire: '\u{1F525}',
-            ice: '\u{2744}\u{FE0F}',
-            poison: '\u{2620}\u{FE0F}',
-            lightning: '\u{26A1}',
-            steam: '\u{2601}\u{FE0F}',
-            toxic: '\u{1F30C}',
-            inferno: '\u{1F4A5}',
-            neurotoxin: '\u{1F9A0}',
-            crystal: '\u{1F4A0}'
-        };
-        
         const yOff = -entity.radius - 16;
         let xOff = -((entity.elementalStatuses.length - 1) * 14) / 2;
         
@@ -19923,11 +19951,11 @@ const ElementalSystem = {
         ctx.font = '12px ' + COLORS.CANVAS_FONT;
         
         for (const status of entity.elementalStatuses) {
-            const icon = icons[status.type] || '?';
             const color = colors[status.type] || '#ffffff';
             ctx.fillStyle = color;
             ctx.globalAlpha = 0.7 + Math.sin(Date.now() * 0.005) * 0.3;
-            ctx.fillText(icon, entity.x - cx + xOff, entity.y - cy + yOff);
+            // Ícone em pixel (7x7 células) no lugar do emoji; fonte e i18n dos números não mudam
+            PixelFX.draw(ctx, WorldSprites.status(status.type, color), entity.x - cx + xOff, entity.y - cy + yOff);
             
             // Stack count
             if (status.stacks > 1) {
@@ -20171,10 +20199,10 @@ const WorldSprites = (() => {
 
     // Chama de fogo: 4 quadros (sway e ponta variam), núcleo claro na base
     const fireBody = frame => {
-        const W = 15, H = 14, c = 7, sway = [0, 1, 0, -1][frame & 3], g = [];
+        const W = 15, H = 14, c = 7, f = frame % 6, sway = [0, 1, 1, 0, -1, -1][f], g = [];
         for (let y = 0; y < H; y++) {
             const t = (H - 1 - y) / (H - 1);
-            const hw = 6.4 * Math.pow(1 - t, 0.75);
+            const hw = [6.4, 5.8, 6.8, 6.1, 6.6, 5.6][f] * Math.pow(1 - t, 0.75);
             const cc = c + Math.round(sway * t);
             let row = '';
             for (let x = 0; x < W; x++) {
@@ -20187,7 +20215,7 @@ const WorldSprites = (() => {
         }
         return g;
     };
-    const fire = (color, frame) => build('hz|fire|' + color + '|' + (frame & 3), fireBody(frame),
+    const fire = (color, frame) => build('hz|fire|' + color + '|' + (frame % 6), fireBody(frame),
         { k: '#3a0e00', o: color, y: '#ffaa00', c: '#fff2b0' }, 3, '#ff4400');
 
     // Cristal triangular (gelo): lado escuro à esquerda, claro à direita, faísca em quadros 1 e 3
@@ -20223,14 +20251,20 @@ const WorldSprites = (() => {
         return build('hz|blob|' + R + '|' + color, g, { k: t.o, s: t.s, b: t.b, l: t.l }, 3, color);
     };
 
-    // Espinhos: placa de 6x2 células e 3 pontas que sobem e descem (4 quadros)
+    // Espinhos: placa de 9x2 células e 4 pontas (base de 2 células, lado sombreado) que sobem e descem (4 quadros)
     const spikes = (color, frame) => {
-        const t = PixelFX.tones(color), hs = [4, 3, 1, 3][frame & 3], g = [];
-        for (let y = 0; y < 6; y++) g.push(new Array(6).fill('.'));
-        for (const x of [1, 3, 5]) for (let k = 0; k < hs; k++) g[3 - k][x] = (k === hs - 1) ? 'l' : 'b';
-        for (let x = 0; x < 6; x++) { g[4][x] = 's'; g[5][x] = 's'; }
+        const t = PixelFX.tones(color), hs = [5, 3, 1, 4][frame & 3], g = [];
+        for (let y = 0; y < 7; y++) g.push(new Array(9).fill('.'));
+        for (const x of [1, 3, 5, 7]) {
+            for (let k = 0; k < hs; k++) {
+                const y = 4 - k;
+                if (k === hs - 1) g[y][x] = 'l';
+                else { g[y][x] = 'b'; g[y][x + 1] = (k === 0) ? 'b' : 's'; }
+            }
+        }
+        for (let x = 0; x < 9; x++) { g[5][x] = 's'; g[6][x] = 'd'; }
         return build('hz|spk|' + color + '|' + (frame & 3), g.map(r => r.join('')),
-            { k: t.o, s: t.s, b: t.b, l: t.l }, 3, color);
+            { k: t.o, s: t.s, b: t.b, l: t.l, d: PixelFX.shade(color, -0.55) }, 3, color);
     };
 
     // Medalhão de item: anel na cor da raridade, miolo escuro e letra em pixel (W ou E)
@@ -20269,7 +20303,46 @@ const WorldSprites = (() => {
         return { body: PixelFX.get(key), halo: PixelFX.get(key + '|h') };
     };
 
-    return { fire, crystal, blob, spikes, medal, chest };
+    // NPC: círculo de 9 células com contorno branco e brilho de 3 células, na cor do NPC (bake por cor)
+    const npc = color => {
+        const key = 'npc|' + color, rc = 4;
+        if (!PixelFX.get(key)) {
+            const rows = [];
+            for (let y = -rc - 1; y <= rc + 1; y++) {
+                let row = '';
+                for (let x = -rc - 1; x <= rc + 1; x++) {
+                    const d = Math.hypot(x, y);
+                    if (d > rc + 0.5) row += '.';
+                    else if (d > rc - 0.5) row += 'w';
+                    else if ((x === -2 && (y === -2 || y === -1)) || (x === -1 && y === -2)) row += 'h';
+                    else row += 'c';
+                }
+                rows.push(row);
+            }
+            PixelFX.bake(key, rows, { c: color, w: '#ffffff', h: 'rgba(255,255,255,0.45)' }, 3);
+        }
+        return PixelFX.get(key);
+    };
+
+    // Ícones de status em 7x7 células ('#' = cor do status, 'l' = brilho), bakeados por tipo e cor
+    const STATUS_ICON = {
+        fire: ['...#...', '..###..', '.#####.', '#######', '##lll##', '#######', '.#####.'],
+        ice: ['...#...', '.#.#.#.', '..###..', '#######', '..###..', '.#.#.#.', '...#...'],
+        poison: ['...#...', '...#...', '..###..', '.#####.', '.#####.', '.#####.', '..###..'],
+        lightning: ['....##.', '...##..', '..##...', '.#####.', '....##.', '...##..', '..##...'],
+        steam: ['..##...', '.####.#', '#######', '#######', '.#####.', '.......', '.......'],
+        toxic: ['.#####.', '#.....#', '#..#..#', '#.....#', '#.....#', '#.....#', '.#####.'],
+        inferno: ['#..#..#', '.#.#.#.', '..###..', '#######', '..###..', '.#.#.#.', '#..#..#'],
+        neurotoxin: ['..###..', '.#####.', '##.#.##', '#######', '##.#.##', '.#####.', '..###..'],
+        crystal: ['...#...', '..###..', '.#####.', '#######', '.#####.', '..###..', '...#...']
+    };
+    const status = (type, color) => {
+        const g = STATUS_ICON[type] || STATUS_ICON.crystal, key = 'st|' + type + '|' + color;
+        if (!PixelFX.get(key)) PixelFX.bake(key, g, { '#': color, l: PixelFX.shade(color, 0.5) }, 2);
+        return PixelFX.get(key);
+    };
+
+    return { fire, crystal, blob, spikes, medal, chest, npc, status };
 })();
 
 class Hazard {
@@ -20332,18 +20405,18 @@ class Hazard {
             ctx.globalAlpha = 1;
         } else if(this.type === 'poison') {
             const puff = Math.sin(gameTime*0.15)*0.1+0.9;
-            const alpha = 0.4 + Math.sin(gameTime*0.12)*0.15;
+            const alpha = 0.65 + Math.sin(gameTime*0.12)*0.15;
             const sp = WorldSprites.blob(puff > 0.95 ? 8 : 7, this.color);
             if (glows) { ctx.globalAlpha = alpha * 0.3; PixelFX.draw(ctx, sp.halo, px, py); }
             ctx.globalAlpha = alpha;
             PixelFX.draw(ctx, sp.body, px, py);
-            // Bolhas subindo, em células de 3 px alinhadas à grade
-            ctx.fillStyle = '#aaff88';
-            ctx.globalAlpha = alpha*0.8;
-            for(let bi = 0; bi < 3; bi++) {
-                const bx = px + Math.sin(gameTime*0.1 + bi*2.1)*this.size*0.35;
-                const by = py - ((gameTime*0.3 + bi*9) % (this.size*1.2));
-                const s = bi === 2 ? 6 : 3;
+            // Bolhas subindo, em células de 3 px (4 bolhas, a maior de 2x2 células), bem visíveis
+            ctx.fillStyle = '#d6ff9e';
+            ctx.globalAlpha = 0.95;
+            for(let bi = 0; bi < 4; bi++) {
+                const bx = px + Math.sin(gameTime*0.1 + bi*2.1)*this.size*0.4;
+                const by = py - ((gameTime*0.35 + bi*11) % (this.size*1.3));
+                const s = bi === 3 ? 6 : 3;
                 ctx.fillRect(PixelFX.snap(bx, 3), PixelFX.snap(by, 3), s, s);
             }
             ctx.globalAlpha = 1;
@@ -21825,12 +21898,12 @@ class Enemy extends Entity {
                 ctx.globalCompositeOperation = 'lighter';
                 ctx.globalAlpha = 0.25 + pulse;
                 ctx.fillStyle = this.isB ? '#ff2244' : CONFIG.ELITE_COLOR;
-                PixelFX.drawDisc(ctx, px, py, this.radius + 8, ctx.fillStyle);
+                PixelFX.drawDisc(ctx, px, py, this.radius + 5, ctx.fillStyle, null, true);
                 ctx.globalCompositeOperation = 'source-over';
             }
             ctx.globalAlpha = CONFIG.ELITE_GLOW_ALPHA + pulse;
             ctx.fillStyle = CONFIG.ELITE_COLOR;
-            PixelFX.drawDisc(ctx, px, py, this.radius + 5, CONFIG.ELITE_COLOR);
+            PixelFX.drawDisc(ctx, px, py, this.radius + 3, CONFIG.ELITE_COLOR, null, true);
             ctx.globalAlpha = 1;
             // Crown indicator for elite, ring for boss
             if(this.isB) {
@@ -21908,7 +21981,7 @@ class Enemy extends Entity {
         // Berserker indicator (red glow pulse)
         if(this._berserk && isNear) {
             ctx.globalAlpha = 0.15 + Math.sin(gameTime * 0.2) * 0.1;
-            PixelFX.drawDisc(ctx, px, py, this.radius + 8, '#ff0000');
+            PixelFX.drawDisc(ctx, px, py, this.radius + 5, '#ff0000', null, true);
             ctx.globalAlpha = 1;
         }
         
@@ -21949,9 +22022,8 @@ class Enemy extends Entity {
             const pb = (gameTime * 0.25 + px) % 1;
             for(let pi = 0; pi < 3; pi++) {
                 const by = py - this.radius - 2 - ((gameTime * 0.4 + pi * 7) % 16);
-                ctx.beginPath();
-                ctx.arc(px + Math.sin(gameTime * 0.12 + pi * 2.4) * this.radius * 0.6, by, 2 - pi * 0.4, 0, Math.PI * 2);
-                ctx.fill();
+                const bxs = px + Math.sin(gameTime * 0.12 + pi * 2.4) * this.radius * 0.6;
+                ctx.fillRect(PixelFX.snap(bxs, 3), PixelFX.snap(by, 3), 3, 3);
             }
             ctx.globalAlpha = 1;
         }
@@ -22110,21 +22182,17 @@ class EliteEnemy extends Enemy {
             // Background danger area
             ctx.globalAlpha = 0.2;
             ctx.fillStyle = '#ff0000';
-            ctx.beginPath();
-            ctx.arc(this.x-cx, this.y-cy, maxRadius, 0, Math.PI*2);
-            ctx.fill();
+            PixelFX.drawDisc(ctx, this.x-cx, this.y-cy, maxRadius, '#ff0000');
 
             // Expanding fill indicator
             ctx.globalAlpha = 0.6;
-            ctx.beginPath();
-            ctx.arc(this.x-cx, this.y-cy, maxRadius * progress, 0, Math.PI*2);
-            ctx.fill();
+            PixelFX.drawDisc(ctx, this.x-cx, this.y-cy, maxRadius * progress, '#ff0000');
             ctx.globalAlpha = 1;
         }
         // Pulsing elite glow
         ctx.globalAlpha = CONFIG.ELITE_GLOW_ALPHA + Math.sin(gameTime * 0.15) * 0.15;
         ctx.fillStyle = CONFIG.ELITE_COLOR;
-        ctx.beginPath(); ctx.arc(this.x-cx, this.y-cy, this.radius + 6, 0, Math.PI*2); ctx.fill();
+        PixelFX.drawDisc(ctx, this.x-cx, this.y-cy, this.radius + 6, CONFIG.ELITE_COLOR);
         ctx.globalAlpha = 1;
         // Draw bigger version
         SpriteRenderer.drawEnemy.call(this, ctx, this.x-cx, this.y-cy, this.enemyType, (this.attackAnim > 0 ? 12 - this.attackAnim : this.walkTimer), this.angle, 1.9, this.ft > 0, this.attackAnim > 0 ? 'attack' : (this.walkTimer > 0 ? 'walk' : 'idle'));
@@ -22311,9 +22379,10 @@ class MimicEnemy extends Entity {
         if(!this.revealed) {
             // Disguised as currency pickup
             ctx.globalAlpha = 0.5; ctx.fillStyle = '#ffdd00';
-            ctx.beginPath(); ctx.arc(this.x-cx, this.y-cy+bob, 12, 0, Math.PI*2); ctx.fill();
+            PixelFX.drawDisc(ctx, this.x-cx, this.y-cy+bob, 12, '#ffdd00');
+            PixelFX.ring(ctx, this.x-cx, this.y-cy+bob, 12, '#8a6a00', 3);
             ctx.globalAlpha = 1; ctx.fillStyle = '#ffdd00';
-            ctx.beginPath(); ctx.arc(this.x-cx, this.y-cy+bob, 8, 0, Math.PI*2); ctx.fill();
+            PixelFX.drawDisc(ctx, this.x-cx, this.y-cy+bob, 8, '#ffdd00');
             ctx.fillStyle = '#000'; ctx.font = 'bold 10px ' + COLORS.CANVAS_FONT; ctx.textAlign = 'center';
             ctx.fillText('$', this.x-cx, this.y-cy+bob);
         } else {
@@ -22448,9 +22517,8 @@ class ShieldEnemy extends Enemy {
             ctx.fillStyle = '#5555ff';
             ctx.strokeStyle = '#aaaaff';
             ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.arc(sx, sy, 9, this.facingAngle - 1.2, this.facingAngle + 1.2);
-            ctx.fill(); ctx.stroke();
+            PixelFX.sector(ctx, sx, sy, 9, this.facingAngle - 1.2, this.facingAngle + 1.2, '#5555ff');
+            PixelFX.ring(ctx, sx, sy, 9, '#aaaaff', 3, { a0: this.facingAngle - 1.2, a1: this.facingAngle + 1.2 });
             ctx.globalAlpha = 1;
         }
         // HP bar
@@ -23392,10 +23460,10 @@ class Boss extends Enemy {
             const maxRadius = this.radius + 60;
             ctx.globalAlpha = 0.2;
             ctx.fillStyle = '#ff00ff';
-            ctx.beginPath(); ctx.arc(this.x-cx, this.y-cy, maxRadius, 0, Math.PI*2); ctx.fill();
+            PixelFX.drawDisc(ctx, this.x-cx, this.y-cy, maxRadius, '#ff00ff');
             
             ctx.globalAlpha = 0.5;
-            ctx.beginPath(); ctx.arc(this.x-cx, this.y-cy, maxRadius * progress, 0, Math.PI*2); ctx.fill();
+            PixelFX.drawDisc(ctx, this.x-cx, this.y-cy, maxRadius * progress, '#ff00ff');
             ctx.globalAlpha = 1;
         }
 
@@ -23422,9 +23490,12 @@ class Boss extends Enemy {
 
             ctx.strokeStyle = '#ff0000';
             ctx.lineWidth = 3;
-            ctx.beginPath(); ctx.arc(0, 0, this.radius + 14 + pulse, 0, Math.PI*2); ctx.stroke();
             
             ctx.restore();
+            // Anel de aviso em pixel, fora do translate/rotate (fillRect rotacionado ficaria torto)
+            ctx.globalAlpha = 0.5 + (1 - t) * 0.45;
+            PixelFX.ring(ctx, this.x-cx, this.y-cy, this.radius + 14 + pulse, '#ff0000', 3);
+            ctx.globalAlpha = 1;
             ctx.fillStyle = '#ff0000';
             ctx.font = `bold ${Math.floor(11 + (1-t)*5)}px ${COLORS.CANVAS_FONT}`;
             ctx.textAlign = 'center';
@@ -23441,11 +23512,9 @@ class Boss extends Enemy {
             ctx.save();
             ctx.globalAlpha = 0.10 * pulse;
             ctx.fillStyle = '#ff3b5c';
-            ctx.beginPath(); ctx.arc(this.x-cx, this.y-cy, CONFIG.BOSS_DRAIN_RADIUS, 0, Math.PI*2); ctx.fill();
+            PixelFX.drawDisc(ctx, this.x-cx, this.y-cy, CONFIG.BOSS_DRAIN_RADIUS, '#ff3b5c');
             ctx.globalAlpha = 0.55;
-            ctx.strokeStyle = '#ff3b5c';
-            ctx.lineWidth = 2;
-            ctx.beginPath(); ctx.arc(this.x-cx, this.y-cy, CONFIG.BOSS_DRAIN_RADIUS, 0, Math.PI*2); ctx.stroke();
+            PixelFX.ring(ctx, this.x-cx, this.y-cy, CONFIG.BOSS_DRAIN_RADIUS, '#ff3b5c', 3);
             ctx.restore();
         }
 
@@ -23454,11 +23523,9 @@ class Boss extends Enemy {
             const sa = this._spiralAngle || 0;
             ctx.save();
             ctx.globalAlpha = 0.5;
-            ctx.strokeStyle = '#ffaa00';
-            ctx.lineWidth = 3;
-            ctx.beginPath(); ctx.arc(this.x-cx, this.y-cy, this.radius + 22, sa, sa + Math.PI * 0.9); ctx.stroke();
+            PixelFX.ring(ctx, this.x-cx, this.y-cy, this.radius + 22, '#ffaa00', 3, { a0: sa, a1: sa + Math.PI * 0.9 });
             ctx.globalAlpha = 0.25;
-            ctx.beginPath(); ctx.arc(this.x-cx, this.y-cy, this.radius + 34, -sa, -sa + Math.PI * 0.9); ctx.stroke();
+            PixelFX.ring(ctx, this.x-cx, this.y-cy, this.radius + 34, '#ffaa00', 3, { a0: -sa, a1: -sa + Math.PI * 0.9 });
             ctx.restore();
         }
 
@@ -23651,7 +23718,7 @@ class ActiveMutation {
         ctx.save();
         ctx.globalAlpha = pulse;
         ctx.fillStyle = this.color;
-        ctx.beginPath(); ctx.arc(x, y, 8, 0, Math.PI * 2); ctx.fill();
+        PixelFX.drawDisc(ctx, x, y, 8, this.color);
         ctx.globalAlpha = 1;
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 9px ' + COLORS.CANVAS_FONT;
@@ -23985,20 +24052,13 @@ class Pet {
     drawMountIndicator(ctx, cx, cy) {
         if(!this.mounted || !this.alive) return;
         // Mount status indicator around player
-        ctx.strokeStyle = this.color;
-        ctx.lineWidth = 2;
         ctx.globalAlpha = 0.6 + Math.sin(gameTime * 0.1) * 0.3;
-        ctx.beginPath();
-        ctx.arc(player.x - cx, player.y - cy, this.radius + 8, 0, Math.PI*2);
-        ctx.stroke();
+        PixelFX.ring(ctx, player.x - cx, player.y - cy, this.radius + 8, this.color, 3);
         ctx.globalAlpha = 1;
         
         // Ability ready indicator
         if(this._abilityTimer >= (this.data.diveInterval || this.data.breathInterval || 100)) {
-            ctx.fillStyle = '#00ff00';
-            ctx.beginPath();
-            ctx.arc(player.x - cx + 15, player.y - cy - 15, 5, 0, Math.PI*2);
-            ctx.fill();
+            PixelFX.drawDisc(ctx, player.x - cx + 15, player.y - cy - 15, 5, '#00ff00');
         }
     }
 
@@ -24136,8 +24196,8 @@ class Pet {
             const distSq = pdx * pdx + pdy * pdy;
             if(distSq < 6400) {
                 const pulse = 0.25 + Math.sin(this.timer * 0.15) * 0.2;
-                ctx.globalAlpha = pulse; ctx.fillStyle = '#ffffff';
-                ctx.beginPath(); ctx.arc(sx, sy + bob, this.radius + 7, 0, Math.PI*2); ctx.fill();
+                ctx.globalAlpha = pulse;
+                PixelFX.drawDisc(ctx, sx, sy + bob, this.radius + 7, '#ffffff');
                 ctx.globalAlpha = 1;
                 ctx.fillStyle = '#fff'; ctx.font = 'bold 12px ' + COLORS.CANVAS_FONT; ctx.textAlign = 'center';
                 ctx.fillText('^', sx, ptop - 8);
@@ -24164,8 +24224,8 @@ class Pet {
         // Sombra projetada deslocada (voadores): sensação de altura
         ctx.globalAlpha = 1;
         if(flyAlt > 0) {
-            ctx.globalAlpha = 0.22; ctx.fillStyle = '#000';
-            ctx.beginPath(); ctx.ellipse(sx + 5, sy + 9, this.radius * 0.9, this.radius * 0.4, 0, 0, Math.PI*2); ctx.fill();
+            ctx.globalAlpha = 0.22;
+            PixelFX.drawEllipse(ctx, sx + 5, sy + 9, this.radius * 0.9, this.radius * 0.4, '#000000');
             ctx.globalAlpha = 1;
         }
 
@@ -24192,9 +24252,8 @@ class Pet {
 
         // Detalhes extras do espírito: halo que pulsa e partículas leves (sem reducedMotion)
         if(this.type === 'spirit') {
-            ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5;
             ctx.globalAlpha = rmV ? 0.4 : 0.35 + Math.sin(this.timer * 0.1) * 0.25;
-            ctx.beginPath(); ctx.arc(sx, sy + bob - flyAlt - 21, 4, 0, Math.PI*2); ctx.stroke();
+            PixelFX.ring(ctx, sx, sy + bob - flyAlt - 21, 4, '#ffffff', 3);
             if(!rmV) {
                 ctx.fillStyle = this.color;
                 for(let _k = 0; _k < 2; _k++) {
@@ -24212,8 +24271,8 @@ class Pet {
 
         // Mounted indicator
         if(this.mounted) {
-            ctx.strokeStyle = '#ffcc00'; ctx.lineWidth = 2; ctx.globalAlpha = 0.8;
-            ctx.beginPath(); ctx.arc(sx, sy + bob, this.radius + 4, 0, Math.PI*2); ctx.stroke();
+            ctx.globalAlpha = 0.8;
+            PixelFX.ring(ctx, sx, sy + bob, this.radius + 4, '#ffcc00', 3);
             ctx.globalAlpha = 1;
         }
 
@@ -25678,14 +25737,7 @@ class Player extends Entity {
             ctx.globalAlpha = shieldAlpha;
             ctx.strokeStyle = '#33ccff';
             ctx.lineWidth = 3;
-            if (window.GFX === undefined || window.GFX.glows) {
-                ctx.shadowColor = '#33ccff';
-                ctx.shadowBlur = 12;
-            }
-            ctx.beginPath();
-            ctx.arc(sx, sy, this.radius + 6, 0, Math.PI * 2);
-            ctx.stroke();
-            ctx.shadowBlur = 0;
+            PixelFX.ring(ctx, sx, sy, this.radius + 6, '#33ccff', 3);
             ctx.font = 'bold 9px ' + COLORS.CANVAS_FONT;
             ctx.textAlign = 'center';
             ctx.fillStyle = '#33ccff';
@@ -25697,23 +25749,12 @@ class Player extends Entity {
         if(this.frozen > 0) {
             ctx.save();
             ctx.globalAlpha = 0.4;
-            ctx.fillStyle = '#33ccff';
-            if (window.GFX === undefined || window.GFX.glows) {
-                ctx.shadowColor = '#33ccff';
-                ctx.shadowBlur = 10;
-            }
-            ctx.beginPath();
-            ctx.arc(sx, sy, this.radius + 4, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.shadowBlur = 0;
+            PixelFX.drawDisc(ctx, sx, sy, this.radius + 4, '#33ccff', null, true);
             for (let i = 0; i < 3; i++) {
                 const a = gameTime * 0.1 + i * 2.1;
                 const d = this.radius + 8 + Math.sin(gameTime * 0.15 + i) * 3;
-                ctx.fillStyle = '#88eeff';
                 ctx.globalAlpha = 0.3 + Math.sin(gameTime * 0.2 + i) * 0.2;
-                ctx.beginPath();
-                ctx.arc(sx + Math.cos(a) * d, sy + Math.sin(a) * d, 2, 0, Math.PI * 2);
-                ctx.fill();
+                PixelFX.drawDisc(ctx, sx + Math.cos(a) * d, sy + Math.sin(a) * d, 2, '#88eeff');
             }
             ctx.restore();
             this.frozen--;
@@ -25723,10 +25764,6 @@ class Player extends Entity {
         if(this.type === 'warrior' && this.furyStacks > 0) {
             ctx.save();
             ctx.fillStyle = '#ff8800';
-            if (window.GFX === undefined || window.GFX.glows) {
-                ctx.shadowColor = '#ff8800';
-                ctx.shadowBlur = 8;
-            }
             ctx.font = 'bold 11px ' + COLORS.CANVAS_FONT;
             ctx.textAlign = 'center';
             ctx.fillText('\u26A1' + this.furyStacks, sx, sy - this.radius - 10);
@@ -25735,27 +25772,14 @@ class Player extends Entity {
         if(this.type === 'rogue' && this.critZoomTimer > 0) {
             ctx.save();
             ctx.globalAlpha = 0.5;
-            ctx.strokeStyle = '#ff4444';
-            ctx.lineWidth = 2;
-            ctx.setLineDash([3, 3]);
-            ctx.beginPath();
-            ctx.arc(sx, sy, this.radius * 1.5, 0, Math.PI * 2);
-            ctx.stroke();
-            ctx.setLineDash([]);
+            PixelFX.ring(ctx, sx, sy, this.radius * 1.5, '#ff4444', 3, { dash: 3 });
             ctx.restore();
         }
         if(this.type === 'mage' && this.orbShieldReady) {
             ctx.save();
             const orbGlow = 0.6 + Math.sin(gameTime * 0.15) * 0.3;
             ctx.globalAlpha = orbGlow;
-            ctx.fillStyle = COLORS.CLASS_MAGE;
-            if (window.GFX === undefined || window.GFX.glows) {
-                ctx.shadowColor = COLORS.CLASS_MAGE;
-                ctx.shadowBlur = 20;
-            }
-            ctx.beginPath();
-            ctx.arc(sx, sy, this.radius + 8, 0, Math.PI * 2);
-            ctx.fill();
+            PixelFX.drawDisc(ctx, sx, sy, this.radius + 8, COLORS.CLASS_MAGE, null, true);
             ctx.restore();
         }
         
@@ -26366,39 +26390,12 @@ class NPC {
 
         ctx.save();
 
-        // Shadow
-        ctx.fillStyle = 'rgba(0,0,0,0)';
-        ctx.beginPath();
-        ctx.ellipse(sx, sy + 14, 12, 5, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Body circle
-        ctx.fillStyle = this.color;
-        ctx.strokeStyle = '#fff';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(sx, sy, 13, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-
-        // Inner highlight
-        ctx.fillStyle = 'rgba(255,255,255,0.25)';
-        ctx.beginPath();
-        ctx.arc(sx - 4, sy - 4, 5, 0, Math.PI * 2);
-        ctx.fill();
+        // Corpo em pixel art: sprite por cor (contorno branco e brilho de células)
+        PixelFX.draw(ctx, WorldSprites.npc(this.color), sx, sy);
 
         // Floating indicator above head
         const bobY = sy - 28 + Math.sin(this.indicatorAnim) * 4;
-        ctx.fillStyle = 'rgba(0,0,0,0)';
-        ctx.beginPath();
-        ctx.arc(sx, bobY, 10, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = this.color;
-        ctx.strokeStyle = this.color;
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.arc(sx, bobY, 10, 0, Math.PI * 2);
-        ctx.stroke();
+        PixelFX.ring(ctx, sx, bobY, 10, this.color, 3);
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 12px ' + COLORS.CANVAS_FONT;
         ctx.textAlign = 'center';
@@ -26415,10 +26412,7 @@ class NPC {
         if (this.nearPlayer) {
             const pulse = 0.3 + Math.sin(this.indicatorAnim * 2) * 0.15;
             ctx.globalAlpha = pulse;
-            ctx.fillStyle = this.color;
-            ctx.beginPath();
-            ctx.arc(sx, sy, 20, 0, Math.PI * 2);
-            ctx.fill();
+            PixelFX.drawDisc(ctx, sx, sy, 20, this.color);
         }
 
         ctx.restore();
@@ -26722,9 +26716,7 @@ const DeathAnimations = {
                 // poça achatada e irregular (em vez de um quadrado chapado)
                 const px = r.x - camX, py = r.y - camY + r.radius * 0.25, rr = r.radius;
                 ctx.fillStyle = r.color;
-                ctx.beginPath();
-                ctx.ellipse(px, py, rr * 1.15, rr * 0.62, 0, 0, Math.PI * 2);
-                ctx.fill();
+                PixelFX.drawEllipse(ctx, px, py, rr * 1.15, rr * 0.62, r.color);
                 ctx.fillRect(px - rr * 1.5, py - 1, 3, 2);
                 ctx.fillRect(px + rr * 1.2, py + rr * 0.3, 3, 2);
                 ctx.fillRect(px - rr * 0.4, py - rr * 0.8, 2, 2);
