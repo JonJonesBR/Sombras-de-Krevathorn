@@ -10463,6 +10463,78 @@ function drawGroundShadow(ctx2, wx, wy, r, cx, cy) {
     ctx2.fill();
 }
 
+// PixelFX: sprites pixel art pré-renderizados (itens, partículas). Cache por key em objeto puro
+// (NÃO usar Map aqui: `class Map` do jogo sombreia o Map embutido).
+const PixelFX = (() => {
+    const cache = Object.create(null);
+    const bake = (key, rows, palette, scale = 2) => {
+        if (cache[key]) return cache[key];
+        const cv = document.createElement('canvas');
+        cv.width = rows[0].length * scale; cv.height = rows.length * scale;
+        const g = cv.getContext('2d');
+        g.imageSmoothingEnabled = false;
+        for (let y = 0; y < rows.length; y++) {
+            const row = rows[y];
+            for (let x = 0; x < row.length; x++) {
+                const ch = row[x];
+                if (ch === '.' || !palette[ch]) continue;
+                g.fillStyle = palette[ch];
+                g.fillRect(x * scale, y * scale, scale, scale);
+            }
+        }
+        cache[key] = cv;
+        return cv;
+    };
+    const draw = (ctx, canvas, px, py) => {
+        const prev = ctx.imageSmoothingEnabled;
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(canvas, Math.round(px - canvas.width / 2), Math.round(py - canvas.height / 2));
+        ctx.imageSmoothingEnabled = prev;
+    };
+    const snap = (v, step = 2) => Math.round(v / step) * step;
+    // Clareia (amt > 0) ou escurece (amt < 0) uma cor hex/rgb. Cor não reconhecida volta inalterada.
+    const shade = (color, amt) => {
+        let r, g, b;
+        const h = String(color).trim();
+        const m = /^#([0-9a-f]{6})$/i.exec(h) || /^#([0-9a-f]{3})$/i.exec(h);
+        if (m) {
+            const hex = m[1].length === 3 ? m[1].split('').map(c => c + c).join('') : m[1];
+            const n = parseInt(hex, 16);
+            r = (n >> 16) & 255; g = (n >> 8) & 255; b = n & 255;
+        } else {
+            const rgb = /^rgba?\((\d+),\s*(\d+),\s*(\d+)/i.exec(h);
+            if (!rgb) return color;
+            r = +rgb[1]; g = +rgb[2]; b = +rgb[3];
+        }
+        const t = amt >= 0 ? 255 : 0, k = Math.abs(amt);
+        const mix = c => Math.max(0, Math.min(255, Math.round(c + (t - c) * k)));
+        return '#' + ((1 << 24) | (mix(r) << 16) | (mix(g) << 8) | mix(b)).toString(16).slice(1);
+    };
+    // Paleta de tons derivada de uma cor: o=contorno, s=sombra, b=base, l=brilho, w=branco, g=cinza
+    const tones = color => ({
+        o: shade(color, -0.7), s: shade(color, -0.35), b: color, l: shade(color, 0.35), w: '#ffffff', g: '#9aa3ad'
+    });
+    // Sprite tonal: a paleta é derivada de `color` só na primeira vez (cache por name+cor)
+    const tonal = (name, rows, color, scale = 2) => {
+        const key = name + '|' + color;
+        return cache[key] || bake(key, rows, tones(color), scale);
+    };
+    // Linha em quadrados 2x2 alinhados à grade (substitui stroke; sem lineCap)
+    const line = (ctx, x0, y0, x1, y1, color, alpha = 1) => {
+        const n = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0) / 2));
+        const prev = ctx.globalAlpha;
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = color;
+        for (let s = 0; s <= n; s++) {
+            const t = s / n;
+            ctx.fillRect(snap(x0 + (x1 - x0) * t - 1, 2), snap(y0 + (y1 - y0) * t - 1, 2), 2, 2);
+        }
+        ctx.globalAlpha = prev;
+    };
+    const get = key => cache[key] || null;
+    return { bake, draw, snap, shade, tones, tonal, line, get };
+})();
+
 // Pre-rendered radial glow sprite (no per-frame shadowBlur)
 const GlowSprite = (() => {
     let cache = null;
@@ -18975,32 +19047,35 @@ class SlashEffect {
         if (this.life <= 0) this.alive = false;
     }
     draw(ctx, cx, cy) {
-        ctx.save();
-        ctx.translate(this.x - cx, this.y - cy);
-        ctx.rotate(this.angle);
+        // Arco em pixels (sem stroke): 3 camadas (externa translúcida, principal, núcleo branco),
+        // afinando nas pontas (estilo crescente) e com fade por life
         const a = Math.min(1, this.life);
-        ctx.globalAlpha = a * 0.3;
-        ctx.lineCap = 'round';
-        // Outer glow
-        ctx.strokeStyle = this.color;
-        ctx.lineWidth = 20 * a;
-        ctx.beginPath();
-        ctx.arc(0, 0, this.radius, -Math.PI / 2.5, Math.PI / 2.5);
-        ctx.stroke();
-        // Main arc
-        ctx.globalAlpha = a * 0.8;
-        ctx.strokeStyle = this.color;
-        ctx.lineWidth = 8 * a;
-        ctx.beginPath();
-        ctx.arc(0, 0, this.radius, -Math.PI / 2.5, Math.PI / 2.5);
-        ctx.stroke();
-        // White hot inner
-        ctx.globalAlpha = a * 0.6;
-        ctx.strokeStyle = '#fff';
-        ctx.lineWidth = 3 * a;
-        ctx.beginPath();
-        ctx.arc(0, 0, this.radius, -Math.PI / 2.5, Math.PI / 2.5);
-        ctx.stroke();
+        const A = Math.PI / 2.5;
+        const ox = this.x - cx, oy = this.y - cy;
+        const steps = Math.max(8, Math.ceil(this.radius * 2 * A / 2));
+        const layers = [
+            { col: this.color, alpha: a * 0.3, rad: 5 },
+            { col: this.color, alpha: a * 0.8, rad: 2 },
+            { col: '#ffffff', alpha: a * 0.6, rad: 0 }
+        ];
+        ctx.save();
+        for (let s = 0; s <= steps; s++) {
+            const t = -A + (2 * A * s) / steps;
+            const taper = 1 - Math.pow(Math.abs(t) / A, 2); // 1 no meio, 0 nas pontas
+            const th = this.angle + t;
+            const cs = Math.cos(th), sn = Math.sin(th);
+            for (let l = 0; l < layers.length; l++) {
+                const L = layers[l];
+                if (L.rad === 0 && taper < 0.3) continue;
+                const m = Math.round(L.rad * taper);
+                ctx.globalAlpha = L.alpha;
+                ctx.fillStyle = L.col;
+                for (let d = -m; d <= m; d++) {
+                    const rr = this.radius + d * 2;
+                    ctx.fillRect(PixelFX.snap(ox + rr * cs - 1, 2), PixelFX.snap(oy + rr * sn - 1, 2), 2, 2);
+                }
+            }
+        }
         ctx.restore();
     }
 }
@@ -19026,21 +19101,25 @@ class Trail {
         if (!active) this.alive = false;
     }
     draw(ctx, cx, cy) {
+        // Rastro em quadrados 2x2 alinhados à grade; alpha decresce com p.a; a cabeça é mais clara
         if (this.points.length < 2) return;
         ctx.save();
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        for(let i=0; i<this.points.length-1; i++) {
-            const p1 = this.points[i];
-            const p2 = this.points[i+1];
+        for (let i = 0; i < this.points.length - 1; i++) {
+            const p1 = this.points[i], p2 = this.points[i + 1];
             if (p1.a <= 0) continue;
-            ctx.globalAlpha = p1.a * 0.5;
-            ctx.strokeStyle = this.color;
-            ctx.lineWidth = this.width * p1.a;
-            ctx.beginPath();
-            ctx.moveTo(p1.x - cx, p1.y - cy);
-            ctx.lineTo(p2.x - cx, p2.y - cy);
-            ctx.stroke();
+            const dx = p2.x - p1.x, dy = p2.y - p1.y;
+            const n = Math.max(1, Math.ceil(Math.hypot(dx, dy) / 2));
+            for (let s = 0; s <= n; s++) {
+                const t = s / n;
+                const a = p1.a + (p2.a - p1.a) * t;
+                if (a <= 0) continue;
+                const size = Math.max(2, PixelFX.snap(this.width * a * 0.5, 2));
+                const x = p1.x + dx * t - cx, y = p1.y + dy * t - cy;
+                const head = (i === 0 && s === 0);
+                ctx.globalAlpha = head ? a * 0.8 : a * 0.5;
+                ctx.fillStyle = head ? '#ffffff' : this.color;
+                ctx.fillRect(PixelFX.snap(x - size / 2, 2), PixelFX.snap(y - size / 2, 2), size, size);
+            }
         }
         ctx.restore();
     }
@@ -19975,31 +20054,20 @@ class Particle {
         const alpha = Math.max(0, this.life);
         ctx.globalAlpha = alpha; 
         ctx.fillStyle = this.color; 
-        const s = this.s * (this.life / this.maxLife);
-        const half = s;
-        
-        const px = this.x - cx;
-        const py = this.y - cy;
+        // Pixel art: quadrado de pixel inteiro (sem arc/stroke). shape é ignorado.
+        const size = Math.max(1, Math.round(this.s * (this.life / this.maxLife)));
+        const x0 = PixelFX.snap(this.x - cx - size / 2, 1);
+        const y0 = PixelFX.snap(this.y - cy - size / 2, 1);
+        ctx.fillRect(x0, y0, size, size);
 
-        // Draw particle body
-        if (this.shape === 'circle') {
-            ctx.beginPath();
-            ctx.arc(px, py, Math.max(half, 0.5), 0, Math.PI * 2);
-            ctx.fill();
-        } else {
-            ctx.fillRect(px - half, py - half, half * 2, half * 2);
-        }
-        
-        // Streak effect for fast particles
+        // Pixel de rastro para partículas rápidas: 1 quadrado menor e mais fraco ~2 px atrás
         const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
         if (speed > 2) {
-            ctx.strokeStyle = this.color;
-            ctx.lineWidth = Math.max(half, 1) * 2;
-            ctx.lineCap = 'round';
-            ctx.beginPath();
-            ctx.moveTo(px, py);
-            ctx.lineTo(px - this.vx * 2, py - this.vy * 2);
-            ctx.stroke();
+            const small = Math.max(1, size - 1);
+            const bx = this.x - cx - (this.vx / speed) * 2;
+            const by = this.y - cy - (this.vy / speed) * 2;
+            ctx.globalAlpha = alpha * 0.5;
+            ctx.fillRect(PixelFX.snap(bx - small / 2, 1), PixelFX.snap(by - small / 2, 1), small, small);
         }
         
         ctx.globalAlpha = 1; 
@@ -20019,6 +20087,26 @@ function spawnParticles(x,y,c,n=8,size=3) {
         }
     }
 }
+
+// Arte dos pickups (1 char = 1 pixel, escala 2): o=contorno, s=sombra, b=base, l=brilho, w=branco, .=transparente
+const PICKUP_ART = {
+    coin: [ // 4 frames de giro: larguras 12→8→4→8 px
+        ['.oooo.', 'owbbso', 'oblbso', 'obbsso', 'osssso', '.oooo.'],
+        ['.oo.', 'owbo', 'obso', 'obso', 'osso', '.oo.'],
+        ['oo', 'ol', 'ob', 'ob', 'os', 'oo'],
+        ['.oo.', 'obwo', 'obso', 'obso', 'osso', '.oo.']
+    ],
+    orb: ['..ooo..', '.owbbo.', 'obbbbso', 'oblbbso', 'obbbbso', '.ossso.', '..ooo..'],
+    essence: ['...o...', '..obo..', '.obwbo.', 'obllbso', '.osbso.', '..oso..', '...o...'],
+    health: ['.oo.oo.', 'owbbbso', 'oblbbso', 'obbbbso', '.obbbso', '..obso.', '...o...'],
+    xp: ['.ooooo.', 'owbbbso', 'obllbso', '.obbbso', '..osso.', '...o...'],
+    shield: ['ooooooo', 'owbbbso', 'oblbbso', 'obbbbso', '.obbbso', '..obso.', '...o...'],
+    speed: ['.oo....', '.owo...', '.obo...', '.obbbbo', 'oobbbso', 'ossssso', 'ooooooo'],
+    fury: ['...o...', '..obo..', 'ooobboo', 'obwbbso', '.osbso.', 'oo...oo'],
+    frenzy: ['....ooo', '...oblo', '..owlo.', '.oobbbo', '..obbo.', '.oblo..', 'oo.....'],
+    magnet: ['ooooooo', 'oblllso', 'obbbbso', 'obs.sbo', 'owb.bwo', 'owg.gwo', '.oo.oo.'],
+    aegis: ['ooooooo', 'owbllso', 'ollllso', 'obblbso', '.obbbso', '..obso.', '...o...']
+};
 
 class Pickup {
     constructor(x,y,type) {
@@ -20049,112 +20137,46 @@ class Pickup {
         }
     }
     draw(ctx, cx, cy) {
-        const px = this.x - cx, py = this.y - cy + Math.sin(gameTime * 0.08 + this.bobOffset) * 3;
+        // Posição arredondada para pixel inteiro (bob vertical incluso)
+        const px = Math.round(this.x - cx), py = Math.round(this.y - cy + Math.sin(gameTime * 0.08 + this.bobOffset) * 3);
+        const reduced = !!(window.GameSettings && GameSettings.reducedMotion);
+        const pulse = reduced ? 0 : Math.sin(gameTime * 0.12 + this.bobOffset) * 0.12;
+        // Halo suave: raio 60% e intensidade no máximo 0.25 (sem disco chapado)
+        const halo = (r, a) => drawGlow(ctx, px, py, r * 0.6, this.color, Math.min(0.25, a));
+        const SPR = 3; // escala 3 (≈18–21 px)
         ctx.save();
         if(this.type === 'currency') {
-            drawGlow(ctx, px, py, 10, this.color, 0.5);
-            // Coin shape
-            ctx.fillStyle = this.color;
-            ctx.beginPath();
-            ctx.arc(px, py, 7, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillStyle = 'rgba(255,255,255,0.3)';
-            ctx.fillRect(px - 3, py - 2, 6, 4);
-            ctx.restore();
-            return;
-        }
-        if(this.type === 'mutation') {
-            // Glowing orb (pre-rendered glow sprite, no shadowBlur per frame)
+            halo(10, 0.5);
+            // Moeda: 4 frames de giro (larguras 12→8→4→8 px na escala 2; ~18→12→6→12 na escala 3)
+            const f = Math.floor(gameTime * 0.15 + this.bobOffset) % 4;
+            PixelFX.draw(ctx, PixelFX.tonal('coin' + f, PICKUP_ART.coin[f], this.color, SPR), px, py);
+        } else if(this.type === 'mutation') {
+            // Orbe: halo e 2 frames alternando brilho
             const glow = Math.sin(gameTime * 0.1 + this.bobOffset) * 0.3 + 0.7;
-            drawGlow(ctx, px, py, 14, this.color, 0.55 * glow);
+            halo(14, 0.55 * glow);
             ctx.globalAlpha = glow;
-            ctx.fillStyle = this.color;
-            ctx.beginPath();
-            ctx.arc(px, py, 8, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillStyle = 'rgba(255,255,255,0.6)';
-            ctx.beginPath();
-            ctx.arc(px - 2.5, py - 2.5, 2.5, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.restore();
-            return;
+            const f = Math.floor(gameTime * 0.1 + this.bobOffset) % 2;
+            PixelFX.draw(ctx, PixelFX.tonal('orb' + f, PICKUP_ART.orb, f ? PixelFX.shade(this.color, 0.25) : this.color, SPR), px, py);
+        } else if(this.type === 'magnet') {
+            // Ímã em U vermelho fixo (pontas brancas/cinza)
+            halo(10, 0.4);
+            PixelFX.draw(ctx, PixelFX.tonal('magnet', PICKUP_ART.magnet, '#d8353b', SPR), px, py);
+        } else if(this.type === 'fury' || this.type === 'frenzy' || this.type === 'aegis') {
+            // Powerups raros: formas próprias e brilho pulsante (desligado com reducedMotion)
+            const pk = reduced ? 0 : Math.sin(gameTime * 0.15 + this.bobOffset) * 0.3;
+            halo(10, 0.4 + pk);
+            PixelFX.draw(ctx, PixelFX.tonal(this.type, PICKUP_ART[this.type], this.color, SPR), px, py);
+        } else {
+            const isEssence = this.type === 'essence';
+            halo(isEssence ? 11 : 9, (isEssence ? 0.5 : 0.4) + pulse);
+            const art = PICKUP_ART[this.type];
+            if(art) PixelFX.draw(ctx, PixelFX.tonal(this.type, art, this.color, SPR), px, py);
         }
-        // Pulso leve (desligado com reducedMotion) e marca própria por tipo para distinguir de longe
-        const pulse = (window.GameSettings && GameSettings.reducedMotion) ? 0 : Math.sin(gameTime * 0.12 + this.bobOffset) * 0.12;
-        if(this.type === 'fury' || this.type === 'frenzy' || this.type === 'magnet' || this.type === 'aegis') {
-            // Powerups raros: formas próprias (estrela, raio, ímã em U, brasão) e brilho pulsante (desligado com reducedMotion)
-            const pk = (window.GameSettings && GameSettings.reducedMotion) ? 0 : Math.sin(gameTime * 0.15 + this.bobOffset) * 0.3;
-            drawGlow(ctx, px, py, 10, this.color, 0.4 + pk);
-            ctx.fillStyle = this.color;
-            ctx.strokeStyle = 'rgba(255,255,255,0.9)';
-            ctx.lineWidth = 1.5;
-            ctx.beginPath();
-            if(this.type === 'fury') {
-                for(let k = 0; k < 10; k++) {
-                    const rr = (k % 2 === 0) ? 9 : 4;
-                    const aa = -Math.PI / 2 + k * Math.PI / 5;
-                    const spx = px + Math.cos(aa) * rr, spy = py + Math.sin(aa) * rr;
-                    if(k === 0) ctx.moveTo(spx, spy); else ctx.lineTo(spx, spy);
-                }
-                ctx.closePath(); ctx.fill(); ctx.stroke();
-            } else if(this.type === 'frenzy') {
-                ctx.moveTo(px + 2, py - 9); ctx.lineTo(px - 5, py + 1); ctx.lineTo(px - 0.5, py + 1);
-                ctx.lineTo(px - 2, py + 9); ctx.lineTo(px + 5, py - 1); ctx.lineTo(px + 0.5, py - 1);
-                ctx.closePath(); ctx.fill(); ctx.stroke();
-            } else if(this.type === 'magnet') {
-                ctx.lineWidth = 3.5; ctx.strokeStyle = this.color;
-                ctx.moveTo(px - 6, py + 5); ctx.lineTo(px - 6, py - 1);
-                ctx.arc(px, py - 1, 6, Math.PI, 0);
-                ctx.lineTo(px + 6, py + 5);
-                ctx.stroke();
-                ctx.fillStyle = 'rgba(255,255,255,0.9)';
-                ctx.fillRect(px - 8, py + 3, 4, 3); ctx.fillRect(px + 4, py + 3, 4, 3);
-            } else {
-                ctx.moveTo(px, py - 9); ctx.lineTo(px + 7, py - 5); ctx.lineTo(px + 6, py + 2);
-                ctx.lineTo(px, py + 9); ctx.lineTo(px - 6, py + 2); ctx.lineTo(px - 7, py - 5);
-                ctx.closePath(); ctx.fill(); ctx.stroke();
-            }
-            ctx.restore();
-            return;
-        }
-        if(this.type === 'essence') {
-            // Losango brilhante
-            drawGlow(ctx, px, py, 11, this.color, 0.5 + pulse);
-            ctx.fillStyle = this.color;
-            ctx.beginPath();
-            ctx.moveTo(px, py - 8); ctx.lineTo(px + 6, py); ctx.lineTo(px, py + 8); ctx.lineTo(px - 6, py);
-            ctx.closePath();
-            ctx.fill();
-            ctx.fillStyle = 'rgba(255,255,255,0.7)';
-            ctx.fillRect(px - 1.5, py - 4, 2, 3);
-            ctx.restore();
-            return;
-        }
-        drawGlow(ctx, px, py, 9, this.color, 0.4 + pulse);
-        ctx.fillStyle = this.color;
-        ctx.beginPath();
-        ctx.arc(px, py, 6, 0, Math.PI * 2);
-        ctx.fill();
-        if(this.type === 'shield') {
-            // Anel externo
-            ctx.globalAlpha = 0.6;
-            ctx.strokeStyle = this.color;
-            ctx.lineWidth = 1.5;
-            ctx.beginPath();
-            ctx.arc(px, py, 9.5, 0, Math.PI * 2);
-            ctx.stroke();
-        } else if(this.type === 'health') {
-            // Cruz branca
-            ctx.fillStyle = 'rgba(255,255,255,0.85)';
-            ctx.fillRect(px - 1, py - 3.5, 2, 7);
-            ctx.fillRect(px - 3.5, py - 1, 7, 2);
-        } else if(this.type === 'speed') {
-            // Chevron (seta dupla)
-            ctx.strokeStyle = 'rgba(255,255,255,0.85)';
-            ctx.lineWidth = 1.5;
-            ctx.beginPath();
-            ctx.moveTo(px - 3, py - 2.5); ctx.lineTo(px, py); ctx.lineTo(px - 3, py + 2.5);
-            ctx.stroke();
+        // Sparkle: 1 pixel branco que alterna de canto a cada ~20 ticks (raros e essência)
+        if(this.type === 'essence' || this.type === 'fury' || this.type === 'frenzy' || this.type === 'magnet' || this.type === 'aegis') {
+            const sp = Math.floor(gameTime / 20 + this.bobOffset) % 2;
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(sp ? px + 7 : px - 9, py - 9, 3, 3);
         }
         ctx.restore();
     }
@@ -24406,6 +24428,51 @@ function awardKillRewards(player, target, source) {
     if(window.RelicSystem) RelicSystem.onKill(target, source);
 }
 // BULLET CLASS
+// Projéteis em pixel art. Flecha e faca são gerados em 8 direções (grade 16x16 de células, escala 2)
+// por predicado sobre (u ao longo do voo, v perpendicular); cache em PixelFX por tipo+direção.
+const BulletArt = (() => {
+    const SZ = 16;
+    const SHOT = ['.ooo.', 'owbbo', 'obbbo', 'obbso', '.ooo.'];
+    const PAL_ARROW = { h: '#a06a3a', t: '#e8e8e8', T: '#9aa3ad', f: '#58e08a', F: '#2e8f55' };
+    const PAL_KNIFE = { b: '#e6ecf2', s: '#9aa6b2', o: '#4a5563', g: '#5cff82', G: '#2e8f4a' };
+    const rasterDir = (ang, fn) => {
+        const c = Math.cos(ang), s = Math.sin(ang);
+        const rows = [];
+        for (let j = 0; j < SZ; j++) {
+            let row = '';
+            for (let i = 0; i < SZ; i++) {
+                const x = i - SZ / 2 + 0.5, y = j - SZ / 2 + 0.5;
+                const u = x * c + y * s, v = -x * s + y * c;
+                row += fn(u, v) || '.';
+            }
+            rows.push(row);
+        }
+        return rows;
+    };
+    // Flecha: haste marrom, ponta cinza clara, penas verdes
+    const arrowCell = (u, v) => {
+        const av = Math.abs(v);
+        if (u >= 2 && u <= 6.5 && av <= 2.2 - (u - 2) * 0.5) return v > 0 ? 'T' : 't';
+        if (u >= -5 && u < 2 && av < 0.5) return 'h';
+        if (u >= -7 && u < -5 && av <= 2) return av <= 1 ? 'f' : 'F';
+        return null;
+    };
+    // Faca: lâmina prata com contorno, cabo verde
+    const knifeCell = (u, v) => {
+        const av = Math.abs(v);
+        if (u >= -7 && u < -3 && av <= 1) return v > 0 ? 'G' : 'g';
+        if (u >= -3 && u <= 1 && av <= 1.5) return av > 1 ? 'o' : (v > 0 ? 's' : 'b');
+        if (u > 1 && u <= 5) {
+            const hw = 1.5 * (5 - u) / 4;
+            if (av <= hw) return av > hw - 0.7 ? 'o' : (v > 0 ? 's' : 'b');
+        }
+        return null;
+    };
+    const rows = (type, k) => rasterDir(k * Math.PI / 4, type === 'arrow' ? arrowCell : knifeCell);
+    const pal = type => (type === 'arrow' ? PAL_ARROW : PAL_KNIFE);
+    return { SHOT, rows, pal };
+})();
+
 class Bullet {
     constructor(x,y,vx,vy,c,dmg,isP,weapon=null, range=400, projType=null) {
         this.init(x,y,vx,vy,c,dmg,isP,weapon,range,projType);
@@ -24640,97 +24707,55 @@ class Bullet {
         const sx = this.x-cx, sy = this.y-cy;
         const vAng = Math.atan2(this.vy, this.vx);
 
-        if (this.projType === 'arrow') {
-            // Flecha: haste na direção do voo + ponta + penas
-            ctx.save();
-            ctx.translate(sx, sy);
-            ctx.rotate(vAng);
-            ctx.globalAlpha = 0.35;
-            ctx.fillStyle = drawColor;
-            ctx.fillRect(-11, -4, 22, 8);
-            ctx.globalAlpha = 1;
-            ctx.fillStyle = '#c8a06a';
-            ctx.fillRect(-9, -1, 15, 2);
-            ctx.fillStyle = '#e8e8e8';
-            ctx.beginPath(); ctx.moveTo(6, -2); ctx.lineTo(13, 0); ctx.lineTo(6, 2); ctx.closePath(); ctx.fill();
-            ctx.fillStyle = '#58e08a';
-            ctx.fillRect(-13, -3, 4, 2);
-            ctx.fillRect(-13, 1, 4, 2);
-            ctx.restore();
-        } else if (this.projType === 'knife') {
-            // Faca: lâmina alongada prateada + cabo verde
-            ctx.save();
-            ctx.translate(sx, sy);
-            ctx.rotate(vAng);
-            ctx.globalAlpha = 0.35;
-            ctx.fillStyle = drawColor;
-            ctx.fillRect(-7, -3, 14, 6);
-            ctx.globalAlpha = 1;
-            ctx.fillStyle = '#d0d8e0';
-            ctx.beginPath(); ctx.moveTo(-9, 0); ctx.lineTo(3, -2); ctx.lineTo(8, 0); ctx.lineTo(3, 2); ctx.closePath(); ctx.fill();
-            ctx.fillStyle = '#5cff82';
-            ctx.fillRect(-9, -1, 4, 2);
-            ctx.restore();
+        ctx.save();
+        if (this.projType === 'arrow' || this.projType === 'knife') {
+            // Flecha/faca: sprite pré-renderizado na direção mais próxima do voo (8 direções, sem rotate)
+            const k = ((Math.round(vAng / (Math.PI / 4)) % 8) + 8) % 8;
+            const key = this.projType + k;
+            const spr = PixelFX.get(key) || PixelFX.bake(key, BulletArt.rows(this.projType, k), BulletArt.pal(this.projType), 2);
+            PixelFX.draw(ctx, spr, sx, sy);
         } else if (this.projType === 'magic') {
-            // Magia: orbe brilhante com núcleo branco
-            ctx.globalAlpha = 0.45;
-            ctx.fillStyle = drawColor;
-            ctx.fillRect(sx - r - 3, sy - r - 3, (r + 3) * 2, (r + 3) * 2);
-            ctx.globalAlpha = 1;
-            ctx.fillStyle = drawColor;
-            ctx.fillRect(sx - r, sy - r, r * 2, r * 2);
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(sx - r * 0.4, sy - r * 0.4, r * 0.8, r * 0.8);
-            ctx.globalAlpha = 0.6;
-            ctx.fillStyle = drawColor;
-            ctx.fillRect(sx - r * 0.7, sy - r * 0.7, r * 1.4, r * 1.4);
-            ctx.globalAlpha = 1;
+            // Magia: orbe pixel redondo (3 tons, núcleo branco) com 2 frames pulsando
+            const f = Math.floor(gameTime / 6) % 2;
+            PixelFX.draw(ctx, PixelFX.tonal('magic' + f, PICKUP_ART.orb, f ? PixelFX.shade(drawColor, 0.25) : drawColor, 2), sx, sy);
         } else {
-            // Core bullet as rect (faster than arc)
-            ctx.fillStyle = drawColor;
-            ctx.fillRect(sx - r, sy - r, r * 2, r * 2);
-            // Glow halo as rect
-            ctx.globalAlpha = 0.35;
-            ctx.fillStyle = drawColor;
-            const glow = this.isP ? (8 + tier) : 6;
-            ctx.fillRect(sx - glow, sy - glow, glow * 2, glow * 2);
-            ctx.globalAlpha = 1;
+            // Projétil comum: estilhaço pixel com contorno escuro (inimigos: contorno vermelho-escuro)
+            const key = (this.isP ? 'shotP|' : 'shotE|') + drawColor;
+            const spr = PixelFX.get(key) || PixelFX.bake(key, BulletArt.SHOT,
+                this.isP ? PixelFX.tones(drawColor) : Object.assign(PixelFX.tones(drawColor), { o: '#4a0812' }), 2);
+            PixelFX.draw(ctx, spr, sx, sy);
         }
 
-        // Special weapon effects
+        // Special weapon effects (em pixel: quadrados alinhados à grade)
         if(this.weapon && this.weapon.poison) {
             ctx.globalAlpha = 0.6; ctx.fillStyle = '#00ff44';
-            ctx.fillRect(sx-this.vx*0.8-r*0.5, sy-this.vy*0.8-r*0.5, r, r);
+            ctx.fillRect(PixelFX.snap(sx - this.vx * 0.8 - 1, 2), PixelFX.snap(sy - this.vy * 0.8 - 1, 2), 2, 2);
             ctx.globalAlpha = 1;
         }
         if(this.weapon && this.weapon.chainLightning) {
-            ctx.globalAlpha = 0.7; ctx.strokeStyle = '#ffff00'; ctx.lineWidth = 1.5;
-            ctx.beginPath();
-            ctx.moveTo(sx + r, sy);
-            ctx.lineTo(sx + r+4, sy - 3);
-            ctx.lineTo(sx + r+7, sy + 3);
-            ctx.stroke();
-            ctx.globalAlpha = 1;
+            PixelFX.line(ctx, sx + r, sy, sx + r + 4, sy - 3, '#ffff00', 0.7);
+            PixelFX.line(ctx, sx + r + 4, sy - 3, sx + r + 7, sy + 3, '#ffff00', 0.7);
         }
         if((this.weapon && this.weapon.pierce) || this.chainPierce) {
-            ctx.globalAlpha = 0.5; ctx.strokeStyle = '#00ffff'; ctx.lineWidth = 1.5;
-            const pr = r+3;
-            ctx.fillRect(sx - pr, sy - pr, pr * 2, pr * 2);
-            ctx.globalAlpha = 1;
-            // Rastro do golpe perfurante do finalizador (elfa): faixa atrás da flecha, sem alocação
+            const pr = r + 3;
+            const pc = '#00ffff';
+            PixelFX.line(ctx, sx - pr, sy - pr, sx + pr, sy - pr, pc, 0.5);
+            PixelFX.line(ctx, sx + pr, sy - pr, sx + pr, sy + pr, pc, 0.5);
+            PixelFX.line(ctx, sx + pr, sy + pr, sx - pr, sy + pr, pc, 0.5);
+            PixelFX.line(ctx, sx - pr, sy + pr, sx - pr, sy - pr, pc, 0.5);
+            // Rastro do golpe perfurante do finalizador (elfa): faixa atrás da flecha
             if(this.chainPierce && this.projType === 'arrow') {
-                ctx.save(); ctx.translate(sx, sy); ctx.rotate(vAng);
-                ctx.globalAlpha = 0.3; ctx.fillStyle = drawColor;
-                ctx.fillRect(-34, -1.5, 22, 3);
-                ctx.restore();
+                const ca = Math.cos(vAng), sa = Math.sin(vAng);
+                PixelFX.line(ctx, sx - ca * 34, sy - sa * 34, sx - ca * 12, sy - sa * 12, drawColor, 0.3);
             }
         }
         if(this.weapon && this.weapon.lifesteal) {
             ctx.globalAlpha = 0.4; ctx.fillStyle = '#ff0055';
-            const lr = r+2;
-            ctx.fillRect(sx - lr, sy - lr, lr * 2, lr * 2);
+            const lr = r + 2;
+            ctx.fillRect(PixelFX.snap(sx - lr, 2), PixelFX.snap(sy - lr, 2), PixelFX.snap(lr * 2, 2), PixelFX.snap(lr * 2, 2));
             ctx.globalAlpha = 1;
         }
+        ctx.restore();
     }
 }
 
