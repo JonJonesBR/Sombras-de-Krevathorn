@@ -3952,6 +3952,10 @@ const I18n = {
             'update.entry.v57.l1': 'Corrigido o flash branco rápido que piscava na tela ao andar e em combate.',
             'update.entry.v57.l2': 'A iluminação e o tom do bioma agora ficam estáveis em todos os quadros.',
             'update.entry.v57.l3': 'Seus saves e progresso não mudam.',
+            'update.entry.v63.title': 'v63 — Luz em pixel art',
+            'update.entry.v63.l1': 'A iluminação das masmorras agora segue o estilo pixel art: a luz da tocha e do herói esmaece em degraus de pixels, em vez de um gradiente borrado.',
+            'update.entry.v63.l2': 'Os personagens continuam legíveis nas bordas da luz.',
+            'update.entry.v63.l3': 'Seus saves não mudam.',
             'update.entry.v62.title': 'v62 — Minimapa e tutorial em pixel art',
             'update.entry.v62.l1': 'O minimapa expandido, os marcadores do oráculo e a barra do tutorial agora seguem o estilo pixel art, sem brilhos borrados.',
             'update.entry.v62.l2': 'O botão de fechar do minimapa e o rótulo do alvo de treino ficaram mais nítidos.',
@@ -5441,6 +5445,10 @@ const I18n = {
             'update.entry.v57.l1': 'Fixed the quick white flashing on screen while walking and in combat.',
             'update.entry.v57.l2': 'Lighting and biome tint now stay steady on every frame.',
             'update.entry.v57.l3': 'Your saves and progress are unchanged.',
+            'update.entry.v63.title': 'v63 — Pixel art lighting',
+            'update.entry.v63.l1': 'Dungeon lighting now follows the pixel art style: torch and hero light fades in pixel steps instead of a blurry gradient.',
+            'update.entry.v63.l2': 'Characters stay readable at the edges of the light.',
+            'update.entry.v63.l3': 'Your saves are unchanged.',
             'update.entry.v62.title': 'v62 — Pixel art minimap and tutorial',
             'update.entry.v62.l1': 'The expanded minimap, oracle markers and the tutorial bar now follow the pixel art style, with no blurry glows.',
             'update.entry.v62.l2': 'The minimap close button and the training dummy label are crisper.',
@@ -6940,6 +6948,10 @@ const I18n = {
             'update.entry.v57.l1': 'Corregido el parpadeo blanco rápido que aparecía en la pantalla al caminar y en combate.',
             'update.entry.v57.l2': 'La iluminación y el tono del bioma ahora se mantienen estables en todos los cuadros.',
             'update.entry.v57.l3': 'Los saves y el progreso no cambian.',
+            'update.entry.v63.title': 'v63 — Iluminación en pixel art',
+            'update.entry.v63.l1': 'La iluminación de las mazmorras ahora sigue el estilo pixel art: la luz de antorchas y héroe se desvanece en escalones de píxeles, en lugar de un degradado borroso.',
+            'update.entry.v63.l2': 'Los personajes siguen siendo legibles en los bordes de la luz.',
+            'update.entry.v63.l3': 'Tus partidas guardadas no cambian.',
             'update.entry.v62.title': 'v62 — Minimapa y tutorial en pixel art',
             'update.entry.v62.l1': 'El minimapa ampliado, los marcadores del oráculo y la barra del tutorial ahora siguen el estilo pixel art, sin brillos borrosos.',
             'update.entry.v62.l2': 'El botón de cerrar del minimapa y la etiqueta del objetivo de entrenamiento son más nítidos.',
@@ -10660,6 +10672,41 @@ const PixelFX = (() => {
     return { bake, draw, snap, shade, tones, tonal, line, ring, disc, drawDisc, ellipse, drawEllipse, sector, ringE, seg3, get };
 })();
 
+// Luz em pixel art: o buffer de luz (células grandes, suave) é ampliado para uma grade de 4 px,
+// o alfa é quantizado em poucos níveis com dithering de Bayer 4x4 e o resultado é ampliado sem
+// suavização. Só o alfa importa (a camada é preta com buracos). Custo: ~(w/4)*(h/4) pixels por
+// recálculo da luz, que já é espaçado por LIGHTING_THROTTLE.
+const LightPixelizer = (() => {
+    const CELL = 4, LEVELS = 6;
+    const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+    let mid = null, mctx = null;
+    return {
+        apply(src, dctx, width, height) {
+            const mw = Math.max(1, Math.ceil(width / CELL)), mh = Math.max(1, Math.ceil(height / CELL));
+            if (!mid) { mid = document.createElement('canvas'); mctx = mid.getContext('2d', { willReadFrequently: true }); }
+            if (mid.width !== mw || mid.height !== mh) { mid.width = mw; mid.height = mh; }
+            mctx.clearRect(0, 0, mw, mh);
+            mctx.imageSmoothingEnabled = true;
+            mctx.drawImage(src, 0, 0, mw, mh);
+            const img = mctx.getImageData(0, 0, mw, mh), d = img.data;
+            for (let y = 0; y < mh; y++) {
+                for (let x = 0; x < mw; x++) {
+                    const i = (y * mw + x) * 4;
+                    const a = d[i + 3] / 255 * (LEVELS - 1), lo = Math.floor(a);
+                    const q = lo + ((a - lo) > (BAYER[(y & 3) * 4 + (x & 3)] + 0.5) / 16 ? 1 : 0);
+                    d[i] = 0; d[i + 1] = 0; d[i + 2] = 0;
+                    d[i + 3] = Math.round(q / (LEVELS - 1) * 255);
+                }
+            }
+            mctx.putImageData(img, 0, 0);
+            const prev = dctx.imageSmoothingEnabled;
+            dctx.imageSmoothingEnabled = false;
+            dctx.drawImage(mid, 0, 0, width, height);
+            dctx.imageSmoothingEnabled = prev;
+        }
+    };
+})();
+
 function drawGlow(ctx2, px, py, r, color, intensity = 0.35) {
     if (window.GFX !== undefined && window.GFX.glows === false) return;
     const prev = ctx2.globalCompositeOperation;
@@ -10984,7 +11031,7 @@ function _drawLightingLayer() {
         }
         const cctx = _cachedLightCanvas.getContext('2d');
         cctx.clearRect(0, 0, width, height);
-        cctx.drawImage(lightCanvas, 0, 0, width, height);
+        LightPixelizer.apply(lightCanvas, cctx, width, height);
         T.drawImage(_cachedLightCanvas, 0, 0, width, height);
         }
         
@@ -31878,7 +31925,7 @@ Input.init();
        current MUST stay in sync with the SW CACHE_VERSION suffix (sw.js).
     */
     window.UPDATE_LOG = {
-        current: 'v62',
+        current: 'v63',
         entries: [
             { v: 'v9', date: '2026-09-10', titleKey: 'update.entry.v9.title', title: 'v9 — Tutorial destravado',
               linesKeys: ['update.entry.v9.l1'],
@@ -32054,6 +32101,11 @@ Input.init();
               lines: ['Corrigido o flash branco rápido que piscava na tela ao andar e em combate.',
                       'A iluminação e o tom do bioma agora ficam estáveis em todos os quadros.',
                       'Seus saves e progresso não mudam.'] },
+            { v: 'v63', date: '2026-10-17', titleKey: 'update.entry.v63.title', title: 'v63 — Luz em pixel art',
+              linesKeys: ['update.entry.v63.l1', 'update.entry.v63.l2', 'update.entry.v63.l3'],
+              lines: ['A iluminação das masmorras agora segue o estilo pixel art: a luz da tocha e do herói esmaece em degraus de pixels, em vez de um gradiente borrado.',
+                      'Os personagens continuam legíveis nas bordas da luz.',
+                      'Seus saves não mudam.'] },
             { v: 'v62', date: '2026-10-17', titleKey: 'update.entry.v62.title', title: 'v62 — Minimapa e tutorial em pixel art',
               linesKeys: ['update.entry.v62.l1', 'update.entry.v62.l2', 'update.entry.v62.l3'],
               lines: ['O minimapa expandido, os marcadores do oráculo e a barra do tutorial agora seguem o estilo pixel art, sem brilhos borrados.',
