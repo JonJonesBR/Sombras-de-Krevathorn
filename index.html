@@ -20621,6 +20621,134 @@ window.PoolManager = PoolManager;
 </script>
     <script>
 // === js/world/map.js ===
+// Arte dos tiles em pixel art: grade 16x16, 1 px de arte = 3 px reais (tile de 48 px).
+// Cada sprite é bakeado uma vez por (cor, máscara de vizinhança, variante) via PixelFX.bake;
+// Map.draw só copia o sprite. Só fillRect alinhado à grade (sem gradiente nem arco).
+const MapTileArt = (() => {
+    const N = 16, P = 3;
+    const palCache = Object.create(null);
+    const pal = c => {
+        if (palCache[c]) return palCache[c];
+        const t = PixelFX.tones(c);
+        return (palCache[c] = {
+            o: t.o, s: t.s, b: t.b, w: PixelFX.shade(c, 0.2),
+            l: PixelFX.shade(c, 0.15), j: PixelFX.shade(c, -0.2),
+            x: PixelFX.shade(c, -0.5), e: PixelFX.shade(c, -0.2),
+            p: PixelFX.shade(c, 0.05), q: PixelFX.shade(c, -0.08), L: PixelFX.shade(c, 0.5)
+        });
+    };
+    const grid = () => Array.from({ length: N }, () => new Array(N).fill('.'));
+    const toRows = g => g.map(r => r.join(''));
+
+    // Parede: fiadas de 4 px de arte (1 de junta + 3 de pedra); juntas verticais de 8 em 8,
+    // com offset alternado entre fiadas (contínuas entre tiles vizinhos).
+    const wallRows = (mask, v) => {
+        const g = grid();
+        for (let y = 0; y < N; y++) {
+            const cr = y & 3, off = ((y >> 2) & 1) ? 4 : 0;
+            for (let x = 0; x < N; x++) {
+                let c;
+                if (cr === 0 || ((x + off) & 7) === 0) c = 'j';
+                else {
+                    // Calmo: só ~1 em 6 pedras recebe tom claro
+                    const k = (((x + off) >> 3) * 3 + (y >> 2) * 5 + v * 7) % 6;
+                    c = k === 0 ? 'l' : 'b';
+                }
+                g[y][x] = c;
+            }
+        }
+        if (mask & 4) for (let y = 0; y < N; y++) g[y][0] = 'x';
+        if (mask & 8) for (let y = 0; y < N; y++) g[y][N - 1] = 'x';
+        if (mask & 2) {
+            // Face frontal (chão ao sul): 3 px de arte com junta no topo
+            for (let x = 0; x < N; x++) { g[13][x] = 'o'; g[14][x] = 'x'; g[15][x] = 'x'; }
+            for (let x = 0; x < N; x++) if (((x + 4) & 7) === 0) g[14][x] = 'o';
+        }
+        if (mask & 1) for (let x = 0; x < N; x++) g[0][x] = 'L'; // topo iluminado (chão ao norte)
+        return toRows(g);
+    };
+
+    // Piso: lajes de 16x8 px de arte com junta sutil ('j') e 8 variantes de layout:
+    // bit0/bit1 = offset vertical da junta de cada fiada, bit2 = deslocamento das juntas horizontais.
+    // Algumas lajes recebem 1 tom diferente ('p' ou 'q'). Sombra de contato em 2 degraus ('x' e 'e').
+    const floorRows = (mask, v) => {
+        const g = grid();
+        const hs = ((v >> 2) & 1) ? 4 : 0;
+        for (let y = 0; y < N; y++) {
+            const sr = (y + hs) >> 3, ly = (y + hs) & 7;
+            const off = ((v >> (sr & 1)) & 1) ? 0 : 8;
+            for (let x = 0; x < N; x++) {
+                let c;
+                if (ly === 0 || ((x + off) & 15) === 0) c = 'j';
+                else {
+                    const k = ((((x + off) >> 4) & 1) * 3 + sr * 5 + v * 7) % 6;
+                    c = k === 0 ? 'q' : (k === 3 ? 'p' : 'b');
+                }
+                g[y][x] = c;
+            }
+        }
+        if (mask & 1) for (let x = 0; x < N; x++) { g[0][x] = 'x'; g[1][x] = 'e'; }
+        if (mask & 2) for (let x = 0; x < N; x++) { g[15][x] = 'x'; g[14][x] = 'e'; }
+        if (mask & 4) for (let y = 0; y < N; y++) { g[y][0] = 'x'; g[y][1] = 'e'; }
+        if (mask & 8) for (let y = 0; y < N; y++) { g[y][N - 1] = 'x'; g[y][N - 2] = 'e'; }
+        return toRows(g);
+    };
+
+    // Rocha: silhueta de 12x10 px com contorno 'o', luz no alto-esquerda, sombra 's' embaixo
+    // e sombra no chão em pixels ('h').
+    const rockRows = () => {
+        const g = grid();
+        const HW = [3, 4, 5, 6, 6, 6, 6, 6, 5, 4], CX = 8, TOP = 3;
+        for (let i = 0; i < HW.length; i++) {
+            const y = TOP + i, hw = HW[i];
+            for (let x = CX - hw; x < CX + hw; x++) {
+                let c = 'b';
+                if (i === 0 || i === HW.length - 1 || x === CX - hw || x === CX + hw - 1) c = 'o';
+                else if (i >= HW.length - 3 || x >= CX + 2) c = 's';
+                else if (i <= 2 && x <= CX - 3) c = 'L';
+                else if (i <= 3 && x <= CX - 1) c = 'l';
+                g[y][x] = c;
+            }
+        }
+        for (let x = CX - 5; x < CX + 5; x++) g[TOP + HW.length][x] = 'h';
+        for (let x = CX - 3; x < CX + 3; x++) g[TOP + HW.length + 1][x] = 'h';
+        return toRows(g);
+    };
+
+    const wall = (color, mask, v) => {
+        const key = 'tile|w|' + color + '|' + mask + '|' + v;
+        return PixelFX.get(key) || PixelFX.bake(key, wallRows(mask, v), pal(color), P);
+    };
+    const floor = (color, mask, v) => {
+        const key = 'tile|f|' + color + '|' + mask + '|' + v;
+        return PixelFX.get(key) || PixelFX.bake(key, floorRows(mask, v), pal(color), P);
+    };
+    const rock = (wallColor, floorColor) => {
+        const key = 'tile|rock|' + wallColor + '|' + floorColor;
+        return PixelFX.get(key) || PixelFX.bake(key, rockRows(),
+            Object.assign({ h: PixelFX.shade(floorColor, -0.5) }, pal(wallColor)), P);
+    };
+    // Detalhes pequenos por tile (1 px de arte cada), sem sprite
+    const cell = (ctx, px, py, ax, ay, color, c) => {
+        ctx.fillStyle = pal(color)[c];
+        ctx.fillRect(px + ax * P, py + ay * P, P, P);
+    };
+    const wallCrack = (ctx, color, px, py, h1) => {
+        if (h1 % 100 >= 6) return;
+        const ax = 4 + (h1 >> 3) % 6, ay = 2 + (h1 >> 6) % 6;
+        for (const [dx, dy] of [[0, 0], [0, 1], [1, 1], [1, 2], [2, 2]]) cell(ctx, px, py, ax + dx, ay + dy, color, 'o');
+    };
+    const floorDetail = (ctx, color, px, py, h1) => {
+        const m = h1 % 100;
+        if (m < 14) cell(ctx, px, py, 2 + (h1 >> 4) % 12, 2 + (h1 >> 8) % 12, color, 'w');
+        else if (m < 20) {
+            const ax = 3 + (h1 >> 3) % 7, ay = 3 + (h1 >> 6) % 6;
+            for (const [dx, dy] of [[0, 0], [1, 0], [1, 1], [2, 1], [2, 2]]) cell(ctx, px, py, ax + dx, ay + dy, color, 's');
+        }
+    };
+    return { wall, floor, rock, wallCrack, floorDetail };
+})();
+
 class Map {
     constructor(pocket) {
         this.tiles = []; this.width = CONFIG.MAP_WIDTH; this.height = CONFIG.MAP_HEIGHT;
@@ -21155,136 +21283,34 @@ class Map {
                 let px=x*ts, py=y*ts;
                 const h1 = (x * 374761393 + y * 668265263) & 0xFFFF;
                 if(this.tiles[x][y].t === 1) {
-                    // Wall tile: running-bond masonry (2 courses per tile, joints
-                    // aligned across neighbours so it reads as ONE wall, not a
-                    // grid of boxes), top-lit, with edge definition only where
-                    // the wall actually borders open floor. Baked once.
-                    bctx.fillStyle=wallColor;
-                    bctx.fillRect(px,py,ts,ts);
-
-                    const wtone = (h1 % 7) - 3;
-                    if (wtone > 0) { bctx.fillStyle = 'rgba(255,255,255,' + (wtone * 0.008) + ')'; bctx.fillRect(px, py, ts, ts); }
-                    else if (wtone < 0) { bctx.fillStyle = 'rgba(0,0,0,' + (-wtone * 0.010) + ')'; bctx.fillRect(px, py, ts, ts); }
-
-                    // Soft top-light falloff
-                    const wallGrad = bctx.createLinearGradient(px, py, px, py + ts);
-                    wallGrad.addColorStop(0.0, 'rgba(255,255,255,0.08)');
-                    wallGrad.addColorStop(0.5, 'rgba(255,255,255,0)');
-                    wallGrad.addColorStop(1.0, 'rgba(0,0,0,0.10)');
-                    bctx.fillStyle = wallGrad;
-                    bctx.fillRect(px, py, ts, ts);
-
-                    // Brick courses: horizontal mortar at the tile top and middle,
-                    // vertical joints staggered between the two courses.
-                    const half = ts / 2;
-                    bctx.fillStyle = 'rgba(0,0,0,0.26)';
-                    bctx.fillRect(px, py, ts, 1);
-                    bctx.fillRect(px, py + half, ts, 1);
-                    bctx.fillRect(px + ts * 0.25, py + 1, 1, half - 1);
-                    bctx.fillRect(px + ts * 0.75, py + half + 1, 1, half - 1);
-                    bctx.fillStyle = 'rgba(255,255,255,0.05)';
-                    bctx.fillRect(px, py + 1, ts, 1);
-                    bctx.fillRect(px, py + half + 1, ts, 1);
-
-                    // A few stones a touch lighter/darker so courses are not uniform
-                    const bh = (h1 >> 3) % 4;
-                    bctx.fillStyle = (h1 & 1) ? 'rgba(255,255,255,0.045)' : 'rgba(0,0,0,0.07)';
-                    if (bh === 0) bctx.fillRect(px + 2, py + 2, ts * 0.25 - 3, half - 3);
-                    else if (bh === 1) bctx.fillRect(px + ts * 0.25 + 2, py + 2, ts * 0.5 - 3, half - 3);
-                    else if (bh === 2) bctx.fillRect(px + 2, py + half + 2, ts * 0.75 - 3, half - 3);
-                    else bctx.fillRect(px + ts * 0.75 + 2, py + half + 2, ts * 0.25 - 3, half - 3);
-
-                    // Rare crack
-                    if (h1 % 100 < 6) {
-                        bctx.strokeStyle = 'rgba(0,0,0,0.20)';
-                        bctx.lineWidth = 1;
-                        bctx.beginPath();
-                        bctx.moveTo(px + ts*0.3, py + ts*0.15);
-                        bctx.lineTo(px + ts*0.5, py + ts*0.45);
-                        bctx.lineTo(px + ts*0.42, py + ts*0.8);
-                        bctx.stroke();
-                    }
-
-                    // Edge definition only where the wall meets open floor
+                    // Parede em pixel art (fiadas de tijolo, face frontal quando há chão ao sul).
+                    // Sprite cacheado por máscara de vizinhança + variante; rachadura por tile.
                     const fN = y > 0 && this.tiles[x][y-1].t !== 1;
                     const fS = y < this.height-1 && this.tiles[x][y+1].t !== 1;
                     const fW = x > 0 && this.tiles[x-1][y].t !== 1;
                     const fE = x < this.width-1 && this.tiles[x+1][y].t !== 1;
-                    if (fN) { bctx.fillStyle = 'rgba(255,255,255,0.16)'; bctx.fillRect(px, py, ts, 2); }
-                    if (fS) {
-                        bctx.fillStyle = 'rgba(0,0,0,0.30)'; bctx.fillRect(px, py + ts - 5, ts, 5);
-                        bctx.fillStyle = 'rgba(0,0,0,0.25)'; bctx.fillRect(px, py + ts - 1, ts, 1);
-                    }
-                    if (fW) { bctx.fillStyle = 'rgba(255,255,255,0.09)'; bctx.fillRect(px, py, 2, ts); }
-                    if (fE) { bctx.fillStyle = 'rgba(0,0,0,0.20)'; bctx.fillRect(px + ts - 2, py, 2, ts); }
+                    const wmask = (fN ? 1 : 0) | (fS ? 2 : 0) | (fW ? 4 : 0) | (fE ? 8 : 0);
+                    PixelFX.draw(bctx, MapTileArt.wall(wallColor, wmask, (h1 >> 4) & 3), px + ts/2, py + ts/2);
+                    MapTileArt.wallCrack(bctx, wallColor, px, py, h1);
 
                     try { BiomeSystem.drawWallDetail(bctx, px, py, ts, x, y); } catch(e) {}
                 }
                 else {
-                    // Floor tile: calm, cohesive stone. One subtle per-tile tone,
-                    // sparse pebbles/cracks, a uniform grout grid and a smooth
-                    // wall-contact shadow. No overlapping washes/patches (that is
-                    // what made the old floor read as a noisy patchwork).
-                    bctx.fillStyle=floorColor;
-                    bctx.fillRect(px,py,ts,ts);
-
-                    const ftone = (h1 % 5) - 2;
-                    if (ftone > 0) { bctx.fillStyle = 'rgba(255,255,255,' + (ftone * 0.007) + ')'; bctx.fillRect(px, py, ts, ts); }
-                    else if (ftone < 0) { bctx.fillStyle = 'rgba(0,0,0,' + (-ftone * 0.009) + ')'; bctx.fillRect(px, py, ts, ts); }
-
-                    if (h1 % 100 < 14) {
-                        bctx.fillStyle = (h1 % 2 === 0) ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.10)';
-                        const sx2 = px + 4 + (h1 % (ts - 8)), sy2 = py + 4 + ((h1 >> 4) % (ts - 8));
-                        bctx.beginPath(); bctx.arc(sx2, sy2, 1 + (h1 >> 8) % 2, 0, Math.PI * 2); bctx.fill();
-                    }
-                    if (h1 % 100 >= 14 && h1 % 100 < 20) {
-                        bctx.strokeStyle = 'rgba(0,0,0,0.14)';
-                        bctx.lineWidth = 1;
-                        bctx.beginPath();
-                        bctx.moveTo(px + ts * 0.2, py + ts * (0.25 + (h1 >> 3) % 5 * 0.08));
-                        bctx.lineTo(px + ts * 0.55, py + ts * (0.45 + (h1 >> 6) % 4 * 0.06));
-                        bctx.lineTo(px + ts * 0.8, py + ts * 0.7);
-                        bctx.stroke();
-                    }
-
-                    // Uniform grout on the bottom/right edge + faint light catch
-                    // on the top edge: reads as flagstones with one consistent
-                    // light direction (same as the walls).
-                    bctx.fillStyle = 'rgba(0,0,0,0.13)';
-                    bctx.fillRect(px, py + ts - 1, ts, 1);
-                    bctx.fillRect(px + ts - 1, py, 1, ts);
-                    bctx.fillStyle = 'rgba(255,255,255,0.035)';
-                    bctx.fillRect(px, py, ts, 1);
-
-                    // Wall-contact shadow: smooth falloff (gradient) instead of
-                    // hard stepped bands.
+                    // Piso em pixel art (lajes com junta em offset, sombra de contato em degraus).
+                    // Sprite cacheado por máscara de paredes vizinhas + variante; seixo/rachadura por tile.
                     const wN = y > 0 && this.tiles[x][y-1].t === 1;
                     const wS = y < this.height-1 && this.tiles[x][y+1].t === 1;
                     const wW = x > 0 && this.tiles[x-1][y].t === 1;
                     const wE = x < this.width-1 && this.tiles[x+1][y].t === 1;
-                    const AO = 12;
-                    if (wN) { const g = bctx.createLinearGradient(0, py, 0, py + AO); g.addColorStop(0, 'rgba(0,0,0,0.30)'); g.addColorStop(1, 'rgba(0,0,0,0)'); bctx.fillStyle = g; bctx.fillRect(px, py, ts, AO); }
-                    if (wS) { const g = bctx.createLinearGradient(0, py + ts, 0, py + ts - AO); g.addColorStop(0, 'rgba(0,0,0,0.20)'); g.addColorStop(1, 'rgba(0,0,0,0)'); bctx.fillStyle = g; bctx.fillRect(px, py + ts - AO, ts, AO); }
-                    if (wW) { const g = bctx.createLinearGradient(px, 0, px + AO, 0); g.addColorStop(0, 'rgba(0,0,0,0.22)'); g.addColorStop(1, 'rgba(0,0,0,0)'); bctx.fillStyle = g; bctx.fillRect(px, py, AO, ts); }
-                    if (wE) { const g = bctx.createLinearGradient(px + ts, 0, px + ts - AO, 0); g.addColorStop(0, 'rgba(0,0,0,0.22)'); g.addColorStop(1, 'rgba(0,0,0,0)'); bctx.fillStyle = g; bctx.fillRect(px + ts - AO, py, AO, ts); }
+                    const fmask = (wN ? 1 : 0) | (wS ? 2 : 0) | (wW ? 4 : 0) | (wE ? 8 : 0);
+                    PixelFX.draw(bctx, MapTileArt.floor(floorColor, fmask, (h1 >> 4) & 7), px + ts/2, py + ts/2);
+                    MapTileArt.floorDetail(bctx, floorColor, px, py, h1);
 
                     try { BiomeSystem.drawFloorDetail(bctx, px, py, ts, x, y); } catch(e) {}
-                    
+
                     if (this.tiles[x][y].t === 2) {
-                        // Prop (rock/pillar) with better 3D look
-                        const cx2 = px + ts/2, cy2 = py + ts/2 + 3;
-                        const r = ts/3;
-                        // Shadow
-                        bctx.fillStyle = 'rgba(0,0,0,0.3)';
-                        bctx.beginPath(); bctx.ellipse(cx2, cy2 + r*0.3, r*0.9, r*0.3, 0, 0, Math.PI*2); bctx.fill();
-                        // Body
-                        bctx.fillStyle = '#41445c';
-                        bctx.beginPath(); bctx.arc(cx2, cy2, r, 0, Math.PI*2); bctx.fill();
-                        // Edge highlight
-                        bctx.fillStyle = '#5a5e74';
-                        bctx.beginPath(); bctx.arc(cx2 - r*0.15, cy2 - r*0.15, r*0.6, 0, Math.PI*2); bctx.fill();
-                        bctx.fillStyle = '#70748c';
-                        bctx.beginPath(); bctx.arc(cx2 - r*0.2, cy2 - r*0.2, r*0.3, 0, Math.PI*2); bctx.fill();
+                        // Rocha em pixel art (sprite cacheado por cor de parede e de chão)
+                        PixelFX.draw(bctx, MapTileArt.rock(wallColor, floorColor), px + ts/2, py + ts/2);
                     }
 
                     if (this.tiles[x][y].lit) {
