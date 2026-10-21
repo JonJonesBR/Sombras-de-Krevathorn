@@ -1515,6 +1515,17 @@ body.gfx-low #start-screen::after { animation: none !important; opacity: 0.5 !im
         </div>
     </div>
 
+    <!-- PRÓLOGO (só na primeira run da vida do jogador; controlado por PrologueSystem) -->
+    <div id="prologue-overlay" role="dialog" aria-modal="true" aria-labelledby="prologue-text" style="display:none;position:fixed;inset:0;z-index:99980;flex-direction:column;align-items:center;justify-content:center;background:rgba(4,2,8,0.96);padding:24px;box-sizing:border-box;">
+        <div style="max-width:360px;width:100%;text-align:center;">
+            <p id="prologue-text" aria-live="polite" style="font-size:clamp(0.95rem,3.4vw,1.1rem);line-height:1.6;color:#eadcf7;margin:0 0 26px;min-height:7em;"></p>
+            <div style="display:flex;gap:10px;">
+                <button id="prologue-skip" type="button" data-i18n="prologue.skip" style="flex:1;padding:10px;border-radius:12px;font-size:0.8rem;font-weight:700;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.5);cursor:pointer;touch-action:manipulation;">Pular</button>
+                <button id="prologue-next" type="button" data-i18n="prologue.continue" style="flex:1;padding:10px;border-radius:12px;font-size:0.8rem;font-weight:700;background:linear-gradient(135deg,rgba(100,60,200,0.3),rgba(157,78,221,0.2));border:1.5px solid rgba(157,78,221,0.45);color:#c084fc;cursor:pointer;touch-action:manipulation;">Continuar</button>
+            </div>
+        </div>
+    </div>
+
     <div id="ui-layer">
         <!-- TOP BAR: Compact HUD -->
         <div id="top-bar" class="hidden">
@@ -2518,6 +2529,7 @@ const StorageManager = {
         settings: 'aethelgard_settings',
         save: 'aethelgard_save',
         runStates: 'aethelgard_run_states', // orphaned legacy (RunState removed) - kept for awareness
+        prologue: 'krev_prologue_seen', // prólogo já visto (só na primeira run; ver PrologueSystem)
         // Dynamic keys (per-day, built at runtime by DailyChallengeSystem):
         //   'daily_YYYY-MM-DD' -> completion record for a given day
         //   (storage helpers only accept static names, so these two stay literal)
@@ -3665,9 +3677,21 @@ const I18n = {
             'npc.nocoins': 'Moedas insuficientes',
             'npc.bought': 'Comprado!',
             'npc.reveal': 'Revelar',
-            'npc.guide.name': 'Guia',
-            'npc.merchant.name': 'Mercador',
-            'npc.oracle.name': 'Oráculo',
+            'npc.guide.name': 'Seraphina, a Guia',
+            'npc.merchant.name': 'Dorian, o Mercador',
+            'npc.oracle.name': 'Vael, o Oráculo',
+            'npc.story.guide1': 'Eu já cruzei a superfície. Voltei porque alguém precisava lembrar você do caminho de volta.',
+            'npc.story.guide2': 'Aldric ficou preso entre dois mundos. Eu vi o que o Véu faz com quem se rende a ele.',
+            'npc.story.guide3': 'Muitos guerreiros desceram comigo. Poucos voltaram. Ainda guardo os nomes de todos eles.',
+            'npc.story.guide4': 'Não confie só na força. A masmorra muda de forma quando você menos espera. Observe os sinais.',
+            'npc.story.merchant1': 'Você quer saber de onde eu venho? Isso custa mais do que qualquer poção que eu tenha na bolsa.',
+            'npc.story.merchant2': 'Todo viajante chega achando que entende o valor das coisas. Eu gosto de descobrir quem está errado.',
+            'npc.story.merchant3': 'Essas moedas parecem comuns, não é? Guarde-as bem. Algumas valem muito mais do que a face sugere.',
+            'npc.story.merchant4': 'Não pergunte quem me mandou aqui. Pergunte o quanto você está disposto a pagar para continuar.',
+            'npc.story.oracle1': 'Não tenho olhos, e ainda assim vejo você. O Véu me mostrou seu caminho antes de você chegar.',
+            'npc.story.oracle2': 'Um pacto feito por amor. Uma dívida que ainda não foi paga. Você já sentiu o peso dela?',
+            'npc.story.oracle3': 'O filho de Aldric não esqueceu. Ele sussurra para quem desce fundo o bastante.',
+            'npc.story.oracle4': 'Perdão não é esquecer. Às vezes é a única chave que o Véu não consegue trancar.',
 
             // Continue screen
             'continue.title': 'CONTINUAR?',
@@ -3956,6 +3980,12 @@ const I18n = {
             'update.entry.v63.l1': 'A iluminação das masmorras agora segue o estilo pixel art: a luz da tocha e do herói esmaece em degraus de pixels, em vez de um gradiente borrado.',
             'update.entry.v63.l2': 'Os personagens continuam legíveis nas bordas da luz.',
             'update.entry.v63.l3': 'Seus saves não mudam.',
+            'update.entry.v64.title': 'v64 — Música nova, NPCs com história e prólogo',
+            'update.entry.v64.l1': 'Trilha sonora nova: 5 músicas de masmorra, 5 de cripta (que mudam com a profundidade) e um tema para cada chefe, com fase 2.',
+            'update.entry.v64.l2': 'Efeitos sonoros em camadas e sem estalos.',
+            'update.entry.v64.l3': 'Seraphina, Dorian e Vael agora têm sprites próprios, nome e falas sobre a história de Krevathorn.',
+            'update.entry.v64.l4': 'Prólogo na primeira partida e trechos de lore em destaque ao descobri-los.',
+            'update.entry.v64.l5': 'Seus saves não mudam.',
             'update.entry.v62.title': 'v62 — Minimapa e tutorial em pixel art',
             'update.entry.v62.l1': 'O minimapa expandido, os marcadores do oráculo e a barra do tutorial agora seguem o estilo pixel art, sem brilhos borrados.',
             'update.entry.v62.l2': 'O botão de fechar do minimapa e o rótulo do alvo de treino ficaram mais nítidos.',
@@ -4760,6 +4790,11 @@ const I18n = {
             'continue.in': 'Continue em',
             'win.title': 'SUPERFÍCIE ALCANÇADA!',
             'win.playAgain': 'JOGAR NOVAMENTE',
+            'prologue.p1': 'Krevathorn foi um reino próspero. Até que o Véu das Sombras caiu e selou a terra.',
+            'prologue.p2': 'O rei Aldric fez um pacto para salvar o filho, e o Véu cobrou o reino como pagamento. Os poucos sobreviventes esperam por alguém capaz de romper o Véu.',
+            'prologue.p3': 'Você desce às masmorras guiado por viajantes estranhos: uma guia, um mercador, um oráculo. Eles parecem saber mais do que dizem.',
+            'prologue.continue': 'Continuar',
+            'prologue.skip': 'Pular',
         },
 
         en: {
@@ -5154,9 +5189,21 @@ const I18n = {
             'npc.nocoins': 'Not enough coins',
             'npc.bought': 'Purchased!',
             'npc.reveal': 'Reveal',
-            'npc.guide.name': 'Guide',
-            'npc.merchant.name': 'Merchant',
-            'npc.oracle.name': 'Oracle',
+            'npc.guide.name': 'Seraphina, the Guide',
+            'npc.merchant.name': 'Dorian, the Merchant',
+            'npc.oracle.name': 'Vael, the Oracle',
+            'npc.story.guide1': 'I crossed to the surface once. I came back because someone had to remind travelers the way home exists.',
+            'npc.story.guide2': 'Aldric was left caught between two worlds. I saw what the Veil does to those who surrender to it.',
+            'npc.story.guide3': 'Many warriors went down with me. Few came back. I still remember the names of every one of them.',
+            'npc.story.guide4': 'Do not trust strength alone. The dungeon shifts its shape when you least expect it. Watch the signs.',
+            'npc.story.merchant1': 'Want to know where I come from? That costs more than any potion in my bag.',
+            'npc.story.merchant2': 'Every traveler arrives sure they know what things are worth. I enjoy finding out who is wrong.',
+            'npc.story.merchant3': 'These coins look ordinary, do they not? Keep them safe. Some are worth far more than their face suggests.',
+            'npc.story.merchant4': 'Do not ask who sent me. Ask how much you are willing to pay to keep going.',
+            'npc.story.oracle1': 'I have no eyes, and yet I see you. The Veil showed me your path before you arrived.',
+            'npc.story.oracle2': 'A pact made out of love. A debt that has not been paid yet. Have you felt its weight?',
+            'npc.story.oracle3': 'The son of Aldric has not forgotten. He whispers to those who descend deep enough.',
+            'npc.story.oracle4': 'Forgiveness is not forgetting. Sometimes it is the only key the Veil cannot lock.',
 
             // Continue screen
             'continue.title': 'CONTINUE?',
@@ -5449,6 +5496,12 @@ const I18n = {
             'update.entry.v63.l1': 'Dungeon lighting now follows the pixel art style: torch and hero light fades in pixel steps instead of a blurry gradient.',
             'update.entry.v63.l2': 'Characters stay readable at the edges of the light.',
             'update.entry.v63.l3': 'Your saves are unchanged.',
+            'update.entry.v64.title': 'v64 — New music, NPCs with a story and a prologue',
+            'update.entry.v64.l1': 'New soundtrack: 5 dungeon tracks, 5 crypt tracks (that change with depth) and a theme for every boss, with a phase 2.',
+            'update.entry.v64.l2': 'Layered sound effects, with no more clicks.',
+            'update.entry.v64.l3': 'Seraphina, Dorian and Vael now have their own sprites, names and lines about the story of Krevathorn.',
+            'update.entry.v64.l4': 'A prologue on your first run and lore excerpts highlighted when you find them.',
+            'update.entry.v64.l5': 'Your saves are unchanged.',
             'update.entry.v62.title': 'v62 — Pixel art minimap and tutorial',
             'update.entry.v62.l1': 'The expanded minimap, oracle markers and the tutorial bar now follow the pixel art style, with no blurry glows.',
             'update.entry.v62.l2': 'The minimap close button and the training dummy label are crisper.',
@@ -6249,6 +6302,11 @@ const I18n = {
             'continue.in': 'Continue in',
             'win.title': 'SURFACE REACHED!',
             'win.playAgain': 'PLAY AGAIN',
+            'prologue.p1': 'Krevathorn was a thriving kingdom. Then the Veil of Shadows fell and sealed the land.',
+            'prologue.p2': 'King Aldric made a pact to save his son, and the Veil demanded the kingdom as its price. The few survivors wait for someone who can break the Veil.',
+            'prologue.p3': 'You descend into the dungeons, guided by strangers: a guide, a merchant, an oracle. They seem to know more than they say.',
+            'prologue.continue': 'Continue',
+            'prologue.skip': 'Skip',
         },
 
         es: {
@@ -6643,9 +6701,21 @@ const I18n = {
             'npc.nocoins': 'Monedas insuficientes',
             'npc.bought': 'Comprado!',
             'npc.reveal': 'Revelar',
-            'npc.guide.name': 'Guia',
-            'npc.merchant.name': 'Mercader',
-            'npc.oracle.name': 'Oráculo',
+            'npc.guide.name': 'Seraphina, la Guía',
+            'npc.merchant.name': 'Dorian, el Mercader',
+            'npc.oracle.name': 'Vael, el Oráculo',
+            'npc.story.guide1': 'Yo crucé a la superficie. Volví porque alguien tenía que recordarles a los viajeros el camino de regreso.',
+            'npc.story.guide2': 'Aldric quedó atrapado entre dos mundos. Vi lo que el Velo hace con quien se rinde ante él.',
+            'npc.story.guide3': 'Muchos guerreros bajaron conmigo. Pocos regresaron. Todavía recuerdo el nombre de cada uno.',
+            'npc.story.guide4': 'No confíes solo en la fuerza. La mazmorra cambia de forma cuando menos lo esperas. Observa las señales.',
+            'npc.story.merchant1': '¿Quieres saber de dónde vengo? Eso cuesta más que cualquier poción que llevo en la bolsa.',
+            'npc.story.merchant2': 'Todo viajero llega creyendo que sabe el valor de las cosas. Me gusta descubrir quién se equivoca.',
+            'npc.story.merchant3': 'Estas monedas parecen comunes, ¿verdad? Guárdalas bien. Algunas valen mucho más de lo que aparentan.',
+            'npc.story.merchant4': 'No preguntes quién me envió. Pregunta cuánto estás dispuesto a pagar para seguir adelante.',
+            'npc.story.oracle1': 'No tengo ojos, y aun así te veo. El Velo me mostró tu camino antes de que llegaras.',
+            'npc.story.oracle2': 'Un pacto hecho por amor. Una deuda que aún no ha sido pagada. ¿Has sentido su peso?',
+            'npc.story.oracle3': 'El hijo de Aldric no ha olvidado. Susurra a quien baja lo bastante hondo.',
+            'npc.story.oracle4': 'Perdonar no es olvidar. A veces es la única llave que el Velo no logra cerrar.',
 
             // Continue screen
             'continue.title': 'CONTINUAR?',
@@ -6952,6 +7022,12 @@ const I18n = {
             'update.entry.v63.l1': 'La iluminación de las mazmorras ahora sigue el estilo pixel art: la luz de antorchas y héroe se desvanece en escalones de píxeles, en lugar de un degradado borroso.',
             'update.entry.v63.l2': 'Los personajes siguen siendo legibles en los bordes de la luz.',
             'update.entry.v63.l3': 'Tus partidas guardadas no cambian.',
+            'update.entry.v64.title': 'v64 — Música nueva, NPCs con historia y prólogo',
+            'update.entry.v64.l1': 'Banda sonora nueva: 5 temas de mazmorra, 5 de cripta (que cambian con la profundidad) y un tema para cada jefe, con fase 2.',
+            'update.entry.v64.l2': 'Efectos de sonido en capas y sin chasquidos.',
+            'update.entry.v64.l3': 'Seraphina, Dorian y Vael ahora tienen sprites propios, nombre y diálogos sobre la historia de Krevathorn.',
+            'update.entry.v64.l4': 'Prólogo en la primera partida y fragmentos de lore destacados al descubrirlos.',
+            'update.entry.v64.l5': 'Tus partidas guardadas no cambian.',
             'update.entry.v62.title': 'v62 — Minimapa y tutorial en pixel art',
             'update.entry.v62.l1': 'El minimapa ampliado, los marcadores del oráculo y la barra del tutorial ahora siguen el estilo pixel art, sin brillos borrosos.',
             'update.entry.v62.l2': 'El botón de cerrar del minimapa y la etiqueta del objetivo de entrenamiento son más nítidos.',
@@ -7735,6 +7811,11 @@ const I18n = {
             'continue.in': 'Continúa en',
             'win.title': '¡SUPERFICIE ALCANZADA!',
             'win.playAgain': 'JUGAR DE NUEVO',
+            'prologue.p1': 'Krevathorn fue un reino próspero. Hasta que cayó el Velo de las Sombras y selló la tierra.',
+            'prologue.p2': 'El rey Aldric pactó para salvar a su hijo, y el Velo cobró el reino como pago. Los pocos supervivientes esperan a alguien capaz de romper el Velo.',
+            'prologue.p3': 'Desciendes a las mazmorras guiado por viajeros extraños: una guía, un mercader, un oráculo. Parecen saber más de lo que dicen.',
+            'prologue.continue': 'Continuar',
+            'prologue.skip': 'Omitir',
         }
     },
 
@@ -8888,8 +8969,9 @@ function _closeAll() {
 
 function isAnyPanelOpen() {
     return (typeof NPCInteractionPanel !== 'undefined' && NPCInteractionPanel.visible) ||
-           merchantActive || skillTreeOpen || statsOpen || achievementsOpen || 
+           merchantActive || skillTreeOpen || statsOpen || achievementsOpen ||
            (typeof NarrativeSystem !== 'undefined' && NarrativeSystem.uiOpen) ||
+           (typeof PrologueSystem !== 'undefined' && PrologueSystem.visible) ||
            (typeof SettingsUI !== 'undefined' && SettingsUI.open) ||
            (typeof PauseSystem !== 'undefined' && PauseSystem.active) ||
            (window.UIManager && window.UIManager.currentPanel !== null);
@@ -9654,6 +9736,7 @@ function _anyPanelOpen() {
     return (typeof NPCInteractionPanel !== 'undefined' && NPCInteractionPanel.visible) ||
            merchantActive || skillTreeOpen || statsOpen || achievementsOpen ||
            (typeof NarrativeSystem !== 'undefined' && NarrativeSystem.uiOpen) ||
+           (typeof PrologueSystem !== 'undefined' && PrologueSystem.visible) ||
            (typeof SettingsUI !== 'undefined' && SettingsUI.open) ||
            (typeof PauseSystem !== 'undefined' && PauseSystem.active) ||
            (window.UIManager && window.UIManager.currentPanel !== null);
@@ -10380,7 +10463,7 @@ function _updateEnemySpawning() {
                 boss.applyArchetype(BOSS_ARCHETYPES[Math.floor(SeedSystem.random() * BOSS_ARCHETYPES.length)]);
                 addLog((window.I18n ? I18n.t('log.bossApproaching') : 'CHEFE APROXIMANDO: ') + boss.name + '!');
             }
-            entities.push(boss); SND.playBoss(); SND.startBossMusic(); shake = 20; ScreenEffects.onBossSpawn(); triggerCamZoom(0.10, 40);
+            entities.push(boss); SND.playBoss(); SND.startBossMusic(boss._blueprint ? boss._blueprint.key : null); shake = 20; ScreenEffects.onBossSpawn(); triggerCamZoom(0.10, 40);
             _bossBanner = { name: boss.name, nameKey: boss.nameKey || null, timer: 90 };
         } else {
             // Central weighted spawn table: single roll makes every type appear reliably
@@ -11729,8 +11812,10 @@ const ToastSystem = {
         document.body.appendChild(this.container);
     },
     // Show the real toast element (shared by show() and _drainPending()).
-    _spawn(message, type) {
+    _spawn(message, type, duration) {
         this.init();
+        // Limite de toasts empilhados: o mais antigo sai para a tela não estourar.
+        while (this.container.children.length >= 3) this.container.firstChild.remove();
         const el = document.createElement('div');
         const colors = { success: 'rgba(0,136,54,0.92)', error: 'rgba(180,0,15,0.92)', info: 'rgba(60,40,110,0.94)' };
         el.style.cssText = 'background:' + (colors[type] || colors.info) + ';color:#fff;padding:10px 16px;border-radius:14px;font-size:calc(12px * var(--font-scale, 1));font-weight:600;line-height:1.35;text-align:center;max-width:100%;box-shadow:0 4px 18px rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.15);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);opacity:0;transform:translateY(-8px);transition:opacity 0.25s ease, transform 0.25s ease;';
@@ -11740,15 +11825,15 @@ const ToastSystem = {
         setTimeout(() => {
             el.style.opacity = '0'; el.style.transform = 'translateY(-8px)';
             setTimeout(() => { if (el.parentNode) el.remove(); }, 300);
-        }, 2600);
+        }, duration || 2600);
     },
     _drainPending() {
         if (!this.pending.length) return;
         const q = this.pending.splice(0, this.pending.length);
         if (this._bossTimer) { clearTimeout(this._bossTimer); this._bossTimer = null; }
-        for (let i = 0; i < q.length; i++) this._spawn(q[i].message, q[i].type);
+        for (let i = 0; i < q.length; i++) this._spawn(q[i].message, q[i].type, q[i].duration);
     },
-    show(message, type) {
+    show(message, type, duration) {
         if (!message) return;
         // Robust boss detection: bossActive flag OR a living boss entity (covers
         // the brief window where the flag clears before the entity dies, and any
@@ -11765,7 +11850,7 @@ const ToastSystem = {
             // (or after 8s, whichever comes first).
             const urgent = type === 'error' || /[Rr]ecompensa|[Gg]uardian/.test(String(message));
             if (!urgent) {
-                if (this.pending.length < 3) this.pending.push({ message: message, type: type });
+                if (this.pending.length < 3) this.pending.push({ message: message, type: type, duration: duration });
                 if (!this._bossTimer) {
                     const self = this;
                     this._bossTimer = setTimeout(() => { self._drainPending(); }, 8000);
@@ -11774,10 +11859,10 @@ const ToastSystem = {
             }
         }
         if (this.pending.length && !bossOn) this._drainPending();
-        this._spawn(message, type);
+        this._spawn(message, type, duration);
     }
 };
-window.showToast = function (message, type) { ToastSystem.show(message, type); };
+window.showToast = function (message, type, duration) { ToastSystem.show(message, type, duration); };
 
 // --- ACHIEVEMENT TOAST ---
 const AchievementToast = {
@@ -12298,6 +12383,949 @@ if (document.readyState === 'loading') {
     <script>
 // === js/core/audio.js ===
 // AUDIO SYSTEM - Procedural Web Audio with Sound Variety and Ambient
+// ===== Motor de música e SFX em camadas (portado do protótipo aprovado) =====
+const MusicEngine = (() => {
+const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
+const rnd = p => 1 + (Math.random() * 2 - 1) * p;
+const db = x => Math.max(-120, 20 * Math.log10(x || 1e-12));
+const MIN = [0, 3, 7], MAJ = [0, 4, 7];
+const NB = new WeakMap();
+// Brilho global: 1 nos tiers I e II, 1.5 no III (só afeta filtros de melodia e pads).
+let OPEN = 1;
+const TIER_MUL = [1, 1.06, 1.12];
+
+
+function noiseBuf(c) {
+    let b = NB.get(c);
+    if (!b) {
+        b = c.createBuffer(1, Math.floor(c.sampleRate * 2), c.sampleRate);
+        const d = b.getChannelData(0);
+        for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+        NB.set(c, b);
+    }
+    return b;
+}
+function impulse(c, dur, decay) {
+    const n = Math.floor(c.sampleRate * dur), b = c.createBuffer(2, n, c.sampleRate);
+    for (let ch = 0; ch < 2; ch++) {
+        const d = b.getChannelData(ch);
+        for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, decay);
+    }
+    return b;
+}
+function env(g, t, peak, dur, a) {
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(peak, t + Math.min(a || 0.005, dur * 0.3));
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+}
+// Envelope de ataque e liberação linear, com sustentação (pads, baixo, melodia).
+function shape(g, t, dur, peak, a, r) {
+    // ataque limitado a 40% da nota: sem isso a automação sai de ordem em notas curtas (clique)
+    a = Math.min(a, dur * 0.4);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(peak, t + a);
+    g.gain.setValueAtTime(peak, Math.max(t + a, t + dur - r));
+    g.gain.linearRampToValueAtTime(0.0001, t + dur);
+}
+// Tom: oscilador com envelope, pitch opcional f->f2 e filtro lowpass opcional.
+function V(c, d, o) {
+    const os = c.createOscillator();
+    os.type = o.type || 'sine';
+    os.frequency.setValueAtTime(o.f, o.t);
+    if (o.f2) os.frequency.exponentialRampToValueAtTime(o.f2, o.t + o.dur);
+    const g = c.createGain();
+    env(g, o.t, o.vol, o.dur, o.a);
+    os.connect(g);
+    let out = g;
+    if (o.lp) {
+        const fl = c.createBiquadFilter();
+        fl.type = 'lowpass'; fl.Q.value = o.q || 0.7;
+        fl.frequency.setValueAtTime(o.lp, o.t);
+        if (o.lp2) fl.frequency.exponentialRampToValueAtTime(o.lp2, o.t + o.dur);
+        g.connect(fl); out = fl;
+    }
+    out.connect(d);
+    os.start(o.t); os.stop(o.t + o.dur + 0.05);
+    os.onended = () => { try { os.disconnect(); g.disconnect(); } catch (e) {} };
+}
+// Ruído filtrado. O envelope fica dentro do buffer (sem automação de ganho sobre a
+// fonte): com automação, a Chrome gerava picos isolados de até 0.48 nos hi-hats.
+function N(c, d, o) {
+    const sr = c.sampleRate, len = Math.max(2, Math.floor(o.dur * sr));
+    const src = noiseBuf(c).getChannelData(0);
+    const buf = c.createBuffer(1, len, sr), x = buf.getChannelData(0);
+    const off = Math.floor(Math.random() * Math.max(1, src.length - len));
+    const att = Math.max(1, Math.floor((o.a || 0.002) * sr));
+    const tail = Math.max(1, Math.floor(0.002 * sr));
+    for (let i = 0; i < len; i++) {
+        const e = i < att ? i / att : Math.pow(0.0001, (i - att) / Math.max(1, len - att));
+        const k = Math.min(1, (len - 1 - i) / tail);
+        x[i] = src[off + i] * e * k * o.vol;
+    }
+    const s = c.createBufferSource(); s.buffer = buf;
+    const fl = c.createBiquadFilter();
+    fl.type = o.ft || 'bandpass'; fl.Q.value = o.q || 1;
+    fl.frequency.setValueAtTime(o.f, o.t);
+    if (o.f2) fl.frequency.exponentialRampToValueAtTime(o.f2, o.t + o.dur);
+    s.connect(fl); fl.connect(d);
+    s.start(o.t);
+    s.onended = () => { try { s.disconnect(); fl.disconnect(); } catch (e) {} };
+}
+// FM simples: portadora + modulador inarmônico com índice decrescente (metal e sinos).
+function FM(c, d, o) {
+    const car = c.createOscillator(); car.frequency.value = o.f;
+    const mod = c.createOscillator(); mod.frequency.value = o.f * o.ratio;
+    const mg = c.createGain();
+    mg.gain.setValueAtTime(o.f * o.ratio * o.index, o.t);
+    mg.gain.exponentialRampToValueAtTime(o.f * 0.02, o.t + o.dur);
+    mod.connect(mg); mg.connect(car.frequency);
+    const g = c.createGain(); env(g, o.t, o.vol, o.dur, o.a);
+    car.connect(g); g.connect(d);
+    car.start(o.t); mod.start(o.t);
+    car.stop(o.t + o.dur + 0.05); mod.stop(o.t + o.dur + 0.05);
+    car.onended = () => { try { car.disconnect(); mod.disconnect(); mg.disconnect(); g.disconnect(); } catch (e) {} };
+}
+
+
+// ---------- Timbres (todos: (c, d, midi, t, dur, vol)) ----------
+function pad(c, d, base, ints, t, dur, vol) {
+    const fl = c.createBiquadFilter(); fl.type = 'lowpass'; fl.Q.value = 1.2;
+    fl.frequency.setValueAtTime(380 * OPEN, t);
+    fl.frequency.linearRampToValueAtTime(900 * OPEN, t + dur * 0.5);
+    fl.frequency.linearRampToValueAtTime(520 * OPEN, t + dur);
+    const g = c.createGain(); shape(g, t, dur, vol, dur * 0.3, dur * 0.3);
+    fl.connect(g); g.connect(d);
+    for (const i of ints) for (const det of [-7, 7]) {
+        const o = c.createOscillator(); o.type = 'sawtooth';
+        o.frequency.value = mtof(base + i); o.detune.value = det;
+        o.connect(fl); o.start(t); o.stop(t + dur + 0.05);
+    }
+}
+// Lead: dois saws desafinados em ±6 cents + lowpass com envelope.
+function lead(c, d, m, t, dur, vol) {
+    const g = c.createGain(); shape(g, t, dur, vol, 0.03, 0.12);
+    const fl = c.createBiquadFilter(); fl.type = 'lowpass'; fl.Q.value = 2;
+    fl.frequency.setValueAtTime(700, t); fl.frequency.linearRampToValueAtTime(2000 * OPEN, t + 0.12);
+    fl.frequency.linearRampToValueAtTime(1000 * OPEN, t + dur);
+    fl.connect(g); g.connect(d);
+    for (const det of [-6, 6]) {
+        const o = c.createOscillator(); o.type = 'sawtooth';
+        o.frequency.value = mtof(m); o.detune.value = det;
+        o.connect(fl); o.start(t); o.stop(t + dur + 0.05);
+    }
+}
+function flute(c, d, m, t, dur, vol) {
+    const o = c.createOscillator(); o.type = 'triangle'; o.frequency.value = mtof(m);
+    const fl = c.createBiquadFilter(); fl.type = 'lowpass'; fl.Q.value = 0.8;
+    fl.frequency.setValueAtTime(1100 * OPEN, t); fl.frequency.linearRampToValueAtTime(800 * OPEN, t + dur);
+    const g = c.createGain(); shape(g, t, dur, vol, 0.12, 0.4);
+    o.connect(fl); fl.connect(g); g.connect(d);
+    o.start(t); o.stop(t + dur + 0.05);
+}
+// Metal: saw + square desafinados com lowpass que abre no ataque.
+function brass(c, d, m, t, dur, vol) {
+    const g = c.createGain(); shape(g, t, dur, vol, 0.03, 0.15);
+    const fl = c.createBiquadFilter(); fl.type = 'lowpass'; fl.Q.value = 1.5;
+    fl.frequency.setValueAtTime(500 * OPEN, t); fl.frequency.linearRampToValueAtTime(2200 * OPEN, t + 0.1);
+    fl.connect(g); g.connect(d);
+    for (const [type, det] of [['sawtooth', -5], ['square', 5]]) {
+        const o = c.createOscillator(); o.type = type;
+        o.frequency.value = mtof(m); o.detune.value = det;
+        o.connect(fl); o.start(t); o.stop(t + dur + 0.05);
+    }
+}
+// Pizzicato: saw com decaimento exponencial e lowpass que fecha.
+function pluck(c, d, m, t, dur, vol) {
+    V(c, d, { type: 'sawtooth', f: mtof(m), t, dur, vol, lp: 2400 * OPEN, lp2: 700, q: 2, a: 0.004 });
+}
+// Piano sintético: triângulo + harmônico decaindo.
+function piano(c, d, m, t, dur, vol) {
+    V(c, d, { type: 'triangle', f: mtof(m), t, dur, vol, a: 0.003 });
+    V(c, d, { type: 'sine', f: mtof(m) * 2, t, dur: dur * 0.6, vol: vol * 0.25, a: 0.003 });
+}
+// Sino grave: FM com razão inarmônica e índice baixo.
+function bellLow(c, d, m, t, dur, vol) {
+    FM(c, d, { f: mtof(m), t, dur, vol, ratio: 2.76, index: 0.5, a: 0.004 });
+}
+function bassSaw(c, d, m, t, dur, vol) {
+    const g = c.createGain(); shape(g, t, dur, vol, 0.05, 0.2);
+    const fl = c.createBiquadFilter(); fl.type = 'lowpass'; fl.Q.value = 1;
+    fl.frequency.value = 260;
+    fl.connect(g); g.connect(d);
+    for (const det of [-4, 4]) {
+        const o = c.createOscillator(); o.type = 'sawtooth';
+        o.frequency.value = mtof(m); o.detune.value = det;
+        o.connect(fl); o.start(t); o.stop(t + dur + 0.05);
+    }
+}
+function bassSub(c, d, m, t, dur, vol) {
+    const o = c.createOscillator(); o.type = 'sine'; o.frequency.value = mtof(m);
+    const g = c.createGain(); shape(g, t, dur, vol, 0.3, 0.5);
+    o.connect(g); g.connect(d);
+    o.start(t); o.stop(t + dur + 0.05);
+}
+function stab(c, d, m, t, dur, vol) {
+    V(c, d, { type: 'square', f: mtof(m), t, dur, vol, lp: 900 * OPEN, lp2: 2600 * OPEN, q: 1.2, a: 0.006 });
+    V(c, d, { type: 'sawtooth', f: mtof(m), t, dur, vol: vol * 0.7, lp: 900 * OPEN, lp2: 2600 * OPEN, q: 1.2, a: 0.006 });
+}
+// Percussão grave: 'kick' (senoide com queda), 'tom' (tambor grave), 'stick' (ruído curto).
+function kick(c, d, t, vol, f, f2, dur) {
+    V(c, d, { type: 'sine', f: f || 150, f2: f2 || 42, t, dur: dur || 0.32, vol, a: 0.002 });
+}
+function hit(c, d, t, k, v, P) {
+    if (k === 'kick') V(c, d, { type: 'sine', f: P.kf, f2: P.kf2, t, dur: P.kd, vol: v, a: 0.002 });
+    else if (k === 'tom') V(c, d, { type: 'sine', f: 110, f2: 60, t, dur: 0.25, vol: v, a: 0.003 });
+    else if (k === 'stick') N(c, d, { t, dur: 0.03, vol: v, f: 2000, q: 4 });
+    else if (k === 'clap') N(c, d, { t, dur: 0.07, vol: v, f: 1200, q: 1.2 });
+}
+
+
+// ---------- Motor de faixas (dungeon e crypt usam o mesmo passo) ----------
+// Cada faixa é um objeto de dados: acordes, baixo, tema (eventos [passo, midi, duração] em 128 passos),
+// timbres e percussão. Camadas por intensidade: II = arpejo + mais percussão; III = pedal, stab, trilo, filtros abertos.
+function stepSong(tr, s, t) {
+    const P = tr.P, c = tr.c, d = tr.out, dd = tr.duck, sd = tr.stepDur, tier = tr.tier;
+    const L = s >> 7, p = s & 127, bar = p >> 4, sb = p & 15;
+    const soft = !!P.soft;
+    // Chefes (soft): brilho limitado (OPEN cresce a cada 2 compassos, teto 1.36) e oitava de registro acima de 12.
+    OPEN = soft ? 1 + 0.12 * (bar >> 1) : (tier === 3 ? 1.5 : 1);
+    const oct = soft ? 12 : 24;
+    const sw = soft ? 0.8 + 0.07 * (bar >> 1) : 1; // crescendo a cada 2 compassos
+    if (P.brk && bar === 7 && sb >= 12) return;   // pausa dramática de 1 tempo antes da repetição
+    const [root, ints] = P.chords[bar];
+    if (sb === 0) {
+        if (P.pad) pad(c, dd, root + P.pad.oct, ints, t, 16 * sd, P.pad.vol);
+        if (!P.pat && P.bassRhythm !== 'eighth') P.bassFn(c, dd, P.bass[bar], t, 16 * sd * 0.97, P.bassVol);
+    }
+    if (P.pat) {
+        // padrão rítmico por chefe: K/k bumbo forte/suave, T/t tom forte/suave, C caixa/palma
+        const ch = (bar & 1 ? P.pat2 : P.pat)[sb], bc = P.bpat[sb];
+        if (ch === 'K') kick(c, d, t, 0.3, P.kf, P.kf2, P.kd);
+        else if (ch === 'k') kick(c, d, t, 0.2, P.kf, P.kf2, P.kd);
+        else if (ch === 'T') hit(c, d, t, 'tom', 0.16 * sw, P);
+        else if (ch === 't') hit(c, d, t, 'tom', 0.09 * sw, P);
+        else if (ch === 'C') hit(c, d, t, 'clap', 0.07 * sw, P);
+        if (bc === 'B') P.bassFn(c, dd, P.bass[bar], t, sd * 1.6, P.bassVol);
+        else if (bc === 'F') P.bassFn(c, dd, P.bass[bar] + 7, t, sd * 1.6, P.bassVol);
+    } else {
+        if (P.bassRhythm === 'eighth' && sb % 2 === 0)
+            P.bassFn(c, dd, P.bass[bar] + (((sb >> 1) & 1) ? 12 : 0), t, 2 * sd * 0.9, P.bassVol);
+        for (const [k, v] of P.hits(bar, sb)) hit(c, d, t, k, v, P);
+    }
+    if (tier >= 2) {
+        if (P.extraType && (sb === 6 || sb === 14)) hit(c, d, t, P.extraType, P.extraType === 'tom' ? 0.08 : 0.05, P);
+        if (sb % 2 === 0) (soft ? pluckSoft : pluck)(c, d, root + oct + ints[(sb >> 1) % 3], t, 2 * sd * 1.1, 0.02 * sw);
+    }
+    if (tier >= 3) {
+        if (sb === 0 && bar % 2 === 0) {
+            if (soft) V(c, dd, { type: 'triangle', f: mtof(root + 12), t, dur: 32 * sd, vol: 0.014, lp: 1000, lp2: 800, a: 0.4 });
+            else V(c, dd, { type: 'sawtooth', f: mtof(root + 12), t, dur: 32 * sd, vol: 0.016, lp: 1800 * OPEN, lp2: 1200 * OPEN, a: 0.4 });
+        }
+        if (sb === 0 && (bar === 0 || bar === 4)) for (const i of ints) (soft ? stabSoft : stab)(c, d, root + oct + i, t, 0.34, 0.03 * sw);
+        if (sb >= 8 && bar === 7) V(c, d, { type: soft ? 'triangle' : 'square', f: mtof(root + oct + (sb & 1)), t, dur: sd * 0.8, vol: 0.02 * sw, lp: 3000, a: 0.003 });
+    }
+    for (const [ms, m, len] of P.mels[L & 1]) if (ms === p) P.mel(c, d, m, t, len * sd * 0.95, P.melVol * sw);
+}
+
+// Tema de 8 compassos: frase de pergunta (1-2), resposta (3-4), reexposição (5-8).
+// Na 2ª volta do loop (ciclo ímpar) a 2ª metade desce uma oitava (oddShift).
+function mk(o) {
+    o.mels = [0, 1].map(odd => o.melody.map(([s, m, l]) => [s, odd && s >= 64 ? m + o.oddShift : m, l]));
+    o.kf = o.kf || 150; o.kf2 = o.kf2 || 42; o.kd = o.kd || 0.32;
+    o.hits = o.hits || (() => []);
+    o.extraType = o.extraType || null;
+    return o;
+}
+
+// ----- Masmorra A e B (tier I preservado) -----
+const MEL_A = [
+    [0, 72, 6], [6, 75, 2], [8, 79, 4], [12, 75, 2], [14, 74, 2],
+    [16, 72, 4], [20, 75, 4], [24, 80, 8],
+    [32, 79, 4], [36, 75, 4], [40, 70, 4], [44, 68, 4],
+    [48, 67, 4], [52, 70, 4], [56, 74, 4], [60, 77, 4],
+    [64, 72, 6], [70, 75, 2], [72, 79, 4], [76, 75, 4],
+    [80, 72, 4], [84, 75, 4], [88, 80, 8],
+    [96, 77, 4], [100, 74, 4], [104, 70, 4], [108, 67, 4],
+    [112, 72, 8], [120, 67, 4], [124, 72, 4]
+];
+const MEL_B = [
+    [0, 69, 6], [8, 74, 8],
+    [16, 70, 4], [20, 67, 4], [24, 70, 8],
+    [32, 72, 4], [36, 69, 4], [40, 64, 8],
+    [48, 62, 12],
+    [64, 74, 6], [72, 77, 4], [76, 74, 4],
+    [80, 70, 8], [88, 67, 8],
+    [96, 72, 4], [100, 76, 4], [104, 71, 8],
+    [112, 69, 8], [120, 62, 8]
+];
+const DUN_A = mk({
+    chords: [[48, MIN], [44, MAJ], [39, MAJ], [46, MAJ], [48, MIN], [44, MAJ], [46, MAJ], [48, MIN]],
+    bass: [36, 32, 39, 34, 36, 32, 34, 36], bassFn: bassSaw, bassVol: 0.085,
+    pad: { oct: 0, vol: 0.008 },
+    melody: MEL_A, oddShift: -12, mel: lead, melVol: 0.07,
+    hits: (bar, sb) => (sb === 0 ? [['kick', 0.3]] : sb === 8 ? [['kick', 0.16]] : []),
+    kf: 92, kf2: 44, kd: 0.4
+});
+const DUN_B = mk({
+    chords: [[38, MIN], [43, MIN], [45, MIN], [38, MIN], [38, MIN], [43, MIN], [45, MIN], [38, MIN]],
+    bass: [38, 43, 45, 38, 38, 43, 45, 38], bassFn: bassSub, bassVol: 0.25,
+    pad: { oct: 12, vol: 0.006 },
+    melody: MEL_B, oddShift: -12, mel: flute, melVol: 0.06,
+    hits: (bar, sb) => (sb === 0 && bar % 4 === 0 ? [['kick', 0.22]] : []),
+    kf: 70, kf2: 40, kd: 0.5
+});
+
+// ----- Masmorra C, D e E (novas) -----
+const MEL_C = [
+    [0, 79, 2], [2, 79, 2], [4, 82, 2], [6, 84, 2], [8, 82, 4], [12, 79, 2], [14, 77, 2],
+    [16, 77, 2], [18, 81, 2], [20, 84, 2], [22, 81, 2], [24, 77, 4], [28, 74, 2], [30, 77, 2],
+    [32, 75, 2], [34, 79, 2], [36, 82, 2], [38, 79, 2], [40, 75, 4], [44, 70, 2], [46, 75, 2],
+    [48, 77, 2], [50, 81, 2], [52, 84, 2], [54, 81, 2], [56, 79, 2], [58, 77, 2], [60, 74, 2], [62, 72, 2],
+    [64, 79, 2], [66, 79, 2], [68, 82, 2], [70, 84, 2], [72, 82, 4], [76, 79, 2], [78, 77, 2],
+    [80, 77, 2], [82, 81, 2], [84, 84, 2], [86, 81, 2], [88, 77, 4], [92, 74, 2], [94, 77, 2],
+    [96, 74, 2], [98, 78, 2], [100, 81, 2], [102, 78, 2], [104, 74, 4], [108, 78, 2], [110, 81, 2],
+    [112, 79, 2], [114, 82, 2], [116, 86, 2], [118, 84, 2], [120, 82, 2], [122, 79, 2], [124, 74, 2], [126, 79, 4]
+];
+const MEL_D = [
+    [0, 62, 4], [4, 69, 4], [8, 74, 4], [12, 77, 4],
+    [16, 70, 4], [20, 74, 4], [24, 77, 4], [28, 82, 4],
+    [32, 84, 4], [36, 81, 4], [40, 77, 4], [44, 72, 4],
+    [48, 72, 8], [56, 67, 4], [60, 72, 4],
+    [64, 74, 4], [68, 77, 4], [72, 81, 4], [76, 86, 4],
+    [80, 77, 4], [84, 74, 4], [88, 70, 8],
+    [96, 72, 4], [100, 76, 4], [104, 79, 8],
+    [112, 77, 4], [116, 74, 4], [120, 69, 4], [124, 62, 4]
+];
+const MEL_E = [
+    [0, 71, 6], [8, 67, 4], [12, 64, 4],
+    [16, 69, 4], [20, 72, 4], [24, 76, 8],
+    [32, 72, 4], [36, 67, 4], [40, 64, 8],
+    [48, 66, 6], [54, 63, 2], [56, 71, 8],
+    [64, 74, 6], [70, 71, 2], [72, 67, 4], [76, 64, 4],
+    [80, 69, 4], [84, 72, 4], [88, 76, 8],
+    [96, 79, 4], [100, 76, 4], [104, 72, 8],
+    [112, 71, 4], [116, 67, 4], [120, 64, 8]
+];
+const DUN_C = mk({
+    chords: [[55, MIN], [53, MAJ], [51, MAJ], [53, MAJ], [55, MIN], [53, MAJ], [50, MAJ], [55, MIN]],
+    bass: [43, 41, 39, 41, 43, 41, 38, 43], bassRhythm: 'eighth', bassFn: bassSaw, bassVol: 0.07,
+    pad: null,
+    melody: MEL_C, oddShift: -12, mel: pluck, melVol: 0.05,
+    hits: (bar, sb) => (sb === 0 || sb === 10 ? [['kick', 0.24]] : sb === 4 || sb === 12 ? [['stick', 0.08]] : []),
+    extraType: 'stick', kf: 95, kf2: 45, kd: 0.3
+});
+const DUN_D = mk({
+    chords: [[38, MIN], [46, MAJ], [41, MAJ], [48, MAJ], [38, MIN], [46, MAJ], [48, MAJ], [38, MIN]],
+    bass: [38, 46, 41, 48, 38, 46, 48, 38], bassFn: bassSaw, bassVol: 0.085,
+    pad: { oct: 12, vol: 0.008 },
+    melody: MEL_D, oddShift: -12, mel: brass, melVol: 0.05,
+    hits: (bar, sb) => (sb === 0 ? [['kick', 0.3]] : sb === 8 ? [['tom', 0.14]] : []),
+    extraType: 'tom', kf: 92, kf2: 44, kd: 0.4
+});
+const DUN_E = mk({
+    chords: [[52, MIN], [45, MIN], [48, MAJ], [47, MAJ], [52, MIN], [45, MIN], [48, MAJ], [52, MIN]],
+    bass: [40, 33, 36, 35, 40, 33, 36, 40], bassFn: bassSub, bassVol: 0.2,
+    pad: { oct: 12, vol: 0.007 },
+    melody: MEL_E, oddShift: -12, mel: piano, melVol: 0.09,
+    hits: (bar, sb) => (sb === 0 ? [['tom', 0.08]] : []),
+    extraType: null
+});
+
+// ----- Cripta A a E (estilo masmorra, modos frígio/menor harmônico/dórico) -----
+const MEL_CA = [
+    [0, 74, 6], [8, 70, 4], [12, 69, 4],
+    [16, 67, 4], [20, 70, 4], [24, 75, 8],
+    [32, 74, 4], [36, 77, 4], [40, 74, 8],
+    [48, 72, 4], [52, 67, 4], [56, 64, 8],
+    [64, 62, 6], [70, 65, 2], [72, 69, 4], [76, 74, 4],
+    [80, 75, 8], [88, 72, 4], [92, 70, 4],
+    [96, 70, 4], [100, 74, 4], [104, 77, 8],
+    [112, 74, 4], [116, 70, 4], [120, 69, 8]
+];
+const MEL_CB = [
+    [0, 69, 8], [12, 72, 4],
+    [16, 74, 8], [28, 69, 4],
+    [32, 68, 4], [40, 64, 8],
+    [48, 69, 16],
+    [64, 76, 8], [76, 72, 4],
+    [80, 77, 8], [92, 72, 4],
+    [96, 68, 4], [100, 71, 4], [104, 68, 8],
+    [112, 69, 16]
+];
+const MEL_CC = [
+    [0, 64, 4], [4, 67, 4], [8, 71, 4], [12, 64, 4],
+    [16, 65, 4], [20, 69, 4], [24, 72, 8],
+    [32, 71, 4], [36, 67, 4], [40, 64, 4], [44, 62, 4],
+    [48, 62, 8], [56, 65, 4], [60, 64, 4],
+    [64, 64, 4], [68, 71, 4], [72, 76, 4], [76, 71, 4],
+    [80, 77, 4], [84, 72, 4], [88, 69, 8],
+    [96, 69, 4], [100, 72, 4], [104, 76, 4], [108, 72, 4],
+    [112, 67, 4], [116, 71, 4], [120, 64, 8]
+];
+const MEL_CD = [
+    [0, 67, 12], [12, 63, 4],
+    [16, 72, 8], [24, 68, 8],
+    [32, 71, 8], [40, 67, 8],
+    [48, 67, 16],
+    [64, 60, 8], [72, 63, 4], [76, 67, 4],
+    [80, 72, 8], [88, 68, 8],
+    [96, 71, 8], [104, 67, 8],
+    [112, 64, 4], [116, 60, 12]
+];
+const MEL_CE = [
+    [0, 78, 2], [2, 78, 2], [4, 81, 2], [6, 78, 2], [8, 73, 4], [12, 69, 4],
+    [16, 74, 2], [18, 78, 2], [20, 81, 2], [22, 86, 2], [24, 81, 4], [28, 78, 4],
+    [32, 76, 4], [36, 80, 4], [40, 83, 4], [44, 80, 4],
+    [48, 81, 8], [56, 78, 4], [60, 74, 4],
+    [64, 78, 2], [66, 81, 2], [68, 85, 2], [70, 81, 2], [72, 78, 4], [76, 73, 4],
+    [80, 74, 4], [84, 78, 4], [88, 81, 8],
+    [96, 73, 4], [100, 76, 4], [104, 80, 4], [108, 73, 4],
+    [112, 78, 4], [116, 74, 4], [120, 69, 4], [124, 78, 4]
+];
+const CRY_A = mk({
+    chords: [[50, MIN], [51, MAJ], [50, MIN], [48, MAJ], [50, MIN], [51, MAJ], [46, MAJ], [50, MIN]],
+    bass: [38, 39, 38, 36, 38, 39, 34, 38], bassFn: bassSaw, bassVol: 0.08,
+    pad: { oct: 0, vol: 0.008 },
+    melody: MEL_CA, oddShift: -12, mel: flute, melVol: 0.06,
+    hits: (bar, sb) => (sb === 0 && bar % 2 === 0 ? [['tom', 0.18]] : []),
+    extraType: 'tom'
+});
+const CRY_B = mk({
+    chords: [[45, MIN], [50, MIN], [52, MAJ], [45, MIN], [45, MIN], [41, MAJ], [52, MAJ], [45, MIN]],
+    bass: [33, 38, 40, 33, 33, 29, 40, 33], bassFn: bassSub, bassVol: 0.28,
+    pad: { oct: 12, vol: 0.008 },
+    melody: MEL_CB, oddShift: -12, mel: bellLow, melVol: 0.14,
+    hits: (bar, sb) => (sb === 0 && (bar === 0 || bar === 4) ? [['kick', 0.22]] : []),
+    kf: 52, kf2: 28, kd: 1.1
+});
+const CRY_C = mk({
+    chords: [[52, MIN], [53, MAJ], [52, MIN], [50, MIN], [52, MIN], [53, MAJ], [45, MIN], [52, MIN]],
+    bass: [40, 41, 40, 38, 40, 41, 33, 40], bassRhythm: 'eighth', bassFn: bassSaw, bassVol: 0.075,
+    pad: null,
+    melody: MEL_CC, oddShift: -12, mel: lead, melVol: 0.06,
+    hits: (bar, sb) => (sb === 0 || sb === 8 ? [['kick', 0.25]] : sb === 4 || sb === 12 ? [['tom', 0.1]] : []),
+    extraType: 'tom', kf: 120, kf2: 45, kd: 0.32
+});
+const CRY_D = mk({
+    chords: [[48, MIN], [44, MAJ], [43, MAJ], [48, MIN], [48, MIN], [41, MIN], [43, MAJ], [48, MIN]],
+    bass: [36, 32, 31, 36, 36, 29, 31, 36], bassFn: bassSub, bassVol: 0.26,
+    pad: { oct: 0, vol: 0.008 },
+    melody: MEL_CD, oddShift: -12, mel: flute, melVol: 0.07,
+    hits: (bar, sb) => (sb % 4 === 0 ? [['tom', sb === 8 ? 0.1 : sb === 0 ? 0.12 : 0.07]] : []),
+    extraType: 'tom'
+});
+const CRY_E = mk({
+    chords: [[54, MIN], [50, MAJ], [52, MAJ], [54, MIN], [54, MIN], [50, MAJ], [49, MIN], [54, MIN]],
+    bass: [42, 38, 40, 42, 42, 38, 37, 42], bassRhythm: 'eighth', bassFn: bassSaw, bassVol: 0.07,
+    pad: { oct: 0, vol: 0.007 },
+    melody: MEL_CE, oddShift: -12, mel: pluck, melVol: 0.05,
+    hits: (bar, sb) => (sb === 0 || sb === 8 ? [['kick', 0.18]] : sb === 6 || sb === 10 ? [['stick', 0.06]] : []),
+    extraType: 'stick', kf: 110, kf2: 45, kd: 0.3
+});
+
+// ----- Chefes 2 a 10 (dados). Acordes + motivo em "passo:grau:duração[:oitava]" por compasso. -----
+// Grau = índice do acorde (0 raiz, 1 terça, 2 quinta). Fase 2 = tier III (+12% tempo, camadas extras).
+function fromBars(chords, bars) {
+    const ev = [];
+    bars.forEach((txt, b) => {
+        const [root, ints] = chords[b];
+        for (const tok of txt.split(' ')) {
+            const [s, d, l, o] = tok.split(':').map(Number);
+            ev.push([b * 16 + s, root + 24 + ints[d] + 12 * (o || 0), l]);
+        }
+    });
+    return ev;
+}
+function boss(o) {
+    if (o.bars) o.melody = fromBars(o.chords, o.bars);
+    if (o.soft) o.melody = o.melody.map(([s, m, l]) => [s, m - 12, l]);
+    o.oddShift = o.oddShift === undefined ? -12 : o.oddShift;
+    return mk(o);
+}
+// Desafinação crescente: os dois saws se afastam ao longo de 30 s e recomeçam.
+function corrupt(c, d, m, t, dur, vol) {
+    const dr = 6 + ((t % 30) * 1.2);
+    const g = c.createGain(); shape(g, t, dur, vol, 0.02, 0.1);
+    const fl = c.createBiquadFilter(); fl.type = 'lowpass'; fl.Q.value = 2;
+    fl.frequency.setValueAtTime(900 * OPEN, t); fl.frequency.linearRampToValueAtTime(2200 * OPEN, t + dur * 0.4);
+    fl.connect(g); g.connect(d);
+    for (const det of [-dr, dr]) {
+        const o = c.createOscillator(); o.type = 'sawtooth';
+        o.frequency.value = mtof(m); o.detune.value = det + (Math.random() * 2 - 1) * 4;
+        o.connect(fl); o.start(t); o.stop(t + dur + 0.05);
+    }
+}
+// Timbres suaves para chefes: triângulo com um saw atenuado e lowpass sob teto de 1.5 kHz.
+function brassSoft(c, d, m, t, dur, vol) {
+    const g = c.createGain(); shape(g, t, dur, vol, 0.03, 0.15);
+    const fl = c.createBiquadFilter(); fl.type = 'lowpass'; fl.Q.value = 1;
+    fl.frequency.setValueAtTime(Math.min(700 * OPEN, 1200), t);
+    fl.frequency.linearRampToValueAtTime(Math.min(1100 * OPEN, 1500), t + 0.1);
+    fl.connect(g); g.connect(d);
+    const a = c.createOscillator(); a.type = 'triangle'; a.frequency.value = mtof(m); a.detune.value = -4;
+    const b = c.createOscillator(); b.type = 'sawtooth'; b.frequency.value = mtof(m); b.detune.value = 4;
+    const gb = c.createGain(); gb.gain.value = 0.35;
+    a.connect(fl); b.connect(gb); gb.connect(fl);
+    a.start(t); b.start(t); a.stop(t + dur + 0.05); b.stop(t + dur + 0.05);
+}
+function pluckSoft(c, d, m, t, dur, vol) {
+    V(c, d, { type: 'triangle', f: mtof(m), t, dur, vol, lp: Math.min(1000 * OPEN, 1000), lp2: 500, q: 1.2, a: 0.004 });
+}
+// Sino suave para o Espectro: FM com índice baixo (menos harmônicos agudos).
+function bellSoft(c, d, m, t, dur, vol) {
+    FM(c, d, { f: mtof(m), t, dur, vol, ratio: 2.76, index: 0.25, a: 0.004 });
+}
+function stabSoft(c, d, m, t, dur, vol) {
+    V(c, d, { type: 'triangle', f: mtof(m), t, dur, vol, lp: Math.min(1100 * OPEN, 1500), lp2: 1200, q: 1.2, a: 0.006 });
+    V(c, d, { type: 'sawtooth', f: mtof(m), t, dur, vol: vol * 0.35, lp: 1000, lp2: 1200, q: 1.2, a: 0.006 });
+}
+// Desafinação crescente com triângulos (versão suave do corrupt).
+function corruptSoft(c, d, m, t, dur, vol) {
+    const dr = 6 + ((t % 30) * 1.2);
+    const g = c.createGain(); shape(g, t, dur, vol, 0.02, 0.1);
+    const fl = c.createBiquadFilter(); fl.type = 'lowpass'; fl.Q.value = 1;
+    fl.frequency.setValueAtTime(Math.min(900 * OPEN, 1300), t);
+    fl.frequency.linearRampToValueAtTime(Math.min(1300 * OPEN, 1300), t + dur * 0.4);
+    fl.connect(g); g.connect(d);
+    for (const det of [-dr, dr]) {
+        const o = c.createOscillator(); o.type = 'triangle';
+        o.frequency.value = mtof(m); o.detune.value = det + (Math.random() * 2 - 1) * 4;
+        o.connect(fl); o.start(t); o.stop(t + dur + 0.05);
+    }
+}
+
+const BOSS_NAMES = ['Guarda das Sombras', 'Senhor das Trevas', 'Arauto da Morte', 'Colosso de Pedra', 'Espectro Ancestral',
+    'Devorador de Almas', 'Senhor dos Ossos', 'Demônio das Profundezas', 'O Corrompido', 'O Guardião Final'];
+// Motivo do Guardião: começa com o contorno de Masmorra A (MEL_A) transposto -5 semitons.
+const MEL_GF = [
+    [0, 67, 6], [6, 70, 2], [8, 74, 4], [12, 70, 2], [14, 69, 2],
+    [16, 67, 4], [20, 70, 4], [24, 74, 8],
+    [32, 72, 4], [36, 70, 4], [40, 67, 4], [44, 63, 4],
+    [48, 62, 8], [56, 65, 4], [60, 70, 4],
+    [64, 67, 6], [70, 70, 2], [72, 74, 4], [76, 70, 4],
+    [80, 69, 4], [84, 67, 4], [88, 74, 8],
+    [96, 75, 4], [100, 74, 4], [104, 70, 4], [108, 67, 4],
+    [112, 63, 8], [120, 67, 4], [124, 62, 4]
+];
+const BOSS_DEF = [
+    { name: 'Senhor das Trevas', bpm: 128, gain: [0.383, 0.383, 0.375], send: 0.3, P: boss({ soft: true,
+        chords: [[45, MIN], [41, MAJ], [52, MAJ], [45, MIN], [45, MIN], [50, MIN], [52, MAJ], [45, MIN]],
+        bass: [33, 29, 40, 33, 33, 38, 40, 33], bpat: 'B.B.B.B.B.B.B.B.', bassFn: bassSaw, bassVol: 0.08,
+        pad: { oct: 0, vol: 0.006 }, pat: 'K.k.K.k.K.k.K.k.', pat2: 'K..kK.k.K..kK.k.', brk: true,
+        bars: ['0:0:6 8:1:4 12:2:4', '16:0:4 20:1:4 24:2:8', '32:0:4 36:1:4 40:2:4 44:0:4', '48:0:8 56:2:4 60:1:4',
+            '64:0:6 72:2:2 74:1:6', '80:0:4 84:1:4 88:2:8', '96:1:4 100:2:4 104:0:8', '112:0:4 116:1:4 120:2:4 124:0:4'],
+        mel: brassSoft, melVol: 0.05, extraType: 'clap', kf: 110, kf2: 40, kd: 0.3 }) },
+    { name: 'Arauto da Morte', bpm: 116, gain: [0.39, 0.39, 0.378], send: 0.3, P: boss({ soft: true,
+        chords: [[48, MIN], [44, MAJ], [39, MAJ], [46, MAJ], [48, MIN], [44, MAJ], [46, MAJ], [48, MIN]],
+        bass: [36, 32, 27, 34, 36, 32, 34, 36], bpat: 'B...B...B...B...', bassFn: bassSub, bassVol: 0.22,
+        pad: { oct: 12, vol: 0.006 }, pat: 'K...T...K...T...', pat2: 'K...T.t.K...T..t', brk: true,
+        bars: ['0:0:8 12:1:4', '16:0:4 20:2:4 24:1:8', '32:1:4 36:2:4 40:0:8', '48:2:16',
+            '64:0:6 72:1:4 76:0:4', '80:2:8 88:1:8', '96:0:4 100:1:4 104:2:8', '112:1:8 120:0:8'],
+        mel: bellLow, melVol: 0.1, extraType: 'tom', kf: 90, kf2: 40, kd: 0.35 }) },
+    { name: 'Colosso de Pedra', bpm: 112, gain: [0.28, 0.28, 0.279], send: 0.3, P: boss({ soft: true,
+        chords: [[53, MIN], [49, MAJ], [51, MAJ], [53, MIN], [53, MIN], [46, MAJ], [48, MAJ], [53, MIN]],
+        bass: [41, 37, 39, 41, 41, 34, 36, 41], bpat: 'B...B...B...B...', bassFn: bassSub, bassVol: 0.3,
+        pad: { oct: 0, vol: 0.006 }, pat: 'K.T.T.T.K.T.T.T.', pat2: 'K.T.T.T.K.T.TtT.', brk: true,
+        bars: ['0:0:8 8:1:4 12:0:4', '16:1:8 24:2:8', '32:0:4 36:1:4 40:2:8', '48:1:16',
+            '64:0:8 72:2:4 76:1:4', '80:0:8 88:2:8', '96:1:4 100:0:4 104:2:8', '112:0:8 120:1:4 124:0:4'],
+        mel: brassSoft, melVol: 0.05, extraType: 'tom', kf: 80, kf2: 38, kd: 0.45 }) },
+    { name: 'Espectro Ancestral', bpm: 124, gain: [0.419, 0.419, 0.404], send: 0.3, P: boss({ soft: true,
+        chords: [[55, MIN], [51, MAJ], [48, MIN], [50, MAJ], [55, MIN], [51, MAJ], [50, MAJ], [55, MIN]],
+        bass: [43, 39, 36, 38, 43, 39, 38, 43], bpat: 'B...F...B...F...', bassFn: bassSub, bassVol: 0.2,
+        pad: { oct: 12, vol: 0.005 }, pat: 'K...C...K...C.k.', pat2: 'K...C...K...C...', brk: true,
+        bars: ['0:0:8:1 8:1:4:1 12:2:4:1', '16:0:4:1 20:1:4:1 24:2:8:1', '32:0:8:1 40:1:8:1', '48:2:16',
+            '64:0:8:1 72:2:4:1 76:1:4:1', '80:1:8:1 88:0:8:1', '96:0:4:1 100:1:4:1 104:2:8:1', '112:0:8:1 120:1:8:1'],
+        mel: bellSoft, melVol: 0.08, extraType: 'clap', kf: 100, kf2: 40, kd: 0.3 }) },
+    { name: 'Devorador de Almas', bpm: 132, gain: [0.403, 0.403, 0.39], send: 0.3, P: boss({ soft: true,
+        chords: [[52, MIN], [51, MAJ], [50, MIN], [49, MAJ], [52, MIN], [51, MAJ], [50, MIN], [52, MIN]],
+        bass: [40, 39, 38, 37, 40, 39, 38, 40], bpat: 'B.B.B.B.B.B.B.B.', bassFn: bassSaw, bassVol: 0.08,
+        pad: null, pat: 'K.k.k.K.k.k.K.k.k.', pat2: 'K.k.k.k.K.k.k.k.k.', brk: true,
+        bars: ['0:0:2 2:0:2 4:1:2 6:2:2 8:1:4 12:2:4', '16:0:4 20:2:4 24:1:2 26:0:2 28:1:4',
+            '32:2:2 34:1:2 36:0:2 38:2:2 40:1:8', '48:0:16',
+            '64:0:2 66:1:2 68:2:2 70:1:2 72:0:4 76:2:4', '80:1:4 84:2:4 88:0:8', '96:2:2 98:1:2 100:0:4 104:2:8', '112:0:4 116:1:4 120:2:8'],
+        mel: pluckSoft, melVol: 0.05, extraType: 'clap', kf: 100, kf2: 40, kd: 0.3 }) },
+    { name: 'Senhor dos Ossos', bpm: 138, gain: [0.305, 0.305, 0.31], send: 0.3, P: boss({ soft: true,
+        chords: [[50, MIN], [46, MAJ], [48, MAJ], [52, MAJ], [50, MIN], [46, MAJ], [48, MAJ], [50, MIN]],
+        bass: [38, 34, 36, 40, 38, 34, 36, 38], bpat: 'B.B...B.B.B...B.', bassFn: bassSub, bassVol: 0.25,
+        pad: null, pat: 'K...C.C.K...C.C.', pat2: 'K.C.C...K.C.C.C.', brk: true,
+        bars: ['0:0:2 3:1:1 6:2:2 8:0:4 12:1:2 14:2:2', '16:1:2 19:0:1 22:2:2 24:1:4 28:0:4',
+            '32:0:2 35:2:1 38:1:2 40:2:4 44:1:4', '48:0:8 56:2:4 60:0:4',
+            '64:0:2 67:1:1 70:2:2 72:0:4 76:1:4', '80:1:2 83:0:1 86:2:2 88:0:4 92:2:4', '96:2:2 99:1:1 102:0:2 104:1:4 108:2:4', '112:0:4 116:2:4 120:1:2 122:0:2 124:0:4'],
+        mel: pluckSoft, melVol: 0.06, extraType: 'clap', kf: 110, kf2: 42, kd: 0.28 }) },
+    { name: 'Demônio das Profundezas', bpm: 150, gain: [0.433, 0.433, 0.416], send: 0.3, P: boss({ soft: true,
+        chords: [[52, MAJ], [53, MAJ], [52, MAJ], [47, MAJ], [52, MAJ], [53, MAJ], [48, MAJ], [52, MAJ]],
+        bass: [40, 41, 40, 35, 40, 41, 36, 40], bpat: 'B.B.B.B.B.B.B.B.', bassFn: bassSaw, bassVol: 0.08,
+        pad: null, pat: 'K...K...K...K...', pat2: 'K...K...K.k.K.kk', brk: true,
+        bars: ['0:0:2 2:1:2 4:2:4 8:1:2 10:0:6', '16:0:2 18:1:2 20:2:4 24:1:4 28:0:4', '32:1:2 34:2:2 36:0:4 40:2:4 44:0:4', '48:0:8 56:2:8',
+            '64:0:2 66:1:2 68:2:4 72:1:2 74:0:6', '80:1:2 82:2:2 84:0:4 88:1:4 92:2:4', '96:0:2 98:1:2 100:2:4 104:1:4 108:0:4', '112:2:4 116:1:4 120:0:8'],
+        mel: brassSoft, melVol: 0.05, extraType: 'tom', kf: 96, kf2: 38, kd: 0.25 }) },
+    { name: 'O Corrompido', bpm: 120, gain: [0.405, 0.405, 0.379], send: 0.3, P: boss({ soft: true,
+        chords: [[50, [0, 1, 6]], [46, [0, 5, 6]], [52, [0, 1, 6]], [47, [0, 4, 6]], [50, [0, 1, 6]], [46, [0, 5, 6]], [53, [0, 1, 6]], [50, [0, 1, 6]]],
+        bass: [38, 34, 40, 35, 38, 34, 41, 38], bpat: 'B...B.B...B.B...', bassFn: bassSaw, bassVol: 0.08,
+        pad: null, pat: 'K..K..K.K..K..K.', pat2: 'K.K..K..K.K..K..', brk: true,
+        bars: ['0:0:3 3:2:1 4:1:4 8:0:2 10:2:6', '16:1:3 19:0:1 20:2:4 24:1:8', '32:2:2 34:0:2 36:1:4 40:0:8', '48:1:5 53:2:3 56:0:8',
+            '64:0:3 67:2:1 68:1:4 72:0:2 74:2:6', '80:2:3 83:1:1 84:0:4 88:2:8', '96:1:2 98:0:2 100:2:4 104:1:8', '112:0:4 116:2:4 120:1:8'],
+        mel: corruptSoft, melVol: 0.05, extraType: 'tom', kf: 100, kf2: 40, kd: 0.3 }) },
+    { name: 'O Guardião Final', bpm: 128, gain: [0.399, 0.399, 0.373], send: 0.3, P: boss({ soft: true,
+        chords: [[48, MIN], [44, MAJ], [39, MAJ], [46, MAJ], [48, MIN], [44, MAJ], [43, MAJ], [48, MIN]],
+        bass: [36, 32, 39, 34, 36, 32, 43, 36], bpat: 'B...F...B...F...', bassFn: bassSaw, bassVol: 0.09,
+        pad: { oct: 0, vol: 0.007 }, pat: 'K...TT..K...T.T.', pat2: 'K..kK..kK..kK..k', brk: true,
+        melody: MEL_GF, mel: brassSoft, melVol: 0.06, extraType: 'tom', kf: 92, kf2: 40, kd: 0.4 }) }
+];
+
+const TRK_BOSS = {};
+BOSS_DEF.forEach((b, i) => { TRK_BOSS['boss' + (i + 2)] = { name: b.name, bpm: b.bpm, gain: b.gain, send: b.send, shelf: true, step: stepSong, P: b.P }; });
+function bossKey(n) { return 'boss' + n; }
+// Chefe do andar: andar n -> chefe n (cíclico após o 10º). Fase 1 = tier I; fase 2 = tier III.
+function pickBossTrack(floor) {
+    const n = ((Math.max(1, floor) - 1) % 10) + 1;
+    return { n, key: bossKey(n), name: BOSS_NAMES[n - 1], phase: 1, tier: 1 };
+}
+
+
+// Gains: [I, II, III] por faixa (calibrados por medição, alvo RMS ~ -27 dBFS).
+const TRK = {
+    atual:   { name: 'Atual (setInterval, aleatório)', bpm: null, stepDur: 0.52, gain: [1, 1, 1], send: 0.34, step: stepOld },
+    dungeonA:{ name: 'Masmorra A (marcial)', bpm: 100, gain: [0.343, 0.338, 0.346], send: 0.3, step: stepSong, P: DUN_A },
+    dungeonB:{ name: 'Masmorra B (misteriosa)', bpm: 66, gain: [0.163, 0.161, 0.168], send: 0.35, step: stepSong, P: DUN_B },
+    dungeonC:{ name: 'Masmorra C (dançante)', bpm: 116, gain: [0.581, 0.574, 0.566], send: 0.3, step: stepSong, P: DUN_C },
+    dungeonD:{ name: 'Masmorra D (épica)', bpm: 84, gain: [0.339, 0.337, 0.337], send: 0.35, step: stepSong, P: DUN_D },
+    dungeonE:{ name: 'Masmorra E (piano melancólico)', bpm: 76, gain: [0.195, 0.203, 0.206], send: 0.4, step: stepSong, P: DUN_E },
+    cryptA:  { name: 'Cripta A (frígia, flauta)', bpm: 72, gain: [0.391, 0.398, 0.408], send: 0.6, step: stepSong, P: CRY_A },
+    cryptB:  { name: 'Cripta B (sinos graves)', bpm: 66, gain: [0.129, 0.133, 0.132], send: 0.7, step: stepSong, P: CRY_B },
+    cryptC:  { name: 'Cripta C (marcha frígia)', bpm: 96, gain: [0.402, 0.417, 0.421], send: 0.5, step: stepSong, P: CRY_C },
+    cryptD:  { name: 'Cripta D (marcha fúnebre)', bpm: 60, gain: [0.148, 0.146, 0.141], send: 0.6, step: stepSong, P: CRY_D },
+    cryptE:  { name: 'Cripta E (pizzicato)', bpm: 104, gain: [0.6, 0.587, 0.601], send: 0.5, step: stepSong, P: CRY_E },
+    boss1:   { name: 'Guarda das Sombras', bpm: 140, gain: [0.293, 0.293, 0.276], send: 0.25, shelf: true, step: stepBoss }
+};
+Object.assign(TRK, TRK_BOSS);
+// Biomas -> faixas em ordem (faixa = (andar-1) % 5).
+const BIOMES = {
+    dungeon: ['dungeonA', 'dungeonB', 'dungeonC', 'dungeonD', 'dungeonE'],
+    crypt: ['cryptA', 'cryptB', 'cryptC', 'cryptD', 'cryptE']
+};
+// Andares 1-3: tier I (base); 4-6: II; 7+: III.
+function pickTrack(biome, floor) {
+    const list = BIOMES[biome];
+    const idx = (floor - 1) % 5;
+    const tier = floor <= 3 ? 1 : floor <= 6 ? 2 : 3;
+    return { faixa: 'ABCDE'[idx], tier, key: list[idx], name: TRK[list[idx]].name };
+}
+
+
+// ---------- Atual: réplica do perfil 'dungeon' (setInterval) ----------
+const OLD_SCALE = [261.63, 311.13, 349.23, 392.00, 466.16, 523.25, 622.25, 698.46];
+const OLD_PROG = [0, 0, 3, 4];
+function padOld(c, d, f, t, dur, vol) {
+    const fl = c.createBiquadFilter(); fl.type = 'lowpass'; fl.Q.value = 3;
+    fl.frequency.setValueAtTime(300, t); fl.frequency.linearRampToValueAtTime(760, t + dur * 0.5);
+    const g = c.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(vol, t + dur * 0.35);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    fl.connect(g); g.connect(d);
+    for (const det of [-8, 8]) {
+        const o = c.createOscillator(); o.type = 'sawtooth'; o.frequency.value = f; o.detune.value = det;
+        o.connect(fl); o.start(t); o.stop(t + dur + 0.05);
+    }
+}
+function stepOld(tr, s, t) {
+    const c = tr.c, d = tr.duck;
+    const n = OLD_SCALE.length, bar = Math.floor(s / 8);
+    const rootIdx = OLD_PROG[bar % OLD_PROG.length] % n;
+    const root = OLD_SCALE[rootIdx];
+    const tones = [0, 2, 4].map(k => OLD_SCALE[(rootIdx + k) % n]);
+    if (s % 8 === 0) padOld(c, d, root, t, 4.16, 0.9 * 0.07);
+    if (s % 4 === 0) V(c, d, { type: 'sawtooth', f: root * 0.5, t, dur: 0.578, vol: 0.07, a: 0.012 });
+    const onChord = Math.random() < 0.75;
+    const note = onChord
+        ? tones[Math.floor(Math.random() * tones.length)]
+        : OLD_SCALE[(rootIdx + (Math.random() < 0.5 ? 1 : 3)) % n];
+    V(c, d, { type: 'triangle', f: note, t, dur: 0.473, vol: 0.055, a: 0.012 });
+    if (s % 8 === 0) V(c, d, { type: 'square', f: root * 2, t, dur: 0.371, vol: 0.1, a: 0.012 });
+}
+
+
+// ---------- Chefe (Ré frígio, 140 BPM) ----------
+const BOSS_CH = [[38, MIN], [38, MIN], [39, MAJ], [38, MIN], [46, MAJ], [48, MAJ], [43, MAJ], [38, MIN]];
+const BOSS_RIFF = [0, 0, 1, 0, 0, 1, 0, 6];
+function stepBoss(tr, s, t) {
+    OPEN = 1;
+    const bar0 = (s & 127) >> 4, sb0 = s & 15;
+    if (bar0 === 7 && sb0 >= 12) return; // pausa dramática de 1 tempo
+    const sw = 0.8 + 0.07 * (bar0 >> 1); // crescendo a cada 2 compassos
+    const c = tr.c, d = tr.out, dd = tr.duck, sd = tr.stepDur;
+    const L = s >> 7, p = s & 127, bar = p >> 4, sb = p & 15;
+    const [root, ints] = BOSS_CH[bar];
+    if (sb === 0) pad(c, dd, root + 12, ints, t, 16 * sd, 0.02);
+    if (sb % 2 === 0) V(c, dd, { type: 'sawtooth', f: mtof(root + BOSS_RIFF[sb >> 1]), t, dur: sd * 1.7, vol: 0.12, lp: 340, lp2: 260, q: 5, a: 0.002 });
+    if (sb % 4 === 0) {
+        V(c, d, { type: 'sine', f: 170, f2: 40, t, dur: 0.35, vol: 0.55, a: 0.002 });
+        // sidechain: o pad e o baixo recuam suavemente no kick (sem salto de ganho)
+        dd.gain.setTargetAtTime(0.3, t, 0.004);
+        dd.gain.setTargetAtTime(1, t + 0.03, 0.04);
+    }
+    if (sb === 4 || sb === 12) {
+        N(c, d, { t, dur: 0.07, vol: 0.08, f: 1200, q: 1.2 });
+        V(c, d, { type: 'triangle', f: 190, t, dur: 0.08, vol: 0.12, a: 0.002 });
+    }
+    if (sb === 14) hit(c, d, t, 'tom', 0.07 * sw, {});
+    if (sb % 2 === 1) N(c, d, { t, dur: 0.03, vol: 0.008, ft: 'bandpass', f: 3500, q: 0.8 });
+    if ((sb === 0 && (bar === 0 || bar === 4)) || (sb === 8 && (bar === 2 || bar === 6))) {
+        for (const i of ints) {
+            const f = mtof(root + 24 + i);
+            V(c, d, { type: 'triangle', f, t, dur: 0.34, vol: 0.035 * sw, lp: 1200, lp2: 1000, q: 1.2, a: 0.006 });
+            V(c, d, { type: 'sawtooth', f, t, dur: 0.34, vol: 0.02 * sw, lp: 1000, lp2: 1400, q: 1.2, a: 0.006 });
+        }
+    }
+    // trilo de tensão (b2 sobre a raiz); no ciclo ímpar também no compasso 4
+    if (sb >= 8 && (bar === 7 || (L & 1 && bar === 3)))
+        V(c, d, { type: 'triangle', f: mtof(root + 24 + (sb & 1)), t, dur: sd * 0.8, vol: 0.03 * sw, lp: 1500, a: 0.003 });
+    // fase 2 (tier III): stabs extras nos compassos ímpares
+    if (tr.tier === 3 && sb === 0 && bar % 2 === 1) for (const i of ints) stabSoft(c, d, root + 12 + i, t, 0.3, 0.025);
+}
+
+
+const SFX_NEW = {
+    warrior(c, d, t, k) {
+        N(c, d, { t, dur: 0.11, vol: 0.5, f: 1800 * k, f2: 650, q: 0.9 });
+        V(c, d, { type: 'sawtooth', f: 170 * k, f2: 65 * k, t, dur: 0.16, vol: 0.22, lp: 1400, lp2: 500, a: 0.003 });
+        V(c, d, { type: 'triangle', f: 95 * k, f2: 48, t, dur: 0.22, vol: 0.3 });
+        N(c, d, { t: t + 0.045, dur: 0.05, vol: 0.15, ft: 'highpass', f: 2600 });
+    },
+    arrow(c, d, t, k) {
+        V(c, d, { type: 'triangle', f: 260 * k, f2: 130 * k, t, dur: 0.09, vol: 0.28, lp: 2600, a: 0.002 });
+        N(c, d, { t, dur: 0.05, vol: 0.18, f: 3500 * k, f2: 2000 });
+        V(c, d, { type: 'sine', f: 1500 * k, f2: 2800 * k, t: t + 0.02, dur: 0.28, vol: 0.07, a: 0.02 });
+    },
+    mage(c, d, t, k) {
+        V(c, d, { type: 'sine', f: 600 * k, f2: 1250 * k, t, dur: 0.3, vol: 0.2, a: 0.02 });
+        V(c, d, { type: 'triangle', f: 1200 * k, f2: 2400 * k, t, dur: 0.18, vol: 0.08, a: 0.01 });
+        N(c, d, { t, dur: 0.08, vol: 0.1, ft: 'highpass', f: 5000 });
+        V(c, d, { type: 'sine', f: 2637 * k, t: t + 0.09, dur: 0.14, vol: 0.05, a: 0.004 });
+    },
+    hit(c, d, t, k) {
+        N(c, d, { t, dur: 0.012, vol: 0.4, f: 2600 * k, q: 2 });
+        V(c, d, { type: 'sine', f: 230 * k, f2: 110 * k, t, dur: 0.1, vol: 0.35, a: 0.001 });
+        V(c, d, { type: 'square', f: 340 * k, f2: 180 * k, t, dur: 0.04, vol: 0.07, lp: 1800 });
+        N(c, d, { t: t + 0.005, dur: 0.07, vol: 0.12, ft: 'lowpass', f: 900 });
+    },
+    kill(c, d, t, k) {
+        V(c, d, { type: 'sawtooth', f: 210 * k, f2: 42 * k, t, dur: 0.45, vol: 0.22, lp: 1600, lp2: 300, a: 0.004 });
+        N(c, d, { t, dur: 0.35, vol: 0.2, ft: 'lowpass', f: 1200, f2: 240 });
+        V(c, d, { type: 'sine', f: 90 * k, f2: 36, t: t + 0.06, dur: 0.35, vol: 0.25, a: 0.003 });
+    },
+    coin(c, d, t, k) {
+        V(c, d, { type: 'sine', f: 1046 * k, t, dur: 0.3, vol: 0.16, a: 0.001 });
+        V(c, d, { type: 'sine', f: 2093 * k, t, dur: 0.12, vol: 0.04, a: 0.001 });
+        V(c, d, { type: 'sine', f: 1568 * k, t: t + 0.06, dur: 0.4, vol: 0.14, a: 0.001 });
+        N(c, d, { t, dur: 0.01, vol: 0.15, ft: 'highpass', f: 8000 });
+    },
+    levelup(c, d, t, k) {
+        [72, 76, 79, 84].forEach((m, i) => {
+            const ti = t + i * 0.09;
+            V(c, d, { type: 'triangle', f: mtof(m) * k, t: ti, dur: 0.45, vol: 0.16, lp: 4000, lp2: 2000, a: 0.006 });
+            V(c, d, { type: 'sine', f: mtof(m) * 2 * k, t: ti, dur: 0.3, vol: 0.05, a: 0.006 });
+        });
+        N(c, d, { t, dur: 0.5, vol: 0.08, ft: 'highpass', f: 400, f2: 6000 });
+    },
+    hurt(c, d, t, k) {
+        V(c, d, { type: 'sine', f: 150 * k, f2: 45, t, dur: 0.32, vol: 0.4, a: 0.002 });
+        V(c, d, { type: 'sawtooth', f: 180 * k, f2: 70, t, dur: 0.12, vol: 0.12, lp: 700, a: 0.002 });
+        N(c, d, { t, dur: 0.12, vol: 0.25, ft: 'lowpass', f: 600 });
+        V(c, d, { type: 'square', f: 300 * k, f2: 120, t: t + 0.03, dur: 0.07, vol: 0.05, lp: 1200 });
+    },
+    crit(c, d, t, k) {
+        N(c, d, { t, dur: 0.01, vol: 0.35, ft: 'highpass', f: 4000 });
+        FM(c, d, { f: 1200 * k, t, dur: 0.35, vol: 0.16, ratio: 1.41, index: 2.5, a: 0.002 });
+        V(c, d, { type: 'square', f: 2200 * k, t: t + 0.02, dur: 0.05, vol: 0.05, lp: 5000, a: 0.002 });
+        V(c, d, { type: 'square', f: 3300 * k, t: t + 0.05, dur: 0.06, vol: 0.035, a: 0.002 });
+        V(c, d, { type: 'sine', f: 110 * k, f2: 50, t, dur: 0.2, vol: 0.3 });
+    },
+    chest(c, d, t, k) {
+        V(c, d, { type: 'triangle', f: 120 * k, f2: 200 * k, t, dur: 0.35, vol: 0.1, lp: 900, a: 0.05 });
+        N(c, d, { t, dur: 0.35, vol: 0.12, f: 300 * k, f2: 1100, q: 2, a: 0.05 });
+        N(c, d, { t: t + 0.36, dur: 0.02, vol: 0.25, ft: 'highpass', f: 3000 });
+        [523, 659, 784, 1047].forEach((m, i) => {
+            const ti = t + 0.42 + i * 0.07;
+            V(c, d, { type: 'sine', f: m * k, t: ti, dur: 0.5, vol: 0.12, a: 0.003 });
+            V(c, d, { type: 'sine', f: m * 2.01 * k, t: ti, dur: 0.3, vol: 0.03, a: 0.003 });
+        });
+    }
+};
+
+    // ---------- Integração com o jogo ----------
+    // Chefe do jogo -> faixa de chefe (chave do BOSS_BLUEPRINTS). magma_titan e thorn_king não têm faixa própria:
+    // 8 (Demônio, frígio agressivo, lava) e 6 (Devorador, rastejante, floresta).
+    const BP_TO_BOSS = {
+        shadow_warden: 1, dark_lord: 2, death_herald: 3, stone_colossus: 4, specter: 5,
+        soul_devourer: 6, bone_lord: 7, deep_demon: 8, corrupted: 9, final_guardian: 10,
+        magma_titan: 8, thorn_king: 6
+    };
+    const VOICE_CAP = 28;
+    let C = null, BUS = null, SFXBUS = null;
+    let enabled = false, cur = null, bossOn = false, bossKeyNow = null, bossPhase = 1;
+    let biomeOverride = null, timerId = null, voices = 0;
+
+    function init(ctx, musicBus, sfxBus) {
+        C = ctx; BUS = musicBus; SFXBUS = sfxBus;
+        if (!timerId) timerId = setTimeout(pump, 25);
+    }
+    // Só toca em jogo ativo e sem painel aberto (regra atual do jogo).
+    function gateOpen() {
+        return typeof gameState !== 'undefined' && gameState === 'PLAYING' &&
+            !(typeof _anyPanelOpen === 'function' && _anyPanelOpen());
+    }
+    function poolBiome(biome) { return (biome === 'crypt' || biome === 'lavaCave') ? 'crypt' : 'dungeon'; }
+    function desired() {
+        if (bossOn) return { key: bossKeyNow, tier: bossPhase === 2 ? 3 : 1 };
+        const biome = biomeOverride || (typeof BiomeSystem !== 'undefined' && BiomeSystem.currentBiome) || 'dungeon';
+        const floor = typeof dungeonLevel === 'number' ? dungeonLevel : 1;
+        const r = pickTrack(poolBiome(biome), floor);
+        return { key: r.key, tier: r.tier };
+    }
+    function bossNumber(bpKey, floor) {
+        if (bpKey && BP_TO_BOSS[bpKey]) return BP_TO_BOSS[bpKey];
+        return ((Math.max(1, floor) - 1) % 10) + 1; // sem blueprint (modo sem andares): ciclo 1-10
+    }
+    function newTrack(key, t0, fade, tier) {
+        const def = TRK[key];
+        tier = tier || 1;
+        const g = def.gain[tier - 1];
+        const out = C.createGain(); out.gain.value = g;
+        if (fade) { out.gain.setValueAtTime(0, t0); out.gain.linearRampToValueAtTime(g, t0 + 1); }
+        if (def.shelf) {
+            const sh = C.createBiquadFilter(); sh.type = 'highshelf'; sh.frequency.value = 4000; sh.gain.value = -4;
+            out.connect(sh); sh.connect(BUS);
+        } else out.connect(BUS);
+        const duck = C.createGain(); duck.connect(out);
+        return {
+            c: C, def, key, tier, P: def.P, out, duck, srcs: [], wind: null,
+            next: t0, step: 0, gated: false, alive: true,
+            stepDur: def.stepDur || 60 / (def.bpm * TIER_MUL[tier - 1]) / 4
+        };
+    }
+    function fadeOut(tr) {
+        if (!tr) return;
+        const now = C.currentTime;
+        tr.alive = false;
+        tr.out.gain.cancelScheduledValues(now);
+        tr.out.gain.setValueAtTime(tr.out.gain.value, now);
+        tr.out.gain.linearRampToValueAtTime(0.0001, now + 1);
+        setTimeout(() => { try { tr.out.disconnect(); tr.duck.disconnect(); } catch (e) {} }, 4000);
+    }
+    // Troca de faixa/fase com crossfade de 1 s.
+    function refresh() {
+        if (!C || !enabled) return;
+        const d = desired();
+        if (cur && cur.alive && cur.key === d.key && cur.tier === d.tier) return;
+        const now = C.currentTime;
+        fadeOut(cur);
+        cur = newTrack(d.key, now + 0.05, true, d.tier);
+        if (!gateOpen()) { // começou com jogo parado: entra mudo e sobe quando liberar
+            cur.gated = true;
+            cur.out.gain.cancelScheduledValues(now);
+            cur.out.gain.setValueAtTime(0.0001, now);
+        }
+    }
+    // Agendador: setTimeout de 25 ms; gera passos até 120 ms à frente pelo relógio do AudioContext.
+    function pump() {
+        timerId = setTimeout(pump, 25);
+        if (!C || !enabled) return;
+        refresh();
+        const tr = cur;
+        if (!tr || !tr.alive) return;
+        const now = C.currentTime;
+        if (!gateOpen()) {
+            if (!tr.gated) {
+                tr.gated = true;
+                tr.out.gain.cancelScheduledValues(now);
+                tr.out.gain.setValueAtTime(tr.out.gain.value, now);
+                tr.out.gain.linearRampToValueAtTime(0.0001, now + 0.3);
+            }
+            return;
+        }
+        if (tr.gated) { // retoma sem estalo: sobe o volume e recomeça o passo atual
+            tr.gated = false;
+            tr.out.gain.cancelScheduledValues(now);
+            tr.out.gain.setValueAtTime(0.0001, now);
+            tr.out.gain.linearRampToValueAtTime(tr.def.gain[tr.tier - 1], now + 0.5);
+            tr.next = now + 0.05;
+        }
+        if (tr.next < now) tr.next = now + 0.05; // sem rajada de notas após suspensão do contexto
+        const lim = now + 0.12;
+        while (tr.next < lim) {
+            tr.def.step(tr, tr.step, tr.next);
+            tr.step++; tr.next += tr.stepDur;
+        }
+    }
+
+    function start(biome) { biomeOverride = biome || null; enabled = true; refresh(); }
+    function stop() { enabled = false; bossOn = false; fadeOut(cur); cur = null; }
+    function bossStart(bpKey) {
+        const floor = typeof dungeonLevel === 'number' ? dungeonLevel : 1;
+        bossOn = true; bossPhase = 1; enabled = true;
+        bossKeyNow = 'boss' + bossNumber(bpKey, floor);
+        refresh();
+    }
+    function bossPhase2() { if (!bossOn) return; bossPhase = 2; refresh(); }
+    function bossEnd() { bossOn = false; bossPhase = 1; enabled = true; refresh(); }
+
+    // Camada de SFX em tempo real (limite de vozes do SND).
+    function playLayer(name, dur) {
+        if (!C || !SFXBUS || !SFX_NEW[name] || voices >= VOICE_CAP) return false;
+        voices++;
+        const gn = C.createGain(); gn.gain.value = rnd(0.08); gn.connect(SFXBUS);
+        SFX_NEW[name](C, gn, C.currentTime + 0.02, rnd(0.04));
+        setTimeout(() => { voices--; try { gn.disconnect(); } catch (e) {} }, (dur || 1.2) * 1000);
+        return true;
+    }
+
+    function status() {
+        return { enabled, boss: bossOn, phase: bossPhase, key: cur ? cur.key : null, tier: cur ? cur.tier : null,
+            steps: cur ? cur.step : 0, gated: cur ? cur.gated : null, voices };
+    }
+
+    // ---------- Renderização offline (testes) ----------
+    const NB_SR = 44100;
+    function analyzeBuf(buf) {
+        let pk = 0, ss = 0, n = 0, nan = 0;
+        const chs = [];
+        for (let ch = 0; ch < buf.numberOfChannels; ch++) chs.push(buf.getChannelData(ch));
+        for (const d of chs) for (let i = 0; i < d.length; i++) {
+            const x = d[i];
+            if (!Number.isFinite(x)) { nan++; continue; }
+            const a = Math.abs(x);
+            if (a > pk) pk = a;
+            ss += x * x; n++;
+        }
+        const r = { peakDb: +db(pk).toFixed(2), rmsDb: +db(Math.sqrt(ss / Math.max(1, n))).toFixed(2), nan };
+        return r;
+    }
+    async function renderTrack(key, tier, secs) {
+        const c = new OfflineAudioContext(2, Math.round(secs * NB_SR), NB_SR);
+        const saveC = C, saveBus = BUS;
+        C = c; BUS = c.destination;
+        try {
+            const tr = newTrack(key, 0.05, false, tier);
+            for (let s = 0; ; s++) {
+                const t = 0.05 + s * tr.stepDur;
+                if (t >= secs) break;
+                tr.def.step(tr, s, t);
+            }
+        } finally { C = saveC; BUS = saveBus; }
+        return analyzeBuf(await c.startRendering());
+    }
+    SFX_NEW.rogue = (c, d, t, k) => {
+        N(c, d, { t, dur: 0.05, vol: 0.14, f: 4500 * k, f2: 2500, ft: 'highpass', q: 0.8 });
+        V(c, d, { type: 'triangle', f: 1400 * k, f2: 900 * k, t, dur: 0.04, vol: 0.08, a: 0.002 });
+        V(c, d, { type: 'sine', f: 3000 * k, t: t + 0.02, dur: 0.02, vol: 0.03, a: 0.002 });
+    };
+    return {
+        noise: N, init, start, stop, bossStart, bossPhase2, bossEnd, playLayer, status, renderTrack
+    };
+})();
+
 window.SND = {
     ctx: null, musicGain: null, sfxGain: null, ambientTimer: null,
     // Sound variation state
@@ -12361,7 +13389,15 @@ window.SND = {
 
             this.sfxGain = this.ctx.createGain();
             this.sfxGain.gain.value = this.settings.sfx;
-            this.sfxGain.connect(this._masterGain);
+            // Teto do bus de SFX: rajadas de muitas vozes empilhadas não passam do headroom antes do limitador do master.
+            this._sfxComp = this.ctx.createDynamicsCompressor();
+            this._sfxComp.threshold.value = -10;
+            this._sfxComp.knee.value = 0;
+            this._sfxComp.ratio.value = 20;
+            this._sfxComp.attack.value = 0.001;
+            this._sfxComp.release.value = 0.05;
+            this.sfxGain.connect(this._sfxComp);
+            this._sfxComp.connect(this._masterGain);
             // Space: one procedurally generated impulse response (no external
             // asset, stays offline) shared by a send from each bus, so a single
             // convolver serves every voice instead of one per sound.
@@ -12404,6 +13440,7 @@ window.SND = {
             // forever and a blur fires during load, which wedged the game and the
             // audio muted for good in both variants tried (poll and event).
             document.addEventListener('visibilitychange', _applyAudioPause);
+            MusicEngine.init(this.ctx, this.musicGain, this.sfxGain);
         }, 'audioInit');
     },
 
@@ -12483,46 +13520,16 @@ window.SND = {
             const dy = y - player.y;
             const d = Math.hypot(dx, dy);
             if (d > 800) return; // Too far to hear
-            const maxDist = 500;
-            finalVol = vol * Math.max(0.05, 1 - (d / maxDist));
+            finalVol = vol * Math.max(0.05, 1 - (d / 500));
             pan = Math.max(-1, Math.min(1, dx / 300));
         }
-
-        const buffer = this._noiseBuffer();
-        const noise = this.ctx.createBufferSource();
-        noise.buffer = buffer;
-        noise.playbackRate.value = 0.8 + Math.random() * 0.45;
-        const filter = this.ctx.createBiquadFilter();
-        filter.type = filterType;
-        filter.frequency.value = freq;
-        const gain = this.ctx.createGain();
-        const _n0 = this.ctx.currentTime;
-        gain.gain.setValueAtTime(0.0001, _n0);
-        gain.gain.linearRampToValueAtTime(finalVol, _n0 + Math.min(0.008, dur * 0.25));
-        gain.gain.exponentialRampToValueAtTime(0.0001, _n0 + dur);
-        noise.connect(filter);
-        filter.connect(gain);
-
-        let panner = null;
-        if (pan !== 0 && this.ctx.createStereoPanner) {
-            panner = this.ctx.createStereoPanner();
-            panner.pan.value = pan;
-            gain.connect(panner);
-            panner.connect(this.sfxGain);
-        } else {
-            gain.connect(this.sfxGain);
+        const c = this.ctx;
+        let dest = this.sfxGain;
+        if (pan !== 0 && c.createStereoPanner) {
+            const p = c.createStereoPanner(); p.pan.value = pan; p.connect(this.sfxGain); dest = p;
         }
-
-        noise.start(this.ctx.currentTime, Math.random() * 0.4);
-        noise.stop(this.ctx.currentTime + dur);
-        noise.onended = () => {
-            try { noise.disconnect(); } catch(e) {}
-            try { filter.disconnect(); } catch(e) {}
-            try { gain.disconnect(); } catch(e) {}
-            if (panner) { try { panner.disconnect(); } catch(e) {} }
-        };
+        MusicEngine.noise(c, dest, { t: c.currentTime, dur, vol: finalVol, f: freq, ft: filterType, q: 1 });
     },
-
     // Exponentially decaying noise: a usable reverb tail without shipping a file.
     _buildImpulse(dur, decay) {
         const rate = this.ctx.sampleRate;
@@ -12550,12 +13557,11 @@ window.SND = {
     },
 
     playHit() {
-        this.lastHitPitch = (this.lastHitPitch + 0.1) % 0.5;
-        this.play(200 + this.lastHitPitch * 50, 'square', 0.1, 0.2);
-        this.playNoise(0.07, 0.012, 3200, 'highpass'); // transient attack
+        // Dano ao jogador (camadas: impacto, corpo grave e cauda curta)
+        MusicEngine.playLayer('hurt', 0.6);
         Vibrate.trigger('hit');
     },
-
+    playEnemyHit() { MusicEngine.playLayer('hit', 0.5); },
 
 
 
@@ -12568,12 +13574,9 @@ window.SND = {
 
 
     playKill() {
-        this.play(180, 'sawtooth', 0.35, 0.26, 'sfx', null, null, 45);
-        this.playNoise(0.16, 0.18, 900, 'lowpass');
-        this.schedule(() => this.play(70, 'triangle', 0.45, 0.16, 'sfx', null, null, 35), 90);
+        MusicEngine.playLayer('kill', 0.9);
         Vibrate.trigger('kill');
     },
-
     playPickup() {
         [660, 880, 1320].forEach((f, i) => {
             this.schedule(() => this.play(f, 'triangle', 0.12, 0.16), i * 55);
@@ -12634,165 +13637,12 @@ window.SND = {
             this._masterMusicGain.gain.setValueAtTime(musicVol, this.ctx.currentTime);
         }
     },
-    _musicInterval: null,
-    _musicStep: 0,
-    _currentMusicMode: null, // 'dungeon'|'lavaCave'|'crypt'|'forest'|'boss'
-
-    //  Music profiles per context 
-    // Chord roots per biome, as indices into that biome's scale. Each entry is
-    // one bar; the melody is drawn from the chord tones of the current bar.
-    _MUSIC_PROG: {
-        dungeon: [0, 0, 3, 4],
-        lavaCave: [0, 1, 0, 2],
-        crypt: [0, 2, 1, 3],
-        forest: [0, 3, 5, 4],
-        boss: [0, 0, 1, 0]
-    },
-    _MUSIC_PROFILES: {
-        dungeon: {
-            // C minor pentatonic  tense dungeon crawl
-            scale: [261.63, 311.13, 349.23, 392.00, 466.16, 523.25, 622.25, 698.46],
-            tempo: 520,
-            bassWave: 'sawtooth', melWave: 'triangle',
-            bassVol: 0.07, melVol: 0.055,
-            bassOctave: 0.5, melOctave: 1,
-            bassEvery: 4, accentEvery: 8,
-            accentVol: 0.1, accentWave: 'square'
-        },
-        lavaCave: {
-            // Phrygian dominant  aggressive, volcanic
-            scale: [261.63, 277.18, 329.63, 349.23, 392.00, 415.30, 466.16, 523.25],
-            tempo: 340,
-            bassWave: 'sawtooth', melWave: 'sawtooth',
-            bassVol: 0.09, melVol: 0.07,
-            bassOctave: 0.25, melOctave: 1,
-            bassEvery: 2, accentEvery: 6,
-            accentVol: 0.12, accentWave: 'sawtooth'
-        },
-        crypt: {
-            // Whole tone  eerie, unsettling
-            scale: [261.63, 293.66, 329.63, 369.99, 415.30, 466.16, 523.25, 587.33],
-            tempo: 900,
-            bassWave: 'sine', melWave: 'sine',
-            bassVol: 0.05, melVol: 0.04,
-            bassOctave: 0.5, melOctave: 1,
-            bassEvery: 6, accentEvery: 12,
-            accentVol: 0.07, accentWave: 'triangle'
-        },
-        forest: {
-            // Lydian  mysterious, organic
-            scale: [293.66, 329.63, 369.99, 392.00, 440.00, 493.88, 554.37, 587.33],
-            tempo: 600,
-            bassWave: 'triangle', melWave: 'sine',
-            bassVol: 0.04, melVol: 0.05,
-            bassOctave: 0.5, melOctave: 1,
-            bassEvery: 5, accentEvery: 10,
-            accentVol: 0.06, accentWave: 'sine'
-        },
-        boss: {
-            // Diminished  fast, dissonant, intense
-            scale: [233.08, 261.63, 311.13, 349.23, 369.99, 415.30, 466.16, 554.37],
-            tempo: 210,
-            bassWave: 'sawtooth', melWave: 'square',
-            bassVol: 0.11, melVol: 0.09,
-            bassOctave: 0.25, melOctave: 1,
-            bassEvery: 2, accentEvery: 4,
-            accentVol: 0.14, accentWave: 'sawtooth'
-        }
-    },
-
-    startMusic(mode) {
-        const target = mode || (typeof BiomeSystem !== 'undefined' ? BiomeSystem.currentBiome : 'dungeon') || 'dungeon';
-        // If already playing the same mode, do nothing
-        if(this._musicInterval && this._currentMusicMode === target) return;
-        this.stopMusic();
-        this._currentMusicMode = target;
-        this._musicStep = 0;
-        const profile = this._MUSIC_PROFILES[target] || this._MUSIC_PROFILES.dungeon;
-        this._musicInterval = setInterval(() => {
-            if(gameState === 'PLAYING' && !_anyPanelOpen()) this._playMusicNote(profile);
-        }, profile.tempo);
-    },
-
-    startBossMusic() { this.startMusic('boss'); },
-
-    stopMusic() {
-        if(this._musicInterval) {
-            clearInterval(this._musicInterval);
-            this._musicInterval = null;
-        }
-        this._currentMusicMode = null;
-    },
-
-    // Resume biome music after boss dies
-    resumeBiomeMusic() {
-        const biome = (typeof BiomeSystem !== 'undefined' ? BiomeSystem.currentBiome : 'dungeon') || 'dungeon';
-        this.startMusic(biome);
-    },
-
-    // Two detuned saws through a slow lowpass: a sustained bed under the loop.
-    _playPad(freq, dur, vol) {
-        if (!this.ctx) return;
-        const t0 = this.ctx.currentTime;
-        const filter = this.ctx.createBiquadFilter();
-        filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(300, t0);
-        filter.frequency.linearRampToValueAtTime(760, t0 + dur * 0.5);
-        filter.Q.value = 3;
-        const gain = this.ctx.createGain();
-        gain.gain.setValueAtTime(0.0001, t0);
-        gain.gain.linearRampToValueAtTime(vol, t0 + dur * 0.35);
-        gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-        filter.connect(gain);
-        gain.connect(this.musicGain);
-        if (this.musicReverb) gain.connect(this.musicReverb);
-        const oscs = [];
-        for (const detune of [-8, 8]) {
-            const osc = this.ctx.createOscillator();
-            osc.type = 'sawtooth';
-            osc.frequency.value = freq;
-            osc.detune.value = detune;
-            osc.connect(filter);
-            osc.start(t0);
-            osc.stop(t0 + dur);
-            oscs.push(osc);
-        }
-        oscs[0].onended = () => {
-            oscs.forEach(o => { try { o.disconnect(); } catch(e) {} });
-            try { filter.disconnect(); } catch(e) {}
-            try { gain.disconnect(); } catch(e) {}
-        };
-    },
-    _playMusicNote(profile) {
-        if(!this.ctx) return;
-        const scale = profile.scale;
-        const prog = (this._MUSIC_PROG && this._MUSIC_PROG[this._currentMusicMode]) || [0, 0, 3, 4];
-        const bar = Math.floor(this._musicStep / 8);
-        const rootIdx = prog[bar % prog.length] % scale.length;
-        const root = scale[rootIdx];
-        // Chord tones: the root plus a third and a fifth up the scale.
-        const tones = [0, 2, 4].map(step => scale[(rootIdx + step) % scale.length]);
-
-        // One sustained pad per bar gives the loop a harmonic floor.
-        if(this._musicStep % 8 === 0) {
-            this._playPad(root * profile.bassOctave * 2, (profile.tempo * 8) / 1000, profile.bassVol * 0.9);
-        }
-        // Bass pulse on the chord root
-        if(this._musicStep % profile.bassEvery === 0) {
-            this.play(root * profile.bassOctave, profile.bassWave, profile.tempo / 900, profile.bassVol, 'music');
-        }
-        // Melody: mostly chord tones, sometimes a step-wise passing note.
-        const onChord = Math.random() < 0.75;
-        const note = onChord
-            ? tones[Math.floor(Math.random() * tones.length)]
-            : scale[(rootIdx + (Math.random() < 0.5 ? 1 : 3)) % scale.length];
-        this.play(note * profile.melOctave, profile.melWave, profile.tempo / 1100, profile.melVol, 'music');
-        // Accent (chord root an octave up on the downbeat)
-        if(this._musicStep % profile.accentEvery === 0) {
-            this.play(root * profile.melOctave * 2, profile.accentWave, profile.tempo / 1400, profile.accentVol, 'music');
-        }
-        this._musicStep++;
-    },
+    // Música: motor por dados (MusicEngine). Mesma API pública para o resto do jogo.
+    startMusic(mode) { if (this.ctx) MusicEngine.start(mode && mode !== 'boss' ? mode : null); },
+    startBossMusic(bpKey) { if (this.ctx) MusicEngine.bossStart(bpKey); },
+    startBossPhase2() { if (this.ctx) MusicEngine.bossPhase2(); },
+    stopMusic() { MusicEngine.stop(); },
+    resumeBiomeMusic() { if (this.ctx) MusicEngine.bossEnd(); },
 
     startAmbient() {
         if(this._ambientInterval) return;
@@ -12848,38 +13698,14 @@ window.SND = {
     // Crossfade ambient sounds
     playShoot(type) {
         if (!this.ctx) return;
-        const pitchVar = (Math.random() - 0.5) * 60;
-        switch(type) {
-            case 'mage':
-                this.play(880 + pitchVar, 'sine', 0.12, 0.12);
-                this.schedule(() => this.play(1320 + pitchVar, 'sine', 0.08, 0.06), 60);
-                break;
-            case 'rogue':
-                this.play(1200 + pitchVar, 'square', 0.03, 0.08);
-                this.playNoise(0.08, 0.04, 2000, 'highpass');
-                break;
-            case 'elf':
-                // Som de arco: estalo de corda + assobio da flecha
-                this.play(900 + pitchVar, 'sine', 0.06, 0.14);
-                this.schedule(() => this.play(1400 + pitchVar, 'sine', 0.06, 0.08), 70);
-                this.playNoise(0.06, 0.05, 3000, 'highpass');
-                break;
-            case 'warrior':
-                this.play(110 + pitchVar, 'sawtooth', 0.15, 0.2);
-                this.playNoise(0.12, 0.06, 400, 'lowpass');
-                break;
-            default:
-                this.play(440 + pitchVar, 'triangle', 0.08, 0.15);
-        }
+        const name = type === 'warrior' ? 'warrior' : type === 'elf' ? 'arrow' : type === 'mage' ? 'mage' : type === 'rogue' ? 'rogue' : null;
+        if (name) MusicEngine.playLayer(name, 0.5);
+        else this.play(440 + (Math.random() - 0.5) * 60, 'triangle', 0.08, 0.15);
     },
-
     playLevelUp() {
-        this.play(523, 'sine', 0.1, 0.3);
-        this.schedule(() => this.play(659, 'sine', 0.1, 0.3), 100);
-        this.schedule(() => this.play(784, 'sine', 0.2, 0.4), 200);
+        MusicEngine.playLayer('levelup', 0.7);
         Vibrate.trigger('levelup');
     },
-
     playMutation() {
         this.play(300, 'sawtooth', 0.2, 0.25);
         this.schedule(() => this.play(600, 'sine', 0.15, 0.2), 150);
@@ -12910,12 +13736,9 @@ window.SND = {
     },
 
     playTreasure() {
-        this.play(600, 'sine', 0.1, 0.2);
-        this.schedule(() => this.play(750, 'sine', 0.1, 0.2), 80);
-        this.schedule(() => this.play(900, 'sine', 0.15, 0.3), 160);
+        MusicEngine.playLayer('chest', 1.2);
         Vibrate.trigger('pickup');
     },
-
     playEnemyDeath(type = 'normal') {
         switch(type) {
             case 'boss':
@@ -12946,10 +13769,8 @@ window.SND = {
 
 
     playCrit() {
-        this.play(800, 'square', 0.05, 0.2);
-        this.schedule(() => this.play(1000, 'sine', 0.06, 0.15), 60);
+        MusicEngine.playLayer('crit', 0.5);
     },
-
     playAchievement() {
         this.play(523, 'sine', 0.1, 0.25);
         this.schedule(() => this.play(659, 'sine', 0.1, 0.25), 100);
@@ -13066,12 +13887,8 @@ window.SND = {
 
     playCoinPickup() {
         if (!this.ctx) return;
-        const base = 880 + Math.random() * 100;
-        this.play(base, 'sine', 0.06, 0.18);
-        this.schedule(() => this.play(base * 1.25, 'sine', 0.05, 0.15), 55);
-        this.schedule(() => this.play(base * 1.5, 'sine', 0.06, 0.18), 110);
+        MusicEngine.playLayer('coin', 0.6);
     },
-
     playCraft() {
         if (!this.ctx) return;
         this.playNoise(0.25, 0.04, 600, 'bandpass');
@@ -14835,8 +15652,19 @@ const NarrativeSystem = {
         this.discovered[id] = true;
         if (Statistics) Statistics.data.loreFragments = this.getDiscoveredCount();
         addLog((window.I18n ? I18n.t('log.loreDiscovered') : ' Lore descoberta: ') + fragment.title);
+        if (typeof showToast === 'function') showToast(this._loreToastText(fragment), 'info', 6000); // ~6 s: é texto para ler
         SND.playLoreDiscover ? SND.playLoreDiscover() : SND.playAchievement();
         return true;
+    },
+
+    // Texto do toast: título + trecho (~140 caracteres) no idioma do diário.
+    // O texto completo continua no diário.
+    _loreToastText(fragment) {
+        const loc = (typeof window._loreLocalized === 'function') ? window._loreLocalized : null;
+        const title = loc ? loc(fragment, 'title') : fragment.title;
+        let text = loc ? loc(fragment, 'text') : fragment.text;
+        if (text.length > 140) text = text.slice(0, 139).replace(/\s+$/, '') + '…';
+        return '📜 ' + title + ': ' + text;
     },
 
     // ============================================================
@@ -20371,23 +21199,36 @@ const WorldSprites = (() => {
         return { body: PixelFX.get(key), halo: PixelFX.get(key + '|h') };
     };
 
-    // NPC: círculo de 9 células com contorno branco e brilho de 3 células, na cor do NPC (bake por cor)
-    const npc = color => {
-        const key = 'npc|' + color, rc = 4;
+    // NPCs: personagens em pixel art de 12x16 células (escala 3, contorno 'k' de 1 px). Cada tipo tem
+    // silhueta própria; `color` é o tom principal (capa, chapéu ou manto). `k` é a linha onde começam
+    // cabeça e ombros: no quadro 1 (idle) a cabeça sobe 1 linha até ela. O oráculo pisca o cristal (C -> K).
+    const NPC_ART = {
+        guide: { k: 6, rows: [ // Seraphina: ex-guerreira, cabelo preso, capa, ombreira metálica e espada nas costas
+            '...HHHHHH...', '..HHHHHHHH..', '..HHSSSSHHM.', '..HSSESSEHM.', '..HSSSsSSHM.', '...SSSSSSGG.',
+            '.mMMTTTTMMB.', '.mMCTTTTCMm.', '..CCTTTTCC..', '..CCBBBBCC..', '..CcTTTTcC..', '.CCcTTTTcCC.',
+            '.CCCcTTcCCC.', '..tt....tt..', '..tt....tt..', '.BBB....BBB.'],
+            pal: c => ({ k: '#14101a', H: '#6b3a1e', S: '#f2c9a0', s: '#c48e62', E: '#14141e', M: '#d5dbe3',
+                m: '#7d8694', C: c, c: PixelFX.shade(c, -0.3), T: '#7a5230', t: '#4f3320', B: '#2a1a0e', G: '#c9a227' }) },
+        merchant: { k: 9, rows: [ // Dorian: chapéu largo dourado, mochila grande nas costas e bolsa de moedas
+            '...YYYYYY...', '...YLYYyY...', '..RRRRRRRR..', 'YYYYYYYYYYYY', '...ssssss...', '...SESSES...',
+            '...SSSsSS...', '...SHHHHS...', '....SSSS....', 'PPVVVVVVVVPP', 'PPVVWWWWVVPP', 'PPVVVVVVVVPP',
+            '.PVVVVVVVVP.', '..bbbbbbbQQ.', '..tt...ttQQ.', '.BBB...BBB..'],
+            pal: c => ({ k: '#14101a', Y: c, y: PixelFX.shade(c, -0.3), L: PixelFX.shade(c, 0.45), R: '#7a2e1a',
+                s: '#c48e62', S: '#f2c9a0', E: '#14141e', H: '#4a2c14', P: '#8a5a2b', V: '#2f6f6a', W: '#e8e0d0',
+                b: '#2a1a0e', Q: '#6b4a2e', t: '#3a3a48', B: '#2a1a0e' }) },
+        oracle: { k: 7, rows: [ // Vael: manto longo até o chão, capuz, faixa branca sobre os olhos e cajado com cristal
+            '....DDDD....', '...DDDDDD.CC', '..DDDDDDDDCC', '..DDSSSSDDT.', '..DWWWWWWDT.', '..DDSSsSDDT.',
+            '...DSSSSD.T.', '..DRRRRRRDT.', '.DRRrRRrRDT.', '.DRrRRRRrDT.', 'DRRRRRRRRDT.', 'DRRrRRRRrDT.',
+            'DRRRRrRRRDT.', 'DRrRRRRRRDT.', 'DRRRRRRRRDT.', 'DDRRRRRRRDT.'],
+            pal: c => ({ k: '#14101a', D: '#6a2290', R: c, r: PixelFX.shade(c, -0.25), S: '#f2d7c4', s: '#c9a6b8',
+                W: '#ffffff', C: '#7fe8ff', K: '#ffffff', T: '#6b4a2e' }) }
+    };
+    const npc = (type, color, frame) => {
+        const art = NPC_ART[type] || NPC_ART.guide, f = frame & 1, key = 'npc|' + type + '|' + color + '|' + f;
         if (!PixelFX.get(key)) {
-            const rows = [];
-            for (let y = -rc - 1; y <= rc + 1; y++) {
-                let row = '';
-                for (let x = -rc - 1; x <= rc + 1; x++) {
-                    const d = Math.hypot(x, y);
-                    if (d > rc + 0.5) row += '.';
-                    else if (d > rc - 0.5) row += 'w';
-                    else if ((x === -2 && (y === -2 || y === -1)) || (x === -1 && y === -2)) row += 'h';
-                    else row += 'c';
-                }
-                rows.push(row);
-            }
-            PixelFX.bake(key, rows, { c: color, w: '#ffffff', h: 'rgba(255,255,255,0.45)' }, 3);
+            let rows = f ? art.rows.map((r, i) => i < art.k ? art.rows[i + 1] : r) : art.rows;
+            if (f && type === 'oracle') rows = rows.map(r => r.replace(/C/g, 'K'));
+            PixelFX.bake(key, outline(pad(rows, 1)), art.pal(color), 3);
         }
         return PixelFX.get(key);
     };
@@ -21576,6 +22417,7 @@ class Entity {
         if (source === player && this !== player && !this.isP && typeof ScreenEffects !== 'undefined') {
             ScreenEffects.onHitEnemy(finalDmg, source.x, source.y, this.x, this.y);
             ScreenEffects.impactHit(finalDmg, source.x, source.y, this.x, this.y, dmgType === 'crit');
+            SND.playEnemyHit();
         }
         
                 // Furto (ladino, v56): chance de ouro extra ao acertar um inimigo
@@ -23201,6 +24043,7 @@ class Boss extends Enemy {
                 shake = 15;
                 ScreenEffects.onBossPhase3(false);
                 if (window.SND && SND.playBossPhase2) SND.playBossPhase2();
+                if (window.SND && SND.startBossPhase2) SND.startBossPhase2(); // trilha de fase 2 (mesmo limiar: BOSS_PHASE_2_THRESHOLD)
                 this.trySummonMinions(m);
                 this._spawnFirePillars(p, m);
             } else if (_np === 3) {
@@ -25922,14 +26765,6 @@ class Player extends Entity {
 // NPC SYSTEM - Friendly characters that spawn in dungeons
 // Types: guide, merchant, oracle
 
-// ============================================================
-// Merchant name pool
-// ============================================================
-const MERCHANT_NAMES = [
-    'Dorian', 'Fen', 'Mira', 'Corvus', 'Talise',
-    'Brek', 'Sela', 'Oryn', 'Voss', 'Calia'
-];
-
 // Class-specific guide tips (keys into the i18n dictionary)
 const NPC_CLASS_TIPS = {
     warrior: ['npc.classtip.warrior1', 'npc.classtip.warrior2', 'npc.classtip.warrior3'],
@@ -26218,7 +27053,7 @@ class NPC {
         this.type = type; // 'guide' | 'merchant' | 'oracle'
         this.alive = true;
         this.interacted = false;
-        this.lifetime = 1200; // 20 seconds at 60fps
+        this.lifetime = 2400; // 40 seconds at 60fps
         this.nearPlayer = false;
         this.indicatorAnim = 0;
 
@@ -26227,18 +27062,17 @@ class NPC {
             this.color = '#44aaff';
             this.nameColor = '#88ccff';
             this.indicator = '?';
-            this.displayName = window.I18n ? I18n.t('npc.guide.name') : 'Guia';
+            this.displayName = window.I18n ? I18n.t('npc.guide.name') : 'Seraphina, a Guia';
         } else if (type === 'merchant') {
             this.color = '#ffcc44';
             this.nameColor = '#ffdd88';
             this.indicator = '$';
-            const mName = MERCHANT_NAMES[Math.floor(Math.random() * MERCHANT_NAMES.length)];
-            this.displayName = window.I18n ? I18n.t('npc.merchant.name') : mName;
+            this.displayName = window.I18n ? I18n.t('npc.merchant.name') : 'Dorian, o Mercador';
         } else { // oracle
             this.color = '#cc44ff';
             this.nameColor = '#dd88ff';
             this.indicator = '!';
-            this.displayName = window.I18n ? I18n.t('npc.oracle.name') : 'Oráculo';
+            this.displayName = window.I18n ? I18n.t('npc.oracle.name') : 'Vael, o Oráculo';
         }
 
         // Merchant wares (dynamic based on dungeon level/gameMode)
@@ -26285,6 +27119,13 @@ class NPC {
     // Context-aware tips based on player progress
     _getContextualTip() {
         if (!window.player) return window.I18n ? I18n.t(NPC_TIPS[0]) : NPC_TIPS[0];
+
+        // 50%: fala de história do próprio tipo de NPC (guide/merchant/oracle)
+        if (Math.random() < 0.5) {
+            const storyKey = 'npc.story.' + this.type + (1 + Math.floor(Math.random() * 4));
+            return window.I18n ? I18n.t(storyKey) : storyKey;
+        }
+
         const tips = [];
 
         // Class-specific tips
@@ -26458,11 +27299,13 @@ class NPC {
 
         ctx.save();
 
-        // Corpo em pixel art: sprite por cor (contorno branco e brilho de células)
-        PixelFX.draw(ctx, WorldSprites.npc(this.color), sx, sy);
+        // Corpo em pixel art (54 px de altura): 2 quadros de idle; com reducedMotion, quadro 0 fixo
+        const npcReduced = !!(window.GameSettings && GameSettings.reducedMotion);
+        const npcFrame = npcReduced ? 0 : Math.floor(this.indicatorAnim * 1.5) % 2;
+        PixelFX.draw(ctx, WorldSprites.npc(this.type, this.color, npcFrame), sx, sy);
 
-        // Floating indicator above head
-        const bobY = sy - 28 + Math.sin(this.indicatorAnim) * 4;
+        // Floating indicator above head (acima da cabeça: metade da altura do sprite + 10 px)
+        const bobY = sy - 37 + Math.sin(this.indicatorAnim) * 4;
         PixelFX.ring(ctx, sx, bobY, 10, this.color, 3);
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 12px ' + COLORS.CANVAS_FONT;
@@ -28135,6 +28978,8 @@ window.SkillTreeUI = SkillTreeUI;
         const translation = LORE_LOCALIZATION[locale] && LORE_LOCALIZATION[locale].entries[entry.id];
         return translation && translation[fieldIndex] ? translation[fieldIndex] : entry[field];
     }
+    // Exposto para o toast de descoberta (NarrativeSystem.discover) usar o mesmo idioma do diário.
+    window._loreLocalized = _loreLocalized;
 
     const UIManager = {
         overlay: null,
@@ -29641,6 +30486,109 @@ renderAchievementsContent() {
 // v=2 - CLEAN REWRITE
 Debug.info("====== BOOTSTRAP.JS IS EXECUTING ======");
 
+// ============================================================
+// PRÓLOGO: 3 páginas só na primeira run da vida do jogador.
+// Enquanto visible, _anyPanelOpen/isAnyPanelOpen congelam a simulação.
+// Flag no StorageManager (RAW 'prologue'); sem localStorage, reaparece.
+// ============================================================
+const PrologueSystem = {
+    visible: false,
+    page: 0,
+    PAGE_KEYS: ['prologue.p1', 'prologue.p2', 'prologue.p3'],
+    _bound: false,
+    _hideTimer: null,
+
+    _el(id) { return document.getElementById(id); },
+
+    hasSeen() {
+        return StorageManager.getRaw('prologue', null) !== null;
+    },
+
+    markSeen() {
+        StorageManager.setRaw('prologue', '1');
+    },
+
+    _bind() {
+        if (this._bound) return;
+        this._bound = true;
+        const self = this;
+        // Captura em window: roda antes dos listeners de jogo e do tutorial,
+        // que não recebem as teclas enquanto o prólogo está aberto.
+        window.addEventListener('keydown', function(e) {
+            if (!self.visible) return;
+            e.stopImmediatePropagation();
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                self.close();
+            } else if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+                // Com foco num botão, o clique nativo já age (evita avançar duas vezes).
+                if (e.target && e.target.tagName === 'BUTTON') return;
+                e.preventDefault();
+                self.advance();
+            } else if (e.key === 'Tab') {
+                e.preventDefault();
+                const s = self._el('prologue-skip'), n = self._el('prologue-next');
+                if (s && n) (document.activeElement === n ? s : n).focus();
+            }
+        }, true);
+        const overlay = this._el('prologue-overlay');
+        // Toques e cliques no prólogo não chegam ao tutorial (listeners no document).
+        if (overlay) ['mousedown', 'touchstart'].forEach(function(t) {
+            overlay.addEventListener(t, function(e) { e.stopPropagation(); });
+        });
+        const next = this._el('prologue-next'), skip = this._el('prologue-skip');
+        if (next) next.addEventListener('click', function() { self.advance(); });
+        if (skip) skip.addEventListener('click', function() { self.close(); });
+    },
+
+    _render() {
+        const p = this._el('prologue-text');
+        if (p) p.textContent = window.I18n ? I18n.t(this.PAGE_KEYS[this.page]) : this.PAGE_KEYS[this.page];
+    },
+
+    show() {
+        const el = this._el('prologue-overlay');
+        if (!el || this.visible) return;
+        this._bind();
+        if (this._hideTimer) { clearTimeout(this._hideTimer); this._hideTimer = null; }
+        this.visible = true;
+        this.page = 0;
+        this._render();
+        const reduced = !!(window.GameSettings && GameSettings.reducedMotion);
+        el.style.pointerEvents = '';
+        el.style.transition = reduced ? 'none' : 'opacity 0.35s ease';
+        el.style.opacity = reduced ? '1' : '0';
+        el.style.display = 'flex';
+        if (!reduced) requestAnimationFrame(function() { el.style.opacity = '1'; });
+        const next = this._el('prologue-next');
+        if (next) next.focus();
+    },
+
+    advance() {
+        if (!this.visible) return;
+        if (this.page < this.PAGE_KEYS.length - 1) {
+            this.page++;
+            this._render();
+            return;
+        }
+        this.close();
+    },
+
+    close() {
+        if (!this.visible) return;
+        this.visible = false;
+        this.markSeen();
+        const el = this._el('prologue-overlay');
+        if (!el) return;
+        const reduced = !!(window.GameSettings && GameSettings.reducedMotion);
+        if (reduced) { el.style.display = 'none'; return; }
+        el.style.pointerEvents = 'none';
+        el.style.opacity = '0';
+        this._hideTimer = setTimeout(function() { el.style.display = 'none'; }, 350);
+    }
+};
+window.PrologueSystem = PrologueSystem;
+
 window.GameBootstrap = {
     start(cls) {
         // Desafios diários que exigem uma classe (Tanque=guerreiro,
@@ -29677,6 +30625,8 @@ window.GameBootstrap = {
             this._spawnInitialEntities(cls);
             this._startUI();
             if (window.RunObjectiveSystem) RunObjectiveSystem.start();
+            // Prólogo: só na primeira run da vida do jogador (continuar save não passa por start()).
+            if (!PrologueSystem.hasSeen()) PrologueSystem.show();
             Debug.info('Game started: ' + cls + ' class, mode: ' + gameMode);
             Debug.info('[BOOTSTRAP] player=' + (player ? 'YES' : 'NO') + ', map=' + (map ? 'YES' : 'NO') + ', gameState=' + gameState);
             if (typeof SaveSystem !== 'undefined') Debug.safe(() => SaveSystem.save(), 'autosaveNewGame');
@@ -31520,6 +32470,8 @@ const Input = {
     // aqui; se A fechar o menu neste frame, o pollGamepad() seguinte já vê A como segurado
     // e não dispara habilidade no mesmo frame.
     pollGamepadMenu() {
+        // Prólogo aberto: tem prioridade sobre o menu de NPC e não depende de _ctrlType.
+        if (window.PrologueSystem && PrologueSystem.visible) { this._pollGamepadPrologue(); return; }
         if (this._ctrlType !== 'gamepad' || !CanvasMenuNav.isOpen()) return;
         const pads = navigator.getGamepads ? navigator.getGamepads() : [];
         let pad = null;
@@ -31549,6 +32501,25 @@ const Input = {
         this._gamepadButtons = Array.from(buttons, button => !!(button && (button.pressed || button.value > 0.5)));
         if (confirm) CanvasMenuNav.confirm();
         else if (cancel) CanvasMenuNav.cancel();
+    },
+
+    // ---- GAMEPAD NO PRÓLOGO: A (0) ou Start (9) avançam, B (1) pula. ----
+    // Enquanto o prólogo está aberto, Input.update (pollGamepad) não roda, então estes
+    // botões não chegam ao herói nem a outros painéis. _gamepadButtons é atualizado aqui
+    // para que um botão segurado ao fechar não dispare habilidade no frame seguinte.
+    _pollGamepadPrologue() {
+        const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+        let pad = null;
+        for (let i = 0; i < pads.length; i++) { if (pads[i]) { pad = pads[i]; break; } }
+        if (!pad) return;
+        const buttons = pad.buttons || [];
+        const pressed = (index) => !!(buttons[index] && (buttons[index].pressed || buttons[index].value > 0.5));
+        const justPressed = (index) => pressed(index) && !this._gamepadButtons[index];
+        const skip = justPressed(1);
+        const advance = justPressed(0) || justPressed(9);
+        this._gamepadButtons = Array.from(buttons, button => !!(button && (button.pressed || button.value > 0.5)));
+        if (skip) PrologueSystem.close();
+        else if (advance) PrologueSystem.advance();
     },
 
     // ---- DRAW ----
@@ -31925,7 +32896,7 @@ Input.init();
        current MUST stay in sync with the SW CACHE_VERSION suffix (sw.js).
     */
     window.UPDATE_LOG = {
-        current: 'v63',
+        current: 'v64',
         entries: [
             { v: 'v9', date: '2026-09-10', titleKey: 'update.entry.v9.title', title: 'v9 — Tutorial destravado',
               linesKeys: ['update.entry.v9.l1'],
@@ -32101,6 +33072,13 @@ Input.init();
               lines: ['Corrigido o flash branco rápido que piscava na tela ao andar e em combate.',
                       'A iluminação e o tom do bioma agora ficam estáveis em todos os quadros.',
                       'Seus saves e progresso não mudam.'] },
+            { v: 'v64', date: '2026-10-21', titleKey: 'update.entry.v64.title', title: 'v64 — Música nova, NPCs com história e prólogo',
+              linesKeys: ['update.entry.v64.l1', 'update.entry.v64.l2', 'update.entry.v64.l3', 'update.entry.v64.l4', 'update.entry.v64.l5'],
+              lines: ['Trilha sonora nova: 5 músicas de masmorra, 5 de cripta (que mudam com a profundidade) e um tema para cada chefe, com fase 2.',
+                      'Efeitos sonoros em camadas e sem estalos.',
+                      'Seraphina, Dorian e Vael agora têm sprites próprios, nome e falas sobre a história de Krevathorn.',
+                      'Prólogo na primeira partida e trechos de lore em destaque ao descobri-los.',
+                      'Seus saves não mudam.'] },
             { v: 'v63', date: '2026-10-17', titleKey: 'update.entry.v63.title', title: 'v63 — Luz em pixel art',
               linesKeys: ['update.entry.v63.l1', 'update.entry.v63.l2', 'update.entry.v63.l3'],
               lines: ['A iluminação das masmorras agora segue o estilo pixel art: a luz da tocha e do herói esmaece em degraus de pixels, em vez de um gradiente borrado.',
