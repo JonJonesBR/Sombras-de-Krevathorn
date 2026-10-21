@@ -3437,6 +3437,7 @@ const I18n = {
             'settings.music': 'Música',
             'settings.musicOn': 'Ligada',
             'settings.musicOff': 'Desligada',
+            'settings.musicVolume': 'Volume da música',
             'settings.close': 'Fechar',
             'settings.graphicsQuality': 'Qualidade Gráfica',
             'settings.fontSmall': 'Pequena',
@@ -3986,6 +3987,10 @@ const I18n = {
             'update.entry.v64.l3': 'Seraphina, Dorian e Vael agora têm sprites próprios, nome e falas sobre a história de Krevathorn.',
             'update.entry.v64.l4': 'Prólogo na primeira partida e trechos de lore em destaque ao descobri-los.',
             'update.entry.v64.l5': 'Seus saves não mudam.',
+            'update.entry.v65.title': 'v65 — Volume da música',
+            'update.entry.v65.l1': 'A música agora toca mais alta por padrão.',
+            'update.entry.v65.l2': 'Novo deslizante de volume da música nas Configurações.',
+            'update.entry.v65.l3': 'Seus saves não mudam.',
             'update.entry.v62.title': 'v62 — Minimapa e tutorial em pixel art',
             'update.entry.v62.l1': 'O minimapa expandido, os marcadores do oráculo e a barra do tutorial agora seguem o estilo pixel art, sem brilhos borrados.',
             'update.entry.v62.l2': 'O botão de fechar do minimapa e o rótulo do alvo de treino ficaram mais nítidos.',
@@ -4949,6 +4954,7 @@ const I18n = {
             'settings.music': 'Music',
             'settings.musicOn': 'On',
             'settings.musicOff': 'Off',
+            'settings.musicVolume': 'Music volume',
             'settings.close': 'Close',
             'settings.graphicsQuality': 'Graphics Quality',
             'settings.fontSmall': 'Small',
@@ -5502,6 +5508,10 @@ const I18n = {
             'update.entry.v64.l3': 'Seraphina, Dorian and Vael now have their own sprites, names and lines about the story of Krevathorn.',
             'update.entry.v64.l4': 'A prologue on your first run and lore excerpts highlighted when you find them.',
             'update.entry.v64.l5': 'Your saves are unchanged.',
+            'update.entry.v65.title': 'v65 — Music volume',
+            'update.entry.v65.l1': 'Music now plays louder by default.',
+            'update.entry.v65.l2': 'New music volume slider in Settings.',
+            'update.entry.v65.l3': 'Your saves are unchanged.',
             'update.entry.v62.title': 'v62 — Pixel art minimap and tutorial',
             'update.entry.v62.l1': 'The expanded minimap, oracle markers and the tutorial bar now follow the pixel art style, with no blurry glows.',
             'update.entry.v62.l2': 'The minimap close button and the training dummy label are crisper.',
@@ -6461,6 +6471,7 @@ const I18n = {
             'settings.music': 'Música',
             'settings.musicOn': 'Activada',
             'settings.musicOff': 'Desactivada',
+            'settings.musicVolume': 'Volumen de la música',
             'settings.close': 'Cerrar',
             'settings.graphicsQuality': 'Calidad Gráfica',
             'settings.fontSmall': 'Pequeña',
@@ -7028,6 +7039,10 @@ const I18n = {
             'update.entry.v64.l3': 'Seraphina, Dorian y Vael ahora tienen sprites propios, nombre y diálogos sobre la historia de Krevathorn.',
             'update.entry.v64.l4': 'Prólogo en la primera partida y fragmentos de lore destacados al descubrirlos.',
             'update.entry.v64.l5': 'Tus partidas guardadas no cambian.',
+            'update.entry.v65.title': 'v65 — Volumen de la música',
+            'update.entry.v65.l1': 'La música ahora suena más fuerte por defecto.',
+            'update.entry.v65.l2': 'Nuevo control deslizante de volumen de la música en Ajustes.',
+            'update.entry.v65.l3': 'Tus partidas guardadas no cambian.',
             'update.entry.v62.title': 'v62 — Minimapa y tutorial en pixel art',
             'update.entry.v62.l1': 'El minimapa ampliado, los marcadores del oráculo y la barra del tutorial ahora siguen el estilo pixel art, sin brillos borrosos.',
             'update.entry.v62.l2': 'El botón de cerrar del minimapa y la etiqueta del objetivo de entrenamiento son más nítidos.',
@@ -13380,7 +13395,7 @@ window.SND = {
             this._masterMusicGain.connect(this._masterGain);
 
             this.musicGain = this.ctx.createGain();
-            this.musicGain.gain.value = this.settings.music;
+            this.musicGain.gain.value = this.musicGainFor(window.GameSettings ? GameSettings.musicVolume : undefined);
             this.musicGain.connect(this._masterMusicGain);
 
             this._ambientGain = this.ctx.createGain();
@@ -13620,6 +13635,16 @@ window.SND = {
         }
     },
 
+    // Volume da música (0..1 do deslizante) -> ganho do musicGain. 100% = 0.6; padrão 0.6 -> 0.36.
+    MUSIC_BASE_GAIN: 0.6,
+    musicGainFor(volume) {
+        const v = (typeof volume === 'number' && Number.isFinite(volume)) ? Math.min(1, Math.max(0, volume)) : 0.6;
+        return v * this.MUSIC_BASE_GAIN;
+    },
+    setMusicVolume(volume) {
+        this.setVolume('music', this.musicGainFor(volume));
+    },
+
     // Apply GameSettings (sfxEnabled / musicEnabled) to the gain nodes.
     // Safe to call before init()  it will be a no-op when ctx is not ready.
     applySettings(settings) {
@@ -13630,6 +13655,10 @@ window.SND = {
                 settings.sfxEnabled ? this.settings.sfx : 0,
                 this.ctx.currentTime
             );
+        }
+        // Volume da música (deslizante); musicEnabled segue como mudo geral, em _masterMusicGain
+        if (this.musicGain) {
+            this.musicGain.gain.setValueAtTime(this.musicGainFor(settings.musicVolume), this.ctx.currentTime);
         }
         // Music + ambient share the _masterMusicGain node
         const musicVol = settings.musicEnabled ? 1.0 : 0;
@@ -28015,6 +28044,7 @@ var GameSettings = {
     joystickSensitivity: 1,  // 0.75 | 1 | 1.4
     sfxEnabled: true,
     musicEnabled: true,
+    musicVolume: 0.6,           // 0..1; ganho efetivo = musicVolume * SND.MUSIC_BASE_GAIN (0.6)
     particlesEnabled: true,
     screenShakeEnabled: true,
     hitstopEnabled: true,
@@ -28073,6 +28103,9 @@ var GameSettings = {
             this.joystickSensitivity = data.joystickSensitivity || 1;
             this.sfxEnabled   = data.sfxEnabled   !== undefined ? data.sfxEnabled   : true;
             this.musicEnabled = data.musicEnabled !== undefined ? data.musicEnabled : true;
+            // Ausente, não numérico ou NaN -> padrão 0.6; fora de 0..1 -> clamp.
+            this.musicVolume = (typeof data.musicVolume === 'number' && Number.isFinite(data.musicVolume))
+                ? Math.min(1, Math.max(0, data.musicVolume)) : 0.6;
             this.particlesEnabled = data.particlesEnabled !== undefined ? data.particlesEnabled : true;
             this.screenShakeEnabled = data.screenShakeEnabled !== undefined ? data.screenShakeEnabled : true;
             this.hitstopEnabled = data.hitstopEnabled !== undefined ? data.hitstopEnabled : true;
@@ -28106,6 +28139,7 @@ var GameSettings = {
             joystickSensitivity: this.joystickSensitivity,
             sfxEnabled:   this.sfxEnabled,
             musicEnabled: this.musicEnabled,
+            musicVolume:  this.musicVolume,
             particlesEnabled: this.particlesEnabled,
             screenShakeEnabled: this.screenShakeEnabled,
             hitstopEnabled: this.hitstopEnabled,
@@ -28349,6 +28383,7 @@ var SettingsUI = {
         const shakeOn  = GameSettings.screenShakeEnabled;
         const sens     = GameSettings.joystickSensitivity;
         const fontSize = GameSettings.fontSize || 'medium';
+        const musicPct = Math.round((GameSettings.musicVolume ?? 0.6) * 100);
 
         // Use a function string that is guaranteed to be in global scope
         const call = (method, val) => `window.SettingsUI.${method}(${val}); event.stopPropagation();`;
@@ -28476,6 +28511,15 @@ var SettingsUI = {
                             ${toggleBtn(musicOn, true, '_setMusic', 'settings.music', 'Música')}
                             ${toggleBtn(!musicOn, false, '_setMusic', 'settings.music', 'Música')}
                         </div>
+                        <div class="flex items-center gap-2 mt-3">
+                            <label for="settings-music-volume" class="flex-1 text-xs text-gray-300 font-bold">${T('settings.musicVolume', 'Volume da música')}</label>
+                            <output data-music-vol-out class="text-xs text-gray-200 font-bold" style="min-width:3em;text-align:right">${musicPct}%</output>
+                        </div>
+                        <input id="settings-music-volume" type="range" min="0" max="100" step="5" value="${musicPct}"
+                            aria-label="${T('settings.musicVolume', 'Volume da música')}" aria-valuetext="${musicPct}%"
+                            class="w-full mt-1" style="accent-color:#e0b6ff;min-height:32px;touch-action:pan-y"
+                            oninput="window.SettingsUI._setMusicVolume(this.value, false); event.stopPropagation();"
+                            onchange="window.SettingsUI._setMusicVolume(this.value, true); event.stopPropagation();">
                     </div>
 
                     <div class="mb-5">
@@ -28594,6 +28638,19 @@ var SettingsUI = {
         GameSettings.save();
         GameSettings.apply();
         this._render();
+    },
+
+    // Deslizante de volume da música: durante o arrasto (commit=false) só ajusta o ganho e o texto;
+    // ao soltar (commit=true) persiste e toca um feedback. Não re-renderiza (quebraria o arrasto).
+    _setMusicVolume(value, commit) {
+        const pct = Math.min(100, Math.max(0, Math.round(Number(value)) || 0));
+        GameSettings.musicVolume = pct / 100;
+        if (window.SND && SND.setMusicVolume) SND.setMusicVolume(GameSettings.musicVolume);
+        document.querySelectorAll('[data-music-vol-out]').forEach(el => { el.textContent = pct + '%'; });
+        if (commit) {
+            GameSettings.save();
+            if (window.SND && SND.playUI) SND.playUI();
+        }
     },
 
     _setSens(value) {
@@ -30272,6 +30329,15 @@ renderAchievementsContent() {
                             <button type="button" aria-pressed="${!!s.musicEnabled}" aria-label="${_L('settings.music', 'Music')}: ${_L('settings.musicOn', 'On')}" style="${btn(s.musicEnabled)}" onclick="UIManager.setSetting('musicEnabled', true)">${_L('settings.music', 'Music')}: ${_L('settings.musicOn', 'On')}</button>
                             <button type="button" aria-pressed="${!s.musicEnabled}" aria-label="${_L('settings.music', 'Music')}: ${_L('settings.musicOff', 'Off')}" style="${btn(!s.musicEnabled)}" onclick="UIManager.setSetting('musicEnabled', false)">${_L('settings.music', 'Music')}: ${_L('settings.musicOff', 'Off')}</button>
                         </div>
+                        <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
+                            <label for="ui-music-volume" style="flex:1;font-size:11px;font-weight:bold;color:${COLORS.TEXT_DIM}">${_L('settings.musicVolume', 'Volume da música')}</label>
+                            <output data-music-vol-out style="min-width:3em;text-align:right;font-size:11px;font-weight:bold;color:${COLORS.TEXT_DIM}">${Math.round((s.musicVolume ?? 0.6) * 100)}%</output>
+                        </div>
+                        <input id="ui-music-volume" type="range" min="0" max="100" step="5" value="${Math.round((s.musicVolume ?? 0.6) * 100)}"
+                            aria-label="${_L('settings.musicVolume', 'Volume da música')}" aria-valuetext="${Math.round((s.musicVolume ?? 0.6) * 100)}%"
+                            style="width:100%;margin-top:4px;min-height:32px;accent-color:#e0b6ff;touch-action:pan-y"
+                            oninput="window.SettingsUI._setMusicVolume(this.value, false)"
+                            onchange="window.SettingsUI._setMusicVolume(this.value, true)">
                     </div>
                     <div>
                         <h3 style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:${COLORS.TEXT_MUTED};font-weight:bold;margin-bottom:8px">${_L('settings.visuals', 'Visuais')}</h3>
@@ -32896,7 +32962,7 @@ Input.init();
        current MUST stay in sync with the SW CACHE_VERSION suffix (sw.js).
     */
     window.UPDATE_LOG = {
-        current: 'v64',
+        current: 'v65',
         entries: [
             { v: 'v9', date: '2026-09-10', titleKey: 'update.entry.v9.title', title: 'v9 — Tutorial destravado',
               linesKeys: ['update.entry.v9.l1'],
@@ -33072,6 +33138,11 @@ Input.init();
               lines: ['Corrigido o flash branco rápido que piscava na tela ao andar e em combate.',
                       'A iluminação e o tom do bioma agora ficam estáveis em todos os quadros.',
                       'Seus saves e progresso não mudam.'] },
+            { v: 'v65', date: '2026-10-21', titleKey: 'update.entry.v65.title', title: 'v65 — Volume da música',
+              linesKeys: ['update.entry.v65.l1', 'update.entry.v65.l2', 'update.entry.v65.l3'],
+              lines: ['A música agora toca mais alta por padrão.',
+                      'Novo deslizante de volume da música nas Configurações.',
+                      'Seus saves não mudam.'] },
             { v: 'v64', date: '2026-10-21', titleKey: 'update.entry.v64.title', title: 'v64 — Música nova, NPCs com história e prólogo',
               linesKeys: ['update.entry.v64.l1', 'update.entry.v64.l2', 'update.entry.v64.l3', 'update.entry.v64.l4', 'update.entry.v64.l5'],
               lines: ['Trilha sonora nova: 5 músicas de masmorra, 5 de cripta (que mudam com a profundidade) e um tema para cada chefe, com fase 2.',
