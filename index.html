@@ -8486,6 +8486,7 @@ var CONFIG = {
     INCINERATE_RADIUS: 105,
     INCINERATE_DAMAGE_MULT: 1.8,
     FROZEN_DAMAGE_MULT: 2.0,
+    PLAYER_CRYSTAL_FREEZE_TICKS: 45,  // CRYSTAL no jogador: 0,75 s (inimigos seguem com 180)
     SHIELD_DAMAGE_ABSORB: 1.0,
     ENRAGE_HP_THRESHOLD: 0.5,
     TREASURE_GOBLIN_CURRENCY_DROP: 8,
@@ -21793,7 +21794,7 @@ const ElementalSystem = {
         const iceStatus = entity.elementalStatuses.find(s => s.type === 'ice');
         if (iceStatus && iceStatus.stacks >= 3) {
             this._triggerInteraction(entity, 'crystal', source);
-            entity.frozen = Math.max(entity.frozen, 180);
+            entity.frozen = Math.max(entity.frozen, entity === player ? CONFIG.PLAYER_CRYSTAL_FREEZE_TICKS : 180);
             entity.elementalStatuses = entity.elementalStatuses.filter(s => s.type !== 'ice');
         }
     },
@@ -23388,8 +23389,8 @@ class Entity {
         if(source && source.skills && source.skills.frostTouch && SeedSystem.random() < 0.15) { this.frozen = Math.max(this.frozen || 0, Math.floor(60 * (this.elite ? 0.5 : this.isB ? 0.25 : 1))); spawnParticles(this.x, this.y, '#66ccff', 8, 4); if(typeof DamageNumbers !== 'undefined') DamageNumbers.add(this.x, this.y, window.I18n ? I18n.t('hud.frost') : 'GEADA!', 'frost'); if(typeof Statistics !== 'undefined' && source === player) Statistics.data.frostsApplied = (Statistics.data.frostsApplied || 0) + 1; }
         // Elfa: raízes da natureza enraízam inimigos no golpe (mesma mecânica do gelo, visual verde)
         if(source && source.skills && source.skills.rootTouch && SeedSystem.random() < 0.15) { this.frozen = Math.max(this.frozen || 0, Math.floor(60 * (this.elite ? 0.5 : this.isB ? 0.25 : 1))); spawnParticles(this.x, this.y, '#58e08a', 8, 4); if(typeof DamageNumbers !== 'undefined') DamageNumbers.add(this.x, this.y, 'RAÍZES!', 'frost'); if(source.skills.thorns) { this.poisonStacks = Math.min(CONFIG.ROGUE_POISON_MAX_STACKS, (this.poisonStacks || 0) + 1); this.poisonTimer = Math.max(this.poisonTimer || 0, CONFIG.ROGUE_POISON_DURATION); spawnParticles(this.x, this.y, '#58e08a', 5, 3); DamageNumbers.add(this.x, this.y, window.I18n ? I18n.t('combat.thorns') : 'ESPINHOS!', 'bleed'); }if(typeof Statistics !== 'undefined' && source === player) Statistics.data.frostsApplied = (Statistics.data.frostsApplied || 0) + 1; }
-        if(this.frozen > 0) { 
-            finalDmg *= CONFIG.FROZEN_DAMAGE_MULT; 
+        if(this !== player && this.frozen > 0) {
+            finalDmg *= CONFIG.FROZEN_DAMAGE_MULT;
             dmgType = 'crit'; 
             if (source && source.type === 'warrior') {
                 finalDmg *= 1.5;
@@ -23909,9 +23910,9 @@ class Enemy extends Entity {
                 // O golpe sai ao fim do pré-golpe, só se o jogador ainda estiver no alcance (esquivar do telegraph funciona)
                 if(--this._meleeWindup === 0 && d < p.radius + this.radius) {
                     this.attackAnim = 12; // mostra a pose de ataque da planilha
-                    p.takeDamage(meleeDmg, m);
-                    // Elemento do bioma aplicado no contato (fogo/gelo/veneno/raio)
-                    if(this.element && typeof ElementalSystem !== 'undefined') ElementalSystem.applyStatus(p, this.element, 1, 120, this);
+                    const _hit = p.takeDamage(meleeDmg, m) !== false;
+                    // Elemento do bioma aplicado no contato (fogo/gelo/veneno/raio), só se o golpe entrou
+                    if(_hit && this.element && typeof ElementalSystem !== 'undefined') ElementalSystem.applyStatus(p, this.element, 1, 120, this);
                 }
             } else if(d < p.radius + this.radius) {
                 this._meleeWindup = CONFIG.ENEMY_MELEE_WINDUP_FRAMES; // inicia o telegraph; o dano vem no fim do pré-golpe
@@ -24783,8 +24784,8 @@ class SkeletonEnemy extends Enemy {
         }
         const contactSq = (p.radius + this.radius) * (p.radius + this.radius);
         if(dSq < contactSq) {
-            p.takeDamage(this.scaledDamage, m);
-            if(typeof ElementalSystem !== 'undefined') ElementalSystem.applyStatus(p, 'ice', 1, 120, this);
+            const _hit = p.takeDamage(this.scaledDamage, m) !== false;
+            if(_hit && typeof ElementalSystem !== 'undefined') ElementalSystem.applyStatus(p, 'ice', 1, 120, this);
         }
     }
     draw(ctx, cx, cy) {
@@ -26764,12 +26765,12 @@ class Bullet {
                     // Main damage: projéteis do jogador danificam inimigos; projéteis
                     // inimigos danificam o jogador. (source=null no lado inimigo para
                     // não inflar dano recebido com damageMult/damageBoost do jogador.)
-                    e.takeDamage(this.dmg, m, this.isP ? source : null); this.hitCount++;
+                    const _landed = e.takeDamage(this.dmg, m, this.isP ? source : null) !== false; this.hitCount++;
                     // Rajada do Vento (v56): empurrão forte na direção do disparo (só se o caminho não for parede)
                     if(this.galeKb && e.alive && !m.isWall(e.x + this.vx * 4, e.y + this.vy * 4)) { e.x += this.vx * 4; e.y += this.vy * 4; }
                     if(this.chainPierce) this.chainLastHit = e;
-                    // Elemento do bioma no projétil inimigo atinge o jogador
-                    if(!this.isP && this.element && typeof ElementalSystem !== 'undefined') ElementalSystem.applyStatus(e, this.element, 1, 120, source || this);
+                    // Elemento do bioma no projétil inimigo atinge o jogador (só se o golpe entrou)
+                    if(!this.isP && _landed && this.element && typeof ElementalSystem !== 'undefined') ElementalSystem.applyStatus(e, this.element, 1, 120, source || this);
                     // Apply elemental status from weapon
                     if(this.weapon && typeof ElementalSystem !== 'undefined') {
                         const element = ElementalSystem.rollRandomElement(this.weapon);
@@ -28015,7 +28016,8 @@ class Player extends Entity {
     }
 
     takeDamage(a, m, source=null) {
-        if (!Number.isFinite(a)) return; // NaN jamais: hp viraria NaN e a guarda isNaN fixaria o HP no máximo
+        // Retorna true só se o golpe entrou (false = parry, i-frames, égide, esquiva ou NaN); os status elementais de contato dependem disso
+        if (!Number.isFinite(a)) return false; // NaN jamais: hp viraria NaN e a guarda isNaN fixaria o HP no máximo
         // Warrior parry (v67): avaliado ANTES dos i-frames do dash. A janela de aparo (8 frames) cabe
         // dentro dos 12 frames de invencibilidade do dash, então este ramo tem de vir antes do retorno abaixo.
         // Consome a janela: não há segundo aparo nem esquiva perfeita para o mesmo golpe, e não há dano.
@@ -28046,21 +28048,21 @@ class Player extends Entity {
             ScreenEffects._hitstop(CONFIG.HITSTOP_ELITE);
             SND.play(660, 'square', 0.12, 0.14);
             if(window.Vibrate) Vibrate.trigger('normalHit');
-            return;
+            return false;
         }
         if (this.invincibleTimer > 0) {
             // Golpe anulado pelos i-frames do dash = esquiva perfeita (só observa; o dano segue ignorado)
             if (a > 0 && this._dodgeIframeT > 0) this._onPerfectDodge();
-            return;
+            return false;
         }
         // Powerup Égide (raro): bloqueia todo dano enquanto aegisTimer > 0; não toca no invincibleTimer
         if (this.aegisTimer > 0 && a > 0) {
             DamageNumbers.add(this.x, this.y, window.I18n ? I18n.t('powerup.aegis.block') : 'ÉGIDE!', 'heal');
             if (!(window.GameSettings && GameSettings.reducedMotion)) spawnParticles(this.x, this.y, COLORS.PICKUP_AEGIS, 4, 2);
-            return;
+            return false;
         }
-        if (this.dodgeChance && a > 0 && SeedSystem.random() < Math.min(0.75, this.dodgeChance)) { spawnParticles(this.x, this.y, '#33ff33', 8, 4); DamageNumbers.add(this.x, this.y, window.I18n ? I18n.t('hud.dodge') : 'ESQUIVA!', 'heal'); return; }
-        if(this.type === 'mage' && this.orbShieldReady && a > 0) { this.orbShieldReady = false; this.orbShieldTimer = 0; spawnParticles(this.x, this.y, COLORS.CLASS_MAGE, 15, 4); SND.play(440, 'sine', 0.2, 0.2); DamageNumbers.add(this.x, this.y, window.I18n ? I18n.t('hud.orbShield') : 'ORB SHIELD!', 'heal'); return; }
+        if (this.dodgeChance && a > 0 && SeedSystem.random() < Math.min(0.75, this.dodgeChance)) { spawnParticles(this.x, this.y, '#33ff33', 8, 4); DamageNumbers.add(this.x, this.y, window.I18n ? I18n.t('hud.dodge') : 'ESQUIVA!', 'heal'); return false; }
+        if(this.type === 'mage' && this.orbShieldReady && a > 0) { this.orbShieldReady = false; this.orbShieldTimer = 0; spawnParticles(this.x, this.y, COLORS.CLASS_MAGE, 15, 4); SND.play(440, 'sine', 0.2, 0.2); DamageNumbers.add(this.x, this.y, window.I18n ? I18n.t('hud.orbShield') : 'ORB SHIELD!', 'heal'); return false; }
         if(this.type === 'rogue' || this.type === 'mage') this.mageComboCount = 0;
         let dmg = a;
         // Daily challenge 'oneshot': the player dies in a single hit
@@ -28081,6 +28083,7 @@ class Player extends Entity {
         super.takeDamage(dmg, m, source);
         ScreenEffects.onPlayerHurt(dmg); // feedback visual apenas (vinheta vermelha)
         this.stealth = 0;
+        return true;
     }
 }
 
