@@ -2867,14 +2867,15 @@ const SaveSystem = {
             weaponLifesteal: player.weaponLifesteal || 0,
             lifestealBonus: player.lifestealBonus || 0,
             equipLifesteal: player.equipLifesteal || 0,
-            speed: player.speed,
+            // Pets are not saved: persist the unmounted values, or the mount bonus becomes permanent on CONTINUE.
+            speed: player._preMountSpeed != null ? player._preMountSpeed : player.speed,
             poisonPotency: player.poisonPotency || 1,
             dodgeChance: player.dodgeChance || 0,
             cdrMult: player.cdrMult || 0,
             chainLightning: !!player.chainLightning, slowAura: !!player.slowAura,
             pierce: !!player.pierce, poison: !!player.poison, spellEcho: !!player.spellEcho,
             damageBoost: player.damageBoost || 0, critChance: player.critChance || 0,
-            damageMult: player.damageMult || 1, lr: player.lr,
+            damageMult: player.damageMult || 1, lr: player._preMountLR != null ? player._preMountLR : player.lr,
             runBoons: Array.isArray(player.runBoons) ? player.runBoons : [],
             damageTakenMult: player.damageTakenMult || 1,
             runRegen: player.runRegen || 0,
@@ -3295,6 +3296,19 @@ window._tryStartClass = function (cls) {
         if (typeof showToast === 'function') showToast((u ? (window._L ? _L(u.nameKey, u.name) : u.name) : cls) + (window.I18n ? I18n.t('meta.lockedSuffix') : ': desbloqueie na MetaLoja.'), 'error');
         if (window.UIManager) window.UIManager.openPanel('meta');
         return;
+    }
+    // Starting a new run overwrites the saved one (CONTINUE): ask for a second tap on the same class.
+    if (window.SaveSystem && SaveSystem.hasSave()) {
+        var _now = Date.now(), _arm = window._overwriteRunArm;
+        if (!(_arm && _arm.cls === cls && _now - _arm.t < 3000)) {
+            var _sv = null;
+            try { _sv = SaveSystem.load(); } catch (e) {}
+            var _fl = (_sv && _sv.dungeonLevel) ? _sv.dungeonLevel : '?';
+            window._overwriteRunArm = { cls: cls, t: _now };
+            if (typeof showToast === 'function') showToast((window.I18n ? I18n.t('menu.overwriteRunPre') : 'Há uma run salva no Piso ') + _fl + (window.I18n ? I18n.t('menu.overwriteRunPost') : '. Toque de novo na classe para começar outra (a salva será perdida).'), 'info');
+            return;
+        }
+        window._overwriteRunArm = null;
     }
     window.startGame(cls);
 };
@@ -3805,6 +3819,8 @@ const I18n = {
             'pause.resume': 'Continuar',
             'pause.quit': 'Desistir e voltar ao menu inicial',
             'pause.quitConfirm': 'Toque de novo para confirmar',
+            'menu.overwriteRunPre': 'Há uma run salva no Piso ',
+            'menu.overwriteRunPost': '. Toque de novo na classe para começar outra (a salva será perdida).',
             'settings.data': 'DADOS',
             'pwa.install': 'Instalar app',
             'pwa.iosHint': 'Compartilhar > Adicionar à Tela de Início',
@@ -3886,7 +3902,7 @@ const I18n = {
             'tutorial.stage1.line1': 'Tutorial rápido — 6 etapas, ~1 minuto.',
             'tutorial.stage1.line2': '',
             'tutorial.stage1.line3': 'ESQUERDA: mover — DIREITA: atirar',
-            'tutorial.stage1.line4': 'BOTÃO CENTRAL: habilidade de classe',
+            'tutorial.stage1.line4': 'HABILIDADE: botão no canto DIREITO',
             'tutorial.stage1.line5': '',
             'tutorial.stage1.line6': 'Os tiros são AUTOMÁTICOS ao apontar!',
             'tutorial.stage2.title': ' Pratique o Movimento',
@@ -3904,7 +3920,7 @@ const I18n = {
             'tutorial.stage4.line3': '',
             'tutorial.stage4.line4': '> Objetivo: Elimine o boneco de treino!',
             'tutorial.stage5.title': ' Use sua Habilidade!',
-            'tutorial.stage5.line1': 'Toque o BOTÃO CENTRAL para usar a habilidade.',
+            'tutorial.stage5.line1': 'Toque o botão de HABILIDADE no canto DIREITO.',
             'tutorial.stage5.line2': 'Guerreiro: Golpe Sísmico  |  Ladino: Dash',
             'tutorial.stage5.line3': 'Mago: Tempestade Arcana',
             'tutorial.stage5.line4': '',
@@ -5436,6 +5452,8 @@ const I18n = {
             'pause.resume': 'Resume',
             'pause.quit': 'Give up and return to main menu',
             'pause.quitConfirm': 'Tap again to confirm',
+            'menu.overwriteRunPre': 'You have a saved run on Floor ',
+            'menu.overwriteRunPost': '. Tap the class again to start a new one (the saved run will be lost).',
             'settings.data': 'DATA',
             'pwa.install': 'Install app',
             'pwa.iosHint': 'Share > Add to Home Screen',
@@ -5517,7 +5535,7 @@ const I18n = {
             'tutorial.stage1.line1': 'Quick tutorial — 6 steps, ~1 minute.',
             'tutorial.stage1.line2': '',
             'tutorial.stage1.line3': 'LEFT: move — RIGHT: shoot',
-            'tutorial.stage1.line4': 'CENTER BUTTON: class ability',
+            'tutorial.stage1.line4': 'ABILITY: button at the bottom RIGHT',
             'tutorial.stage1.line5': '',
             'tutorial.stage1.line6': 'Shots are AUTOMATIC while aiming!',
             'tutorial.stage2.title': ' Practice Movement',
@@ -5535,7 +5553,7 @@ const I18n = {
             'tutorial.stage4.line3': '',
             'tutorial.stage4.line4': '> Goal: Eliminate the training dummy!',
             'tutorial.stage5.title': ' Use your Ability!',
-            'tutorial.stage5.line1': 'Tap the CENTER BUTTON to use the ability.',
+            'tutorial.stage5.line1': 'Tap the ABILITY button at the bottom RIGHT.',
             'tutorial.stage5.line2': 'Warrior: Seismic Slam  |  Rogue: Dash',
             'tutorial.stage5.line3': 'Mage: Arcane Storm',
             'tutorial.stage5.line4': '',
@@ -7067,6 +7085,8 @@ const I18n = {
             'pause.resume': 'Continuar',
             'pause.quit': 'Rendirse y volver al menú inicial',
             'pause.quitConfirm': 'Toca de nuevo para confirmar',
+            'menu.overwriteRunPre': 'Tienes una partida guardada en el Piso ',
+            'menu.overwriteRunPost': '. Toca la clase otra vez para empezar otra (la guardada se perderá).',
             'settings.data': 'DATOS',
             'pwa.install': 'Instalar app',
             'pwa.iosHint': 'Compartir > Añadir a la pantalla de inicio',
@@ -7148,7 +7168,7 @@ const I18n = {
             'tutorial.stage1.line1': 'Tutorial rápido — 6 pasos, ~1 minuto.',
             'tutorial.stage1.line2': '',
             'tutorial.stage1.line3': 'IZQUIERDA: mover — DERECHA: disparar',
-            'tutorial.stage1.line4': 'BOTÓN CENTRAL: habilidad de clase',
+            'tutorial.stage1.line4': 'HABILIDAD: botón en la esquina DERECHA',
             'tutorial.stage1.line5': '',
             'tutorial.stage1.line6': '¡Los disparos son AUTOMÁTICOS al apuntar!',
             'tutorial.stage2.title': ' Practica el Movimiento',
@@ -7166,7 +7186,7 @@ const I18n = {
             'tutorial.stage4.line3': '',
             'tutorial.stage4.line4': '> Objetivo: ¡Elimina al muñeco de entrenamiento!',
             'tutorial.stage5.title': ' ¡Usa tu Habilidad!',
-            'tutorial.stage5.line1': 'Toca el BOTÓN CENTRAL para usar la habilidad.',
+            'tutorial.stage5.line1': 'Toca el botón de HABILIDAD en la esquina DERECHA.',
             'tutorial.stage5.line2': 'Guerrero: Golpe Sísmico  |  Ladrón: Dash',
             'tutorial.stage5.line3': 'Mago: Tormenta Arcana',
             'tutorial.stage5.line4': '',
@@ -9604,7 +9624,9 @@ function _doContinue() {
     currentEvent = null;
     weather = null;
     weatherTimer = 0;
-    bossActive = false;
+    // entities[] survives the revive: a live boss must keep the fight flagged, or its
+    // death skips the reward/music block and a second boss can spawn.
+    bossActive = entities.some(e => e && e.isBoss && e.alive);
     shake = 0;
     _bossBanner = null;
     _fadeState = null;
@@ -10247,7 +10269,7 @@ function _updateWorldSim() {
     Debug.time('fx', () => ScreenEffects.update());
     Debug.time('death', () => DeathAnimations.update());
     // Ambient biome particles (throttled)
-    if (gameTime % CONFIG.AMBIENT_PARTICLE_INTERVAL === 0 && BiomeSystem.shouldSpawnAmbient() && map && particles.length < CONFIG.PARTICLE_CAP - 10) {
+    if (gameTime % CONFIG.AMBIENT_PARTICLE_INTERVAL === 0 && BiomeSystem.shouldSpawnAmbient() && map && particles.length < Math.floor(CONFIG.PARTICLE_CAP * 0.35)) { // decor stays under ~1/3 of the budget: hit/death bursts need the rest
         const pos = map.getSafeSpawn(300);
         if (pos) {
             const count = 2 + Math.floor(Math.random() * 3);
@@ -10429,6 +10451,15 @@ function _updateEntitySimulation() {
                 const rate = dist2 < nearDist2 ? 1 : (dist2 < farDist2 ? 3 : 5); // Slightly more aggressive staggering
                 if ((i + gameTime) % rate === 0) e.update(player, map); 
             }
+        }
+        // Boss arena hazards deal damage: they tick here every simulation step (not in
+        // Boss.draw, which also runs while paused/hit-stopped, nor under AI staggering).
+        for (let i = 0; i < entities.length; i++) {
+            const e = entities[i];
+            if (!e.isBoss || !e.alive || !e.arenaHazards) continue;
+            const hz = e.arenaHazards;
+            for (let k = 0; k < hz.length; k++) hz[k].update(player);
+            for (let k = hz.length - 1; k >= 0; k--) { if (!hz[k].alive) hz.splice(k, 1); }
         }
     }
 
@@ -10696,10 +10727,12 @@ function _updatePortalAndFloor() {
             return;
         }
         if (typeof CampSystem !== 'undefined' && CampSystem.state && CampSystem.state.floor === dungeonLevel) {
-            if (window.UIManager) window.UIManager.openPanel('camp');
+            if (!CampSystem._dismissed && window.UIManager) window.UIManager.openPanel('camp');
             return;
         }
         _startFloorTransition();
+    } else if (typeof CampSystem !== 'undefined' && CampSystem._dismissed) {
+        CampSystem._dismissed = false;
     }
 }
 
@@ -11564,7 +11597,7 @@ let _particleBatch = {};
 let _cachedAliveEnemies = 0;
 function _spawnTorchParticles() {
     if (!player || !player.alive || CONFIG.TORCH_PARTICLE_INTERVAL > 0 && gameTime % CONFIG.TORCH_PARTICLE_INTERVAL !== 0) return;
-    if (particles.length >= CONFIG.PARTICLE_CAP - 5) return;
+    if (particles.length >= Math.floor(CONFIG.PARTICLE_CAP * 0.5)) return; // torch + ambient leave >= half the cap for combat feedback
     const fireColors = ['#ff6600', '#ff8800', '#ffaa00', '#ff4400'];
     for (let i = 0; i < 2; i++) {
         const px = player.x + (Math.random() - 0.5) * 16;
@@ -14136,7 +14169,6 @@ window.SND = {
         }
 
         if (this._voiceCount >= 28) return; // polyphony cap: no CPU spike, no pile-up
-        this._voiceCount++;
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         osc.type = type;
@@ -14172,6 +14204,9 @@ window.SND = {
         if (panner) { tail.connect(panner); panner.connect(dest); }
         else { tail.connect(dest); }
         
+        // Count the voice only once the graph is built: a throw above (e.g. an
+        // invalid osc.type) must not leak a slot that onended never frees.
+        this._voiceCount++;
         osc.start();
         osc.stop(this.ctx.currentTime + dur);
         // Free the graph as soon as the note ends so GC can reclaim the nodes
@@ -15708,6 +15743,7 @@ const CampSystem = {
 
     descend() {
         this._descend = true;
+        this._dismissed = false;
         this.state = null;
         if (window.UIManager) window.UIManager.closePanel();
     },
@@ -15715,6 +15751,7 @@ const CampSystem = {
     reset() {
         this.state = null;
         this._descend = false;
+        this._dismissed = false;
     }
 };
 
@@ -17142,7 +17179,10 @@ const QuestSystem = {
     },
 
     _pick(count) {
-        const pool = this.POOL.slice();
+        // Floor quests read the absolute dungeonLevel: on CONTINUE (startRun runs again)
+        // one already reached would complete instantly and pay again on every resume.
+        const lvl = (typeof dungeonLevel !== 'undefined') ? dungeonLevel : 1;
+        const pool = this.POOL.filter(q => !(q.type === 'floor' && q.target <= lvl));
         for (let i = 0; i < count && pool.length; i++) {
             const r = (window.SeedSystem && SeedSystem.isSeeded())
                 ? Math.floor(SeedSystem.random() * pool.length)
@@ -17810,6 +17850,8 @@ const ScreenEffects = {
     },
     
     triggerFlash(alpha, color) {
+        // Reduced motion: keep a faint tint as feedback, never a bright full-screen flash (photosensitivity).
+        if (window.GameSettings && GameSettings.reducedMotion) alpha = Math.min(alpha, 0.12);
         this._flashAlpha = Math.max(this._flashAlpha, alpha);
         this._flashColor = color;
     },
@@ -18006,7 +18048,8 @@ const ScreenEffects = {
         // Death flash timer
         if (this._deathFlashTimer > 0) {
             this._deathFlashTimer--;
-            this._flashAlpha = 0.3 + Math.sin(this._deathFlashTimer * 0.3) * 0.2;
+            // Reduced motion: steady faint red instead of a ~3 Hz strobe.
+            this._flashAlpha = (window.GameSettings && GameSettings.reducedMotion) ? 0.12 : 0.3 + Math.sin(this._deathFlashTimer * 0.3) * 0.2;
             this._flashColor = '#ff0000';
             this.triggerShake(3);
         }
@@ -18208,7 +18251,7 @@ const ScreenEffects = {
             // Low-HP red pulse vignette
             if (_lowHp) {
                 const danger = 1 - player.hp / (player.maxHp * 0.30);
-                const pulse = 0.5 + Math.sin(gameTime * 0.1) * 0.5;
+                const pulse = (window.GameSettings && GameSettings.reducedMotion) ? 0.6 : 0.5 + Math.sin(gameTime * 0.1) * 0.5;
                 const dgrad = ctx.createRadialGradient(vx, vy, vrad * 0.3, vx, vy, vrad);
                 dgrad.addColorStop(0, 'rgba(255,0,0,0)');
                 dgrad.addColorStop(1, `rgba(255,0,0,${0.20 * danger * pulse})`);
@@ -21760,7 +21803,7 @@ const ElementalSystem = {
                 if (typeof spawnParticles !== 'undefined') {
                     spawnParticles(entity.x, entity.y, '#ccddff', 15, 40);
                 }
-                if (typeof SND !== 'undefined') SND.play(3000, 'noise', 0.05, 0.2);
+                if (typeof SND !== 'undefined') SND.playNoise(0.2, 0.05, 3000, 'highpass');
                 break;
                 
             case 'neurotoxin':
@@ -23964,8 +24007,17 @@ class Enemy extends Entity {
             ctx.globalAlpha = 1;
         }
         
-        // Draw the enemy sprite
+        // Draw the enemy sprite (once; squashed & stretched while flinching from a hit)
+        const _flinch = this.flinchTimer > 0 && isNear;
+        if (_flinch) {
+            const sq = Math.min(1, this.flinchTimer / 8);
+            ctx.save();
+            ctx.translate(px, py);
+            ctx.scale(1 + 0.12 * sq, 1 - 0.18 * sq);
+            ctx.translate(-px, -py);
+        }
         SpriteRenderer.drawEnemy.call(this, ctx, px, py, this.enemyType === 'melee' ? 'melee' : this.enemyType, (this.attackAnim > 0 ? 12 - this.attackAnim : this.walkTimer), this.angle, this.isB ? 2.0 : 1.5, this.ft > 0, this.attackAnim > 0 ? 'attack' : (this.walkTimer > 0 ? 'walk' : 'idle'));
+        if (_flinch) ctx.restore();
         
         // Biome variant aura (brasa/espectro/espinho)
         if(this._variant && isNear) {
@@ -23982,17 +24034,6 @@ class Enemy extends Entity {
         
         // Draw elemental statuses
         if(typeof ElementalSystem !== 'undefined') ElementalSystem.drawStatuses(ctx, this, cx, cy);
-        
-        // Flinch squash & stretch (hit feedback)
-        if(this.flinchTimer > 0 && isNear) {
-            const sq = Math.min(1, this.flinchTimer / 8);
-            ctx.save();
-            ctx.translate(px, py);
-            ctx.scale(1 + 0.12 * sq, 1 - 0.18 * sq);
-            ctx.translate(-px, -py);
-            SpriteRenderer.drawEnemy.call(this, ctx, px, py, this.enemyType === 'melee' ? 'melee' : this.enemyType, (this.attackAnim > 0 ? 12 - this.attackAnim : this.walkTimer), this.angle, this.isB ? 2.0 : 1.5, this.ft > 0, this.attackAnim > 0 ? 'attack' : (this.walkTimer > 0 ? 'walk' : 'idle'));
-            ctx.restore();
-        }
         
         // Poison / bleed clouds (rising bubbles above the enemy)
         if((this.poisonStacks || 0) > 0 && isNear) {
@@ -25645,8 +25686,7 @@ class Boss extends Enemy {
         if(this.frozen > 0) { ctx.globalAlpha = 0.5; ctx.fillStyle = '#33ccff'; ctx.fillRect(this.x-cx-this.radius-3, this.y-cy-this.radius-3, (this.radius+3)*2, (this.radius+3)*2); ctx.globalAlpha = 1; }
 
         // Draw arena hazards
-        for(let i = 0; i < this.arenaHazards.length; i++) { this.arenaHazards[i].update(player); this.arenaHazards[i].draw(ctx, cx, cy); }
-        for (let i = this.arenaHazards.length - 1; i >= 0; i--) { if (!this.arenaHazards[i].alive) this.arenaHazards.splice(i, 1); }
+        for(let i = 0; i < this.arenaHazards.length; i++) this.arenaHazards[i].draw(ctx, cx, cy);
     }
     takeDamage(a, m, source=null) {
         if (source && source.type !== 'rogue') {
@@ -27328,7 +27368,8 @@ class Player extends Entity {
                 ScreenEffects.triggerShake(8);
                 const n = CONFIG.ELF_NATURE_STORM_ARROWS;
                 const spd = CONFIG.PLAYER.elf.bulletSpeed || 13;
-                const arrowDmg = Math.floor(CONFIG.ELF_NATURE_STORM_DAMAGE * this.weaponLevel * this.weaponDamageMult * (this.damageMult || 1));
+                // damageMult is applied once, in Entity.takeDamage (source === player).
+                const arrowDmg = Math.floor(CONFIG.ELF_NATURE_STORM_DAMAGE * this.weaponLevel * this.weaponDamageMult);
                 for(let i = 0; i < n; i++) {
                     const sa = (i / n) * Math.PI * 2 + i * 0.3;
                     const b = window.PoolManager ? PoolManager.acquire('Bullet', this.x, this.y, Math.cos(sa)*spd, Math.sin(sa)*spd, '#58e08a', arrowDmg, true, null, 400, 'arrow') : new Bullet(this.x, this.y, Math.cos(sa)*spd, Math.sin(sa)*spd, '#58e08a', arrowDmg, true, null, 400, 'arrow');
@@ -27375,9 +27416,10 @@ class Player extends Entity {
                     }
                 }
                 const wSpd = CONFIG.PLAYER.elf.bulletSpeed || 13;
+                const gustArrowDmg = Math.floor(CONFIG.ELF_WIND_DAMAGE * 0.7 * this.weaponLevel * this.weaponDamageMult);
                 for(let i = 0; i < 8; i++) {
                     const a = (i / 8) * Math.PI * 2;
-                    const b = window.PoolManager ? PoolManager.acquire('Bullet', this.x, this.y, Math.cos(a)*wSpd, Math.sin(a)*wSpd, '#7fffd4', Math.floor(CONFIG.ELF_WIND_DAMAGE * 0.7 * this.weaponLevel * this.weaponDamageMult * (this.damageMult || 1)), true, null, 320, 'arrow') : new Bullet(this.x, this.y, Math.cos(a)*wSpd, Math.sin(a)*wSpd, '#7fffd4', Math.floor(CONFIG.ELF_WIND_DAMAGE * 0.7 * this.weaponLevel * this.weaponDamageMult * (this.damageMult || 1)), true, null, 320, 'arrow');
+                    const b = window.PoolManager ? PoolManager.acquire('Bullet', this.x, this.y, Math.cos(a)*wSpd, Math.sin(a)*wSpd, '#7fffd4', gustArrowDmg, true, null, 320, 'arrow') : new Bullet(this.x, this.y, Math.cos(a)*wSpd, Math.sin(a)*wSpd, '#7fffd4', gustArrowDmg, true, null, 320, 'arrow');
                     bullets.push(b);
                 }
                 ScreenEffects.specialFX(this.x, this.y, '#7fffd4', CONFIG.ELF_WIND_RANGE, 'ring', 3, 8);
@@ -27394,6 +27436,7 @@ class Player extends Entity {
         if(this._dodgeIframeT > 0) this._dodgeIframeT--;
         if(this._perfectDodgeCd > 0) this._perfectDodgeCd--;
         if(this._perfectCritT > 0) this._perfectCritT--;
+        if(this.frozen > 0) this.frozen--; // on the simulation tick (was in draw: ran during pause and 2x on 120 Hz)
 
         let dx = Input.left.active ? Input.left.dx : ((Input.keys['d'] || Input.keys['arrowright'])?1:(Input.keys['a'] || Input.keys['arrowleft'])?-1:0);
         let dy = Input.left.active ? Input.left.dy : ((Input.keys['s'] || Input.keys['arrowdown'])?1:(Input.keys['w'] || Input.keys['arrowup'])?-1:0);
@@ -27884,7 +27927,6 @@ class Player extends Entity {
                 PixelFX.drawDisc(ctx, sx + Math.cos(a) * d, sy + Math.sin(a) * d, 2, '#88eeff');
             }
             ctx.restore();
-            this.frozen--;
         }
         
         // Class-specific indicators
@@ -28389,8 +28431,8 @@ class NPC {
         if (dungeonLvl >= 7) {
             this._merchantItems.push({ healer: true, nameKey: 'npc.merchant.item5.name', name: 'Cura Total', cost: applyDiscount(100), descKey: 'npc.merchant.item5.desc', desc: 'Cura Completa', action: (p) => { p.hp = p.maxHp; } });
         }
-        // Desafio diário 'Jejum': sem itens de cura na loja do mercador
-        if (window._dailyMods && window._dailyMods.healOnlyFromKills) this._merchantItems = this._merchantItems.filter(i => !i.healer);
+        // Desafios diários 'Jejum' e 'Sofrimento': sem itens de cura no mercador (como na loja)
+        if (window._dailyMods && (window._dailyMods.healOnlyFromKills || window._dailyMods.noHealShop)) this._merchantItems = this._merchantItems.filter(i => !i.healer);
     }
 
     // Context-aware tips based on player progress
@@ -30808,6 +30850,9 @@ window.SkillTreeUI = SkillTreeUI;
             // Sair do painel descarta um opt-in de desafio diário ainda não iniciado.
             // Síncrono: o botão "Jogar desafio de hoje" marca o opt-in logo após fechar.
             window._dailyOptIn = false;
+            // Closing the camp without descending: don't reopen it while the player
+            // is still standing on the portal (the panel used to come back next frame).
+            if (this.currentPanel === 'camp' && typeof CampSystem !== 'undefined' && CampSystem.state) CampSystem._dismissed = true;
             if (this.overlay) {
                 const returnFocus = this._returnFocusElement;
                 this.overlay.classList.add('fade-out');
@@ -30932,7 +30977,7 @@ window.SkillTreeUI = SkillTreeUI;
                 <div style="margin-top:16px;padding:12px;border-radius:12px;border:1.5px solid rgba(255,170,68,0.35);background:rgba(255,140,0,0.07)">
                     <div style="font-weight:bold;font-size:12px;color:#ffaa44;margin-bottom:8px;letter-spacing:0.08em;text-transform:uppercase">⚒️ ${_L('shop.forge', 'FORJA')}</div>
                     <div style="display:flex;flex-direction:column;gap:8px">
-                        ${window.CraftSystem ? CraftSystem.RECIPES.filter(r => !(window._dailyMods && window._dailyMods.healOnlyFromKills && r.id === 'forge_health')).map(r => {
+                        ${window.CraftSystem ? CraftSystem.RECIPES.filter(r => !(window._dailyMods && ((window._dailyMods.healOnlyFromKills && r.id === 'forge_health') || (window._dailyMods.noHealShop && (r.id === 'forge_health' || r.id === 'forge_shield'))))).map(r => {
                             const canCraft = p.currency >= r.cost;
                             return `<button style="display:flex;justify-content:space-between;align-items:center;padding:10px;border-radius:10px;border:1.5px solid ${canCraft ? 'rgba(255,170,68,0.5)' : 'rgba(255,255,255,0.1)'};background:${canCraft ? 'rgba(255,170,68,0.1)' : 'rgba(35,28,48,0.5)'};${canCraft ? 'cursor:pointer' : 'opacity:0.6'};transition:all 0.2s"
                                     onclick="${canCraft ? `UIManager.craftItem('${r.id}')` : ''}">
@@ -32375,7 +32420,7 @@ const TutorialSystem = {
                 'Tutorial rápido — 6 etapas, ~1 minuto.',
                 '',
                 'ESQUERDA: mover — DIREITA: atirar',
-                'BOTÃO CENTRAL: habilidade de classe',
+                'HABILIDADE: botão no canto DIREITO',
                 '',
                 'Os tiros são AUTOMÁTICOS ao apontar!',
             ],
@@ -32430,7 +32475,7 @@ const TutorialSystem = {
             title: ' Use sua Habilidade!',
             linesKeys: ['tutorial.stage5.line1', 'tutorial.stage5.line2', 'tutorial.stage5.line3', 'tutorial.stage5.line4', 'tutorial.stage5.line5'],
             lines: [
-                'Toque o BOTÃO CENTRAL para usar a habilidade.',
+                'Toque o botão de HABILIDADE no canto DIREITO.',
                 'Guerreiro: Golpe Sísmico  |  Ladino: Dash',
                 'Mago: Tempestade Arcana',
                 '',
@@ -32473,7 +32518,7 @@ const TutorialSystem = {
                 'Tutorial completo — 9 etapas, ~3 minutos.',
                 '',
                 'ESQUERDA: mover — DIREITA: atirar',
-                'BOTÃO CENTRAL: habilidade de classe',
+                'HABILIDADE: botão no canto DIREITO',
                 '',
                 'Os tiros são AUTOMÁTICOS ao apontar!',
             ],
@@ -32528,7 +32573,7 @@ const TutorialSystem = {
             title: ' Use sua Habilidade!',
             linesKeys: ['tutorial.stage5.line1', 'tutorial.stage5.line2', 'tutorial.stage5.line3', 'tutorial.stage5.line4', 'tutorial.stage5.line5'],
             lines: [
-                'Toque o BOTÃO CENTRAL para usar a habilidade.',
+                'Toque o botão de HABILIDADE no canto DIREITO.',
                 'Guerreiro: Golpe Sísmico  |  Ladino: Dash',
                 'Mago: Tempestade Arcana',
                 '',
@@ -33838,6 +33883,21 @@ const Input = {
                 }
             }
         }, { passive: false });
+
+        // A call, a system gesture or leaving the app cancels the touch without a
+        // touchend: release the sticks or the hero keeps walking and new touches
+        // are ignored (the side still looks "active" under the old id).
+        window.addEventListener('touchcancel', () => this._releaseSticks(), { passive: true });
+        document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') this._releaseSticks(); });
+        window.addEventListener('pagehide', () => this._releaseSticks());
+    },
+
+    _releaseSticks() {
+        for (const side of ['left', 'right']) {
+            const j = this[side];
+            if (!j) continue;
+            j.active = false; j.id = -1; j.dx = 0; j.dy = 0;
+        }
     },
 
     _applyMove(t) {
