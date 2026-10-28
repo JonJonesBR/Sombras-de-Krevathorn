@@ -1,10 +1,13 @@
 /* Krevathorn Service Worker — offline cache for the single-file game.
  *
  * Strategy:
- *   - navigation (./, ./index.html): NETWORK-FIRST. A freshly deployed release
- *     reaches players as soon as this worker activates (activation happens via
- *     skipWaiting on install + clients.claim), and the cache is only the
- *     offline fallback. This is what makes updates show automatically.
+ *   - navigation (./, ./index.html): NETWORK-FIRST com timeout de 3,5 s quando há
+ *     cópia em cache. A freshly deployed release reaches players as soon as this
+ *     worker activates (activation happens via skipWaiting on install +
+ *     clients.claim). The cache is the fallback when offline or when the network
+ *     is too slow; the fetch keeps running and refreshes the cache. Without a
+ *     cached copy the network is awaited with no timeout. This is what makes
+ *     updates show automatically.
  *   - other same-origin GETs: stale-while-revalidate (cache-first, refresh in
  *     background) — the app is a single HTML file, so there is little else.
  *   - offline: the cache serves the game.
@@ -42,6 +45,20 @@ self.addEventListener('activate', (event) => {
     );
 });
 
+const NAVIGATION_TIMEOUT_MS = 3500;
+
+function cachedNavigation(req) {
+    return APP_SHELL.reduce((hit, key) => hit.then((found) => found || caches.match(key)), caches.match(req));
+}
+
+function navigationResponse(req, network) {
+    return cachedNavigation(req).catch(() => undefined).then((cached) => {
+        if (!cached) return network.catch(() => Response.error());
+        const timeout = new Promise((resolve) => setTimeout(() => resolve(cached), NAVIGATION_TIMEOUT_MS));
+        return Promise.race([network.catch(() => cached), timeout]);
+    });
+}
+
 self.addEventListener('fetch', (event) => {
     const req = event.request;
     if (req.method !== 'GET') return;
@@ -53,18 +70,19 @@ self.addEventListener('fetch', (event) => {
 
     if (isNavigation) {
         // Network-first: new deployments must reach players as soon as the
-        // refreshed worker is active; the cache is only the offline fallback.
-        event.respondWith(
-            fetch(req)
-                .then((res) => {
-                    if (res && res.ok && (res.type === 'basic' || res.type === 'default')) {
-                        const clone = res.clone();
-                        caches.open(CACHE_NAME).then((cache) => cache.put(req, clone));
-                    }
-                    return res;
-                })
-                .catch(() => caches.match(req)) // offline: cached copy
-        );
+        // refreshed worker is active. With a cached copy, a slow network
+        // (lie-fi) yields to the cache after NAVIGATION_TIMEOUT_MS, while the
+        // fetch keeps running in the background to refresh the cache.
+        let storing = Promise.resolve();
+        const network = fetch(req).then((res) => {
+            if (res && res.ok && (res.type === 'basic' || res.type === 'default')) {
+                const clone = res.clone();
+                storing = caches.open(CACHE_NAME).then((cache) => cache.put(req, clone));
+            }
+            return res;
+        });
+        event.waitUntil(network.then(() => storing, () => {}));
+        event.respondWith(navigationResponse(req, network));
         return;
     }
 
