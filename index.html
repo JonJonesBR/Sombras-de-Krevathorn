@@ -8650,7 +8650,7 @@ var CONFIG = {
     BOSS_ABILITY_SUMMON_COUNT: 2, // minions per summon
     BOSS_ABILITY_SUMMON_CHANCE: 0.3, // 30% chance on phase transition
     BOSS_ABILITY_CHARGE_SPEED: 10,
-    BOSS_ABILITY_CHARGE_DAMAGE: 45,
+    BOSS_ABILITY_CHARGE_DAMAGE: 18, // mesma base do dash (BOSS_DASH_DAMAGE); antes 45 e nunca aplicado
     BOSS_CHARGE_RANGE: 400,
     BOSS_DRAIN_RADIUS: 340,        // raio do canal de dreno
     BOSS_ABILITY_CHARGE_RANGE: 250,
@@ -24849,6 +24849,15 @@ class Boss extends Enemy {
         this.chargeTarget = null;
         this._chargeWindupTimer = 0;
         this._chargeWindupTarget = null;
+        this._chargeDmg = 0;
+        this._chargeT = 0;
+        this._poundTelegraph = 0;
+        this._poundDmg = 0;
+        this._poundRange = 0;
+        this._teleportT = 0;
+        this._teleportX = 0;
+        this._teleportY = 0;
+        this._shadowQueue = [];
         this.name = CONFIG.BOSS_NAMES[Math.floor(Math.random() * CONFIG.BOSS_NAMES.length)];
         this.nameKey = null;
         this.xpReward = CONFIG.XP_BOSS_REWARD + CONFIG.BOSS_XP_BONUS;
@@ -24991,15 +25000,16 @@ class Boss extends Enemy {
         this.x = nx; this.y = ny;
         spawnParticles(this.x, this.y, this._bpGlow, 16, 5);
         shake = 8;
-        for(let i = 0; i < 3; i++) {
-            setTimeout(() => {
-                if(!this.alive || typeof player === 'undefined' || !player) return;
-                const pa = Math.atan2(player.y - this.y, player.x - this.x);
-                if (typeof DamageNumbers !== 'undefined') DamageNumbers.addSlash(this.x + Math.cos(pa) * this.radius, this.y + Math.sin(pa) * this.radius, pa, this.radius * 2, '#b48cff');
-                const pd = Math.hypot(player.x - this.x, player.y - this.y);
-                if(pd < this.radius * 2 + player.radius) player.takeDamage(CONFIG.ENEMY_MELEE_DAMAGE * 1.2, m);
-            }, i * 120);
-        }
+        // Cortes em ticks de simulação (60 ticks = 1 s), não em setTimeout: não disparam em pausa, painel ou hit-stop
+        for(let i = 0; i < 3; i++) this._shadowQueue.push({ t: 1 + Math.round(i * 120 * 60 / 1000) });
+    }
+
+    _shadowStrikeHit(m) {
+        if(!this.alive || typeof player === 'undefined' || !player) return;
+        const pa = Math.atan2(player.y - this.y, player.x - this.x);
+        if (typeof DamageNumbers !== 'undefined') DamageNumbers.addSlash(this.x + Math.cos(pa) * this.radius, this.y + Math.sin(pa) * this.radius, pa, this.radius * 2, '#b48cff');
+        const pd = Math.hypot(player.x - this.x, player.y - this.y);
+        if(pd < this.radius * 2 + player.radius) player.takeDamage(CONFIG.ENEMY_MELEE_DAMAGE * 1.2, m);
     }
 
     _ab_darkNova(p, m) {
@@ -25370,7 +25380,7 @@ class Boss extends Enemy {
         }
 
         // Boss abilities
-        if(this.abilityCooldown <= 0 && !this.charging) {
+        if(this.abilityCooldown <= 0 && !this.charging && !(this._chargeWindupTimer > 0)) {
             this.useAbility(p, m);
             this.abilityCooldown = Math.max(70, Math.floor((CONFIG.BOSS_ABILITY_COOLDOWN - (this.phase - 1) * 14) * (1 - (this._abyssalCooldownCut || 0))));
         }
@@ -25394,12 +25404,48 @@ class Boss extends Enemy {
             }
         }
 
+        // Golpes de sombra agendados (shadowStrike): cada item conta ticks até o corte
+        if(this._shadowQueue.length) {
+            for(let i = this._shadowQueue.length - 1; i >= 0; i--) {
+                if(--this._shadowQueue[i].t > 0) continue;
+                this._shadowQueue.splice(i, 1);
+                this._shadowStrikeHit(m);
+            }
+        }
+
+        // groundPound: aviso de 28 ticks; o dano cai quando zera, no ponto do chefe naquele instante
+        if(this._poundTelegraph > 0 && --this._poundTelegraph === 0) {
+            const pdx = p.x - this.x, pdy = p.y - this.y;
+            spawnParticles(this.x, this.y, '#ff6600', 30, 5); shake = 18;
+            if(pdx * pdx + pdy * pdy < this._poundRange * this._poundRange) {
+                p.takeDamage(this._poundDmg, m);
+                spawnParticles(p.x, p.y, '#ff3300', 15, 5);
+            }
+        }
+
+        // teleport: a rajada sai do ponto de chegada 28 ticks depois, com o aviso desenhado ali
+        if(this._teleportT > 0 && --this._teleportT === 0) {
+            const sp = CONFIG.BOSS_ABILITY_PROJECTILE_SPEED;
+            const dmg = CONFIG.BOSS_ABILITY_PROJECTILE_DAMAGE * (this._abyssalDmgMult || 1);
+            for(let i = 0; i < 6; i++) {
+                const a = (i / 6) * Math.PI * 2;
+                if (window.PoolManager) {
+                    bullets.push(PoolManager.acquire('Bullet', this._teleportX, this._teleportY, Math.cos(a)*sp, Math.sin(a)*sp, '#cc00ff', dmg, false));
+                } else {
+                    bullets.push(new Bullet(this._teleportX, this._teleportY, Math.cos(a)*sp, Math.sin(a)*sp, '#cc00ff', dmg, false));
+                }
+            }
+            spawnParticles(this._teleportX, this._teleportY, '#ff00ff', 20, 6);
+            shake = 10;
+        }
+
         // Charge wind-up: boss freezes, telegraphs direction, then lunges
         if(this._chargeWindupTimer > 0) {
             this._chargeWindupTimer--;
             if(this._chargeWindupTimer === 0) {
                 this.charging = true;
                 this.chargeTarget = { x: this._chargeWindupTarget.x, y: this._chargeWindupTarget.y };
+                this._chargeT = Math.ceil(CONFIG.BOSS_CHARGE_RANGE / CONFIG.BOSS_ABILITY_CHARGE_SPEED) + 10;
                 spawnParticles(this.x, this.y, '#ff0000', 25, 7);
             }
             return;
@@ -25413,9 +25459,11 @@ class Boss extends Enemy {
             const invCd = cd > 0 ? 1/cd : 1;
             const vx = cdx * invCd * CONFIG.BOSS_ABILITY_CHARGE_SPEED;
             const vy = cdy * invCd * CONFIG.BOSS_ABILITY_CHARGE_SPEED;
-            if(cd > 10) {
+            if(cd > 10 && --this._chargeT > 0) {
                 const _charged = this.move(vx, vy, m);
-                if(!_charged) {
+                const _ndx = this.chargeTarget.x - this.x, _ndy = this.chargeTarget.y - this.y;
+                // move() desliza ou empurra na parede e quase nunca devolve false: para quando não avança mais
+                if(!_charged || cd - Math.sqrt(_ndx * _ndx + _ndy * _ndy) < CONFIG.BOSS_ABILITY_CHARGE_SPEED * 0.3) {
                     this.charging = false;
                 } else {
                     this.angle = Math.atan2(vy, vx);
@@ -25423,7 +25471,7 @@ class Boss extends Enemy {
                     const contactSq = (p.radius + this.radius + 10) * (p.radius + this.radius + 10);
                     const pdx = p.x-this.x, pdy = p.y-this.y;
                     if(pdx*pdx + pdy*pdy < contactSq) {
-                        p.takeDamage(CONFIG.BOSS_ABILITY_CHARGE_DAMAGE, m);
+                        p.takeDamage(this._chargeDmg || CONFIG.BOSS_ABILITY_CHARGE_DAMAGE, m);
                         spawnParticles(p.x, p.y, '#ff0000', 10, 4);
                         this.charging = false; shake = 12; ScreenEffects.onChargeHit();
                     }
@@ -25513,14 +25561,18 @@ class Boss extends Enemy {
             this._dashDmg = CONFIG.BOSS_DASH_DAMAGE * (this._abyssalDmgMult || 1) * (this._archDamageMult || 1);
             spawnParticles(this.x, this.y, this._bpGlow || '#ffffff', 12, 5);
 
+        } else if(ability === 'charge') {
+            // Investida telegrafada: direção fixada agora; o golpe sai após o windup (Boss.update)
+            const cpa = Math.atan2(p.y - this.y, p.x - this.x);
+            this._chargeWindupTimer = CONFIG.BOSS_CHARGE_WINDUP_FRAMES;
+            this._chargeWindupTarget = { x: this.x + Math.cos(cpa) * CONFIG.BOSS_CHARGE_RANGE, y: this.y + Math.sin(cpa) * CONFIG.BOSS_CHARGE_RANGE };
+            this._chargeDmg = CONFIG.BOSS_ABILITY_CHARGE_DAMAGE * (this._abyssalDmgMult || 1) * (this._archDamageMult || 1);
+
         } else if(ability === 'groundPound') {
-            const pdx = p.x - this.x, pdy = p.y - this.y;
-            const distSq = pdx * pdx + pdy * pdy;
-            spawnParticles(this.x, this.y, '#ff6600', 30, 5); shake = 18;
-            if(distSq < 48400) {
-                p.takeDamage(dmg * 2, m);
-                spawnParticles(p.x, p.y, '#ff3300', 15, 5);
-            }
+            // Aviso de 28 ticks com o anel do raio real (220 px); o dano cai em Boss.update
+            this._poundTelegraph = 28;
+            this._poundRange = 220;
+            this._poundDmg = dmg * 2;
             // Ring of 8 slow projectiles
             for(let i = 0; i < 8; i++) {
                 const a = (i / 8) * Math.PI * 2;
@@ -25552,16 +25604,11 @@ class Boss extends Enemy {
                 this.x = nx; this.y = ny;
                 spawnParticles(this.x, this.y, '#ff00ff', 20, 6);
             }
-            // Immediate burst on arrival
-            for(let i = 0; i < 6; i++) {
-                const a = (i / 6) * Math.PI * 2;
-                if (window.PoolManager) {
-                    bullets.push(PoolManager.acquire('Bullet', this.x, this.y, Math.cos(a)*sp, Math.sin(a)*sp, '#cc00ff', dmg, false));
-                } else {
-                    bullets.push(new Bullet(this.x, this.y, Math.cos(a)*sp, Math.sin(a)*sp, '#cc00ff', dmg, false));
-                }
-            }
-            shake = 10; addLog(' ' + this.name + (window.I18n ? I18n.t('log.bossTeleported') : ' teleportou!'));
+            // Rajada de chegada com aviso: sai 28 ticks depois (Boss.update)
+            this._teleportT = 28;
+            this._teleportX = this.x;
+            this._teleportY = this.y;
+            addLog(' ' + this.name + (window.I18n ? I18n.t('log.bossTeleported') : ' teleportou!'));
         }
 
         this.abilityCooldown = Math.max(70, Math.floor((CONFIG.BOSS_ABILITY_COOLDOWN - this.phase * 10) * (1 - (this._abyssalCooldownCut || 0))));
@@ -25630,7 +25677,7 @@ class Boss extends Enemy {
         }
         // Boss pose por estado: lunge/dash = attack, windup/telegraph/drain/spiral = cast, movendo = walk
         const bossState = (this.charging || this._dashT > 0) ? 'attack'
-            : (this._chargeWindupTimer > 0 || this._burstTelegraphTimer > 0 || this._drainT > 0 || this._spiralTimer > 0) ? 'cast'
+            : (this._chargeWindupTimer > 0 || this._burstTelegraph > 0 || this._drainT > 0 || this._spiralTimer > 0) ? 'cast'
             : (this.walkTimer > 0) ? 'walk' : 'idle';
         SpriteRenderer.drawEnemy.call(this, ctx, this.x-cx, this.y-cy, this._sprite || 'boss', this.walkTimer, this.angle, this._spriteScale || 2.3, this.ft > 0, bossState);
 
@@ -25677,6 +25724,24 @@ class Boss extends Enemy {
             ctx.globalAlpha = 0.5;
             PixelFX.drawDisc(ctx, this.x-cx, this.y-cy, maxRadius * progress, '#ff00ff');
             ctx.globalAlpha = 1;
+        }
+
+        // Telegraph: groundPound impact radius (real 220 px area, shown before the hit)
+        if(this._poundTelegraph > 0) {
+            const pp = 1 - this._poundTelegraph / 28;
+            ctx.save();
+            ctx.globalAlpha = 0.35 + pp * 0.55;
+            PixelFX.ring(ctx, this.x-cx, this.y-cy, this._poundRange, '#ff6600', 3);
+            ctx.restore();
+        }
+
+        // Telegraph: teleport arrival point (the burst leaves from here after 28 ticks)
+        if(this._teleportT > 0) {
+            const tp = 1 - this._teleportT / 28;
+            ctx.save();
+            ctx.globalAlpha = 0.4 + tp * 0.5;
+            PixelFX.ring(ctx, this._teleportX-cx, this._teleportY-cy, 24 + (1 - tp) * 36, '#cc00ff', 3);
+            ctx.restore();
         }
 
         // Charge wind-up warning: pulsing red ring + charge path
