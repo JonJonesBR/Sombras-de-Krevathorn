@@ -1719,7 +1719,7 @@ body { --util-btn: min(calc(44px * var(--ui-btn-scale, 1)), calc((100vw - 84px) 
         <div id="pause-overlay" class="hidden" style="position:absolute;inset:0;z-index:300;background:rgba(6,2,12,0.85);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:auto;padding:24px;">
             <div class="glass-panel" style="width:100%;max-width:20rem;padding:32px;display:flex;flex-direction:column;align-items:center;gap:6px;">
                 <div data-i18n="pause.title" style="font-size:1.6rem;font-weight:900;color:#e0b6ff;text-shadow:0 0 20px rgba(224,182,255,0.5),0 0 40px rgba(224,182,255,0.2);">PAUSADO</div>
-                <div data-i18n="pause.hint" style="font-size:0.75rem;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:0.15em;margin-bottom:22px;">Toque para continuar</div>
+                <div data-i18n="pause.hint" style="font-size:0.75rem;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:0.15em;margin-bottom:22px;">Toque em Continuar</div>
                 <div style="display:flex;flex-direction:column;gap:10px;width:100%;">
                     <button id="pause-resume" data-i18n="pause.resume" style="width:100%;padding:16px 0;border-radius:12px;color:#fff;font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:0.05em;background:linear-gradient(135deg,#008836,#3ce36a);border:1px solid rgba(60,227,106,0.3);box-shadow:0 4px 20px rgba(0,136,54,0.3);transition:all 0.3s;text-shadow:0 1px 4px rgba(0,0,0,0.4);cursor:pointer;touch-action:manipulation;">Continuar</button>
                     <button id="pause-settings" data-i18n="pause.settings" onclick="if(window.SettingsUI) SettingsUI.show(this);" style="width:100%;padding:12px 0;border-radius:12px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;border:1px solid rgba(224,182,255,0.2);color:rgba(224,182,255,0.85);background:rgba(30,22,45,0.6);cursor:pointer;touch-action:manipulation;">Ajustes</button>
@@ -3815,7 +3815,7 @@ const I18n = {
 
             // Pause panel
             'pause.title': 'PAUSADO',
-            'pause.hint': 'Toque para continuar',
+            'pause.hint': 'Toque em Continuar',
             'pause.resume': 'Continuar',
             'pause.quit': 'Desistir e voltar ao menu inicial',
             'pause.quitConfirm': 'Toque de novo para confirmar',
@@ -4911,7 +4911,6 @@ const I18n = {
             'log.tutorialCompletePost': ' moedas. Boa sorte!',
             'log.trainingDummy': ' Boneco de treino apareceu!',
             'log.trainingWeapon': ' Equipamento de treino apareceu!',
-            'log.pressBack': 'Pressione Voltar novamente para sair.',
             'log.itemBought': ' comprado!',
 
             // ============================================================
@@ -5455,7 +5454,7 @@ const I18n = {
 
             // Pause panel
             'pause.title': 'PAUSED',
-            'pause.hint': 'Tap to resume',
+            'pause.hint': 'Tap Continue',
             'pause.resume': 'Resume',
             'pause.quit': 'Give up and return to main menu',
             'pause.quitConfirm': 'Tap again to confirm',
@@ -6551,7 +6550,6 @@ const I18n = {
             'log.tutorialCompletePost': ' coins. Good luck!',
             'log.trainingDummy': ' Training dummy appeared!',
             'log.trainingWeapon': ' Training equipment appeared!',
-            'log.pressBack': 'Press Back again to exit.',
             'log.itemBought': ' purchased!',
 
             // ============================================================
@@ -7095,7 +7093,7 @@ const I18n = {
 
             // Pause panel
             'pause.title': 'PAUSADO',
-            'pause.hint': 'Toca para continuar',
+            'pause.hint': 'Toca Continuar',
             'pause.resume': 'Continuar',
             'pause.quit': 'Rendirse y volver al menú inicial',
             'pause.quitConfirm': 'Toca de nuevo para confirmar',
@@ -8190,7 +8188,6 @@ const I18n = {
             'log.tutorialCompletePost': ' monedas. ¡Buena suerte!',
             'log.trainingDummy': ' ¡Apareció el muñeco de entrenamiento!',
             'log.trainingWeapon': ' ¡Apareció el equipo de entrenamiento!',
-            'log.pressBack': 'Pulsa Volver de nuevo para salir.',
             'log.itemBought': ' comprado!',
 
             // Toasts (meta/loja/diário)
@@ -9536,7 +9533,7 @@ window.addEventListener('keydown', (e) => {
     // 'd' is a movement key (move right) - debug overlay is F3-only to avoid
     // toggling every frame while holding D to move
     // hero mode removed
-    if(key === 'escape') { _closeAll(); debugVisible = false; }
+    if(key === 'escape') { debugVisible = false; }
     if(key === 'f3') { e.preventDefault(); window.toggleDebug(); }
 });
 
@@ -12436,9 +12433,9 @@ const PauseSystem = {
             if (botUtils) botUtils.classList.add('hidden');
             if (window._refreshContinueButton) window._refreshContinueButton();
         });
-        // Support back button for pause
+        // Escape/Voltar passam pelo despachante _handleBack (IIFE do Android)
         document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape' || e.key === 'p' || e.key === 'P') {
+            if (e.key === 'p' || e.key === 'P') {
                 if (gameState === 'PLAYING') self.toggle();
                 else if (self.active && !(window.SettingsUI && SettingsUI.open)) self.resume();
             }
@@ -32311,6 +32308,7 @@ window.GameBootstrap = {
 
     _startUI() {
         gameState = 'PLAYING';
+        if (window._ensureBackSentinel) window._ensureBackSentinel();
         // Skip showing controls during tutorial
         if (typeof TutorialSystem !== 'undefined' && TutorialSystem.active) {
             // Controls stay hidden during tutorial
@@ -32719,6 +32717,10 @@ const TutorialSystem = {
                 const stg = TutorialSystem.currentStage;
                 if(stg && stg.waitForTap && TutorialSystem.stageTimer > 12) TutorialSystem._advanceStage();
             } else if(e.key === 'Escape') {
+                // Com pausa/painel aberto o Escape é do despachante _handleBack (retomar/fechar)
+                if (isAnyPanelOpen()) return;
+                // Uma tecla, uma ação: impede o despachante de também pausar
+                e.stopImmediatePropagation();
                 TutorialSystem._skipInGame();
             }
         });
@@ -33165,6 +33167,8 @@ const TutorialSystem = {
 
     onTap(tx, ty) {
         if(!this.active) return false;
+        // Pausa aberta: o toque é do overlay (Continuar/Ajustes/Desistir), não do tutorial
+        if(typeof PauseSystem !== 'undefined' && PauseSystem.active) return false;
         // Convert screen coordinates to LOGICAL canvas coordinates (fixed under
         // _autoResScale - the physical buffer may be smaller, input lines up
         // with where the game actually draws).
@@ -34132,34 +34136,36 @@ Input.init();
     (function() {
         'use strict';
 
-        // --- Android Back Button ---
+        // --- Voltar (Escape/teclas Back e botão Voltar do Android) ---
+        // Despachante único: retorna true quando tratou. Nunca recarrega a página.
+        function _handleBack() {
+            if (typeof PrologueSystem !== 'undefined' && PrologueSystem.visible) return false;
+            if (typeof SettingsUI !== 'undefined' && SettingsUI.open) { SettingsUI.close(); return true; }
+            var pausado = typeof PauseSystem !== 'undefined' && PauseSystem.active;
+            if (!pausado && isAnyPanelOpen()) { _closeAll(); return true; }
+            if (gameState === 'PLAYING') { PauseSystem.toggle(); return true; }
+            return false;
+        }
+        window._handleBack = _handleBack;
+
         document.addEventListener('keydown', function(e) {
-            if (e.key === 'Back' || e.key === 'Escape' || e.key === 'Android') {
-                e.preventDefault();
-                // Priority: close any open panel > confirm exit
-                if (typeof isAnyPanelOpen === 'function' && isAnyPanelOpen()) {
-                    if (typeof _closeAll === 'function') _closeAll();
-                    return;
-                }
-                if (gameState === 'PLAYING' && typeof SettingsUI !== 'undefined' && SettingsUI.open) {
-                    SettingsUI.close();
-                    return;
-                }
-                if (gameState !== 'START' && gameState !== 'WORLD_MAP') {
-                    // Show pause/exit confirmation
-                    if (typeof _closeAll === 'function') _closeAll();
-                    if (typeof addLog === 'function') addLog(window.I18n ? I18n.t('log.pressBack') : 'Pressione Voltar novamente para sair.');
-                    if (!window._backPressTimer) {
-                        window._backPressTimer = setTimeout(function() { window._backPressTimer = null; }, 2000);
-                    } else {
-                        clearTimeout(window._backPressTimer);
-                        window._backPressTimer = null;
-                        location.reload();
-                    }
-                } else {
-                    location.reload();
-                }
-            }
+            if (e.key !== 'Back' && e.key !== 'Escape' && e.key !== 'Android' && e.key !== 'BrowserBack' && e.key !== 'GoBack') return;
+            if (e.repeat) return;
+            if (_handleBack()) e.preventDefault();
+        });
+
+        // Sentinela de histórico: o Voltar do sistema Android navega no histórico (popstate)
+        // e não gera keydown. Só se empilha uma entrada por vez (checa history.state).
+        function _ensureBackSentinel() {
+            if (!(history.state && history.state.krev)) history.pushState({ krev: 1 }, '');
+        }
+        window._ensureBackSentinel = _ensureBackSentinel;
+        // Estados de dentro da run: a sentinela tem de sobreviver a um Voltar neles (REWARD/CONTINUE são modais)
+        function _naRun() { return gameState === 'PLAYING' || gameState === 'REWARD' || gameState === 'CONTINUE'; }
+        window.addEventListener('popstate', function() {
+            if (!_naRun() && !isAnyPanelOpen()) return;
+            _handleBack();
+            if (_naRun()) _ensureBackSentinel();
         });
 
         // --- Wake Lock (prevent screen off during gameplay) ---
@@ -34219,6 +34225,10 @@ Input.init();
             _resetLoopClocks();
             if (document.visibilityState === 'visible' && gameState === 'PLAYING') {
                 requestWakeLock();
+            }
+            // Sair do app no meio da run pausa; ao voltar, não retoma sozinho (Continuar no overlay)
+            if (document.visibilityState === 'hidden' && gameState === 'PLAYING' && !isAnyPanelOpen() && typeof PauseSystem !== 'undefined') {
+                PauseSystem.pause();
             }
             if (document.visibilityState === 'hidden' && typeof SaveSystem !== 'undefined') {
                 Debug.safe(() => SaveSystem.save(), 'autosaveVisibility');
