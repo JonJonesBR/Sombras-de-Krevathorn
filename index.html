@@ -729,16 +729,6 @@ body.cb-tritan  { filter: url("#cb-tritan"); }
     0%, 100% { transform: scale(1); }
     50% { transform: scale(1.05); }
 }
-/* Double-tap-to-confirm on the death screen restart button: the first tap
-   arms a countdown instead of instantly abandoning the run. */
-#restart-btn._go-confirm {
-    filter: saturate(1.4) brightness(1.12);
-    animation: goConfirmPulse 0.9s ease-in-out infinite;
-}
-@keyframes goConfirmPulse {
-    0%, 100% { transform: scale(1); box-shadow: 0 4px 20px rgba(200,0,15,0.3); }
-    50% { transform: scale(1.03); box-shadow: 0 4px 28px rgba(255,80,40,0.55); }
-}
 #win-screen h1, #continue-screen h2 {
     text-shadow: 0 0 25px currentColor, 0 0 50px currentColor;
 }
@@ -1764,9 +1754,10 @@ body { --util-btn: min(calc(44px * var(--ui-btn-scale, 1)), calc((100vw - 84px) 
             <div id="go-records" style="width:100%;text-align:center;"></div>
             <div id="go-tip" class="text-xs hidden text-center px-4" style="color:#ffcc00;"></div>
             <div id="go-lore-teaser" class="text-xs hidden text-center px-4" style="color:#e0b6ff;"></div>
+            <button id="go-newrun-btn" data-i18n="gameover.newRun" onclick="_startNewRunSameClass()" style="position:sticky;bottom:0;z-index:2;width:100%;padding:16px 0;border-radius:12px;color:#fff;font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:0.05em;background:linear-gradient(135deg,#b8000f,#e84525);border:1px solid rgba(255,100,80,0.3);box-shadow:0 4px 20px rgba(200,0,15,0.3);transition:all 0.3s;text-shadow:0 1px 4px rgba(0,0,0,0.4);cursor:pointer;">NOVA RUN</button>
             <button id="go-share-btn" data-i18n="gameover.share" style="width:100%;padding:10px 0;border-radius:12px;color:#9ad0ff;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;background:rgba(80,140,255,0.1);border:1px solid rgba(80,140,255,0.3);cursor:pointer;transition:all 0.3s;">&#128279; COMPARTILHAR RESULTADO</button>
             <button id="go-prestige-btn" data-i18n="gameover.prestigeBtn" onclick="if(window.UIManager) window.UIManager.openPanel('prestige')" style="width:100%;padding:10px 0;border-radius:12px;color:#ff8c42;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;background:rgba(255,140,66,0.12);border:1px solid rgba(255,140,66,0.35);cursor:pointer;transition:all 0.3s;">Prestígio</button>
-            <button id="restart-btn" data-i18n="gameover.restart" aria-live="polite" style="width:100%;padding:16px 0;border-radius:12px;color:#fff;font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:0.05em;background:linear-gradient(135deg,#b8000f,#e84525);border:1px solid rgba(255,100,80,0.3);box-shadow:0 4px 20px rgba(200,0,15,0.3);transition:all 0.3s;text-shadow:0 1px 4px rgba(0,0,0,0.4);cursor:pointer;">TENTAR NOVAMENTE</button>
+            <button id="restart-btn" data-i18n="gameover.restart" style="width:100%;padding:12px 0;border-radius:12px;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.5);background:rgba(40,30,55,0.6);transition:all 0.2s;cursor:pointer;">VOLTAR AO MENU</button>
         </div>
     </div>
 
@@ -1805,7 +1796,7 @@ body { --util-btn: min(calc(44px * var(--ui-btn-scale, 1)), calc((100vw - 84px) 
             <h1 class="text-3xl font-bold epic-glow-text" data-i18n="win.title" style="color:#3ce36a;text-shadow:0 0 25px rgba(60,227,106,0.5),0 0 50px rgba(60,227,106,0.2);">SUPERFÍCIE ALCANÇADA!</h1>
             <div id="win-stars" class="text-4xl"></div>
             <div id="win-stats" class="text-sm" style="color:rgba(255,255,255,0.6);"></div>
-            <button data-i18n="win.playAgain" style="width:100%;padding:16px 0;border-radius:12px;color:#fff;font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:0.05em;background:linear-gradient(135deg,#008836,#3ce36a);border:1px solid rgba(60,227,106,0.3);box-shadow:0 4px 20px rgba(0,136,54,0.3);transition:all 0.3s;text-shadow:0 1px 4px rgba(0,0,0,0.4);cursor:pointer;" onclick="location.reload()">JOGAR NOVAMENTE</button>
+            <button id="win-playagain-btn" data-i18n="win.playAgain" style="width:100%;padding:16px 0;border-radius:12px;color:#fff;font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:0.05em;background:linear-gradient(135deg,#008836,#3ce36a);border:1px solid rgba(60,227,106,0.3);box-shadow:0 4px 20px rgba(0,136,54,0.3);transition:all 0.3s;text-shadow:0 1px 4px rgba(0,0,0,0.4);cursor:pointer;" onclick="_startNewRunSameClass()">JOGAR NOVAMENTE</button>
         </div>
     </div>
 
@@ -3442,7 +3433,8 @@ const I18n = {
 
             // Game over
             'gameover.title': 'VOCÊ MORREU',
-            'gameover.restart': 'Tentar Novamente',
+            'gameover.restart': 'Voltar ao Menu',
+            'gameover.newRun': 'Nova run',
             'gameover.confirmHint': 'Toque de novo para confirmar',
             'gameover.level': 'Nível',
             'gameover.kills': 'Abates',
@@ -5098,7 +5090,8 @@ const I18n = {
 
             // Game over
             'gameover.title': 'YOU DIED',
-            'gameover.restart': 'Try Again',
+            'gameover.restart': 'Back to Menu',
+            'gameover.newRun': 'New run',
             'gameover.confirmHint': 'Tap again to confirm',
             'gameover.level': 'Level',
             'gameover.kills': 'Kills',
@@ -6754,7 +6747,8 @@ const I18n = {
 
             // Game over
             'gameover.title': 'HAS MUERTO',
-            'gameover.restart': 'Intentar de Nuevo',
+            'gameover.restart': 'Volver al Menú',
+            'gameover.newRun': 'Nueva partida',
             'gameover.confirmHint': 'Toca otra vez para confirmar',
             'gameover.level': 'Nivel',
             'gameover.kills': 'Bajas',
@@ -9721,6 +9715,7 @@ function _cancelContinue() {
     // Trigger normal game over
     gameState = 'GAME_OVER';
     uiG.classList.remove('hidden'); uiG.classList.add('fade-in');
+    _lockEndScreenButtons(['go-newrun-btn', 'restart-btn']);
     _recordRunEnd();
     _populateGameOverUI();
     // A run the player gave up on is over: wipe the save so the menu does
@@ -9729,6 +9724,38 @@ function _cancelContinue() {
     Statistics.save();
     NarrativeSystem.save();
     StorageManager.set('prestige', { prestigeLevel, totalGamesPlayed });
+}
+
+var _endScreenLockTimer = null, _endScreenLocked = [];
+// Botões que começam ou abandonam a run ficam travados por 700 ms: um toque acidental na hora da morte não decide a run.
+function _lockEndScreenButtons(ids) {
+    _unlockEndScreenButtons();
+    _endScreenLocked = ids.map(function (id) { return document.getElementById(id); }).filter(Boolean);
+    _endScreenLocked.forEach(function (b) { b.disabled = true; b.style.pointerEvents = 'none'; });
+    _endScreenLockTimer = setTimeout(_unlockEndScreenButtons, 700);
+}
+function _unlockEndScreenButtons() {
+    if (_endScreenLockTimer) clearTimeout(_endScreenLockTimer);
+    _endScreenLockTimer = null;
+    _endScreenLocked.forEach(function (b) { b.disabled = false; b.style.pointerEvents = ''; });
+    _endScreenLocked = [];
+}
+// Nova run com a mesma classe da run que acabou, pelo mesmo caminho do menu sem o prompt do tutorial.
+// O desafio diário não é reaplicado: o opt-in é consumido em GameBootstrap.start.
+function _startNewRunSameClass() {
+    var cls = (player && player.type) || 'warrior';
+    if (window.MetaSystem && !MetaSystem.isClassUnlocked(cls)) cls = 'warrior';
+    _unlockEndScreenButtons();
+    _continueActive = false;
+    if (_continueTimer) { clearInterval(_continueTimer); _continueTimer = null; }
+    ['game-over-screen', 'win-screen', 'continue-screen'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) el.classList.add('hidden');
+    });
+    if (uiG) uiG.classList.remove('fade-in', 'fade-out');
+    if (typeof TutorialSystem !== 'undefined' && TutorialSystem.active) { TutorialSystem.active = false; TutorialSystem.suppressEnemySpawns = false; TutorialSystem._showControls(true); }
+    if (typeof ScreenEffects !== 'undefined') { ScreenEffects._deathFlashTimer = 0; ScreenEffects._flashAlpha = 0; }
+    GameBootstrap.start(cls);
 }
 
 // ============================================================
@@ -9960,7 +9987,7 @@ statsEl.innerHTML = '<div style="margin:8px 0;">'
     if(ws) {
         if (window.WorldMap) WorldMap.unlockNext();
         // Desfecho antes da tela de vitória (uma vez por run vitoriosa, sem bloquear: botão Continuar)
-        _showFinalEpilogue(function() { ws.classList.remove('hidden'); });
+        _showFinalEpilogue(function() { ws.classList.remove('hidden'); _lockEndScreenButtons(['win-playagain-btn']); });
     }
 }
 
@@ -10485,6 +10512,7 @@ function _handlePlayerDeath() {
         } else {
             if (typeof ScreenEffects !== 'undefined' && ScreenEffects.onPlayerDeath) ScreenEffects.onPlayerDeath();
             gameState = 'GAME_OVER'; uiG.classList.remove('hidden'); uiG.classList.add('fade-in');
+            _lockEndScreenButtons(['go-newrun-btn', 'restart-btn']);
             _recordDeath(false);
             _recordRunEnd();
             if (window.UIManager) window.UIManager.updateHUD();
@@ -13050,24 +13078,7 @@ function _initEngine() {
     const restartBtn = document.getElementById('restart-btn');
     if (restartBtn) {
         restartBtn.onclick = () => {
-            // Double-tap confirmation: the first tap arms a short countdown so a
-            // stray tap can't dismiss the results screen and abandon the run.
-            if (!restartBtn._goArmed) {
-                restartBtn._goArmed = true;
-                restartBtn.classList.add('_go-confirm');
-                restartBtn.dataset.origText = restartBtn.textContent;
-                restartBtn.textContent = (window.I18n ? I18n.t('gameover.confirmHint') : 'Toque de novo para confirmar');
-                if (restartBtn._goTimer) clearTimeout(restartBtn._goTimer);
-                restartBtn._goTimer = setTimeout(() => {
-                    restartBtn._goArmed = false;
-                    restartBtn.classList.remove('_go-confirm');
-                    if (restartBtn.dataset.origText) restartBtn.textContent = restartBtn.dataset.origText;
-                }, 2500);
-                return;
-            }
-            if (restartBtn._goTimer) clearTimeout(restartBtn._goTimer);
-            restartBtn._goArmed = false;
-            restartBtn.classList.remove('_go-confirm');
+            _unlockEndScreenButtons();
             if (uiG) {
                 uiG.classList.add('fade-out');
                 setTimeout(() => {
