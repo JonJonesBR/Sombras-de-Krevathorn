@@ -10288,13 +10288,15 @@ function _updateSystems() {
     }
     
     Input.update();
-    if (typeof ElementalSystem !== "undefined" && entities) {
+    // Fade de troca de andar: status elementais pausam (o timer não corre) para o DOT não ferir/matar o
+    // jogador congelado na tela preta (morte aqui dessincroniza andar e mapa no CONTINUE). Retomam após o fade.
+    if (typeof ElementalSystem !== "undefined" && entities && !_transitioning) {
         for (let _ei = 0; _ei < entities.length; _ei++) {
             if (entities[_ei].alive) ElementalSystem.updateStatuses(entities[_ei]);
         }
     }
     if (typeof TutorialSystem !== 'undefined' && TutorialSystem.active) TutorialSystem.update();
-    if (gameTime % 60 === 0 && window.SND && gameState === 'PLAYING') {
+    if (!_transitioning && gameTime % 60 === 0 && window.SND && gameState === 'PLAYING') {
         SND.playAmbientDrone();
     }
 }
@@ -11186,7 +11188,9 @@ function update() {
     if (_anyPanelOpen()) return;
     Debug.safe(() => _updateSystems(), 'updateSystems');
     Debug.safe(() => _updateWorldSim(), 'updateWorldSim');
-    Debug.safe(() => Debug.time('entities', _updateEntitySimulation), 'updateEntitySimulation');
+    // Durante o fade de troca de andar o jogador está congelado e gameTime parado: perigos com
+    // gameTime % N === 0 feririam em todo tick e spawnHazard dispararia em série. Não simular entidades.
+    if (!_transitioning) Debug.safe(() => Debug.time('entities', _updateEntitySimulation), 'updateEntitySimulation');
     Debug.safe(() => _updatePortalAndFloor(), 'updatePortalAndFloor');
     Debug.safe(() => _updateSecretRoom(), 'secretRoom');
     Debug.safe(() => _updateEnemySpawning(), 'updateEnemySpawning');
