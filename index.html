@@ -2289,6 +2289,7 @@ let _fontScaleBypass = false;
 // Dynamic resolution scaler - lowers internal resolution when FPS drops so the
 // game keeps a stable framerate on weak devices, then recovers when performance allows.
 let _autoResScale = 1;     // current multiplier (1 = full 0.75x base, min _autoResMin)
+let _frameStale = true;    // canvas precisa de um draw mesmo sem passo de simulação (resize, estado não-PLAYING)
 let _autoResMin = 0.6;     // lowest internal resolution multiplier
 let _autoResStable = 0;    // consecutive healthy seconds before scaling back up
 // Logical -> physical scale for the MAIN canvas. The main canvas always runs
@@ -2458,6 +2459,7 @@ function resize() {
         worldCanvas.height = bufH;
     }
     _mmDirty = true;
+    _frameStale = true;
 }
 
 // Coalesce rajadas de resize (arrastar a janela, barra do navegador mobile) em uma por quadro.
@@ -12874,6 +12876,13 @@ function _advanceSimulation(deltaMs) {
     return steps;
 }
 
+// Telas de 90/120 Hz: a simulação é fixa em 60 Hz e não há interpolação, então um callback
+// sem passo novo redesenharia o mesmo quadro. Só pula o draw no jogo rodando, sem overlay.
+function _canSkipRedraw() {
+    return gameState === 'PLAYING' && !_anyPanelOpen() && !minimapExpanded &&
+        !(typeof TutorialSystem !== 'undefined' && TutorialSystem.active);
+}
+
 function loop(timestamp) {
     if (!_lastTime) _lastTime = timestamp;
     
@@ -12891,6 +12900,7 @@ function loop(timestamp) {
         return;
     }
     
+    // Conta callbacks (não draws): no slow-mo (timeScale 0.5) e com jitter há callbacks sem passo, e contar draws derrubaria o auto-res.
     _fpsFrames++;
     _fpsTime += dt;
     
@@ -12942,8 +12952,12 @@ function loop(timestamp) {
     }
 
     Debug.beginFrame();
-    _advanceSimulation(dt * ScreenEffects.timeScale());
-    Debug.safe(() => draw(), 'draw');
+    const _steps = _advanceSimulation(dt * ScreenEffects.timeScale());
+    const _skippable = _canSkipRedraw();
+    if (_steps > 0 || _frameStale || !_skippable) {
+        Debug.safe(() => draw(), 'draw');
+    }
+    _frameStale = !_skippable;
     Debug.endFrame();
 
     requestAnimationFrame(loop);
