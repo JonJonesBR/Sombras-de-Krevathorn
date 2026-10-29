@@ -412,7 +412,8 @@ body.controls-left #actions-right {
    ============================================================ */
 #logs {
     position: absolute;
-    bottom: max(100px, calc(env(safe-area-inset-bottom, 16px) + 60px));
+    /* Acima do objetivo da run (que fica em --bottom-base): antes os dois dividiam a mesma faixa. */
+    bottom: calc(var(--bottom-base) + 36px);
     left: 50%;
     transform: translateX(-50%);
     text-align: center;
@@ -431,7 +432,8 @@ body.controls-left #actions-right {
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
     z-index: 50;
     transition: opacity 0.3s ease, transform 0.3s ease;
-    max-width: 80vw;
+    /* Não passa por baixo da coluna de esquiva/especial. */
+    max-width: min(80vw, var(--hud-center-w));
     line-height: 1.4;
     /* Not nowrap: it defeated the 80vw max-width above, so on a 320px screen a
        long line overflowed on both sides and was cut mid-word. Short lines
@@ -901,7 +903,7 @@ body.cb-tritan  { filter: url("#cb-tritan"); }
        same value, putting the action buttons back in the utility bar band. It
        must match the base rule, otherwise the fix below is silently lost. */
     #actions-right { bottom: max(60px, calc(12px + var(--util-btn) + 4px)); right: max(14px, env(safe-area-inset-right, 14px)); }
-    #logs { bottom: max(80px, calc(env(safe-area-inset-bottom, 16px) + 50px)); }
+    #logs { bottom: calc(var(--bottom-base) + 36px); }
 }
 
 .custom-scrollbar::-webkit-scrollbar { width: 4px; }
@@ -1228,6 +1230,57 @@ body { --util-btn: min(calc(44px * var(--ui-btn-scale, 1)), calc((100vw - 84px) 
     .util-btn { width: var(--util-btn) !important; height: var(--util-btn) !important; min-width: 0; min-height: 0; }
     #minimap-toggle-btn { width: var(--util-btn) !important; height: var(--util-btn) !important; }
     #bottom-controls { gap: 2px !important; left: max(4px, env(safe-area-inset-left, 4px)) !important; right: max(4px, env(safe-area-inset-right, 4px)) !important; }
+}
+
+/* ============================================================
+   Layout do HUD em jogo (v73) — faixas sem sobreposição
+   --hud-clear: primeira linha livre abaixo do minimapa (topo).
+   --bottom-base: primeira linha livre acima da barra util (base).
+   --hud-left-stack: abaixo da coluna esquerda + fileira de equipamentos
+   (medido em JS por _refreshHudLayout).
+   ============================================================ */
+body {
+    --hud-clear: calc(max(8px, env(safe-area-inset-top, 8px)) + max(88px, min(128px, 22vw)) + 8px);
+    --bottom-base: calc(max(12px, env(safe-area-inset-bottom, 12px)) + var(--util-btn) + 8px);
+    --hud-center-w: calc(100vw - 2 * min(56px, 15vw) - 52px);
+}
+/* Desempenho: backdrop-filter sobre o canvas em movimento obriga o navegador a
+   refazer o desfoque a cada quadro (caro no celular). Os fundos já são escuros. */
+#currency-display > div, #run-objective > div, #minimap-container, #logs, .cd-badge,
+#status-chips > div, .toast-stack > div, .notification, #achievement-toast > div {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+@media (max-width: 600px) {
+    /* Coluna única à esquerda (vida, piso, dificuldade/nível): em linha, os chips
+       espremiam a barra de vida e o texto "829 / 924" vazava sobre "Normal". */
+    #top-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+        right: calc(max(8px, env(safe-area-inset-right, 8px)) + max(88px, min(128px, 22vw)) + 8px);
+    }
+    body.mm-hidden #top-bar { right: max(8px, env(safe-area-inset-right, 8px)); }
+    #hud-left { flex: none; width: 100%; max-width: 200px; }
+    #top-bar .top-right-chips { margin-right: 0; flex-wrap: wrap; max-width: 100%; }
+    #boss-hp-container { top: var(--hud-clear) !important; }
+    #achievement-toast, .notification { top: var(--hud-clear) !important; }
+    /* Missão concluída mostra o aviso de missão e o de lore juntos: a pilha fica logo abaixo. */
+    .toast-stack { top: calc(var(--hud-clear) + 52px) !important; }
+    /* Buffs vão para baixo da coluna esquerda; o combo para baixo do minimapa.
+       Embaixo, entre o direcional e a barra util, sobram só objetivo e avisos. */
+    #status-chips {
+        top: var(--hud-left-stack, 100px) !important;
+        bottom: auto !important;
+        left: max(8px, env(safe-area-inset-left, 8px)) !important;
+        right: auto !important;
+        align-items: flex-start !important;
+    }
+    #combo-display {
+        top: var(--hud-clear) !important;
+        bottom: auto !important;
+        right: max(10px, env(safe-area-inset-right, 10px)) !important;
+    }
 }
 
 /* ============================================================
@@ -1625,7 +1678,7 @@ body { --util-btn: min(calc(44px * var(--ui-btn-scale, 1)), calc((100vw - 84px) 
         </div>
 
         <!-- RUN OBJECTIVE (bottom-center, above controls) -->
-        <div id="run-objective" class="hidden" style="position:absolute;bottom:calc(env(safe-area-inset-bottom,12px) + 84px);left:50%;transform:translateX(-50%);z-index:110;pointer-events:none;width:min(248px,66vw);">
+        <div id="run-objective" class="hidden" style="position:absolute;bottom:var(--bottom-base);left:50%;transform:translateX(-50%);z-index:110;pointer-events:none;width:min(248px,var(--hud-center-w));">
             <div style="display:flex;align-items:center;gap:6px;justify-content:center;background:rgba(0,0,0,0.55);padding:3px 12px;border-radius:999px;border:1px solid rgba(224,182,255,0.18);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);">
                 <span id="ro-icon" style="display:inline-flex;align-items:center;font-size:10px;"><svg class="icon-inline" width="11" height="11"><use href="#ic-target"/></svg></span>
                 <span id="ro-title" style="font-size:9px;font-weight:700;color:#e0b6ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Objetivo</span>
@@ -2189,7 +2242,9 @@ function _initCanvas() {
         });
     }
     lightCanvas = document.createElement('canvas');
-    lctx = lightCanvas ? lightCanvas.getContext('2d') : null;
+    // Buffer de luz minúsculo e lido pelo LightPixelizer (getImageData): mantê-lo na
+    // CPU evita a leitura síncrona da GPU, que travava o quadro a cada recálculo da luz.
+    lctx = lightCanvas ? lightCanvas.getContext('2d', { willReadFrequently: true }) : null;
     // World layer cache for performance
     worldCanvas = document.createElement('canvas');
     wctx = worldCanvas ? worldCanvas.getContext('2d') : null;
@@ -2418,11 +2473,7 @@ function resize() {
     width = Math.floor(winW * 0.75);
     height = Math.floor(winH * 0.75);
 
-    // World/light buffers: logical space scaled by _autoResScale (dynamic
-    // resolution). Only these shrink under sustained low FPS.
     const res = Math.max(0.01, _autoResScale || 1);
-    const bufW = Math.max(1, Math.round(width * res));
-    const bufH = Math.max(1, Math.round(height * res));
 
     // PHYSICAL MAIN BUFFER: full window resolution at native device pixels
     // (capped at 2x for perf). Dynamic resolution (autoRes) shrinks only the
@@ -2447,9 +2498,21 @@ function resize() {
         ctx.setTransform(_cssScale, 0, 0, _cssScale, 0, 0);
     }
     
-    // Offscreen world/light buffers follow the dynamic resolution. The drawImage
-    // composition steps stretch worldCanvas/lightCanvas back to the logical
-    // destination, so their internal drawing code stays unchanged.
+    _resizeWorldBuffers();
+    _mmDirty = true;
+    _refreshHudLayout();
+}
+
+// Offscreen world/light buffers follow the dynamic resolution. The drawImage
+// composition steps stretch worldCanvas/lightCanvas back to the logical
+// destination, so their internal drawing code stays unchanged.
+// O auto-res chama só isto: realocar o canvas principal (resolução nativa do
+// aparelho) a cada degrau de FPS causava um engasgo extra justamente quando o
+// jogo já estava lento.
+function _resizeWorldBuffers() {
+    const res = Math.max(0.01, _autoResScale || 1);
+    const bufW = Math.max(1, Math.round(width * res));
+    const bufH = Math.max(1, Math.round(height * res));
     if (lightCanvas) {
         lightCanvas.width = bufW;
         lightCanvas.height = bufH;
@@ -2458,8 +2521,52 @@ function resize() {
         worldCanvas.width = bufW;
         worldCanvas.height = bufH;
     }
-    _mmDirty = true;
     _frameStale = true;
+}
+
+// Caixas do HUD em DOM (px CSS), para o que é desenhado no canvas não cair por baixo
+// delas: painel do NPC, faixa de evento, equipamentos e direcionais fixos.
+// Medido no resize e a cada 0,5 s no loop (getBoundingClientRect, barato).
+const _hudLayout = { measured: false, k: 0.75, topBarBottom: 0, clearTop: 0, bossBottom: 0, actionsTop: 0, actionsLeft: 0, actionsRight: 0 };
+function _refreshHudLayout() {
+    try {
+        const vis = el => el && !el.classList.contains('hidden') && el.offsetParent !== null;
+        const cw = (canvas && canvas.clientWidth) || window.innerWidth || 1;
+        _hudLayout.k = (width || cw * 0.75) / cw;
+        const tb = document.getElementById('top-bar');
+        const mm = document.getElementById('minimap-container');
+        const boss = document.getElementById('boss-hp-container');
+        const act = document.getElementById('actions-right');
+        const tbB = vis(tb) ? tb.getBoundingClientRect().bottom : 0;
+        const mmVisible = mm && getComputedStyle(mm).display !== 'none' && !document.body.classList.contains('mm-hidden');
+        const mmB = mmVisible ? mm.getBoundingClientRect().bottom : 0;
+        const hasEquip = !!(window.player && player.equipment && CONFIG.EQUIPMENT_SLOTS.some(s => player.equipment[s]));
+        // Buffs só contam quando estão no alto (celular); no desktop ficam embaixo à direita
+        const sc = document.getElementById('status-chips');
+        const scR = sc && sc.childElementCount ? sc.getBoundingClientRect() : null;
+        const scB = scR && scR.height > 0 && scR.top < (window.innerHeight || 0) * 0.5 ? scR.bottom : 0;
+        _hudLayout.topBarBottom = tbB;
+        _hudLayout.clearTop = Math.max(tbB + (hasEquip ? 30 : 0), mmB, scB) + 8;
+        _hudLayout.bossBottom = vis(boss) ? boss.getBoundingClientRect().bottom : 0;
+        const actR = vis(act) ? act.getBoundingClientRect() : null;
+        _hudLayout.actionsTop = actR ? actR.top : 0;
+        _hudLayout.actionsLeft = actR ? actR.left : 0;
+        _hudLayout.actionsRight = actR ? actR.right : 0;
+        const stack = Math.round(tbB + (hasEquip ? 30 : 0) + 6) + 'px';
+        if (_hudLayout._stack !== stack) { _hudLayout._stack = stack; document.body.style.setProperty('--hud-left-stack', stack); }
+        // Topo livre real (inclui equipamentos e buffs) para chefe/avisos em CSS
+        const clear = tbB > 0 ? Math.round(_hudLayout.clearTop) + 'px' : '';
+        if (_hudLayout._clear !== clear) {
+            _hudLayout._clear = clear;
+            if (clear) document.body.style.setProperty('--hud-clear', clear); else document.body.style.removeProperty('--hud-clear');
+        }
+        _hudLayout.measured = tbB > 0;
+    } catch (e) {}
+}
+// Topo livre para elementos do canvas, em coordenadas lógicas
+function _hudClearTopLogical() {
+    if (!_hudLayout.measured) _refreshHudLayout();
+    return _hudLayout.clearTop > 8 ? _hudLayout.clearTop * _hudLayout.k : 10;
 }
 
 // Coalesce rajadas de resize (arrastar a janela, barra do navegador mobile) em uma por quadro.
@@ -11856,7 +11963,12 @@ function _drawInWorldHUD() {
             }
         }
     }
-    if (currentEvent) currentEvent.draw(ctx, width/2, 40);
+    if (currentEvent) {
+        // Abaixo do HUD do topo e, em luta de chefe, abaixo da barra dele
+        let ey = _hudClearTopLogical();
+        if (_hudLayout.bossBottom > 0) ey = Math.max(ey, (_hudLayout.bossBottom + 6) * _hudLayout.k);
+        currentEvent.draw(ctx, width/2, ey);
+    }
 }
 
 function _drawScreenSpaceHUD() {
@@ -11878,13 +11990,13 @@ function _drawScreenSpaceHUD() {
         const specCd = document.getElementById('special-cd');
         
         // Dodge cooldown badge
+        // Escreve no DOM só quando o valor muda (cada escrita invalida estilo da página)
         if (dashCd) {
-            if (player.dodgeCooldown > 0) {
-                var cdSec = Math.ceil(player.dodgeCooldown / 60);
-                dashCd.textContent = cdSec;
-                dashCd.classList.remove('hidden');
-            } else {
-                dashCd.classList.add('hidden');
+            const dTxt = player.dodgeCooldown > 0 ? String(Math.ceil(player.dodgeCooldown / 60)) : '';
+            if (dashCd._shown !== dTxt) {
+                dashCd._shown = dTxt;
+                if (dTxt) dashCd.textContent = dTxt;
+                dashCd.classList.toggle('hidden', !dTxt);
             }
         }
         
@@ -11896,12 +12008,11 @@ function _drawScreenSpaceHUD() {
                          CONFIG.MAGE_ARCANE_STORM_COOLDOWN;
             // Badge
             if (specCd) {
-                if (player.skillCooldown > 0) {
-                    var cdSec2 = Math.ceil(player.skillCooldown / 60);
-                    specCd.textContent = cdSec2;
-                    specCd.classList.remove('hidden');
-                } else {
-                    specCd.classList.add('hidden');
+                const sTxt = player.skillCooldown > 0 ? String(Math.ceil(player.skillCooldown / 60)) : '';
+                if (specCd._shown !== sTxt) {
+                    specCd._shown = sTxt;
+                    if (sTxt) specCd.textContent = sTxt;
+                    specCd.classList.toggle('hidden', !sTxt);
                 }
             }
             // Fill overlay for visual progress
@@ -12936,6 +13047,7 @@ function loop(timestamp) {
         // Adaptive resolution + auto performance: drop internal resolution and
         // disable heavy effects when FPS is low, recover when stable.
         if (gameState === 'PLAYING') {
+            _refreshHudLayout();
             if (fps < 45) {
                 _setAutoPerf(true);
             } else if (fps >= 55) {
@@ -12947,16 +13059,16 @@ function loop(timestamp) {
             if (fps < 40 && _autoResScale > _autoResMin) {
                 _autoResScale = Math.max(_autoResMin, Math.round((_autoResScale * 0.75) * 100) / 100);
                 _autoResStable = 0;
-                resize();
+                _resizeWorldBuffers();
             } else if (fps < 50 && _autoResScale > _autoResMin) {
                 _autoResScale = Math.max(_autoResMin, Math.round((_autoResScale * 0.9) * 100) / 100);
                 _autoResStable = 0;
-                resize();
+                _resizeWorldBuffers();
             } else if (fps >= 57 && _autoResScale < 1) {
                 if (++_autoResStable >= 15) {
                     _autoResScale = Math.min(1, Math.round((_autoResScale / 0.9) * 100) / 100);
                     _autoResStable = 0;
-                    resize();
+                    _resizeWorldBuffers();
                 }
             } else if (fps < 57) {
                 _autoResStable = 0;
@@ -16307,10 +16419,22 @@ class ActiveEvent {
     draw(ctx, x, y) {
         const name = window._L ? _L(this.nameKey, this.name) : this.name;
         const desc = window._L ? _L(this.descKey, this.desc) : this.desc;
-        ctx.globalAlpha = 0.8; ctx.fillStyle = '#000'; ctx.fillRect(x - 150, y, 300, 40);
-        ctx.strokeStyle = this.color; ctx.lineWidth = 2; ctx.strokeRect(x - 150, y, 300, 40);
-        ctx.globalAlpha = 1; ctx.fillStyle = this.color; ctx.font = 'bold 16px ' + COLORS.CANVAS_FONT; ctx.textAlign = 'center';
-        ctx.fillText(name, x, y + 16); ctx.fillStyle = '#fff'; ctx.font = '14px ' + COLORS.CANVAS_FONT; ctx.fillText(desc, x, y + 32);
+        // Faixa cabe na tela (antes tinha 300 px fixos e cortava a descrição no celular).
+        // Depois de 4 s vira só o nome, numa faixa baixa, para não cobrir o jogo o evento inteiro.
+        const W = Math.min(300, (typeof width === 'number' ? width : 320) - 16);
+        const compact = this.duration > 0 && (this.duration - this.timeLeft) > 240;
+        const H = compact ? 20 : 40;
+        const fit = (txt, size, bold) => {
+            let s = size;
+            ctx.font = (bold ? 'bold ' : '') + s + 'px ' + COLORS.CANVAS_FONT;
+            while (s > 9 && ctx.measureText(txt).width > W - 12) { s--; ctx.font = (bold ? 'bold ' : '') + s + 'px ' + COLORS.CANVAS_FONT; }
+        };
+        ctx.globalAlpha = 0.8; ctx.fillStyle = '#000'; ctx.fillRect(x - W / 2, y, W, H);
+        ctx.strokeStyle = this.color; ctx.lineWidth = 2; ctx.strokeRect(x - W / 2, y, W, H);
+        ctx.globalAlpha = 1; ctx.fillStyle = this.color; ctx.textAlign = 'center';
+        fit(name, compact ? 12 : 16, true);
+        ctx.fillText(name, x, y + (compact ? 14 : 16));
+        if (!compact) { ctx.fillStyle = '#fff'; fit(desc, 14, false); ctx.fillText(desc, x, y + 32); }
     }
 }
 
@@ -16606,26 +16730,38 @@ _statLabel(key) {
     // Draw equipment HUD
     drawEquipmentHUD(ctx, player) {
         if(!player.equipment) return;
-        // Small equipment indicators in bottom-left
-        let y = height - 30;
+        // Fileira compacta no canto superior esquerdo, logo abaixo da coluna de vida/piso.
+        // Antes ficava em height - 30, escondida atrás da barra de botões, e o rótulo saía
+        // vazio (os nomes começam com espaço, então split(' ')[0] era '').
+        if (!_hudLayout.measured) return;
+        const k = _hudLayout.k || 0.75;
+        const y = Math.round((_hudLayout.topBarBottom + 4) * k);
+        const x0 = Math.round(8 * k);
         const slots = CONFIG.EQUIPMENT_SLOTS;
-        slots.forEach((slot, i) => {
+        ctx.save();
+        ctx.font = 'bold 8px ' + COLORS.CANVAS_FONT;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        let col = 0;
+        slots.forEach((slot) => {
             const equip = player.equipment[slot];
             if(equip) {
-                const x = 15 + i * 40;
+                const x = x0 + col * 25;
+                col++;
+                ctx.fillStyle = 'rgba(0,0,0,0.6)';
+                ctx.fillRect(x, y, 22, 16);
                 ctx.fillStyle = equip.color;
-                ctx.globalAlpha = 0.7;
-                ctx.fillRect(x, y, 32, 22);
+                ctx.globalAlpha = 0.45;
+                ctx.fillRect(x, y, 22, 16);
                 ctx.globalAlpha = 1;
                 ctx.strokeStyle = equip.color;
                 ctx.lineWidth = 1;
-                ctx.strokeRect(x, y, 32, 22);
+                ctx.strokeRect(x + 0.5, y + 0.5, 21, 15);
                 ctx.fillStyle = '#fff';
-                ctx.font = '9px ' + COLORS.CANVAS_FONT;
-                ctx.textAlign = 'center';
-                ctx.fillText(CONFIG.EQUIPMENT_SLOT_NAMES[slot].split(' ')[0], x + 16, y + 14);
+                ctx.fillText(String(CONFIG.EQUIPMENT_SLOT_NAMES[slot]).trim().slice(0, 3), x + 11, y + 8.5);
             }
         });
+        ctx.restore();
     }
 };
 
@@ -17326,7 +17462,8 @@ const QuestSystem = {
             if (this.granted[q.id]) continue;
             if (this.progress(q) >= q.target) this._complete(q);
         }
-        this.render();
+        // Painel fechado: toggle() redesenha ao abrir; refazer o innerHTML escondido a cada segundo era trabalho à toa
+        if (this.uiOpen) this.render();
     },
 
     _complete(q) {
@@ -28310,6 +28447,32 @@ const NPCInteractionPanel = {
         return this.note ? 68 : 0;
     },
 
+    // Abaixo do HUD do topo (vida/minimapa ficam em DOM por cima do canvas e
+    // escondiam o nome do NPC e o fim das linhas). Desenho e toque usam o mesmo valor.
+    _panelY() {
+        const h = typeof height === 'number' && height > 0 ? height : 600;
+        const y = Math.max(10, Math.round(_hudClearTopLogical()));
+        return Math.min(y, Math.max(10, h - (160 + this._noteH()) - 10));
+    },
+
+    // Colunas dos botões: setas "<"/">" ficam estreitas para sobrar espaço ao
+    // rótulo com preço. Desenho e toque usam a mesma divisão.
+    _btnLayout(panelX, panelW) {
+        const n = this.buttons.length, gap = 8;
+        // Rótulos longos ("Comprar (50)") ganham mais largura que os curtos ("Fechar")
+        const weights = this.buttons.map(b => { const n = String(b.label).length; return n <= 2 ? 1.3 : Math.sqrt(n); });
+        const total = weights.reduce((a, w) => a + w, 0) || 1;
+        const free = panelW - 30 - Math.max(0, n - 1) * gap;
+        const out = [];
+        let x = panelX + 15;
+        for (let i = 0; i < n; i++) {
+            const w = Math.floor(free * weights[i] / total);
+            out.push({ x, w });
+            x += w + gap;
+        }
+        return out;
+    },
+
     showFeedback(msg) {
         this.feedback = msg;
         this.feedbackTimer = 90;
@@ -28324,9 +28487,9 @@ const NPCInteractionPanel = {
     hitTest(tx, ty, panelX, panelY, panelW) {
         const btnY = panelY + 110 + this._noteH();
         const btnH = 32;
-        const btnW = Math.floor((panelW - 30 - (this.buttons.length - 1) * 8) / Math.max(1, this.buttons.length));
-        for (let i = 0; i < this.buttons.length; i++) {
-            const bx = panelX + 15 + i * (btnW + 8);
+        const cols = this._btnLayout(panelX, panelW);
+        for (let i = 0; i < cols.length; i++) {
+            const bx = cols[i].x, btnW = cols[i].w;
             if (tx >= bx && tx <= bx + btnW && ty >= btnY && ty <= btnY + btnH) return i;
         }
         return -1;
@@ -28338,7 +28501,7 @@ const NPCInteractionPanel = {
         const panelW = Math.min(320, screenW - 20);
         const panelH = 160 + this._noteH();
         const panelX = (screenW - panelW) / 2;
-        const panelY = 10;
+        const panelY = this._panelY();
 
         // Background
         ctx.save();
@@ -28398,9 +28561,9 @@ const NPCInteractionPanel = {
         // Buttons
         const btnY = panelY + 110 + this._noteH();
         const btnH = 32;
-        const btnW = Math.floor((panelW - 30 - (this.buttons.length - 1) * 8) / Math.max(1, this.buttons.length));
+        const cols = this._btnLayout(panelX, panelW);
         for (let i = 0; i < this.buttons.length; i++) {
-            const bx = panelX + 15 + i * (btnW + 8);
+            const bx = cols[i].x, btnW = cols[i].w;
             ctx.fillStyle = 'rgba(60, 40, 120, 0.9)';
             ctx.strokeStyle = '#8866dd';
             ctx.lineWidth = 1.5;
@@ -28409,9 +28572,17 @@ const NPCInteractionPanel = {
             ctx.stroke();
             if (i === CanvasMenuNav.sel) CanvasMenuNav.highlight(ctx, bx, btnY, btnW, btnH);
             ctx.fillStyle = '#eee';
-            ctx.font = 'bold 12px ' + COLORS.CANVAS_FONT;
             ctx.textAlign = 'center';
-            ctx.fillText(this.buttons[i].label, bx + btnW / 2, btnY + btnH / 2 + 5);
+            // Com 4 botões numa tela estreita "Comprar (50)" vazava do botão: reduz a
+            // fonte até 9 px e, se ainda não couber, corta com reticências.
+            let label = String(this.buttons[i].label), fs = 12;
+            ctx.font = 'bold 12px ' + COLORS.CANVAS_FONT;
+            while (fs > 9 && ctx.measureText(label).width > btnW - 6) { fs--; ctx.font = 'bold ' + fs + 'px ' + COLORS.CANVAS_FONT; }
+            if (ctx.measureText(label).width > btnW - 6) {
+                while (label.length > 1 && ctx.measureText(label + '…').width > btnW - 6) label = label.slice(0, -1);
+                label += '…';
+            }
+            ctx.fillText(label, bx + btnW / 2, btnY + btnH / 2 + 4);
         }
 
         ctx.restore();
@@ -28878,7 +29049,7 @@ const NPCSystem = {
         const screenW = width || 800;
         const panelW = Math.min(320, screenW - 20);
         const panelX = (screenW - panelW) / 2;
-        const panelY = 10;
+        const panelY = NPCInteractionPanel._panelY();
         const idx = NPCInteractionPanel.hitTest(tx, ty, panelX, panelY, panelW);
         if (idx >= 0 && NPCInteractionPanel.buttons[idx]) {
             NPCInteractionPanel.buttons[idx].action();
@@ -29542,8 +29713,10 @@ function _detectGraphicsQuality() {
         let score = cores * mem;
         if (mobile) score *= 0.6;
         if (dpr >= 3) score *= 0.85;
+        // Celular nunca começa em 'high': aberração cromática (3 cópias da tela inteira em
+        // resolução nativa), granulado e raios de luz pesavam demais em aparelhos médios.
+        // O jogador ainda pode escolher 'Alta' nas Configurações.
         if (mobile) {
-            if (score >= 30) return 'high';
             if (score >= 12) return 'medium';
             return 'low';
         }
@@ -32044,7 +32217,8 @@ renderAchievementsContent() {
                     cache.lvl = lvlText;
                     lvlInfo.textContent = lvlText;
                 }
-                lvlInfo.title = xpLeft > 0 ? (xpLeft + ' XP para o proximo nivel') : 'Proximo nivel pronto';
+                const lvlTitle = xpLeft > 0 ? (xpLeft + ' XP para o proximo nivel') : 'Proximo nivel pronto';
+                if (cache.lvlTitle !== lvlTitle) { cache.lvlTitle = lvlTitle; lvlInfo.title = lvlTitle; }
             }
             // Floor pill: which floor, how far through it, and how long the run
             // has been going. It existed in the markup and was never filled.
@@ -33896,9 +34070,23 @@ const Input = {
     // Fixed joystick base positions (computed from canvas size each frame)
     // Controles invertidos (canhoto): o stick de movimento (this.left) fica a direita.
     get _lx() { return width  * (window.GameSettings && GameSettings.leftHanded ? 0.80 : 0.20); },
-    get _ly() { return height * 0.68; },
+    get _ly() { return this._fixedY(); },
     get _rx() { return width  * (window.GameSettings && GameSettings.leftHanded ? 0.20 : 0.80); },
-    get _ry() { return height * 0.68; },
+    get _ry() { return this._fixedY(); },
+    // 68% da altura, mas o anel nunca desce sobre os botões de esquiva/especial
+    // (em telas de celular o anel direito cobria o topo do botão de esquiva).
+    _fixedY() {
+        const base = height * 0.68;
+        const at = _hudLayout.actionsTop;
+        if (!at) return base;
+        const k = _hudLayout.k || 0.75;
+        const R = Math.floor(CONFIG.JOYSTICK_RADIUS * getFontScale());
+        // Só quando algum anel cruza a coluna dos botões na horizontal (paisagem não muda)
+        const aL = _hudLayout.actionsLeft * k, aR = _hudLayout.actionsRight * k;
+        const crosses = x => x + R > aL && x - R < aR;
+        if (!crosses(this._lx) && !crosses(this._rx)) return base;
+        return Math.max(height * 0.5, Math.min(base, (at - 10) * k - R));
+    },
 
     // Returns current control settings  reads live from GameSettings each frame
     get _ctrlType()  { return window.GameSettings ? window.GameSettings.controlType  : 'touch'; },
