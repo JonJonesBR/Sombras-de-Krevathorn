@@ -3651,6 +3651,7 @@ const I18n = {
             'settings.musicOn': 'Ligada',
             'settings.musicOff': 'Desligada',
             'settings.musicVolume': 'Volume da música',
+            'settings.vibration': 'Vibração',
             'settings.close': 'Fechar',
             'settings.graphicsQuality': 'Qualidade Gráfica',
             'settings.fontSmall': 'Pequena',
@@ -5318,6 +5319,7 @@ const I18n = {
             'settings.musicOn': 'On',
             'settings.musicOff': 'Off',
             'settings.musicVolume': 'Music volume',
+            'settings.vibration': 'Vibration',
             'settings.close': 'Close',
             'settings.graphicsQuality': 'Graphics Quality',
             'settings.fontSmall': 'Small',
@@ -6985,6 +6987,7 @@ const I18n = {
             'settings.musicOn': 'Activada',
             'settings.musicOff': 'Desactivada',
             'settings.musicVolume': 'Volumen de la música',
+            'settings.vibration': 'Vibración',
             'settings.close': 'Cerrar',
             'settings.graphicsQuality': 'Calidad Gráfica',
             'settings.fontSmall': 'Pequeña',
@@ -9853,6 +9856,7 @@ function _cancelContinue() {
     if (el) el.classList.add('hidden');
     // Trigger normal game over
     gameState = 'GAME_OVER';
+    if (window._releaseWakeLock) window._releaseWakeLock();
     uiG.classList.remove('hidden'); uiG.classList.add('fade-in');
     _lockEndScreenButtons(['go-newrun-btn', 'restart-btn']);
     _recordRunEnd();
@@ -10071,6 +10075,7 @@ function _triggerWin() {
         Debug.safe(() => DailyChallenge.complete(dungeonLevel, Math.floor(gameTime / GAME_TICKS_PER_SECOND), { kills: (player && player.kills) || 0, gold: (player && player.currency) || 0 }), 'dailyCompleteOnWin');
     }
     gameState = 'WIN';
+    if (window._releaseWakeLock) window._releaseWakeLock();
     _recordRunEnd();
     Statistics.save();
     NarrativeSystem.save();
@@ -10650,7 +10655,7 @@ function _handlePlayerDeath() {
             _showContinueScreen();
         } else {
             if (typeof ScreenEffects !== 'undefined' && ScreenEffects.onPlayerDeath) ScreenEffects.onPlayerDeath();
-            gameState = 'GAME_OVER'; uiG.classList.remove('hidden'); uiG.classList.add('fade-in');
+            gameState = 'GAME_OVER'; if (window._releaseWakeLock) window._releaseWakeLock(); uiG.classList.remove('hidden'); uiG.classList.add('fade-in');
             _lockEndScreenButtons(['go-newrun-btn', 'restart-btn']);
             _recordDeath(false);
             _recordRunEnd();
@@ -12162,10 +12167,12 @@ function draw() {
             ctx.fillStyle = 'rgba(0,0,0,0.5)';
             const bLine = _bossBanner.line;
             const bH = bLine ? 104 : 80;
-            ctx.fillRect(width/2 - 150, height/2 - 50, 300, bH);
+            // Largura da moldura acompanha a tela (celular de 360 px CSS = ~270 lógicos)
+            const bw = Math.min(300, width - 16);
+            ctx.fillRect(width/2 - bw/2, height/2 - 50, bw, bH);
             ctx.strokeStyle = '#ff4444';
             ctx.lineWidth = 2;
-            ctx.strokeRect(width/2 - 150, height/2 - 50, 300, bH);
+            ctx.strokeRect(width/2 - bw/2, height/2 - 50, bw, bH);
             ctx.fillStyle = '#ff4444';
             ctx.font = `bold 14px ${COLORS.CANVAS_FONT}`;
             ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -12173,11 +12180,12 @@ function draw() {
             ctx.fillStyle = '#fff';
             ctx.font = `bold 18px ${COLORS.CANVAS_FONT}`;
             const bName = (_bossBanner.nameKey && window._L) ? _L(_bossBanner.nameKey, _bossBanner.name) : _bossBanner.name;
+            if (ctx.measureText(bName).width > bw - 24) ctx.font = `bold 14px ${COLORS.CANVAS_FONT}`;
             ctx.fillText(bName, width/2, height/2 + 10);
             if (bLine) {
                 ctx.fillStyle = '#e8d8ff';
                 ctx.font = `italic 12px ${COLORS.CANVAS_FONT}`;
-                if (ctx.measureText(bLine).width > 280) ctx.font = `italic 10px ${COLORS.CANVAS_FONT}`;
+                if (ctx.measureText(bLine).width > bw - 24) ctx.font = `italic 10px ${COLORS.CANVAS_FONT}`;
                 ctx.fillText(bLine, width/2, height/2 + 36);
             }
             ctx.restore();
@@ -12650,6 +12658,7 @@ const PauseSystem = {
             self.resume();
             if (typeof SaveSystem !== 'undefined') Debug.safe(() => SaveSystem.save(), 'autosaveQuitToMenu');
             gameState = 'START';
+            if (window._releaseWakeLock) window._releaseWakeLock();
             if (uiS) { uiS.classList.remove('hidden'); }
             if (uiG) uiG.classList.add('hidden');
             var topBar = document.getElementById('top-bar');
@@ -14509,8 +14518,8 @@ window.SND = {
 
     playHit() {
         // Dano ao jogador (camadas: impacto, corpo grave e cauda curta)
+        // Vibração do dano recebido fica em Player.takeDamage ('hitTaken'); aqui não, para não duplicar
         MusicEngine.playLayer('hurt', 0.6);
-        Vibrate.trigger('hit');
     },
     playEnemyHit() { MusicEngine.playLayer('hit', 0.5); },
 
@@ -14669,7 +14678,7 @@ window.SND = {
     },
     playLevelUp() {
         MusicEngine.playLayer('levelup', 0.7);
-        Vibrate.trigger('levelup');
+        Vibrate.trigger('levelUp');
     },
     playMutation() {
         this.play(300, 'sawtooth', 0.2, 0.25);
@@ -14741,7 +14750,7 @@ window.SND = {
         this.schedule(() => this.play(659, 'sine', 0.1, 0.25), 100);
         this.schedule(() => this.play(784, 'sine', 0.1, 0.25), 200);
         this.schedule(() => this.play(1047, 'sine', 0.15, 0.35), 300);
-        Vibrate.trigger('levelup');
+        Vibrate.trigger('levelUp');
     },
 
     playBiomeChange() {
@@ -14957,6 +14966,7 @@ window.SND = {
 
 const Vibrate = {
     enabled: true,
+    _warnedTypes: new Set(),
 
     patterns: {
         normalHit: 20,
@@ -14966,6 +14976,7 @@ const Vibrate = {
         eliteKill: [60, 20, 60],
         bossKill: [100, 50, 100],
         bossHit: [50, 20, 50],
+        boss: [80, 40, 80],
         dodge: 15,
         shoot: 10,
         ui: 15,
@@ -14984,7 +14995,14 @@ const Vibrate = {
     trigger(type) {
         if (!this.enabled || !navigator.vibrate) return;
         const pattern = this.patterns[type];
-        if (!pattern) return;
+        if (!pattern) {
+            // Aviso uma única vez por tipo, para padrão errado não passar em silêncio
+            if (!this._warnedTypes.has(type)) {
+                this._warnedTypes.add(type);
+                Debug.warn('Vibrate: padrão desconhecido', type);
+            }
+            return;
+        }
         try {
             navigator.vibrate(pattern);
         } catch(e) {
@@ -14995,6 +15013,10 @@ const Vibrate = {
     toggle(state) {
         this.enabled = state;
         StorageManager.setRaw('vibration', state);
+        // Teste curto ao ligar, para o jogador confirmar que a vibração funciona
+        if (state === true && navigator.vibrate) {
+            try { navigator.vibrate(30); } catch(e) { /* não suportado */ }
+        }
     },
 
     init() {
@@ -28369,9 +28391,9 @@ class Player extends Entity {
         // Desafio diário 'Risco Dourado': dano recebido +25% (aplicado uma vez, aqui)
         if (dmg > 0 && window._dailyMods && window._dailyMods.playerDmgTakenMult) dmg *= window._dailyMods.playerDmgTakenMult;
         if(typeof pets !== 'undefined' && pets.length > 0) { const mount = pets.find(p => p.alive && p.mounted); if(mount) dmg = mount.onPlayerHit(dmg); }
-        
-        // VIBRATION FEEDBACK
-        if(window.Vibrate) Vibrate.trigger('normalHit');
+
+        // VIBRATION FEEDBACK (dano recebido pelo jogador)
+        if(window.Vibrate) Vibrate.trigger('hitTaken');
         
         // Muralha (v56): enquanto houver escudo, o dano recebido cai (sem tocar no dano do jogador)
         if (this.skills && this.skills.bulwark && this.shield > 0 && dmg > 0) dmg *= CONFIG.BULWARK_DMG_MULT;
@@ -30165,6 +30187,7 @@ var SettingsUI = {
         const isFixed  = GameSettings.joystickMode === 'fixed';
         const sfxOn    = GameSettings.sfxEnabled;
         const musicOn  = GameSettings.musicEnabled;
+        const vibOn    = !!(window.Vibrate && Vibrate.enabled);
         const partsOn  = GameSettings.particlesEnabled;
         const shakeOn  = GameSettings.screenShakeEnabled;
         const sens     = GameSettings.joystickSensitivity;
@@ -30322,6 +30345,12 @@ var SettingsUI = {
                             class="w-full mt-1" style="accent-color:#e0b6ff;min-height:32px;touch-action:pan-y"
                             oninput="window.SettingsUI._setMusicVolume(this.value, false); event.stopPropagation();"
                             onchange="window.SettingsUI._setMusicVolume(this.value, true); event.stopPropagation();">
+                        ${navigator.vibrate ? `
+                        <div class="text-xs text-gray-400 font-bold mb-1 mt-3">${T('settings.vibration', 'Vibração')}</div>
+                        <div class="flex gap-2">
+                            ${toggleBtn(vibOn, true, '_setVibration', 'settings.vibration', 'Vibração')}
+                            ${toggleBtn(!vibOn, false, '_setVibration', 'settings.vibration', 'Vibração')}
+                        </div>` : ''}
                     </div>
 
                     <div class="mb-5">
@@ -30450,6 +30479,12 @@ var SettingsUI = {
         GameSettings.musicEnabled = enabled;
         GameSettings.save();
         GameSettings.apply();
+        this._render();
+    },
+
+    // Liga/desliga a vibração (Vibrate.toggle grava e faz o teste curto ao ligar)
+    _setVibration(enabled) {
+        if (window.Vibrate) Vibrate.toggle(enabled);
         this._render();
     },
 
@@ -32660,6 +32695,7 @@ window.GameBootstrap = {
 
     _startUI() {
         gameState = 'PLAYING';
+        window.dispatchEvent(new Event('gamestarted')); // pede o wake lock também em run nova (start e continue)
         if (window._ensureBackSentinel) window._ensureBackSentinel();
         // Skip showing controls during tutorial
         if (typeof TutorialSystem !== 'undefined' && TutorialSystem.active) {
@@ -34537,6 +34573,7 @@ Input.init();
         // --- Wake Lock (prevent screen off during gameplay) ---
         var wakeLock = null;
         async function requestWakeLock() {
+            if (wakeLock) return;
             try {
                 if ('wakeLock' in navigator) {
                     wakeLock = await navigator.wakeLock.request('screen');
@@ -34546,6 +34583,15 @@ Input.init();
                 }
             } catch(err) { /* Wake lock not supported or denied */ }
         }
+        // Libera o lock ao sair da run (morte, vitória, menu). Sem lock ativo, não faz nada.
+        window._releaseWakeLock = function () {
+            if (!wakeLock) return;
+            try {
+                var p = wakeLock.release();
+                if (p && p.catch) p.catch(function () {});
+            } catch(err) { /* já liberado */ }
+            wakeLock = null;
+        };
         function _refreshContinueButton() {
             var btn = document.getElementById('continue-run-btn');
             if (!btn) return;
