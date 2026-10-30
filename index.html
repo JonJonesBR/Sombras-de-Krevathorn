@@ -2921,7 +2921,9 @@ const SaveSystem = {
         objective: null, campState: null,
         dungeonLevel: 1, gameMode: 'dungeon', dungeonKills: 0, dungeonKillTarget: 18,
         continuesLeft: 3, biome: 'dungeon', dungeonsCompleted: 0, prestigeLevel: 0, totalGamesPlayed: 0,
-        secretFloorUsed: -1
+        secretFloorUsed: -1,
+        // Aditivo (sem migração): desafio diário e mutadores da run; null em saves antigos
+        mutators: null, daily: null
     },
 
     // Migrations: version -> version+1 (mirrors StorageManager.MIGRATIONS)
@@ -2998,7 +3000,10 @@ const SaveSystem = {
             dungeonsCompleted: (typeof BiomeSystem !== 'undefined') ? BiomeSystem.dungeonsCompleted : 0,
             prestigeLevel: (typeof prestigeLevel !== 'undefined') ? prestigeLevel : 0,
             totalGamesPlayed: (typeof totalGamesPlayed !== 'undefined') ? totalGamesPlayed : 0,
-            secretFloorUsed: (typeof _secretFloorUsed !== 'undefined') ? _secretFloorUsed : -1
+            secretFloorUsed: (typeof _secretFloorUsed !== 'undefined') ? _secretFloorUsed : -1,
+            // Desafio diário (id + dia em que foi aplicado) e mutadores congelados na run (ids)
+            mutators: (window.RunMutators && Array.isArray(RunMutators._run)) ? RunMutators._run.map(m => m.id) : null,
+            daily: window._currentDailyChallenge ? { id: window._currentDailyChallenge.id, date: DailyChallenge._activeDate || DailyChallenge._todayDate } : null
         };
     },
 
@@ -3143,6 +3148,9 @@ const SaveSystem = {
                 for (const value of Object.values(item.stats)) if (typeof value !== 'number' || !Number.isFinite(value) || Math.abs(value) > 1000) return false;
             }
         }
+        // Campos aditivos da run (null em saves antigos): ids de mutadores e { id, date } do desafio diário
+        if (data.mutators !== undefined && data.mutators !== null && (!Array.isArray(data.mutators) || data.mutators.length > 10 || data.mutators.some(v => typeof v !== 'string' || v.length > 40))) return false;
+        if (data.daily !== undefined && data.daily !== null && (typeof data.daily !== 'object' || Array.isArray(data.daily) || typeof data.daily.id !== 'string' || data.daily.id.length > 40 || typeof data.daily.date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(data.daily.date))) return false;
         if (data._migratedAt !== undefined && data._migratedAt !== null && (!Number.isSafeInteger(data._migratedAt) || data._migratedAt < 0)) return false;
         return true;
     },
@@ -3878,6 +3886,7 @@ const I18n = {
             'daily.empty': 'Nenhuma pontuação ainda — seja o primeiro!',
             'daily.playToday': 'Jogar desafio de hoje',
             'daily.pickClass': 'Escolha uma classe para iniciar o desafio de hoje',
+            'daily.expiredOnResume': 'O desafio de ontem expirou: a run segue sem as regras do dia.',
             'meta.acquired': 'Acumulado',
             'meta.earnHint': 'Ganhe Essência ao completar runs (vitórias rendem mais). Invista para desbloquear classes, biomas e melhorias permanentes.',
             'meta.passives': 'Melhorias permanentes',
@@ -5547,6 +5556,7 @@ const I18n = {
             'daily.empty': 'No scores yet — be the first!',
             'daily.playToday': 'Play today\'s challenge',
             'daily.pickClass': 'Pick a class to start today\'s challenge',
+            'daily.expiredOnResume': 'Yesterday\'s challenge expired: the run continues without the daily rules.',
             'meta.acquired': 'TOTAL EARNED',
             'meta.earnHint': 'Earn Essence by completing runs (wins pay more). Invest to unlock classes, biomes and permanent upgrades.',
             'meta.passives': 'Permanent upgrades',
@@ -7216,6 +7226,7 @@ const I18n = {
             'daily.empty': 'Aún no hay puntuaciones: ¡sé el primero!',
             'daily.playToday': 'Jugar el desafío de hoy',
             'daily.pickClass': 'Elige una clase para iniciar el desafío de hoy',
+            'daily.expiredOnResume': 'El desafío de ayer expiró: la partida sigue sin las reglas del día.',
             'meta.acquired': 'ACUMULADO',
             'meta.earnHint': 'Gana Esencia al completar runs (las victorias rinden más). Invierte para desbloquear clases, biomas y mejoras permanentes.',
             'meta.passives': 'Mejoras permanentes',
@@ -8505,6 +8516,8 @@ const I18n = {
         // Re-apply data-i18n labels (pause panel and any element using the attribute)
         this.apply();
         if (typeof _refreshDailyBadge === 'function') _refreshDailyBadge();
+        // Painel de mutadores tem textos montados em JS (não usa data-i18n)
+        if (window.RunMutators) RunMutators.render();
     },
 
     // Re-apply translations to every element carrying a data-i18n key
@@ -17331,6 +17344,8 @@ const RunMutators = {
         el.style.display = '';
     }
 };
+// const de topo não vira window.X: exporta para os guards `if (window.RunMutators)` (start, render, continue)
+window.RunMutators = RunMutators;
 
 window.setMode = function(m) {
     if (m !== 'dungeon' && m !== 'abyss') return;
@@ -17723,6 +17738,7 @@ window.SeedSystem = {
 const DailyChallenge = {
     _lastPlayedDate: null,
     _todayDate: null,
+    _activeDate: null,      // data em que o desafio foi aplicado a uma run (gravada no save)
     _completedToday: false,
 
     // Challenges rotate daily
@@ -17828,6 +17844,8 @@ const DailyChallenge = {
         
         // Store current challenge for UI
         window._currentDailyChallenge = challenge;
+        this._updateDate();
+        this._activeDate = this._todayDate;
         this._floor5Time = null;
 
         // Store active modifiers (consumed by gameplay hooks across the engine)
@@ -31265,7 +31283,10 @@ window.SkillTreeUI = SkillTreeUI;
         closePanel() {
             // Sair do painel descarta um opt-in de desafio diário ainda não iniciado.
             // Síncrono: o botão "Jogar desafio de hoje" marca o opt-in logo após fechar.
+            const _hadOptIn = window._dailyOptIn === true;
             window._dailyOptIn = false;
+            // Painel de mutadores (tela inicial) mostra o bloqueio do diário: atualiza só se mudou
+            if (_hadOptIn && window.RunMutators) RunMutators.render();
             // Closing the camp without descending: don't reopen it while the player
             // is still standing on the portal (the panel used to come back next frame).
             if (this.currentPanel === 'camp' && typeof CampSystem !== 'undefined' && CampSystem.state) CampSystem._dismissed = true;
@@ -32554,6 +32575,8 @@ window.GameBootstrap = {
         Debug.safe(() => {
             const cls = save.type || 'warrior';
             const floor = save.dungeonLevel || 1;
+            // Desafio diário e mutadores da run salva: antes de _resetState (ver _restoreRunRules)
+            this._restoreRunRules(save);
             // Build a fresh floor AT the saved level/biome/seed, then restore the
             // player's progression on top. `player` is still undefined until this
             // call, so no state from the previous run can leak into the new one.
@@ -32583,6 +32606,30 @@ window.GameBootstrap = {
             addLog((window.I18n ? I18n.t('log.progressRestored') : 'Progresso restaurado - Piso ') + dungeonLevel);
             Debug.info('Game continued: floor ' + dungeonLevel + ', class ' + cls);
         }, 'continueGame');
+    },
+
+    // Restaura o desafio diário e os mutadores gravados no save (SaveSystem._serialize).
+    // Chamado em continueGame ANTES de _resetState, para o mundo novo já nascer com essas regras.
+    // Save antigo (sem os campos): mutadores seguem begin() e o diário fica sem desafio.
+    _restoreRunRules(save) {
+        const d = save.daily;
+        if (window.DailyChallenge) DailyChallenge._updateDate();
+        const today = window.DailyChallenge ? DailyChallenge._todayDate : null;
+        // Desafio já concluído hoje (canPlay falso) não é reaplicado: a run sobe sem as regras do dia
+        const dc = (d && d.date === today && window.DailyChallenge && DailyChallenge.canPlay()) ? DailyChallenge.getTodayChallenge() : null;
+        if (dc && dc.id === d.id) {
+            DailyChallenge.applyChallenge(dc);
+        } else {
+            window._currentDailyChallenge = null;
+            window._dailyMods = null;
+            if (d && d.date !== today && typeof showToast === 'function') {
+                showToast(window._L ? _L('daily.expiredOnResume', 'O desafio de ontem expirou: a run segue sem as regras do dia.') : 'O desafio de ontem expirou: a run segue sem as regras do dia.', 'info');
+            }
+        }
+        if (window.RunMutators) {
+            if (Array.isArray(save.mutators)) RunMutators._run = RUN_MUTATORS.filter(m => save.mutators.includes(m.id)).slice(0, RunMutators.MAX_ACTIVE);
+            else RunMutators.begin();
+        }
     },
 
     _resetState(cls, opts) {
@@ -34641,6 +34688,7 @@ Input.init();
             if (!dc || !dc.canPlay()) return;
             if (window.UIManager) window.UIManager.closePanel();
             window._dailyOptIn = true;
+            if (window.RunMutators) RunMutators.render();
             if (typeof showToast === 'function') showToast(_L('daily.pickClass', 'Escolha uma classe para iniciar o desafio de hoje'), 'info');
         };
 
