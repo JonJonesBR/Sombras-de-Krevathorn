@@ -1416,7 +1416,7 @@ body {
             <div id="mode-desc" data-i18n="start.modeDesc" style="text-align:center;font-size:clamp(0.65rem,2.2vw,0.8rem);color:rgba(255,255,255,0.62);margin-bottom:10px;min-height:2.2em;line-height:1.4;padding:0 8px;">
                 Evolua seu personagem em masmorras cada vez mais difíceis.
             </div>
-            <!-- Mutadores de prestígio (v66): preenchido por RunMutators.render(); oculto até o prestígio 10 -->
+            <!-- Mutadores de prestígio (v66): preenchido por RunMutators.render(); oculto até CONFIG.MUTATORS_UNLOCK_PRESTIGE (só dica a partir do prestígio 1) -->
             <div id="mutator-panel" style="display:none;margin:0 auto 10px;width:100%;max-width:520px;padding:8px;border-radius:12px;border:1px solid rgba(255,190,90,0.2);background:rgba(255,190,90,0.04);"></div>
             <!-- Daily challenge badge: shows today's active challenge before starting -->
             <div id="daily-badge" style="display:none;text-align:center;font-size:clamp(0.58rem,2vw,0.7rem);color:#9ad0ff;background:rgba(80,140,255,0.1);border:1.5px solid rgba(80,140,255,0.25);border-radius:10px;padding:5px 10px;margin-bottom:8px;line-height:1.35;"></div>
@@ -3231,9 +3231,9 @@ const MetaSystem = {
 
     // Conteúdo desbloqueável (compra única)
     UNLOCKS: {
-        'class_rogue':   { kind: 'class',   cls: 'rogue',    nameKey: 'meta.unlock.class_rogue.name',   name: 'Ladino',          icon: '🗡️', cost: 250, descKey: 'meta.unlock.class_rogue.desc',   desc: 'Venenoso, veloz e crítico. Habilita a classe Ladino.' },
-        'class_mage':    { kind: 'class',   cls: 'mage',     nameKey: 'meta.unlock.class_mage.name',    name: 'Mago',            icon: '🔮', cost: 350, descKey: 'meta.unlock.class_mage.desc',    desc: 'Poder arcano e projéteis certeiros. Habilita a classe Mago.' },
-        'class_elf':     { kind: 'class',   cls: 'elf',      nameKey: 'meta.unlock.class_elf.name',     name: 'Elfa',            icon: '🏹', cost: 300, descKey: 'meta.unlock.class_elf.desc',     desc: 'Vento e natureza, arco e flecha. Habilita a classe Elfa.' },
+        'class_rogue':   { kind: 'class',   cls: 'rogue',    nameKey: 'meta.unlock.class_rogue.name',   name: 'Ladino',          icon: '🗡️', cost: 120, descKey: 'meta.unlock.class_rogue.desc',   desc: 'Venenoso, veloz e crítico. Habilita a classe Ladino.' },
+        'class_mage':    { kind: 'class',   cls: 'mage',     nameKey: 'meta.unlock.class_mage.name',    name: 'Mago',            icon: '🔮', cost: 180, descKey: 'meta.unlock.class_mage.desc',    desc: 'Poder arcano e projéteis certeiros. Habilita a classe Mago.' },
+        'class_elf':     { kind: 'class',   cls: 'elf',      nameKey: 'meta.unlock.class_elf.name',     name: 'Elfa',            icon: '🏹', cost: 150, descKey: 'meta.unlock.class_elf.desc',     desc: 'Vento e natureza, arco e flecha. Habilita a classe Elfa.' },
         'biome_lavaCave':{ kind: 'biome',   biome: 'lavaCave', nameKey: 'meta.unlock.biome_lavaCave.name', name: 'Caverna de Lava', icon: '🌋', cost: 180, descKey: 'meta.unlock.biome_lavaCave.desc', desc: 'Habilita o bioma Caverna de Lava nas trocas de cenário.' },
         'biome_crypt':   { kind: 'biome',   biome: 'crypt',  nameKey: 'meta.unlock.biome_crypt.name',   name: 'Cripta',          icon: '💀', cost: 220, descKey: 'meta.unlock.biome_crypt.desc',   desc: 'Habilita o bioma Cripta nas trocas de cenário.' },
         'biome_forest':  { kind: 'biome',   biome: 'forest', nameKey: 'meta.unlock.biome_forest.name',  name: 'Floresta Sombria', icon: '🌲', cost: 200, descKey: 'meta.unlock.biome_forest.desc',  desc: 'Habilita o bioma Floresta Sombria nas trocas de cenário.' },
@@ -4638,6 +4638,7 @@ const I18n = {
             'journey.deathsByFloor': 'Mortes por andar', 'journey.deathsByCause': 'Mortes por causa',
             'journey.note': 'Dados locais, coletados desde a v66. Histórico anterior: —',
             'mut.title': 'Mutadores', 'mut.hint': 'Até 3. Inimigos mais duros em troca de mais recompensa.', 'mut.dailyOff': 'Indisponível no desafio diário.',
+            'mut.lockedHint': 'Mutadores liberam no prestígio {n} (atual: {p})',
             'mut.hardEnemies.name': 'Inimigos resistentes', 'mut.hardEnemies.desc': 'Inimigos com +25% de vida', 'mut.hardEnemies.bonus': 'XP +20%',
             'mut.fastEnemies.name': 'Inimigos velozes', 'mut.fastEnemies.desc': 'Inimigos 15% mais rápidos', 'mut.fastEnemies.bonus': 'Ouro +20%',
             'mut.noRegen.name': 'Sem regeneração', 'mut.noRegen.desc': 'Nenhuma cura passiva por tempo', 'mut.noRegen.bonus': 'Essência +25%',
@@ -6306,6 +6307,7 @@ const I18n = {
             'journey.deathsByFloor': 'Deaths by floor', 'journey.deathsByCause': 'Deaths by cause',
             'journey.note': 'Local data, collected since v66. Earlier history: —',
             'mut.title': 'Mutators', 'mut.hint': 'Up to 3. Tougher enemies in exchange for more rewards.', 'mut.dailyOff': 'Not available in the daily challenge.',
+            'mut.lockedHint': 'Mutators unlock at prestige {n} (current: {p})',
             'mut.hardEnemies.name': 'Tough enemies', 'mut.hardEnemies.desc': 'Enemies have +25% HP', 'mut.hardEnemies.bonus': 'XP +20%',
             'mut.fastEnemies.name': 'Swift enemies', 'mut.fastEnemies.desc': 'Enemies 15% faster', 'mut.fastEnemies.bonus': 'Gold +20%',
             'mut.noRegen.name': 'No regeneration', 'mut.noRegen.desc': 'No passive healing over time', 'mut.noRegen.bonus': 'Essence +25%',
@@ -7973,6 +7975,7 @@ const I18n = {
             'journey.deathsByFloor': 'Muertes por piso', 'journey.deathsByCause': 'Muertes por causa',
             'journey.note': 'Datos locales, recogidos desde la v66. Historial anterior: —',
             'mut.title': 'Mutadores', 'mut.hint': 'Hasta 3. Enemigos más duros a cambio de más recompensa.', 'mut.dailyOff': 'No disponible en el desafío diario.',
+            'mut.lockedHint': 'Los mutadores se desbloquean en el prestigio {n} (actual: {p})',
             'mut.hardEnemies.name': 'Enemigos resistentes', 'mut.hardEnemies.desc': 'Enemigos con +25% de vida', 'mut.hardEnemies.bonus': 'XP +20%',
             'mut.fastEnemies.name': 'Enemigos veloces', 'mut.fastEnemies.desc': 'Enemigos 15% más rápidos', 'mut.fastEnemies.bonus': 'Oro +20%',
             'mut.noRegen.name': 'Sin regeneración', 'mut.noRegen.desc': 'Ninguna curación pasiva con el tiempo', 'mut.noRegen.bonus': 'Esencia +25%',
@@ -9307,6 +9310,7 @@ var CONFIG = {
     PRESTIGE_XP_PER_LEVEL: 0.02,        // +2% XP per prestige level (smooth growth on top of milestones)
     PRESTIGE_DMG_PER_LEVEL: 0.01,       // +1% permanent damage per prestige level
     PRESTIGE_MAX_TIERS: 10,             // 10 prestige tiers
+    MUTATORS_UNLOCK_PRESTIGE: 3,        // prestígio mínimo para liberar os mutadores (não confundir com PRESTIGE_MAX_TIERS)
     PRESTIGE_TIER_LEVELS: [1, 3, 5, 8, 10, 15, 20, 30, 40, 50],
     PRESTIGE_AURA_COLORS: ['#cccccc', '#33ff33', '#33ccff', '#ffcc00', '#ff8800', '#ff3333', '#cc66ff', '#ff00ff', '#ff0000', '#ffffff'],
     PRESTIGE_AURA_SIZES: [3, 5, 7, 9, 11, 13, 15, 18, 22, 26], // radius offset per tier
@@ -17238,7 +17242,7 @@ if (document.readyState === 'loading') {
 // ============================================================
 window._selectedMode = (typeof window._selectedMode !== 'undefined') ? window._selectedMode : 'dungeon';
 // === Mutadores de prestígio (v66) ===
-// Desbloqueados ao atingir o prestígio 10. Escolha de até 3 na tela inicial, salva em GameSettings.mutators.
+// Desbloqueados ao atingir CONFIG.MUTATORS_UNLOCK_PRESTIGE. Escolha de até 3 na tela inicial, salva em GameSettings.mutators.
 // Cada um troca dureza por recompensa. Não rodam no desafio diário e não mexem no prestígio.
 // A escolha é congelada no início da run (begin); mudar na tela inicial vale só para a próxima.
 const RUN_MUTATORS = [
@@ -17254,7 +17258,7 @@ const RunMutators = {
     ELITE_MULT: 2,     // frequência de elites
     _run: null,        // snapshot da run atual (null = ainda não começou run nesta sessão)
 
-    isUnlocked() { return (typeof prestigeLevel !== 'undefined' ? prestigeLevel : 0) >= CONFIG.PRESTIGE_MAX_TIERS; },
+    isUnlocked() { return (typeof prestigeLevel !== 'undefined' ? prestigeLevel : 0) >= CONFIG.MUTATORS_UNLOCK_PRESTIGE; },
     _compute() {
         if (!this.isUnlocked() || window._currentDailyChallenge) return [];
         if (typeof GameSettings === 'undefined' || !GameSettings) return [];
@@ -17287,11 +17291,19 @@ const RunMutators = {
         this.render();
     },
 
-    // Painel na tela inicial (#mutator-panel). Oculto antes do prestígio 10.
+    // Painel na tela inicial (#mutator-panel). Bloqueado: oculto no prestígio 0; a partir do 1, só uma dica.
     render() {
         const el = document.getElementById('mutator-panel');
         if (!el || typeof GameSettings === 'undefined' || !GameSettings) return;
-        if (!this.isUnlocked()) { el.style.display = 'none'; el.innerHTML = ''; return; }
+        if (!this.isUnlocked()) {
+            const p = typeof prestigeLevel !== 'undefined' ? prestigeLevel : 0;
+            if (p < 1) { el.style.display = 'none'; el.innerHTML = ''; return; }
+            const tpl = window._L ? _L('mut.lockedHint', 'Mutadores liberam no prestígio {n} (atual: {p})') : 'Mutadores liberam no prestígio {n} (atual: {p})';
+            const hint = tpl.replace('{n}', CONFIG.MUTATORS_UNLOCK_PRESTIGE).replace('{p}', p);
+            el.innerHTML = `<div style="font-size:9px;color:rgba(255,255,255,0.5);text-align:center">${hint}</div>`;
+            el.style.display = '';
+            return;
+        }
         const sel = Array.isArray(GameSettings.mutators) ? GameSettings.mutators : [];
         const daily = !!window._dailyOptIn;
         const full = sel.length >= this.MAX_ACTIVE;
@@ -29782,7 +29794,7 @@ var GameSettings = {
     colorblindMode: 'off',      // Fase B: off | deutan | protan | tritan
     reducedMotion: false,       // Fase B: honors prefers-reduced-motion on load
     userSetQuality: false,      // true when the player picks a tier in Settings (locks auto-adjust)
-    mutators: [],               // Mutadores de prestígio escolhidos (até 3, ids de RUN_MUTATORS); só com prestígio 10+
+    mutators: [],               // Mutadores de prestígio escolhidos (até 3, ids de RUN_MUTATORS); só com prestígio CONFIG.MUTATORS_UNLOCK_PRESTIGE+
 
     // Standard gamepad mapping. Button names are hardware names (A/B/X/Y, LB/RB,
     // Start) and do not translate; only the action names and UI copy are localized.
