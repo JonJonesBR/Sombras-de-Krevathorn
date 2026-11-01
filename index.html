@@ -34552,7 +34552,10 @@ const Input = {
         });
         window.addEventListener('mousedown', e => {
             if (e.button !== 0) return;
-            if (window.GameSettings) window.GameSettings.adaptTo('mouse');
+            // O Chrome Android dispara mousedown de compatibilidade logo após um toque.
+            // Esse evento não pode trocar o controle para mouse: ignora se veio de toque.
+            const emulado = (e.sourceCapabilities && e.sourceCapabilities.firesTouchEvents) || (performance.now() - (this._lastTouchTs || 0) < 1000);
+            if (!emulado && window.GameSettings) window.GameSettings.adaptTo('mouse');
             if (this._ctrlType !== 'mouse') return;
             if (gameState !== 'PLAYING' || e.target.closest('button')) return;
             if (window.isAnyPanelOpen && window.isAnyPanelOpen()) return;
@@ -34574,6 +34577,7 @@ const Input = {
 
         // ---- TOUCH ----
         window.addEventListener('touchstart', e => {
+            this._lastTouchTs = performance.now();
             if (window.GameSettings) window.GameSettings.adaptTo('touch');
             if (typeof TutorialSystem !== 'undefined' && TutorialSystem.active && TutorialSystem._allControlsHidden()) {
                 // Real buttons (shop/skills/stats bar, tutorial UI) must stay
@@ -34642,6 +34646,7 @@ const Input = {
         }, { passive: false });
 
         window.addEventListener('touchend', e => {
+            this._lastTouchTs = performance.now();
             // Soltura antes do retorno do tutorial: um toque iniciado antes da etapa não pode ficar preso
             if (e.changedTouches) {
                 for (let i = 0; i < e.changedTouches.length; i++) {
