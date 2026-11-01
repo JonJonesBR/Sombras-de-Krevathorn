@@ -3976,6 +3976,7 @@ const I18n = {
             'settings.low': 'BAIXA',
             'settings.medium': 'MÉDIA',
             'settings.high': 'ALTA',
+            'settings.auto': 'Auto',
             'settings.audio': 'ÁUDIO',
             'settings.visuals': 'VISUAIS',
             'settings.particles': 'Partículas',
@@ -5671,6 +5672,7 @@ const I18n = {
             'settings.low': 'LOW',
             'settings.medium': 'MEDIUM',
             'settings.high': 'HIGH',
+            'settings.auto': 'Auto',
             'settings.audio': 'AUDIO',
             'settings.visuals': 'VISUALS',
             'settings.particles': 'Particles',
@@ -7366,6 +7368,7 @@ const I18n = {
             'settings.low': 'BAJA',
             'settings.medium': 'MEDIA',
             'settings.high': 'ALTA',
+            'settings.auto': 'Auto',
             'settings.audio': 'AUDIO',
             'settings.visuals': 'VISUALES',
             'settings.particles': 'Partículas',
@@ -30122,8 +30125,11 @@ var GameSettings = {
                     if (Number.isInteger(v) && this.GAMEPAD_BUTTONS.some(b => b.i === v)) this.gamepadMap[action] = v;
                 }
             }
-            if (data.graphicsQuality) { this.graphicsQuality = data.graphicsQuality; this.userSetQuality = true; }
-            else { this.graphicsQuality = _detectGraphicsQuality(); }
+            // Só volta travado se o save diz que foi o jogador quem escolheu. Saves antigos (sem
+            // userSetQuality) voltam ao automático: não dá para saber se houve escolha.
+            const _gfxOk = ['low', 'medium', 'high'].includes(data.graphicsQuality);
+            if (data.userSetQuality === true && _gfxOk) { this.graphicsQuality = data.graphicsQuality; this.userSetQuality = true; }
+            else { this.graphicsQuality = _detectGraphicsQuality(); this.userSetQuality = false; }
             this.reducedMotion = data.reducedMotion !== undefined ? data.reducedMotion
                 : (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
             // Mutadores (v66): ausente em saves antigos = nenhum; ids desconhecidos são descartados
@@ -30147,7 +30153,9 @@ var GameSettings = {
             particlesEnabled: perfPrefs ? perfPrefs.particlesEnabled : this.particlesEnabled,
             screenShakeEnabled: perfPrefs ? perfPrefs.screenShakeEnabled : this.screenShakeEnabled,
             hitstopEnabled: perfPrefs ? perfPrefs.hitstopEnabled : this.hitstopEnabled,
-            graphicsQuality: this.graphicsQuality,
+            // Qualidade automática não é escolha do jogador: só grava o valor quando travado
+            graphicsQuality: this.userSetQuality ? this.graphicsQuality : null,
+            userSetQuality: !!this.userSetQuality,
             fontSize:     this.fontSize,
             aimAssist:    this.aimAssist,
             attackMode:   this.attackMode,
@@ -30182,6 +30190,18 @@ var GameSettings = {
     setGraphicsQuality(q) {
         this.graphicsQuality = q;
         this.userSetQuality = true;
+        this.save();
+        this.apply();
+        if (window.SettingsUI && window.SettingsUI._render) window.SettingsUI._render();
+    },
+
+    // Volta ao automático: a detecção do aparelho e o ajuste por FPS voltam a valer.
+    // apply() recalcula window.GFX.detected e window.GFX.tier, usados por _autoQualityStep.
+    setGraphicsQualityAuto() {
+        // Já no automático: não reseta o nível que o ajuste por FPS escolheu
+        if (!this.userSetQuality) return;
+        this.userSetQuality = false;
+        this.graphicsQuality = _detectGraphicsQuality();
         this.save();
         this.apply();
         if (window.SettingsUI && window.SettingsUI._render) window.SettingsUI._render();
@@ -30653,8 +30673,10 @@ var SettingsUI = {
                         ${head(T('settings.visuals', 'VISUAIS'))}
                         ${choiceLabel(T('settings.graphicsQuality', 'Qualidade gráfica'))}
                         <div class="flex gap-2 mb-3">
+                            <button type="button" data-sk="gfx-auto" aria-pressed="${!GameSettings.userSetQuality}" aria-label="${T('settings.graphicsQuality', 'Graphics quality')}: ${T('settings.auto', 'Auto')}" class="${segCls(!GameSettings.userSetQuality)}"
+                                onclick="window.GameSettings.setGraphicsQualityAuto()">${T('settings.auto', 'Auto').toUpperCase()}</button>
                             ${['low', 'medium', 'high'].map(q => `
-                                <button type="button" data-sk="gfx-${q}" aria-pressed="${GameSettings.graphicsQuality === q}" aria-label="${T('settings.graphicsQuality', 'Graphics quality')}: ${q === 'low' ? T('settings.low', 'Low') : q === 'medium' ? T('settings.medium', 'Medium') : T('settings.high', 'High')}" class="${segCls(GameSettings.graphicsQuality === q)}"
+                                <button type="button" data-sk="gfx-${q}" aria-pressed="${!!GameSettings.userSetQuality && GameSettings.graphicsQuality === q}" aria-label="${T('settings.graphicsQuality', 'Graphics quality')}: ${q === 'low' ? T('settings.low', 'Low') : q === 'medium' ? T('settings.medium', 'Medium') : T('settings.high', 'High')}" class="${segCls(!!GameSettings.userSetQuality && GameSettings.graphicsQuality === q)}"
                                     onclick="window.GameSettings.setGraphicsQuality('${q}')">${q === 'low' ? T('settings.low', 'BAIXA').toUpperCase() : q === 'medium' ? T('settings.medium', 'MÉDIA').toUpperCase() : T('settings.high', 'ALTA').toUpperCase()}</button>
                             `).join('')}
                         </div>
