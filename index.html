@@ -29093,14 +29093,19 @@ class NPC {
             {
                 label: revealLabel,
                 action: () => {
+                    // Fecha o painel como o Fechar faz; o aviso vai por toast (fora do painel)
                     if (!self._oracleUsed) {
                         self._oracleUsed = true;
                         // Mark portal and first chest on minimap via global oracle markers
                         if (window.NPCSystem) NPCSystem._oracleReveal();
-                        NPCInteractionPanel.showFeedback(window.I18n ? I18n.t('npc.oracle.revealed') : 'Revelado no minimapa!');
+                        NPCInteractionPanel.hide();
+                        self.interacted = true;
+                        showToast(window.I18n ? I18n.t('npc.oracle.revealed') : 'Revelado no minimapa!', 'success');
                         if (window.SND) SND.playAchievement && SND.playAchievement();
                     } else {
-                        NPCInteractionPanel.showFeedback(window.I18n ? I18n.t('npc.oracle.alreadyRevealed') : 'Já revelado!');
+                        NPCInteractionPanel.hide();
+                        self.interacted = true;
+                        showToast(window.I18n ? I18n.t('npc.oracle.alreadyRevealed') : 'Já revelado!', 'info');
                     }
                 }
             },
