@@ -2210,6 +2210,7 @@ function triggerCamZoom(strength, frames) {
     camZoomTimer = frames;
 }
 var dungeonKills = 0, dungeonKillTarget = 18, dungeonPortal = null;
+var _floorStartTime = 0; // gameTime (frames) em que o andar atual começou; base do tempo mínimo do chefe
 var hitstopFrames = 0;
 var _chainLightningActive = false; // guards chain lightning from chaining recursively
 var merchantActive = false, skillTreeOpen = false, statsOpen = false, achievementsOpen = false;
@@ -8813,8 +8814,9 @@ var CONFIG = {
     BOSS_ENRAGE_SPEED: 2.0,
     BOSS_CONTACT_DAMAGE_MULT: 1.8,   // dano de contato do chefe (não é o único perigo)
     BOSS_PHASE_HEAL: 0.05,           // cura % do HP máximo a cada transição de fase
-    BOSS_SPAWN_CHANCE: 0.10,
-    BOSS_SPAWN_KILL_FRACTION: 0.5,   // chefe só entra em cena após ~50% do andar ser limpo
+    BOSS_SPAWN_CHANCE: 0.05,
+    BOSS_SPAWN_KILL_FRACTION: 0.8,   // chefe só entra em cena após ~80% do andar ser limpo
+    BOSS_MIN_FLOOR_SECONDS: 60,      // sorteio aleatório do chefe só após 60 s no andar (os 2 últimos abates forçam)
     BOSS_DAMAGE_DEALT_STAT: 500,
 
     // Boss Phases (3 phases based on HP thresholds)
@@ -10960,7 +10962,7 @@ class Portal {
 function _startFloorTransition() {
     if (typeof CampSystem !== 'undefined') CampSystem._descend = false;
     secretPortal = null; _secretRoom = null;
-    dungeonLevel++; dungeonKills = 0; dungeonKillTarget = 18 + dungeonLevel * 2;
+    dungeonLevel++; dungeonKills = 0; dungeonKillTarget = 18 + dungeonLevel * 2; _floorStartTime = gameTime;
     if (window.DailyChallenge) DailyChallenge.noteFloor(dungeonLevel, Math.floor(gameTime / GAME_TICKS_PER_SECOND));
     if (window.RunStats) RunStats.recordFloor();
     if (window.RunObjectiveSystem) RunObjectiveSystem.onFloor(dungeonLevel);
@@ -11295,7 +11297,9 @@ function _updateEnemySpawning() {
         const _bossKillGate = Math.floor(dungeonKillTarget * CONFIG.BOSS_SPAWN_KILL_FRACTION);
         const bossEligible = !bossActive && dungeonKills >= _bossKillGate;
         const bossForced = bossEligible && dungeonKills >= dungeonKillTarget - 2;
-        const isBoss = bossEligible && (bossForced || SeedSystem.random() < CONFIG.BOSS_SPAWN_CHANCE);
+        // Sorteio aleatório só depois de um tempo mínimo no andar (gameTime é em frames a 60 fps)
+        const _floorSecs = (gameTime - _floorStartTime) / GAME_TICKS_PER_SECOND;
+        const isBoss = bossForced || (bossEligible && _floorSecs >= CONFIG.BOSS_MIN_FLOOR_SECONDS && SeedSystem.random() < CONFIG.BOSS_SPAWN_CHANCE);
         if (isBoss) {
             bossActive = true;
             if (player) player._hitSinceBoss = false; // início da luta: conta dano desde aqui (conquista 'Intocável')
@@ -32603,6 +32607,7 @@ window.GameBootstrap = {
             gameMode = save.gameMode || gameMode;
             dungeonKills = save.dungeonKills || 0;
             dungeonKillTarget = save.dungeonKillTarget || 18;
+            _floorStartTime = gameTime; // o save não guarda gameTime: o andar retomado recomeça a contagem
             continuesLeft = (typeof save.continuesLeft === 'number') ? save.continuesLeft : 3;
             _secretFloorUsed = Number.isInteger(save.secretFloorUsed) ? save.secretFloorUsed : -1;
             if (typeof BiomeSystem !== 'undefined') {
@@ -32682,7 +32687,7 @@ window.GameBootstrap = {
         if (window.RunEventSystem) RunEventSystem.reset();
         if (window.BossRewardSystem) BossRewardSystem.reset();
         gameTime = 0; bossActive = false; currentEvent = null;
-        dungeonKills = 0; dungeonKillTarget = 18; dungeonPortal = null;
+        dungeonKills = 0; dungeonKillTarget = 18; dungeonPortal = null; _floorStartTime = gameTime;
         secretPortal = null; _secretRoom = null; _secretFloorUsed = -1;
         continuesLeft = 3; _continueActive = false; minimapExpanded = false;
         weather = null; weatherTimer = 0;
