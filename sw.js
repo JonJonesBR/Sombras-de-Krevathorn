@@ -23,7 +23,7 @@
  * Save data lives in localStorage and is NEVER touched by this worker — only
  * Cache Storage entries with the krevathorn- prefix are cleaned on activate.
  */
-const CACHE_VERSION = 'krevathorn-v75';
+const CACHE_VERSION = 'krevathorn-v76';
 const CACHE_NAME = CACHE_VERSION;
 const APP_SHELL = ['./', './index.html'];
 
