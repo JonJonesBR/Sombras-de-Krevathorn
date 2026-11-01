@@ -8637,6 +8637,10 @@ var CONFIG = {
 
     // Performance Tuning
     PARTICLE_CAP: 60,
+    // Multidão: com inimigos demais na tela, efeitos de acerto diminuem (fator 1 até START, mínimo MIN_SCALE em FULL)
+    FX_CROWD_START: 4,
+    FX_CROWD_FULL: 10,
+    FX_CROWD_MIN_SCALE: 0.35,
     MAX_BULLETS: 45,
     INPUT_BUFFER_FRAMES: 8,        // janela em frames para buffer de dodge/habilidade
     LIGHTING_THROTTLE: 15,          // skip frames
@@ -18210,18 +18214,25 @@ const ScreenEffects = {
         this._chromaIntensity = Math.max(this._chromaIntensity, intensity);
     },
     
-    onHitEnemy(damage, fromX, fromY, targetX, targetY) {
-        this.triggerShake(Math.min(2 + damage * 0.02, 8));
-        // Light chromatic aberration only on heavy hits (rare, keeps the
-        // sustained-combat path cheap)
-        if (damage > 30) this.triggerChromatic(3);
-
-        // Blood splatter direction - splatter toward the camera (screen flash)
-        if (damage > 5) {
-            this._bloodSplatterAlpha = Math.min(0.1 + damage * 0.005, 0.5);
-            this._bloodSplatterColor = '#ff0000';
-            this._bloodSplatterTimer = 15;
+    // received=true: dano que o jogador RECEBE (splatter vermelho de tela, sem mudança).
+    // Sem received: acerto do jogador em inimigo. Não há splatter vermelho (lia como dano recebido);
+    // o tremor escala com a multidão e a cromática só aparece com tela calma.
+    onHitEnemy(damage, fromX, fromY, targetX, targetY, received) {
+        if (received) {
+            this.triggerShake(Math.min(2 + damage * 0.02, 8));
+            // Light chromatic aberration only on heavy hits (rare, keeps the
+            // sustained-combat path cheap)
+            if (damage > 30) this.triggerChromatic(3);
+            if (damage > 5) {
+                this._bloodSplatterAlpha = Math.min(0.1 + damage * 0.005, 0.5);
+                this._bloodSplatterColor = '#ff0000';
+                this._bloodSplatterTimer = 15;
+            }
+            return;
         }
+        const k = _fxCrowdScale();
+        this.triggerShake(Math.min(2 + damage * 0.02, 8) * k);
+        if (damage > 30 && k >= 1) this.triggerChromatic(3);
     },
     
     onBossSpawn() {
@@ -18261,11 +18272,14 @@ const ScreenEffects = {
         this.triggerFlash(0.4, isFinal ? '#ff3333' : COLORS.ELITE);
     },
     
+    // Crítico do jogador: flash e cromática só com tela calma; sem splatter vermelho (era dano recebido)
     onCrit() {
-        this.triggerShake(5);
-        this.triggerFlash(0.2, '#ffee88');
-        this.triggerChromatic(6);
-        this._bloodSplatterAlpha = Math.min(this._bloodSplatterAlpha + 0.2, 0.5);
+        // Tremor escalonado pela multidão, como os outros tremores de combate
+        this.triggerShake(5 * _fxCrowdScale());
+        if (_fxCrowdScale() >= 1) {
+            this.triggerFlash(0.2, '#ffee88');
+            this.triggerChromatic(6);
+        }
     },
     
     onBuff(type, mutationType) {
@@ -21547,7 +21561,7 @@ class Trail {
 const DamageNumbers = {
     numbers: [],
     slashes: [],
-    MAX_NUMBERS: 20,
+    MAX_NUMBERS: 14,
     addSlash(x, y, angle, radius, color) {
         if (this.slashes.length > 5) return;
         let s;
@@ -21559,6 +21573,8 @@ const DamageNumbers = {
         if (s) this.slashes.push(s);
     },
     add(x, y, value, type='normal') {
+        // Com multidão, o dano 'normal' (número, em inimigo) some; crit, cura, textos ("SUPERAQUECIDO!") e 'hurt' ficam
+        if (type === 'normal' && typeof value === 'number' && _fxCrowdScale() < 0.6) return;
         if (this.numbers.length >= this.MAX_NUMBERS) return;
         let n;
         if (window.PoolManager) {
@@ -22380,9 +22396,33 @@ class Particle {
     }
 }
 
+// Fator de multidão (1 = tela calma, até FX_CROWD_MIN_SCALE = tela cheia). Conta inimigos vivos
+// perto da câmera, recalcula no máximo a cada 15 frames e não aloca arrays.
+let _fxCrowdT = -999, _fxCrowdV = 1;
+function _fxCrowdScale() {
+    if (gameTime < _fxCrowdT || gameTime - _fxCrowdT >= 15) {
+        _fxCrowdT = gameTime;
+        const x0 = camX - 48, x1 = camX + width + 48, y0 = camY - 48, y1 = camY + height + 48;
+        let n = 0;
+        for (let i = 0; i < entities.length; i++) {
+            const e = entities[i];
+            if (e && e !== player && e.alive && (e instanceof Enemy || e.isEnemy) && e.x > x0 && e.x < x1 && e.y > y0 && e.y < y1) n++;
+        }
+        const s = CONFIG.FX_CROWD_START, f = CONFIG.FX_CROWD_FULL, m = CONFIG.FX_CROWD_MIN_SCALE;
+        _fxCrowdV = n <= s ? 1 : n >= f ? m : 1 - (1 - m) * (n - s) / (f - s);
+    }
+    return _fxCrowdV;
+}
+
 function spawnParticles(x,y,c,n=8,size=3) {
     if (window.GameSettings && GameSettings.particlesEnabled === false) return;
-    var pc = CONFIG.PARTICLE_CAP || 100;
+    // Pedido sem partículas: sai antes do escalonamento, que usaria no mínimo 1
+    if (n <= 0) return;
+    const k = _fxCrowdScale();
+    // n=1 (gotas de sangue) vira chance; o resto escala com mínimo de 1 partícula
+    if (n === 1) { if (Math.random() >= k) return; }
+    else n = Math.max(1, Math.round(n * k));
+    var pc = Math.floor((CONFIG.PARTICLE_CAP || 100) * Math.max(0.5, k));
     if (particles.length >= pc) return;
     const toSpawn = Math.min(n, pc - particles.length);
     for(let i=0; i<toSpawn; i++) {
@@ -23838,13 +23878,14 @@ class Entity {
                 this.flinchVy = Math.sin(angle) * kbBoss;
             }
 
-            // Screen shake for ANY significant hit
+            // Screen shake for ANY significant hit (dano recebido pelo jogador igual; em inimigo, escala com a multidão)
             if (finalDmg > 8) {
-                ScreenEffects.triggerShake(Math.min(1 + finalDmg * 0.01, 5));
+                if (this === player) ScreenEffects.triggerShake(Math.min(1 + finalDmg * 0.01, 5));
+                else { const _kf = _fxCrowdScale(); if (_kf >= 0.6) ScreenEffects.triggerShake(Math.min(1 + finalDmg * 0.01, 5) * _kf); }
             }
         }
         
-        if(this === player) { shake = CONFIG.SHAKE_HIT; SND.playHit(); Statistics.data.totalDamageTaken += finalDmg; if (window.RunStats) RunStats.damageTaken += finalDmg; if (window.RunObjectiveSystem) RunObjectiveSystem.onDamage(finalDmg); ScreenEffects.onHitEnemy(finalDmg, source ? source.x : 0, source ? source.y : 0, this.x, this.y); this.combatTimer = 0;
+        if(this === player) { shake = CONFIG.SHAKE_HIT; SND.playHit(); Statistics.data.totalDamageTaken += finalDmg; if (window.RunStats) RunStats.damageTaken += finalDmg; if (window.RunObjectiveSystem) RunObjectiveSystem.onDamage(finalDmg); ScreenEffects.onHitEnemy(finalDmg, source ? source.x : 0, source ? source.y : 0, this.x, this.y, true); this.combatTimer = 0;
             // The number only rendered for damage the player DEALT. Taking a hit
             // showed a flash but no magnitude; a red number closes that gap.
             if(typeof DamageNumbers !== 'undefined' && finalDmg >= 1) DamageNumbers.add(this.x, this.y, Math.round(finalDmg), 'hurt');
@@ -26139,7 +26180,7 @@ class Boss extends Enemy {
         if(this.alive && this.phase >= 3 && source === player && a > 0) {
             const reflected = Math.max(1, Math.floor(a * CONFIG.BOSS_THORN_REFLECT_RATIO));
             player.hp -= reflected;
-            DamageNumbers.add(player.x, player.y, reflected, 'normal');
+            DamageNumbers.add(player.x, player.y, reflected, 'hurt'); // dano recebido (era 'normal', que a multidão esconde)
             spawnParticles(this.x, this.y, '#ff4400', 3, 2);
         }
         if(!this.alive) {
@@ -28000,8 +28041,7 @@ class Player extends Entity {
                     spawnParticles(px, py, '#ffaa00', 2, 3 + Math.random() * 2);
                 }
                 ScreenEffects.triggerShake(CONFIG.SHAKE_HIT * 0.5, sx, sy);
-                // Quick flash at start of swing
-                ScreenEffects.triggerFlash(0.08, '#ffcc00');
+                // Sem flash a cada golpe: só o finalizador (chainStep 3) pisca, mais abaixo
                 const furyMult = 1 + this.furyStacks * CONFIG.WARRIOR_FURY_DMG_PER_STACK;
                 let dmg = Math.floor(cls.baseDmg * this.weaponLevel * this.weaponDamageMult * furyMult);
                 if(this.mutations.berserk) dmg *= CONFIG.BERSERK_DAMAGE_MULT;
@@ -28034,7 +28074,7 @@ class Player extends Entity {
                                 if(window.Vibrate) Vibrate.trigger('normalHit');
                                 ScreenEffects.triggerShake(CONFIG.SHAKE_HIT, sx, sy);
                                 spawnParticles(e.x, e.y, '#ffaa00', 6, 4);
-                                if (this.furyStacks >= 5) ScreenEffects.triggerFlash(0.15, '#ff8800', 8);
+                                if (chainStep === 3 && this.furyStacks >= 5) ScreenEffects.triggerFlash(0.15, '#ff8800', 8);
                                 this.furyStacks = Math.min(CONFIG.WARRIOR_FURY_MAX_STACKS, this.furyStacks + 1);
                                 this.furyDecayTimer = CONFIG.WARRIOR_FURY_DECAY_FRAMES;
                                 const ed = distSq > 0 ? Math.sqrt(distSq) : 1;
@@ -28052,7 +28092,7 @@ class Player extends Entity {
                 this.walkTimer = 60;
                 let dmg = Math.floor(cls.baseDmg * this.weaponLevel * this.weaponDamageMult);
                 if(this.mutations.berserk) dmg *= CONFIG.BERSERK_DAMAGE_MULT;
-                if(this.damageBoost > 0) { ScreenEffects.triggerChromatic(2); }
+                if(this.damageBoost > 0 && _fxCrowdScale() >= 1) { ScreenEffects.triggerChromatic(2); } // cromática por tiro só com tela calma
                 if(window.RelicSystem) { dmg = Math.floor(dmg * RelicSystem.berserkerMult(this)); dmg = Math.floor(RelicSystem.furiaShot(this, dmg)); }
                 const bulletSpeed = (this.type === 'rogue' || this.type === 'elf') ? CONFIG.PLAYER[this.type].bulletSpeed : CONFIG.BULLET_SPEED_DEFAULT, baseRange = WeaponSystem.getEffectiveRange(this), range = window.RelicSystem ? baseRange * RelicSystem.rangeMult(this) : baseRange;
                 if(this.type === 'mage') {
