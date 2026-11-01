@@ -1271,9 +1271,11 @@ body {
     #hud-left { flex: none; width: 100%; max-width: 200px; }
     #top-bar .top-right-chips { margin-right: 0; flex-wrap: wrap; max-width: 100%; }
     #boss-hp-container { top: var(--hud-clear) !important; }
-    #achievement-toast, .notification { top: var(--hud-clear) !important; }
-    /* Missão concluída mostra o aviso de missão e o de lore juntos: a pilha fica logo abaixo. */
-    .toast-stack { top: calc(var(--hud-clear) + 52px) !important; }
+    .notification { top: var(--hud-clear) !important; }
+    /* Avisos (toast, conquista, cartão de equipamento) ficam todos no mesmo lugar, abaixo
+       de HUD, chefe e faixa de evento. --toast-top é calculado em _updateToastTop(). */
+    #achievement-toast { top: var(--toast-top, var(--hud-clear)) !important; }
+    .toast-stack { top: var(--toast-top, calc(var(--hud-clear) + 52px)) !important; }
     /* Buffs vão para baixo da coluna esquerda; o combo para baixo do minimapa.
        Embaixo, entre o direcional e a barra util, sobram só objetivo e avisos. */
     #status-chips {
@@ -1730,7 +1732,7 @@ body {
         </div>
 
         <!-- ACHIEVEMENT TOAST -->
-        <div id="achievement-toast" class="hidden" style="position:absolute;top:max(50px,calc(env(safe-area-inset-top,50px) + 8px));left:50%;transform:translateX(-50%);z-index:250;pointer-events:none;text-align:center;transition:all 0.4s cubic-bezier(0.34,1.56,0.64,1);">
+        <div id="achievement-toast" class="hidden" style="position:absolute;top:var(--toast-top,calc(var(--hud-clear) + 52px));left:50%;transform:translateX(-50%);z-index:250;pointer-events:none;text-align:center;transition:all 0.4s cubic-bezier(0.34,1.56,0.64,1);">
             <div style="background:rgba(30,20,50,0.95);border:1.5px solid rgba(255,215,0,0.4);border-radius:14px;padding:8px 16px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 6px 25px rgba(0,0,0,0.5);">
                 <div data-i18n="ui.achievementToast" style="font-size:calc(7px * var(--font-scale, 1));letter-spacing:0.15em;text-transform:uppercase;color:rgba(255,215,0,0.7);margin-bottom:1px;">🏆 Conquista!</div>
                 <div id="achievement-toast-text" style="font-size:calc(11px * var(--font-scale, 1));font-weight:700;color:#ffcc00;"></div>
@@ -1754,7 +1756,7 @@ body {
              compares to what you are wearing. Auto-equip used to happen with no
              information at all — getStatDescription()/isUpgrade() existed but
              nothing ever called them, so a downgrade cost HP and speed silently. -->
-        <div id="equip-card" class="hidden" style="position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,12px) + 152px);transform:translateX(-50%);z-index:240;pointer-events:none;width:min(280px,86vw);">
+        <div id="equip-card" class="hidden" style="position:absolute;left:50%;top:var(--toast-top,calc(var(--hud-clear) + 52px));transform:translateX(-50%);z-index:240;pointer-events:none;width:min(280px,86vw);">
             <div id="equip-card-inner" style="background:rgba(20,15,30,0.97);border-radius:14px;padding:10px 12px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 6px 22px rgba(0,0,0,0.55);border:1.5px solid rgba(224,182,255,0.25);transition:opacity 0.3s,transform 0.3s;">
                 <div style="display:flex;align-items:center;justify-content:space-between;gap:6px">
                     <span id="eqc-rarity" style="font-size:calc(8px * var(--font-scale, 1));letter-spacing:0.15em;text-transform:uppercase;color:#9ca3af;">COMUM</span>
@@ -2576,6 +2578,20 @@ function _refreshHudLayout() {
 function _hudClearTopLogical() {
     if (!_hudLayout.measured) _refreshHudLayout();
     return _hudLayout.clearTop > 8 ? _hudLayout.clearTop * _hudLayout.k : 10;
+}
+// Topo dos avisos (toast, conquista, cartão de equipamento), em px CSS: abaixo do HUD
+// do topo, da barra do chefe (se houver) e da faixa de evento (eventH, unidades lógicas).
+// Só escreve no CSS quando o valor muda.
+function _updateToastTop(eventH) {
+    const k = _hudLayout.k || 0.75;
+    let top = _hudClearTopLogical() / k;
+    if (_hudLayout.bossBottom > 0) top = Math.max(top, _hudLayout.bossBottom + 6);
+    if (eventH > 0) top += eventH / k + 6;
+    const px = Math.ceil(top) + 'px';
+    if (_hudLayout._toastTop !== px) {
+        _hudLayout._toastTop = px;
+        document.body.style.setProperty('--toast-top', px);
+    }
 }
 
 // Coalesce rajadas de resize (arrastar a janela, barra do navegador mobile) em uma por quadro.
@@ -5105,6 +5121,8 @@ const I18n = {
             'toast.classLocked': 'Classe bloqueada — desbloqueie na MetaLoja com Essência.',
             'toast.guardianReward': '🏆 Recompensa do Guardião: ',
             'toast.objectiveComplete': '🎯 Objetivo concluído: ',
+            'toast.loreNew': 'novo no Grimório',
+            'toast.equipWorse': 'pior que o anterior',
 
             // Start screen (static labels)
             'start.modeDesc': 'Evolua seu personagem em masmorras cada vez mais difíceis.',
@@ -6806,6 +6824,8 @@ const I18n = {
             'toast.classLocked': 'Class locked — unlock it in the Meta Shop with Essence.',
             'toast.guardianReward': '🏆 Guardian Reward: ',
             'toast.objectiveComplete': '🎯 Objective complete: ',
+            'toast.loreNew': 'new in the Grimoire',
+            'toast.equipWorse': 'worse than before',
 
             // Start screen (static labels)
             'start.modeDesc': 'Evolve your character through ever-harder dungeons.',
@@ -8504,6 +8524,8 @@ const I18n = {
             'toast.classLocked': 'Clase bloqueada: desbloquéala en la MetaTienda con Esencia.',
             'toast.guardianReward': '🏆 Recompensa del Guardián: ',
             'toast.objectiveComplete': '🎯 Objetivo completado: ',
+            'toast.loreNew': 'nuevo en el Grimorio',
+            'toast.equipWorse': 'peor que el anterior',
 
             // Start screen (static labels)
             'start.modeDesc': 'Evoluciona tu personaje en mazmorras cada vez más difíciles.',
@@ -9867,6 +9889,11 @@ let _logCur = null; // { msg, at }: mensagem visível e quando apareceu (perform
 // (mesmo limite da regeneração). Fora disso o combatTimer está congelado, então não conta.
 function _logInCombat() {
     return gameState === 'PLAYING' && !_anyPanelOpen() && typeof player !== 'undefined' && !!player && (player.combatTimer || 0) < 240;
+}
+// Chefe vivo (flag bossActive ou entidade com isBoss e alive)
+function _bossAlive() {
+    return (typeof bossActive !== 'undefined' && bossActive) ||
+           (typeof entities !== 'undefined' && entities.some(function(e){ return e && e.isBoss && e.alive; }));
 }
 function _logHide() {
     const logs = document.getElementById('logs');
@@ -12174,12 +12201,16 @@ function _drawInWorldHUD() {
             }
         }
     }
+    let eventH = 0;
     if (currentEvent) {
         // Abaixo do HUD do topo e, em luta de chefe, abaixo da barra dele
         let ey = _hudClearTopLogical();
         if (_hudLayout.bossBottom > 0) ey = Math.max(ey, (_hudLayout.bossBottom + 6) * _hudLayout.k);
         currentEvent.draw(ctx, width/2, ey);
+        eventH = currentEvent._lastH || 0;
     }
+    // Os avisos de texto ficam logo abaixo de tudo isso (faixa de evento incluída)
+    _updateToastTop(eventH);
 }
 
 function _drawScreenSpaceHUD() {
@@ -12849,6 +12880,7 @@ const PauseSystem = {
             self.resume();
             if (typeof SaveSystem !== 'undefined') Debug.safe(() => SaveSystem.save(), 'autosaveQuitToMenu');
             gameState = 'START';
+            ToastSystem.reset();
             if (window._releaseWakeLock) window._releaseWakeLock();
             if (uiS) { uiS.classList.remove('hidden'); }
             if (uiG) uiG.classList.add('hidden');
@@ -12896,55 +12928,154 @@ window.PauseSystem = PauseSystem;
 // never defined anywhere — lockouts, rewards and errors went unseen.
 const ToastSystem = {
     container: null,
-    pending: [],      // toasts deferred during boss fights (max 3)
-    _bossTimer: null, // drain timer (8s fallback)
+    pending: [],      // avisos não urgentes adiados durante luta de chefe (max 3)
+    _bossTimer: null, // drena os adiados (fallback de 8 s)
+    // Fila única: só um aviso aparece por vez (texto, conquista ou cartão de equipamento).
+    _queue: [],       // esperando (max 4)
+    _current: null,   // entrada visível agora
+    _tok: 0,          // invalida timers de uma exibição já substituída
+    _timer: null,     // tempo visível e saída
+    _gap: null,       // 250 ms depois que o aviso sumiu, antes do próximo entrar
+    _poll: null,      // reconfere avisos "low" que esperam calma
+    _textEl: null,
     init() {
         if (this.container) return;
         this.container = document.createElement('div');
         this.container.className = 'toast-stack';
-        this.container.style.cssText = 'position:fixed;top:max(12px,env(safe-area-inset-top,12px));left:50%;transform:translateX(-50%);z-index:99990;display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none;width:min(88vw,360px);';
+        this.container.style.cssText = 'position:fixed;top:var(--toast-top,calc(var(--hud-clear) + 52px));left:50%;transform:translateX(-50%);z-index:99990;display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none;width:min(88vw,360px);';
         document.body.appendChild(this.container);
     },
-    // Show the real toast element (shared by show() and _drainPending()).
-    _spawn(message, type, duration) {
+    // Aviso de texto: sempre um só no contêiner.
+    _spawnText(message, type) {
         this.init();
-        // Limite de toasts empilhados: o mais antigo sai para a tela não estourar.
-        while (this.container.children.length >= 3) this.container.firstChild.remove();
+        this.container.innerHTML = '';
         const el = document.createElement('div');
         const colors = { success: 'rgba(0,136,54,0.92)', error: 'rgba(180,0,15,0.92)', info: 'rgba(60,40,110,0.94)' };
         el.style.cssText = 'background:' + (colors[type] || colors.info) + ';color:#fff;padding:10px 16px;border-radius:14px;font-size:calc(12px * var(--font-scale, 1));font-weight:600;line-height:1.35;text-align:center;max-width:100%;box-shadow:0 4px 18px rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.15);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);opacity:0;transform:translateY(-8px);transition:opacity 0.25s ease, transform 0.25s ease;';
         el.textContent = message;
         this.container.appendChild(el);
+        this._textEl = el;
         requestAnimationFrame(() => { el.style.opacity = '1'; el.style.transform = 'translateY(0)'; });
-        setTimeout(() => {
-            el.style.opacity = '0'; el.style.transform = 'translateY(-8px)';
-            setTimeout(() => { if (el.parentNode) el.remove(); }, 300);
-        }, duration || 2600);
+    },
+    _fadeText() {
+        const el = this._textEl;
+        this._textEl = null;
+        if (!el) return;
+        el.style.opacity = '0'; el.style.transform = 'translateY(-8px)';
+        setTimeout(() => { if (el.parentNode) el.remove(); }, 300);
+    },
+    // Mostra a entrada e devolve quanto tempo ela fica visível (ms).
+    _show(e) {
+        if (e.kind === 'achievement') { AchievementToast._show(e.name); return 2500; }
+        if (e.kind === 'equip') { EquipmentCard._show(e.equip, e.previous, e.verdict); return 2600; }
+        this._spawnText(e.message, e.type);
+        return e.duration || 2600;
+    },
+    _fade(e) {
+        if (e.kind === 'achievement') AchievementToast._fade();
+        else if (e.kind === 'equip') EquipmentCard._fade();
+        else this._fadeText();
+    },
+    // Tira o visível na hora (erro que fura a fila).
+    _clearNow() {
+        this._tok++;
+        clearTimeout(this._timer); clearTimeout(this._gap);
+        this._timer = null; this._gap = null;
+        const c = this._current;
+        this._current = null;
+        if (!c) return;
+        if (c.kind === 'achievement') AchievementToast._reset();
+        else if (c.kind === 'equip') EquipmentCard._reset();
+        else { this._textEl = null; if (this.container) this.container.innerHTML = ''; }
+        // Conquista ou cartão cortados antes de sumir voltam para a frente da fila
+        // (cartão só se não houver um mais novo esperando)
+        if (c.kind !== 'text' && !c._faded &&
+            !(c.kind === 'equip' && this._queue.some(function(x) { return x.kind === 'equip'; }))) this._queue.unshift(c);
+    },
+    _play(e) {
+        const tok = ++this._tok;
+        this._current = e;
+        e._faded = false;
+        let ms;
+        // Se o visual falhar, a fila segue (senão _current ficaria preso para sempre)
+        try { ms = this._show(e); } catch (err) { ms = 0; }
+        this._timer = setTimeout(() => {
+            if (tok !== this._tok) return;
+            e._faded = true;
+            try { this._fade(e); } catch (err) {}
+            this._timer = setTimeout(() => {
+                if (tok !== this._tok) return;
+                this._current = null;
+                this._timer = null;
+                this._gap = setTimeout(() => { this._gap = null; this._pump(); }, 250);
+            }, 300);
+        }, ms);
+    },
+    // "low" (lore etc.) espera painel fechado, fora de combate e sem chefe vivo.
+    _blocked(e) {
+        // Chefe só conta em jogo: morrer na luta deixa bossActive ligado no game over e no menu
+        return !!e.low && (_anyPanelOpen() || _logInCombat() || (gameState === 'PLAYING' && _bossAlive()));
+    },
+    _pump() {
+        if (this._current || this._gap) return;
+        const q = this._queue;
+        let idx = -1;
+        for (let j = 0; j < q.length; j++) if (!this._blocked(q[j])) { idx = j; break; }
+        if (idx < 0) {
+            // Só sobraram avisos "low" esperando calma: confere de novo em 500 ms (sem fila, sem timer)
+            if (q.length && !this._poll) this._poll = setTimeout(() => { this._poll = null; this._pump(); }, 500);
+            return;
+        }
+        this._play(q.splice(idx, 1)[0]);
+    },
+    _enqueue(e) {
+        const q = this._queue;
+        if (e.kind === 'equip') {
+            // Só o cartão mais recente importa: troca o que estava esperando
+            for (let j = q.length - 1; j >= 0; j--) if (q[j].kind === 'equip') q.splice(j, 1);
+        } else if (e.kind === 'text') {
+            const c = this._current;
+            if (c && c.kind === 'text' && c.message === e.message) return;
+            if (q.some(function(x) { return x.kind === 'text' && x.message === e.message; })) return;
+        }
+        if (q.length >= 4) {
+            // Fila cheia: sai o mais antigo não urgente (low); se todos forem urgentes, o mais antigo
+            const j = q.findIndex(function(x) { return x.low; });
+            if (j < 0 && e.low) return; // um "low" não tira lugar de aviso urgente
+            q.splice(j >= 0 ? j : 0, 1);
+        }
+        q.push(e);
+        this._pump();
     },
     _drainPending() {
         if (!this.pending.length) return;
-        const q = this.pending.splice(0, this.pending.length);
+        const list = this.pending.splice(0, this.pending.length);
         if (this._bossTimer) { clearTimeout(this._bossTimer); this._bossTimer = null; }
-        for (let i = 0; i < q.length; i++) this._spawn(q[i].message, q[i].type, q[i].duration);
+        for (let i = 0; i < list.length; i++) {
+            const p = list[i];
+            this._enqueue({ kind: 'text', message: p.message, type: p.type, duration: p.duration, low: p.low });
+        }
     },
-    show(message, type, duration) {
+    show(message, type, duration, opts) {
         if (!message) return;
-        // Robust boss detection: bossActive flag OR a living boss entity (covers
-        // the brief window where the flag clears before the entity dies, and any
-        // desync between the two). Suppression only applies while actually
-        // playing — errors and guardian-reward lines still pass, everything else
-        // queues and drains when the fight ends (or after 8s).
-        const bossNow = (typeof bossActive !== 'undefined' && bossActive) ||
-                        (typeof entities !== 'undefined' && entities.some(function(e){ return e && e.isBoss && e.alive; }));
-        const bossOn = gameState === 'PLAYING' && bossNow;
+        const low = !!(opts && opts.low);
+        // Erro fura a fila: aparece na hora e substitui o visível. Com painel aberto (loja,
+        // MetaLoja), o retorno de uma ação também troca o texto visível na hora: comprar
+        // várias vezes seguidas não pode deixar o retorno segundos atrasado na fila.
+        const c = this._current;
+        const panelReply = !low && c && c.kind === 'text' && c.message !== message && _anyPanelOpen();
+        if (type === 'error' || panelReply) {
+            this._clearNow();
+            this._play({ kind: 'text', message: message, type: type, duration: duration, low: false });
+            return;
+        }
+        // Luta de chefe: avisos comuns esperam em "pending" e saem quando a luta acaba
+        // (ou após 8 s). Recompensas de chefe passam na hora.
+        const bossOn = gameState === 'PLAYING' && _bossAlive();
         if (bossOn) {
-            // Boss scene: suppress routine toasts so they don't clutter the fight.
-            // Errors and boss reward lines are important enough to show at once;
-            // everything else waits in a small queue drained when the fight ends
-            // (or after 8s, whichever comes first).
-            const urgent = type === 'error' || /[Rr]ecompensa|[Gg]uardian/.test(String(message));
+            const urgent = /[Rr]ecompensa|[Gg]uardian/.test(String(message));
             if (!urgent) {
-                if (this.pending.length < 3) this.pending.push({ message: message, type: type, duration: duration });
+                if (this.pending.length < 3) this.pending.push({ message: message, type: type, duration: duration, low: low });
                 if (!this._bossTimer) {
                     const self = this;
                     this._bossTimer = setTimeout(() => { self._drainPending(); }, 8000);
@@ -12953,42 +13084,56 @@ const ToastSystem = {
             }
         }
         if (this.pending.length && !bossOn) this._drainPending();
-        this._spawn(message, type, duration);
+        this._enqueue({ kind: 'text', message: message, type: type, duration: duration, low: low });
+    },
+    // Zera tudo (fila, adiados do chefe, timers) e tira o aviso visível na hora, sem reenfileirar.
+    // Chamado ao começar run nova e ao voltar ao menu inicial; não na troca de andar.
+    reset() {
+        // _clearNow devolve à fila a conquista/cartão cortado, por isso a fila só é zerada depois
+        this._clearNow();
+        this._queue.length = 0;
+        this.pending.length = 0;
+        if (this._bossTimer) { clearTimeout(this._bossTimer); this._bossTimer = null; }
+        if (this._poll) { clearTimeout(this._poll); this._poll = null; }
+        AchievementToast._reset();
+        EquipmentCard._reset();
     }
 };
-window.showToast = function (message, type, duration) { ToastSystem.show(message, type, duration); };
+window.showToast = function (message, type, duration, opts) { ToastSystem.show(message, type, duration, opts); };
 
 // --- ACHIEVEMENT TOAST ---
+// Só o visual: a fila é a do ToastSystem (show() enfileira; _show/_fade/_reset são chamados por ela).
 const AchievementToast = {
     el: null,
     textEl: null,
-    queue: [],
-    showing: false,
+    _hideT: null,
     init() {
         this.el = document.getElementById('achievement-toast');
         this.textEl = document.getElementById('achievement-toast-text');
     },
     show(name) {
-        this.queue.push(name);
-        if (!this.showing) this._showNext();
+        ToastSystem._enqueue({ kind: 'achievement', name: name, low: false });
     },
-    _showNext() {
-        if (this.queue.length === 0) { this.showing = false; return; }
-        this.showing = true;
-        var name = this.queue.shift();
+    _show(name) {
+        if (!this.el) this.init();
+        if (!this.el || !this.textEl) return;
+        clearTimeout(this._hideT);
         this.textEl.textContent = name;
         this.el.classList.remove('hidden');
         this.el.style.transform = 'translateX(-50%) translateY(0)';
         this.el.style.opacity = '1';
-        var self = this;
-        setTimeout(function() {
-            self.el.style.transform = 'translateX(-50%) translateY(-30px)';
-            self.el.style.opacity = '0';
-            setTimeout(function() {
-                self.el.classList.add('hidden');
-                self._showNext();
-            }, 400);
-        }, 2500);
+    },
+    _fade() {
+        if (!this.el) return;
+        const el = this.el;
+        el.style.transform = 'translateX(-50%) translateY(-30px)';
+        el.style.opacity = '0';
+        clearTimeout(this._hideT);
+        this._hideT = setTimeout(function() { el.classList.add('hidden'); }, 400);
+    },
+    _reset() {
+        clearTimeout(this._hideT);
+        if (this.el) { this.el.style.opacity = '0'; this.el.classList.add('hidden'); }
     }
 };
 
@@ -13049,11 +13194,12 @@ const LootCard = {
     }
 };
 
-// Shows what an equipment pickup actually grants and how it compares to the
-// piece it replaced. Auto-equip had no UI, and getStatDescription()/isUpgrade()
-// were dead code, so 6 rarities x 10 stats x 5 affixes were invisible.
+// Mostra o que a peça dá e como se compara com a que estava vestida. Entra na fila de
+// avisos (ToastSystem). Cartão só quando a peça é melhor ou traz algo novo. "Pior" não
+// ganha cartão, mas também não pode ser silencioso: vira um aviso de texto curto.
+// "Equivalente" não mostra nada.
 const EquipmentCard = {
-    el: null, _timer: null, seq: 0,
+    el: null, _hideT: null,
     _i18n(k, fallback) { return window.I18n ? I18n.t(k) : fallback; },
 
     init() {
@@ -13071,8 +13217,22 @@ const EquipmentCard = {
     },
 
     show(equip, previous) {
+        if (!equip || typeof EquipmentSystem === 'undefined') return;
+        const verdict = EquipmentSystem.compareVerdict(equip, previous);
+        // Pior que a peça vestida: o auto-equip troca mesmo assim, então avisa em texto curto
+        // (nome igual ao do cartão) para o jogador não perder atributos sem saber.
+        if (verdict === 'down') {
+            const label = window._L ? _L('toast.equipWorse', 'pior que o anterior') : 'pior que o anterior';
+            ToastSystem._enqueue({ kind: 'text', message: '▼ ' + (equip.name || '') + ' — ' + label, type: 'info', duration: 2200, low: false });
+            return;
+        }
+        if (verdict !== 'new' && verdict !== 'up' && verdict !== 'mixed') return;
+        ToastSystem._enqueue({ kind: 'equip', equip: equip, previous: previous, verdict: verdict, low: false });
+    },
+
+    _show(equip, previous, verdict) {
         this.init();
-        if (!this.el || !equip || typeof EquipmentSystem === 'undefined') return;
+        if (!this.el) return;
         const rarityEl = document.getElementById('eqc-rarity');
         const nameEl = document.getElementById('eqc-name');
         const statsEl = document.getElementById('eqc-stats');
@@ -13120,7 +13280,6 @@ const EquipmentCard = {
             }
         }
 
-        const verdict = EquipmentSystem.compareVerdict(equip, previous);
         const vMap = {
             new: [this._i18n('eq.verdictNew', 'NOVO'), '#7ee08a'],
             up: [this._i18n('eq.verdictUp', 'MELHOR'), '#7ee08a'],
@@ -13131,18 +13290,22 @@ const EquipmentCard = {
         verdictEl.textContent = vMap[0];
         verdictEl.style.color = vMap[1];
 
+        clearTimeout(this._hideT);
         this.el.classList.remove('hidden');
         this.el.style.opacity = '1';
-        this.seq++;
-        if (this._timer) clearTimeout(this._timer);
-        this._timer = setTimeout(() => { this.hide(); }, 3200);
     },
 
-    hide() {
+    _fade() {
         if (!this.el) return;
-        this.el.style.opacity = '0';
-        const self = this;
-        setTimeout(() => { if (self.el) self.el.classList.add('hidden'); }, 320);
+        const el = this.el;
+        el.style.opacity = '0';
+        clearTimeout(this._hideT);
+        this._hideT = setTimeout(function() { el.classList.add('hidden'); }, 320);
+    },
+
+    _reset() {
+        clearTimeout(this._hideT);
+        if (this.el) { this.el.style.opacity = '0'; this.el.classList.add('hidden'); }
     }
 };
 window.EquipmentCard = EquipmentCard;
@@ -13465,6 +13628,7 @@ function _initEngine() {
                     if(modeDiv) modeDiv.style.display = 'block';
                     if(classDiv) classDiv.style.display = 'none';
                     gameState = 'START';
+                    ToastSystem.reset();
                     if (window._refreshContinueButton) window._refreshContinueButton();
                 }, 350);
             }
@@ -15512,7 +15676,7 @@ window.doPrestige = function() {
             Debug.info(`Prestige ${prestigeLevel} achieved`);
             // Save prestige data via StorageManager
             StorageManager.set('prestige', { prestigeLevel, totalGamesPlayed });
-            gameState = 'START'; uiG.classList.add('hidden'); uiS.classList.remove('hidden'); uiS.style.display = '';
+            gameState = 'START'; ToastSystem.reset(); uiG.classList.add('hidden'); uiS.classList.remove('hidden'); uiS.style.display = '';
             // Prestígio 10 desbloqueia o painel de mutadores na tela inicial (prestígio não é resetado)
             if (window.RunMutators) RunMutators.render();
         }
@@ -16511,6 +16675,14 @@ const RunObjectiveSystem = {
         return '<span style="color:#e0b6ff;">🎯 ' + (window.I18n ? I18n.t('run.obj.label') : 'Objetivo:') + '</span> ' + o.icon + ' ' + o.name + ' — ' + status;
     },
 
+    // Esconde (opacity, sem tirar do layout) em combate; o elemento só recebe estilo quando muda.
+    _setBusy(busy) {
+        if (this._busy === busy) return;
+        this._busy = busy;
+        if (!this._el.style.transition) this._el.style.transition = 'opacity 0.25s ease';
+        this._el.style.opacity = busy ? '0' : '';
+    },
+
     syncHUD() {
         if (!this._el) {
             this._el = document.getElementById('run-objective');
@@ -16525,6 +16697,9 @@ const RunObjectiveSystem = {
             if (!this._el.classList.contains('hidden')) this._el.classList.add('hidden');
             return;
         }
+        // Em combate (ou com chefe vivo) o rastreador some, para não ficar acima da barra de baixo.
+        // A checagem roda a cada 30 ticks e o estilo só muda quando o estado muda.
+        if (typeof gameTime !== 'undefined' && gameTime % 30 === 0) this._setBusy(_logInCombat() || _bossAlive());
         this._check();
         const o = this.current;
         const cur = Math.min(this.progress(), this.target);
@@ -16665,10 +16840,11 @@ class ActiveEvent {
         const name = window._L ? _L(this.nameKey, this.name) : this.name;
         const desc = window._L ? _L(this.descKey, this.desc) : this.desc;
         // Faixa cabe na tela (antes tinha 300 px fixos e cortava a descrição no celular).
-        // Depois de 4 s vira só o nome, numa faixa baixa, para não cobrir o jogo o evento inteiro.
+        // Depois de 3 s vira só o nome, numa faixa baixa, para não cobrir o jogo o evento inteiro.
         const W = Math.min(300, (typeof width === 'number' ? width : 320) - 16);
-        const compact = this.duration > 0 && (this.duration - this.timeLeft) > 240;
+        const compact = this.duration > 0 && (this.duration - this.timeLeft) > 180;
         const H = compact ? 20 : 40;
+        this._lastH = H; // altura desenhada neste quadro: _drawInWorldHUD põe os avisos logo abaixo
         const fit = (txt, size, bold) => {
             let s = size;
             ctx.font = (bold ? 'bold ' : '') + s + 'px ' + COLORS.CANVAS_FONT;
@@ -17045,20 +17221,14 @@ const NarrativeSystem = {
 
         this.discovered[id] = true;
         if (Statistics) Statistics.data.loreFragments = this.getDiscoveredCount();
-        addLog((window.I18n ? I18n.t('log.loreDiscovered') : ' Lore descoberta: ') + fragment.title);
-        if (typeof showToast === 'function') showToast(this._loreToastText(fragment), 'info', 6000); // ~6 s: é texto para ler
-        SND.playLoreDiscover ? SND.playLoreDiscover() : SND.playAchievement();
-        return true;
-    },
-
-    // Texto do toast: título + trecho (~140 caracteres) no idioma do diário.
-    // O texto completo continua no diário.
-    _loreToastText(fragment) {
+        // Aviso curto (uma linha no celular: "📜 Título — novo no Grimório") que espera calma;
+        // o texto completo fica no Grimório.
         const loc = (typeof window._loreLocalized === 'function') ? window._loreLocalized : null;
         const title = loc ? loc(fragment, 'title') : fragment.title;
-        let text = loc ? loc(fragment, 'text') : fragment.text;
-        if (text.length > 140) text = text.slice(0, 139).replace(/\s+$/, '') + '…';
-        return '📜 ' + title + ': ' + text;
+        const label = window._L ? _L('toast.loreNew', 'novo no Grimório') : 'novo no Grimório';
+        if (typeof showToast === 'function') showToast('📜 ' + title + ' — ' + label, 'info', 3000, { low: true });
+        SND.playLoreDiscover ? SND.playLoreDiscover() : SND.playAchievement();
+        return true;
     },
 
     // ============================================================
@@ -17653,7 +17823,6 @@ const QuestSystem = {
     baselines: {},     // per-run baselines for lifetime counters
     uiOpen: false,
     tick: 0,
-    _toastTimer: 0,
 
     // Quest pool. progress() reads existing counters; baselines captured at
     // startRun() turn lifetime stats into per-run progress.
@@ -17733,15 +17902,10 @@ const QuestSystem = {
         this._toast(q);
     },
 
+    // Usa a mesma fila de avisos da conquista (um elemento só, na mesma posição)
     _toast(q) {
-        const el = document.getElementById('achievement-toast-text');
-        const toast = document.getElementById('achievement-toast');
-        if (el && toast) {
-            el.textContent = (window.I18n ? I18n.t('log.missionToast') : 'Missão: ') + (window._L ? _L(q.titleKey, q.title) : q.title);
-            toast.classList.remove('hidden');
-            clearTimeout(this._toastTimer);
-            this._toastTimer = setTimeout(function() { toast.classList.add('hidden'); }, 2600);
-        }
+        if (typeof AchievementToast === 'undefined') return;
+        AchievementToast.show((window.I18n ? I18n.t('log.missionToast') : 'Missão: ') + (window._L ? _L(q.titleKey, q.title) : q.title));
     },
 
     render() {
@@ -30481,6 +30645,7 @@ var SettingsUI = {
         if (mo) { mo.classList.add('hidden'); mo.classList.remove('fade-out'); }
         this.close();
         gameState = 'START';
+        ToastSystem.reset();
         const us = document.getElementById('start-screen');
         if (us) { us.classList.remove('hidden'); us.style.opacity = ''; us.style.pointerEvents = ''; }
         const ug = document.getElementById('game-over-screen');
@@ -32854,6 +33019,9 @@ window.PrologueSystem = PrologueSystem;
 
 window.GameBootstrap = {
     start(cls) {
+        // Run nova: avisos da run anterior não passam para a nova. Vem antes do aviso do
+        // desafio diário, que também é um toast desta run.
+        ToastSystem.reset();
         // Desafios diários que exigem uma classe (Tanque=guerreiro,
         // Atirador=mago) só valem quando o jogador escolhe exatamente a
         // classe exigida. Escolher outra classe inicia uma run normal — sem
