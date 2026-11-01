@@ -657,6 +657,15 @@ body.gfx-low #modal-overlay.hidden {
 
 /* Keep every settings-panel control near the 44px touch target. */
 #settings-panel .settings-box button { min-height: 44px; }
+/* Toques no painel: sem zoom de duplo toque nem atraso de clique nos botões */
+#settings-panel button { touch-action: manipulation; }
+/* Re-render com o painel já aberto não repete a animação de entrada (ver SettingsUI._render) */
+#settings-panel .settings-box.settings-static { animation: none !important; }
+/* Seções do painel de Configurações: espaçamento regular e linha fina entre elas */
+#settings-panel .settings-section { padding: 14px 0; }
+#settings-panel .settings-section:first-child { padding-top: 0; }
+#settings-panel .settings-section + .settings-section { border-top: 1px solid rgba(255,255,255,0.08); }
+#settings-panel .settings-section > :last-child { margin-bottom: 0; }
 #settings-panel .settings-box select { color-scheme: dark; }
 #settings-panel .settings-box select option { color: #ffffff; background-color: #1e1628; }
 
@@ -3643,7 +3652,7 @@ const I18n = {
             // Settings
             'settings.title': 'Configurações',
             'settings.language': 'Idioma',
-            'settings.controls': 'Tipo de Controle',
+            'settings.controls': 'Tipo de controle',
             'settings.touch': 'Tela',
             'settings.gamepad': 'Joystick',
             'settings.joystickMode': 'Posição dos Controles na Tela',
@@ -3660,13 +3669,13 @@ const I18n = {
             'settings.musicVolume': 'Volume da música',
             'settings.vibration': 'Vibração',
             'settings.close': 'Fechar',
-            'settings.graphicsQuality': 'Qualidade Gráfica',
+            'settings.graphicsQuality': 'Qualidade gráfica',
             'settings.fontSmall': 'Pequena',
             'settings.fontMedium': 'Média',
             'settings.fontLarge': 'Grande',
             'settings.joystick': 'Modo Joystick',
-            'settings.on': 'LIG',
-            'settings.off': 'DES',
+            'settings.on': 'Ligado',
+            'settings.off': 'Desligado',
             'panel.shop': 'Mercador',
             'panel.camp': 'Acampamento do Mercador',
             'panel.skills': 'Habilidades',
@@ -3951,7 +3960,7 @@ const I18n = {
             'settings.touchBtn': 'TOUCH',
             'settings.mouseBtn': 'MOUSE',
             'settings.gamepadBtn': 'GAMEPAD',
-            'settings.gamepadMap': 'BOTÕES DO MANDO',
+            'settings.gamepadMap': 'Botões do mando',
             'settings.gamepadMapHint': 'Escolha um botão na lista ou use "Remapear" e aperte o botão no controle.',
             'settings.gpAbility': 'Habilidade',
             'settings.gpDodge': 'Esquiva',
@@ -3962,25 +3971,26 @@ const I18n = {
             'settings.joystickLabel': 'MODO JOYSTICK',
             'settings.fixedBtn': 'FIXO',
             'settings.anywhereBtn': 'QUALQUER',
-            'settings.sensitivity': 'SENSIBILIDADE',
+            'settings.sensitivity': 'Sensibilidade',
             'settings.low': 'BAIXA',
             'settings.medium': 'MÉDIA',
             'settings.high': 'ALTA',
             'settings.audio': 'ÁUDIO',
             'settings.visuals': 'VISUAIS',
-            'settings.particles': 'PARTÍCULAS',
-            'settings.shake': 'TREME-TREME',
-            'settings.hitstop': 'HITSTOP',
+            'settings.particles': 'Partículas',
+            'settings.shake': 'Tremor da tela',
+            'settings.hitstop': 'Hitstop',
             'settings.quality': 'QUALIDADE GRÁFICA',
-            'settings.fontSize': 'TAMANHO DA FONTE',
+            'settings.fontSize': 'Tamanho da fonte',
             'settings.leftHanded': 'Controles invertidos (canhoto)',
             'settings.btnSize': 'Tamanho dos botões',
             'settings.accessibility': 'ACESSIBILIDADE',
-            'settings.aimAssist': 'MIRA AUTOMÁTICA',
-            'settings.attackMode': 'BOTÃO DE ATAQUE',
+            'settings.aimAssist': 'Mira automática',
+            'settings.attackMode': 'Botão de ataque',
             'settings.attackStick': 'Analógico',
             'settings.attackButton': 'Botão (mira auto.)',
-            'settings.reducedMotion': 'MENOS MOVIMENTO',
+            'settings.reducedMotion': 'Menos movimento',
+            'settings.colorblind': 'Modo daltônico',
             'settings.normal': 'NORMAL',
             'settings.deutan': 'DEUTAN',
             'settings.protan': 'PROTAN',
@@ -5329,7 +5339,7 @@ const I18n = {
             // Settings
             'settings.title': 'Settings',
             'settings.language': 'Language',
-            'settings.controls': 'Control Type',
+            'settings.controls': 'Control type',
             'settings.touch': 'Touch',
             'settings.gamepad': 'Gamepad',
             'settings.joystickMode': 'Joystick Position',
@@ -5346,13 +5356,13 @@ const I18n = {
             'settings.musicVolume': 'Music volume',
             'settings.vibration': 'Vibration',
             'settings.close': 'Close',
-            'settings.graphicsQuality': 'Graphics Quality',
+            'settings.graphicsQuality': 'Graphics quality',
             'settings.fontSmall': 'Small',
             'settings.fontMedium': 'Medium',
             'settings.fontLarge': 'Large',
             'settings.joystick': 'Joystick Mode',
-            'settings.on': 'ON',
-            'settings.off': 'OFF',
+            'settings.on': 'On',
+            'settings.off': 'Off',
             'panel.shop': 'Merchant',
             'panel.camp': 'Merchant Camp',
             'panel.skills': 'Skills',
@@ -5637,7 +5647,7 @@ const I18n = {
             'settings.touchBtn': 'TOUCH',
             'settings.mouseBtn': 'MOUSE',
             'settings.gamepadBtn': 'GAMEPAD',
-            'settings.gamepadMap': 'GAMEPAD BUTTONS',
+            'settings.gamepadMap': 'Gamepad buttons',
             'settings.gamepadMapHint': 'Pick a button from the list, or use "Remap" and press the button on your pad.',
             'settings.gpAbility': 'Ability',
             'settings.gpDodge': 'Dodge',
@@ -5648,25 +5658,26 @@ const I18n = {
             'settings.joystickLabel': 'JOYSTICK MODE',
             'settings.fixedBtn': 'FIXED',
             'settings.anywhereBtn': 'ANYWHERE',
-            'settings.sensitivity': 'SENSITIVITY',
+            'settings.sensitivity': 'Sensitivity',
             'settings.low': 'LOW',
             'settings.medium': 'MEDIUM',
             'settings.high': 'HIGH',
             'settings.audio': 'AUDIO',
             'settings.visuals': 'VISUALS',
-            'settings.particles': 'PARTICLES',
-            'settings.shake': 'SCREEN SHAKE',
-            'settings.hitstop': 'HITSTOP',
+            'settings.particles': 'Particles',
+            'settings.shake': 'Screen shake',
+            'settings.hitstop': 'Hitstop',
             'settings.quality': 'GRAPHICS QUALITY',
-            'settings.fontSize': 'FONT SIZE',
+            'settings.fontSize': 'Font size',
             'settings.leftHanded': 'Inverted controls (left-handed)',
             'settings.btnSize': 'Button size',
             'settings.accessibility': 'ACCESSIBILITY',
-            'settings.aimAssist': 'AUTO AIM',
-            'settings.attackMode': 'ATTACK BUTTON',
+            'settings.aimAssist': 'Auto aim',
+            'settings.attackMode': 'Attack button',
             'settings.attackStick': 'Stick',
             'settings.attackButton': 'Button (auto aim)',
-            'settings.reducedMotion': 'LESS MOTION',
+            'settings.reducedMotion': 'Less motion',
+            'settings.colorblind': 'Color blind mode',
             'settings.normal': 'NORMAL',
             'settings.deutan': 'DEUTAN',
             'settings.protan': 'PROTAN',
@@ -7015,7 +7026,7 @@ const I18n = {
             // Settings
             'settings.title': 'Configuración',
             'settings.language': 'Idioma',
-            'settings.controls': 'Tipo de Control',
+            'settings.controls': 'Tipo de control',
             'settings.touch': 'Táctil',
             'settings.gamepad': 'Joystick',
             'settings.joystickMode': 'Posición de Controles',
@@ -7032,13 +7043,13 @@ const I18n = {
             'settings.musicVolume': 'Volumen de la música',
             'settings.vibration': 'Vibración',
             'settings.close': 'Cerrar',
-            'settings.graphicsQuality': 'Calidad Gráfica',
+            'settings.graphicsQuality': 'Calidad gráfica',
             'settings.fontSmall': 'Pequeña',
             'settings.fontMedium': 'Mediana',
             'settings.fontLarge': 'Grande',
             'settings.joystick': 'Modo Joystick',
-            'settings.on': 'SÍ',
-            'settings.off': 'NO',
+            'settings.on': 'Sí',
+            'settings.off': 'No',
             'panel.shop': 'Mercader',
             'panel.camp': 'Campamento del Mercader',
             'panel.skills': 'Habilidades',
@@ -7323,7 +7334,7 @@ const I18n = {
             'settings.touchBtn': 'TÁCTIL',
             'settings.mouseBtn': 'MOUSE',
             'settings.gamepadBtn': 'MANDO',
-            'settings.gamepadMap': 'BOTONES DEL MANDO',
+            'settings.gamepadMap': 'Botones del mando',
             'settings.gamepadMapHint': 'Elige un botón de la lista, o usa "Remapear" y pulsa el botón en el mando.',
             'settings.gpAbility': 'Habilidad',
             'settings.gpDodge': 'Esquiva',
@@ -7334,25 +7345,26 @@ const I18n = {
             'settings.joystickLabel': 'MODO JOYSTICK',
             'settings.fixedBtn': 'FIJO',
             'settings.anywhereBtn': 'CUALQUIER',
-            'settings.sensitivity': 'SENSIBILIDAD',
+            'settings.sensitivity': 'Sensibilidad',
             'settings.low': 'BAJA',
             'settings.medium': 'MEDIA',
             'settings.high': 'ALTA',
             'settings.audio': 'AUDIO',
             'settings.visuals': 'VISUALES',
-            'settings.particles': 'PARTÍCULAS',
-            'settings.shake': 'SACUDIDA',
-            'settings.hitstop': 'HITSTOP',
+            'settings.particles': 'Partículas',
+            'settings.shake': 'Sacudida de pantalla',
+            'settings.hitstop': 'Hitstop',
             'settings.quality': 'CALIDAD GRÁFICA',
-            'settings.fontSize': 'TAMAÑO DE FUENTE',
+            'settings.fontSize': 'Tamaño de fuente',
             'settings.leftHanded': 'Controles invertidos (zurdo)',
             'settings.btnSize': 'Tamaño de los botones',
             'settings.accessibility': 'ACCESIBILIDAD',
-            'settings.aimAssist': 'MIRA AUTOMÁTICA',
-            'settings.attackMode': 'BOTÓN DE ATAQUE',
+            'settings.aimAssist': 'Mira automática',
+            'settings.attackMode': 'Botón de ataque',
             'settings.attackStick': 'Joystick',
             'settings.attackButton': 'Botón (mira auto.)',
-            'settings.reducedMotion': 'MENOS MOVIMIENTO',
+            'settings.reducedMotion': 'Menos movimiento',
+            'settings.colorblind': 'Modo daltónico',
             'settings.normal': 'NORMAL',
             'settings.deutan': 'DEUTÁN',
             'settings.protan': 'PROTÁN',
@@ -30245,7 +30257,7 @@ const PWAInstall = {
     html(T) {
         const parts = [];
         if (this.deferred && !this.installed) {
-            parts.push(`<button type="button" id="settings-install-btn" class="w-full py-3 px-2 mb-2 rounded-xl text-xs font-bold transition-all bg-primary/30 text-primary border border-primary"
+            parts.push(`<button type="button" id="settings-install-btn" class="w-full py-3 px-2 mb-2 rounded-xl text-xs font-bold bg-primary/30 text-primary border border-primary"
                 onclick="window.PWAInstall.install(); event.stopPropagation();">${T('pwa.install', 'Instalar app')}</button>`);
         } else if (!this.installed && !this.isStandalone() && this.isIOS()) {
             parts.push(`<div class="text-[11px] text-gray-400 mb-2">${T('pwa.iosHint', 'Compartilhar > Adicionar à Tela de Início')}</div>`);
@@ -30280,7 +30292,8 @@ var SettingsUI = {
         }
         this._returnFocusTo = opener || document.activeElement;
         this.open = true;
-        this._render();
+        // Única renderização que toca a animação de entrada (ver _render)
+        this._render(true);
         const panel = document.getElementById('settings-panel');
         if (panel) {
             panel.setAttribute('role', 'dialog');
@@ -30402,7 +30415,11 @@ var SettingsUI = {
         if (window._refreshContinueButton) window._refreshContinueButton();
     },
 
-    _render() {
+    // animate === true só na abertura (show). Qualquer outro re-render (toque numa opção,
+    // idioma, qualidade automática, etc.) sai com a classe settings-static, que desliga a
+    // animação de entrada do .glass-panel: senão o painel some e volta a cada toque.
+    // Toques: ações só em onclick (ontouchstart disparava ao iniciar uma rolagem).
+    _render(animate) {
         const panel = document.getElementById('settings-panel');
         if (!panel) return;
 
@@ -30412,8 +30429,11 @@ var SettingsUI = {
         const isTouch  = GameSettings.controlType  === 'touch';
         const isMouse  = GameSettings.controlType  === 'mouse';
         const isGamepad = GameSettings.controlType === 'gamepad';
+        // Modo automático quase nunca estaria em 'gamepad' com o painel aberto (abrir exige toque ou mouse),
+        // então o bloco de mapeamento também aparece se houver um controle conectado
+        const showGp   = isGamepad || !!this._readPad();
         const isFixed  = GameSettings.joystickMode === 'fixed';
-        // No toque com botão de ataque, a mira automática por cone não faz nada: esmaece o toggle
+        // No toque com botão de ataque, a mira automática por cone não faz nada: o ajuste some
         const aimNoop  = isTouch && GameSettings.attackMode === 'button';
         const sfxOn    = GameSettings.sfxEnabled;
         const musicOn  = GameSettings.musicEnabled;
@@ -30423,6 +30443,7 @@ var SettingsUI = {
         const sens     = GameSettings.joystickSensitivity;
         const fontSize = GameSettings.fontSize || 'medium';
         const musicPct = Math.round((GameSettings.musicVolume ?? 0.6) * 100);
+        const boxClass = animate === true ? 'settings-box glass-panel' : 'settings-box glass-panel settings-static';
 
         // Use a function string that is guaranteed to be in global scope
         const call = (method, val) => `window.SettingsUI.${method}(${val}); event.stopPropagation();`;
@@ -30430,29 +30451,35 @@ var SettingsUI = {
         const T = (k, fb) => (typeof _L === 'function') ? _L(k, fb) : fb;
         const curLang = (window.I18n && I18n.lang) || 'pt';
 
+        // Classes dos botões segmentados (múltipla escolha)
+        const segCls = selected => `flex-1 py-3 px-2 rounded-xl text-xs font-bold ${selected ? 'bg-primary/30 text-primary border border-primary' : 'bg-primary/10 text-gray-300 border border-white/15'}`;
+        // Cabeçalho de seção (o uppercase vem da classe)
+        const head = (text, extra) => `<div class="text-xs text-secondary font-bold uppercase tracking-widest mb-2 opacity-90"${extra ? ` style="${extra}"` : ''}>${text}</div>`;
+        // Rótulo em cima dos botões de múltipla escolha
+        const choiceLabel = text => `<div class="text-sm text-gray-200 mb-2">${text}</div>`;
+
         const langBtn = (code, label) => `
-            <button type="button" aria-pressed="${curLang === code}" class="flex-1 py-3 px-2 rounded-xl text-xs font-bold transition-all ${curLang === code ? 'bg-primary/30 text-primary border border-primary' : 'bg-primary/10 text-gray-300 border border-white/15'}"
-                ontouchstart="window.I18n.setLang('${code}'); window.SettingsUI._render(); event.stopPropagation();"
+            <button type="button" aria-pressed="${curLang === code}" class="${segCls(curLang === code)}"
                 onclick="window.I18n.setLang('${code}'); window.SettingsUI._render(); event.stopPropagation();">${label}</button>
         `;
 
-        // Preserve scroll position across re-renders (toggles reset the panel HTML)
-        const scrollContent = panel.querySelector('.settings-content');
-        const savedScrollTop = scrollContent ? scrollContent.scrollTop : 0;
-
-        const toggleBtn = (selected, desired, m, labelKey, fallbackLabel) => {
-            const stateKey = labelKey === 'settings.sfx'
-                ? `settings.sfx${desired ? 'On' : 'Off'}`
-                : labelKey === 'settings.music'
-                    ? `settings.music${desired ? 'On' : 'Off'}`
-                    : desired ? 'settings.on' : 'settings.off';
-            const optionLabel = T(stateKey, desired ? 'ON' : 'OFF');
-            const settingLabel = T(labelKey, fallbackLabel);
+        // Liga/desliga: rótulo à esquerda e um interruptor à direita. `setter` é o método
+        // de SettingsUI que recebe o novo valor (true/false) e já re-renderiza.
+        // `estados` (opcional) troca o texto Ligado/Desligado por um par com concordância
+        // de gênero, ex.: { on: ['settings.musicOn', 'Ligada'], off: ['settings.musicOff', 'Desligada'] }
+        const switchRow = (labelKey, labelFb, value, setter, estados) => {
+            const isOn = !!value; // aria-checked precisa ser true/false, nunca undefined
+            const label = T(labelKey, labelFb);
+            const est = estados || { on: ['settings.on', 'Ligado'], off: ['settings.off', 'Desligado'] };
+            const stateText = isOn ? T(est.on[0], est.on[1]) : T(est.off[0], est.off[1]);
             return `
-            <button type="button" aria-pressed="${selected}" aria-label="${settingLabel}: ${optionLabel}" class="flex-1 py-3 px-2 rounded-xl text-xs font-bold transition-all ${selected ? 'bg-primary/30 text-primary border border-primary' : 'bg-primary/10 text-gray-300 border border-white/15'}"
-                ontouchstart="${call(m, String(desired))}"
-                onclick="${call(m, String(desired))}">${optionLabel}</button>
-        `;
+            <div class="flex items-center gap-2 mb-3">
+                <span class="flex-1 text-sm text-gray-200">${label}</span>
+                <button type="button" role="switch" aria-checked="${isOn}" aria-label="${label}"
+                        class="py-2 px-2 rounded-xl text-xs font-bold ${isOn ? 'bg-primary/30 text-primary border border-primary' : 'bg-primary/10 text-gray-300 border border-white/15'}"
+                        style="width:88px;min-height:44px;flex-shrink:0"
+                        onclick="window.SettingsUI.${setter}(${!isOn}); event.stopPropagation();">${stateText}</button>
+            </div>`;
         };
 
         // Rebinding UI: a select for keyboard/screen-reader players and a capture
@@ -30474,100 +30501,94 @@ var SettingsUI = {
                         onchange="window.SettingsUI._setGamepadAction('${action}', parseInt(this.value, 10)); event.stopPropagation();">${options}</select>
                 <button type="button" id="gp-remap-${action}" aria-pressed="${listening}"
                         aria-label="${label}: ${listening ? T('settings.gpCancel', 'Cancelar') : T('settings.gpRemap', 'Remapear')}"
-                        class="py-2 px-3 rounded-lg text-xs font-bold transition-all ${btnClass}"
-                        ontouchstart="window.SettingsUI._${listening ? 'cancelRemap' : 'beginRemap'}('${action}'); event.stopPropagation();"
+                        class="py-2 px-3 rounded-lg text-xs font-bold ${btnClass}"
                         onclick="window.SettingsUI._${listening ? 'cancelRemap' : 'beginRemap'}('${action}'); event.stopPropagation();">${listening ? T('settings.gpCancel', 'Cancelar') : T('settings.gpRemap', 'Remapear')}</button>
             </div>`;
         };
 
-        panel.innerHTML = `
-            <div class="settings-box glass-panel" style="pointer-events:auto; position:relative; z-index:2000; display:flex; flex-direction:column; background:rgba(30, 22, 40, 0.97); border:1.5px solid rgba(224, 182, 255, 0.3); box-shadow: 0 10px 40px rgba(0,0,0,0.7), 0 0 30px rgba(100, 50, 160, 0.15); border-radius:28px; padding:24px; width:90vw; max-width:400px; max-height:80vh;">
-                <h2 id="settings-dialog-title" class="text-2xl text-center text-primary font-bold mb-4 font-headline-xl epic-glow-text" style="border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:15px;">${T('settings.title', 'CONFIGURAÇÕES')}</h2>
-                <div class="mb-5">
-                    <div class="text-xs text-secondary font-bold uppercase tracking-widest mb-2 opacity-90">${T('settings.language', 'IDIOMA')}</div>
-                    <div class="flex gap-2">
-                        ${langBtn('pt', '🇧🇷 Português')}
-                        ${langBtn('en', '🇺🇸 English')}
-                        ${langBtn('es', '🇪🇸 Español')}
-                    </div>
-                </div>
+        // Preserve scroll position across re-renders (toggles rebuild the panel HTML)
+        const scrollContent = panel.querySelector('.settings-content');
+        const savedScrollTop = scrollContent ? scrollContent.scrollTop : 0;
 
-                <div class="overflow-y-auto settings-content" style="flex:1; min-height:0; -webkit-overflow-scrolling:touch; touch-action:pan-y;">
-                    <div class="mb-5">
-                        <div class="text-xs text-secondary font-bold uppercase tracking-widest mb-2 opacity-90">${T('settings.controls', 'CONTROLES')}</div>
+        // Ordem: Idioma, Controles, Áudio, Visual, Acessibilidade, Dados, Zona de perigo.
+        // Blocos que não se aplicam ao controle atual não são renderizados.
+        panel.innerHTML = `
+            <div class="${boxClass}" style="pointer-events:auto; position:relative; z-index:2000; display:flex; flex-direction:column; background:rgba(30, 22, 40, 0.97); border:1.5px solid rgba(224, 182, 255, 0.3); box-shadow: 0 10px 40px rgba(0,0,0,0.7), 0 0 30px rgba(100, 50, 160, 0.15); border-radius:28px; padding:24px; width:90vw; max-width:400px; max-height:80vh;">
+                <h2 id="settings-dialog-title" class="text-2xl text-center text-primary font-bold mb-4 font-headline-xl epic-glow-text" style="border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:15px;">${T('settings.title', 'CONFIGURAÇÕES')}</h2>
+
+                <div class="overflow-y-auto settings-content" style="flex:1; min-height:0; -webkit-overflow-scrolling:touch; touch-action:pan-y; overscroll-behavior:contain;">
+
+                    <section class="settings-section">
+                        ${head(T('settings.language', 'IDIOMA'))}
                         <div class="flex gap-2">
-                            <button type="button" aria-pressed="${isTouch}" aria-label="${T('settings.touchBtn', 'Touch controls')}" class="flex-1 py-3 px-2 rounded-xl text-xs font-bold transition-all ${isTouch ? 'bg-primary/30 text-primary border border-primary' : 'bg-primary/10 text-gray-300 border border-white/15'}"
-                                ontouchstart="${call('_setControl', "'touch'")}"
+                            ${langBtn('pt', '🇧🇷 Português')}
+                            ${langBtn('en', '🇺🇸 English')}
+                            ${langBtn('es', '🇪🇸 Español')}
+                        </div>
+                    </section>
+
+                    <section class="settings-section">
+                        ${head(T('settings.controlsLabel', 'CONTROLES'))}
+                        ${choiceLabel(T('settings.controls', 'Tipo de controle'))}
+                        <div class="flex gap-2 mb-3">
+                            <button type="button" aria-pressed="${isTouch}" aria-label="${T('settings.touchBtn', 'Touch controls')}" class="${segCls(isTouch)}"
                                 onclick="${call('_setControl', "'touch'")}">${T('settings.touchBtn', 'TOUCH').toUpperCase()}</button>
-                            <button type="button" aria-pressed="${isMouse}" aria-label="${T('settings.mouseBtn', 'Mouse controls')}" class="flex-1 py-3 px-2 rounded-xl text-xs font-bold transition-all ${isMouse ? 'bg-primary/30 text-primary border border-primary' : 'bg-primary/10 text-gray-300 border border-white/15'}"
+                            <button type="button" aria-pressed="${isMouse}" aria-label="${T('settings.mouseBtn', 'Mouse controls')}" class="${segCls(isMouse)}"
                                 onclick="${call('_setControl', "'mouse'")}">${T('settings.mouseBtn', 'MOUSE').toUpperCase()}</button>
-                            <button type="button" aria-pressed="${isGamepad}" aria-label="${T('settings.gamepadBtn', 'Gamepad controls')}" class="flex-1 py-3 px-2 rounded-xl text-xs font-bold transition-all ${isGamepad ? 'bg-primary/30 text-primary border border-primary' : 'bg-primary/10 text-gray-300 border border-white/15'}"
-                                ontouchstart="${call('_setControl', "'gamepad'")}"
+                            <button type="button" aria-pressed="${isGamepad}" aria-label="${T('settings.gamepadBtn', 'Gamepad controls')}" class="${segCls(isGamepad)}"
                                 onclick="${call('_setControl', "'gamepad'")}">${T('settings.gamepadBtn', 'GAMEPAD').toUpperCase()}</button>
                         </div>
-                    </div>
 
-                    <div class="mb-5">
-                        <div class="text-xs text-secondary font-bold uppercase tracking-widest mb-2 opacity-90">${T('settings.leftHanded', 'Controles invertidos (canhoto)')}</div>
-                        <div class="flex gap-2 mb-2">
-                            ${toggleBtn(!GameSettings.leftHanded, false, '_setLeftHanded', 'settings.leftHanded', 'Controles invertidos (canhoto)')}
-                            ${toggleBtn(GameSettings.leftHanded, true, '_setLeftHanded', 'settings.leftHanded', 'Controles invertidos (canhoto)')}
-                        </div>
-                        <div class="text-xs text-secondary font-bold uppercase tracking-widest mt-3 mb-2 opacity-90">${T('settings.btnSize', 'Tamanho dos botões')}</div>
-                        <div class="flex gap-2">
-                            ${[1, 1.2, 1.4].map(v => `
-                                <button type="button" aria-pressed="${GameSettings.uiButtonScale === v}" aria-label="${T('settings.btnSize', 'Tamanho dos botões')}: ${Math.round(v * 100)}%" class="flex-1 py-2 px-2 rounded-xl text-xs font-bold transition-all ${GameSettings.uiButtonScale === v ? 'bg-primary/30 text-primary border border-primary' : 'bg-primary/10 text-gray-300 border border-white/15'}"
-                                    ontouchstart="${call('_setUiScale', v)}"
-                                    onclick="${call('_setUiScale', v)}">${Math.round(v * 100)}%</button>
+                        ${isTouch ? `
+                        ${choiceLabel(T('settings.attackMode', 'Botão de ataque'))}
+                        <div class="flex gap-2 mb-3">
+                            ${[['stick', 'settings.attackStick', 'Analógico'], ['button', 'settings.attackButton', 'Botão (mira auto.)']].map(([m, k, fb]) => `
+                                <button type="button" aria-pressed="${GameSettings.attackMode === m}" aria-label="${T('settings.attackMode', 'Attack button')}: ${T(k, fb)}" class="${segCls(GameSettings.attackMode === m)}"
+                                    onclick="${call('setAttackMode', `'${m}'`)}">${T(k, fb)}</button>
                             `).join('')}
                         </div>
-                    </div>
-
-                    <div class="mb-5" ${isTouch ? '' : 'inert'} style="${isTouch ? '' : 'opacity:0.4;pointer-events:none;'}">
-                        <div class="text-xs text-secondary font-bold uppercase tracking-widest mb-2 opacity-90">${T('settings.joystick', 'MODO JOYSTICK')}</div>
-                        <div class="flex gap-2">
-                            <button type="button" aria-pressed="${isFixed}" aria-label="${T('settings.joystick', 'Joystick')}: ${T('settings.fixed', 'Fixed')}" class="flex-1 py-3 px-2 rounded-xl text-xs font-bold transition-all ${isFixed ? 'bg-primary/30 text-primary border border-primary' : 'bg-primary/10 text-gray-300 border border-white/15'}"
-                                ontouchstart="${call('_setJoyMode', "'fixed'")}"
+                        ${choiceLabel(T('settings.joystick', 'Modo Joystick'))}
+                        <div class="flex gap-2 mb-3">
+                            <button type="button" aria-pressed="${isFixed}" aria-label="${T('settings.joystick', 'Joystick')}: ${T('settings.fixed', 'Fixed')}" class="${segCls(isFixed)}"
                                 onclick="${call('_setJoyMode', "'fixed'")}">${T('settings.fixed', 'FIXO').toUpperCase()}</button>
-                            <button type="button" aria-pressed="${!isFixed}" aria-label="${T('settings.joystick', 'Joystick')}: ${T('settings.anywhere', 'Free touch')}" class="flex-1 py-3 px-2 rounded-xl text-xs font-bold transition-all ${!isFixed ? 'bg-primary/30 text-primary border border-primary' : 'bg-primary/10 text-gray-300 border border-white/15'}"
-                                ontouchstart="${call('_setJoyMode', "'anywhere'")}"
+                            <button type="button" aria-pressed="${!isFixed}" aria-label="${T('settings.joystick', 'Joystick')}: ${T('settings.anywhere', 'Free touch')}" class="${segCls(!isFixed)}"
                                 onclick="${call('_setJoyMode', "'anywhere'")}">${T('settings.anywhere', 'QUALQUER').toUpperCase()}</button>
                         </div>
-                        <div class="text-xs text-secondary font-bold uppercase tracking-widest mt-3 mb-2 opacity-90">${T('settings.sensitivity', 'SENSIBILIDADE')}</div>
-                        <div class="flex gap-2">
+                        ${choiceLabel(T('settings.sensitivity', 'Sensibilidade'))}
+                        <div class="flex gap-2 mb-3">
                             ${[0.75, 1, 1.4].map(v => `
-                                <button type="button" aria-pressed="${sens === v}" aria-label="${T('settings.sensitivity', 'Sensitivity')}: ${v === 0.75 ? T('settings.low', 'Low') : v === 1 ? T('settings.medium', 'Medium') : T('settings.high', 'High')}" class="flex-1 py-2 px-2 rounded-xl text-xs font-bold transition-all ${sens === v ? 'bg-primary/30 text-primary border border-primary' : 'bg-primary/10 text-gray-300 border border-white/15'}"
-                                    ontouchstart="${call('_setSens', v)}"
+                                <button type="button" aria-pressed="${sens === v}" aria-label="${T('settings.sensitivity', 'Sensitivity')}: ${v === 0.75 ? T('settings.low', 'Low') : v === 1 ? T('settings.medium', 'Medium') : T('settings.high', 'High')}" class="${segCls(sens === v)}"
                                     onclick="${call('_setSens', v)}">${v === 0.75 ? T('settings.low', 'BAIXA').toUpperCase() : v === 1 ? T('settings.medium', 'MÉDIA').toUpperCase() : T('settings.high', 'ALTA').toUpperCase()}</button>
                             `).join('')}
                         </div>
-                    </div>
+                        ` : ''}
 
-                    <div class="mb-5">
-                        <div class="text-xs text-secondary font-bold uppercase tracking-widest mb-2 opacity-90">${T('settings.gamepadMap', 'BOTÕES DO MANDO')}</div>
+                        ${showGp ? `
+                        ${choiceLabel(T('settings.gamepadMap', 'Botões do mando'))}
                         <div class="text-[11px] text-gray-400 mb-3">${T('settings.gamepadMapHint', 'Escolha um botão na lista ou use "Remapear" e aperte o botão no controle.')}</div>
                         ${gpRow('ability', 'settings.gpAbility', 'Habilidade')}
                         ${gpRow('dodge', 'settings.gpDodge', 'Esquiva')}
                         ${gpRow('pause', 'settings.gpPause', 'Pausar')}
-                        <button type="button" id="settings-gp-reset-btn" class="w-full py-2 mt-1 rounded-lg text-xs font-bold bg-primary/10 text-gray-300 border border-white/15"
-                                ontouchstart="window.SettingsUI._resetGamepadMap(); event.stopPropagation();"
+                        <button type="button" id="settings-gp-reset-btn" class="w-full py-2 mt-1 mb-3 rounded-lg text-xs font-bold bg-primary/10 text-gray-300 border border-white/15"
                                 onclick="window.SettingsUI._resetGamepadMap(); event.stopPropagation();">${T('settings.gpReset', 'Restaurar padrão')}</button>
-                    </div>
+                        ` : ''}
 
-                    <div class="mb-5">
-                        <div class="text-xs text-secondary font-bold uppercase tracking-widest mb-2 opacity-90">${T('settings.audio', 'ÁUDIO')}</div>
-                        <div class="text-xs text-gray-400 font-bold mb-1">${T('settings.sfx', 'Som (SFX)')}</div>
-                        <div class="flex gap-2 mb-2">
-                            ${toggleBtn(sfxOn, true, '_setSfx', 'settings.sfx', 'Som (SFX)')}
-                            ${toggleBtn(!sfxOn, false, '_setSfx', 'settings.sfx', 'Som (SFX)')}
-                        </div>
-                        <div class="text-xs text-gray-400 font-bold mb-1">${T('settings.music', 'Música')}</div>
+                        ${switchRow('settings.leftHanded', 'Controles invertidos (canhoto)', GameSettings.leftHanded, '_setLeftHanded')}
+                        ${choiceLabel(T('settings.btnSize', 'Tamanho dos botões'))}
                         <div class="flex gap-2">
-                            ${toggleBtn(musicOn, true, '_setMusic', 'settings.music', 'Música')}
-                            ${toggleBtn(!musicOn, false, '_setMusic', 'settings.music', 'Música')}
+                            ${[1, 1.2, 1.4].map(v => `
+                                <button type="button" aria-pressed="${GameSettings.uiButtonScale === v}" aria-label="${T('settings.btnSize', 'Tamanho dos botões')}: ${Math.round(v * 100)}%" class="${segCls(GameSettings.uiButtonScale === v)}"
+                                    onclick="${call('_setUiScale', v)}">${Math.round(v * 100)}%</button>
+                            `).join('')}
                         </div>
-                        <div class="flex items-center gap-2 mt-3">
-                            <label for="settings-music-volume" class="flex-1 text-xs text-gray-300 font-bold">${T('settings.musicVolume', 'Volume da música')}</label>
+                    </section>
+
+                    <section class="settings-section">
+                        ${head(T('settings.audio', 'ÁUDIO'))}
+                        ${switchRow('settings.sfx', 'Som (SFX)', sfxOn, '_setSfx', { on: ['settings.sfxOn', 'Ligado'], off: ['settings.sfxOff', 'Desligado'] })}
+                        ${switchRow('settings.music', 'Música', musicOn, '_setMusic', { on: ['settings.musicOn', 'Ligada'], off: ['settings.musicOff', 'Desligada'] })}
+                        <div class="flex items-center gap-2">
+                            <label for="settings-music-volume" class="flex-1 text-sm text-gray-200">${T('settings.musicVolume', 'Volume da música')}</label>
                             <output data-music-vol-out class="text-xs text-gray-200 font-bold" style="min-width:3em;text-align:right">${musicPct}%</output>
                         </div>
                         <input id="settings-music-volume" type="range" min="0" max="100" step="5" value="${musicPct}"
@@ -30575,118 +30596,75 @@ var SettingsUI = {
                             class="w-full mt-1" style="accent-color:#e0b6ff;min-height:32px;touch-action:pan-y"
                             oninput="window.SettingsUI._setMusicVolume(this.value, false); event.stopPropagation();"
                             onchange="window.SettingsUI._setMusicVolume(this.value, true); event.stopPropagation();">
-                        ${navigator.vibrate ? `
-                        <div class="text-xs text-gray-400 font-bold mb-1 mt-3">${T('settings.vibration', 'Vibração')}</div>
-                        <div class="flex gap-2">
-                            ${toggleBtn(vibOn, true, '_setVibration', 'settings.vibration', 'Vibração')}
-                            ${toggleBtn(!vibOn, false, '_setVibration', 'settings.vibration', 'Vibração')}
-                        </div>` : ''}
-                    </div>
+                        ${navigator.vibrate ? switchRow('settings.vibration', 'Vibração', vibOn, '_setVibration') : ''}
+                    </section>
 
-                    <div class="mb-5">
-                        <div class="text-xs text-secondary font-bold uppercase tracking-widest mb-2 opacity-90">${T('settings.visuals', 'VISUAIS')}</div>
-                        <div class="flex gap-2 mb-2">
-                            ${toggleBtn(partsOn, true, '_setParticles', 'settings.particles', 'Particles')}
-                            ${toggleBtn(!partsOn, false, '_setParticles', 'settings.particles', 'Particles')}
-                            <div class="flex-1 text-center py-3 px-2 text-xs font-bold text-gray-400">${T('settings.particles', 'PARTÍCULAS')}</div>
-                        </div>
-                        <div class="flex gap-2">
-                            ${toggleBtn(shakeOn, true, '_setShake', 'settings.shake', 'Screen shake')}
-                            ${toggleBtn(!shakeOn, false, '_setShake', 'settings.shake', 'Screen shake')}
-                            <div class="flex-1 text-center py-3 px-2 text-xs font-bold text-gray-400">${T('settings.shake', 'TREME-TREME')}</div>
-                        </div>
-                        <div class="flex gap-2">
-                            ${toggleBtn(GameSettings.hitstopEnabled, true, '_setHitstop', 'settings.hitstop', 'Hit stop')}
-                            ${toggleBtn(!GameSettings.hitstopEnabled, false, '_setHitstop', 'settings.hitstop', 'Hit stop')}
-                            <div class="flex-1 text-center py-3 px-2 text-xs font-bold text-gray-400">${T('settings.hitstop', 'HITSTOP')}</div>
-                        </div>
-                        <div class="text-xs text-secondary font-bold uppercase tracking-widest mt-3 mb-2 opacity-90">${T('settings.graphicsQuality', 'QUALIDADE GRÁFICA')}</div>
-                        <div class="flex gap-2">
+                    <section class="settings-section">
+                        ${head(T('settings.visuals', 'VISUAIS'))}
+                        ${choiceLabel(T('settings.graphicsQuality', 'Qualidade gráfica'))}
+                        <div class="flex gap-2 mb-3">
                             ${['low', 'medium', 'high'].map(q => `
-                                <button type="button" aria-pressed="${GameSettings.graphicsQuality === q}" aria-label="${T('settings.graphicsQuality', 'Graphics quality')}: ${q === 'low' ? T('settings.low', 'Low') : q === 'medium' ? T('settings.medium', 'Medium') : T('settings.high', 'High')}" class="flex-1 py-2 px-2 rounded-xl text-xs font-bold transition-all ${GameSettings.graphicsQuality === q ? 'bg-primary/30 text-primary border border-primary' : 'bg-primary/10 text-gray-300 border border-white/15'}"
-                                    ontouchstart="window.GameSettings.setGraphicsQuality('${q}')"
+                                <button type="button" aria-pressed="${GameSettings.graphicsQuality === q}" aria-label="${T('settings.graphicsQuality', 'Graphics quality')}: ${q === 'low' ? T('settings.low', 'Low') : q === 'medium' ? T('settings.medium', 'Medium') : T('settings.high', 'High')}" class="${segCls(GameSettings.graphicsQuality === q)}"
                                     onclick="window.GameSettings.setGraphicsQuality('${q}')">${q === 'low' ? T('settings.low', 'BAIXA').toUpperCase() : q === 'medium' ? T('settings.medium', 'MÉDIA').toUpperCase() : T('settings.high', 'ALTA').toUpperCase()}</button>
                             `).join('')}
                         </div>
-                    </div>
-
-                    <div class="mb-5">
-                        <div class="text-xs text-secondary font-bold uppercase tracking-widest mb-2 opacity-90">${T('settings.fontSize', 'TAMANHO DA FONTE')}</div>
+                        ${switchRow('settings.particles', 'Partículas', partsOn, '_setParticles')}
+                        ${switchRow('settings.shake', 'Tremor da tela', shakeOn, '_setShake')}
+                        ${switchRow('settings.hitstop', 'Hitstop', GameSettings.hitstopEnabled, '_setHitstop')}
+                        ${choiceLabel(T('settings.fontSize', 'Tamanho da fonte'))}
                         <div class="flex gap-2">
-                            <button type="button" aria-pressed="${fontSize === 'small'}" aria-label="${T('settings.fontSize', 'Font size')}: ${T('settings.fontSmall', 'Small')}" class="flex-1 py-3 px-2 rounded-xl text-xs font-bold transition-all ${fontSize === 'small' ? 'bg-primary/30 text-primary border border-primary' : 'bg-primary/10 text-gray-300 border border-white/15'}"
-                                ontouchstart="window.GameSettings.setFontSize('small'); window.SettingsUI._render()"
+                            <button type="button" aria-pressed="${fontSize === 'small'}" aria-label="${T('settings.fontSize', 'Font size')}: ${T('settings.fontSmall', 'Small')}" class="${segCls(fontSize === 'small')}"
                                 onclick="window.GameSettings.setFontSize('small'); window.SettingsUI._render()">P</button>
-                            <button type="button" aria-pressed="${fontSize === 'medium'}" aria-label="${T('settings.fontSize', 'Font size')}: ${T('settings.fontMedium', 'Medium')}" class="flex-1 py-3 px-2 rounded-xl text-xs font-bold transition-all ${fontSize === 'medium' ? 'bg-primary/30 text-primary border border-primary' : 'bg-primary/10 text-gray-300 border border-white/15'}"
-                                ontouchstart="window.GameSettings.setFontSize('medium'); window.SettingsUI._render()"
+                            <button type="button" aria-pressed="${fontSize === 'medium'}" aria-label="${T('settings.fontSize', 'Font size')}: ${T('settings.fontMedium', 'Medium')}" class="${segCls(fontSize === 'medium')}"
                                 onclick="window.GameSettings.setFontSize('medium'); window.SettingsUI._render()">M</button>
-                            <button type="button" aria-pressed="${fontSize === 'large'}" aria-label="${T('settings.fontSize', 'Font size')}: ${T('settings.fontLarge', 'Large')}" class="flex-1 py-3 px-2 rounded-xl text-xs font-bold transition-all ${fontSize === 'large' ? 'bg-primary/30 text-primary border border-primary' : 'bg-primary/10 text-gray-300 border border-white/15'}"
-                                ontouchstart="window.GameSettings.setFontSize('large'); window.SettingsUI._render()"
+                            <button type="button" aria-pressed="${fontSize === 'large'}" aria-label="${T('settings.fontSize', 'Font size')}: ${T('settings.fontLarge', 'Large')}" class="${segCls(fontSize === 'large')}"
                                 onclick="window.GameSettings.setFontSize('large'); window.SettingsUI._render()">G</button>
                         </div>
-                    </div>
+                    </section>
 
-                    <div class="mb-5">
-                        <div class="text-xs text-secondary font-bold uppercase tracking-widest mb-2 opacity-90">${T('settings.accessibility', 'ACESSIBILIDADE')}</div>
-                        <div class="flex gap-2 mb-2" ${aimNoop ? 'inert' : ''} style="${aimNoop ? 'opacity:0.4;pointer-events:none;' : ''}">
-                            ${toggleBtn(GameSettings.aimAssist, true, 'setAimAssist', 'settings.aimAssist', 'Auto aim')}
-                            ${toggleBtn(!GameSettings.aimAssist, false, 'setAimAssist', 'settings.aimAssist', 'Auto aim')}
-                            <div class="flex-1 text-center py-3 px-2 text-xs font-bold text-gray-400">${T('settings.aimAssist', 'MIRA AUTOMÁTICA')}</div>
-                        </div>
-                        <div class="mb-2" ${isTouch ? '' : 'inert'} style="${isTouch ? '' : 'opacity:0.4;pointer-events:none;'}">
-                            <div class="text-xs text-secondary font-bold uppercase tracking-widest mb-2 opacity-90">${T('settings.attackMode', 'BOTÃO DE ATAQUE')}</div>
-                            <div class="flex gap-2">
-                                ${[['stick', 'settings.attackStick', 'Analógico'], ['button', 'settings.attackButton', 'Botão (mira auto.)']].map(([m, k, fb]) => `
-                                    <button type="button" aria-pressed="${GameSettings.attackMode === m}" aria-label="${T('settings.attackMode', 'Attack button')}: ${T(k, fb)}" class="flex-1 py-3 px-2 rounded-xl text-xs font-bold transition-all ${GameSettings.attackMode === m ? 'bg-primary/30 text-primary border border-primary' : 'bg-primary/10 text-gray-300 border border-white/15'}"
-                                        ontouchstart="${call('setAttackMode', `'${m}'`)}"
-                                        onclick="${call('setAttackMode', `'${m}'`)}">${T(k, fb)}</button>
-                                `).join('')}
-                            </div>
-                        </div>
-                        <div class="flex gap-2 mb-2">
-                            ${toggleBtn(GameSettings.reducedMotion, true, 'setReducedMotion', 'settings.reducedMotion', 'Reduced motion')}
-                            ${toggleBtn(!GameSettings.reducedMotion, false, 'setReducedMotion', 'settings.reducedMotion', 'Reduced motion')}
-                            <div class="flex-1 text-center py-3 px-2 text-xs font-bold text-gray-400">${T('settings.reducedMotion', 'MENOS MOVIMENTO')}</div>
-                        </div>
+                    <section class="settings-section">
+                        ${head(T('settings.accessibility', 'ACESSIBILIDADE'))}
+                        ${aimNoop ? '' : switchRow('settings.aimAssist', 'Mira automática', GameSettings.aimAssist, 'setAimAssist')}
+                        ${switchRow('settings.reducedMotion', 'Menos movimento', GameSettings.reducedMotion, 'setReducedMotion')}
+                        ${choiceLabel(T('settings.colorblind', 'Modo daltônico'))}
                         <div class="flex gap-2">
                             ${['off', 'deutan', 'protan', 'tritan'].map(cm => `
-                                <button type="button" aria-pressed="${GameSettings.colorblindMode === cm}" aria-label="${T('settings.accessibility', 'Accessibility')}: ${T(`settings.${cm === 'off' ? 'normal' : cm}`, cm.toUpperCase())}" class="flex-1 py-3 px-2 rounded-xl text-xs font-bold transition-all ${GameSettings.colorblindMode === cm ? 'bg-primary/30 text-primary border border-primary' : 'bg-primary/10 text-gray-300 border border-white/15'}"
+                                <button type="button" aria-pressed="${GameSettings.colorblindMode === cm}" aria-label="${T('settings.colorblind', 'Colorblind mode')}: ${T(`settings.${cm === 'off' ? 'normal' : cm}`, cm.toUpperCase())}" class="${segCls(GameSettings.colorblindMode === cm)}"
                                     onclick="window.GameSettings.setColorblindMode('${cm}')">${T(`settings.${cm === 'off' ? 'normal' : cm}`, cm.toUpperCase()).toUpperCase()}</button>
                             `).join('')}
                         </div>
-                    </div>
+                    </section>
 
-                    <div class="mb-5">
-                        <div class="text-xs text-secondary font-bold uppercase tracking-widest mb-2 opacity-90">${T('settings.data', 'DADOS')}</div>
-                        <div class="flex gap-2">
-                            <button type="button" id="settings-export-btn" class="flex-1 py-3 px-2 rounded-xl text-xs font-bold transition-all bg-primary/10 text-gray-300 border border-white/15"
+                    <section class="settings-section">
+                        ${head(T('settings.data', 'DADOS'))}
+                        <div class="flex gap-2 mb-3">
+                            <button type="button" id="settings-export-btn" class="${segCls(false)}"
                                 onclick="if(window.SaveSystem) window._exportSave(); event.stopPropagation();">${T('ui.exportSave', 'Exportar Save')}</button>
-                            <button type="button" id="settings-import-btn" class="flex-1 py-3 px-2 rounded-xl text-xs font-bold transition-all bg-primary/10 text-gray-300 border border-white/15"
+                            <button type="button" id="settings-import-btn" class="${segCls(false)}"
                                 onclick="if(window.SaveSystem) window._openSaveImport(this); event.stopPropagation();">${T('ui.importSave', 'Importar Save')}</button>
                         </div>
-                    </div>
+                        ${PWAInstall.html(T)}
+                    </section>
 
-                    ${PWAInstall.html(T)}
-
-                    <div class="mb-2">
-                        <div class="text-xs text-secondary font-bold uppercase tracking-widest mb-2 opacity-90" style="color:#f87171">${T('settings.dangerZone', 'ZONA DE PERIGO')}</div>
+                    <section class="settings-section">
+                        ${head(T('settings.dangerZone', 'ZONA DE PERIGO'), 'color:#f87171')}
                         <button id="settings-reset-btn" style="width:100%;padding:12px;border-radius:12px;font-size:12px;font-weight:bold;color:#fca5a5;background:rgba(220,38,38,0.1);border:1.5px solid rgba(220,38,38,0.35);cursor:pointer"
-                            ontouchstart="window.SettingsUI._resetSave(); event.preventDefault();"
-                            onclick="window.SettingsUI._resetSave(); event.preventDefault();">${T('settings.resetSave', '🗑 RESETAR SAVE COMPLETO')}</button>
-                    </div>
+                            onclick="window.SettingsUI._resetSave(); event.stopPropagation();">${T('settings.resetSave', '🗑 RESETAR SAVE COMPLETO')}</button>
+                    </section>
                 </div>
 
                 <button type="button" class="w-full mt-4 py-4 rounded-xl text-white font-bold text-sm" style="background:linear-gradient(90deg, #93000a, #d9381e);"
-                    ontouchstart="window.SettingsUI.close(); event.preventDefault();"
                     onclick="window.SettingsUI.close(); event.preventDefault();">${T('settings.close', 'FECHAR').toUpperCase()}</button>
             </div>
         `;
-        // Restore scroll position (toggles rebuild the panel HTML)
+        // Restaura a rolagem (também quando estava no topo, savedScrollTop = 0)
         const newScroll = panel.querySelector('.settings-content');
-        if (newScroll && savedScrollTop > 0) newScroll.scrollTop = savedScrollTop;
+        if (newScroll) newScroll.scrollTop = savedScrollTop;
         if (this.open && previousFocus >= 0) {
             const newFocusable = this._getFocusable(panel);
             const focusTarget = newFocusable[Math.min(previousFocus, newFocusable.length - 1)];
-            if (focusTarget) focusTarget.focus();
+            // preventScroll: o foco volta ao mesmo botão sem mexer na rolagem
+            if (focusTarget) focusTarget.focus({ preventScroll: true });
         }
     },
 
@@ -30695,6 +30673,8 @@ var SettingsUI = {
         // Solta os lados: um stick/botão ativo do controle anterior ficaria preso
         if (window.Input && Input._releaseSticks) Input._releaseSticks();
         GameSettings.controlTypeAuto = false; // manual choice -> stop auto-adapting
+        // Sair do mapeamento de botões: a captura de remapeamento não pode continuar órfã
+        if (type !== 'gamepad') this._stopRemapCapture();
         GameSettings.save();
         GameSettings.apply();
         this._render();
@@ -34583,7 +34563,8 @@ const Input = {
                 // Real buttons (shop/skills/stats bar, tutorial UI) must stay
                 // reachable even during info-only stages; only block bare
                 // canvas/joystick touches on the game surface.
-                if (!(e.target && e.target.closest && e.target.closest('button'))) { e.preventDefault(); return; }
+                // O painel de Configurações (aberto pela pausa) também fica livre: rolagem, deslizante e lista
+                if (!(e.target && e.target.closest && e.target.closest('button, #settings-panel'))) { e.preventDefault(); return; }
             }
             if (gameState === 'WORLD_MAP' && window.WorldMap) {
                 const rect = canvas.getBoundingClientRect();
@@ -35061,9 +35042,12 @@ Input.init();
 
         // --- Prevent double-tap zoom ---
         var lastTouchEnd = 0;
+        // Dentro do painel de Configurações não cancela: o preventDefault mataria o click
+        // de toques rápidos seguidos. Os botões do painel já têm touch-action: manipulation.
         document.addEventListener('touchend', function(e) {
             var now = Date.now();
-            if (now - lastTouchEnd <= 300) e.preventDefault();
+            var inSettings = !!(e.target && e.target.closest && e.target.closest('#settings-panel'));
+            if (now - lastTouchEnd <= 300 && !inSettings) e.preventDefault();
             lastTouchEnd = now;
         }, false);
 
