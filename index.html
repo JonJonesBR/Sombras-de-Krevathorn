@@ -30272,7 +30272,7 @@ const PWAInstall = {
     html(T) {
         const parts = [];
         if (this.deferred && !this.installed) {
-            parts.push(`<button type="button" id="settings-install-btn" class="w-full py-3 px-2 mb-2 rounded-xl text-xs font-bold bg-primary/30 text-primary border border-primary"
+            parts.push(`<button type="button" id="settings-install-btn" data-sk="pwa-install" class="w-full py-3 px-2 mb-2 rounded-xl text-xs font-bold bg-primary/30 text-primary border border-primary"
                 onclick="window.PWAInstall.install(); event.stopPropagation();">${T('pwa.install', 'Instalar app')}</button>`);
         } else if (!this.installed && !this.isStandalone() && this.isIOS()) {
             parts.push(`<div class="text-[11px] text-gray-400 mb-2">${T('pwa.iosHint', 'Compartilhar > Adicionar à Tela de Início')}</div>`);
@@ -30438,8 +30438,11 @@ var SettingsUI = {
         const panel = document.getElementById('settings-panel');
         if (!panel) return;
 
+        // Foco: guarda a chave data-sk do elemento focado (se houver) e, de reserva, o índice
+        const activeNow = document.activeElement;
+        const focusKey = activeNow && panel.contains(activeNow) && activeNow.dataset.sk ? activeNow.dataset.sk : null;
         const previousFocusable = this.open ? this._getFocusable(panel) : [];
-        const previousFocus = previousFocusable.indexOf(document.activeElement);
+        const previousFocus = previousFocusable.indexOf(activeNow);
 
         const isTouch  = GameSettings.controlType  === 'touch';
         const isMouse  = GameSettings.controlType  === 'mouse';
@@ -30474,7 +30477,7 @@ var SettingsUI = {
         const choiceLabel = text => `<div class="text-sm text-gray-200 mb-2">${text}</div>`;
 
         const langBtn = (code, label) => `
-            <button type="button" aria-pressed="${curLang === code}" class="${segCls(curLang === code)}"
+            <button type="button" data-sk="lang-${code}" aria-pressed="${curLang === code}" class="${segCls(curLang === code)}"
                 onclick="window.I18n.setLang('${code}'); window.SettingsUI._render(); event.stopPropagation();">${label}</button>
         `;
 
@@ -30490,7 +30493,7 @@ var SettingsUI = {
             return `
             <div class="flex items-center gap-2 mb-3">
                 <span class="flex-1 text-sm text-gray-200">${label}</span>
-                <button type="button" role="switch" aria-checked="${isOn}" aria-label="${label}"
+                <button type="button" role="switch" data-sk="sw-${setter}" aria-checked="${isOn}" aria-label="${label}"
                         class="py-2 px-2 rounded-xl text-xs font-bold ${isOn ? 'bg-primary/30 text-primary border border-primary' : 'bg-primary/10 text-gray-300 border border-white/15'}"
                         style="width:88px;min-height:44px;flex-shrink:0"
                         onclick="window.SettingsUI.${setter}(${!isOn}); event.stopPropagation();">${stateText}</button>
@@ -30511,10 +30514,10 @@ var SettingsUI = {
             return `
             <div class="flex items-center gap-2 mb-2">
                 <label class="flex-1 text-xs text-gray-200" for="gp-${action}">${label}</label>
-                <select id="gp-${action}" class="py-2 px-2 rounded-lg text-xs bg-black/40 text-white border border-white/20"
+                <select id="gp-${action}" data-sk="gp-${action}-sel" class="py-2 px-2 rounded-lg text-xs bg-black/40 text-white border border-white/20"
                         aria-label="${label}: ${T('settings.gpRemap', 'Remapear')}"
                         onchange="window.SettingsUI._setGamepadAction('${action}', parseInt(this.value, 10)); event.stopPropagation();">${options}</select>
-                <button type="button" id="gp-remap-${action}" aria-pressed="${listening}"
+                <button type="button" id="gp-remap-${action}" data-sk="gp-${action}-remap" aria-pressed="${listening}"
                         aria-label="${label}: ${listening ? T('settings.gpCancel', 'Cancelar') : T('settings.gpRemap', 'Remapear')}"
                         class="py-2 px-3 rounded-lg text-xs font-bold ${btnClass}"
                         onclick="window.SettingsUI._${listening ? 'cancelRemap' : 'beginRemap'}('${action}'); event.stopPropagation();">${listening ? T('settings.gpCancel', 'Cancelar') : T('settings.gpRemap', 'Remapear')}</button>
@@ -30524,6 +30527,8 @@ var SettingsUI = {
         // Preserve scroll position across re-renders (toggles rebuild the panel HTML)
         const scrollContent = panel.querySelector('.settings-content');
         const savedScrollTop = scrollContent ? scrollContent.scrollTop : 0;
+        // Item de referência: se um bloco entrar ou sair acima dele, a posição visual é mantida
+        const scrollAnchor = this._scrollAnchor(scrollContent);
 
         // Ordem: Idioma, Controles, Áudio, Visual, Acessibilidade, Dados, Zona de perigo.
         // Blocos que não se aplicam ao controle atual não são renderizados.
@@ -30533,7 +30538,7 @@ var SettingsUI = {
 
                 <div class="overflow-y-auto settings-content" style="flex:1; min-height:0; -webkit-overflow-scrolling:touch; touch-action:pan-y; overscroll-behavior:contain;">
 
-                    <section class="settings-section">
+                    <section class="settings-section" data-sk="sec-idioma">
                         ${head(T('settings.language', 'IDIOMA'))}
                         <div class="flex gap-2">
                             ${langBtn('pt', '🇧🇷 Português')}
@@ -30542,15 +30547,15 @@ var SettingsUI = {
                         </div>
                     </section>
 
-                    <section class="settings-section">
+                    <section class="settings-section" data-sk="sec-controles">
                         ${head(T('settings.controlsLabel', 'CONTROLES'))}
                         ${choiceLabel(T('settings.controls', 'Tipo de controle'))}
                         <div class="flex gap-2 mb-3">
-                            <button type="button" aria-pressed="${isTouch}" aria-label="${T('settings.touchBtn', 'Touch controls')}" class="${segCls(isTouch)}"
+                            <button type="button" data-sk="ctl-touch" aria-pressed="${isTouch}" aria-label="${T('settings.touchBtn', 'Touch controls')}" class="${segCls(isTouch)}"
                                 onclick="${call('_setControl', "'touch'")}">${T('settings.touchBtn', 'TOUCH').toUpperCase()}</button>
-                            <button type="button" aria-pressed="${isMouse}" aria-label="${T('settings.mouseBtn', 'Mouse controls')}" class="${segCls(isMouse)}"
+                            <button type="button" data-sk="ctl-mouse" aria-pressed="${isMouse}" aria-label="${T('settings.mouseBtn', 'Mouse controls')}" class="${segCls(isMouse)}"
                                 onclick="${call('_setControl', "'mouse'")}">${T('settings.mouseBtn', 'MOUSE').toUpperCase()}</button>
-                            <button type="button" aria-pressed="${isGamepad}" aria-label="${T('settings.gamepadBtn', 'Gamepad controls')}" class="${segCls(isGamepad)}"
+                            <button type="button" data-sk="ctl-gamepad" aria-pressed="${isGamepad}" aria-label="${T('settings.gamepadBtn', 'Gamepad controls')}" class="${segCls(isGamepad)}"
                                 onclick="${call('_setControl', "'gamepad'")}">${T('settings.gamepadBtn', 'GAMEPAD').toUpperCase()}</button>
                         </div>
 
@@ -30558,21 +30563,21 @@ var SettingsUI = {
                         ${choiceLabel(T('settings.attackMode', 'Botão de ataque'))}
                         <div class="flex gap-2 mb-3">
                             ${[['stick', 'settings.attackStick', 'Analógico'], ['button', 'settings.attackButton', 'Botão (mira auto.)']].map(([m, k, fb]) => `
-                                <button type="button" aria-pressed="${GameSettings.attackMode === m}" aria-label="${T('settings.attackMode', 'Attack button')}: ${T(k, fb)}" class="${segCls(GameSettings.attackMode === m)}"
+                                <button type="button" data-sk="atk-${m}" aria-pressed="${GameSettings.attackMode === m}" aria-label="${T('settings.attackMode', 'Attack button')}: ${T(k, fb)}" class="${segCls(GameSettings.attackMode === m)}"
                                     onclick="${call('setAttackMode', `'${m}'`)}">${T(k, fb)}</button>
                             `).join('')}
                         </div>
                         ${choiceLabel(T('settings.joystick', 'Modo Joystick'))}
                         <div class="flex gap-2 mb-3">
-                            <button type="button" aria-pressed="${isFixed}" aria-label="${T('settings.joystick', 'Joystick')}: ${T('settings.fixed', 'Fixed')}" class="${segCls(isFixed)}"
+                            <button type="button" data-sk="joy-fixed" aria-pressed="${isFixed}" aria-label="${T('settings.joystick', 'Joystick')}: ${T('settings.fixed', 'Fixed')}" class="${segCls(isFixed)}"
                                 onclick="${call('_setJoyMode', "'fixed'")}">${T('settings.fixed', 'FIXO').toUpperCase()}</button>
-                            <button type="button" aria-pressed="${!isFixed}" aria-label="${T('settings.joystick', 'Joystick')}: ${T('settings.anywhere', 'Free touch')}" class="${segCls(!isFixed)}"
+                            <button type="button" data-sk="joy-anywhere" aria-pressed="${!isFixed}" aria-label="${T('settings.joystick', 'Joystick')}: ${T('settings.anywhere', 'Free touch')}" class="${segCls(!isFixed)}"
                                 onclick="${call('_setJoyMode', "'anywhere'")}">${T('settings.anywhere', 'QUALQUER').toUpperCase()}</button>
                         </div>
                         ${choiceLabel(T('settings.sensitivity', 'Sensibilidade'))}
                         <div class="flex gap-2 mb-3">
                             ${[0.75, 1, 1.4].map(v => `
-                                <button type="button" aria-pressed="${sens === v}" aria-label="${T('settings.sensitivity', 'Sensitivity')}: ${v === 0.75 ? T('settings.low', 'Low') : v === 1 ? T('settings.medium', 'Medium') : T('settings.high', 'High')}" class="${segCls(sens === v)}"
+                                <button type="button" data-sk="sens-${v}" aria-pressed="${sens === v}" aria-label="${T('settings.sensitivity', 'Sensitivity')}: ${v === 0.75 ? T('settings.low', 'Low') : v === 1 ? T('settings.medium', 'Medium') : T('settings.high', 'High')}" class="${segCls(sens === v)}"
                                     onclick="${call('_setSens', v)}">${v === 0.75 ? T('settings.low', 'BAIXA').toUpperCase() : v === 1 ? T('settings.medium', 'MÉDIA').toUpperCase() : T('settings.high', 'ALTA').toUpperCase()}</button>
                             `).join('')}
                         </div>
@@ -30584,7 +30589,7 @@ var SettingsUI = {
                         ${gpRow('ability', 'settings.gpAbility', 'Habilidade')}
                         ${gpRow('dodge', 'settings.gpDodge', 'Esquiva')}
                         ${gpRow('pause', 'settings.gpPause', 'Pausar')}
-                        <button type="button" id="settings-gp-reset-btn" class="w-full py-2 mt-1 mb-3 rounded-lg text-xs font-bold bg-primary/10 text-gray-300 border border-white/15"
+                        <button type="button" id="settings-gp-reset-btn" data-sk="gp-reset" class="w-full py-2 mt-1 mb-3 rounded-lg text-xs font-bold bg-primary/10 text-gray-300 border border-white/15"
                                 onclick="window.SettingsUI._resetGamepadMap(); event.stopPropagation();">${T('settings.gpReset', 'Restaurar padrão')}</button>
                         ` : ''}
 
@@ -30592,13 +30597,13 @@ var SettingsUI = {
                         ${choiceLabel(T('settings.btnSize', 'Tamanho dos botões'))}
                         <div class="flex gap-2">
                             ${[1, 1.2, 1.4].map(v => `
-                                <button type="button" aria-pressed="${GameSettings.uiButtonScale === v}" aria-label="${T('settings.btnSize', 'Tamanho dos botões')}: ${Math.round(v * 100)}%" class="${segCls(GameSettings.uiButtonScale === v)}"
+                                <button type="button" data-sk="ui-scale-${v}" aria-pressed="${GameSettings.uiButtonScale === v}" aria-label="${T('settings.btnSize', 'Tamanho dos botões')}: ${Math.round(v * 100)}%" class="${segCls(GameSettings.uiButtonScale === v)}"
                                     onclick="${call('_setUiScale', v)}">${Math.round(v * 100)}%</button>
                             `).join('')}
                         </div>
                     </section>
 
-                    <section class="settings-section">
+                    <section class="settings-section" data-sk="sec-audio">
                         ${head(T('settings.audio', 'ÁUDIO'))}
                         ${switchRow('settings.sfx', 'Som (SFX)', sfxOn, '_setSfx', { on: ['settings.sfxOn', 'Ligado'], off: ['settings.sfxOff', 'Desligado'] })}
                         ${switchRow('settings.music', 'Música', musicOn, '_setMusic', { on: ['settings.musicOn', 'Ligada'], off: ['settings.musicOff', 'Desligada'] })}
@@ -30606,7 +30611,7 @@ var SettingsUI = {
                             <label for="settings-music-volume" class="flex-1 text-sm text-gray-200">${T('settings.musicVolume', 'Volume da música')}</label>
                             <output data-music-vol-out class="text-xs text-gray-200 font-bold" style="min-width:3em;text-align:right">${musicPct}%</output>
                         </div>
-                        <input id="settings-music-volume" type="range" min="0" max="100" step="5" value="${musicPct}"
+                        <input id="settings-music-volume" data-sk="music-vol" type="range" min="0" max="100" step="5" value="${musicPct}"
                             aria-label="${T('settings.musicVolume', 'Volume da música')}" aria-valuetext="${musicPct}%"
                             class="w-full mt-1" style="accent-color:#e0b6ff;min-height:32px;touch-action:pan-y"
                             oninput="window.SettingsUI._setMusicVolume(this.value, false); event.stopPropagation();"
@@ -30614,12 +30619,12 @@ var SettingsUI = {
                         ${navigator.vibrate ? switchRow('settings.vibration', 'Vibração', vibOn, '_setVibration') : ''}
                     </section>
 
-                    <section class="settings-section">
+                    <section class="settings-section" data-sk="sec-visual">
                         ${head(T('settings.visuals', 'VISUAIS'))}
                         ${choiceLabel(T('settings.graphicsQuality', 'Qualidade gráfica'))}
                         <div class="flex gap-2 mb-3">
                             ${['low', 'medium', 'high'].map(q => `
-                                <button type="button" aria-pressed="${GameSettings.graphicsQuality === q}" aria-label="${T('settings.graphicsQuality', 'Graphics quality')}: ${q === 'low' ? T('settings.low', 'Low') : q === 'medium' ? T('settings.medium', 'Medium') : T('settings.high', 'High')}" class="${segCls(GameSettings.graphicsQuality === q)}"
+                                <button type="button" data-sk="gfx-${q}" aria-pressed="${GameSettings.graphicsQuality === q}" aria-label="${T('settings.graphicsQuality', 'Graphics quality')}: ${q === 'low' ? T('settings.low', 'Low') : q === 'medium' ? T('settings.medium', 'Medium') : T('settings.high', 'High')}" class="${segCls(GameSettings.graphicsQuality === q)}"
                                     onclick="window.GameSettings.setGraphicsQuality('${q}')">${q === 'low' ? T('settings.low', 'BAIXA').toUpperCase() : q === 'medium' ? T('settings.medium', 'MÉDIA').toUpperCase() : T('settings.high', 'ALTA').toUpperCase()}</button>
                             `).join('')}
                         </div>
@@ -30628,59 +30633,100 @@ var SettingsUI = {
                         ${switchRow('settings.hitstop', 'Hitstop', GameSettings.hitstopEnabled, '_setHitstop')}
                         ${choiceLabel(T('settings.fontSize', 'Tamanho da fonte'))}
                         <div class="flex gap-2">
-                            <button type="button" aria-pressed="${fontSize === 'small'}" aria-label="${T('settings.fontSize', 'Font size')}: ${T('settings.fontSmall', 'Small')}" class="${segCls(fontSize === 'small')}"
+                            <button type="button" data-sk="font-small" aria-pressed="${fontSize === 'small'}" aria-label="${T('settings.fontSize', 'Font size')}: ${T('settings.fontSmall', 'Small')}" class="${segCls(fontSize === 'small')}"
                                 onclick="window.GameSettings.setFontSize('small'); window.SettingsUI._render()">P</button>
-                            <button type="button" aria-pressed="${fontSize === 'medium'}" aria-label="${T('settings.fontSize', 'Font size')}: ${T('settings.fontMedium', 'Medium')}" class="${segCls(fontSize === 'medium')}"
+                            <button type="button" data-sk="font-medium" aria-pressed="${fontSize === 'medium'}" aria-label="${T('settings.fontSize', 'Font size')}: ${T('settings.fontMedium', 'Medium')}" class="${segCls(fontSize === 'medium')}"
                                 onclick="window.GameSettings.setFontSize('medium'); window.SettingsUI._render()">M</button>
-                            <button type="button" aria-pressed="${fontSize === 'large'}" aria-label="${T('settings.fontSize', 'Font size')}: ${T('settings.fontLarge', 'Large')}" class="${segCls(fontSize === 'large')}"
+                            <button type="button" data-sk="font-large" aria-pressed="${fontSize === 'large'}" aria-label="${T('settings.fontSize', 'Font size')}: ${T('settings.fontLarge', 'Large')}" class="${segCls(fontSize === 'large')}"
                                 onclick="window.GameSettings.setFontSize('large'); window.SettingsUI._render()">G</button>
                         </div>
                     </section>
 
-                    <section class="settings-section">
+                    <section class="settings-section" data-sk="sec-acessibilidade">
                         ${head(T('settings.accessibility', 'ACESSIBILIDADE'))}
                         ${aimNoop ? '' : switchRow('settings.aimAssist', 'Mira automática', GameSettings.aimAssist, 'setAimAssist')}
                         ${switchRow('settings.reducedMotion', 'Menos movimento', GameSettings.reducedMotion, 'setReducedMotion')}
                         ${choiceLabel(T('settings.colorblind', 'Modo daltônico'))}
                         <div class="flex gap-2">
                             ${['off', 'deutan', 'protan', 'tritan'].map(cm => `
-                                <button type="button" aria-pressed="${GameSettings.colorblindMode === cm}" aria-label="${T('settings.colorblind', 'Colorblind mode')}: ${T(`settings.${cm === 'off' ? 'normal' : cm}`, cm.toUpperCase())}" class="${segCls(GameSettings.colorblindMode === cm)}"
+                                <button type="button" data-sk="cb-${cm}" aria-pressed="${GameSettings.colorblindMode === cm}" aria-label="${T('settings.colorblind', 'Colorblind mode')}: ${T(`settings.${cm === 'off' ? 'normal' : cm}`, cm.toUpperCase())}" class="${segCls(GameSettings.colorblindMode === cm)}"
                                     onclick="window.GameSettings.setColorblindMode('${cm}')">${T(`settings.${cm === 'off' ? 'normal' : cm}`, cm.toUpperCase()).toUpperCase()}</button>
                             `).join('')}
                         </div>
                     </section>
 
-                    <section class="settings-section">
+                    <section class="settings-section" data-sk="sec-dados">
                         ${head(T('settings.data', 'DADOS'))}
                         <div class="flex gap-2 mb-3">
-                            <button type="button" id="settings-export-btn" class="${segCls(false)}"
+                            <button type="button" id="settings-export-btn" data-sk="data-export" class="${segCls(false)}"
                                 onclick="if(window.SaveSystem) window._exportSave(); event.stopPropagation();">${T('ui.exportSave', 'Exportar Save')}</button>
-                            <button type="button" id="settings-import-btn" class="${segCls(false)}"
+                            <button type="button" id="settings-import-btn" data-sk="data-import" class="${segCls(false)}"
                                 onclick="if(window.SaveSystem) window._openSaveImport(this); event.stopPropagation();">${T('ui.importSave', 'Importar Save')}</button>
                         </div>
                         ${PWAInstall.html(T)}
                     </section>
 
-                    <section class="settings-section">
+                    <section class="settings-section" data-sk="sec-perigo">
                         ${head(T('settings.dangerZone', 'ZONA DE PERIGO'), 'color:#f87171')}
-                        <button id="settings-reset-btn" style="width:100%;padding:12px;border-radius:12px;font-size:12px;font-weight:bold;color:#fca5a5;background:rgba(220,38,38,0.1);border:1.5px solid rgba(220,38,38,0.35);cursor:pointer"
+                        <button id="settings-reset-btn" data-sk="reset-save" style="width:100%;padding:12px;border-radius:12px;font-size:12px;font-weight:bold;color:#fca5a5;background:rgba(220,38,38,0.1);border:1.5px solid rgba(220,38,38,0.35);cursor:pointer"
                             onclick="window.SettingsUI._resetSave(); event.stopPropagation();">${T('settings.resetSave', '🗑 RESETAR SAVE COMPLETO')}</button>
                     </section>
                 </div>
 
-                <button type="button" class="w-full mt-4 py-4 rounded-xl text-white font-bold text-sm" style="background:linear-gradient(90deg, #93000a, #d9381e);"
+                <button type="button" data-sk="close" class="w-full mt-4 py-4 rounded-xl text-white font-bold text-sm" style="background:linear-gradient(90deg, #93000a, #d9381e);"
                     onclick="window.SettingsUI.close(); event.preventDefault();">${T('settings.close', 'FECHAR').toUpperCase()}</button>
             </div>
         `;
         // Restaura a rolagem (também quando estava no topo, savedScrollTop = 0)
         const newScroll = panel.querySelector('.settings-content');
         if (newScroll) newScroll.scrollTop = savedScrollTop;
-        if (this.open && previousFocus >= 0) {
+        // Compensa o deslocamento de blocos inseridos ou removidos acima da âncora (a primeira da lista
+        // que ainda existe). Se nenhuma sobrou, fica só com o scrollTop antigo.
+        if (newScroll && scrollAnchor) {
+            for (const a of scrollAnchor) {
+                const anchorNew = newScroll.querySelector('[data-sk="' + a.key + '"]');
+                if (!anchorNew) continue;
+                const newTop = anchorNew.getBoundingClientRect().top - newScroll.getBoundingClientRect().top;
+                newScroll.scrollTop += newTop - a.offset;
+                break;
+            }
+        }
+        // Foco: pela chave data-sk; sem chave ou com elemento sumido, cai no índice (comportamento antigo)
+        if (this.open) {
             const newFocusable = this._getFocusable(panel);
-            const focusTarget = newFocusable[Math.min(previousFocus, newFocusable.length - 1)];
+            let focusTarget = focusKey ? newFocusable.find(el => el.dataset.sk === focusKey) : null;
+            if (!focusTarget && previousFocus >= 0) focusTarget = newFocusable[Math.min(previousFocus, newFocusable.length - 1)];
             // preventScroll: o foco volta ao mesmo botão sem mexer na rolagem
             if (focusTarget) focusTarget.focus({ preventScroll: true });
         }
+    },
+
+    // Escolhe os itens de referência da rolagem antes de um re-render, por ordem de preferência:
+    // o elemento focado (se tiver data-sk e estiver à vista na área rolável) e depois os primeiros
+    // com data-sk cujo topo está visível. Devolve a lista de {key, offset}, com offset = distância
+    // até o topo da área rolável; o consumidor usa o primeiro que ainda existir após o render
+    // (um bloco que some, como o de toque, leva junto a âncora que estava dentro dele).
+    _scrollAnchor(container) {
+        // Painel escondido (abertura): as posições são zero e não há o que ancorar
+        if (!container || !container.getClientRects().length) return null;
+        const box = container.getBoundingClientRect();
+        const focused = document.activeElement;
+        const list = [];
+        const add = el => {
+            const top = el.getBoundingClientRect().top - box.top;
+            list.push({ key: el.dataset.sk, offset: top });
+        };
+        // Foco fora da vista (rolou depois de focar) não serve: ancoraria num lugar que o jogador não vê
+        if (container.contains(focused) && focused.dataset && focused.dataset.sk) {
+            const r = focused.getBoundingClientRect();
+            if (r.bottom > box.top && r.top < box.bottom) add(focused);
+        }
+        for (const item of container.querySelectorAll('[data-sk]')) {
+            if (list.length >= 6) break;
+            const top = item.getBoundingClientRect().top;
+            if (top >= box.top && top < box.bottom) add(item);
+        }
+        return list.length ? list : null;
     },
 
     _setControl(type) {
