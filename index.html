@@ -3977,6 +3977,9 @@ const I18n = {
             'settings.btnSize': 'Tamanho dos botões',
             'settings.accessibility': 'ACESSIBILIDADE',
             'settings.aimAssist': 'MIRA AUTOMÁTICA',
+            'settings.attackMode': 'BOTÃO DE ATAQUE',
+            'settings.attackStick': 'Analógico',
+            'settings.attackButton': 'Botão (mira auto.)',
             'settings.reducedMotion': 'MENOS MOVIMENTO',
             'settings.normal': 'NORMAL',
             'settings.deutan': 'DEUTAN',
@@ -5653,6 +5656,9 @@ const I18n = {
             'settings.btnSize': 'Button size',
             'settings.accessibility': 'ACCESSIBILITY',
             'settings.aimAssist': 'AUTO AIM',
+            'settings.attackMode': 'ATTACK BUTTON',
+            'settings.attackStick': 'Stick',
+            'settings.attackButton': 'Button (auto aim)',
             'settings.reducedMotion': 'LESS MOTION',
             'settings.normal': 'NORMAL',
             'settings.deutan': 'DEUTAN',
@@ -7329,6 +7335,9 @@ const I18n = {
             'settings.btnSize': 'Tamaño de los botones',
             'settings.accessibility': 'ACCESIBILIDAD',
             'settings.aimAssist': 'MIRA AUTOMÁTICA',
+            'settings.attackMode': 'BOTÓN DE ATAQUE',
+            'settings.attackStick': 'Joystick',
+            'settings.attackButton': 'Botón (mira auto.)',
             'settings.reducedMotion': 'MENOS MOVIMIENTO',
             'settings.normal': 'NORMAL',
             'settings.deutan': 'DEUTÁN',
@@ -13312,6 +13321,7 @@ function _initEngine() {
                     const skillX = width/2 - 42, skillY = height - 75, skillW = 84, skillH = 50;
                     if(_skillBtnCx >= skillX && _skillBtnCx <= skillX+skillW && _skillBtnCy >= skillY && _skillBtnCy <= skillY+skillH) {
                         if(window.player && player.useSkill) player.useSkill();
+                        if(window.Input) Input._uiTapTs = e.timeStamp; // toque de UI: não vira ataque no modo botão
                         return;
                     }
                 }
@@ -13326,8 +13336,9 @@ function _initEngine() {
                 if(!_mmExpandBounds) { minimapExpanded = false; continue; }
                 const { x: mx, y: my, w: mw, h: mh } = _mmExpandBounds;
                 const closeX = mx + mw - 18, closeY = my + 18;
-                if(Math.hypot(tx - closeX, ty - closeY) < 20) { minimapExpanded = false; return; }
-                if(tx < mx || tx > mx + mw || ty < my || ty > my + mh) { minimapExpanded = false; return; }
+                if(Math.hypot(tx - closeX, ty - closeY) < 20) { minimapExpanded = false; if(window.Input) Input._uiTapTs = e.timeStamp; return; }
+                if(tx < mx || tx > mx + mw || ty < my || ty > my + mh) { minimapExpanded = false; if(window.Input) Input._uiTapTs = e.timeStamp; return; }
+                if(window.Input) Input._uiTapTs = e.timeStamp; // toque dentro do minimapa expandido
                 return; // inside minimap, absorb event
             }
         }
@@ -13339,7 +13350,7 @@ function _initEngine() {
                 const t = e.changedTouches[i];
                 const _npcCx = (t.clientX - _npcRect.left) * (width / _npcRect.width);
                 const _npcCy = (t.clientY - _npcRect.top) * (height / _npcRect.height);
-                if(NPCSystem.handleTouch(_npcCx, _npcCy)) { _npcSuppressClickUntil = performance.now() + 400; return; }
+                if(NPCSystem.handleTouch(_npcCx, _npcCy)) { _npcSuppressClickUntil = performance.now() + 400; if(window.Input) Input._uiTapTs = e.timeStamp; return; }
             }
         }
 
@@ -28072,7 +28083,8 @@ class Player extends Entity {
             this.angle = Math.atan2(sy * invMag, sx * invMag);
             this.spriteAngle = this.angle;
             // Fase B: aim assist - snap toward nearest enemy inside a cone around the manual aim
-            if (window.GameSettings && window.GameSettings.aimAssist) {
+            // No modo botão a mira já vai para o inimigo mais próximo (Input._updateButtonAim)
+            if (window.GameSettings && window.GameSettings.aimAssist && !Input._isButtonAttack()) {
                 const aimCone = 0.6, maxRangeSq = 480 * 480;
                 let best = null, bestScore = Infinity, ax = 0, ay = 0;
                 for (let _aa = 0; _aa < entities.length; _aa++) {
@@ -29961,6 +29973,7 @@ var GameSettings = {
     leftHanded: false,          // Controles invertidos: joystick de movimento a direita, botoes de acao a esquerda
     uiButtonScale: 1,           // Tamanho dos botoes: 1 | 1.2 | 1.4
     aimAssist: false,           // Fase B: auto-aim at nearest enemy when active
+    attackMode: 'stick',        // Toque: 'stick' = analógico de ataque | 'button' = botão com mira automática
     colorblindMode: 'off',      // Fase B: off | deutan | protan | tritan
     reducedMotion: false,       // Fase B: honors prefers-reduced-motion on load
     userSetQuality: false,      // true when the player picks a tier in Settings (locks auto-adjust)
@@ -30024,6 +30037,7 @@ var GameSettings = {
             // that fits the device instead of forcing LOW everywhere.
             this.fontSize     = data.fontSize     || 'medium';
             this.aimAssist    = data.aimAssist    === true;
+            this.attackMode   = data.attackMode   === 'button' ? 'button' : 'stick';
             this.colorblindMode = data.colorblindMode || 'off';
             this.leftHanded = data.leftHanded === true;
             const bScale = Number(data.uiButtonScale);
@@ -30063,6 +30077,7 @@ var GameSettings = {
             graphicsQuality: this.graphicsQuality,
             fontSize:     this.fontSize,
             aimAssist:    this.aimAssist,
+            attackMode:   this.attackMode,
             colorblindMode: this.colorblindMode,
             leftHanded: this.leftHanded,
             uiButtonScale: this.uiButtonScale,
@@ -30077,6 +30092,8 @@ var GameSettings = {
     adaptTo(type) {
         if (!this.controlTypeAuto || this.controlType === type) return;
         this.controlType = type;
+        // Troca de controle com um toque segurado: solta os analógicos e o botão
+        if (window.Input && Input._releaseSticks) Input._releaseSticks();
         this.save();
         // adaptTo() runs from mousedown/touchstart. Re-rendering the panel there
         // replaces the control between mousedown and mouseup, so the click never
@@ -30138,6 +30155,14 @@ var GameSettings = {
 
     setAimAssist(v) {
         this.aimAssist = !!v;
+        this.save();
+        if (window.SettingsUI && window.SettingsUI._render) window.SettingsUI._render();
+    },
+
+    // Só aceita 'button'; qualquer outro valor vira 'stick' (analógico)
+    setAttackMode(v) {
+        this.attackMode = v === 'button' ? 'button' : 'stick';
+        if (window.Input && Input._releaseSticks) Input._releaseSticks();
         this.save();
         if (window.SettingsUI && window.SettingsUI._render) window.SettingsUI._render();
     },
@@ -30367,6 +30392,8 @@ var SettingsUI = {
         const isMouse  = GameSettings.controlType  === 'mouse';
         const isGamepad = GameSettings.controlType === 'gamepad';
         const isFixed  = GameSettings.joystickMode === 'fixed';
+        // No toque com botão de ataque, a mira automática por cone não faz nada: esmaece o toggle
+        const aimNoop  = isTouch && GameSettings.attackMode === 'button';
         const sfxOn    = GameSettings.sfxEnabled;
         const musicOn  = GameSettings.musicEnabled;
         const vibOn    = !!(window.Vibrate && Vibrate.enabled);
@@ -30579,10 +30606,20 @@ var SettingsUI = {
 
                     <div class="mb-5">
                         <div class="text-xs text-secondary font-bold uppercase tracking-widest mb-2 opacity-90">${T('settings.accessibility', 'ACESSIBILIDADE')}</div>
-                        <div class="flex gap-2 mb-2">
+                        <div class="flex gap-2 mb-2" ${aimNoop ? 'inert' : ''} style="${aimNoop ? 'opacity:0.4;pointer-events:none;' : ''}">
                             ${toggleBtn(GameSettings.aimAssist, true, 'setAimAssist', 'settings.aimAssist', 'Auto aim')}
                             ${toggleBtn(!GameSettings.aimAssist, false, 'setAimAssist', 'settings.aimAssist', 'Auto aim')}
                             <div class="flex-1 text-center py-3 px-2 text-xs font-bold text-gray-400">${T('settings.aimAssist', 'MIRA AUTOMÁTICA')}</div>
+                        </div>
+                        <div class="mb-2" ${isTouch ? '' : 'inert'} style="${isTouch ? '' : 'opacity:0.4;pointer-events:none;'}">
+                            <div class="text-xs text-secondary font-bold uppercase tracking-widest mb-2 opacity-90">${T('settings.attackMode', 'BOTÃO DE ATAQUE')}</div>
+                            <div class="flex gap-2">
+                                ${[['stick', 'settings.attackStick', 'Analógico'], ['button', 'settings.attackButton', 'Botão (mira auto.)']].map(([m, k, fb]) => `
+                                    <button type="button" aria-pressed="${GameSettings.attackMode === m}" aria-label="${T('settings.attackMode', 'Attack button')}: ${T(k, fb)}" class="flex-1 py-3 px-2 rounded-xl text-xs font-bold transition-all ${GameSettings.attackMode === m ? 'bg-primary/30 text-primary border border-primary' : 'bg-primary/10 text-gray-300 border border-white/15'}"
+                                        ontouchstart="${call('setAttackMode', `'${m}'`)}"
+                                        onclick="${call('setAttackMode', `'${m}'`)}">${T(k, fb)}</button>
+                                `).join('')}
+                            </div>
                         </div>
                         <div class="flex gap-2 mb-2">
                             ${toggleBtn(GameSettings.reducedMotion, true, 'setReducedMotion', 'settings.reducedMotion', 'Reduced motion')}
@@ -30634,6 +30671,8 @@ var SettingsUI = {
 
     _setControl(type) {
         GameSettings.controlType = type;
+        // Solta os lados: um stick/botão ativo do controle anterior ficaria preso
+        if (window.Input && Input._releaseSticks) Input._releaseSticks();
         GameSettings.controlTypeAuto = false; // manual choice -> stop auto-adapting
         GameSettings.save();
         GameSettings.apply();
@@ -30801,6 +30840,11 @@ var SettingsUI = {
 
     setAimAssist(enabled) {
         if (window.GameSettings.setAimAssist) GameSettings.setAimAssist(enabled);
+        this._render();
+    },
+
+    setAttackMode(mode) {
+        if (window.GameSettings.setAttackMode) GameSettings.setAttackMode(mode);
         this._render();
     },
 
@@ -34355,6 +34399,13 @@ const Input = {
     get _ctrlType()  { return window.GameSettings ? window.GameSettings.controlType  : 'touch'; },
     get _joyMode()   { return window.GameSettings ? window.GameSettings.joystickMode : 'fixed'; },
 
+    // Botão de ataque (toque): o lado direito vira botão e a mira vai para o inimigo mais próximo
+    autoAimRange: 480, // px, do centro do herói
+    _uiTapTs: -1,      // timeStamp do último toque consumido pela interface (canvas)
+    _aimTarget: null,  // inimigo escolhido pelo botão (histerese)
+    _aimTimer: 0,      // frames até refazer a escolha
+    _isButtonAttack() { return this._ctrlType === 'touch' && !!window.GameSettings && window.GameSettings.attackMode === 'button'; },
+
     _originFor(side) {
         // Fixed mode: write straight into the reused left/right fields (no per-frame allocation)
         if (this._joyMode === 'fixed') {
@@ -34374,6 +34425,68 @@ const Input = {
         }
         this.pollGamepad();
         this.pollMouse();
+        this._updateButtonAim();
+    },
+
+    // Modo botão: com o dedo no botão, a mira vai para um inimigo até autoAimRange.
+    // Sem sobrecarga: só variáveis locais. Sem alvo, segue o movimento ou a direção do herói.
+    // A escolha vale por 5 frames (histerese) e é refeita antes se o alvo morrer ou sair do alcance.
+    _updateButtonAim() {
+        if (!this._isButtonAttack() || !player) return;
+        if (!this.right.active) { this._aimTarget = null; this._aimTimer = 0; return; }
+        const rangeSq = this.autoAimRange * this.autoAimRange;
+        let tgt = this._aimTarget;
+        const stale = --this._aimTimer <= 0;
+        if (stale || (tgt && !this._aimValid(tgt, rangeSq))) {
+            tgt = this._pickAimTarget(rangeSq);
+            this._aimTarget = tgt;
+            this._aimTimer = 5;
+        }
+        let dx, dy;
+        if (tgt) { dx = tgt.x - player.x; dy = tgt.y - player.y; }
+        else if (this.left.active && Math.hypot(this.left.dx, this.left.dy) > 0.2) { dx = this.left.dx; dy = this.left.dy; }
+        else { dx = Math.cos(player.angle); dy = Math.sin(player.angle); }
+        // Vetor unitário: passa sempre do deadzone do ataque
+        const mag = Math.hypot(dx, dy) || 1;
+        this.right.dx = dx / mag;
+        this.right.dy = dy / mag;
+    },
+
+    // Alvo guardado ainda serve? (vivo, inimigo, dentro do alcance)
+    _aimValid(t, rangeSq) {
+        if (!t.alive || !t.isEnemy || t === player || t.isP || t.isBarrier) return false;
+        const ex = t.x - player.x, ey = t.y - player.y;
+        const dSq = ex * ex + ey * ey;
+        return dSq >= 1 && dSq <= rangeSq;
+    },
+
+    // Escolhe o alvo do botão. Só inimigos atacáveis: pula o herói, balas, barreiras de gelo,
+    // mortos e mímicos ainda disfarçados de moeda. Ordem: armadilha ainda não ativada por último;
+    // depois com linha de visão (hasLineOfSight); depois dentro da tela (margem 40 px); depois o mais
+    // próximo. A linha de visão só é checada para quem bateria o melhor candidato com visão.
+    _pickAimTarget(rangeSq) {
+        const m = (typeof map !== 'undefined' && map) ? map : null;
+        const px = player.x, py = player.y;
+        const L = camX - 40, R = camX + width + 40, T = camY - 40, B = camY + height + 40;
+        let visT = null, visTier = 9, visD = Infinity; // melhor com linha de visão
+        let anyT = null, anyTier = 9, anyD = Infinity; // melhor de todos
+        for (let i = 0; i < entities.length; i++) {
+            const e = entities[i];
+            if (!e.alive || !e.isEnemy || e === player || e.isP || e.isBarrier) continue;
+            if (e.enemyType === 'mimic' && !e.revealed) continue;
+            const ex = e.x - px, ey = e.y - py;
+            const dSq = ex * ex + ey * ey;
+            if (dSq < 1 || dSq > rangeSq) continue;
+            // Tier: 2 = armadilha ainda não ativada; +1 = fora da tela
+            const tier = (e.enemyType === 'trap' && !e.triggered ? 2 : 0) + (e.x < L || e.x > R || e.y < T || e.y > B ? 1 : 0);
+            if (tier < anyTier || (tier === anyTier && dSq < anyD)) { anyT = e; anyTier = tier; anyD = dSq; }
+            if (tier < visTier || (tier === visTier && dSq < visD)) {
+                if (hasLineOfSight(m, px, py, e.x, e.y)) { visT = e; visTier = tier; visD = dSq; }
+            }
+        }
+        // Com visão: usa o melhor com visão, salvo se ele for armadilha inativa e houver outra opção
+        if (visT && (visTier < 2 || anyTier >= 2)) return visT;
+        return anyT;
     },
 
     // Mouse mode: aim toward the cursor, fire while the left button is held
@@ -34454,6 +34567,8 @@ const Input = {
                 WorldMap.handleInput(t.clientX - rect.left, t.clientY - rect.top);
             }
             if (gameState !== 'PLAYING' || e.target.closest('button')) return;
+            // Toque consumido pela interface (minimapa, painel de NPC) não ataca no modo botão
+            if (e.timeStamp === this._uiTapTs || (typeof minimapExpanded !== 'undefined' && minimapExpanded) || (e.target.closest && e.target.closest('#minimap-container'))) return;
             if (this._ctrlType !== 'touch') return;
             
             // If touching inside a scrollable area, don't prevent default (allows native scrolling)
@@ -34506,12 +34621,7 @@ const Input = {
         }, { passive: false });
 
         window.addEventListener('touchend', e => {
-            if (typeof TutorialSystem !== 'undefined' && TutorialSystem.active && TutorialSystem._allControlsHidden()) { return; }
-            if (gameState === 'PLAYING' && !e.target.closest('button')) {
-                if (!e.target.closest('.settings-content, .skilltree-content, .custom-scrollbar') && !(window.isAnyPanelOpen && window.isAnyPanelOpen())) {
-                    e.preventDefault();
-                }
-            }
+            // Soltura antes do retorno do tutorial: um toque iniciado antes da etapa não pode ficar preso
             if (e.changedTouches) {
                 for (let i = 0; i < e.changedTouches.length; i++) {
                     const t = e.changedTouches[i];
@@ -34519,6 +34629,12 @@ const Input = {
                     const wasRight = t.identifier === this.right.id;
                     if (wasLeft) { this.left.active = false; this.left.id = -1; this.left.dx = 0; this.left.dy = 0; }
                     if (wasRight) { this.right.active = false; this.right.id = -1; this.right.dx = 0; this.right.dy = 0; }
+                }
+            }
+            if (typeof TutorialSystem !== 'undefined' && TutorialSystem.active && TutorialSystem._allControlsHidden()) { return; }
+            if (gameState === 'PLAYING' && !e.target.closest('button')) {
+                if (!e.target.closest('.settings-content, .skilltree-content, .custom-scrollbar') && !(window.isAnyPanelOpen && window.isAnyPanelOpen())) {
+                    e.preventDefault();
                 }
             }
         }, { passive: false });
@@ -34537,6 +34653,7 @@ const Input = {
             if (!j) continue;
             j.active = false; j.id = -1; j.dx = 0; j.dy = 0;
         }
+        this._aimTarget = null; this._aimTimer = 0;
     },
 
     _applyMove(t) {
@@ -34548,6 +34665,8 @@ const Input = {
         for (const side of ['left', 'right']) {
             const j = this[side];
             if (t.identifier !== j.id || !j.active) continue;
+            // Modo botão: o lado direito não é analógico (a mira vem de _updateButtonAim)
+            if (side === 'right' && this._isButtonAttack()) continue;
             let dx = canvasX - j.ox;
             let dy = canvasY - j.oy;
             const d = Math.hypot(dx, dy);
@@ -34673,7 +34792,36 @@ const Input = {
     },
 
     // ---- DRAW ----
+    // Botão de ataque (modo 'button'): disco na posição fixa do anel direito, com uma espada em pixels
+    _drawAttackButton(ctx) {
+        const R = Math.floor(CONFIG.JOYSTICK_RADIUS * getFontScale());
+        const x = this._rx, y = this._ry;
+        const on = this.right.active;
+        // Disco e contorno (mais claros quando o dedo está nele)
+        ctx.globalAlpha = on ? 0.75 : 0.40;
+        ctx.fillStyle = on ? 'rgba(190,140,255,0.95)' : 'rgba(60,60,80,0.8)';
+        ctx.beginPath(); ctx.arc(x, y, R, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = on ? '#ffffff' : '#cc88ff';
+        ctx.lineWidth = on ? 3 : 2;
+        ctx.beginPath(); ctx.arc(x, y, R, 0, Math.PI * 2); ctx.stroke();
+        // Espada: lâmina, guarda e punho em retângulos, inclinada a 45 graus
+        const u = R / 10; // unidade de pixel
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(-Math.PI / 4);
+        ctx.globalAlpha = on ? 1 : 0.85;
+        ctx.fillStyle = '#e8f0ff';                 // lâmina
+        ctx.fillRect(-0.5 * u, -6 * u, 1 * u, 8 * u);
+        ctx.fillStyle = '#ffcc00';                 // guarda
+        ctx.fillRect(-2.5 * u, 2 * u, 5 * u, 1 * u);
+        ctx.fillStyle = '#8a5a2b';                 // punho
+        ctx.fillRect(-0.5 * u, 3 * u, 1 * u, 3 * u);
+        ctx.restore();
+        ctx.globalAlpha = 1;
+    },
+
     drawJoystick(ctx, j, side) {
+        if (side === 'right' && this._isButtonAttack()) { this._drawAttackButton(ctx); return; }
         const fixed = this._ctrlType === 'touch' && this._joyMode === 'fixed';
         const baseX = fixed ? (side === 'left' ? this._lx : this._rx) : j.ox;
         const baseY = fixed ? (side === 'left' ? this._ly : this._ry) : j.oy;
