@@ -2355,6 +2355,7 @@ let _autoResScale = 1;     // current multiplier (1 = full 0.75x base, min _auto
 let _frameStale = true;    // canvas precisa de um draw mesmo sem passo de simulação (resize, estado não-PLAYING)
 let _autoResMin = 0.6;     // lowest internal resolution multiplier
 let _autoResStable = 0;    // consecutive healthy seconds before scaling back up
+let _perfSkipSample = false; // true depois de um bloco de FPS com menu aberto: o próximo bloco é descartado
 // Logical -> physical scale for the MAIN canvas. The main canvas always runs
 // at full window resolution (so canvas text stays crisp even when auto-res
 // shrinks the world buffers); this maps logical coords (width/height) onto it.
@@ -2387,7 +2388,7 @@ function _applyAutoQuality(next) {
     if (!window.GameSettings || !window.GFX || window.GFX.tier === next) return;
     GameSettings.graphicsQuality = next;
     GameSettings.apply();
-    if (window.SettingsUI && SettingsUI._render) SettingsUI._render();
+    if (window.SettingsUI && SettingsUI._renderSoon) SettingsUI._renderSoon();
     if (typeof addLog === 'function' && gameState === 'PLAYING') {
         addLog(next === 'low' ? (window.I18n ? I18n.t('log.gfxReduced') : ' Qualidade visual reduzida (desempenho)') : (window.I18n ? I18n.t('log.gfxRestored') : ' Qualidade visual restaurada'));
     }
@@ -2442,7 +2443,7 @@ function _setAutoPerf(on) {
         }
     }
     GameSettings.apply();
-    if (window.SettingsUI && SettingsUI._render) SettingsUI._render();
+    if (window.SettingsUI && SettingsUI._renderSoon) SettingsUI._renderSoon();
     // Discreet auto-perf notice: a single honest ON banner per session at most.
     // Repeated mid-run center banners are noise, so OFF toggles never log and
     // a player-locked quality preset (userSetQuality) stays fully silent.
@@ -13244,30 +13245,42 @@ function loop(timestamp) {
         // disable heavy effects when FPS is low, recover when stable.
         if (gameState === 'PLAYING') {
             _refreshHudLayout();
-            if (fps < 45) {
-                _setAutoPerf(true);
-            } else if (fps >= 55) {
-                _setAutoPerf(false);
-            }
-            _autoQualityStep(fps);
-            // Two-tier drop: hard dips (fps < 40) jump a full tier (x0.75) so
-            // the game recovers fast on weak devices; mild dips crawl x0.9.
-            if (fps < 40 && _autoResScale > _autoResMin) {
-                _autoResScale = Math.max(_autoResMin, Math.round((_autoResScale * 0.75) * 100) / 100);
+            // Com pausa ou menu aberto o FPS cai por causa do blur e do redesenho do painel, não do jogo:
+            // nessa fase não se mede desempenho e os contadores zeram, para não contar como amostra de jogo.
+            if (window.isAnyPanelOpen && isAnyPanelOpen()) {
+                _autoGfxStable = 0;
+                _autoGfxRestoreStable = 0;
                 _autoResStable = 0;
-                _resizeWorldBuffers();
-            } else if (fps < 50 && _autoResScale > _autoResMin) {
-                _autoResScale = Math.max(_autoResMin, Math.round((_autoResScale * 0.9) * 100) / 100);
-                _autoResStable = 0;
-                _resizeWorldBuffers();
-            } else if (fps >= 57 && _autoResScale < 1) {
-                if (++_autoResStable >= 15) {
-                    _autoResScale = Math.min(1, Math.round((_autoResScale / 0.9) * 100) / 100);
+                _perfSkipSample = true;
+            } else if (_perfSkipSample) {
+                // O primeiro bloco depois de fechar o menu ainda mistura quadros do menu (e a animação de saída): descarta
+                _perfSkipSample = false;
+            } else {
+                if (fps < 45) {
+                    _setAutoPerf(true);
+                } else if (fps >= 55) {
+                    _setAutoPerf(false);
+                }
+                _autoQualityStep(fps);
+                // Two-tier drop: hard dips (fps < 40) jump a full tier (x0.75) so
+                // the game recovers fast on weak devices; mild dips crawl x0.9.
+                if (fps < 40 && _autoResScale > _autoResMin) {
+                    _autoResScale = Math.max(_autoResMin, Math.round((_autoResScale * 0.75) * 100) / 100);
                     _autoResStable = 0;
                     _resizeWorldBuffers();
+                } else if (fps < 50 && _autoResScale > _autoResMin) {
+                    _autoResScale = Math.max(_autoResMin, Math.round((_autoResScale * 0.9) * 100) / 100);
+                    _autoResStable = 0;
+                    _resizeWorldBuffers();
+                } else if (fps >= 57 && _autoResScale < 1) {
+                    if (++_autoResStable >= 15) {
+                        _autoResScale = Math.min(1, Math.round((_autoResScale / 0.9) * 100) / 100);
+                        _autoResStable = 0;
+                        _resizeWorldBuffers();
+                    }
+                } else if (fps < 57) {
+                    _autoResStable = 0;
                 }
-            } else if (fps < 57) {
-                _autoResStable = 0;
             }
         }
         _fpsFrames = 0;
@@ -30120,6 +30133,9 @@ var GameSettings = {
     },
 
     save() {
+        // Com o auto-desempenho ativo, os efeitos em memória estão desligados à força:
+        // grava a escolha do jogador (_autoPerfPrefs), não o valor temporário.
+        const perfPrefs = (typeof _autoPerfPrefs !== 'undefined' && _autoPerfPrefs) ? _autoPerfPrefs : null;
         StorageManager.setRaw('settings', JSON.stringify({
             controlType:     this.controlType,
             controlTypeAuto: this.controlTypeAuto,
@@ -30128,9 +30144,9 @@ var GameSettings = {
             sfxEnabled:   this.sfxEnabled,
             musicEnabled: this.musicEnabled,
             musicVolume:  this.musicVolume,
-            particlesEnabled: this.particlesEnabled,
-            screenShakeEnabled: this.screenShakeEnabled,
-            hitstopEnabled: this.hitstopEnabled,
+            particlesEnabled: perfPrefs ? perfPrefs.particlesEnabled : this.particlesEnabled,
+            screenShakeEnabled: perfPrefs ? perfPrefs.screenShakeEnabled : this.screenShakeEnabled,
+            hitstopEnabled: perfPrefs ? perfPrefs.hitstopEnabled : this.hitstopEnabled,
             graphicsQuality: this.graphicsQuality,
             fontSize:     this.fontSize,
             aimAssist:    this.aimAssist,
@@ -30269,7 +30285,7 @@ const PWAInstall = {
         return !!(navigator.serviceWorker && navigator.serviceWorker.controller);
     },
     _refresh() {
-        if (window.SettingsUI && SettingsUI.open && SettingsUI._render) SettingsUI._render();
+        if (window.SettingsUI && SettingsUI.open && SettingsUI._renderSoon) SettingsUI._renderSoon();
     },
     install() {
         const ev = this.deferred;
@@ -30316,6 +30332,7 @@ var SettingsUI = {
         }
         this._returnFocusTo = opener || document.activeElement;
         this.open = true;
+        this._trackScroll();
         // Única renderização que toca a animação de entrada (ver _render)
         this._render(true);
         const panel = document.getElementById('settings-panel');
@@ -30346,6 +30363,7 @@ var SettingsUI = {
         const panel = document.getElementById('settings-panel');
         if (!panel || (!this.open && panel.classList.contains('hidden'))) return;
         this._stopRemapCapture();
+        if (this._renderSoonTimer) { clearTimeout(this._renderSoonTimer); this._renderSoonTimer = null; }
         if (panel) {
             this.open = false;
             panel.setAttribute('aria-hidden', 'true');
@@ -30465,8 +30483,11 @@ var SettingsUI = {
         const sfxOn    = GameSettings.sfxEnabled;
         const musicOn  = GameSettings.musicEnabled;
         const vibOn    = !!(window.Vibrate && Vibrate.enabled);
-        const partsOn  = GameSettings.particlesEnabled;
-        const shakeOn  = GameSettings.screenShakeEnabled;
+        // Com o auto-desempenho ativo os efeitos ficam desligados à força: o painel mostra a escolha do jogador
+        const perfPrefs = (typeof _autoPerfPrefs !== 'undefined' && _autoPerfPrefs) ? _autoPerfPrefs : null;
+        const partsOn  = perfPrefs ? perfPrefs.particlesEnabled : GameSettings.particlesEnabled;
+        const shakeOn  = perfPrefs ? perfPrefs.screenShakeEnabled : GameSettings.screenShakeEnabled;
+        const hitstopOn = perfPrefs ? perfPrefs.hitstopEnabled : GameSettings.hitstopEnabled;
         const sens     = GameSettings.joystickSensitivity;
         const fontSize = GameSettings.fontSize || 'medium';
         const musicPct = Math.round((GameSettings.musicVolume ?? 0.6) * 100);
@@ -30639,7 +30660,7 @@ var SettingsUI = {
                         </div>
                         ${switchRow('settings.particles', 'Partículas', partsOn, '_setParticles')}
                         ${switchRow('settings.shake', 'Tremor da tela', shakeOn, '_setShake')}
-                        ${switchRow('settings.hitstop', 'Hitstop', GameSettings.hitstopEnabled, '_setHitstop')}
+                        ${switchRow('settings.hitstop', 'Hitstop', hitstopOn, '_setHitstop')}
                         ${choiceLabel(T('settings.fontSize', 'Tamanho da fonte'))}
                         <div class="flex gap-2">
                             <button type="button" data-sk="font-small" aria-pressed="${fontSize === 'small'}" aria-label="${T('settings.fontSize', 'Font size')}: ${T('settings.fontSmall', 'Small')}" class="${segCls(fontSize === 'small')}"
@@ -30811,6 +30832,39 @@ var SettingsUI = {
         if (window.SND && SND.playUI) SND.playUI();
     },
 
+    // Marca quando a rolagem do painel andou por último. Escuta em captura porque o evento
+    // scroll não borbulha; o listener fica no #settings-panel, que persiste (o innerHTML é trocado a cada render).
+    _trackScroll() {
+        const panel = document.getElementById('settings-panel');
+        if (!panel || panel._scrollTrackBound) return;
+        panel._scrollTrackBound = true;
+        panel.addEventListener('scroll', e => {
+            if (e.target && e.target.classList && e.target.classList.contains('settings-content')) this._lastScrollTs = performance.now();
+        }, { capture: true, passive: true });
+    },
+
+    // Re-render pedido de fora (auto-desempenho, PWA). Com o painel fechado renderiza na hora.
+    // Aberto e com a rolagem mexendo nos últimos 250 ms, adia até a rolagem parar e renderiza uma vez só.
+    _renderSoon() {
+        if (!this.open) { this._render(); return; }
+        if (this._renderSoonTimer) return; // já há um render adiado: ele junta esta chamada
+        const wait = this._scrollWait();
+        if (wait <= 0) { this._render(); return; }
+        this._renderSoonTimer = setTimeout(() => this._flushRenderSoon(), wait);
+    },
+
+    _scrollWait() {
+        return Math.max(0, (this._lastScrollTs || 0) + 250 - performance.now());
+    },
+
+    _flushRenderSoon() {
+        this._renderSoonTimer = null;
+        if (!this.open) return; // fechou antes do render adiado: nada a desenhar
+        const wait = this._scrollWait();
+        if (wait > 0) { this._renderSoonTimer = setTimeout(() => this._flushRenderSoon(), wait); return; }
+        this._render();
+    },
+
     // A re-render is requested while a pointer gesture is in flight. It must
     // wait for the click to complete, otherwise the control the player is
     // clicking is replaced under their finger and the click dies with it.
@@ -30820,7 +30874,7 @@ var SettingsUI = {
         const flush = () => {
             this._renderPending = false;
             clearTimeout(this._renderTimer);
-            if (this.open) this._render();
+            if (this.open) this._renderSoon();
         };
         this._renderTimer = setTimeout(flush, 600);
         // Bubble phase on purpose: capture would run before the control's own
@@ -30888,8 +30942,11 @@ var SettingsUI = {
         this._render();
     },
 
+    // A escolha também vai para _autoPerfPrefs (se o auto-desempenho estiver ativo), para que
+    // ao desligar ele restaure a escolha nova e não a antiga.
     _setParticles(enabled) {
         GameSettings.particlesEnabled = enabled;
+        if (typeof _autoPerfPrefs !== 'undefined' && _autoPerfPrefs) _autoPerfPrefs.particlesEnabled = enabled;
         GameSettings.save();
         this._render();
         if (window.SND && SND.playUI) SND.playUI();
@@ -30897,6 +30954,7 @@ var SettingsUI = {
 
     _setShake(enabled) {
         GameSettings.screenShakeEnabled = enabled;
+        if (typeof _autoPerfPrefs !== 'undefined' && _autoPerfPrefs) _autoPerfPrefs.screenShakeEnabled = enabled;
         GameSettings.save();
         this._render();
         if (window.SND && SND.playUI) SND.playUI();
@@ -30904,6 +30962,7 @@ var SettingsUI = {
 
     _setHitstop(enabled) {
         GameSettings.hitstopEnabled = enabled;
+        if (typeof _autoPerfPrefs !== 'undefined' && _autoPerfPrefs) _autoPerfPrefs.hitstopEnabled = enabled;
         GameSettings.save();
         this._render();
         if (window.SND && SND.playUI) SND.playUI();
