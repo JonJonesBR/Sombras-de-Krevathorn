@@ -16857,11 +16857,11 @@ class ActiveEvent {
     draw(ctx, x, y) {
         const name = window._L ? _L(this.nameKey, this.name) : this.name;
         const desc = window._L ? _L(this.descKey, this.desc) : this.desc;
-        // Faixa cabe na tela (antes tinha 300 px fixos e cortava a descrição no celular).
-        // Depois de 3 s vira só o nome, numa faixa baixa, para não cobrir o jogo o evento inteiro.
-        const W = Math.min(300, (typeof width === 'number' ? width : 320) - 16);
-        const compact = this.duration > 0 && (this.duration - this.timeLeft) > 180;
-        const H = compact ? 20 : 40;
+        // Faixa compacta (antes 300 px e letra 16/14, grande demais no celular).
+        // Cheia só nos primeiros 120 ticks (2 s); depois vira só o nome, numa faixa mais baixa.
+        const W = Math.min(230, (typeof width === 'number' ? width : 320) - 24);
+        const compact = this.duration > 0 && (this.duration - this.timeLeft) > 120;
+        const H = compact ? 18 : 32;
         this._lastH = H; // altura desenhada neste quadro: _drawInWorldHUD põe os avisos logo abaixo
         const fit = (txt, size, bold) => {
             let s = size;
@@ -16871,9 +16871,9 @@ class ActiveEvent {
         ctx.globalAlpha = 0.8; ctx.fillStyle = '#000'; ctx.fillRect(x - W / 2, y, W, H);
         ctx.strokeStyle = this.color; ctx.lineWidth = 2; ctx.strokeRect(x - W / 2, y, W, H);
         ctx.globalAlpha = 1; ctx.fillStyle = this.color; ctx.textAlign = 'center';
-        fit(name, compact ? 12 : 16, true);
-        ctx.fillText(name, x, y + (compact ? 14 : 16));
-        if (!compact) { ctx.fillStyle = '#fff'; fit(desc, 14, false); ctx.fillText(desc, x, y + 32); }
+        fit(name, compact ? 11 : 13, true);
+        ctx.fillText(name, x, y + 13);
+        if (!compact) { ctx.fillStyle = '#fff'; fit(desc, 11, false); ctx.fillText(desc, x, y + 26); }
     }
 }
 
@@ -28909,6 +28909,39 @@ const NPC_TIPS = [
 // ============================================================
 // NPC Interaction Panel  manages the on-canvas dialog
 // ============================================================
+// Medidas do painel do NPC em unidades lógicas (compacto, para caber no celular em retrato)
+const NPC_PANEL_METRICS = {
+    maxW: 240,      // largura máxima (antes 320)
+    pad: 12,        // margem lateral
+    headBase: 17,   // linha de base do nome
+    divider: 23,    // divisor abaixo do nome
+    msgTop: 31,     // topo da fala
+    msgSize: 13,    // fala: nunca abaixo de 13
+    msgLH: 15,      // altura de linha da fala
+    noteSize: 11,   // dica
+    noteLH: 12,
+    btnH: 34,       // altura dos botões
+    btnSize: 11,    // rótulo dos botões (reduz até 9 se não couber)
+    btnGap: 6,
+    bottomPad: 10,
+};
+function _npcFont(size, bold) {
+    return (bold ? 'bold ' : '') + size + 'px ' + COLORS.CANVAS_FONT;
+}
+// Ajusta o texto a maxW: primeiro reduz a fonte (até 9), depois corta com reticências.
+// Deixa a fonte escolhida no ctx.
+function _npcFitText(ctx, text, maxW, size, bold) {
+    let s = size;
+    ctx.font = _npcFont(s, bold);
+    while (s > 9 && ctx.measureText(text).width > maxW) { s--; ctx.font = _npcFont(s, bold); }
+    let t = String(text);
+    if (ctx.measureText(t).width > maxW) {
+        while (t.length > 1 && ctx.measureText(t + '…').width > maxW) t = t.slice(0, -1);
+        t += '…';
+    }
+    return t;
+}
+
 const NPCInteractionPanel = {
     visible: false,
     npc: null,
@@ -28938,35 +28971,115 @@ const NPCInteractionPanel = {
         this.note = '';
     },
 
-    // Altura extra da caixa de dica (0 quando o painel não tem dica)
-    _noteH() {
-        return this.note ? 68 : 0;
+    // Canvas só para medir texto (mesma fonte do desenho)
+    _measureCtx() {
+        if (!this._mctx) this._mctx = document.createElement('canvas').getContext('2d');
+        return this._mctx;
     },
 
-    // Abaixo do HUD do topo (vida/minimapa ficam em DOM por cima do canvas e
-    // escondiam o nome do NPC e o fim das linhas). Desenho e toque usam o mesmo valor.
+    // Quebra o texto em linhas que cabem em maxW, sem cortar. '\n' vira quebra de
+    // linha (os textos do vendedor usam '\n') e a altura do painel segue o número de linhas.
+    _lines(ctx, text, maxW) {
+        const out = [];
+        String(text || '').split('\n').forEach(par => {
+            let line = '';
+            par.split(' ').forEach(word => {
+                const test = line ? line + ' ' + word : word;
+                if (line && ctx.measureText(test).width > maxW) { out.push(line); line = word; }
+                else line = test;
+            });
+            out.push(line);
+        });
+        return out;
+    },
+
+    // Topo do painel: abaixo do HUD do topo e, em luta de chefe, abaixo da barra do
+    // chefe (DOM por cima do canvas). Desenho e toque usam o mesmo valor.
     _panelY() {
-        const h = typeof height === 'number' && height > 0 ? height : 600;
-        const y = Math.max(10, Math.round(_hudClearTopLogical()));
-        return Math.min(y, Math.max(10, h - (160 + this._noteH()) - 10));
+        let y = _hudClearTopLogical();
+        if (_hudLayout.bossBottom > 0) y = Math.max(y, (_hudLayout.bossBottom + 6) * _hudLayout.k);
+        return Math.max(10, Math.round(y));
+    },
+
+    // Até onde o painel pode descer: borda da tela ou, com analógico fixo, logo acima
+    // do anel (mesma conta do Input._fixedY, que já foge dos botões de ação)
+    _bottomLimit() {
+        const hh = typeof height === 'number' && height > 0 ? height : 600;
+        let lim = hh - 8;
+        if (typeof Input !== 'undefined' && Input._ctrlType === 'touch' && Input._joyMode === 'fixed') {
+            const R = Math.floor(CONFIG.JOYSTICK_RADIUS * getFontScale());
+            lim = Math.min(lim, Input._fixedY() - R - 6);
+        }
+        return lim;
     },
 
     // Colunas dos botões: setas "<"/">" ficam estreitas para sobrar espaço ao
     // rótulo com preço. Desenho e toque usam a mesma divisão.
     _btnLayout(panelX, panelW) {
-        const n = this.buttons.length, gap = 8;
+        const n = this.buttons.length, gap = NPC_PANEL_METRICS.btnGap, pad = NPC_PANEL_METRICS.pad;
         // Rótulos longos ("Comprar (50)") ganham mais largura que os curtos ("Fechar")
         const weights = this.buttons.map(b => { const n = String(b.label).length; return n <= 2 ? 1.3 : Math.sqrt(n); });
         const total = weights.reduce((a, w) => a + w, 0) || 1;
-        const free = panelW - 30 - Math.max(0, n - 1) * gap;
+        const free = panelW - pad * 2 - Math.max(0, n - 1) * gap;
         const out = [];
-        let x = panelX + 15;
+        let x = panelX + pad;
         for (let i = 0; i < n; i++) {
             const w = Math.floor(free * weights[i] / total);
             out.push({ x, w });
             x += w + gap;
         }
         return out;
+    },
+
+    // Tudo o que o painel desenha e onde o toque acerta, a partir do texto atual.
+    // Coordenadas absolutas na tela lógica. Altura: fala até msgTop + linhas,
+    // caixa de dica (se houver) com 6 px de folga, botões com 8 px de folga.
+    _geom(screenW) {
+        const M = NPC_PANEL_METRICS;
+        const panelW = Math.min(M.maxW, screenW - 24);
+        const panelX = (screenW - panelW) / 2;
+        const innerW = panelW - M.pad * 2;
+        const ctx = this._measureCtx();
+        ctx.font = _npcFont(M.msgSize, false);
+        const msgLines = this._lines(ctx, this.message, innerW);
+        let contentEnd = M.msgTop + msgLines.length * M.msgLH; // fim da fala, relativo ao topo
+        let panelY = this._panelY();
+        // Limite de baixo: borda da tela e, no toque, o topo dos analógicos (o painel
+        // não pode cobrir o anel nem passar da borda em celular pequeno)
+        const limit = this._bottomLimit();
+        let noteLines = [], noteRel = 0, noteBoxH = 0;
+        if (this.note) {
+            ctx.font = _npcFont(M.noteSize, false);
+            noteLines = this._lines(ctx, this.note, innerW - 16);
+            noteRel = contentEnd + 6;
+            // A dica encolhe antes de tudo (fala e botões têm prioridade): corta as
+            // linhas que não cabem e, abaixo de 2 linhas, ela some
+            const room = Math.floor((limit - panelY - noteRel - 8 - 8 - M.btnH - M.bottomPad) / M.noteLH);
+            if (room < noteLines.length) {
+                if (room < 2) noteLines = [];
+                else {
+                    noteLines = noteLines.slice(0, room);
+                    let last = noteLines[room - 1];
+                    while (last.length > 1 && ctx.measureText(last + '\u2026').width > innerW - 16) last = last.slice(0, -1);
+                    noteLines[room - 1] = last + '\u2026';
+                }
+            }
+            if (noteLines.length) {
+                noteBoxH = noteLines.length * M.noteLH + 8;
+                contentEnd = noteRel + noteBoxH;
+            }
+        }
+        const btnRel = contentEnd + 8;
+        const panelH = btnRel + M.btnH + M.bottomPad;
+        // Último recurso (fala muito longa): sobe o painel para os botões ficarem na tela
+        const hh = typeof height === 'number' && height > 0 ? height : 600;
+        panelY = Math.min(panelY, Math.max(10, hh - 6 - panelH));
+        return {
+            panelX, panelY, panelW, panelH, innerW,
+            msgLines, noteLines, noteY: panelY + noteRel, noteBoxH,
+            btnY: panelY + btnRel, btnH: M.btnH,
+            cols: this._btnLayout(panelX, panelW),
+        };
     },
 
     showFeedback(msg) {
@@ -28979,14 +29092,11 @@ const NPCInteractionPanel = {
         if (this.feedbackTimer === 0) this.feedback = '';
     },
 
-    // Returns button index if a touch/click hit a button, else -1
-    hitTest(tx, ty, panelX, panelY, panelW) {
-        const btnY = panelY + 110 + this._noteH();
-        const btnH = 32;
-        const cols = this._btnLayout(panelX, panelW);
-        for (let i = 0; i < cols.length; i++) {
-            const bx = cols[i].x, btnW = cols[i].w;
-            if (tx >= bx && tx <= bx + btnW && ty >= btnY && ty <= btnY + btnH) return i;
+    // Índice do botão tocado (ou -1). Recebe o _geom() do quadro: o mesmo do desenho.
+    hitTest(tx, ty, g) {
+        for (let i = 0; i < g.cols.length; i++) {
+            const bx = g.cols[i].x, btnW = g.cols[i].w;
+            if (tx >= bx && tx <= bx + btnW && ty >= g.btnY && ty <= g.btnY + g.btnH) return i;
         }
         return -1;
     },
@@ -28994,72 +29104,78 @@ const NPCInteractionPanel = {
     draw(ctx, screenW) {
         if (!this.visible) return;
 
-        const panelW = Math.min(320, screenW - 20);
-        const panelH = 160 + this._noteH();
-        const panelX = (screenW - panelW) / 2;
-        const panelY = this._panelY();
+        const M = NPC_PANEL_METRICS, pad = M.pad;
+        const g = this._geom(screenW);
+        const { panelX, panelY, panelW, panelH, innerW } = g;
 
         // Background
         ctx.save();
         ctx.fillStyle = 'rgba(10, 10, 30, 0.93)';
         ctx.strokeStyle = '#6644bb';
         ctx.lineWidth = 2;
-        _roundRect(ctx, panelX, panelY, panelW, panelH, 10);
+        _roundRect(ctx, panelX, panelY, panelW, panelH, 8);
         ctx.fill();
         ctx.stroke();
 
-        // NPC Name header
-        const npcName = this.npc ? this.npc.displayName : 'NPC';
+        // Aviso ("Comprado!", "Moedas insuficientes") no canto direito do cabeçalho,
+        // sem ocupar linha própria (o painel não cresce quando ele aparece). O aviso
+        // tem prioridade: é o nome que encolhe/corta enquanto ele aparece (1,5 s).
+        const hasFb = !!(this.feedback && this.feedbackTimer > 0);
+        let fbW = 0;
+        if (hasFb) {
+            ctx.font = _npcFont(11, true);
+            fbW = Math.min(ctx.measureText(this.feedback).width, innerW * 0.62);
+        }
+
+        // Nome do NPC no cabeçalho
+        const npcName = '[' + (this.npc ? this.npc.displayName : 'NPC') + ']';
         ctx.fillStyle = this.npc ? this.npc.nameColor : '#ffcc00';
-        ctx.font = 'bold 14px ' + COLORS.CANVAS_FONT;
         ctx.textAlign = 'left';
-        ctx.fillText('[' + npcName + ']', panelX + 15, panelY + 22);
+        const nameShown = _npcFitText(ctx, npcName, hasFb ? innerW - fbW - 8 : innerW, 13, true);
+        ctx.fillText(nameShown, panelX + pad, panelY + M.headBase);
 
-        // Divider
-        ctx.strokeStyle = '#443388';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(panelX + 10, panelY + 30);
-        ctx.lineTo(panelX + panelW - 10, panelY + 30);
-        ctx.stroke();
-
-        // Dialog message (word-wrap)
-        ctx.fillStyle = '#ccc';
-        ctx.font = '14px ' + COLORS.CANVAS_FONT;
-        ctx.textAlign = 'left';
-        _wrapText(ctx, this.message, panelX + 15, panelY + 48, panelW - 30, 16, 4);
-
-        // Feedback message
-        if (this.feedback && this.feedbackTimer > 0) {
+        if (hasFb) {
             ctx.globalAlpha = Math.min(1, this.feedbackTimer / 20);
             ctx.fillStyle = '#33ff88';
-            ctx.font = 'bold 12px ' + COLORS.CANVAS_FONT;
-            ctx.textAlign = 'center';
-            ctx.fillText(this.feedback, panelX + panelW / 2, panelY + 100);
+            ctx.textAlign = 'right';
+            const fb = _npcFitText(ctx, this.feedback, fbW + 1, 11, true);
+            ctx.fillText(fb, panelX + panelW - pad, panelY + M.headBase);
             ctx.globalAlpha = 1;
         }
 
+        // Divisor
+        ctx.strokeStyle = '#443388';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(panelX + 8, panelY + M.divider);
+        ctx.lineTo(panelX + panelW - 8, panelY + M.divider);
+        ctx.stroke();
+
+        // Fala: linhas já quebradas por _geom (nada cortado)
+        ctx.fillStyle = '#ccc';
+        ctx.font = _npcFont(M.msgSize, false);
+        ctx.textAlign = 'left';
+        g.msgLines.forEach((ln, i) => ctx.fillText(ln, panelX + pad, panelY + M.msgTop + 11 + i * M.msgLH));
+
         // Dica de sistema: caixa própria em tom dourado, abaixo da fala e acima dos botões
-        if (this.note) {
-            const noteX = panelX + 12, noteY = panelY + 104, noteW = panelW - 24, noteBoxH = 60;
+        if (g.noteLines.length) {
+            const noteX = panelX + pad, noteY = g.noteY;
             ctx.fillStyle = 'rgba(38, 28, 8, 0.9)';
             ctx.strokeStyle = '#b8903a';
             ctx.lineWidth = 1;
-            _roundRect(ctx, noteX, noteY, noteW, noteBoxH, 6);
+            _roundRect(ctx, noteX, noteY, innerW, g.noteBoxH, 6);
             ctx.fill();
             ctx.stroke();
             ctx.fillStyle = '#e8d08a';
-            ctx.font = '11px ' + COLORS.CANVAS_FONT;
+            ctx.font = _npcFont(M.noteSize, false);
             ctx.textAlign = 'left';
-            _wrapText(ctx, this.note, noteX + 8, noteY + 15, noteW - 16, 13, 4);
+            g.noteLines.forEach((ln, i) => ctx.fillText(ln, noteX + 8, noteY + 12 + i * M.noteLH));
         }
 
-        // Buttons
-        const btnY = panelY + 110 + this._noteH();
-        const btnH = 32;
-        const cols = this._btnLayout(panelX, panelW);
+        // Botões
+        const btnY = g.btnY, btnH = g.btnH;
         for (let i = 0; i < this.buttons.length; i++) {
-            const bx = cols[i].x, btnW = cols[i].w;
+            const bx = g.cols[i].x, btnW = g.cols[i].w;
             ctx.fillStyle = 'rgba(60, 40, 120, 0.9)';
             ctx.strokeStyle = '#8866dd';
             ctx.lineWidth = 1.5;
@@ -29071,13 +29187,7 @@ const NPCInteractionPanel = {
             ctx.textAlign = 'center';
             // Com 4 botões numa tela estreita "Comprar (50)" vazava do botão: reduz a
             // fonte até 9 px e, se ainda não couber, corta com reticências.
-            let label = String(this.buttons[i].label), fs = 12;
-            ctx.font = 'bold 12px ' + COLORS.CANVAS_FONT;
-            while (fs > 9 && ctx.measureText(label).width > btnW - 6) { fs--; ctx.font = 'bold ' + fs + 'px ' + COLORS.CANVAS_FONT; }
-            if (ctx.measureText(label).width > btnW - 6) {
-                while (label.length > 1 && ctx.measureText(label + '…').width > btnW - 6) label = label.slice(0, -1);
-                label += '…';
-            }
+            const label = _npcFitText(ctx, String(this.buttons[i].label), btnW - 6, M.btnSize, true);
             ctx.fillText(label, bx + btnW / 2, btnY + btnH / 2 + 4);
         }
 
@@ -29394,11 +29504,9 @@ class NPC {
         const itemName = window._L ? _L(item.nameKey, item.name) : item.name;
         const itemDesc = window._L ? _L(item.descKey, item.desc) : item.desc;
         const coinsLabel = window.I18n ? I18n.t('npc.merchant.coins') : ' moedas';
-        const prevLabel = window.I18n ? I18n.t('npc.merchant.prev') : '\n[< Anterior]';
-        const nextLabel = window.I18n ? I18n.t('npc.merchant.next') : '\n[Próximo >]';
         const self = this;
-        const msg = itemName + ' - ' + item.cost + coinsLabel + '\n' + itemDesc +
-            (idx > 0 ? prevLabel : '') + (idx < self._merchantItems.length - 1 ? nextLabel : '');
+        // As setas < e > já são botões: o texto "[< Anterior]"/"[Próximo >]" só ocupava duas linhas
+        const msg = itemName + ' - ' + item.cost + coinsLabel + '\n' + itemDesc;
         const buttons = [];
         if (idx > 0) buttons.push({ label: '<', action: () => self._showMerchantItem(idx - 1) });
         buttons.push({
@@ -29548,10 +29656,9 @@ const NPCSystem = {
         if (!NPCInteractionPanel.visible) return false;
         CanvasMenuNav.kb = false; // toque/clique volta a ser o modo principal: some o destaque do teclado
         const screenW = width || 800;
-        const panelW = Math.min(320, screenW - 20);
-        const panelX = (screenW - panelW) / 2;
-        const panelY = NPCInteractionPanel._panelY();
-        const idx = NPCInteractionPanel.hitTest(tx, ty, panelX, panelY, panelW);
+        // Mesma geometria do desenho (_geom), inclusive a altura da fala e da dica
+        const g = NPCInteractionPanel._geom(screenW);
+        const idx = NPCInteractionPanel.hitTest(tx, ty, g);
         if (idx >= 0 && NPCInteractionPanel.buttons[idx]) {
             NPCInteractionPanel.buttons[idx].action();
             return true;
