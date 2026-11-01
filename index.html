@@ -9081,6 +9081,13 @@ var CONFIG = {
     HITSTOP_BOSS: 8,
     KNOCKBACK_STRENGTH: 8,
     KNOCKBACK_HEAVY_MULT: 0.3,          // reduced knockback on elite/boss
+    // Recuo de impacto (impulso separado, aplicado em _updateEntitySimulation)
+    KNOCKBACK_HIT_IMPULSE: 2.5,         // px/frame por golpe do jogador (inimigo comum); desloca ~10 px no total
+    KNOCKBACK_HEAVY_HIT_MULT: 0.6,      // elite e escudeiro (~6 px)
+    KNOCKBACK_BOSS_HIT_MULT: 0.3,       // chefe (~3 px)
+    KNOCKBACK_WARRIOR_MULT: 0.4,        // guerreiro já empurra no próprio golpe (COMBO_CHAIN_WARRIOR_KB): só complemento
+    KNOCKBACK_MAX_SPEED: 7,             // limite do módulo do impulso acumulado
+    KNOCKBACK_DECAY: 0.75,              // fração do impulso que sobra a cada frame
     DODGE_INVULN_FRAMES: 12,            // i-frames granted at the start of the dash (0.2s)
 
     // New Enemy Types (Phase 4)
@@ -10620,7 +10627,7 @@ function _updateWeather() {
                 if (dSq < nearestDistSq) { nearestDistSq = dSq; nearest = e; }
             }
             if (nearest) {
-                nearest.takeDamage(CONFIG.WEATHER_STORM_DAMAGE, map, player);
+                nearest.takeDamage(CONFIG.WEATHER_STORM_DAMAGE, map, player, true);
                 spawnParticles(nearest.x, nearest.y, '#ffffaa', 20, 8);
                 shake = 12;
                 if (typeof ScreenEffects !== 'undefined') ScreenEffects.triggerFlash(0.3, '#ffffff', 8);
@@ -10766,6 +10773,34 @@ function _updateEntitySimulation() {
             const hz = e.arenaHazards;
             for (let k = 0; k < hz.length; k++) hz[k].update(player);
             for (let k = hz.length - 1; k >= 0; k--) { if (!hz[k].alive) hz.splice(k, 1); }
+        }
+    }
+
+    // Passe de recuo: todo frame, para todas as entidades vivas (inclusive as que a IA não atualizou).
+    // Só roda aqui, na simulação ativa (update() sai antes em pausa, hit-stop e painel).
+    // Colisão de parede por eixo (X, depois Y); limite do mapa; decai o impulso. Conta flinchTimer (squash).
+    if (map) {
+        const _kbMapW = (map.width || CONFIG.MAP_WIDTH) * CONFIG.TILE_SIZE, _kbMapH = (map.height || CONFIG.MAP_HEIGHT) * CONFIG.TILE_SIZE;
+        for (let i = 0; i < entities.length; i++) {
+            const e = entities[i];
+            if (e === player) continue;
+            if (e.flinchTimer > 0) e.flinchTimer--;
+            if (!e.alive || (!e.kbVx && !e.kbVy)) continue;
+            if (e._kbBlocked()) { e.kbVx = 0; e.kbVy = 0; continue; }
+            const r = e.radius * 0.85;
+            // Eixo por eixo: a nova posição só vale se o corpo inteiro cabe (mesmo teste de move)
+            if (e.kbVx) {
+                const nx = e.x + e.kbVx;
+                if (_entityClear(map, nx, e.y, r)) e.x = nx; else e.kbVx = 0;
+            }
+            if (e.kbVy) {
+                const ny = e.y + e.kbVy;
+                if (_entityClear(map, e.x, ny, r)) e.y = ny; else e.kbVy = 0;
+            }
+            if (e.x < r) e.x = r; else if (e.x > _kbMapW - r) e.x = _kbMapW - r;
+            if (e.y < r) e.y = r; else if (e.y > _kbMapH - r) e.y = _kbMapH - r;
+            e.kbVx *= CONFIG.KNOCKBACK_DECAY; e.kbVy *= CONFIG.KNOCKBACK_DECAY;
+            if (e.kbVx * e.kbVx + e.kbVy * e.kbVy < 0.0025) { e.kbVx = 0; e.kbVy = 0; }
         }
     }
 
@@ -18553,13 +18588,12 @@ const ScreenEffects = {
 
     // Inimigo atingido por especial: flash curto e recuo maior. Boss recebe só uma fração.
     specialHit(e, dx, dy) {
-        if (!e || e === player || e.isP) return;
+        if (!e || e === player || e.isP || e.isBarrier || typeof e.knockback !== 'function') return;
         const d = Math.hypot(dx, dy) || 1;
-        const mag = CONFIG.KNOCKBACK_STRENGTH * (e.isB ? 0.1 : 0.6);
         e.ft = Math.max(e.ft || 0, 6);
         e.flinchTimer = Math.max(e.flinchTimer || 0, e.isB ? 3 : 6);
-        e.flinchVx = (dx / d) * mag;
-        e.flinchVy = (dy / d) * mag;
+        // Especial empurra 1,5x o golpe comum (chefe e pesados já reduzidos em _kbScale)
+        e.knockback(dx / d, dy / d, CONFIG.KNOCKBACK_HIT_IMPULSE * 1.5 * e._kbScale());
     },
 
     drawRings(ctx, cx, cy) {
@@ -22168,13 +22202,13 @@ const ElementalSystem = {
                         if (e !== entity && e.alive && e !== playerRef) {
                             const dx = e.x - entity.x, dy = e.y - entity.y;
                             if (dx*dx + dy*dy < toxicRangeSq) {
-                                e.takeDamage(toxicDmg, null, source);
+                                e.takeDamage(toxicDmg, null, source, true);
                                 ElementalSystem.applyStatus(e, 'poison', 2, 120, source);
                             }
                         }
                     }
                 }
-                entity.takeDamage(toxicDmg * 1.5, null, source);
+                entity.takeDamage(toxicDmg * 1.5, null, source, true);
                 if (typeof spawnParticles !== 'undefined') {
                     spawnParticles(entity.x, entity.y, '#66ff33', 20, toxicRange/2);
                     spawnParticles(entity.x, entity.y, '#88ff00', 15, 5);
@@ -22207,7 +22241,7 @@ const ElementalSystem = {
             case 'inferno':
                 // Heavy fire DoT
                 const infernoDmg = 5 + (source ? source.level || 1 : 1);
-                entity.takeDamage(infernoDmg, null, source);
+                entity.takeDamage(infernoDmg, null, source, true);
                 // Extra visual
                 if (typeof spawnParticles !== 'undefined') {
                     spawnParticles(entity.x, entity.y, '#ff6600', 8, 15);
@@ -22245,14 +22279,14 @@ const ElementalSystem = {
                 switch (status.type) {
                     case 'fire':
                         const fireDmg = 2 + status.stacks;
-                        entity.takeDamage(fireDmg, null, status.source);
+                        entity.takeDamage(fireDmg, null, status.source, true);
                         if (typeof spawnParticles !== 'undefined') {
                             spawnParticles(entity.x + (Math.random()-0.5)*20, entity.y + (Math.random()-0.5)*20, '#ff6600', 1, 2);
                         }
                         break;
                     case 'poison':
                         const poisonDmg = 3 + status.stacks;
-                        entity.takeDamage(poisonDmg, null, status.source);
+                        entity.takeDamage(poisonDmg, null, status.source, true);
                         entity.poisonStacks = (entity.poisonStacks || 0) + 1;
                         if (typeof spawnParticles !== 'undefined') {
                             spawnParticles(entity.x + (Math.random()-0.5)*10, entity.y + (Math.random()-0.5)*10, '#33ff88', 1, 3);
@@ -22260,14 +22294,14 @@ const ElementalSystem = {
                         break;
                     case 'toxic':
                         const toxicDmg = 5 + status.stacks * 2;
-                        entity.takeDamage(toxicDmg, null, status.source);
+                        entity.takeDamage(toxicDmg, null, status.source, true);
                         if (typeof spawnParticles !== 'undefined') {
                             spawnParticles(entity.x + (Math.random()-0.5)*20, entity.y + (Math.random()-0.5)*20, '#66ff33', 2, 4);
                         }
                         break;
                     case 'inferno':
                         const infernoDmg = 5 + status.stacks * 3;
-                        entity.takeDamage(infernoDmg, null, status.source);
+                        entity.takeDamage(infernoDmg, null, status.source, true);
                         if (typeof spawnParticles !== 'undefined') {
                             spawnParticles(entity.x + (Math.random()-0.5)*25, entity.y + (Math.random()-0.5)*25, '#ff4400', 3, 5);
                         }
@@ -22769,7 +22803,7 @@ class Hazard {
                     const e = entities[i];
                     if(e === p || !e.alive || e.isBarrier || e.isP) continue;
                     const edx = e.x-this.x, edy = e.y-this.y;
-                    if(edx*edx + edy*edy < this.size * this.size) e.takeDamage(this.damage, m, p);
+                    if(edx*edx + edy*edy < this.size * this.size) e.takeDamage(this.damage, m, p, true);
                 }
             }
             return;
@@ -23746,10 +23780,25 @@ class Map {
 // BASE ENTITY CLASS - Enhanced with flinch, knockback, and better hit feedback
 // Shared collision direction tables (module scope) so Entity.move() allocates nothing.
 const _MOVE_DIRS = [[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[1,-1],[-1,1],[1,1]];
+// Teste de colisão de Entity.move e do passe de recuo: centro e 8 pontos na borda (raio r). Sem closure.
+function _entityClear(m, px, py, r) {
+    if(m && m.isWall && m.isWall(px, py)) return false;
+    if(!m) return true;
+    if(m.isWall(px - r, py)) return false;
+    if(m.isWall(px + r, py)) return false;
+    if(m.isWall(px, py - r)) return false;
+    if(m.isWall(px, py + r)) return false;
+    if(m.isWall(px - r, py - r)) return false;
+    if(m.isWall(px + r, py - r)) return false;
+    if(m.isWall(px - r, py + r)) return false;
+    if(m.isWall(px + r, py + r)) return false;
+    return true;
+}
 class Entity {
-    constructor(x,y,r,hp,c) { this.x=x; this.y=y; this.radius=r; this.radiusSq=r*r; this.hp=this.maxHp=hp; this.color=c; this.alive=true; this.ft=0; this.lr=0; this.shield=0; this.speedBoost=0; this.frozen=0; this.stealth=0; this.poisonStacks=0; this.poisonTimer=0; this.walkTimer=0; this.angle=0; this.flinchTimer=0; this.flinchVx=0; this.flinchVy=0; this.hitFlashTimer=0; }
+    constructor(x,y,r,hp,c) { this.x=x; this.y=y; this.radius=r; this.radiusSq=r*r; this.hp=this.maxHp=hp; this.color=c; this.alive=true; this.ft=0; this.lr=0; this.shield=0; this.speedBoost=0; this.frozen=0; this.stealth=0; this.poisonStacks=0; this.poisonTimer=0; this.walkTimer=0; this.angle=0; this.flinchTimer=0; this.kbVx=0; this.kbVy=0; this.hitFlashTimer=0; }
     
-    takeDamage(a, m, source=null) {
+    // noKb: dano indireto vindo do jogador (veneno, cadeia, área, espinhos, pets) não empurra
+    takeDamage(a, m, source=null, noKb=false) {
         if (!Number.isFinite(a)) return; // dano corrompido (NaN/undefined) nunca pode virar HP NaN
         // Mutador 'inimigos resistentes' (v66): +25% de vida = o dano recebido pelo inimigo cai na mesma proporção
         if (this !== player && !this.isP && typeof RunMutators !== 'undefined') a = a / RunMutators.hpMult();
@@ -23758,7 +23807,7 @@ class Entity {
         if (this !== player && !this.isB && window._dailyMods && window._dailyMods.enemyOneHit) {
             a = this.hp + (this.shield || 0); finalDmg = a;
         }
-        if(source && source.mutations) { if(source.mutations.vampiric) { const heal = finalDmg * CONFIG.VAMPIRIC_LIFESTEAL; source.hp = Math.min(source.maxHp, source.hp + heal); DamageNumbers.add(source.x, source.y, heal, 'heal'); } if(source.mutations.lightning && SeedSystem.random() < CONFIG.LIGHTNING_CHAIN_CHANCE) { dmgType = 'lightning'; finalDmg *= CONFIG.LIGHTNING_DAMAGE_MULT; const chainHeal = finalDmg * 0.03; if(source.hp != null) source.hp = Math.min(source.maxHp, source.hp + chainHeal); const chainRangeSq = CONFIG.LIGHTNING_CHAIN_RANGE * CONFIG.LIGHTNING_CHAIN_RANGE; for(let i = 0; i < entities.length; i++) { const e = entities[i]; if(e !== this && e.alive) { const dx = e.x-this.x, dy = e.y-this.y; if(dx*dx + dy*dy < chainRangeSq) { e.takeDamage(finalDmg * 0.5, m, source); spawnParticles(e.x, e.y, '#ffff33', 3, 2); } } } } if(source.mutations.freeze && SeedSystem.random() < CONFIG.FREEZE_CHANCE) { this.frozen = CONFIG.FREEZE_DURATION; spawnParticles(this.x, this.y, '#33ccff', 10, 4); } }
+        if(source && source.mutations) { if(source.mutations.vampiric) { const heal = finalDmg * CONFIG.VAMPIRIC_LIFESTEAL; source.hp = Math.min(source.maxHp, source.hp + heal); DamageNumbers.add(source.x, source.y, heal, 'heal'); } if(source.mutations.lightning && SeedSystem.random() < CONFIG.LIGHTNING_CHAIN_CHANCE) { dmgType = 'lightning'; finalDmg *= CONFIG.LIGHTNING_DAMAGE_MULT; const chainHeal = finalDmg * 0.03; if(source.hp != null) source.hp = Math.min(source.maxHp, source.hp + chainHeal); const chainRangeSq = CONFIG.LIGHTNING_CHAIN_RANGE * CONFIG.LIGHTNING_CHAIN_RANGE; for(let i = 0; i < entities.length; i++) { const e = entities[i]; if(e !== this && e.alive) { const dx = e.x-this.x, dy = e.y-this.y; if(dx*dx + dy*dy < chainRangeSq) { e.takeDamage(finalDmg * 0.5, m, source, true); spawnParticles(e.x, e.y, '#ffff33', 3, 2); } } } } if(source.mutations.freeze && SeedSystem.random() < CONFIG.FREEZE_CHANCE) { this.frozen = CONFIG.FREEZE_DURATION; spawnParticles(this.x, this.y, '#33ccff', 10, 4); } }
         if(source && source.skills && source.skills.execute && this.hp < this.maxHp * CONFIG.ROGUE_ASSASSINATE_THRESHOLD) { finalDmg = this.isB ? Math.min(this.maxHp * 0.10, Math.max(10, this.maxHp * CONFIG.ROGUE_ASSASSINATE_DAMAGE_PCT)) : Math.max(10, this.maxHp * CONFIG.ROGUE_ASSASSINATE_DAMAGE_PCT); dmgType = 'crit'; if(typeof DamageNumbers !== 'undefined') DamageNumbers.add(this.x, this.y, 'EXEC!', 'execute'); }
         if(source && source.skills && source.skills.deathmark && this._deathMarkT > 0) { finalDmg = Math.floor(finalDmg * 1.5); dmgType = 'crit'; }
         if(source && source.skills && source.skills.stun && SeedSystem.random() < 0.10) { this.frozen = Math.max(this.frozen || 0, Math.floor(40 * (this.elite ? 0.5 : this.isB ? 0.25 : 1))); spawnParticles(this.x, this.y, '#ffcc00', 6, 3); if(typeof DamageNumbers !== 'undefined') DamageNumbers.add(this.x, this.y, 'STUN!', 'stun'); if(typeof Statistics !== 'undefined' && source === player) { Statistics.data.stunsApplied = (Statistics.data.stunsApplied || 0) + 1; const _sb = Statistics._stunWin || (Statistics._stunWin = { t: -9999, n: 0 }); if (gameTime - _sb.t > GAME_TICKS_PER_SECOND) { _sb.t = gameTime; _sb.n = 0; } _sb.n++; if (_sb.n > (Statistics.data.maxStunBurst || 0)) Statistics.data.maxStunBurst = _sb.n; } }
@@ -23846,7 +23895,7 @@ class Entity {
                 }
             }
             if (_chainBest) {
-                _chainBest.takeDamage(finalDmg * 0.5, m, player);
+                _chainBest.takeDamage(finalDmg * 0.5, m, player, true);
                 if (typeof spawnParticles !== 'undefined') spawnParticles(_chainBest.x, _chainBest.y, '#ffff33', 6, 3);
                 if (typeof SND !== 'undefined' && SND.playLightning) SND.playLightning();
             }
@@ -23882,22 +23931,20 @@ class Entity {
             }
             
             // Flinch / knockback (only for non-player, non-boss entities)
+            // flinchTimer só anima o squash; o recuo é o impulso kbVx/kbVy abaixo (não soma em move)
             if (this !== player && !this.isB) {
                 this.flinchTimer = Math.min(4 + Math.floor(finalDmg / 5), 12);
-                // Single source of knockback: bullets used to also push the body
-                // directly, so one hit flung the enemy twice. The flinch is the
-                // one that also drives the squash animation.
-                const kbMag = Math.min(CONFIG.KNOCKBACK_STRENGTH, 1 + finalDmg * 0.03) * (this.elite ? CONFIG.KNOCKBACK_HEAVY_MULT : 1);
-                this.flinchVx = Math.cos(angle) * kbMag;
-                this.flinchVy = Math.sin(angle) * kbMag;
                 // Brief material flash
                 this.hitFlashTimer = 4;
             } else if (this !== player) {
-                // Boss: recuo leve (fração pequena do recuo normal), sem squash
-                const kbBoss = Math.min(CONFIG.KNOCKBACK_STRENGTH, 1 + finalDmg * 0.03) * 0.15;
+                // Boss: sem squash
                 this.flinchTimer = 3;
-                this.flinchVx = Math.cos(angle) * kbBoss;
-                this.flinchVy = Math.sin(angle) * kbBoss;
+            }
+            // Recuo do golpe do jogador. Só dano direto (noKb false); guerreiro reduz pelo empurrão que já dá no golpe.
+            if (source === player && !noKb && this !== player && !this.isP) {
+                let _kbHit = CONFIG.KNOCKBACK_HIT_IMPULSE * (1 + Math.min(finalDmg, 60) / 300) * this._kbScale();
+                if (source.type === 'warrior') _kbHit *= CONFIG.KNOCKBACK_WARRIOR_MULT;
+                this.knockback(Math.cos(angle), Math.sin(angle), _kbHit);
             }
 
             // Screen shake for ANY significant hit (dano recebido pelo jogador igual; em inimigo, escala com a multidão)
@@ -23985,7 +24032,7 @@ class Entity {
                         if (e !== this && e.alive && (!e.isP || e === player)) {
                             const dx = e.x - this.x, dy = e.y - this.y;
                             if(dx * dx + dy * dy < explSq) {
-                                e.takeDamage(explDmg, m, source);
+                                e.takeDamage(explDmg, m, source, true);
                                 spawnParticles(e.x, e.y, '#ff6600', 6, 4);
                             }
                         }
@@ -24004,7 +24051,7 @@ class Entity {
                         if (e !== this && e.alive && (!e.isP || e === player)) {
                             const dx = e.x - this.x, dy = e.y - this.y;
                             if(dx * dx + dy * dy < incSq) {
-                                e.takeDamage(incDmg, m, source);
+                                e.takeDamage(incDmg, m, source, true);
                                 spawnParticles(e.x, e.y, '#ff8800', 6, 5);
                             }
                         }
@@ -24032,7 +24079,7 @@ class Entity {
                 const potency = (typeof player !== 'undefined' && player && player.poisonPotency) ? player.poisonPotency : 1;
                 const dmg = CONFIG.ROGUE_POISON_DAMAGE * this.poisonStacks * potency;
                 if (dmg > 0) {
-                    this.takeDamage(dmg, (typeof map !== 'undefined' ? map : null), (typeof player !== 'undefined' ? player : null));
+                    this.takeDamage(dmg, (typeof map !== 'undefined' ? map : null), (typeof player !== 'undefined' ? player : null), true);
                     if (typeof spawnParticles !== 'undefined') spawnParticles(this.x, this.y, '#44ff88', 2, 3);
                 }
             }
@@ -24041,16 +24088,30 @@ class Entity {
         }
     }
 
+    // Soma impulso de recuo (px/frame) na direção (ux,uy) e limita a velocidade máxima
+    knockback(ux, uy, mag) {
+        if (this._kbBlocked()) return;
+        // Rendimento decrescente: impulso já alto soma menos; congelado/enraizado recua pouco
+        mag *= Math.max(0.25, 1 - Math.hypot(this.kbVx, this.kbVy) / CONFIG.KNOCKBACK_MAX_SPEED);
+        if (this.frozen > 0) mag *= 0.3;
+        this.kbVx += ux * mag; this.kbVy += uy * mag;
+        const sp = Math.sqrt(this.kbVx * this.kbVx + this.kbVy * this.kbVy);
+        if (sp > CONFIG.KNOCKBACK_MAX_SPEED) { const k = CONFIG.KNOCKBACK_MAX_SPEED / sp; this.kbVx *= k; this.kbVy *= k; }
+    }
+    // Fator do impulso por tipo: chefe pouco, elite e escudeiro médio
+    _kbScale() { return this.isB ? CONFIG.KNOCKBACK_BOSS_HIT_MULT : ((this.elite || this.isShielder) ? CONFIG.KNOCKBACK_HEAVY_HIT_MULT : 1); }
+    // Sem recuo quando a posição é controlada pelo script ou o alvo é fixo: armadilhas, mímico
+    // disfarçado, barreiras, investida do charger e investida/teletransporte/carga do chefe
+    _kbBlocked() {
+        return !!(this.isBarrier || this.enemyType === 'trap' || (this.enemyType === 'mimic' && !this.revealed)
+            || this._chargeState === 'dash' || this.charging || this._chargeWindupTimer > 0 || this._dashT > 0 || this._teleportT > 0);
+    }
+
     move(dx, dy, m) {
         // Daily challenge modifier: enemy movement speed
         if (window._dailyMods && window._dailyMods.enemySpeed) { dx *= window._dailyMods.enemySpeed; dy *= window._dailyMods.enemySpeed; }
-        // Apply flinch knockback
+        // Recuo é aplicado no passe de _updateEntitySimulation; aqui só o passo próprio
         let fx = dx, fy = dy;
-        if (this.flinchTimer > 0) {
-            fx += this.flinchVx;
-            fy += this.flinchVy;
-            this.flinchTimer--;
-        }
         const r = this.radius * 0.85; // Slightly smaller hitbox for smoother movement
         // Clamp to map boundaries to prevent going outside
         if(m && typeof CONFIG !== 'undefined') {
@@ -24065,19 +24126,7 @@ class Entity {
         // Check 8 directions first circle-for-wall collision. The direction tables
         // below are module-level constants so move() never allocates arrays (called for
         // every entity every tick - a big GC hotspot).
-        const _isClear = (px, py) => {
-            if(m && m.isWall && m.isWall(px, py)) return false;
-            if(!m) return true;
-            if(m.isWall(px - r, py)) return false;
-            if(m.isWall(px + r, py)) return false;
-            if(m.isWall(px, py - r)) return false;
-            if(m.isWall(px, py + r)) return false;
-            if(m.isWall(px - r, py - r)) return false;
-            if(m.isWall(px + r, py - r)) return false;
-            if(m.isWall(px - r, py + r)) return false;
-            if(m.isWall(px + r, py + r)) return false;
-            return true;
-        };
+        const _isClear = (px, py) => _entityClear(m, px, py, r);
 
         // Push out of wall if stuck. Tries 8 directions at escalating distances - a fixed
         // single-radius push isn't enough to clear an entity embedded more than a few
@@ -26166,7 +26215,7 @@ class Boss extends Enemy {
         // Draw arena hazards
         for(let i = 0; i < this.arenaHazards.length; i++) this.arenaHazards[i].draw(ctx, cx, cy);
     }
-    takeDamage(a, m, source=null) {
+    takeDamage(a, m, source=null, noKb=false) {
         if (source && source.type !== 'rogue') {
             const dx = this.x - source.x;
             const dy = this.y - source.y;
@@ -26196,7 +26245,7 @@ class Boss extends Enemy {
         if (this._phaseGuardFrames > 0 && a > 0) a = Math.max(1, Math.ceil(a * 0.45));
         // Boss resistencia global: chefs absorvem uma fração fixa do dano
         if(a > 0) a = Math.max(1, Math.ceil(a * (1 - CONFIG.BOSS_DAMAGE_REDUCTION)));
-        super.takeDamage(a, m, source);
+        super.takeDamage(a, m, source, noKb);
 
         // --- Phase 4: Thorn aura in phase 3+  reflect 10% damage to attacker ---
         if(this.alive && this.phase >= 3 && source === player && a > 0) {
@@ -26726,7 +26775,7 @@ class Pet {
                 }
             }
             if(nearest) {
-                nearest.takeDamage(this.damage * this._synMult(), m, player);
+                nearest.takeDamage(this.damage * this._synMult(), m, player, true);
                 spawnParticles(nearest.x, nearest.y, '#ff6600', 12, 4);
                 this._atkT = 14;
                 const steps = 6, dx2 = (nearest.x - this.x) / steps, dy2 = (nearest.y - this.y) / steps;
@@ -26745,7 +26794,7 @@ class Pet {
                 }
             }
             if(nearest) {
-                nearest.takeDamage(this.data.diveDamage * this._synMult(), m, player);
+                nearest.takeDamage(this.data.diveDamage * this._synMult(), m, player, true);
                 spawnParticles(nearest.x, nearest.y, this.color, 10, 3);
                 this._atkT = 14;
                 this.x = nearest.x; this.y = nearest.y;
@@ -26760,7 +26809,7 @@ class Pet {
                     if((e instanceof Enemy || e.isEnemy) && e.alive) {
                         const edx = e.x-this.x, edy = e.y-this.y;
                         if(edx*edx + edy*edy < trampleSq) {
-                            e.takeDamage(this.damage * 0.5 * this._synMult(), m, player);
+                            e.takeDamage(this.damage * 0.5 * this._synMult(), m, player, true);
                             this._atkT = 14;
                         }
                     }
@@ -26780,7 +26829,7 @@ class Pet {
                 }
             }
             if(nearest) {
-                nearest.takeDamage(this.damage * this._synMult(), m, player);
+                nearest.takeDamage(this.damage * this._synMult(), m, player, true);
                 spawnParticles(nearest.x, nearest.y, this.color, 8, 3);
                 this._atkT = 14;
             }
@@ -27228,7 +27277,7 @@ class Bullet {
                         // Unique weapon abilities
                         if(this.weapon.unique === 'holySmite' && this.hitCount <= 1) {
                             if(typeof spawnParticles !== 'undefined') spawnParticles(e.x, e.y, '#ffee00', 15, 25);
-                            e.takeDamage(Math.floor(this.dmg * 0.5), m, source);
+                            e.takeDamage(Math.floor(this.dmg * 0.5), m, source, true);
                             if(typeof ScreenEffects !== 'undefined') ScreenEffects.triggerFlash(0.15, '#ffee00');
                             if(typeof SND !== 'undefined') SND.play(600, 'sine', 0.1, 0.15);
                         }
@@ -27275,7 +27324,7 @@ class Bullet {
                                     if(_ce.alive && _ce !== e) {
                                         const cdx = _ce.x - e.x, cdy = _ce.y - e.y;
                                         if(cdx*cdx + cdy*cdy < 60*60) {
-                                            _ce.takeDamage(Math.floor(this.dmg * 0.6), m, source);
+                                            _ce.takeDamage(Math.floor(this.dmg * 0.6), m, source, true);
                                             if(typeof spawnParticles !== 'undefined') spawnParticles(_ce.x, _ce.y, '#ffaa00', 3, 4);
                                         }
                                     }
@@ -27293,8 +27342,8 @@ class Bullet {
                         e.poisonTimer = CONFIG.ROGUE_POISON_DURATION;
                         spawnParticles(e.x, e.y, '#33ff88', 3, 2);
                     }
-                    // (Knockback moved entirely into Entity.takeDamage's flinch:
-                    // this block used to push the body as well, doubling it.)
+                    // (O recuo do golpe agora é o impulso kbVx/kbVy de Entity.knockback;
+                    // este bloco não empurra o corpo, para não duplicar.)
                     // --- Phase 4: Rogue crit-zoom on high damage ---
                     if(this.isP && source && source.type === 'rogue' && this.dmg >= CONFIG.ROGUE_CRIT_ZOOM_THRESHOLD) {
                         source.critZoomTimer = CONFIG.ROGUE_CRIT_ZOOM_DURATION;
@@ -27303,7 +27352,7 @@ class Bullet {
                     }
                     // Poison effect
                     if(this.poisonDmg > 0) {
-                        e.takeDamage(this.poisonDmg, m, source);
+                        e.takeDamage(this.poisonDmg, m, source, true);
                     if(typeof ElementalSystem !== 'undefined') ElementalSystem.applyStatus(e, 'poison', 1, 90, source);
                         spawnParticles(e.x, e.y, '#33ff33', 5, 2);
                     }
@@ -27327,7 +27376,7 @@ class Bullet {
                             const _be = entities[_bi];
                             if(_be !== e && _be.alive && typeof Enemy !== 'undefined' && (_be instanceof Enemy || _be.isEnemy)) {
                                 const _bdx = _be.x - e.x, _bdy = _be.y - e.y;
-                                if(_bdx * _bdx + _bdy * _bdy < _bR2) _be.takeDamage(_bDmg, m, source);
+                                if(_bdx * _bdx + _bdy * _bdy < _bR2) _be.takeDamage(_bDmg, m, source, true);
                             }
                         }
                         ScreenEffects._addRing(e.x, e.y, this.color, CONFIG.COMBO_CHAIN_BLAST_RADIUS, 12, 3, 0);
@@ -27562,7 +27611,7 @@ class Player extends Entity {
                 if(e !== this && e.alive && typeof Enemy !== 'undefined' && (e instanceof Enemy || e.isEnemy)) {
                     const dx = e.x - pl.x, dy = e.y - pl.y;
                     if(dx * dx + dy * dy < rSq) {
-                        e.takeDamage(CONFIG.VENOM_POOL_DMG, map, this);
+                        e.takeDamage(CONFIG.VENOM_POOL_DMG, map, this, true);
                         e.poisonStacks = Math.min(CONFIG.ROGUE_POISON_MAX_STACKS, (e.poisonStacks || 0) + 1);
                         e.poisonTimer = Math.max(e.poisonTimer || 0, CONFIG.ROGUE_POISON_DURATION);
                     }
@@ -27579,7 +27628,7 @@ class Player extends Entity {
             const e = entities[i];
             if(e !== this && e.alive && typeof Enemy !== 'undefined' && (e instanceof Enemy || e.isEnemy)) {
                 const dx = e.x - pu.x, dy = e.y - pu.y;
-                if(dx * dx + dy * dy < rSq) { e.takeDamage(pu.dmg, map, this); spawnParticles(e.x, e.y, pu.color, 6, 4); }
+                if(dx * dx + dy * dy < rSq) { e.takeDamage(pu.dmg, map, this, true); spawnParticles(e.x, e.y, pu.color, 6, 4); }
             }
         }
     }
@@ -27683,7 +27732,7 @@ class Player extends Entity {
                 if(e !== this && e.alive) {
                     const dx = e.x-this.x, dy = e.y-this.y;
                     if(dx*dx + dy*dy < slamRangeSq && hasLineOfSight(map, this.x, this.y, e.x, e.y)) {
-                        e.takeDamage(CONFIG.WARRIOR_SLAM_DAMAGE, map, this);
+                        e.takeDamage(CONFIG.WARRIOR_SLAM_DAMAGE, map, this, true); // o impulso vem do specialHit abaixo
                         spawnParticles(e.x, e.y, '#ff6600', 12, 5);
                         spawnParticles(e.x, e.y, '#ffcc00', 6, 8);
                         ScreenEffects.triggerShake(8);
@@ -27741,7 +27790,7 @@ class Player extends Entity {
                     if(e !== this && e.alive) {
                         const edx = e.x - this.x, edy = e.y - this.y;
                         const execDmg = e.isB ? Math.min(e.maxHp * 0.10, Math.max(10, e.maxHp * CONFIG.ROGUE_ASSASSINATE_DAMAGE_PCT)) : Math.max(10, e.maxHp * CONFIG.ROGUE_ASSASSINATE_DAMAGE_PCT);
-                        if(edx*edx + edy*edy < assassRangeSq && e.hp / e.maxHp < threshold) { e.takeDamage(execDmg, map, this); ScreenEffects.specialHit(e, edx, edy); }
+                        if(edx*edx + edy*edy < assassRangeSq && e.hp / e.maxHp < threshold) { e.takeDamage(execDmg, map, this, true); ScreenEffects.specialHit(e, edx, edy); }
                     }
                 }
             }
@@ -27779,7 +27828,7 @@ class Player extends Entity {
                     if(e !== this && e.alive) {
                         const edx = e.x-this.x, edy = e.y-this.y;
                         if(edx*edx + edy*edy < meteorRangeSq) {
-                            e.takeDamage(CONFIG.MAGE_METEOR_DAMAGE, map, this);
+                            e.takeDamage(CONFIG.MAGE_METEOR_DAMAGE, map, this, true);
                             spawnParticles(e.x, e.y, '#ff4400', 10, 5);
                             ScreenEffects.triggerShake(6);
                             ScreenEffects.specialHit(e, edx, edy);
@@ -27827,7 +27876,7 @@ class Player extends Entity {
                     if(e !== this && e.alive) {
                         const edx = e.x - this.x, edy = e.y - this.y;
                         if(edx*edx + edy*edy < burstSq) {
-                            e.takeDamage(45, map, this);
+                            e.takeDamage(45, map, this, true);
                             ScreenEffects.specialHit(e, edx, edy);
                             spawnParticles(e.x, e.y, '#66ccff', 8, 4);
                         }
@@ -27887,7 +27936,7 @@ class Player extends Entity {
                         const edx = e.x - this.x, edy = e.y - this.y;
                         const dSq = edx*edx + edy*edy;
                         if(dSq < gustRangeSq) {
-                            e.takeDamage(Math.floor(CONFIG.ELF_WIND_DAMAGE * this.weaponLevel * this.weaponDamageMult), map, this);
+                            e.takeDamage(Math.floor(CONFIG.ELF_WIND_DAMAGE * this.weaponLevel * this.weaponDamageMult), map, this, true);
                             // Knockback: empurra para longe
                             const d = Math.sqrt(dSq) || 1;
                             const kbx = (edx / d) * 9, kby = (edy / d) * 9;
@@ -29722,7 +29771,7 @@ const RelicSystem = {
             if (e !== enemy && e !== player && e.alive) {
                 const edx = e.x - enemy.x, edy = e.y - enemy.y;
                 if(edx*edx + edy*edy < explosaoSq) {
-                    e.takeDamage(dmg, map, player);
+                    e.takeDamage(dmg, map, player, true);
                 }
             }
         }
@@ -29777,7 +29826,7 @@ const RelicSystem = {
         const pct = this.reflectPct(victim);
         const reflected = Math.floor(dmg * pct);
         if (reflected > 0 && typeof attacker.takeDamage === 'function') {
-            attacker.takeDamage(reflected, map, victim);
+            attacker.takeDamage(reflected, map, victim, true);
             if (victim.relics && victim.relics.has('mirror') && typeof spawnParticles !== 'undefined') spawnParticles(attacker.x, attacker.y, '#cc88ff', 8, 3);
         }
     },
