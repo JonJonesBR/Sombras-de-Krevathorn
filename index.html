@@ -417,16 +417,14 @@ body.controls-left #actions-right {
     left: 50%;
     transform: translateX(-50%);
     text-align: center;
-    font-size: calc(13px * var(--font-scale, 1));
+    font-size: calc(12px * var(--font-scale, 1));
     font-weight: 700;
     color: #fff;
     text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9);
     opacity: 0;
     pointer-events: none;
-    background: rgba(30, 22, 45, 0.85);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    padding: 8px 20px;
+    background: rgba(30, 22, 45, 0.6);
+    padding: 6px 14px;
     border-radius: 20px;
     border: 1px solid rgba(224, 182, 255, 0.25);
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
@@ -9286,7 +9284,7 @@ var CONFIG = {
     UI_BUTTON_HIDE_DELAY: 3000,       // ms
     UI_HEALTH_BAR_LOW: 30,
     UI_HEALTH_BAR_MID: 60,
-    UI_LOG_FADE_TIME: 4000,           // ms
+    UI_LOG_FADE_TIME: 2500,           // ms
     UI_MUTATION_DISPLAY_START: 120,   // px from bottom
     UI_MUTATION_ROW_HEIGHT: 20,
     UI_DAMAGE_NUMBER_LIFE: 1.0,
@@ -9735,9 +9733,9 @@ window.toggleSave = function() {
     if(gameState !== 'PLAYING') return;
     const ok = (typeof SaveSystem !== 'undefined') ? SaveSystem.save() : false;
     if(ok) {
-        addLog(window.I18n ? I18n.t('log.saveCreated') : ' Ponto de save criado!');
+        addLog(window.I18n ? I18n.t('log.saveCreated') : ' Ponto de save criado!', true);
     } else {
-        addLog(window.I18n ? I18n.t('log.saveUnavailable') : 'Não é possível salvar agora.');
+        addLog(window.I18n ? I18n.t('log.saveUnavailable') : 'Não é possível salvar agora.', true);
     }
 };
 
@@ -9772,7 +9770,20 @@ window.addEventListener('keydown', (e) => {
 // Helper: add log message
 // ============================================================
 let _logTimeout = null;
-function addLog(msg) {
+let _logCur = null; // { msg, at }: mensagem visível e quando apareceu (performance.now)
+// Em combate = PLAYING, sem painel aberto, e atirou ou levou dano nos últimos 4 s
+// (mesmo limite da regeneração). Fora disso o combatTimer está congelado, então não conta.
+function _logInCombat() {
+    return gameState === 'PLAYING' && !_anyPanelOpen() && typeof player !== 'undefined' && !!player && (player.combatTimer || 0) < 240;
+}
+function _logHide() {
+    const logs = document.getElementById('logs');
+    _logCur = null;
+    if (logs) logs.classList.remove('visible', 'slide-in');
+}
+// important: só para o essencial (portal, chefe, nível, conquista, missão).
+// Mensagens comuns somem durante combate e não trocam a visível nos primeiros 1,5 s.
+function addLog(msg, important) {
     const logs = document.getElementById('logs');
     if (!logs) return;
     // Boss fights have their own banners and telegraphs — keep the center log
@@ -9784,7 +9795,19 @@ function addLog(msg) {
     const _bossNow = (typeof bossActive !== 'undefined' && bossActive) ||
                      (typeof entities !== 'undefined' && entities.some(function(e){ return e && e.isBoss && e.alive; }));
     if (_bossNow && gameState === 'PLAYING') return;
+    // Comum em combate: descartada (sem fila)
+    if (!important && _logInCombat()) return;
+    // Igual à visível: só renova o tempo, sem reanimar
+    if (_logCur && _logCur.msg === msg) {
+        clearTimeout(_logTimeout);
+        _logTimeout = setTimeout(_logHide, CONFIG.UI_LOG_FADE_TIME);
+        return;
+    }
+    // Comum: não troca a visível que apareceu há menos de 1,5 s
+    const _now = performance.now();
+    if (!important && _logCur && _now - _logCur.at < 1500) return;
     clearTimeout(_logTimeout);
+    _logCur = { msg: msg, at: _now };
     logs.innerText = msg;
     logs.classList.remove('slide-in', 'visible');
     // Restart the CSS animation without forcing a synchronous layout reflow
@@ -9792,11 +9815,7 @@ function addLog(msg) {
     requestAnimationFrame(() => {
         logs.classList.add('slide-in', 'visible');
     });
-    _logTimeout = setTimeout(() => {
-        if (logs.innerText === msg) {
-            logs.classList.remove('visible', 'slide-in');
-        }
-    }, CONFIG.UI_LOG_FADE_TIME);
+    _logTimeout = setTimeout(_logHide, CONFIG.UI_LOG_FADE_TIME);
 }
 
 // ============================================================
@@ -9886,7 +9905,7 @@ function _doContinue() {
     gameState = 'PLAYING'; window.dispatchEvent(new Event('gamestarted'));
     uiG.classList.add('hidden');
     const msg = window.I18n ? I18n.t('continue.revived') : 'Revivido! Seja mais cuidadoso!';
-    addLog(msg);
+    addLog(msg, true);
     if (window.SND) SND.playLevelUp && SND.playLevelUp();
     player && spawnParticles(player.x, player.y, '#33ff88', 10, 3);
 }
@@ -11110,7 +11129,7 @@ function _spawnSecretPortal() {
     spawnParticles(secretPortal.x, secretPortal.y, R.COLOR, 20, 4);
     triggerCamZoom(0.04, 24);
     if (window.SND && SND.playAchievement) SND.playAchievement();
-    addLog(window.I18n ? I18n.t('log.secretPortalOpened') : 'Um portal secreto se abriu neste andar! Encontre-o antes que feche.');
+    addLog(window.I18n ? I18n.t('log.secretPortalOpened') : 'Um portal secreto se abriu neste andar! Encontre-o antes que feche.', true);
     return true;
 }
 
@@ -11322,10 +11341,10 @@ function _updateEnemySpawning() {
                 if (_preBossLines.length > 0) addLog(window.I18n ? I18n.t(_preBossLines[Math.floor(Math.random() * _preBossLines.length)]) : _preBossLines[Math.floor(Math.random() * _preBossLines.length)]);
                 addLog(gameMode === 'abyss'
                     ? (window.I18n ? I18n.t('log.guardianAbyssPre') : 'O Guardião do Abismo (Profundidade ') + dungeonLevel + (window.I18n ? I18n.t('log.guardianAbyssPost') : ') desponta entre as sombras!')
-                    : (window.I18n ? I18n.t('log.guardianFloorPre') : 'O guardião do Piso B') + depth + (window.I18n ? I18n.t('log.guardianFloorPost') : ' bloqueia sua passagem!'));
+                    : (window.I18n ? I18n.t('log.guardianFloorPre') : 'O guardião do Piso B') + depth + (window.I18n ? I18n.t('log.guardianFloorPost') : ' bloqueia sua passagem!'), true);
             } else {
                 boss.applyArchetype(BOSS_ARCHETYPES[Math.floor(SeedSystem.random() * BOSS_ARCHETYPES.length)]);
-                addLog((window.I18n ? I18n.t('log.bossApproaching') : 'CHEFE APROXIMANDO: ') + boss.name + '!');
+                addLog((window.I18n ? I18n.t('log.bossApproaching') : 'CHEFE APROXIMANDO: ') + boss.name + '!', true);
             }
             entities.push(boss); SND.playBoss(); SND.startBossMusic(boss._blueprint ? boss._blueprint.key : null); shake = 20; ScreenEffects.onBossSpawn(); triggerCamZoom(0.10, 40);
             _bossBanner = { name: boss.name, nameKey: boss.nameKey || null, timer: 90, line: (boss._blueprint && window.I18n) ? I18n.t('boss.' + boss._blueprint.key + '.intro') : null };
@@ -11359,7 +11378,7 @@ function _updateEnemySpawning() {
     if (bossActive) { for (let i = 0; i < entities.length; i++) { if (entities[i].isBoss && entities[i].alive) { bossAlive = true; break; } } }
     if (bossActive && !bossAlive) {
         bossActive = false; SND.resumeBiomeMusic();
-        addLog(window.I18n ? I18n.t('log.bossDefeated') : 'Chefe abatido!'); player.gainXP(CONFIG.XP_BOSS_REWARD + CONFIG.BOSS_XP_BONUS); ScreenEffects.onBossDeath();
+        addLog(window.I18n ? I18n.t('log.bossDefeated') : 'Chefe abatido!', true); player.gainXP(CONFIG.XP_BOSS_REWARD + CONFIG.BOSS_XP_BONUS); ScreenEffects.onBossDeath();
         const bossPos = map.getSafeSpawn(0);
         chests.push(new Chest(bossPos.x, bossPos.y, SeedSystem.random() < 0.35 ? 'lendario' : 'epico'));
         // Powerup raro garantido ao abater o chefe: 1 dos 4 igualmente
@@ -11373,10 +11392,10 @@ function _updateEnemySpawning() {
         if (player) triggerCamZoom(0.04, 24);
         if (gameMode === 'dungeon') {
             const depth = 10 - (dungeonLevel - 1);
-            if (depth > 0) addLog(window.I18n ? I18n.t('log.stairsUp') : 'As escadas para cima aparecem! Suba!');
-            else addLog(window.I18n ? I18n.t('log.surfaceReached') : 'SUPERFÍCIE ALCANÇADA! Vá para o portal!');
+            if (depth > 0) addLog(window.I18n ? I18n.t('log.stairsUp') : 'As escadas para cima aparecem! Suba!', true);
+            else addLog(window.I18n ? I18n.t('log.surfaceReached') : 'SUPERFÍCIE ALCANÇADA! Vá para o portal!', true);
         } else {
-            addLog(window.I18n ? I18n.t('log.zoneCleared') : 'Zona limpa! Portal para nova área abriu!');
+            addLog(window.I18n ? I18n.t('log.zoneCleared') : 'Zona limpa! Portal para nova área abriu!', true);
         }
         player && spawnParticles(player.x, player.y, COLORS.CLASS_MAGE, 20, 4);
         SND.playAchievement && SND.playAchievement(); shake = 15;
@@ -15169,7 +15188,7 @@ function checkAchievements() {
                 const _after = _achPermTotals(unlocked);
                 Statistics.data.achievementsUnlocked = unlocked.length;
                 SND.playAchievement();
-                addLog('🏆 ' + (window._L ? _L(ach.nameKey, ach.name) : ach.name) + '!');
+                addLog('🏆 ' + (window._L ? _L(ach.nameKey, ach.name) : ach.name) + '!', true);
                 spawnParticles(player.x, player.y, '#ffdd00', CONFIG.PARTICLE_SPAWN_ACHIEVEMENT, 6);
                 // Show toast
                 if (typeof AchievementToast !== 'undefined' && AchievementToast.show) AchievementToast.show(window._L ? _L(ach.nameKey, ach.name) : ach.name);
@@ -15347,12 +15366,15 @@ window.doPrestige = function() {
     Debug.safe(() => {
         if(gameState === 'GAME_OVER' && player && player.lvl >= CONFIG.PRESTIGE_MIN_LEVEL) {
             prestigeLevel++; Statistics.data.totalPrestiges++; totalGamesPlayed++;
-            SND.playPrestige(); addLog((window.I18n ? I18n.t('log.prestige') : ' PRESTIGE ') + prestigeLevel + '!');
+            SND.playPrestige();
             const reward = PRESTIGE_REWARDS.find(r => prestigeLevel >= r.level) || PRESTIGE_REWARDS[0];
-            addLog((window.I18n ? I18n.t('log.prestigeBonus') : 'Bonus: ') + reward.name + ' (XP +' + Math.round((getPrestigeXpMult(prestigeLevel)-1)*100) + '%)');
-            if(getPrestigeHpBonus(prestigeLevel) > 0) addLog(' +' + getPrestigeHpBonus(prestigeLevel) + (window.I18n ? I18n.t('log.prestigeHp') : ' HP permanente'));
-            if(getPrestigeDmgBonus(prestigeLevel) > 0) addLog(' +' + (getPrestigeDmgBonus(prestigeLevel)*100).toFixed(0) + (window.I18n ? I18n.t('log.prestigeDmg') : '% dano permanente'));
-            if(getPrestigeStartingWeaponTier(prestigeLevel) !== null) addLog(window.I18n ? I18n.t('log.prestigeWeapon') : ' Arma inicial desbloqueada!');
+            // Uma mensagem só e importante: senão a regra de 1,5 s descartaria os bônus
+            const _pParts = [(window.I18n ? I18n.t('log.prestige') : ' PRESTIGE ') + prestigeLevel + '!',
+                (window.I18n ? I18n.t('log.prestigeBonus') : 'Bonus: ') + reward.name + ' (XP +' + Math.round((getPrestigeXpMult(prestigeLevel)-1)*100) + '%)'];
+            if(getPrestigeHpBonus(prestigeLevel) > 0) _pParts.push('+' + getPrestigeHpBonus(prestigeLevel) + (window.I18n ? I18n.t('log.prestigeHp') : ' HP permanente'));
+            if(getPrestigeDmgBonus(prestigeLevel) > 0) _pParts.push('+' + (getPrestigeDmgBonus(prestigeLevel)*100).toFixed(0) + (window.I18n ? I18n.t('log.prestigeDmg') : '% dano permanente'));
+            if(getPrestigeStartingWeaponTier(prestigeLevel) !== null) _pParts.push(window.I18n ? I18n.t('log.prestigeWeapon') : 'Arma inicial desbloqueada!');
+            addLog(_pParts.map(s => s.trim()).join(' · '), true);
             Debug.info(`Prestige ${prestigeLevel} achieved`);
             // Save prestige data via StorageManager
             StorageManager.set('prestige', { prestigeLevel, totalGamesPlayed });
@@ -15994,7 +16016,7 @@ const CampSystem = {
             eventChoice: -1,
             eventResult: ''
         };
-        if (typeof addLog !== 'undefined') addLog(window.I18n ? I18n.t('log.campEstablished') : ' O mercador monta acampamento: compre, descanse ou escolha uma bênção antes de descer.');
+        if (typeof addLog !== 'undefined') addLog(window.I18n ? I18n.t('log.campEstablished') : ' O mercador monta acampamento: compre, descanse ou escolha uma bênção antes de descer.', true);
     },
 
     buy(idx) {
@@ -16434,7 +16456,7 @@ const BossRewardSystem = {
         }
         if (typeof gameState !== 'undefined') gameState = 'REWARD';
         if (typeof SND !== 'undefined' && SND.playAchievement) SND.playAchievement();
-        if (typeof addLog === 'function') addLog((window.I18n ? I18n.t('log.bossRewardPre') : ' 🏆 ') + (window._L ? _L(boss.nameKey, boss.name || (window.I18n ? I18n.t('boss.fallbackName') : 'O Guardião')) : (boss.name || 'O Guardião')) + (window.I18n ? I18n.t('log.bossRewardPost') : ' derrotado! Escolha sua recompensa.'));
+        if (typeof addLog === 'function') addLog((window.I18n ? I18n.t('log.bossRewardPre') : ' 🏆 ') + (window._L ? _L(boss.nameKey, boss.name || (window.I18n ? I18n.t('boss.fallbackName') : 'O Guardião')) : (boss.name || 'O Guardião')) + (window.I18n ? I18n.t('log.bossRewardPost') : ' derrotado! Escolha sua recompensa.'), true);
     },
 
     choose(idx) {
@@ -17567,7 +17589,7 @@ const QuestSystem = {
 
     _complete(q) {
         this.granted[q.id] = true;
-        if (typeof addLog === 'function') addLog((window.I18n ? I18n.t('log.missionComplete') : 'Missão concluída: ') + (window._L ? _L(q.titleKey, q.title) : q.title) + '!');
+        if (typeof addLog === 'function') addLog((window.I18n ? I18n.t('log.missionComplete') : 'Missão concluída: ') + (window._L ? _L(q.titleKey, q.title) : q.title) + '!', true);
         if (typeof player !== 'undefined' && player) {
             if (q.xp > 0 && typeof player.gainXP === 'function') player.gainXP(q.xp);
             if (q.gold > 0) player.currency += q.gold;
@@ -24770,7 +24792,7 @@ class MimicEnemy extends Entity {
         if(!this.revealed && dSq < triggerSq) {
             this.revealed = true;
             spawnParticles(this.x, this.y, '#ffcc00', 15, 5);
-            addLog(window.I18n ? I18n.t('log.mimic') : ' MIMIC!');
+            addLog(window.I18n ? I18n.t('log.mimic') : ' MIMIC!', true);
             shake = 8;
         }
 
@@ -27502,7 +27524,7 @@ class Player extends Entity {
             SND.playLevelUp(); 
             if (typeof ScreenEffects !== "undefined" && ScreenEffects.onLevelUp) ScreenEffects.onLevelUp();
             this.levelUpAnim = 30;
-            addLog((window.I18n ? I18n.t('log.levelUp') : ' Nível UP! ') + this.lvl + (levelsGained > 1 ? ' (+' + (levelsGained - 1) + ')' : ''));
+            addLog((window.I18n ? I18n.t('log.levelUp') : ' Nível UP! ') + this.lvl + (levelsGained > 1 ? ' (+' + (levelsGained - 1) + ')' : ''), true);
             spawnParticles(this.x, this.y, '#ffdd00', Math.min(CONFIG.PARTICLE_SPAWN_LEVELUP * levelsGained, CONFIG.PARTICLE_CAP - 10), 5);
             DamageNumbers.add(this.x, this.y, window.I18n ? I18n.t('hud.levelUp') : 'LEVEL UP!', 'heal');
             if (window.uiLv) {
@@ -29595,7 +29617,7 @@ const RelicSystem = {
             }
             const gold = 60 + 10 * dungeonLevel;
             player.currency += gold;
-            addLog(r.icon + (window.I18n ? I18n.t('log.relicDuplicate').replace('{n}', gold) : ' Duplicata! +' + gold + ' moedas'));
+            addLog(r.icon + (window.I18n ? I18n.t('log.relicDuplicate').replace('{n}', gold) : ' Duplicata! +' + gold + ' moedas'), true);
             SND.playPickup();
             return;
         }
@@ -29823,7 +29845,7 @@ const RelicSystem = {
             if (w) setTimeout(() => weaponPickups.push(new WeaponPickup(chest.x + 40, chest.y, w)), 300);
         }
 
-        addLog((window.I18n ? I18n.t('log.lootChestPre') : ' Ba ') + r.toUpperCase() + (window.I18n ? I18n.t('log.lootChestPost') : '! ') + msg + ' +' + currencyBonus);
+        addLog((window.I18n ? I18n.t('log.lootChestPre') : ' Ba ') + r.toUpperCase() + (window.I18n ? I18n.t('log.lootChestPost') : '! ') + msg + ' +' + currencyBonus, true);
         SND.playTreasure();
     },
 
