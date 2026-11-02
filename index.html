@@ -786,7 +786,7 @@ body.cb-tritan  { filter: url("#cb-tritan"); }
         radial-gradient(1px 1px at 90% 80%, rgba(224,182,255,0.15), transparent);
     pointer-events: none;
     z-index: 0;
-    animation: starDrift 8s ease-in-out infinite alternate;
+    /* Estático: a única camada animada do menu é o ::after (orbDrift). Antes havia duas em tela cheia. */
 }
 
 .class-mini-card:active { transform: scale(0.94); }
@@ -810,31 +810,17 @@ body.cb-tritan  { filter: url("#cb-tritan"); }
 #mode-selection { display: none !important; }
 #class-selection-step { display: none !important; }
 
-@keyframes starDrift {
-    0% { transform: translateY(0); opacity: 0.6; }
-    100% { transform: translateY(-8px); opacity: 1; }
-}
-
+/* Sem animação de text-shadow/filter/color no menu: cada quadro repintaria o título e o subtítulo.
+   O brilho e a cor estáticos ficam nos estilos inline do <h1> e do <p> (inline vence esta folha). */
 #start-screen h1 {
     font-family: var(--font-display);
-    animation: titleShimmer 4s ease-in-out infinite;
-    text-shadow: 0 0 25px rgba(224, 182, 255, 0.5), 0 0 50px rgba(157, 78, 221, 0.2);
     position: relative;
     z-index: 1;
-}
-@keyframes titleShimmer {
-    0%, 100% { text-shadow: 0 0 25px rgba(224,182,255,0.5), 0 0 50px rgba(157,78,221,0.2); }
-    50% { text-shadow: 0 0 35px rgba(224,182,255,0.7), 0 0 70px rgba(157,78,221,0.35); }
 }
 
 #start-screen header p {
-    animation: subtitlePulse 4s ease-in-out infinite;
     position: relative;
     z-index: 1;
-}
-@keyframes subtitlePulse {
-    0%, 100% { color: rgba(224, 182, 255, 0.5); }
-    50% { color: rgba(224, 182, 255, 0.75); }
 }
 #start-screen > * { position: relative; z-index: 1; }
 
@@ -848,7 +834,7 @@ body.cb-tritan  { filter: url("#cb-tritan"); }
 .start-main > * { flex-shrink: 0; }
 
 /* Continuar: ação principal, cheia e com largura total */
-.start-continue { display: block; width: 100%; box-sizing: border-box; padding: 12px; border-radius: 16px; border: 1.5px solid rgba(60,227,106,0.7); background: linear-gradient(135deg, #0f9a4a, #3ce36a); box-shadow: 0 0 16px rgba(60,227,106,0.25); color: #04140a; font-size: clamp(0.85rem,3vw,1rem); font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; text-align: center; cursor: pointer; touch-action: manipulation; transition: all 0.2s; }
+.start-continue { display: block; width: 100%; box-sizing: border-box; padding: 12px; border-radius: 16px; border: 1.5px solid rgba(60,227,106,0.7); background: linear-gradient(135deg, #0f9a4a, #3ce36a); box-shadow: 0 0 16px rgba(60,227,106,0.25); color: #04140a; font-size: clamp(0.85rem,3vw,1rem); font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; text-align: center; cursor: pointer; touch-action: manipulation; transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease; }
 .start-row-center { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
 
 /* Card "Nova partida" */
@@ -863,7 +849,7 @@ body.cb-tritan  { filter: url("#cb-tritan"); }
 
 /* Controle segmentado (modo e dificuldade): container com borda, botões sem borda própria */
 .start-seg { display: flex; gap: 3px; padding: 3px; border: 1px solid rgba(255,255,255,0.12); border-radius: 999px; }
-.start-seg-btn { flex: 1 1 0; min-width: 0; min-height: 40px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 6px 4px; border: 1px solid transparent; border-radius: 999px; background: transparent; color: rgba(255,255,255,0.6); font-size: clamp(0.62rem,2.4vw,0.8rem); font-weight: 600; line-height: 1.1; cursor: pointer; touch-action: manipulation; transition: all 0.2s; }
+.start-seg-btn { flex: 1 1 0; min-width: 0; min-height: 40px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 6px 4px; border: 1px solid transparent; border-radius: 999px; background: transparent; color: rgba(255,255,255,0.6); font-size: clamp(0.62rem,2.4vw,0.8rem); font-weight: 600; line-height: 1.1; cursor: pointer; touch-action: manipulation; transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease; }
 .start-seg-btn > .icon-inline { width: 14px; height: 14px; flex: none; }
 .start-seg-btn > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* Telas estreitas ou fonte grande: a dificuldade fica só com o rótulo (Pesadelo cabe no segmento) */
@@ -879,7 +865,7 @@ body.font-small #start-screen .start-tile, body.font-large #start-screen .start-
 
 /* Grade de atalhos: 3 colunas, estilo neutro; só o ícone tem cor */
 .start-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
-.start-tile { position: relative; min-width: 0; min-height: 52px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 6px 4px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.75); font-size: 0.68rem; font-weight: 700; line-height: 1.1; text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer; touch-action: manipulation; transition: all 0.2s; }
+.start-tile { position: relative; min-width: 0; min-height: 52px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 6px 4px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.75); font-size: 0.68rem; font-weight: 700; line-height: 1.1; text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer; touch-action: manipulation; transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease; }
 .start-tile-ic { width: 18px; height: 18px; flex: none; color: var(--tile-ic, rgba(255,255,255,0.75)); }
 .start-tile-label { display: block; max-width: 100%; font-size: clamp(0.6rem,2.7vw,0.72rem); letter-spacing: 0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .start-tile-tutorial { --tile-ic: #ffcc00; }
@@ -1195,6 +1181,8 @@ body.quest-open #minimap-container {
     background-repeat: no-repeat;
     opacity: 0.6;
     animation: orbDrift 14s ease-in-out infinite alternate;
+    /* Só transform/opacity, em camada própria: o navegador não refaz o gradiente a cada quadro */
+    will-change: transform, opacity;
 }
 @keyframes orbDrift {
     0%   { opacity: 0.45; transform: translate3d(0, 0, 0) scale(1); }
@@ -1202,21 +1190,9 @@ body.quest-open #minimap-container {
     100% { opacity: 0.6;  transform: translate3d(2%, -2.5%, 0) scale(1.06); }
 }
 @media (prefers-reduced-motion: reduce) {
-    #start-screen::after { animation: none; opacity: 0.5; }
+    #start-screen::after { animation: none; opacity: 0.5; will-change: auto; }
 }
-body.gfx-low #start-screen::after { animation: none !important; opacity: 0.5 !important; }
-
-/* Title: extra slow, very subtle breathing glow layered over the existing
-   shimmer (animates filter, so it can coexist with titleShimmer's shadow). */
-@media (prefers-reduced-motion: no-preference) {
-    #start-screen h1 {
-        animation: titleShimmer 4s ease-in-out infinite, titleGlowPulse 3.2s ease-in-out infinite;
-    }
-}
-@keyframes titleGlowPulse {
-    0%, 100% { filter: brightness(1); }
-    50%      { filter: brightness(1.09); }
-}
+body.gfx-low #start-screen::after { animation: none !important; opacity: 0.5 !important; will-change: auto; }
 
 /* Opções avançadas (seed + build): sem o triângulo do navegador no summary. */
 #start-options-advanced summary { list-style: none; }
@@ -1473,8 +1449,8 @@ body {
                     <defs><linearGradient id="logoGrad2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#9d4edd"/><stop offset="100%" stop-color="#e0b6ff"/></linearGradient></defs>
                 </svg>
                 <div>
-                    <h1 class="font-headline-xl" style="font-size:clamp(1.5rem,6vw,2.2rem);color:#f0e0ff;text-shadow:0 0 20px rgba(224,182,255,0.4);letter-spacing:-0.02em;">Krevathorn</h1>
-                    <p class="text-center" style="font-size:clamp(0.6rem,2.2vw,0.8rem);letter-spacing:0.3em;text-transform:uppercase;color:rgba(224,182,255,0.4);margin-top:-2px;" data-i18n="start.tagline">O Abismo Aguarda</p>
+                    <h1 class="font-headline-xl" style="font-size:clamp(1.5rem,6vw,2.2rem);color:#f0e0ff;text-shadow:0 0 30px rgba(224,182,255,0.6),0 0 60px rgba(157,78,221,0.25);letter-spacing:-0.02em;">Krevathorn</h1>
+                    <p class="text-center" style="font-size:clamp(0.6rem,2.2vw,0.8rem);letter-spacing:0.3em;text-transform:uppercase;color:rgba(224,182,255,0.62);margin-top:-2px;" data-i18n="start.tagline">O Abismo Aguarda</p>
                 </div>
             </div>
         </header>
@@ -1513,7 +1489,7 @@ body {
 
                     <div class="start-pick-hint" data-i18n="start.pickClass">Toque numa classe para começar</div>
                     <div class="start-classes">
-                <button type="button" onclick="window._tryStartClass('warrior')" class="class-mini-card warrior" style="appearance:none;-webkit-appearance:none;display:block;font:inherit;color:inherit;text-align:center;flex:1;padding:10px 3px;border-radius:16px;border:1.5px solid rgba(201,162,39,0.38);background:rgba(70,110,142,0.15);cursor:pointer;transition:all 0.2s;touch-action:manipulation;">
+                <button type="button" onclick="window._tryStartClass('warrior')" class="class-mini-card warrior" style="appearance:none;-webkit-appearance:none;display:block;font:inherit;color:inherit;text-align:center;flex:1;padding:10px 3px;border-radius:16px;border:1.5px solid rgba(201,162,39,0.38);background:rgba(70,110,142,0.15);cursor:pointer;transition:transform 0.2s ease,background-color 0.2s ease,border-color 0.2s ease,box-shadow 0.2s ease,filter 0.2s ease,opacity 0.2s ease;touch-action:manipulation;">
                     <div style="display:flex;justify-content:center;align-items:flex-end;height:60px;margin-bottom:3px;"><canvas class="hero-canvas" data-class="warrior" width="56" height="60" aria-hidden="true"></canvas></div>
                     <div class="start-class-name" data-i18n="start.classWarrior" style="font-weight:800;text-transform:uppercase;color:#facc15;text-shadow:0 0 8px rgba(201,162,39,0.35);">Guerreiro</div>
                     <div style="display:flex;gap:3px;justify-content:center;margin-top:4px;">
@@ -1522,7 +1498,7 @@ body {
                         <span class="stat-dot" style="width:4px;height:6px;border-radius:2px;background:rgba(255,255,255,0.15);"></span>
                     </div>
                 </button>
-                <button type="button" onclick="window._tryStartClass('rogue')" class="class-mini-card rogue" style="appearance:none;-webkit-appearance:none;display:block;font:inherit;color:inherit;text-align:center;flex:1;padding:10px 3px;border-radius:16px;border:1.5px solid rgba(224,90,69,0.4);background:rgba(58,24,22,0.5);cursor:pointer;transition:all 0.2s;touch-action:manipulation;">
+                <button type="button" onclick="window._tryStartClass('rogue')" class="class-mini-card rogue" style="appearance:none;-webkit-appearance:none;display:block;font:inherit;color:inherit;text-align:center;flex:1;padding:10px 3px;border-radius:16px;border:1.5px solid rgba(224,90,69,0.4);background:rgba(58,24,22,0.5);cursor:pointer;transition:transform 0.2s ease,background-color 0.2s ease,border-color 0.2s ease,box-shadow 0.2s ease,filter 0.2s ease,opacity 0.2s ease;touch-action:manipulation;">
                     <div style="display:flex;justify-content:center;align-items:flex-end;height:60px;margin-bottom:3px;"><canvas class="hero-canvas" data-class="rogue" width="56" height="60" aria-hidden="true"></canvas></div>
                     <div class="start-class-name" data-i18n="start.classRogue" style="font-weight:800;text-transform:uppercase;color:#e8816a;text-shadow:0 0 8px rgba(224,90,69,0.35);">Ladino</div>
                     <div style="display:flex;gap:3px;justify-content:center;margin-top:4px;">
@@ -1531,7 +1507,7 @@ body {
                         <span class="stat-dot" style="width:4px;height:6px;border-radius:2px;background:rgba(255,255,255,0.15);"></span>
                     </div>
                 </button>
-                <button type="button" onclick="window._tryStartClass('mage')" class="class-mini-card mage" style="appearance:none;-webkit-appearance:none;display:block;font:inherit;color:inherit;text-align:center;flex:1;padding:10px 3px;border-radius:16px;border:1.5px solid rgba(140,100,205,0.45);background:rgba(106,61,145,0.17);cursor:pointer;transition:all 0.2s;touch-action:manipulation;">
+                <button type="button" onclick="window._tryStartClass('mage')" class="class-mini-card mage" style="appearance:none;-webkit-appearance:none;display:block;font:inherit;color:inherit;text-align:center;flex:1;padding:10px 3px;border-radius:16px;border:1.5px solid rgba(140,100,205,0.45);background:rgba(106,61,145,0.17);cursor:pointer;transition:transform 0.2s ease,background-color 0.2s ease,border-color 0.2s ease,box-shadow 0.2s ease,filter 0.2s ease,opacity 0.2s ease;touch-action:manipulation;">
                     <div style="display:flex;justify-content:center;align-items:flex-end;height:60px;margin-bottom:3px;"><canvas class="hero-canvas" data-class="mage" width="56" height="60" aria-hidden="true"></canvas></div>
                     <div class="start-class-name" data-i18n="start.classMage" style="font-weight:800;text-transform:uppercase;color:#b78be8;text-shadow:0 0 8px rgba(106,61,145,0.5);">Mago</div>
                     <div style="display:flex;gap:3px;justify-content:center;margin-top:4px;">
@@ -1540,7 +1516,7 @@ body {
                         <span class="stat-dot" style="width:6px;height:6px;border-radius:50%;background:#3ad0ff;box-shadow:0 0 4px #3ad0ff;"></span>
                     </div>
                 </button>
-                <button type="button" onclick="window._tryStartClass('elf')" class="class-mini-card elf" style="appearance:none;-webkit-appearance:none;display:block;font:inherit;color:inherit;text-align:center;flex:1;padding:10px 3px;border-radius:16px;border:1.5px solid rgba(219,181,92,0.35);background:rgba(78,110,49,0.16);cursor:pointer;transition:all 0.2s;touch-action:manipulation;">
+                <button type="button" onclick="window._tryStartClass('elf')" class="class-mini-card elf" style="appearance:none;-webkit-appearance:none;display:block;font:inherit;color:inherit;text-align:center;flex:1;padding:10px 3px;border-radius:16px;border:1.5px solid rgba(219,181,92,0.35);background:rgba(78,110,49,0.16);cursor:pointer;transition:transform 0.2s ease,background-color 0.2s ease,border-color 0.2s ease,box-shadow 0.2s ease,filter 0.2s ease,opacity 0.2s ease;touch-action:manipulation;">
                     <div style="display:flex;justify-content:center;align-items:flex-end;height:60px;margin-bottom:3px;"><canvas class="hero-canvas" data-class="elf" width="56" height="60" aria-hidden="true"></canvas></div>
                     <div class="start-class-name" data-i18n="start.classElf" style="font-weight:800;text-transform:uppercase;color:#a5cf6e;text-shadow:0 0 8px rgba(165,207,110,0.35);">Elfa</div>
                     <div style="display:flex;gap:3px;justify-content:center;margin-top:4px;">
@@ -13820,7 +13796,9 @@ function loop(timestamp) {
     Debug.beginFrame();
     const _steps = _advanceSimulation(dt * ScreenEffects.timeScale());
     const _skippable = _canSkipRedraw();
-    if (_steps > 0 || _frameStale || !_skippable) {
+    // Em START a tela inicial é opaca e draw() já sai no primeiro if: não chama. _frameStale
+    // continua true enquanto não for pulável, então o primeiro quadro fora do START redesenha.
+    if (gameState !== 'START' && (_steps > 0 || _frameStale || !_skippable)) {
         Debug.safe(() => draw(), 'draw');
     }
     _frameStale = !_skippable;
@@ -17919,11 +17897,18 @@ const DifficultySystem = {
 // ============================================================
 // Difficulty selection API (used by the start screen buttons)
 // ============================================================
+// Trabalho que não precisa aparecer no próprio toque (gravar preferência, reescrever painéis
+// ocultos): roda quando o navegador ficar ocioso. Com fallback de setTimeout, para não atrasar demais.
+function _depoisDoToque(fn) {
+    if (typeof requestIdleCallback === 'function') requestIdleCallback(fn, { timeout: 300 });
+    else setTimeout(fn, 0);
+}
 window.setDifficulty = function(key) {
     if (!DIFFICULTY_PRESETS[key]) return;
     DifficultySystem.preset = key;
-    try { StorageManager.setRaw('difficulty', key); } catch(e) {}
+    // Feedback imediato (is-selected); a gravação vai para depois do toque
     window._refreshDifficultyUI();
+    _depoisDoToque(function () { try { StorageManager.setRaw('difficulty', key); } catch(e) {} });
 };
 
 window._refreshDifficultyUI = function() {
@@ -18088,7 +18073,6 @@ window.setMode = function(m) {
     if (m !== 'dungeon' && m !== 'abyss') return;
     window._selectedMode = m;
     if (typeof gameMode !== 'undefined') gameMode = m;
-    try { StorageManager.setRaw('mode', m); } catch(e) {}
     // Controle segmentado: o visual vem da classe is-selected (ver .start-seg-btn)
     var btns = document.querySelectorAll('.mode-tab');
     for (var i = 0; i < btns.length; i++) {
@@ -18098,8 +18082,12 @@ window.setMode = function(m) {
         btns[i].setAttribute('aria-pressed', sel ? 'true' : 'false');
     }
     window._refreshModeDesc();
-    // Painel de mutadores: adiado para depois do boot (GameSettings é carregado depois)
-    setTimeout(function () { if (window.RunMutators) RunMutators.render(); }, 0);
+    // Gravação e painel de mutadores (reescreve innerHTML, mesmo oculto) saem do toque; o painel
+    // também fica adiado para depois do boot (GameSettings é carregado depois)
+    _depoisDoToque(function () {
+        try { StorageManager.setRaw('mode', m); } catch(e) {}
+        if (window.RunMutators) RunMutators.render();
+    });
 };
 window.addEventListener('load', function () { if (window.RunMutators) RunMutators.render(); });
 // Restore saved mode preference
@@ -36062,7 +36050,11 @@ Input.init();
         var rnd = o.random || Math.random;
         var count = o.count || 50;
         var area = o.spawnArea || null;
-        var W = 0, H = 0, frame = 0, rafId = null, running = false;
+        // Opcionais (tela inicial): fps = teto de quadros; sprites = um desenho pré-renderizado por cor
+        // em vez de arc+fill a cada quadro. Sem essas opções, o comportamento é o de sempre (splash).
+        var minStep = o.fps ? 1000 / o.fps : 0;
+        var sprites = o.sprites ? {} : null;
+        var W = 0, H = 0, frame = 0, rafId = null, running = false, lastStep = 0;
         var particles = [];
 
         function makeParticle() {
@@ -36078,36 +36070,63 @@ Input.init();
         }
         function resize() {
             var s = o.measure ? o.measure() : { w: window.innerWidth, h: window.innerHeight };
+            // Buffer em pixels CSS (sem devicePixelRatio): partícula de 1-2 px não ganha nada com DPR cheio
             W = canvas.width = s.w;
             H = canvas.height = s.h;
         }
-        function step() {
+        function spriteFor(color) {
+            if (sprites[color]) return sprites[color];
+            var c = document.createElement('canvas');
+            c.width = c.height = 8;
+            var g = c.getContext('2d');
+            g.beginPath();
+            g.arc(4, 4, 4, 0, Math.PI * 2);
+            g.fillStyle = 'rgb(' + color + ')';
+            g.fill();
+            sprites[color] = c;
+            return c;
+        }
+        // k = passos de 60 Hz desde o quadro anterior (1 sem teto de fps): a velocidade em tempo real não muda
+        function step(k) {
             ctx.clearRect(0, 0, W, H);
             for (var j = 0; j < particles.length; j++) {
                 var p = particles[j];
-                p.x += p.vx;
-                p.y += p.vy;
+                p.x += p.vx * k;
+                p.y += p.vy * k;
                 if (p.y < -10) { p.y = H + 10; p.x = rnd() * W; }
                 if (p.x < -10 || p.x > W + 10) p.x = rnd() * W;
                 var flick = o.flicker(j, frame);
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-                ctx.fillStyle = 'rgba(' + p.color + ',' + (p.a * flick) + ')';
-                ctx.fill();
+                if (sprites) {
+                    var d = p.r * 2;
+                    ctx.globalAlpha = Math.max(0, Math.min(1, p.a * flick));
+                    ctx.drawImage(spriteFor(p.color), p.x - p.r, p.y - p.r, d, d);
+                } else {
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(' + p.color + ',' + (p.a * flick) + ')';
+                    ctx.fill();
+                }
             }
+            if (sprites) ctx.globalAlpha = 1;
             frame++;
             rafId = requestAnimationFrame(loop);
         }
-        function loop() {
+        function loop(ts) {
             // Zero-cost when hidden: stop the loop while the field is covered;
             // the caller restarts it (e.g. via a MutationObserver). The canvas
             // is cleared on stop so no stale frame lingers behind the overlay.
             if (o.shouldRun && !o.shouldRun()) {
                 ctx.clearRect(0, 0, W, H);
-                running = false; rafId = null;
+                running = false; rafId = null; lastStep = 0;
                 return;
             }
-            step();
+            if (minStep && lastStep && ts - lastStep < minStep - 2) {
+                rafId = requestAnimationFrame(loop); // ainda não é hora do próximo passo (teto de fps)
+                return;
+            }
+            var k = (minStep && lastStep) ? Math.min(3, (ts - lastStep) / (1000 / 60)) : 1;
+            lastStep = ts;
+            step(k);
         }
         function ensureRunning() {
             if (!running && (!o.shouldRun || o.shouldRun())) {
@@ -36125,9 +36144,18 @@ Input.init();
     (function() {
         var startScreen = document.getElementById('start-screen');
         var palette = ['224,182,255', '157,78,221', '100,80,200', '200,180,255'];
+        var mql = (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)')) || null;
+        // Sem partículas com gfx-low ou movimento reduzido (ajuste do jogo ou do sistema)
+        function semParticulas() {
+            var b = document.body;
+            if (b && (b.classList.contains('gfx-low') || b.classList.contains('reduce-motion'))) return true;
+            if (window.GameSettings && GameSettings.reducedMotion) return true;
+            return !!(mql && mql.matches);
+        }
         var field = createParticleField(document.getElementById('start-particles'), {
-            count: 50,
-            spawnArea: { w: 1200, h: 2000 },
+            count: 28,
+            fps: 30,
+            sprites: true,
             vxSpread: 0.2, vyBase: 0.4, vyExtra: 0.05,
             rSpread: 1.5, rBase: 0.3,
             aSpread: 0.3, aBase: 0.05,
@@ -36138,13 +36166,17 @@ Input.init();
                     ? { w: startScreen.offsetWidth, h: startScreen.offsetHeight }
                     : { w: window.innerWidth, h: window.innerHeight };
             },
-            shouldRun: function() { return !!startScreen && !startScreen.classList.contains('hidden'); }
+            shouldRun: function() { return !!startScreen && !startScreen.classList.contains('hidden') && !semParticulas(); }
         });
         if (!field) return;
         window.addEventListener('resize', field.resize);
         field.ensureRunning();
         if (window.MutationObserver && startScreen) {
             new MutationObserver(field.ensureRunning).observe(startScreen, { attributes: true, attributeFilter: ['class'] });
+        }
+        // Ajuste de gfx-low / movimento reduzido com a tela já aberta: religa ou desliga o campo
+        if (window.MutationObserver && document.body) {
+            new MutationObserver(field.ensureRunning).observe(document.body, { attributes: true, attributeFilter: ['class'] });
         }
     })();
     </script>
@@ -36781,10 +36813,12 @@ Input.init();
                 return; // static frame already painted
             }
             tick++;
-            if (tick % 3 === 0) { // advance the idle cycle every ~3 rAF ticks
+            // Repinta só quando o quadro do ciclo muda (a cada 3 rAF, ~20 fps): nos outros
+            // ticks o canvas ficaria com o mesmo desenho, então não há o que pintar.
+            if (tick % 3 === 0) {
                 for (var a = 0; a < heroes.length; a++) heroes[a].time += 1;
+                for (var b = 0; b < heroes.length; b++) paintHero(heroes[b]);
             }
-            for (var b = 0; b < heroes.length; b++) paintHero(heroes[b]);
             rafId = requestAnimationFrame(anim);
         }
         function ensureRunning() {
