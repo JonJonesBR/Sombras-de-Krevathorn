@@ -4968,6 +4968,10 @@ const I18n = {
             'best.summoner.desc': 'Mantém distância e invoca enxames. Interrompa antes que se acumulem.',
             'best.skeleton.name': 'Esqueleto da Cripta',
             'best.skeleton.desc': 'Variante de cripta: mais resistente que os soldados comuns.',
+            'best.salamander.name': 'Salamandra de Brasa',
+            'best.salamander.desc': 'Lagarto de basalto com rachaduras de brasa. Corre um pouco mais que os soldados e deixa poças de fogo pelo caminho, que se apagam sozinhas. Dica: não pare em cima do rastro.',
+            'best.lurker.name': 'Espreitador do Mato',
+            'best.lurker.desc': 'Escondido nas folhas, parece só um arbusto. Quando você chega perto, revela-se, avisa no chão e dá um bote envenenado. Dica: saia da linha do aviso antes do bote.',
             'best.fire_elemental.name': 'Elemental de Fogo',
             'best.fire_elemental.desc': 'Found in lava caves. Immune to fire.',
             'best.ice_wraith.name': 'Wraith de Gelo',
@@ -6704,6 +6708,10 @@ const I18n = {
             'best.summoner.desc': 'Keeps its distance and summons swarms. Interrupt it before they pile up.',
             'best.skeleton.name': 'Crypt Skeleton',
             'best.skeleton.desc': 'A crypt variant, tougher than the common soldiers.',
+            'best.salamander.name': 'Ember Salamander',
+            'best.salamander.desc': 'A basalt lizard with glowing ember cracks. Runs a little faster than the common soldiers and leaves fire puddles behind it, which fade on their own. Tip: do not stand on the trail.',
+            'best.lurker.name': 'Thicket Lurker',
+            'best.lurker.desc': 'Hidden in the leaves, it looks like just a bush. When you get close it reveals itself, warns on the ground and lunges with poison. Tip: step out of the warning line before the lunge.',
             'best.fire_elemental.name': 'Fire Elemental',
             'best.fire_elemental.desc': 'Found in lava caves. Immune to fire.',
             'best.ice_wraith.name': 'Ice Wraith',
@@ -8439,6 +8447,10 @@ const I18n = {
             'best.summoner.desc': 'Mantiene la distancia e invoca enjambres. Interrúmpelo antes de que se acumulen.',
             'best.skeleton.name': 'Esqueleto de la Cripta',
             'best.skeleton.desc': 'Variante de cripta, más resistente que los soldados comunes.',
+            'best.salamander.name': 'Salamandra de Brasa',
+            'best.salamander.desc': 'Lagarto de basalto con grietas de brasa. Corre un poco más que los soldados y deja charcos de fuego a su paso, que se apagan solos. Consejo: no te quedes sobre el rastro.',
+            'best.lurker.name': 'Acechador de la Maleza',
+            'best.lurker.desc': 'Oculto entre las hojas, parece solo un arbusto. Cuando te acercas, se revela, avisa en el suelo y da una embestida envenenada. Consejo: sal de la línea del aviso antes de la embestida.',
             'best.fire_elemental.name': 'Elemental de Fuego',
             'best.fire_elemental.desc': 'Se encuentra en cuevas de lava. Inmune al fuego.',
             'best.ice_wraith.name': 'Espectro de Hielo',
@@ -9245,6 +9257,37 @@ var CONFIG = {
     MIMIC_BLINK_PERIOD: 180,       // tell: olhinho vermelho pisca a cada ~3 s (disfarçada)
     MIMIC_BLINK_FRAMES: 2,         // quadros em que o olhinho fica aceso
 
+    // Salamandra de Brasa (caverna de lava): persegue um pouco mais rápido e deixa poças de fogo (ver SalamanderEnemy)
+    SALAMANDER_HP_MULT: 0.8,         // vida: ~0,8x o inimigo comum
+    SALAMANDER_SPEED_MULT: 1.2,      // perseguição: 1,2x o inimigo comum
+    SALAMANDER_XP: 16,
+    SALAMANDER_COLOR: '#ff6a1a',     // brasa: morte, partículas e a mancha no chão
+    SALAMANDER_TRAIL_INTERVAL: 45,   // ticks andando entre duas poças
+    SALAMANDER_TRAIL_MAX: 3,         // poças vivas por salamandra
+    SALAMANDER_TRAIL_TOTAL_MAX: 10,  // poças de salamandra vivas no mapa inteiro
+    SALAMANDER_TRAIL_MIN_GAP: 40,    // distância mínima (px) entre poças da mesma salamandra
+    SALAMANDER_TRAIL_FRAMES: 120,    // duração de cada poça (frames)
+    SALAMANDER_TRAIL_RADIUS: 16,     // raio de acerto da poça (a chama comum tem 25)
+    SALAMANDER_TRAIL_DAMAGE: 1.5,    // dano por tique no jogador (HAZARD_FIRE_DAMAGE é 2)
+
+    // Espreitador do Mato (floresta): escondido em folhas; revelado, avisa e dá UM bote com veneno (ver LurkerEnemy)
+    LURKER_HP_MULT: 1.1,             // vida: ~1,1x o inimigo comum
+    LURKER_XP: 14,
+    LURKER_COLOR: '#4f9a3c',
+    LURKER_REVEAL_RANGE: 150,        // revela-se com o jogador a esta distância e com linha de visão, ou ao levar dano
+    LURKER_WINDUP_FRAMES: 35,        // aviso no chão, com o alcance real do bote
+    LURKER_AIM_LOCK_FRAMES: 8,       // últimos ticks do aviso: a mira trava
+    LURKER_LUNGE_SPEED: 9,           // px por tick no bote
+    LURKER_LUNGE_FRAMES: 12,         // alcance do bote: 9 x 12 = 108 px
+    LURKER_LUNGE_DAMAGE_MULT: 1.4,   // dano do bote, x dano de contato do inimigo comum
+    LURKER_RECOVER_FRAMES: 60,       // parado depois do bote, antes de voltar a perseguir
+    LURKER_BLINK_PERIOD: 240,        // escondido, os olhos piscam a cada ~4 s
+    LURKER_BLINK_FRAMES: 3,          // quadros em que os olhos ficam acesos
+    LURKER_RADIUS: 14,               // raio de acerto (contato e bote)
+    LURKER_HIDE_MAX_FRAMES: 1200,    // escondido por 20 s: revela-se sem bote, para não travar a sala
+    LURKER_MAX_HIDDEN: 2,            // espreitadores escondidos vivos ao mesmo tempo (o sorteio para aqui)
+    SALAMANDER_RADIUS: 17,           // raio de acerto (contato)
+
     // Enemy Type Display
     ENEMY_TYPE_MELEE: 'melee',
     ENEMY_TYPE_RANGED: 'ranged',
@@ -9253,6 +9296,8 @@ var CONFIG = {
     ENEMY_TYPE_SWARM: 'swarm',
     ENEMY_TYPE_TRAP: 'trap',
     ENEMY_TYPE_MIMIC: 'mimic',
+    ENEMY_TYPE_SALAMANDER: 'salamander',
+    ENEMY_TYPE_LURKER: 'lurker',
     ENEMY_TYPE_GOBLIN: 'treasureGoblin',
 
     // Boss Base Stats
@@ -10790,6 +10835,7 @@ function _drawMinimapDots(c, scaleX, scaleY, dotMult) {
     for (let i = 0; i < entities.length; i++) {
         const e = entities[i];
         if (e === player || !e.alive) continue;
+        if (e.enemyType === 'lurker' && !e.revealed) continue; // escondido no mato: fora do minimapa
         if (!e.isBoss && !e.elite) {
             normalEnemyCount++;
             if (!revealAll && normalEnemyCount > MAX_MINIMAP_ENEMIES) continue;
@@ -11411,7 +11457,7 @@ function _updateEntitySimulation() {
     for (let i = 0; i < chests.length; i++) chests[i].update();
     for (let i = chests.length - 1; i >= 0; i--) { if (!chests[i].alive) chests.splice(i, 1); }
     if (window.RelicSystem) RelicSystem.update(player);
-    if (gameTime % CONFIG.HAZARD_SPAWN_INTERVAL === 0 && hazards.length < CONFIG.HAZARD_MAX_COUNT) map.spawnHazard();
+    if (gameTime % CONFIG.HAZARD_SPAWN_INTERVAL === 0 && _ambientHazardCount() < CONFIG.HAZARD_MAX_COUNT) map.spawnHazard();
     if (window.NPCSystem) {
         NPCSystem.update();
         if (gameTime % 600 === 0 && !_secretRoom && SeedSystem.random() < 0.25) NPCSystem.spawnNPC();
@@ -11847,6 +11893,8 @@ function _buildSpawnPool() {
     if (dungeonLevel >= 2) push('healer', CONFIG.HEALER_SPAWN_CHANCE);
     if (dungeonLevel >= 3) push('summoner', 0.05);
     if (typeof BiomeSystem !== 'undefined' && BiomeSystem.currentBiome === 'crypt') push('skeleton', 0.35);
+    if (typeof BiomeSystem !== 'undefined' && BiomeSystem.currentBiome === 'lavaCave') push('salamander', 0.3);
+    if (typeof BiomeSystem !== 'undefined' && BiomeSystem.currentBiome === 'forest' && _hiddenLurkerCount() < CONFIG.LURKER_MAX_HIDDEN) push('lurker', 0.3);
     // Carregador (v67): a partir do piso 3, fora da luta contra o chefe (salas secretas já são barradas no spawner)
     if (dungeonLevel >= CONFIG.CHARGER_SPAWN_DUNGEON && !bossActive) push('charger', CONFIG.CHARGER_SPAWN_CHANCE);
     push('normal', 1.0);
@@ -11862,6 +11910,8 @@ const ENEMY_SPAWN_FACTORIES = {
     healer: (x, y) => new HealerEnemy(x, y),
     summoner: (x, y) => new SummonerEnemy(x, y),
     skeleton: (x, y) => new SkeletonEnemy(x, y),
+    salamander: (x, y) => new SalamanderEnemy(x, y),
+    lurker: (x, y) => new LurkerEnemy(x, y),
     charger: (x, y) => new ChargerEnemy(x, y),
     normal: (x, y) => new Enemy(x, y, false)
 };
@@ -12476,7 +12526,7 @@ function _drawWorldLayer() {
             if (e.spawnTimer > 0) {
                 e.spawnTimer--;
                 const p = Math.min(1, 1 - e.spawnTimer / 20);
-                drawGroundShadow(wctx, e.x, e.y, e.radius, camX, camY);
+                if (!_isHiddenLurker(e)) drawGroundShadow(wctx, e.x, e.y, e.radius, camX, camY);
                 wctx.save();
                 wctx.globalAlpha = Math.min(1, p * 3);
                 wctx.translate(e.x - camX, e.y - camY);
@@ -12485,7 +12535,7 @@ function _drawWorldLayer() {
                 e.draw(wctx, camX, camY);
                 wctx.restore();
             } else {
-                drawGroundShadow(wctx, e.x, e.y, e.radius, camX, camY);
+                if (!_isHiddenLurker(e)) drawGroundShadow(wctx, e.x, e.y, e.radius, camX, camY);
                 e.draw(wctx, camX, camY);
             }
         }
@@ -15639,6 +15689,14 @@ window.SND = {
             case 'mimic':
                 this.play(420, 'square', 0.08, 0.14);
                 this.schedule(() => this.play(280, 'triangle', 0.1, 0.12), 40);
+                break;
+            case 'salamander':
+                this.playNoise(0.14, 0.08, 220, 'highpass');
+                this.schedule(() => this.play(140, 'sawtooth', 0.1, 0.12), 40);
+                break;
+            case 'lurker':
+                this.playNoise(0.12, 0.08, 500, 'bandpass');
+                this.schedule(() => this.play(190, 'triangle', 0.08, 0.1), 35);
                 break;
             default:
                 this.play(150, 'sawtooth', 0.15, 0.2);
@@ -18969,6 +19027,8 @@ const Bestiary = {
         'charger': { nameKey: 'best.charger.name', name: 'Carregador', category: 'special', descKey: 'best.charger.desc', desc: 'Telegrafa uma investida em linha reta. Se bater na parede, fica atordoado: saia da linha e ataque.', difficulty: 5 },
         // Biome-specific
         'skeleton': { nameKey: 'best.skeleton.name', name: 'Esqueleto da Cripta', category: 'biome', descKey: 'best.skeleton.desc', desc: 'Variante de cripta mais resistente.', difficulty: 4 },
+        'salamander': { nameKey: 'best.salamander.name', name: 'Salamandra de Brasa', category: 'biome', descKey: 'best.salamander.desc', desc: 'Lagarto de basalto com rachaduras de brasa. Corre um pouco mais que os soldados e deixa poças de fogo pelo caminho, que se apagam sozinhas. Dica: não pare em cima do rastro.', difficulty: 4 },
+        'lurker': { nameKey: 'best.lurker.name', name: 'Espreitador do Mato', category: 'biome', descKey: 'best.lurker.desc', desc: 'Escondido nas folhas, parece só um arbusto. Quando você chega perto, revela-se, avisa no chão e dá um bote envenenado. Dica: saia da linha do aviso antes do bote.', difficulty: 4 },
         'fire_elemental': { nameKey: 'best.fire_elemental.name', name: 'Elemental de Fogo', category: 'biome', descKey: 'best.fire_elemental.desc', desc: 'Found in lava caves. Immune to fire.', difficulty: 6 },
         'ice_wraith': { nameKey: 'best.ice_wraith.name', name: 'Wraith de Gelo', category: 'biome', descKey: 'best.ice_wraith.desc', desc: 'Found in crypts. Slows you on hit.', difficulty: 7 },
         'forest_spirit': { nameKey: 'best.forest_spirit.name', name: 'Espírito da Floresta', category: 'biome', descKey: 'best.forest_spirit.desc', desc: 'Found in dark forests. Heals nearby enemies.', difficulty: 5 }
@@ -25082,7 +25142,7 @@ class Entity {
             // Haptic feedback on kill
             if(this.isB) Vibrate.trigger('bossKill');
             else if(this.elite) Vibrate.trigger('eliteKill');
-            if(this.isB) { Statistics.data.bossKills++; if (source === player && player && !player._hitSinceBoss) Statistics.data.bossNoHitKills = (Statistics.data.bossNoHitKills || 0) + 1; if (window.RunStats) RunStats.bosses++; DifficultySystem.trackKill(); SND.playEnemyDeath('boss'); NarrativeSystem.tryDropLore(null, true); } else if(source === player) { if ((this.poisonStacks || 0) > 0 && typeof Statistics !== 'undefined') Statistics.data.bleedKills = (Statistics.data.bleedKills || 0) + 1; DifficultySystem.trackKill(); SND.playEnemyDeath(this.elite ? 'elite' : (this.enemyType === 'swarm' ? 'swarm' : (this.enemyType === 'trap' ? 'trap' : (this.enemyType === 'mimic' ? 'mimic' : 'normal')))); NarrativeSystem.tryDropLore(this.elite ? 'elite' : 'normal', false); if(this.elite) ScreenEffects.onEliteDeath(); } if(this.isB) { Statistics.data.totalDamageDealt += CONFIG.BOSS_DAMAGE_DEALT_STAT; } if(source && source.skills && source.skills.stealth) source.stealth = CONFIG.STEALTH_DURATION; if(source === player && (this.isB || SeedSystem.random() < CONFIG.ENEMY_CURRENCY_DROP_CHANCE)) { const _mult = this.isB ? CONFIG.BOSS_LOOT_MULTIPLIER : 1; for(let _ci = 0; _ci < Math.ceil(_mult); _ci++) pickups.push(new Pickup(this.x + (Math.random()-0.5)*30, this.y + (Math.random()-0.5)*30, 'currency')); }
+            if(this.isB) { Statistics.data.bossKills++; if (source === player && player && !player._hitSinceBoss) Statistics.data.bossNoHitKills = (Statistics.data.bossNoHitKills || 0) + 1; if (window.RunStats) RunStats.bosses++; DifficultySystem.trackKill(); SND.playEnemyDeath('boss'); NarrativeSystem.tryDropLore(null, true); } else if(source === player) { if ((this.poisonStacks || 0) > 0 && typeof Statistics !== 'undefined') Statistics.data.bleedKills = (Statistics.data.bleedKills || 0) + 1; DifficultySystem.trackKill(); SND.playEnemyDeath(this.elite ? 'elite' : (this.enemyType === 'swarm' ? 'swarm' : (this.enemyType === 'trap' ? 'trap' : (this.enemyType === 'mimic' ? 'mimic' : (this.enemyType === 'salamander' ? 'salamander' : (this.enemyType === 'lurker' ? 'lurker' : 'normal')))))); NarrativeSystem.tryDropLore(this.elite ? 'elite' : 'normal', false); if(this.elite) ScreenEffects.onEliteDeath(); } if(this.isB) { Statistics.data.totalDamageDealt += CONFIG.BOSS_DAMAGE_DEALT_STAT; } if(source && source.skills && source.skills.stealth) source.stealth = CONFIG.STEALTH_DURATION; if(source === player && (this.isB || SeedSystem.random() < CONFIG.ENEMY_CURRENCY_DROP_CHANCE)) { const _mult = this.isB ? CONFIG.BOSS_LOOT_MULTIPLIER : 1; for(let _ci = 0; _ci < Math.ceil(_mult); _ci++) pickups.push(new Pickup(this.x + (Math.random()-0.5)*30, this.y + (Math.random()-0.5)*30, 'currency')); }
         }
     }
     // Rogue poison damage-over-time. poisonStacks (cap ROGUE_POISON_MAX_STACKS)
@@ -26611,6 +26671,385 @@ class SkeletonEnemy extends Enemy {
         if(!this.alive) return;
         SpriteRenderer.drawEnemy.call(this, ctx, this.x-cx, this.y-cy, this.enemyType, (this.attackAnim > 0 ? 12 - this.attackAnim : this.walkTimer), this.angle, 1.3, this.ft > 0, this.attackAnim > 0 ? 'attack' : (this.walkTimer > 0 ? 'walk' : 'idle'));
         if(this.ft > 0) this.ft--;
+    }
+}
+
+// SALAMANDRA DE BRASA (caverna de lava): arte em grade. Lagarto baixo de basalto, cabeça à direita.
+// 'K' rachadura e 'Y' núcleo: acendem em 3 quadros. Sem cache próprio: o canvas fica no PixelFX
+// (PixelFX.clear na recuperação do canvas), e a grade só é montada quando o canvas ainda não existe.
+const SalamanderArt = (() => {
+    const W = 18, H = 7;
+    const PAL = {
+        k: '#0a0606', b: '#2b2321', d: '#17110f', h: '#4a3d38',
+        e: '#7a2a0c', c: '#ff6a1a', C: '#ffb14a', y: '#ffe27a', E: '#ffd23a'
+    };
+    const blank = () => { const g = []; for (let y = 0; y < H; y++) g.push(new Array(W).fill('.')); return g; };
+    const put = (g, x, y, c) => { if (x >= 0 && x < W && y >= 0 && y < H) g[y][x] = c; };
+    const rect = (g, x0, y0, x1, y1, c) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) put(g, x, y, c); };
+    // Corpo com as patas do quadro de passo (legFrame 0 ou 1)
+    const body = legFrame => {
+        const g = blank();
+        rect(g, 3, 1, 14, 3, 'b');                // tronco
+        rect(g, 12, 0, 15, 2, 'b');               // cabeça, mais alta na frente
+        put(g, 16, 1, 'b'); put(g, 16, 2, 'b');   // focinho
+        rect(g, 0, 2, 2, 2, 'b');                 // cauda fina
+        put(g, 0, 3, 'd');
+        rect(g, 4, 1, 11, 1, 'h');                // brilho do dorso (basalto)
+        rect(g, 3, 4, 14, 4, 'd');                // sombra da barriga
+        for (const [x, y] of [[5, 2], [6, 3], [8, 2], [9, 3], [11, 2], [10, 1], [12, 3]]) put(g, x, y, 'K');
+        put(g, 7, 3, 'Y');
+        put(g, 14, 0, 'E');                       // olho
+        const legs = legFrame === 0 ? [[4, 5], [5, 6], [12, 5], [13, 6]] : [[3, 5], [4, 6], [11, 5], [14, 6]];
+        for (const [x, y] of legs) put(g, x, y, 'd');
+        return g;
+    };
+    // Estado da brasa: 0 apagada (dim), 1 acesa, 2 no pico (núcleo amarelo)
+    const cracks = (g, state) => {
+        const K = state === 0 ? 'e' : (state === 1 ? 'c' : 'C');
+        const Y = state === 0 ? 'e' : (state === 1 ? 'c' : 'y');
+        for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+            if (g[y][x] === 'K') g[y][x] = K; else if (g[y][x] === 'Y') g[y][x] = Y;
+        }
+        return g;
+    };
+    // face 0 = direita, 1 = esquerda; leg 0/1; crack 0..2
+    const rows = (face, leg, crack) => {
+        let g = cracks(body(leg), crack);
+        if (face) g = g.map(r => r.slice().reverse());
+        return _enemyOutline(g);
+    };
+    const sprite = (face, leg, crack) => {
+        const key = 'sal|' + face + leg + crack;
+        return PixelFX.get(key) || PixelFX.bake(key, rows(face, leg, crack), PAL, 3);
+    };
+    return { sprite };
+})();
+
+// ESPREITADOR DO MATO (floresta): arte em grade 13x11 gerada com hash fixo (mesma folhagem em todo o jogo).
+// Dois quadros de folha (tremulam) e, no escondido, os olhos viram folha; o revelado mostra os olhos acesos.
+const LurkerArt = (() => {
+    const W = 13, H = 11;
+    const PAL = { k: '#06100a', d: '#1f4418', m: '#3f7a2e', l: '#5c9c3e', h: '#86c25a', w: '#4b3522', E: '#c8ff6a' };
+    const hash = (x, y, s) => {
+        let h = Math.imul(x, 374761393) + Math.imul(y, 668265263) + Math.imul(s, 982451653) | 0;
+        h = Math.imul(h ^ (h >>> 13), 1274126177);
+        return ((h ^ (h >>> 16)) >>> 0) % 100;
+    };
+    const bush = (seed, eyes) => {
+        const g = []; for (let y = 0; y < H; y++) g.push(new Array(W).fill('.'));
+        for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+            const dx = (x - 6) / 6.2, dy = (y - 5) / 5.4;
+            const r = dx * dx + dy * dy;
+            const n = hash(x, y, seed);
+            if (r <= 0.9 || (r <= 1.25 && n < 35)) {
+                let c;
+                if (dy < -0.4 && n < 60) c = 'h';            // topo iluminado
+                else if (dy > 0.35) c = n < 25 ? 'm' : 'd';  // base escura
+                else c = n < 22 ? 'h' : (n < 60 ? 'm' : 'l');
+                g[y][x] = c;
+            }
+        }
+        for (const [x, y] of [[4, 9], [3, 10], [8, 9], [9, 10]]) g[y][x] = 'w';  // galhos por baixo
+        for (const [x, y] of [[4, 5], [8, 5]]) g[y][x] = eyes ? 'E' : 'm';
+        return g;
+    };
+    // Olhos: só dado de cálculo (deslocamento em px do canto de cada olho em relação ao centro do sprite)
+    const w3 = (W + 2) * 3, h3 = (H + 2) * 3;
+    const ox = Math.round(-w3 / 2), oy = Math.round(-h3 / 2);
+    const eyes = [[4, 5], [8, 5]].map(([x, y]) => [ox + (x + 1) * 3, oy + (y + 1) * 3]);
+    // Sprite por quadro de folha e por estado. Sem cache próprio: o canvas fica no PixelFX
+    const sprite = (revealed, frame) => {
+        const key = 'lurk|' + (revealed ? 'shown|' : 'hidden|') + frame;
+        return PixelFX.get(key) || PixelFX.bake(key, _enemyOutline(bush(frame ? 7 : 1, revealed)), PAL, 3);
+    };
+    return { sprite, eyes };
+})();
+
+// Escondido de verdade: espreitador ainda não revelado (ou mímico disfarçado). Usado pela mira, pelo
+// homing e pelo sorteio. O espreitador escondido também sai da sombra no chão (ver o desenho das entidades).
+function _isHiddenLurker(e) { return e.enemyType === 'lurker' && !e.revealed; }
+function _isHiddenEnemy(e) { return _isHiddenLurker(e) || (e.enemyType === 'mimic' && !e.revealed); }
+// Espreitadores escondidos vivos no mapa (o sorteio para em CONFIG.LURKER_MAX_HIDDEN)
+function _hiddenLurkerCount() {
+    let n = 0;
+    for (let i = 0; i < entities.length; i++) { const e = entities[i]; if (e.alive && _isHiddenLurker(e)) n++; }
+    return n;
+}
+// Perigos ambientais do spawner: as poças de salamandra não entram na conta (ver _updateEntitySimulation)
+function _ambientHazardCount() {
+    let n = 0;
+    for (let i = 0; i < hazards.length; i++) if (!(hazards[i] instanceof SalamanderPuddle)) n++;
+    return n;
+}
+
+// Poça da Salamandra: um Hazard 'fire' do inimigo (fere o jogador, nunca o dono). Desenhada na escala do
+// raio de acerto (size), e não no tamanho do fogo comum (size 25).
+class SalamanderPuddle extends Hazard {
+    constructor(x, y, owner) {
+        super(x, y, 'fire', false);
+        this.timer = CONFIG.SALAMANDER_TRAIL_FRAMES;
+        this.size = CONFIG.SALAMANDER_TRAIL_RADIUS;
+        this.damage = CONFIG.SALAMANDER_TRAIL_DAMAGE;
+        this._salamander = owner;
+    }
+    draw(ctx, cx, cy) {
+        const k = this.size / 25;   // 25 = raio do fogo comum, o tamanho do sprite
+        const sp = WorldSprites.fire(this.color, ((gameTime / 5) | 0) + (this.x | 0));
+        ctx.save();
+        ctx.translate(this.x - cx, this.y - cy);
+        ctx.scale(k, k);
+        if (window.GFX === undefined || window.GFX.glows) {
+            ctx.globalCompositeOperation = 'lighter';
+            ctx.globalAlpha = (0.5 + Math.sin(gameTime * 0.1) * 0.2) * 0.5;
+            PixelFX.draw(ctx, sp.halo, 0, 0);
+            ctx.globalCompositeOperation = 'source-over';
+        }
+        ctx.globalAlpha = 0.9;
+        PixelFX.draw(ctx, sp.body, 0, 0);
+        ctx.restore();
+    }
+}
+
+// SALAMANDER ENEMY - Salamandra de Brasa. Persegue um pouco mais rápido que o inimigo comum e, andando,
+// deixa poças de fogo. Limites: poças próprias, total no mapa e distância mínima entre elas.
+class SalamanderEnemy extends Enemy {
+    constructor(x, y) {
+        super(x, y, false, 'salamander');
+        this.radius = CONFIG.SALAMANDER_RADIUS; this.radiusSq = this.radius * this.radius;
+        this.hp = this.maxHp = Math.floor(DifficultySystem.getScaledHp(CONFIG.ENEMY_HP, false) * CONFIG.SALAMANDER_HP_MULT);
+        this.s = CONFIG.ENEMY_SPEED * CONFIG.SALAMANDER_SPEED_MULT;
+        this.color = CONFIG.SALAMANDER_COLOR;
+        this.xpReward = CONFIG.SALAMANDER_XP;
+        this.element = 'fire';      // o contato queima (Enemy.update aplica o elemento no golpe)
+        this._trailT = CONFIG.SALAMANDER_TRAIL_INTERVAL;
+    }
+    update(p, m) {
+        if (this.frozen > 0) return;
+        const x0 = this.x, y0 = this.y;
+        super.update(p, m);          // perseguição e golpe corpo a corpo do inimigo comum
+        // Rastro só enquanto anda: parada, no golpe ou congelada, não deixa poça
+        if (this.x !== x0 || this.y !== y0) this._trail();
+    }
+    _trail() {
+        if (--this._trailT > 0) return;
+        this._trailT = CONFIG.SALAMANDER_TRAIL_INTERVAL;
+        if (typeof hazards === 'undefined' || !hazards) return;
+        const gap2 = CONFIG.SALAMANDER_TRAIL_MIN_GAP * CONFIG.SALAMANDER_TRAIL_MIN_GAP;
+        let own = 0, total = 0, tooClose = false;
+        for (let i = 0; i < hazards.length; i++) {
+            const h = hazards[i];
+            if (!h.alive || !h._salamander) continue;
+            total++;
+            if (h._salamander !== this) continue;
+            own++;
+            const dx = h.x - this.x, dy = h.y - this.y;
+            if (dx * dx + dy * dy < gap2) tooClose = true;
+        }
+        if (own >= CONFIG.SALAMANDER_TRAIL_MAX || total >= CONFIG.SALAMANDER_TRAIL_TOTAL_MAX || tooClose) return;
+        hazards.push(new SalamanderPuddle(this.x, this.y, this));
+    }
+    draw(ctx, cx, cy) {
+        if (!this.alive) return;
+        const px = Math.round(this.x - cx), py = Math.round(this.y - cy);
+        // Face pela direção, quadro de passo pelas patas (só andando) e brasa em 3 quadros de ~8 ticks
+        const spr = SalamanderArt.sprite(Math.cos(this.angle) < 0 ? 1 : 0, (this.walkTimer >> 3) & 1, ((gameTime / 8) | 0) % 3);
+        this._drawMeleeWindup(ctx, cx, cy);
+        const fl = this.flinchTimer > 0;
+        if (fl) {
+            const sq = Math.min(1, this.flinchTimer / 8);
+            ctx.save(); ctx.translate(px, py); ctx.scale(1 + 0.12 * sq, 1 - 0.18 * sq); ctx.translate(-px, -py);
+        }
+        PixelFX.draw(ctx, spr, px, py);
+        if (this.ft > 0) { // flash de dano
+            ctx.globalCompositeOperation = 'lighter';
+            ctx.globalAlpha = 0.35;
+            PixelFX.draw(ctx, spr, px, py);
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.globalAlpha = 1;
+        }
+        if (fl) ctx.restore();
+        if (typeof ElementalSystem !== 'undefined') ElementalSystem.drawStatuses(ctx, this, cx, cy);
+        if (this.frozen > 0) {
+            ctx.globalAlpha = 0.35;
+            ctx.fillStyle = '#33ccff';
+            ctx.fillRect(px - 30, py - 14, 60, 28);
+            ctx.globalAlpha = 1;
+        }
+        if (this.hp < this.maxHp) {
+            const barW = 26, barH = 4, barX = px - barW / 2, barY = py - 24;
+            ctx.fillStyle = 'rgba(0,0,0,0.7)';
+            ctx.fillRect(barX - 1, barY - 1, barW + 2, barH + 2);
+            ctx.fillStyle = '#ff8800';
+            ctx.fillRect(barX, barY, barW * Math.max(0, Math.min(1, this.hp / this.maxHp)), barH);
+        }
+        if (this.ft > 0) this.ft--;
+    }
+    onDeath() {
+        spawnParticles(this.x, this.y, CONFIG.SALAMANDER_COLOR, 10, 3);
+        spawnParticles(this.x, this.y, '#ffd23a', 6, 2);
+    }
+}
+
+// LURKER ENEMY - Espreitador do Mato (floresta). Escondido, é um arbusto parado. Revelado (com o jogador perto e
+// à vista, ou ao levar dano), avisa no chão com o alcance real e dá UM bote reto com veneno; depois recupera e
+// volta a perseguir como o inimigo comum. Estados: hidden > windup (aviso) > lunge (bote) > recover > chase.
+// Escondido por mais de LURKER_HIDE_MAX_FRAMES, revela-se sem bote (não trava a sala). Na sala secreta, nasce revelado.
+class LurkerEnemy extends Enemy {
+    constructor(x, y) {
+        super(x, y, false, 'lurker');
+        this.radius = CONFIG.LURKER_RADIUS; this.radiusSq = this.radius * this.radius;
+        this.hp = this.maxHp = Math.floor(DifficultySystem.getScaledHp(CONFIG.ENEMY_HP, false) * CONFIG.LURKER_HP_MULT);
+        this.color = CONFIG.LURKER_COLOR;
+        this.xpReward = CONFIG.LURKER_XP;
+        this.element = 'poison';    // veneno no bote e no contato
+        this.revealed = false;
+        this._state = 'hidden';
+        this._stateT = 0;
+        this._lungeDx = 1; this._lungeDy = 0;   // direção do bote: travada nos últimos ticks do aviso
+        this._bornAt = gameTime;                 // tempo escondido compara com gameTime (o update reduzido de inimigos longe não atrasa)
+        this._blinkOff = Math.floor(Math.random() * CONFIG.LURKER_BLINK_PERIOD); // só visual (não consome o RNG da simulação)
+        if (typeof _secretRoom !== 'undefined' && _secretRoom) { this.revealed = true; this._state = 'chase'; }
+    }
+    // Revela e começa o aviso, já com a mira no jogador (senão o aviso aponta para a direita nos primeiros quadros)
+    _reveal(p) {
+        this.revealed = true;
+        this._state = 'windup';
+        this._stateT = CONFIG.LURKER_WINDUP_FRAMES;
+        if (p) this._aimAt(p);
+        spawnParticles(this.x, this.y, '#7fc25a', 12, 3);   // folhas que voam
+    }
+    // Revela sem bote (tempo escondido esgotado): só folhas, e persegue direto
+    _revealChase() {
+        this.revealed = true;
+        this._state = 'chase';
+        spawnParticles(this.x, this.y, '#7fc25a', 4, 2);
+    }
+    _aimAt(p) {
+        const dx = p.x - this.x, dy = p.y - this.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+        this._lungeDx = dx / d; this._lungeDy = dy / d;
+        this.angle = Math.atan2(this._lungeDy, this._lungeDx);
+    }
+    _enterRecover() { this._state = 'recover'; this._stateT = CONFIG.LURKER_RECOVER_FRAMES; }
+    // Levar dano (projétil, golpe, veneno) também revela
+    takeDamage(a, m, source = null, noKb = false) {
+        const r = super.takeDamage(a, m, source, noKb);
+        if (!this.revealed && this.alive) this._reveal(typeof player !== 'undefined' ? player : null);
+        return r;
+    }
+    update(p, m) {
+        if (this.frozen > 0) return;
+        if (!this.revealed) {
+            if (gameTime - this._bornAt > CONFIG.LURKER_HIDE_MAX_FRAMES) { this._revealChase(); return; }
+            // Escondido: não anda nem encosta. Revela-se só com o jogador perto e à vista (não através de parede)
+            const dx = p.x - this.x, dy = p.y - this.y, rr = CONFIG.LURKER_REVEAL_RANGE;
+            if (dx * dx + dy * dy < rr * rr && hasLineOfSight(m, this.x, this.y, p.x, p.y)) this._reveal(p);
+            return;
+        }
+        const st = this._state;
+        if (st === 'chase') { super.update(p, m); return; }
+        if (st === 'windup') {
+            // Mira no jogador até os últimos ticks; depois a direção trava
+            if (this._stateT > CONFIG.LURKER_AIM_LOCK_FRAMES) this._aimAt(p);
+            if (--this._stateT <= 0) {
+                this._state = 'lunge';
+                this._stateT = CONFIG.LURKER_LUNGE_FRAMES;
+                spawnParticles(this.x, this.y, '#7fc25a', 6, 3);
+            }
+        } else if (st === 'lunge') {
+            const step = CONFIG.LURKER_LUNGE_SPEED;
+            const lx = this._lungeDx, ly = this._lungeDy;
+            // Parede à frente: o bote termina antes de bater (sonda antes de mover, como o besouro e o carregador)
+            const aheadD = this.radius * 0.85 + step;
+            const wallAhead = !!m && m.isWall(this.x + lx * aheadD, this.y + ly * aheadD);
+            const moved = !wallAhead && this.move(lx * step, ly * step, m);
+            this._stateT--;
+            const pdx = p.x - this.x, pdy = p.y - this.y, hitR = p.radius + this.radius;
+            if (pdx * pdx + pdy * pdy < hitR * hitR) {
+                // Um golpe por bote; o veneno só entra se o golpe não foi bloqueado
+                const hit = p.takeDamage(this.scaledDamage * CONFIG.LURKER_LUNGE_DAMAGE_MULT, m) !== false;
+                if (hit && typeof ElementalSystem !== 'undefined') ElementalSystem.applyStatus(p, 'poison', 1, 120, this);
+                spawnParticles(p.x, p.y, '#7fc25a', 6, 3);
+                this._enterRecover();
+            } else if (wallAhead || !moved || this._stateT <= 0) {
+                this._enterRecover();
+            }
+        } else if (--this._stateT <= 0) {
+            this._state = 'chase';   // recover: parado (janela para acertar), depois volta a perseguir
+        }
+    }
+    // Aviso do bote: faixa perigosa de verdade (comprimento do bote + raio de contato, largura 2 x contato),
+    // em alpha baixo, e a linha central que enche durante o aviso
+    _drawLungeTelegraph(ctx, px, py) {
+        const t = 1 - this._stateT / CONFIG.LURKER_WINDUP_FRAMES;
+        const L = CONFIG.LURKER_LUNGE_SPEED * CONFIG.LURKER_LUNGE_FRAMES;
+        const pr = (typeof player !== 'undefined' && player) ? player.radius : 12;
+        const hitR = pr + this.radius;
+        ctx.save();
+        ctx.translate(px, py);
+        ctx.rotate(Math.atan2(this._lungeDy, this._lungeDx));
+        ctx.globalAlpha = 0.1 + 0.06 * t;
+        ctx.fillStyle = CONFIG.LURKER_COLOR;
+        ctx.fillRect(0, -hitR, L + hitR, hitR * 2);
+        ctx.restore();
+        PixelFX.line(ctx, px, py, px + this._lungeDx * L * t, py + this._lungeDy * L * t, '#9dff5a', 0.3 + 0.4 * t);
+    }
+    draw(ctx, cx, cy) {
+        if (!this.alive) return;
+        const px = Math.round(this.x - cx), py = Math.round(this.y - cy);
+        const frame = ((gameTime / 10) | 0) & 1;   // as folhas trocam a cada 10 ticks: tremulam
+        if (!this.revealed) {
+            // Escondido: arbusto a 18% de opacidade, balançando 1 px; os olhos piscam de vez em quando
+            ctx.globalAlpha = 0.18;
+            PixelFX.draw(ctx, LurkerArt.sprite(false, frame), px + (frame ? 1 : -1), py);
+            ctx.globalAlpha = 1;
+            if ((gameTime + this._blinkOff) % CONFIG.LURKER_BLINK_PERIOD < CONFIG.LURKER_BLINK_FRAMES) {
+                ctx.globalAlpha = 0.55;
+                ctx.fillStyle = '#b8ff5a';
+                for (let i = 0; i < LurkerArt.eyes.length; i++) ctx.fillRect(px + LurkerArt.eyes[i][0], py + LurkerArt.eyes[i][1], 3, 3);
+                ctx.globalAlpha = 1;
+            }
+            if (this.ft > 0) this.ft--;
+            return;
+        }
+        const st = this._state;
+        // Tremor no aviso (Math.sin: desenhar não consome o RNG da simulação)
+        const shake = st === 'windup' ? Math.round(Math.sin(gameTime * 1.7 + this.x) * 1.2) : 0;
+        if (st === 'windup') this._drawLungeTelegraph(ctx, px, py);
+        this._drawMeleeWindup(ctx, cx, cy);   // anel do golpe corpo a corpo, como a salamandra
+        const fl = this.flinchTimer > 0;
+        if (fl) {
+            const sq = Math.min(1, this.flinchTimer / 8);
+            ctx.save(); ctx.translate(px, py); ctx.scale(1 + 0.12 * sq, 1 - 0.18 * sq); ctx.translate(-px, -py);
+        }
+        const spr = LurkerArt.sprite(true, frame);
+        PixelFX.draw(ctx, spr, px + shake, py);
+        if (this.ft > 0) { // flash de dano
+            ctx.globalCompositeOperation = 'lighter';
+            ctx.globalAlpha = 0.35;
+            PixelFX.draw(ctx, spr, px + shake, py);
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.globalAlpha = 1;
+        }
+        if (fl) ctx.restore();
+        if (typeof ElementalSystem !== 'undefined') ElementalSystem.drawStatuses(ctx, this, cx, cy);
+        if (this.frozen > 0) {
+            ctx.globalAlpha = 0.35;
+            ctx.fillStyle = '#33ccff';
+            ctx.fillRect(px - 24, py - 20, 48, 40);
+            ctx.globalAlpha = 1;
+        }
+        if (this.hp < this.maxHp) {
+            const barW = 26, barH = 4, barX = px - barW / 2, barY = py - 28;
+            ctx.fillStyle = 'rgba(0,0,0,0.7)';
+            ctx.fillRect(barX - 1, barY - 1, barW + 2, barH + 2);
+            ctx.fillStyle = '#ff8800';
+            ctx.fillRect(barX, barY, barW * Math.max(0, Math.min(1, this.hp / this.maxHp)), barH);
+        }
+        if (this.ft > 0) this.ft--;
+    }
+    onDeath() {
+        spawnParticles(this.x, this.y, '#7fc25a', 10, 3);
+        spawnParticles(this.x, this.y, '#3f7a2e', 6, 2);
     }
 }
 
@@ -28591,7 +29030,7 @@ class Bullet {
         let best = null, bestSq = CONFIG.HOMING_RANGE * CONFIG.HOMING_RANGE;
         for (let i = 0; i < list.length; i++) {
             const e = list[i];
-            if (e.alive && typeof Enemy !== 'undefined' && (e instanceof Enemy || e.isEnemy)) {
+            if (e.alive && typeof Enemy !== 'undefined' && (e instanceof Enemy || e.isEnemy) && !_isHiddenEnemy(e)) {
                 const dx = e.x - this.x, dy = e.y - this.y, d = dx * dx + dy * dy;
                 if (d < bestSq) { bestSq = d; best = e; }
             }
@@ -29469,7 +29908,7 @@ class Player extends Entity {
                 let best = null, bestScore = Infinity, ax = 0, ay = 0;
                 for (let _aa = 0; _aa < entities.length; _aa++) {
                     const _e = entities[_aa];
-                    if (!_e.alive || _e === this || _e.isP || _e.isBarrier) continue;
+                    if (!_e.alive || _e === this || _e.isP || _e.isBarrier || _isHiddenEnemy(_e)) continue;
                     const _ex = _e.x - this.x, _ey = _e.y - this.y;
                     const _dSq = _ex * _ex + _ey * _ey;
                     if (_dSq > maxRangeSq || _dSq < 1) continue;
@@ -36051,13 +36490,14 @@ const Input = {
     // Alvo guardado ainda serve? (vivo, inimigo, dentro do alcance)
     _aimValid(t, rangeSq) {
         if (!t.alive || !t.isEnemy || t === player || t.isP || t.isBarrier) return false;
+        if (_isHiddenEnemy(t)) return false; // escondido (espreitador ou mímico): não vira alvo
         const ex = t.x - player.x, ey = t.y - player.y;
         const dSq = ex * ex + ey * ey;
         return dSq >= 1 && dSq <= rangeSq;
     },
 
     // Escolhe o alvo do botão. Só inimigos atacáveis: pula o herói, balas, barreiras de gelo,
-    // mortos e mímicos ainda disfarçados de moeda. Ordem: armadilha ainda não ativada por último;
+    // mortos, mímicos ainda disfarçados de moeda e espreitadores escondidos. Ordem: armadilha ainda não ativada por último;
     // depois com linha de visão (hasLineOfSight); depois dentro da tela (margem 40 px); depois o mais
     // próximo. A linha de visão só é checada para quem bateria o melhor candidato com visão.
     _pickAimTarget(rangeSq) {
@@ -36069,7 +36509,7 @@ const Input = {
         for (let i = 0; i < entities.length; i++) {
             const e = entities[i];
             if (!e.alive || !e.isEnemy || e === player || e.isP || e.isBarrier) continue;
-            if (e.enemyType === 'mimic' && !e.revealed) continue;
+            if (_isHiddenEnemy(e)) continue; // mímico disfarçado e espreitador escondido: não são alvo
             const ex = e.x - px, ey = e.y - py;
             const dSq = ex * ex + ey * ey;
             if (dSq < 1 || dSq > rangeSq) continue;
