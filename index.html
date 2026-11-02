@@ -10830,6 +10830,12 @@ function _drawMinimapDots(c, scaleX, scaleY, dotMult) {
         c.globalAlpha = 0.6 + Math.sin(gameTime * 0.1) * 0.3;
         c.beginPath(); c.arc(px2, py2, 2.5 * dotMult, 0, 6.28); c.fill();
         c.globalAlpha = 1;
+    } else if (_exitRevealed && !_transitioning && map && map.exitTile) {
+        // Saída selada, já descoberta: marcador cinza (some quando o portal abre)
+        const ep = map.getExitSpawn();
+        c.fillStyle = FLOOR_EXIT.MARK; c.globalAlpha = 0.9;
+        c.beginPath(); c.arc((ep.x/CONFIG.TILE_SIZE)*scaleX, (ep.y/CONFIG.TILE_SIZE)*scaleY, 2.5 * dotMult, 0, 6.28); c.fill();
+        c.globalAlpha = 1;
     }
 }
 function drawMinimap() {
@@ -11463,6 +11469,73 @@ class Portal {
     }
 }
 
+// Saída do andar: selada (sem portal) até o portal abrir. Fica no mapa como um selo cinza apagado,
+// sem brilho, e vira o Portal quando ele nasce. "Descoberta" = o jogador chegou perto dela.
+const FLOOR_EXIT = { REVEAL_TILES: 6, MARK: '#7d8590', STONE: '#b0b0c0', STONE_DK: '#8a8a9a', EDGE: '#0b0c10' };
+let _exitRevealed = false;               // saída já vista neste andar (minimapa passa a mostrá-la)
+
+// Selo fechado em pixel art (células de 3 px): anel de runas de pedra clara com contorno escuro e uma porta
+// trancada no centro. Brilho fraco e lento (alpha pulsa entre 0,6 e 0,9, ciclo de ~2 s), sem drawGlow.
+function _drawSealedExit(ctx, sx, sy) {
+    const R = 28;
+    const rm = !!(window.GameSettings && GameSettings.reducedMotion);
+    const pulse = rm ? 0.75 : 0.75 + 0.15 * Math.sin(gameTime * 0.05);
+    ctx.save();
+    // Halo quase transparente, que acompanha a pulsação
+    ctx.globalAlpha = (pulse - 0.6) * 0.4;
+    PixelFX.drawDisc(ctx, sx, sy, R + 8, FLOOR_EXIT.STONE);
+    // Disco escuro por baixo: contraste com o chão escuro da masmorra
+    ctx.globalAlpha = 0.7;
+    PixelFX.drawDisc(ctx, sx, sy, R, FLOOR_EXIT.EDGE);
+    // 8 runas: contorno escuro (raio 6) e pedra clara por cima (raio 3)
+    for (let k = 0; k < 8; k++) {
+        const a = k * Math.PI / 4;
+        const rx = sx + Math.cos(a) * (R + 2), ry = sy + Math.sin(a) * (R + 2) * 0.6;
+        ctx.globalAlpha = 0.85;
+        PixelFX.drawDisc(ctx, rx, ry, 6, FLOOR_EXIT.EDGE);
+        ctx.globalAlpha = pulse * 0.85;
+        PixelFX.drawDisc(ctx, rx, ry, 3, FLOOR_EXIT.STONE);
+    }
+    // Porta: contorno escuro de 1 célula por fora e a moldura clara por cima
+    const x0 = sx - 9, x1 = sx + 9, y0 = sy - 12, y1 = sy + 9;
+    ctx.globalAlpha = 0.85;
+    PixelFX.seg3(ctx, x0 - 3, y0 - 3, x1 + 3, y0 - 3, FLOOR_EXIT.EDGE);
+    PixelFX.seg3(ctx, x0 - 3, y1 + 3, x1 + 3, y1 + 3, FLOOR_EXIT.EDGE);
+    PixelFX.seg3(ctx, x0 - 3, y0 - 3, x0 - 3, y1 + 3, FLOOR_EXIT.EDGE);
+    PixelFX.seg3(ctx, x1 + 3, y0 - 3, x1 + 3, y1 + 3, FLOOR_EXIT.EDGE);
+    ctx.globalAlpha = pulse * 0.85;
+    PixelFX.seg3(ctx, x0, y0, x1, y0, FLOOR_EXIT.STONE_DK);
+    PixelFX.seg3(ctx, x0, y1, x1, y1, FLOOR_EXIT.STONE_DK);
+    PixelFX.seg3(ctx, x0, y0, x0, y1, FLOOR_EXIT.STONE_DK);
+    PixelFX.seg3(ctx, x1, y0, x1, y1, FLOOR_EXIT.STONE_DK);
+    PixelFX.drawDisc(ctx, sx, sy - 2, 3, FLOOR_EXIT.STONE);   // trava
+    ctx.restore();
+}
+
+// Mundo: a saída (selada ou o portal aberto, no mesmo ponto) só é desenhada quando cai na tela.
+// O selo some durante o fade de troca de andar; o portal aberto tem margem maior (brilho de ~84 px).
+function _drawFloorExit(ctx, cx, cy) {
+    if (!map || !map.exitPx) return; // sala secreta: mapa sem saída
+    const p = dungeonPortal || map.getExitSpawn();
+    const sx = p.x - cx, sy = p.y - cy;
+    const m = dungeonPortal ? 90 : 64;
+    if (sx < -m || sx > width + m || sy < -m || sy > height + m) return;
+    if (dungeonPortal) dungeonPortal.draw(ctx, cx, cy);
+    else if (!_transitioning) _drawSealedExit(ctx, sx, sy);
+}
+
+// Marca a saída como descoberta quando o jogador chega a até REVEAL_TILES dela (uma vez por andar)
+function _updateFloorExitReveal() {
+    if (_exitRevealed || _transitioning || dungeonPortal || !player || !map || !map.exitTile) return;
+    const ep = map.getExitSpawn(), R = FLOOR_EXIT.REVEAL_TILES * CONFIG.TILE_SIZE;
+    if (Math.hypot(player.x - ep.x, player.y - ep.y) <= R) _exitRevealed = true;
+}
+
+// Estado por andar, zerado em todo andar novo (floor transition, início de run e continue)
+function _resetFloorExplore() {
+    _exitRevealed = false;
+}
+
 function _startFloorTransition() {
     if (typeof CampSystem !== 'undefined') CampSystem._descend = false;
     secretPortal = null; _secretRoom = null;
@@ -11883,7 +11956,9 @@ function _updateEnemySpawning() {
     }
     // Portal só com o chefe do andar derrotado (floorBossDefeated). Os modos dungeon e abyss sempre têm chefe.
     if (dungeonKills >= dungeonKillTarget && !dungeonPortal && !bossActive && floorBossDefeated) {
-        dungeonPortal = player ? new Portal(player.x, player.y) : null;
+        // O portal nasce na saída do andar (longe do início); sem saída, no jogador como antes
+        const _exitPos = map && map.getExitSpawn ? map.getExitSpawn() : null;
+        dungeonPortal = player ? new Portal(_exitPos ? _exitPos.x : player.x, _exitPos ? _exitPos.y : player.y) : null;
         if (player) triggerCamZoom(0.04, 24);
         if (gameMode === 'dungeon') {
             const depth = 10 - (dungeonLevel - 1);
@@ -11954,6 +12029,7 @@ function update() {
     // gameTime % N === 0 feririam em todo tick e spawnHazard dispararia em série. Não simular entidades.
     if (!_transitioning) Debug.safe(() => Debug.time('entities', _updateEntitySimulation), 'updateEntitySimulation');
     Debug.safe(() => _updatePortalAndFloor(), 'updatePortalAndFloor');
+    Debug.safe(() => _updateFloorExitReveal(), 'floorExitReveal');
     Debug.safe(() => _updateSecretRoom(), 'secretRoom');
     Debug.safe(() => _updateEnemySpawning(), 'updateEnemySpawning');
     Debug.safe(() => { if (window.QuestSystem) QuestSystem.update(); }, 'questSystem');
@@ -12231,7 +12307,9 @@ function _drawWorldLayer() {
     if (_secretRoom) { wctx.fillStyle = 'rgba(90,30,150,0.22)'; wctx.fillRect(0, 0, width, height); }
     if (secretPortal) secretPortal.draw(wctx, camX, camY);
     if (_secretRoom && _secretRoom.exit) _secretRoom.exit.draw(wctx, camX, camY);
-    
+    // Saída do andar: selo fechado, ou o portal aberto no mesmo ponto
+    _drawFloorExit(wctx, camX, camY);
+
     // Draw weather overlay if active
     if (weather && weather.draw) weather.draw(wctx);
     
@@ -12807,8 +12885,8 @@ function draw() {
                     }
                 }
                 if (window.SeedSystem && SeedSystem.isSeeded()) SeedSystem.reseedForFloor(dungeonLevel);
-                map = new Map(); _mmDirty = true;
-                const sp = map.getSafeSpawn(); if (player) { player.x = sp.x; player.y = sp.y; }
+                map = new Map(); _mmDirty = true; _resetFloorExplore();
+                const sp = map.getStartSpawn(); if (player) { player.x = sp.x; player.y = sp.y; }
                 entities = [player]; bullets = []; particles = []; pickups = [];
                 hazards = []; chests = []; pets = []; weaponPickups = []; equipmentPickups = [];
                 guidedBullets = []; rogueClones = []; hitstopFrames = 0; ScreenEffects.resetImpact();
@@ -23969,7 +24047,15 @@ const MapTileArt = (() => {
 class Map {
     constructor(pocket) {
         this.tiles = []; this.width = CONFIG.MAP_WIDTH; this.height = CONFIG.MAP_HEIGHT;
+        // Salas escavadas (retângulos em tiles, limitados à borda) e pontos de início e saída do andar.
+        // A sala secreta (pocket) não tem salas nem início/saída: esses campos ficam null.
+        this.rooms = []; this.startTile = null; this.exitTile = null; this.startRoom = -1; this.exitRoom = -1; this.distFromStart = null;
+        this.exitPx = null; // centro em pixels da saída, calculado uma vez (sem alocar a cada quadro)
         if (pocket) this._buildPocket(pocket); else this.generate(); // generate() runs _ensureConnectivity() last
+        if (!pocket) {
+            this._computeStartExit();
+            if (this.exitTile) this.exitPx = this._tileCenter(this.exitTile);
+        }
         this.buffer = (() => {
             try {
                 if (typeof OffscreenCanvas !== 'undefined') {
@@ -24034,6 +24120,10 @@ class Map {
             // Carve the room
             for(let x=rx; x<rx+rw; x++) for(let y=ry; y<ry+rh; y++)
                 if(x>0&&x<W-1&&y>0&&y<H-1) this.tiles[x][y].t=0;
+            // Guarda o retângulo (limitado à borda) para achar início, saída e baús depois
+            const rx0 = Math.max(1, rx), ry0 = Math.max(1, ry);
+            const rx1 = Math.min(W-2, rx+rw-1), ry1 = Math.min(H-2, ry+rh-1);
+            if (rx1 >= rx0 && ry1 >= ry0) this.rooms.push({ x: rx0, y: ry0, w: rx1-rx0+1, h: ry1-ry0+1 });
 
             // Connect room center to the pre-existing floor tile
             if(nx >= 0) this._carveCorridor(rcx, rcy, nx, ny);
@@ -24164,6 +24254,148 @@ class Map {
                 this.litProps.push({ tx:x, ty:y, x:x*lpTs+lpTs/2, y:y*lpTs+lpTs/2 });
             }
         }
+    }
+    // BFS de 4 vizinhos sobre o chão (t===0) a partir de (sx, sy). Devolve Int16Array com a distância
+    // em passos (-1 = inalcançável), indexado por x * altura + y. Determinístico: não usa sorteio.
+    _bfsDist(sx, sy) {
+        const W = this.width, H = this.height;
+        const dist = new Int16Array(W * H).fill(-1);
+        const q = new Int32Array(W * H);
+        const DIRS = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+        let h = 0, t = 0;
+        dist[sx * H + sy] = 0; q[t++] = sx * H + sy;
+        while (h < t) {
+            const cur = q[h++], x = (cur / H) | 0, y = cur % H, d = dist[cur] + 1;
+            for (const [dx, dy] of DIRS) {
+                const nx = x + dx, ny = y + dy;
+                if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue;
+                const ni = nx * H + ny;
+                if (dist[ni] >= 0 || this.tiles[nx][ny].t !== 0) continue;
+                dist[ni] = d; q[t++] = ni;
+            }
+        }
+        return dist;
+    }
+    // Início e saída do andar. Cada sala vira um candidato (chão mais próximo do centro dela); o par de
+    // salas com o MAIOR caminho entre si vira início e saída. Com menos de duas salas, início = primeiro
+    // chão e saída = tile alcançável mais distante dele. Sem sorteio.
+    _computeStartExit() {
+        const W = this.width, H = this.height;
+        const centers = [];
+        for (let i = 0; i < this.rooms.length; i++) {
+            const r = this.rooms[i];
+            const c = this._nearestFloor(r.x + (r.w >> 1), r.y + (r.h >> 1));
+            if (c[0] >= 0) centers.push({ room: i, x: c[0], y: c[1] });
+        }
+        const dists = centers.map(c => this._bfsDist(c.x, c.y));
+        let best = null;
+        for (let i = 0; i < centers.length; i++) for (let j = i + 1; j < centers.length; j++) {
+            const d = dists[i][centers[j].x * H + centers[j].y];
+            if (d > 0 && (!best || d > best.d)) best = { a: i, b: j, d: d };
+        }
+        if (best) {
+            const A = centers[best.a], B = centers[best.b];
+            this.startTile = { x: A.x, y: A.y };
+            this.startRoom = A.room;
+            this.distFromStart = dists[best.a];
+            this.exitRoom = B.room;
+            this.exitTile = this._pickExitTile(this.rooms[B.room], this.distFromStart, { x: B.x, y: B.y });
+            return;
+        }
+        // Fallback: menos de duas salas alcançáveis entre si
+        let s = null;
+        outer: for (let x = 1; x < W - 1; x++) for (let y = 1; y < H - 1; y++) {
+            if (this.tiles[x][y].t === 0) { s = { x: x, y: y }; break outer; }
+        }
+        if (!s) return; // mapa sem chão: getStartSpawn cai no getSafeSpawn
+        const dist = this._bfsDist(s.x, s.y);
+        let far = s, fd = 0;
+        for (let x = 1; x < W - 1; x++) for (let y = 1; y < H - 1; y++) {
+            if (dist[x * H + y] > fd) { fd = dist[x * H + y]; far = { x: x, y: y }; }
+        }
+        this.startTile = s; this.distFromStart = dist; this.exitTile = far;
+    }
+    // Saída dentro da sala, ou perto dela (até 3 tiles de folga): prefere chão cujos 8 vizinhos também são
+    // chão, para o portal não ficar colado na parede. Mais perto do centro da sala, sem sorteio.
+    _pickExitTile(room, dist, fallback) {
+        const W = this.width, H = this.height;
+        const open = (x, y) => x > 0 && y > 0 && x < W - 1 && y < H - 1 && this.tiles[x][y].t === 0 && dist[x * H + y] > 0;
+        const ring8 = (x, y) => {
+            for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) {
+                if ((dx || dy) && this.tiles[x + dx][y + dy].t !== 0) return false;
+            }
+            return true;
+        };
+        const cx = room.x + (room.w >> 1), cy = room.y + (room.h >> 1);
+        for (let pad = 0; pad <= 3; pad++) {
+            let best = null, bd = Infinity;
+            for (let x = Math.max(1, room.x - pad); x <= Math.min(W - 2, room.x + room.w - 1 + pad); x++) {
+                for (let y = Math.max(1, room.y - pad); y <= Math.min(H - 2, room.y + room.h - 1 + pad); y++) {
+                    if (!open(x, y) || !ring8(x, y)) continue;
+                    const d = Math.abs(x - cx) + Math.abs(y - cy);
+                    if (d < bd) { bd = d; best = { x: x, y: y }; }
+                }
+            }
+            if (best) return best;
+        }
+        return fallback;
+    }
+    _tileCenter(t) { const T = CONFIG.TILE_SIZE; return { x: t.x * T + T / 2, y: t.y * T + T / 2 }; }
+    // Centro em pixels do início do andar (sem início: sorteio antigo, só para mapas sem salas)
+    getStartSpawn() { return this.startTile ? this._tileCenter(this.startTile) : this.getSafeSpawn(); }
+    // Centro em pixels da saída (null na sala secreta). Devolve o objeto calculado no construtor: não aloca.
+    getExitSpawn() { return this.exitPx; }
+    // Posições para baús comuns: centro (chão mais próximo) das salas que não são a de início, da mais
+    // distante do início para a mais perto. A sala de saída fica por último e nenhum baú cai perto da saída.
+    // Devolve até `count` posições em pixels (pode devolver menos: o chamador completa com getSafeSpawn).
+    chestRoomSpots(count) {
+        const out = [];
+        if (!this.startTile || !this.distFromStart || count <= 0) return out;
+        const H = this.height, minD = 200 / CONFIG.TILE_SIZE;
+        const cands = [];
+        for (let i = 0; i < this.rooms.length; i++) {
+            if (i === this.startRoom) continue;
+            const r = this.rooms[i];
+            const c = this._nearestFloor(r.x + (r.w >> 1), r.y + (r.h >> 1));
+            if (c[0] < 0) continue;
+            const d = this.distFromStart[c[0] * H + c[1]];
+            if (d <= 0 || Math.hypot(c[0] - this.startTile.x, c[1] - this.startTile.y) < minD) continue;
+            cands.push({ x: c[0], y: c[1], d: d, last: i === this.exitRoom ? 1 : 0, i: i });
+        }
+        cands.sort((a, b) => (a.last - b.last) || (b.d - a.d) || (a.i - b.i));
+        const picked = [];
+        for (const c of cands) {
+            if (picked.length >= count) break;
+            if (this.exitTile && Math.max(Math.abs(c.x - this.exitTile.x), Math.abs(c.y - this.exitTile.y)) <= 2) continue;
+            if (picked.some(p => Math.max(Math.abs(p.x - c.x), Math.abs(p.y - c.y)) <= 2)) continue;
+            picked.push({ x: c.x, y: c.y });
+        }
+        for (const p of picked) out.push(this._tileCenter(p));
+        return out;
+    }
+    // Beco sem saída (chão com 3 vizinhos ortogonais que não são chão), o mais longe do início, para o baú
+    // escondido. Null se não houver. Evita a saída e as posições de `avoid` (pixels). Sem sorteio.
+    deadEndSpot(avoid) {
+        if (!this.startTile || !this.distFromStart) return null;
+        const W = this.width, H = this.height, T = CONFIG.TILE_SIZE, minD = 200 / T;
+        const near = (x, y, ax, ay) => Math.max(Math.abs(x - ax), Math.abs(y - ay)) <= 2;
+        let best = null, bd = 0;
+        for (let x = 1; x < W - 1; x++) for (let y = 1; y < H - 1; y++) {
+            if (this.tiles[x][y].t !== 0) continue;
+            const d = this.distFromStart[x * H + y];
+            if (d <= bd) continue;
+            let walls = 0;
+            if (this.tiles[x - 1][y].t !== 0) walls++;
+            if (this.tiles[x + 1][y].t !== 0) walls++;
+            if (this.tiles[x][y - 1].t !== 0) walls++;
+            if (this.tiles[x][y + 1].t !== 0) walls++;
+            if (walls !== 3) continue;
+            if (Math.hypot(x - this.startTile.x, y - this.startTile.y) < minD) continue;
+            if (this.exitTile && near(x, y, this.exitTile.x, this.exitTile.y)) continue;
+            if (avoid && avoid.some(a => near(x, y, Math.floor(a.x / T), Math.floor(a.y / T)))) continue;
+            best = { x: x, y: y }; bd = d;
+        }
+        return best ? this._tileCenter(best) : null;
     }
     isWall(x,y) { let tx = Math.floor(x/CONFIG.TILE_SIZE), ty = Math.floor(y/CONFIG.TILE_SIZE); return tx < 0 || tx >= this.width || ty < 0 || ty >= this.height || this.tiles[tx][ty].t === 1 || this.tiles[tx][ty].t === 2; }
     getSafeSpawn(minDistFromPlayer) {
@@ -30462,6 +30694,10 @@ const NPCSystem = {
         this._oracleMarkers = [];
         if (window.dungeonPortal) {
             this._oracleMarkers.push({ x: dungeonPortal.x, y: dungeonPortal.y, color: '#cc88ff', label: 'P' });
+        } else if (window.map && map.exitTile) {
+            // Portal ainda fechado: o oráculo marca a saída selada no lugar dele
+            const _ep = map.getExitSpawn();
+            this._oracleMarkers.push({ x: _ep.x, y: _ep.y, color: FLOOR_EXIT.MARK, label: 'S' });
         }
         if (window.chests && chests.length > 0) {
             // Find nearest chest to player
@@ -34115,7 +34351,7 @@ window.GameBootstrap = {
         if (window.SeedSystem && SeedSystem.isSeeded()) SeedSystem.reseedForFloor(dungeonLevel);
         map = new Map();
         _mmDirty = true;
-        var pSpawn = map.getSafeSpawn();
+        var pSpawn = map.getStartSpawn();
         player = new Player(pSpawn.x, pSpawn.y, cls);
 
         entities = [player]; bullets = []; particles = []; pickups = [];
@@ -34128,6 +34364,7 @@ window.GameBootstrap = {
         if (window.BossRewardSystem) BossRewardSystem.reset();
         gameTime = 0; bossActive = false; floorBossDefeated = false; currentEvent = null;
         dungeonKills = 0; dungeonKillTarget = 18; dungeonPortal = null; _floorStartTime = gameTime;
+        _resetFloorExplore();
         secretPortal = null; _secretRoom = null; _secretFloorUsed = -1;
         continuesLeft = 3; _continueActive = false; minimapExpanded = false;
         weather = null; weatherTimer = 0;
@@ -34262,12 +34499,15 @@ window.GameBootstrap = {
         if (!map) return;
         var count = 3 + Math.floor(SeedSystem.random() * 3);
         var rarityPool = ['comum','comum','comum','raro','raro','epico'];
+        // Baús comuns nos centros das salas (longe do início); o que faltar volta ao sorteio antigo
+        var roomSpots = map.chestRoomSpots(count);
         for (var i = 0; i < count; i++) {
-            var pos = map.getSafeSpawn(200);
+            var pos = roomSpots[i] || map.getSafeSpawn(200);
             var rarity = rarityPool[Math.floor(SeedSystem.random() * rarityPool.length)];
             chests.push(new Chest(pos.x, pos.y, rarity));
         }
-        var hiddenPos = map.getSafeSpawn(400);
+        // Escondido: beco sem saída longe do início; sem beco, o sorteio antigo
+        var hiddenPos = map.deadEndSpot(roomSpots) || map.getSafeSpawn(400);
         var hiddenRarity = SeedSystem.random() < 0.4 ? 'epico' : 'raro';
         chests.push(new Chest(hiddenPos.x, hiddenPos.y, hiddenRarity));
     },
@@ -34279,8 +34519,10 @@ window.GameBootstrap = {
         if (!map) return;
         var count = (dungeonLevel % 4 === 0) ? 2 : 1;
         var rarityPool = ['comum','comum','raro','raro','epico'];
+        // Centros das salas, longe do início; o que faltar volta ao sorteio antigo
+        var roomSpots = map.chestRoomSpots(count);
         for (var i = 0; i < count; i++) {
-            var pos = map.getSafeSpawn(200);
+            var pos = roomSpots[i] || map.getSafeSpawn(200);
             var rarity = rarityPool[Math.floor(SeedSystem.random() * rarityPool.length)];
             chests.push(new Chest(pos.x, pos.y, rarity));
         }
