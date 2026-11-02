@@ -2269,6 +2269,9 @@ var spatialHash = null;
 var gameState = 'START', map = null, player = null;
 var entities = [], bullets = [], particles = [], pickups = [], hazards = [], chests = [];
 var camX = 0, camY = 0, shake = 0, gameTime = 0, bossActive = false, dungeonLevel = 1;
+// Chefe do andar já abatido. O portal só abre com ele true: sem isso, uma explosão que levava
+// os abates da meta-3 até a meta entre dois ticks de spawn deixava o chefe sem nascer e o portal abria.
+var floorBossDefeated = false;
 const GAME_TICKS_PER_SECOND = 60;
 var camZoomTimer = 0, camZoomMax = 1, camZoomStrength = 0.06;
 function triggerCamZoom(strength, frames) {
@@ -2972,6 +2975,13 @@ window.StorageManager = StorageManager;
 // Initialize on load
 Debug.info(`StorageManager initialized, schema v${StorageManager.CURRENT_VERSION}`);
 
+// Estado do chefe do andar ao continuar. Save sem o campo (anterior a esta correção): o andar
+// é tratado como já liberado quando a meta de abates foi atingida, para não forçar um segundo chefe.
+function _floorBossFromSave(save) {
+    if (typeof save.floorBossDefeated === 'boolean') return save.floorBossDefeated;
+    return (save.dungeonKills || 0) >= (save.dungeonKillTarget || 18);
+}
+
 // ============================================================
 // SAVE SYSTEM - lets the player close the game mid-run and pick up
 // later. Checkpoints at the start of each floor plus periodic/lifecycle
@@ -3079,6 +3089,8 @@ const SaveSystem = {
             gameMode: (typeof gameMode !== 'undefined') ? gameMode : 'dungeon',
             dungeonKills: (typeof dungeonKills !== 'undefined') ? dungeonKills : 0,
             dungeonKillTarget: (typeof dungeonKillTarget !== 'undefined') ? dungeonKillTarget : 18,
+            // Campo opcional (sem DEFAULTS, sem migração): ausente em saves antigos, ver _floorBossFromSave
+            floorBossDefeated: (typeof floorBossDefeated !== 'undefined') ? !!floorBossDefeated : false,
             continuesLeft: (typeof continuesLeft !== 'undefined') ? continuesLeft : 3,
             biome: (typeof BiomeSystem !== 'undefined') ? BiomeSystem.currentBiome : 'dungeon',
             dungeonsCompleted: (typeof BiomeSystem !== 'undefined') ? BiomeSystem.dungeonsCompleted : 0,
@@ -3214,7 +3226,7 @@ const SaveSystem = {
             if (data[key] === null && (key === 'lr' || key === 'speed')) continue;
             if (data[key] !== undefined && (typeof data[key] !== 'number' || !Number.isFinite(data[key]) || data[key] < min || data[key] > max)) return false;
         }
-        const booleanFields = ['_exported', 'regenerating', 'greedBonus', 'chainLightning', 'slowAura', 'pierce', 'poison', 'spellEcho'];
+        const booleanFields = ['_exported', 'regenerating', 'greedBonus', 'chainLightning', 'slowAura', 'pierce', 'poison', 'spellEcho', 'floorBossDefeated'];
         for (const key of booleanFields) if (data[key] !== undefined && typeof data[key] !== 'boolean') return false;
         for (const key of ['unlockedSkills', 'runBoons', 'relics']) {
             if (data[key] !== undefined && (!Array.isArray(data[key]) || data[key].length > 200 || data[key].some(v => typeof v !== 'string' || v.length > 80))) return false;
@@ -11268,7 +11280,7 @@ function _startFloorTransition() {
     if (window.RunObjectiveSystem) RunObjectiveSystem.onFloor(dungeonLevel);
     if (typeof Statistics !== 'undefined') Statistics.data.maxFloor = Math.max(Statistics.data.maxFloor || 0, dungeonLevel);
     if (typeof Statistics !== 'undefined' && player && player.type) { const _bf = Statistics.data.bestFloorByClass = Statistics.data.bestFloorByClass || {}; _bf[player.type] = Math.max(_bf[player.type] || 0, dungeonLevel); }
-    dungeonPortal = null; bossActive = false;
+    dungeonPortal = null; bossActive = false; floorBossDefeated = false;
     if (gameMode === 'dungeon' && dungeonLevel > 10) { _triggerWin(); return; }
 
     if (gameMode === 'abyss') {
@@ -11463,7 +11475,7 @@ function _enterSecretRoom(forcedKind) {
             hazards: hazards, chests: chests, pets: pets, weaponPickups: weaponPickups,
             equipmentPickups: equipmentPickups, guidedBullets: guidedBullets, rogueClones: rogueClones,
             dungeonPortal: dungeonPortal, dungeonKills: dungeonKills, dungeonKillTarget: dungeonKillTarget,
-            bossActive: bossActive, cachedAlive: _cachedAliveEnemies,
+            bossActive: bossActive, floorBossDefeated: floorBossDefeated, cachedAlive: _cachedAliveEnemies,
             npcs: (typeof NPCSystem !== 'undefined') ? NPCSystem.npcs : null,
             retX: player.x, retY: player.y
         }
@@ -11538,7 +11550,7 @@ function _leaveSecretRoom(byExit) {
     hazards = sn.hazards; chests = sn.chests; pets = sn.pets; weaponPickups = sn.weaponPickups;
     equipmentPickups = sn.equipmentPickups; guidedBullets = sn.guidedBullets; rogueClones = sn.rogueClones;
     dungeonPortal = sn.dungeonPortal; dungeonKills = sn.dungeonKills; dungeonKillTarget = sn.dungeonKillTarget;
-    bossActive = sn.bossActive; _cachedAliveEnemies = sn.cachedAlive;
+    bossActive = sn.bossActive; floorBossDefeated = sn.floorBossDefeated; _cachedAliveEnemies = sn.cachedAlive;
     if (typeof NPCSystem !== 'undefined' && sn.npcs) NPCSystem.npcs = sn.npcs;
     if (player) { player.x = sn.retX; player.y = sn.retY; camX = player.x - width / 2; camY = player.y - height / 2; }
     if (byExit) {
@@ -11581,6 +11593,38 @@ const ENEMY_SPAWN_FACTORIES = {
 };
 if (typeof window !== 'undefined') window.ENEMY_SPAWN_FACTORIES = ENEMY_SPAWN_FACTORIES;
 
+// Chefe do andar: marca a luta, cria o Boss, anuncia no log e no banner. Usada pelo sorteio normal
+// e pela aparição imediata (meta de abates atingida sem chefe), para não duplicar o bloco.
+function _spawnFloorBoss(eSpawn) {
+    // bossActive só liga depois do push: exceção antes disso não vira "chefe abatido" sem chefe.
+    // Os logs de introdução também esperam o push, pois addLog ignora logs enquanto bossActive está ligado.
+    const boss = new Boss(eSpawn.x, eSpawn.y);
+    const BOSS_ARCHETYPES = ['brutamontes', 'arcano', 'convocador'];
+    const _introLogs = [];
+    if (gameMode === 'dungeon' || gameMode === 'abyss') {
+        const depth = Math.max(1, 10 - (dungeonLevel - 1));
+        const floorIdx = (typeof BiomeSystem !== 'undefined' && BiomeSystem.getBossBlueprintIndex)
+            ? BiomeSystem.getBossBlueprintIndex(dungeonLevel, gameMode)
+            : Math.min(dungeonLevel - 1, BOSS_BLUEPRINTS.length - 1);
+        boss.applyFloorBlueprint(floorIdx);
+        if (gameMode === 'abyss' && typeof boss._applyAbyssEvolution === 'function') boss._applyAbyssEvolution(dungeonLevel);
+        const _preBossLines = typeof BOSS_PRE_COMBAT_LINES !== 'undefined' ? BOSS_PRE_COMBAT_LINES : [];
+        if (_preBossLines.length > 0) _introLogs.push([window.I18n ? I18n.t(_preBossLines[Math.floor(Math.random() * _preBossLines.length)]) : _preBossLines[Math.floor(Math.random() * _preBossLines.length)]]);
+        _introLogs.push([gameMode === 'abyss'
+            ? (window.I18n ? I18n.t('log.guardianAbyssPre') : 'O Guardião do Abismo (Profundidade ') + dungeonLevel + (window.I18n ? I18n.t('log.guardianAbyssPost') : ') desponta entre as sombras!')
+            : (window.I18n ? I18n.t('log.guardianFloorPre') : 'O guardião do Piso B') + depth + (window.I18n ? I18n.t('log.guardianFloorPost') : ' bloqueia sua passagem!'), true]);
+    } else {
+        boss.applyArchetype(BOSS_ARCHETYPES[Math.floor(SeedSystem.random() * BOSS_ARCHETYPES.length)]);
+        _introLogs.push([(window.I18n ? I18n.t('log.bossApproaching') : 'CHEFE APROXIMANDO: ') + boss.name + '!', true]);
+    }
+    entities.push(boss);
+    bossActive = true;
+    if (player) player._hitSinceBoss = false; // início da luta: conta dano desde aqui (conquista 'Intocável')
+    for (const _l of _introLogs) addLog(..._l);
+    SND.playBoss(); SND.startBossMusic(boss._blueprint ? boss._blueprint.key : null); shake = 20; ScreenEffects.onBossSpawn(); triggerCamZoom(0.10, 40);
+    _bossBanner = { name: boss.name, nameKey: boss.nameKey || null, timer: 90, line: (boss._blueprint && window.I18n) ? I18n.t('boss.' + boss._blueprint.key + '.intro') : null };
+}
+
 function _updateEnemySpawning() {
     if (_transitioning || _secretRoom) return;
     // Only recount alive enemies on spawn ticks (spawning is throttled to gameTime % 60)
@@ -11590,7 +11634,11 @@ function _updateEnemySpawning() {
     }
     const aliveEnemies = _cachedAliveEnemies;
     const _tutSuppressSpawn = typeof TutorialSystem !== 'undefined' && TutorialSystem.active && TutorialSystem.suppressEnemySpawns;
-    if (aliveEnemies < CONFIG.MAX_ENEMIES && gameTime % 60 === 0 && dungeonKills < dungeonKillTarget && !dungeonPortal && !_tutSuppressSpawn) {
+    // Meta de abates atingida sem chefe vivo nem derrotado: o chefe nasce já, sem esperar o tick de
+    // 60 frames nem o teto de inimigos. Antes, um salto de abates entre dois ticks deixava o portal abrir sem chefe.
+    if (dungeonKills >= dungeonKillTarget && !dungeonPortal && !bossActive && !floorBossDefeated && !_tutSuppressSpawn) {
+        _spawnFloorBoss(map.getSafeSpawn(CONFIG.ENEMY_SPAWN_MIN_DIST));
+    } else if (aliveEnemies < CONFIG.MAX_ENEMIES && gameTime % 60 === 0 && dungeonKills < dungeonKillTarget && !dungeonPortal && !_tutSuppressSpawn) {
         const eSpawn = map.getSafeSpawn(CONFIG.ENEMY_SPAWN_MIN_DIST);
         // Portão de aparição do chefe: não surge no início, só depois de limpar
         // uma fração mínima do andar. Garantido nos últimos abates antes do portal.
@@ -11601,28 +11649,7 @@ function _updateEnemySpawning() {
         const _floorSecs = (gameTime - _floorStartTime) / GAME_TICKS_PER_SECOND;
         const isBoss = bossForced || (bossEligible && _floorSecs >= CONFIG.BOSS_MIN_FLOOR_SECONDS && SeedSystem.random() < CONFIG.BOSS_SPAWN_CHANCE);
         if (isBoss) {
-            bossActive = true;
-            if (player) player._hitSinceBoss = false; // início da luta: conta dano desde aqui (conquista 'Intocável')
-            const boss = new Boss(eSpawn.x, eSpawn.y);
-            const BOSS_ARCHETYPES = ['brutamontes', 'arcano', 'convocador'];
-            if (gameMode === 'dungeon' || gameMode === 'abyss') {
-                const depth = Math.max(1, 10 - (dungeonLevel - 1));
-                const floorIdx = (typeof BiomeSystem !== 'undefined' && BiomeSystem.getBossBlueprintIndex)
-                    ? BiomeSystem.getBossBlueprintIndex(dungeonLevel, gameMode)
-                    : Math.min(dungeonLevel - 1, BOSS_BLUEPRINTS.length - 1);
-                boss.applyFloorBlueprint(floorIdx);
-                if (gameMode === 'abyss' && typeof boss._applyAbyssEvolution === 'function') boss._applyAbyssEvolution(dungeonLevel);
-                const _preBossLines = typeof BOSS_PRE_COMBAT_LINES !== 'undefined' ? BOSS_PRE_COMBAT_LINES : [];
-                if (_preBossLines.length > 0) addLog(window.I18n ? I18n.t(_preBossLines[Math.floor(Math.random() * _preBossLines.length)]) : _preBossLines[Math.floor(Math.random() * _preBossLines.length)]);
-                addLog(gameMode === 'abyss'
-                    ? (window.I18n ? I18n.t('log.guardianAbyssPre') : 'O Guardião do Abismo (Profundidade ') + dungeonLevel + (window.I18n ? I18n.t('log.guardianAbyssPost') : ') desponta entre as sombras!')
-                    : (window.I18n ? I18n.t('log.guardianFloorPre') : 'O guardião do Piso B') + depth + (window.I18n ? I18n.t('log.guardianFloorPost') : ' bloqueia sua passagem!'), true);
-            } else {
-                boss.applyArchetype(BOSS_ARCHETYPES[Math.floor(SeedSystem.random() * BOSS_ARCHETYPES.length)]);
-                addLog((window.I18n ? I18n.t('log.bossApproaching') : 'CHEFE APROXIMANDO: ') + boss.name + '!', true);
-            }
-            entities.push(boss); SND.playBoss(); SND.startBossMusic(boss._blueprint ? boss._blueprint.key : null); shake = 20; ScreenEffects.onBossSpawn(); triggerCamZoom(0.10, 40);
-            _bossBanner = { name: boss.name, nameKey: boss.nameKey || null, timer: 90, line: (boss._blueprint && window.I18n) ? I18n.t('boss.' + boss._blueprint.key + '.intro') : null };
+            _spawnFloorBoss(eSpawn);
         } else {
             // Central weighted spawn table: single roll makes every type appear reliably
             const pool = _buildSpawnPool();
@@ -11652,7 +11679,7 @@ function _updateEnemySpawning() {
     let bossAlive = false;
     if (bossActive) { for (let i = 0; i < entities.length; i++) { if (entities[i].isBoss && entities[i].alive) { bossAlive = true; break; } } }
     if (bossActive && !bossAlive) {
-        bossActive = false; SND.resumeBiomeMusic();
+        bossActive = false; floorBossDefeated = true; SND.resumeBiomeMusic();
         addLog(window.I18n ? I18n.t('log.bossDefeated') : 'Chefe abatido!', true); player.gainXP(CONFIG.XP_BOSS_REWARD + CONFIG.BOSS_XP_BONUS); ScreenEffects.onBossDeath();
         const bossPos = map.getSafeSpawn(0);
         chests.push(new Chest(bossPos.x, bossPos.y, SeedSystem.random() < 0.35 ? 'lendario' : 'epico'));
@@ -11662,7 +11689,8 @@ function _updateEnemySpawning() {
         addLog(window.I18n ? I18n.t('log.bossChest') : 'Bau do Chefe apareceu!');
         dungeonKills = Math.max(dungeonKills, dungeonKillTarget);
     }
-    if (dungeonKills >= dungeonKillTarget && !dungeonPortal && !bossActive) {
+    // Portal só com o chefe do andar derrotado (floorBossDefeated). Os modos dungeon e abyss sempre têm chefe.
+    if (dungeonKills >= dungeonKillTarget && !dungeonPortal && !bossActive && floorBossDefeated) {
         dungeonPortal = player ? new Portal(player.x, player.y) : null;
         if (player) triggerCamZoom(0.04, 24);
         if (gameMode === 'dungeon') {
@@ -33504,6 +33532,7 @@ window.GameBootstrap = {
             gameMode = save.gameMode || gameMode;
             dungeonKills = save.dungeonKills || 0;
             dungeonKillTarget = save.dungeonKillTarget || 18;
+            floorBossDefeated = _floorBossFromSave(save);
             _floorStartTime = gameTime; // o save não guarda gameTime: o andar retomado recomeça a contagem
             continuesLeft = (typeof save.continuesLeft === 'number') ? save.continuesLeft : 3;
             _secretFloorUsed = Number.isInteger(save.secretFloorUsed) ? save.secretFloorUsed : -1;
@@ -33583,7 +33612,7 @@ window.GameBootstrap = {
         if (window.CampSystem) CampSystem.reset();
         if (window.RunEventSystem) RunEventSystem.reset();
         if (window.BossRewardSystem) BossRewardSystem.reset();
-        gameTime = 0; bossActive = false; currentEvent = null;
+        gameTime = 0; bossActive = false; floorBossDefeated = false; currentEvent = null;
         dungeonKills = 0; dungeonKillTarget = 18; dungeonPortal = null; _floorStartTime = gameTime;
         secretPortal = null; _secretRoom = null; _secretFloorUsed = -1;
         continuesLeft = 3; _continueActive = false; minimapExpanded = false;
