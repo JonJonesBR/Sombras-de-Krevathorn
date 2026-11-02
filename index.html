@@ -4945,10 +4945,10 @@ const I18n = {
             'best.elite_ranged.desc': 'Elite com ataques à distância. Atira mais rápido.',
             'best.swarm.name': 'Enxame de Ossos',
             'best.swarm.desc': 'Besouros de ossos que rodeiam o alvo e dão botes. Cada bote avisa antes, e só dois atacam por vez.',
-            'best.trap.name': 'Armadilha',
-            'best.trap.desc': 'Ativa quando você se aproxima. Causa dano fixo.',
-            'best.mimic.name': 'Mímico',
-            'best.mimic.desc': 'Parece um baú de ouro, mas é uma armadilha!',
+            'best.trap.name': 'Boca de Pedra',
+            'best.trap.desc': 'Uma laje que parece chão até você chegar perto. Treme, abre a mandíbula e morde uma vez, avisando no chão antes. Dano fixo.',
+            'best.mimic.name': 'Baú Faminto',
+            'best.mimic.desc': 'Parece uma moeda do chão. Revelado, pula atrás de você e rouba suas moedas a cada mordida. Mate-o para recuperar o roubado, com bônus. Se você fugir do andar, o roubado se perde.',
             'best.boss.name': 'Guardião Esqueleto',
             'best.boss.desc': 'O chefão de cada piso. Muito forte!',
             'best.treasure_goblin.name': 'Goblin Tesoureiro',
@@ -5272,7 +5272,7 @@ const I18n = {
             'log.biomeChange': ' A paisagem se transforma: entrando em ',
             'log.berserker': ' Berserker!',
             'log.bossEnraged': ' BOSS ENRAGED!',
-            'log.mimic': ' MIMIC!',
+            'log.mimic': ' BAÚ FAMINTO!',
             'log.goblinDefeated': ' Goblin derrotado!',
             'log.abyssAwakening': ' A escuridão do Abismo desperta: ',
             'log.bossShadowStrike': ' sumiu nas sombras!',
@@ -6676,10 +6676,10 @@ const I18n = {
             'best.elite_ranged.desc': 'Elite with ranged attacks. Shoots faster.',
             'best.swarm.name': 'Bone Swarm',
             'best.swarm.desc': 'Bone beetles that circle their prey and dart in. Every lunge is telegraphed, and only two strike at a time.',
-            'best.trap.name': 'Trap',
-            'best.trap.desc': 'Activates when you get close. Deals fixed damage.',
-            'best.mimic.name': 'Mimic',
-            'best.mimic.desc': 'Looks like a gold chest, but it is a trap!',
+            'best.trap.name': 'Stone Maw',
+            'best.trap.desc': 'A stone slab that looks like floor until you get close. It shakes, opens its jaws and bites once, warning you on the ground first. Fixed damage.',
+            'best.mimic.name': 'Hungry Chest',
+            'best.mimic.desc': 'Looks like a coin on the floor. Once revealed, it hops after you and steals your coins with every bite. Kill it to get back what it took, plus a bonus. If you leave the floor, what it stole is lost.',
             'best.boss.name': 'Skeleton Guardian',
             'best.boss.desc': 'The boss of each floor. Very strong!',
             'best.treasure_goblin.name': 'Treasurer Goblin',
@@ -7003,7 +7003,7 @@ const I18n = {
             'log.biomeChange': ' The landscape shifts: entering ',
             'log.berserker': ' Berserker!',
             'log.bossEnraged': ' BOSS ENRAGED!',
-            'log.mimic': ' MIMIC!',
+            'log.mimic': ' HUNGRY CHEST!',
             'log.goblinDefeated': ' Goblin defeated!',
             'log.abyssAwakening': ' The darkness of the Abyss awakens: ',
             'log.bossShadowStrike': ' vanished into the shadows!',
@@ -8406,10 +8406,10 @@ const I18n = {
             'best.elite_ranged.desc': 'Élite con ataques a distancia. Dispara más rápido.',
             'best.swarm.name': 'Enjambre de Huesos',
             'best.swarm.desc': 'Escarabajos de huesos que rodean a su presa y lanzan embestidas. Cada embestida avisa antes, y solo dos atacan a la vez.',
-            'best.trap.name': 'Trampa',
-            'best.trap.desc': 'Se activa cuando te acercas. Causa daño fijo.',
-            'best.mimic.name': 'Mímico',
-            'best.mimic.desc': '¡Parece un cofre de oro, pero es una trampa!',
+            'best.trap.name': 'Boca de Piedra',
+            'best.trap.desc': 'Una losa que parece suelo hasta que te acercas. Tiembla, abre la mandíbula y muerde una sola vez, avisando antes en el suelo. Daño fijo.',
+            'best.mimic.name': 'Cofre Hambriento',
+            'best.mimic.desc': 'Parece una moneda del suelo. Al revelarse, salta tras de ti y roba tus monedas en cada mordida. Mátalo para recuperar lo robado, con bonus. Si sales del piso, lo robado se pierde.',
             'best.boss.name': 'Guardián Esqueleto',
             'best.boss.desc': 'El jefe de cada piso. ¡Muy fuerte!',
             'best.treasure_goblin.name': 'Duende Tesorero',
@@ -8733,7 +8733,7 @@ const I18n = {
             'log.biomeChange': ' El paisaje se transforma: entrando en ',
             'log.berserker': ' ¡Berserker!',
             'log.bossEnraged': ' ¡JEFE ENFURECIDO!',
-            'log.mimic': ' ¡MÍMICO!',
+            'log.mimic': ' ¡COFRE HAMBRIENTO!',
             'log.goblinDefeated': ' ¡Duende derrotado!',
             'log.abyssAwakening': ' La oscuridad del Abismo despierta: ',
             'log.bossShadowStrike': ' desapareció en las sombras!',
@@ -9181,28 +9181,47 @@ var CONFIG = {
     SWARM_RECOVER_FRAMES: 24,      // recuo lento antes de voltar a circular
     SWARM_MAX_ATTACKING: 2,        // besouros em windup/lunge ao mesmo tempo no mapa
 
-    // Trap Enemies (stationary, high burst damage)
+    // Trap Enemies: Boca de Pedra. Laje dormente que acorda ao chegar perto, avisa e dá UM bote (ver TrapEnemy)
     TRAP_HP: 60,
     TRAP_RADIUS: 20,
     TRAP_TRIGGER_RANGE: 80,
-    TRAP_ATTACK_RANGE: 100,
+    TRAP_ATTACK_RANGE: 100,        // alcance do bote; também é o raio da marca no chão
     TRAP_DAMAGE: 15,
-    TRAP_ATTACK_COOLDOWN: 90, // frames (~1.5s)
+    TRAP_ATTACK_COOLDOWN: 90,      // frames desde o início de um bote até poder acordar de novo (~1.5s)
     TRAP_XP: 40,
     TRAP_COLOR: '#884400',
     TRAP_SPAWN_CHANCE: 0.1,
-    TRAP_LUNGE_SPEED: 8,
+    TRAP_LUNGE_SPEED: 8,           // px por tick no bote
+    TRAP_WAKE_FRAMES: 24,          // aviso: treme, os olhos acendem e a marca aparece (~0.4s)
+    TRAP_BITE_HOLD_FRAMES: 6,      // mordida parada no fim do bote (quadro de mordida)
+    TRAP_RECOVER_FRAMES: 30,       // recuperação curta depois da mordida
+    TRAP_RETURN_SPEED: 2,          // px por tick na volta à origem
+    TRAP_CONTACT_PAD: 10,          // folga do contato da mordida (px, além dos raios)
 
-    // Mimic Enemies (disguised as pickups)
+    // Mimic Enemies: Baú Faminto. Disfarçado de moeda; revelado, pula atrás do jogador e rouba moedas (ver MimicEnemy)
     MIMIC_HP: 50,
     MIMIC_RADIUS: 12,
-    MIMIC_DAMAGE: 10,
+    MIMIC_BITE_DAMAGE: 18,         // dano de uma mordida (lifesteal sobre este valor)
     MIMIC_TRIGGER_RANGE: 40,
     MIMIC_XP: 35,
     MIMIC_COLOR: '#ffcc00',
     MIMIC_SPAWN_CHANCE: 0.08,
     MIMIC_DECOY_TYPE: 'currency', // disguised as currency pickup
     MIMIC_LIFESTEAL: 0.3, // heals 30% of damage dealt
+    MIMIC_BITE_COOLDOWN: 45,       // frames entre mordidas (antes: dano a cada tick de contato)
+    MIMIC_BITE_FRAMES: 10,         // frames com a boca aberta depois de morder
+    MIMIC_STEAL_PCT: 0.05,         // moedas roubadas por mordida: 5% do que o jogador tem...
+    MIMIC_STEAL_MIN: 2,            // ...com mínimo de 2 (ou tudo, se tiver menos)
+    MIMIC_STEAL_BASE: 2,           // ...e teto de base + floor(andar / 2)
+    MIMIC_DEATH_BONUS: 0.5,        // ao morrer, devolve o roubado + 50%
+    MIMIC_HOP_SPEED_MULT: 1.8,     // velocidade do pulo, x ENEMY_SPEED
+    MIMIC_HOP_FRAMES: 14,          // duração do pulo no ar
+    MIMIC_HOP_HEIGHT: 10,          // altura do pulo (px)
+    MIMIC_CROUCH_FRAMES: 4,        // agachar antes do pulo
+    MIMIC_LAND_FRAMES: 4,          // squash ao pousar
+    MIMIC_HOP_PAUSE: 10,           // espera entre pulos
+    MIMIC_BLINK_PERIOD: 180,       // tell: olhinho vermelho pisca a cada ~3 s (disfarçada)
+    MIMIC_BLINK_FRAMES: 2,         // quadros em que o olhinho fica aceso
 
     // Enemy Type Display
     ENEMY_TYPE_MELEE: 'melee',
@@ -11273,10 +11292,10 @@ function _updateEntitySimulation() {
             p.alive = false;
             if (p.type === 'currency') {
                 SND.playCoinPickup ? SND.playCoinPickup() : SND.playPickup();
-                const gained = Math.round(p.value * (player.goldRushTimer > 0 ? 2 : 1) * (player.greedBonus ? 1.15 : 1) * (player.goldMult || 1) * ((window._dailyMods && window._dailyMods.goldMult) || 1) * (typeof RunMutators !== 'undefined' ? RunMutators.goldMult() : 1));
-                player.currency += gained; Statistics.data.totalCurrencyEarned += gained; DamageNumbers.add(player.x, player.y, `+${gained} `, 'normal');
-                if (window.RunObjectiveSystem) RunObjectiveSystem.onGold(gained);
-                if (player.goldRushTimer > 0) DamageNumbers.add(player.x, player.y, window.I18n ? I18n.t('hud.x2') : 'x2!', 'crit');
+                const gained = p.noMult ? p.value : Math.round(p.value * (player.goldRushTimer > 0 ? 2 : 1) * (player.greedBonus ? 1.15 : 1) * (player.goldMult || 1) * ((window._dailyMods && window._dailyMods.goldMult) || 1) * (typeof RunMutators !== 'undefined' ? RunMutators.goldMult() : 1));
+                player.currency += gained; if (!p.noMult) Statistics.data.totalCurrencyEarned += gained; DamageNumbers.add(player.x, player.y, `+${gained} `, 'normal');
+                if (window.RunObjectiveSystem && !p.noMult) RunObjectiveSystem.onGold(gained);
+                if (player.goldRushTimer > 0 && !p.noMult) DamageNumbers.add(player.x, player.y, window.I18n ? I18n.t('hud.x2') : 'x2!', 'crit');
             } else {
                 SND.playPickup();
                 ScreenEffects.onBuff(p.type, p.mutationType);
@@ -18758,8 +18777,8 @@ const Bestiary = {
         'elite_melee': { nameKey: 'best.elite_melee.name', name: 'Guerreiro Elite', category: 'elite', descKey: 'best.elite_melee.desc', desc: 'Versão mais forte dos soldados. Mais HP e dano.', difficulty: 4 },
         'elite_ranged': { nameKey: 'best.elite_ranged.name', name: 'Arqueiro Elite', category: 'elite', descKey: 'best.elite_ranged.desc', desc: 'Elite com ataques à distância. Atira mais rápido.', difficulty: 5 },
         'swarm': { nameKey: 'best.swarm.name', name: 'Enxame de Ossos', category: 'swarm', descKey: 'best.swarm.desc', desc: 'Besouros de ossos que rodeiam o alvo e dão botes. Cada bote avisa antes, e só dois atacam por vez.', difficulty: 3 },
-        'trap': { nameKey: 'best.trap.name', name: 'Armadilha', category: 'hazard', descKey: 'best.trap.desc', desc: 'Ativa quando você se aproxima. Causa dano fixo.', difficulty: 2 },
-        'mimic': { nameKey: 'best.mimic.name', name: 'Mímico', category: 'special', descKey: 'best.mimic.desc', desc: 'Parece um baú de ouro, mas é uma armadilha!', difficulty: 4 },
+        'trap': { nameKey: 'best.trap.name', name: 'Boca de Pedra', category: 'hazard', descKey: 'best.trap.desc', desc: 'Uma laje que parece chão até você chegar perto. Treme, abre a mandíbula e morde uma vez, avisando no chão antes. Dano fixo.', difficulty: 2 },
+        'mimic': { nameKey: 'best.mimic.name', name: 'Baú Faminto', category: 'special', descKey: 'best.mimic.desc', desc: 'Parece uma moeda do chão. Revelado, pula atrás de você e rouba suas moedas a cada mordida. Mate-o para recuperar o roubado, com bônus. Se você fugir do andar, o roubado se perde.', difficulty: 4 },
         'boss': { nameKey: 'best.boss.name', name: 'Guardião Esqueleto', category: 'boss', descKey: 'best.boss.desc', desc: 'O chefão de cada piso. Muito forte!', difficulty: 10 },
         'treasure_goblin': { nameKey: 'best.treasure_goblin.name', name: 'Goblin Tesoureiro', category: 'special', descKey: 'best.treasure_goblin.desc', desc: 'Foge rapidamente e larga muito ouro!', difficulty: 3 },
         // Special roles that actually spawn from the weighted table (previously
@@ -25529,7 +25548,85 @@ class SwarmEnemy extends Entity {
     }
 }
 
-// TRAP ENEMY - Stationary ambusher, lunges at player
+// Contorno escuro de 1 célula em volta de uma grade de cores (4 direções). Devolve a grade com moldura.
+function _enemyOutline(g) {
+    const H = g.length + 2, W = g[0].length + 2, out = [];
+    for (let y = 0; y < H; y++) {
+        let row = '';
+        for (let x = 0; x < W; x++) {
+            const inside = y >= 1 && y <= g.length && x >= 1 && x <= g[0].length;
+            const c = inside ? g[y - 1][x - 1] : '.';
+            if (c !== '.') { row += c; continue; }
+            const near = [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => {
+                const yy = y - 1 + dy, xx = x - 1 + dx;
+                return yy >= 0 && yy < g.length && xx >= 0 && xx < g[0].length && g[yy][xx] !== '.';
+            });
+            row += near ? 'k' : '.';
+        }
+        out.push(row);
+    }
+    return out;
+}
+
+// TRAP ENEMY - Boca de Pedra. Dormente, é uma laje do chão; acordada, abre a mandíbula, avisa e dá UM bote.
+// Estados: rest (dormente) > wake (aviso) > bite (bote) > recover (recuperação) > return (volta à origem) > rest.
+const TrapArt = (() => {
+    const W = 13, H = 10; // corpo sem contorno; o contorno ganha 1 célula de cada lado (15x12, escala 3)
+    const PALETTE = ['#1c0d07', '#2a130a', '#3d1b0d', '#55240f']; // veios de brasa: quase apagados, só um brilho fraco
+    const EYE = ['#4a1a08', '#c8400c', '#ffb14a'];                // olhos: apagados, acendendo, brilhando
+    const blank = () => { const g = []; for (let y = 0; y < H; y++) g.push(new Array(W).fill('.')); return g; };
+    const put = (g, x, y, c) => { if (x >= 0 && x < W && y >= 0 && y < H) g[y][x] = c; };
+    const rect = (g, x0, y0, x1, y1, c) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) put(g, x, y, c); };
+    // Laje dormente: pedra com bisel de luz (topo e esquerda), sombra embaixo e à direita, rachaduras e veios
+    const slab = veins => {
+        const g = blank();
+        rect(g, 0, 2, 12, 9, 'b');
+        rect(g, 1, 2, 11, 2, 'l'); rect(g, 0, 3, 0, 8, 'l');
+        rect(g, 1, 9, 11, 9, 's'); rect(g, 12, 3, 12, 8, 's');
+        put(g, 0, 2, '.'); put(g, 12, 2, '.'); put(g, 0, 9, '.'); put(g, 12, 9, '.');
+        for (const [x, y] of [[3, 3], [4, 4], [4, 5], [3, 6], [2, 7], [8, 4], [8, 5], [9, 6], [10, 7], [6, 6], [7, 6]]) put(g, x, y, 'x');
+        for (const [x, y] of [[1, 5], [6, 3], [11, 5], [5, 8]]) put(g, x, y, 'g');
+        // Veios de brasa: a cor vem da paleta (nível 0 quase invisível, 3 o mais forte)
+        for (const [x, y] of [[5, 4], [5, 5], [6, 5], [7, 5], [9, 3], [10, 3], [7, 8], [8, 8]]) put(g, x, y, 'e');
+        return g;
+    };
+    // Mandíbula de pedra: presas de cima (descem) e de baixo (sobem), goela com brilho laranja e olhos de brasa
+    const jaws = (mt, mb) => {
+        const g = blank();
+        const open = mb > mt;
+        rect(g, 0, 0, 12, mt - 1, 'b');       // mandíbula de cima
+        rect(g, 0, mb + 1, 12, 9, 'b');       // mandíbula de baixo
+        rect(g, 1, 0, 11, 0, 'l');             // bisel de luz no topo
+        rect(g, 1, 9, 11, 9, 's');             // sombra embaixo
+        rect(g, 1, mt, 11, mb, 'm');           // goela
+        for (const x of [2, 5, 8, 11]) for (let y = mt; y <= mt + (open ? 1 : 0); y++) put(g, x, y, 'w');  // presas de cima
+        for (const x of [3, 6, 9]) for (let y = mb; y >= mb - (open ? 1 : 0); y--) put(g, x, y, 'w');     // presas de baixo
+        if (open) for (let y = mt + 1; y < mb; y++) for (let x = 4; x <= 8; x++) if (g[y][x] === 'm') put(g, x, y, 'y');
+        if (open && g[mt + 1][6] === 'm') put(g, 6, mt + 1, 'Y');
+        for (const [x, y] of [[2, 1], [3, 1], [2, 2], [3, 2], [9, 1], [10, 1], [9, 2], [10, 2]]) put(g, x, y, 'E'); // olhos de brasa 2x2
+        return g;
+    };
+    const FRAMES = {
+        abrindo: () => jaws(4, 5),  // abre um pouco (aviso e recuperação)
+        aberta: () => jaws(3, 6),   // bem aberta (durante o bote)
+        mordendo: () => jaws(4, 4)  // dentes se encontram (fim do bote)
+    };
+    // Dormente: pedra e contorno mais perto do chão (#151a26), para parecer parte dele
+    const palette = (eyes, veins, dorm) => ({
+        k: dorm ? '#0f1219' : '#07080c', l: dorm ? '#323946' : '#3d4454', b: dorm ? '#272d39' : '#2b313d',
+        s: dorm ? '#1d222c' : '#1b1f29', x: '#0a0c12', g: '#3a4150',
+        e: PALETTE[veins], m: '#0c0306', y: '#c8400c', Y: '#ffb14a', w: '#e8dfc8', E: EYE[eyes]
+    });
+    // Sprite pronto: 'dorm' usa os veios (pulsam); os demais usam os olhos. Cache por quadro.
+    const sprite = (frame, eyes, veins) => {
+        const key = 'trap|' + frame + '|' + eyes + '|' + veins;
+        if (PixelFX.get(key)) return PixelFX.get(key);
+        const body = frame === 'dorm' ? slab(veins) : FRAMES[frame]();
+        return PixelFX.bake(key, _enemyOutline(body), palette(frame === 'dorm' ? 0 : eyes, frame === 'dorm' ? veins : 0, frame === 'dorm'), 3);
+    };
+    return { sprite };
+})();
+
 class TrapEnemy extends Entity {
     constructor(x, y) {
         super(x, y, CONFIG.TRAP_RADIUS, DifficultySystem.getScaledHp(CONFIG.TRAP_HP, false), CONFIG.TRAP_COLOR);
@@ -25538,72 +25635,169 @@ class TrapEnemy extends Entity {
         this.isB = false;
         this.lr = 0;
         this.s = 0; // Stationary
-        this.triggered = false;
+        this.triggered = false; // true enquanto está acordada (qualquer estado que não seja rest)
         this.attackCooldown = 0;
-        this.lungeTarget = null;
         this.xpReward = CONFIG.TRAP_XP;
         this.originalX = x; this.originalY = y;
+        this._state = 'rest';
+        this._t = 0;              // frames restantes no estado atual (wake, recover)
+        this._hold = 0;           // frames parada na mordida, depois que o bote chega ao fim
+        this._dirX = 0; this._dirY = 0; // direção travada no início do bote
+        this._reach = 0;          // alcance do bote (px), travado no início
+        this._travel = 0;         // quanto do bote já foi andado
+        this._biteHit = false;    // o contato deste bote já deu dano
+        this._ringR = CONFIG.TRAP_ATTACK_RANGE + this.radius + CONFIG.TRAP_CONTACT_PAD; // raio do anel (com o jogador: ver update)
+    }
+    _setState(name, frames) { this._state = name; this._t = frames || 0; this.triggered = name !== 'rest'; }
+    // Início do bote: a mira trava na posição do jogador agora, e o bote só vai até o alcance
+    _startBite(p) {
+        const dx = p.x - this.x, dy = p.y - this.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+        this._dirX = dx / d; this._dirY = dy / d;
+        this._reach = Math.min(d, CONFIG.TRAP_ATTACK_RANGE);
+        this._travel = 0; this._biteHit = false; this._hold = CONFIG.TRAP_BITE_HOLD_FRAMES;
+        this.attackCooldown = CONFIG.TRAP_ATTACK_COOLDOWN;
+        this._setState('bite', 0);
     }
     update(p, m) {
-        if(this.frozen > 0) return;
+        if (this.frozen > 0) return;
+        this.attackCooldown--;
         const dx = p.x - this.x, dy = p.y - this.y;
         const dSq = dx * dx + dy * dy;
-        this.attackCooldown--;
-
-        const triggerSq = CONFIG.TRAP_TRIGGER_RANGE * CONFIG.TRAP_TRIGGER_RANGE;
-        if(!this.triggered && dSq < triggerSq) {
-            this.triggered = true;
-            spawnParticles(this.x, this.y, '#ff4400', 10, 4);
-        }
-
-        const attackSq = CONFIG.TRAP_ATTACK_RANGE * CONFIG.TRAP_ATTACK_RANGE;
-        if(this.triggered && dSq < attackSq && this.attackCooldown <= 0) {
-            if(dSq > 0) {
-                const invD = 1.0 / Math.sqrt(dSq);
-                this.x += (dx*invD) * CONFIG.TRAP_LUNGE_SPEED;
-                this.y += (dy*invD) * CONFIG.TRAP_LUNGE_SPEED;
+        const st = this._state;
+        if (st === 'rest') {
+            // Acorda ao chegar perto (só depois do cooldown do bote anterior)
+            const triggerSq = CONFIG.TRAP_TRIGGER_RANGE * CONFIG.TRAP_TRIGGER_RANGE;
+            if (dSq < triggerSq && this.attackCooldown <= 0) {
+                // Anel = alcance real do bote: bote + raio do jogador + raio da armadilha + folga do contato
+                this._ringR = CONFIG.TRAP_ATTACK_RANGE + p.radius + this.radius + CONFIG.TRAP_CONTACT_PAD;
+                this._setState('wake', CONFIG.TRAP_WAKE_FRAMES);
+                spawnParticles(this.x, this.y, '#ff4400', 10, 4);
             }
-            const contactSq = (p.radius + this.radius + 10) * (p.radius + this.radius + 10);
-            if(dSq < contactSq) {
-                p.takeDamage(CONFIG.TRAP_DAMAGE, m);
-                this.attackCooldown = CONFIG.TRAP_ATTACK_COOLDOWN;
-                spawnParticles(p.x, p.y, '#ff4400', 8, 3);
+        } else if (st === 'wake') {
+            // Aviso: treme, os olhos acendem e a marca no chão mostra o alcance. Depois, bote.
+            if (--this._t <= 0) this._startBite(p);
+        } else if (st === 'bite') {
+            if (this._travel < this._reach) {
+                const step = Math.min(CONFIG.TRAP_LUNGE_SPEED, this._reach - this._travel);
+                this._travel += step;
+                // Parede na frente: o bote termina ali
+                if (!this.move(this._dirX * step, this._dirY * step, m)) this._travel = this._reach;
             }
-        }
-
-        if(!this.triggered || this.attackCooldown <= 0) {
+            // Um dano por bote, no contato
+            if (!this._biteHit) {
+                const cdx = p.x - this.x, cdy = p.y - this.y;
+                const contactR = p.radius + this.radius + CONFIG.TRAP_CONTACT_PAD;
+                if (cdx * cdx + cdy * cdy < contactR * contactR) {
+                    this._biteHit = true;
+                    p.takeDamage(CONFIG.TRAP_DAMAGE, m);
+                    spawnParticles(p.x, p.y, '#ff4400', 8, 3);
+                }
+            }
+            if (this._travel >= this._reach && --this._hold <= 0) this._setState('recover', CONFIG.TRAP_RECOVER_FRAMES);
+        } else if (st === 'recover') {
+            if (--this._t <= 0) this._setState('return');
+        } else {
+            // return: volta devagar à origem e, chegando lá, dorme de novo
             const odx = this.originalX - this.x, ody = this.originalY - this.y;
             const odSq = odx * odx + ody * ody;
-            if(odSq > 4) {
-                const invOd = 1.0 / Math.sqrt(odSq);
-                this.x += (odx*invOd)*2;
-                this.y += (ody*invOd)*2;
+            const sp = CONFIG.TRAP_RETURN_SPEED;
+            if (odSq > sp * sp) {
+                const inv = 1 / Math.sqrt(odSq);
+                // Bloqueada na volta: a origem é tile livre, então volta para lá em vez de ficar presa
+                if (!this.move(odx * inv * sp, ody * inv * sp, m)) {
+                    this.x = this.originalX; this.y = this.originalY;
+                    this._setState('rest');
+                }
+            } else {
+                this.x = this.originalX; this.y = this.originalY;
+                this._setState('rest');
             }
         }
     }
     draw(ctx, cx, cy) {
-        if(!this.alive) return;
-        ctx.fillStyle = this.triggered ? '#ff4400' : CONFIG.TRAP_COLOR;
-        ctx.fillRect(this.x-cx-this.radius, this.y-cy-this.radius, this.radius*2, this.radius*2);
-        // Spikes as simple rects
-        ctx.fillStyle = this.triggered ? '#ff6600' : '#664400';
-        ctx.fillRect(this.x-cx-this.radius-4, this.y-cy-this.radius-4, 4, 4);
-        ctx.fillRect(this.x-cx+this.radius, this.y-cy-this.radius-4, 4, 4);
-        ctx.fillRect(this.x-cx-this.radius-4, this.y-cy+this.radius, 4, 4);
-        ctx.fillRect(this.x-cx+this.radius, this.y-cy+this.radius, 4, 4);
-        // Warning indicator when triggered
-        if(this.triggered) {
-            ctx.globalAlpha = 0.3 + Math.sin(gameTime * 0.3) * 0.2;
-            ctx.strokeStyle = '#ff4400';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(this.x-cx-this.radius-10, this.y-cy-this.radius-10, (this.radius+10)*2, (this.radius+10)*2);
-            ctx.globalAlpha = 1;
+        if (!this.alive) return;
+        const reduced = !!(window.GameSettings && GameSettings.reducedMotion);
+        const st = this._state;
+        const bx = this.x - cx, by = this.y - cy;
+        ctx.save();
+        // Marca no chão: o alcance do bote no aviso; o trajeto travado durante o bote
+        if (st === 'wake') {
+            ctx.globalAlpha = 0.25 + 0.4 * (1 - this._t / CONFIG.TRAP_WAKE_FRAMES);
+            PixelFX.ring(ctx, bx, by, this._ringR, '#ff6a1a', 3, { dash: 2 });
+        } else if (st === 'bite') {
+            ctx.globalAlpha = 0.6 * (1 - this._travel / Math.max(1, this._reach));
+            PixelFX.seg3(ctx, bx, by, bx + this._dirX * this._reach, by + this._dirY * this._reach, '#ff6a1a');
         }
-        if(this.ft > 0) this.ft--;
+        ctx.globalAlpha = 1;
+        // Aviso: a laje treme (sem reducedMotion; Math.sin não consome o RNG)
+        const shake = (st === 'wake' && !reduced) ? Math.sin(gameTime * 1.7 + this.x) * 1.5 : 0;
+        const px = Math.round(bx + shake), py = Math.round(by);
+        let frame = 'dorm', eyes = 0, veins = 0;
+        if (st === 'rest' || st === 'return') {
+            // Veios de brasa: fracos, pulsando devagar (~2 s); com reducedMotion ficam no nível médio
+            const ph = (gameTime / (2 * GAME_TICKS_PER_SECOND)) * Math.PI * 2;
+            veins = reduced ? 1 : Math.round((1 + Math.sin(ph)) * 1.5);
+        } else if (st === 'wake') {
+            frame = 'abrindo'; eyes = this._t > CONFIG.TRAP_WAKE_FRAMES / 2 ? 1 : 2;
+        } else if (st === 'bite') {
+            frame = this._travel < this._reach ? 'aberta' : 'mordendo'; eyes = 2;
+        } else { // recover: a mandíbula fecha devagar e os olhos apagam
+            frame = 'abrindo'; eyes = this._t > CONFIG.TRAP_RECOVER_FRAMES / 2 ? 1 : 0;
+        }
+        const sp = TrapArt.sprite(frame, eyes, veins);
+        if (eyes > 0) drawGlow(ctx, px, py, 16, '#ff6a1a', eyes === 2 ? 0.7 : 0.35);
+        PixelFX.draw(ctx, sp, px, py);
+        if (this.ft > 0) { // flash de dano
+            ctx.globalCompositeOperation = 'lighter';
+            ctx.globalAlpha = 0.35;
+            PixelFX.draw(ctx, sp, px, py);
+        }
+        ctx.restore();
+        if (this.ft > 0) this.ft--;
     }
 }
 
-// MIMIC ENEMY - Disguised as a pickup, attacks when player is close
+// MIMIC ENEMY - Baú Faminto. Disfarçada de moeda do chão (mesma arte e halo); revelada, pula atrás do
+// jogador e rouba moedas a cada mordida. Arte: MimicArt (PixelFX, 13x11 células + contorno, escala 3).
+const MimicArt = (() => {
+    const W = 13, H = 11;
+    const PAL = {
+        L: '#b07a40', b: '#7d4d24', s: '#4a2b12', h: '#fff3b0', G: '#ffcc33', g: '#b07a10',
+        w: '#f4eedb', m: '#24050a', r: '#e0557a', R: '#9c2a4c', e: '#ff2a2a'
+    };
+    // Baú de couro: lábio no topo, bojo arredondado, moedas grudadas como escamas em duas fileiras
+    const bag = wide => {
+        const g = []; for (let y = 0; y < H; y++) g.push(new Array(W).fill('.'));
+        const put = (x, y, c) => { if (x >= 0 && x < W && y >= 0 && y < H) g[y][x] = c; };
+        const rect = (x0, y0, x1, y1, c) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) put(x, y, c); };
+        const span = y => (y <= 8 ? [0, 12] : (y === 9 ? [1, 11] : [2, 10])); // largura do bojo por linha
+        rect(1, 0, 11, 0, 'L');                           // lábio
+        for (let y = 1; y < H; y++) rect(span(y)[0], y, span(y)[1], y, 'b');
+        rect(0, 1, 1, 9, 'L'); rect(11, 1, 12, 9, 's'); rect(1, 10, 9, 10, 's');
+        for (const x0 of [1, 4, 7, 10]) { put(x0, 5, 'h'); put(x0 + 1, 5, 'G'); put(x0, 6, 'G'); put(x0 + 1, 6, 'g'); }
+        for (const x0 of [0, 3, 6, 9]) { put(x0, 7, 'h'); put(x0 + 1, 7, 'G'); put(x0, 8, 'G'); put(x0 + 1, 8, 'g'); }
+        // Boca: dentes que se encaixam; na aberta, a mandíbula de baixo e a língua aparecem
+        for (let x = 1; x <= 11; x += 2) put(x, 1, 'w');
+        for (let x = 2; x <= 10; x += 2) put(x, 1, 'm');
+        put(0, 1, 'b'); put(12, 1, 'b');
+        if (wide) {
+            rect(1, 2, 11, 3, 'm');
+            for (let x = 1; x <= 11; x += 2) put(x, 1, 'w');
+            for (const x of [2, 4, 8, 10]) put(x, 3, 'w');
+            for (const x of [5, 6, 7]) { put(x, 3, 'r'); put(x, 4, 'r'); }
+            put(6, 4, 'R'); put(6, 5, 'R');
+        }
+        put(3, 0, 'e'); put(9, 0, 'e'); // olhos vermelhos no lábio
+        return g;
+    };
+    const sprite = wide => {
+        const key = 'mimic|' + (wide ? 'wide' : 'shut');
+        if (PixelFX.get(key)) return PixelFX.get(key);
+        return PixelFX.bake(key, _enemyOutline(bag(wide)), PAL, 3);
+    };
+    return { sprite };
+})();
+
 class MimicEnemy extends Entity {
     constructor(x, y) {
         super(x, y, CONFIG.MIMIC_RADIUS, DifficultySystem.getScaledHp(CONFIG.MIMIC_HP, false), CONFIG.MIMIC_COLOR);
@@ -25614,69 +25808,149 @@ class MimicEnemy extends Entity {
         this.revealed = false;
         this.xpReward = CONFIG.MIMIC_XP;
         this.bobOffset = Math.random() * Math.PI * 2;
+        this.stolen = 0;               // moedas roubadas e ainda no baú (voltam ao chão ao morrer, com bônus)
+        this.biteCooldown = 0;         // frames até a próxima mordida
+        this._biteT = 0;               // frames com a boca aberta depois de uma mordida
+        this._hop = 'idle';            // idle | crouch | air | land
+        this._hopT = CONFIG.MIMIC_HOP_PAUSE;
+        this._hopDx = 0; this._hopDy = 0;
+        this._blinkOff = Math.floor(Math.random() * CONFIG.MIMIC_BLINK_PERIOD); // fase do olhinho que pisca
+    }
+    _setHop(name, frames) { this._hop = name; this._hopT = frames; }
+    // Pulo: a direção é escolhida no início (o pulo não corrige a rota no ar)
+    _startHop(p) {
+        let speedMult = 1;
+        if (player && player.skills.slow) speedMult *= (1 - player.skills.slow);
+        if (player && typeof RunBoons !== 'undefined') speedMult *= RunBoons.enemySpeedMult(player);
+        const dx = p.x - this.x, dy = p.y - this.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+        const v = CONFIG.ENEMY_SPEED * CONFIG.MIMIC_HOP_SPEED_MULT * speedMult;
+        this._hopDx = dx / d * v; this._hopDy = dy / d * v;
+        this._setHop('air', CONFIG.MIMIC_HOP_FRAMES);
+    }
+    _hopUpdate(p, m, dSq) {
+        const st = this._hop;
+        if (st === 'idle') {
+            // Espera; só começa a pular com o jogador ao alcance da perseguição
+            if (dSq > CONFIG.ENEMY_CHASE_RANGE * CONFIG.ENEMY_CHASE_RANGE) return;
+            if (--this._hopT <= 0) this._setHop('crouch', CONFIG.MIMIC_CROUCH_FRAMES);
+        } else if (st === 'crouch') {
+            if (--this._hopT <= 0) this._startHop(p);
+        } else if (st === 'air') {
+            this._hopT--;
+            const moved = this.move(this._hopDx, this._hopDy, m);
+            if (!moved || this._hopT <= 0) this._setHop('land', CONFIG.MIMIC_LAND_FRAMES);
+        } else if (--this._hopT <= 0) {
+            this._setHop('idle', CONFIG.MIMIC_HOP_PAUSE);
+        }
+    }
+    // Mordida: dano, cura (lifesteal) e roubo de moedas. Uma por cooldown, não a cada tick de contato.
+    // Cooldown e boca aberta valem mesmo se a mordida for bloqueada; roubo e cura só com acerto.
+    _bite(p, m) {
+        this.biteCooldown = CONFIG.MIMIC_BITE_COOLDOWN;
+        this._biteT = CONFIG.MIMIC_BITE_FRAMES;
+        const hit = p.takeDamage(CONFIG.MIMIC_BITE_DAMAGE, m);
+        // takeDamage devolve false em parry, i-frames (dash), Égide, esquiva e orbe do mago
+        if (hit === false) { spawnParticles(p.x, p.y, '#cfd8e3', 5, 2); return; }
+        const andar = typeof dungeonLevel === 'number' ? dungeonLevel : 1;
+        const cur = Math.floor(p.currency || 0);
+        const cap = CONFIG.MIMIC_STEAL_BASE + Math.floor(andar / 2);
+        // Roubo: 5% do que o jogador tem (mínimo 2), limitado pelo teto do andar e pelo que ele tem
+        const n = Math.min(cur, cap, Math.max(CONFIG.MIMIC_STEAL_MIN, Math.floor(cur * CONFIG.MIMIC_STEAL_PCT)));
+        if (n > 0) {
+            p.currency -= n;
+            this.stolen += n;
+            DamageNumbers.add(p.x, p.y - 16, `-${n}$`, 'hurt');
+        }
+        const heal = CONFIG.MIMIC_BITE_DAMAGE * CONFIG.MIMIC_LIFESTEAL;
+        this.hp = Math.min(this.maxHp, this.hp + heal);
+        spawnParticles(p.x, p.y, '#ffcc00', 6, 3);
     }
     update(p, m) {
-        if(this.frozen > 0) return;
+        if (this.frozen > 0) return;
+        if (this.biteCooldown > 0) this.biteCooldown--;
+        if (this._biteT > 0) this._biteT--;
         const dx = p.x - this.x, dy = p.y - this.y;
         const dSq = dx * dx + dy * dy;
 
         const triggerSq = CONFIG.MIMIC_TRIGGER_RANGE * CONFIG.MIMIC_TRIGGER_RANGE;
-        if(!this.revealed && dSq < triggerSq) {
+        if (!this.revealed && dSq < triggerSq) {
             this.revealed = true;
             spawnParticles(this.x, this.y, '#ffcc00', 15, 5);
-            addLog(window.I18n ? I18n.t('log.mimic') : ' MIMIC!', true);
+            addLog(window.I18n ? I18n.t('log.mimic') : ' BAÚ FAMINTO!', true);
             shake = 8;
         }
+        if (!this.revealed) return; // disfarçada: não anda nem morde
 
-        if(this.revealed) {
-            let speedMult = 1;
-            if(player && player.skills.slow) speedMult *= (1 - player.skills.slow);
-        if(player && typeof RunBoons !== 'undefined') speedMult *= RunBoons.enemySpeedMult(player);
-            const chaseRangeSq = CONFIG.ENEMY_CHASE_RANGE * CONFIG.ENEMY_CHASE_RANGE;
-            if(dSq > 0 && dSq < chaseRangeSq) {
-                const invD = 1.0 / Math.sqrt(dSq);
-                this.move((dx*invD)*CONFIG.ENEMY_SPEED*speedMult, (dy*invD)*CONFIG.ENEMY_SPEED*speedMult, m);
-            }
-            const contactSq = (p.radius + this.radius) * (p.radius + this.radius);
-            if(dSq < contactSq) {
-                p.takeDamage(CONFIG.MIMIC_DAMAGE, m);
-                const heal = CONFIG.MIMIC_DAMAGE * CONFIG.MIMIC_LIFESTEAL;
-                this.hp = Math.min(this.maxHp, this.hp + heal);
-            }
+        this._hopUpdate(p, m, dSq);
+        const ex = p.x - this.x, ey = p.y - this.y;
+        const contactSq = (p.radius + this.radius) * (p.radius + this.radius);
+        if (ex * ex + ey * ey < contactSq && this.biteCooldown <= 0) this._bite(p, m);
+    }
+    // Ao morrer: devolve ao chão tudo o que roubou, mais o bônus (já no valor), em moedas com noMult
+    // (sem multiplicadores de coleta nem estatística de ouro ganho). Posição em parede volta para a criatura.
+    onDeath(source, m) {
+        const total = Math.round(this.stolen * (1 + CONFIG.MIMIC_DEATH_BONUS));
+        this.stolen = 0;
+        if (!(total > 0)) return;
+        const n = Math.min(12, Math.max(1, Math.ceil(total / CONFIG.PICKUP_CURRENCY_VALUE)));
+        for (let i = 0; i < n; i++) {
+            let x = this.x + (Math.random() - 0.5) * 30, y = this.y + (Math.random() - 0.5) * 30;
+            if (m && m.isWall && m.isWall(x, y)) { x = this.x; y = this.y; }
+            const pk = new Pickup(x, y, 'currency');
+            pk.value = Math.floor(total / n) + (i < total % n ? 1 : 0);
+            pk.noMult = true;
+            pickups.push(pk);
         }
     }
     draw(ctx, cx, cy) {
-        if(!this.alive) return;
-        const bob = Math.sin((gameTime + this.bobOffset) * 0.1) * 3;
-
-        if(!this.revealed) {
-            // Disguised as currency pickup
-            ctx.globalAlpha = 0.5; ctx.fillStyle = '#ffdd00';
-            PixelFX.drawDisc(ctx, this.x-cx, this.y-cy+bob, 12, '#ffdd00');
-            PixelFX.ring(ctx, this.x-cx, this.y-cy+bob, 12, '#8a6a00', 3);
-            ctx.globalAlpha = 1; ctx.fillStyle = '#ffdd00';
-            PixelFX.drawDisc(ctx, this.x-cx, this.y-cy+bob, 8, '#ffdd00');
-            ctx.fillStyle = '#000'; ctx.font = 'bold 10px ' + COLORS.CANVAS_FONT; ctx.textAlign = 'center';
-            ctx.fillText('$', this.x-cx, this.y-cy+bob);
-        } else {
-            // Revealed mimic - toothy chest
-            ctx.fillStyle = '#ffcc00';
-            ctx.fillRect(this.x-cx-this.radius, this.y-cy-this.radius, this.radius*2, this.radius*2);
-            // Mouth
-            ctx.fillStyle = '#330000';
-            ctx.fillRect(this.x-cx-8, this.y-cy-2, 16, 8);
-            // Teeth
-            ctx.fillStyle = '#fff';
-            for(let i = -6; i <= 6; i += 4) {
-                ctx.fillRect(this.x-cx+i, this.y-cy-2, 2, 3);
-                ctx.fillRect(this.x-cx+i, this.y-cy+2, 2, 3);
+        if (!this.alive) return;
+        const reduced = !!(window.GameSettings && GameSettings.reducedMotion);
+        if (!this.revealed) {
+            // Disfarce: a moeda do chão (mesmo halo, mesma arte), que gira um pouco mais devagar.
+            // A cada ~3 s pisca um olhinho vermelho por 2 quadros.
+            const px = Math.round(this.x - cx), py = Math.round(this.y - cy + Math.sin(gameTime * 0.08 + this.bobOffset) * 3);
+            ctx.save();
+            drawGlow(ctx, px, py, 6, COLORS.PICKUP_CURRENCY, 0.25);
+            const f = Math.floor(gameTime * 0.11 + this.bobOffset) % 4;
+            PixelFX.draw(ctx, PixelFX.tonal('coin' + f, PICKUP_ART.coin[f], COLORS.PICKUP_CURRENCY, 3), px, py);
+            if ((gameTime + this._blinkOff) % CONFIG.MIMIC_BLINK_PERIOD < CONFIG.MIMIC_BLINK_FRAMES) {
+                ctx.fillStyle = '#ff2a2a';
+                ctx.fillRect(px - 1, py - 1, 3, 3);
             }
-            // Eyes
-            ctx.fillStyle = '#ff0000';
-            ctx.fillRect(this.x-cx-6, this.y-cy-8, 3, 3);
-            ctx.fillRect(this.x-cx+3, this.y-cy-8, 3, 3);
+            ctx.restore();
+        } else {
+            // Revelada: baú vivo em pulinhos. Squash e stretch por fase do pulo; os pés ficam no chão
+            const ph = this._hop, t = this._hopT;
+            let sx = 1, sy = 1, lift = 0;
+            if (ph === 'idle') {
+                const b = reduced ? 0 : Math.sin((gameTime + this.bobOffset) * 0.1);
+                sx = 1 + 0.03 * b; sy = 1 - 0.03 * b;
+            } else if (ph === 'crouch') {
+                const k = 1 - t / CONFIG.MIMIC_CROUCH_FRAMES;
+                sx = 1 + 0.2 * k; sy = 1 - 0.22 * k;
+            } else if (ph === 'air') {
+                const s = Math.sin(Math.PI * (1 - t / CONFIG.MIMIC_HOP_FRAMES));
+                lift = CONFIG.MIMIC_HOP_HEIGHT * s;
+                sx = 1 - 0.08 * s; sy = 1 + 0.15 * s;
+            } else {
+                const k = t / CONFIG.MIMIC_LAND_FRAMES;
+                sx = 1 + 0.2 * k; sy = 1 - 0.22 * k;
+            }
+            const gx = this.x - cx, gy = this.y - cy;
+            const sp = MimicArt.sprite(this._biteT > 0 || ph === 'air');
+            ctx.save();
+            PixelFX.drawEllipse(ctx, Math.round(gx), Math.round(gy), 11 - lift * 0.3, 3.5, 'rgba(0,0,0,0.3)');
+            ctx.translate(Math.round(gx), Math.round(gy - lift));
+            ctx.scale(sx, sy);
+            PixelFX.draw(ctx, sp, 0, -sp.height / 2);
+            if (this.ft > 0) { // flash de dano
+                ctx.globalCompositeOperation = 'lighter';
+                ctx.globalAlpha = 0.35;
+                PixelFX.draw(ctx, sp, 0, -sp.height / 2);
+            }
+            ctx.restore();
         }
-        if(this.ft > 0) this.ft--;
+        if (this.ft > 0) this.ft--;
     }
 }
 
