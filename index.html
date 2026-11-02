@@ -10313,7 +10313,9 @@ function _doContinue() {
     _bossBanner = null;
     _fadeState = null;
     _transitioning = false;
-    
+    // Na tela de continuar o _deathFlashTimer ficou parado: zera para não pulsar vermelho ao reviver
+    if (typeof ScreenEffects !== 'undefined') ScreenEffects.resetVisual();
+
     const sp = map.getSafeSpawn(200);
     player && (player.x = sp.x, player.y = sp.y);
     gameState = 'PLAYING'; window.dispatchEvent(new Event('gamestarted'));
@@ -13193,6 +13195,9 @@ const PauseSystem = {
             self.resume();
             if (typeof SaveSystem !== 'undefined') Debug.safe(() => SaveSystem.save(), 'autosaveQuitToMenu');
             gameState = 'START';
+            // Sair para o menu: efeitos de tela e transição da run não sobram para a próxima
+            if (typeof ScreenEffects !== 'undefined') ScreenEffects.resetVisual();
+            _fadeState = null; _fadeText = ''; _transitioning = false; _bossBanner = null;
             ToastSystem.reset();
             if (window._releaseWakeLock) window._releaseWakeLock();
             if (uiS) { uiS.classList.remove('hidden'); }
@@ -13718,6 +13723,9 @@ function loop(timestamp) {
         return;
     }
     
+    // Efeitos de tela decaem por tempo real, antes da simulação (ver ScreenEffects.tickVisual)
+    if (typeof ScreenEffects !== 'undefined') ScreenEffects.tickVisual(Math.min(dt, 100));
+
     // Conta callbacks (não draws): no slow-mo (timeScale 0.5) e com jitter há callbacks sem passo, e contar draws derrubaria o auto-res.
     _fpsFrames++;
     _fpsTime += dt;
@@ -13942,6 +13950,8 @@ function _initEngine() {
                     if(modeDiv) modeDiv.style.display = 'block';
                     if(classDiv) classDiv.style.display = 'none';
                     gameState = 'START';
+                    if (typeof ScreenEffects !== 'undefined') ScreenEffects.resetVisual();
+                    _fadeState = null; _fadeText = ''; _transitioning = false; _bossBanner = null;
                     ToastSystem.reset();
                     if (window._refreshContinueButton) window._refreshContinueButton();
                     if (window._refreshDailyBadge) window._refreshDailyBadge();
@@ -15991,7 +16001,10 @@ window.doPrestige = function() {
             Debug.info(`Prestige ${prestigeLevel} achieved`);
             // Save prestige data via StorageManager
             StorageManager.set('prestige', { prestigeLevel, totalGamesPlayed });
-            gameState = 'START'; ToastSystem.reset(); uiG.classList.add('hidden'); uiS.classList.remove('hidden'); uiS.style.display = '';
+            gameState = 'START';
+            if (typeof ScreenEffects !== 'undefined') ScreenEffects.resetVisual();
+            _fadeState = null; _fadeText = ''; _transitioning = false; _bossBanner = null;
+            ToastSystem.reset(); uiG.classList.add('hidden'); uiS.classList.remove('hidden'); uiS.style.display = '';
             // Prestígio 10 desbloqueia o painel de mutadores na tela inicial (prestígio não é resetado)
             if (window.RunMutators) RunMutators.render();
             if (window._refreshContinueButton) window._refreshContinueButton();
@@ -19031,24 +19044,35 @@ const ScreenEffects = {
         this._bloodSplatterColor = color;
     },
     
-    update() {
-        // Flash decay
-        if (this._flashAlpha > 0.01) this._flashAlpha *= 0.88;
+    // Decaimento visual por tempo real, chamado em loop() a cada quadro (antes da simulação).
+    // Não depende de gameState, transição, painel nem hitstop: nada pode deixar um flash preso.
+    // Os fatores são os do tick de 60 fps: f = quadros de 60 fps decorridos.
+    tickVisual(ms) {
+        const f = ms * 60 / 1000;
+        if (this._flashAlpha > 0.01) this._flashAlpha *= Math.pow(0.88, f);
         else this._flashAlpha = 0;
-        
+        if (this._chromaIntensity > 0.1) this._chromaIntensity *= Math.pow(0.90, f);
+        else this._chromaIntensity = 0;
+        if (this._vignetteAlpha > 0.01) this._vignetteAlpha += (this._vignetteTarget - this._vignetteAlpha) * (1 - Math.pow(0.98, f));
+        else this._vignetteAlpha = 0;
+        if (this._bloodSplatterAlpha > 0.01) this._bloodSplatterAlpha *= Math.pow(0.94, f);
+        else this._bloodSplatterAlpha = 0;
+    },
+
+    // Zera os efeitos de tela de uma vez (início de run e saída para o menu)
+    resetVisual() {
+        this._flashAlpha = 0; this._deathFlashTimer = 0; this._chromaIntensity = 0;
+        this._vignetteAlpha = 0; this._bloodSplatterAlpha = 0; this._bloodSplatterTimer = 0;
+    },
+
+    update() {
          // Shake decay
          if (window.GameSettings && GameSettings.screenShakeEnabled === false) { this._shake = 0; }
          else if (this._shake > 0.1) this._shake *= 0.88;
          else this._shake = 0;
         
-        // Chromatic aberration decay
-        if (this._chromaIntensity > 0.1) this._chromaIntensity *= 0.90;
-        else this._chromaIntensity = 0;
-        
-        // Vignette decay
-        if (this._vignetteAlpha > 0.01) this._vignetteAlpha += (this._vignetteTarget - this._vignetteAlpha) * 0.02;
-        else this._vignetteAlpha = 0;
-        
+        // Flash, cromática, vinheta e splatter decaem em tickVisual (tempo real)
+
         // Death flash timer
         if (this._deathFlashTimer > 0) {
             this._deathFlashTimer--;
@@ -19069,13 +19093,8 @@ const ScreenEffects = {
         if (this._ringCd > 0) this._ringCd--;
         if (this._hurtTimer > 0) this._hurtTimer--;
 
-        // Blood splatter decay
-        if (this._bloodSplatterAlpha > 0.01) {
-            this._bloodSplatterAlpha *= 0.94;
-            if (this._bloodSplatterTimer > 0) this._bloodSplatterTimer--;
-        } else {
-            this._bloodSplatterAlpha = 0;
-        }
+        // Blood splatter: o alfa decai em tickVisual; o timer segue contando ticks enquanto está visível
+        if (this._bloodSplatterAlpha > 0.01 && this._bloodSplatterTimer > 0) this._bloodSplatterTimer--;
     },
     
     // ---- Game feel: impacto de acerto, especiais e slow-motion (só visual/sensação) ----
@@ -31230,6 +31249,9 @@ var SettingsUI = {
         if (mo) { mo.classList.add('hidden'); mo.classList.remove('fade-out'); }
         this.close();
         gameState = 'START';
+        // Sair para o menu das Configurações: efeitos de tela e transição da run não sobram
+        if (typeof ScreenEffects !== 'undefined') ScreenEffects.resetVisual();
+        _fadeState = null; _fadeText = ''; _transitioning = false; _bossBanner = null;
         ToastSystem.reset();
         const us = document.getElementById('start-screen');
         if (us) { us.classList.remove('hidden'); us.style.opacity = ''; us.style.pointerEvents = ''; }
@@ -33763,6 +33785,10 @@ window.GameBootstrap = {
         const floor = opts.floor || 1;
         if (!SeedSystem.isSeeded()) { SeedSystem.clearSeed(); }
         _essenceRunAwarded = false;
+        // Efeitos de tela e transição da run anterior não podem continuar na nova: se o fade antigo
+        // seguisse, o 'mid' recriaria o mapa e dispararia onBossDeath e dungeonsCompleted
+        if (typeof ScreenEffects !== 'undefined') ScreenEffects.resetVisual();
+        _fadeState = null; _fadeText = ''; _transitioning = false; _bossBanner = null;
         // Desafio diário já foi decidido em start() (opt-in consumido ali);
         // não reaplicar aqui, senão zeraria os mods recém-aplicados.
         SND.init();
