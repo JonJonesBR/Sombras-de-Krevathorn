@@ -9040,6 +9040,13 @@ var CONFIG = {
 
     // Game State
     MAX_ENEMIES: 11,
+    // Grupos de inimigos com respiro: o próximo grupo só entra quando sobram poucos vivos e depois de uma pausa.
+    WAVE_NEXT_WHEN_ALIVE: 2,       // o próximo grupo só vem com no máximo 2 inimigos vivos
+    WAVE_SIZE_BASE: 3,             // tamanho base do grupo (+1 a cada 3 pisos)
+    WAVE_SIZE_MAX: 6,              // teto do tamanho do grupo pelo andar
+    WAVE_BREATHER_START: 6,        // segundos de respiro no andar 1 (cai 0,25 s por andar)
+    WAVE_BREATHER_MIN: 3.5,        // respiro mínimo, em segundos
+    WAVE_STALL_SECONDS: 25,        // válvula: grupo vivo há mais que isso libera o próximo mesmo com mais de 2 vivos
 
     // Performance Tuning
     PARTICLE_CAP: 60,
@@ -11534,6 +11541,7 @@ function _updateFloorExitReveal() {
 // Estado por andar, zerado em todo andar novo (floor transition, início de run e continue)
 function _resetFloorExplore() {
     _exitRevealed = false;
+    _resetWaveState();
 }
 
 function _startFloorTransition() {
@@ -11817,6 +11825,7 @@ function _leaveSecretRoom(byExit) {
     dungeonPortal = sn.dungeonPortal; dungeonKills = sn.dungeonKills; dungeonKillTarget = sn.dungeonKillTarget;
     bossActive = sn.bossActive; floorBossDefeated = sn.floorBossDefeated; _cachedAliveEnemies = sn.cachedAlive;
     if (typeof NPCSystem !== 'undefined' && sn.npcs) NPCSystem.npcs = sn.npcs;
+    _resetWaveState(); // o andar volta com o respiro cheio (bossActive já foi restaurado acima)
     if (player) { player.x = sn.retX; player.y = sn.retY; camX = player.x - width / 2; camY = player.y - height / 2; }
     if (byExit) {
         addLog(window.I18n ? I18n.t('log.secretExit') : 'Você voltou ao andar.');
@@ -11890,6 +11899,100 @@ function _spawnFloorBoss(eSpawn) {
     _bossBanner = { name: boss.name, nameKey: boss.nameKey || null, timer: 90, line: (boss._blueprint && window.I18n) ? I18n.t('boss.' + boss._blueprint.key + '.intro') : null };
 }
 
+// Estado dos grupos (por andar): respiro restante em frames (conta só com poucos vivos, 60 por tick) e o
+// gameTime do último grupo, ou do início do andar até o primeiro grupo (a válvula já conta desde o início).
+// Zerados por _resetFloorExplore, ao sair da sala secreta e, no continue, depois de restaurar gameTime.
+let _waveBreatherFrames = 0;
+let _waveSpawnedAt = 0;
+
+// Respiro antes do próximo grupo: cai com o andar, com piso no mínimo; no chefe, 1,5x.
+function _waveBreatherSecs() {
+    const base = Math.max(CONFIG.WAVE_BREATHER_MIN, CONFIG.WAVE_BREATHER_START - 0.25 * (dungeonLevel - 1));
+    return bossActive ? base * 1.5 : base;
+}
+
+// Tamanho do grupo: base + 1 a cada 3 pisos (teto próprio), vezes o +Inimigos do desafio diário.
+// Na luta contra o chefe, um membro a menos (mínimo 1).
+function _waveSize() {
+    let n = Math.min(CONFIG.WAVE_SIZE_MAX, CONFIG.WAVE_SIZE_BASE + Math.floor(dungeonLevel / 3));
+    n = Math.round(n * ((window._dailyMods && window._dailyMods.enemyCountMult) || 1));
+    if (bossActive) n -= 1;
+    return Math.max(1, n);
+}
+
+// Zera o estado dos grupos: o respiro do andar começa cheio e a válvula conta a partir de agora
+function _resetWaveState() {
+    _waveBreatherFrames = _waveBreatherSecs() * GAME_TICKS_PER_SECOND;
+    _waveSpawnedAt = gameTime;
+}
+
+// Já há um membro deste grupo a menos de 16 px do ponto (evita dois no mesmo lugar)
+function _waveTaken(placed, x, y) {
+    for (let i = 0; i < placed.length; i++) {
+        if (Math.hypot(placed[i].x - x, placed[i].y - y) < 16) return true;
+    }
+    return false;
+}
+
+// Posição de um membro do grupo: 30-60 px em volta do centro. Se o ponto cai em parede ou em outro membro,
+// tenta até 6 ângulos seguintes; depois os centros dos tiles vizinhos livres; por último, 3 px por índice
+// (dentro do tile do centro, então nunca em parede).
+function _waveMemberPos(c, m, n, placed) {
+    const base = (m / n) * Math.PI * 2 + SeedSystem.random() * 0.6;
+    const d = 30 + SeedSystem.random() * 30;
+    for (let k = 0; k < 6; k++) {
+        const a = base + k * Math.PI / 3;
+        const x = c.x + Math.cos(a) * d, y = c.y + Math.sin(a) * d;
+        if (!map.isWall(x, y) && !_waveTaken(placed, x, y)) return { x: x, y: y };
+    }
+    const T = CONFIG.TILE_SIZE, tx = Math.floor(c.x / T), ty = Math.floor(c.y / T);
+    for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) {
+        const nx = tx + dx, ny = ty + dy;
+        if ((!dx && !dy) || !map.tiles[nx] || !map.tiles[nx][ny] || map.tiles[nx][ny].t !== 0) continue;
+        const x = nx * T + T / 2, y = ny * T + T / 2;
+        if (!_waveTaken(placed, x, y)) return { x: x, y: y };
+    }
+    return { x: c.x + 3 * m, y: c.y };
+}
+
+// Um grupo em volta de `center` (ponto andável a ENEMY_SPAWN_MIN_DIST do jogador). Cada membro é um sorteio
+// normal de _buildSpawnPool, com o teto de pesados e a variante do bioma. Um sorteio de enxame vira o anel
+// de besouros e encerra o grupo. O tamanho respeita o teto de vivos e os abates que faltam (mínimo 1).
+function _spawnWave(center, alive) {
+    const killsLeft = dungeonKillTarget - dungeonKills - alive;
+    const size = Math.max(1, Math.min(_waveSize(), CONFIG.MAX_ENEMIES - alive, killsLeft));
+    const placed = [];
+    for (let m = 0; m < size; m++) {
+        const pos = _waveMemberPos(center, m, size, placed);
+        placed.push(pos);
+        // Central weighted spawn table: single roll makes every type appear reliably
+        const pool = _buildSpawnPool();
+        let total = 0; for(const o of pool) total += o[1];
+        let r = SeedSystem.random() * total, chosen = 'normal';
+        for(const o of pool) { r -= o[1]; if (r <= 0) { chosen = o[0]; break; } }
+        // Teto de pesados vivos (elite e escudeiro): acima do limite vira inimigo normal
+        if (chosen === 'elite' || chosen === 'shielder') {
+            let _heavyAlive = 0;
+            for (let i = 0; i < entities.length; i++) { const _he = entities[i]; if (_he.alive && (_he.elite || _he.isShielder)) _heavyAlive++; }
+            const _heavyCap = CONFIG.MAX_HEAVY_ENEMIES + ((typeof RunMutators !== 'undefined' && RunMutators.eliteMult() > 1) ? 1 : 0);
+            if (_heavyAlive >= _heavyCap) chosen = 'normal';
+        }
+        if (chosen === 'swarm') {
+            // A ameaça é o número, não a vida: nasce um anel de besouros de ossos (SwarmEnemy). Encerra o grupo.
+            for (let s = 0; s < CONFIG.SWARM_SPAWN_COUNT; s++) { const sa = (s / CONFIG.SWARM_SPAWN_COUNT) * Math.PI * 2; const sd = 30 + SeedSystem.random() * 30; entities.push(new SwarmEnemy(center.x + Math.cos(sa)*sd, center.y + Math.sin(sa)*sd)); }
+            break;
+        }
+        const factory = ENEMY_SPAWN_FACTORIES[chosen] || ENEMY_SPAWN_FACTORIES.normal;
+        const _ne = factory(pos.x, pos.y);
+        if ((chosen === 'elite' || chosen === 'normal') && typeof BiomeSystem !== 'undefined' && BiomeSystem.applyEnemyVariant) {
+            BiomeSystem.applyEnemyVariant(_ne);
+        }
+        entities.push(_ne);
+    }
+    _waveSpawnedAt = gameTime;
+    _waveBreatherFrames = _waveBreatherSecs() * GAME_TICKS_PER_SECOND;
+}
+
 function _updateEnemySpawning() {
     if (_transitioning || _secretRoom) return;
     // Only recount alive enemies on spawn ticks (spawning is throttled to gameTime % 60)
@@ -11916,29 +12019,13 @@ function _updateEnemySpawning() {
         if (isBoss) {
             _spawnFloorBoss(eSpawn);
         } else {
-            // Central weighted spawn table: single roll makes every type appear reliably
-            const pool = _buildSpawnPool();
-            let total = 0; for(const o of pool) total += o[1];
-            let r = SeedSystem.random() * total, chosen = 'normal';
-            for(const o of pool) { r -= o[1]; if (r <= 0) { chosen = o[0]; break; } }
-            // Teto de pesados vivos (elite e escudeiro): acima do limite vira inimigo normal
-            if (chosen === 'elite' || chosen === 'shielder') {
-                let _heavyAlive = 0;
-                for (let i = 0; i < entities.length; i++) { const _he = entities[i]; if (_he.alive && (_he.elite || _he.isShielder)) _heavyAlive++; }
-                const _heavyCap = CONFIG.MAX_HEAVY_ENEMIES + ((typeof RunMutators !== 'undefined' && RunMutators.eliteMult() > 1) ? 1 : 0);
-                if (_heavyAlive >= _heavyCap) chosen = 'normal';
-            }
-            if (chosen === 'swarm') {
-                // A ameaça é o número, não a vida: nasce um anel de besouros de ossos (SwarmEnemy).
-                for (let s = 0; s < CONFIG.SWARM_SPAWN_COUNT; s++) { const sa = (s / CONFIG.SWARM_SPAWN_COUNT) * Math.PI * 2; const sd = 30 + SeedSystem.random() * 30; entities.push(new SwarmEnemy(eSpawn.x + Math.cos(sa)*sd, eSpawn.y + Math.sin(sa)*sd)); }
-            } else {
-                const factory = ENEMY_SPAWN_FACTORIES[chosen] || ENEMY_SPAWN_FACTORIES.normal;
-                const _ne = factory(eSpawn.x, eSpawn.y);
-                if ((chosen === 'elite' || chosen === 'normal') && typeof BiomeSystem !== 'undefined' && BiomeSystem.applyEnemyVariant) {
-                    BiomeSystem.applyEnemyVariant(_ne);
-                }
-                entities.push(_ne);
-            }
+            // Grupos com respiro: o respiro só corre com poucos vivos (ou com o grupo atual parado há muito
+            // tempo, válvula). Quando zera, nasce o próximo grupo; a checagem é o tick de 60 frames.
+            const _stalled = (gameTime - _waveSpawnedAt) / GAME_TICKS_PER_SECOND > CONFIG.WAVE_STALL_SECONDS;
+            const _gateOpen = aliveEnemies <= CONFIG.WAVE_NEXT_WHEN_ALIVE || _stalled;
+            // Respiro em frames: cada tick de 60 frames desconta 1 s
+            if (_gateOpen && _waveBreatherFrames > 0) _waveBreatherFrames -= GAME_TICKS_PER_SECOND;
+            if (_gateOpen && _waveBreatherFrames <= 0) _spawnWave(eSpawn, aliveEnemies);
         }
     }
     let bossAlive = false;
@@ -34280,6 +34367,7 @@ window.GameBootstrap = {
                 if (typeof DifficultySystem !== 'undefined') DifficultySystem.lastAdjustmentFrame = gameTime;
             }
             _floorStartTime = gameTime; // o tempo mínimo do chefe recomeça no andar retomado
+            _waveSpawnedAt = gameTime;  // a válvula dos grupos também conta a partir do tempo restaurado
             continuesLeft = (typeof save.continuesLeft === 'number') ? save.continuesLeft : 3;
             _secretFloorUsed = Number.isInteger(save.secretFloorUsed) ? save.secretFloorUsed : -1;
             if (typeof BiomeSystem !== 'undefined') {
