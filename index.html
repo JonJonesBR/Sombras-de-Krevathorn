@@ -15084,7 +15084,7 @@ window.SND = {
                 this.sfxGain.connect(this.sfxReverb);
 
                 this.musicReverb = this.ctx.createGain();
-                this.musicReverb.gain.value = 0.34;
+                this.musicReverb.gain.value = this.MUSIC_REVERB_SEND;
                 this.musicReverb.connect(this._reverb);
                 this.musicGain.connect(this.musicReverb);
             }
@@ -15293,6 +15293,8 @@ window.SND = {
 
     // Volume da música (0..1 do deslizante) -> ganho do musicGain. 100% = MUSIC_BASE_GAIN; padrão 0.6 -> 0.6 * MUSIC_BASE_GAIN.
     MUSIC_BASE_GAIN: 0.9459,
+    // Send da música para o reverb (musicGain -> musicReverb). Não passa por _masterMusicGain, então é zerado à parte.
+    MUSIC_REVERB_SEND: 0.34,
     musicGainFor(volume) {
         const v = (typeof volume === 'number' && Number.isFinite(volume)) ? Math.min(1, Math.max(0, volume)) : 0.6;
         return v * this.MUSIC_BASE_GAIN;
@@ -15320,6 +15322,10 @@ window.SND = {
         const musicVol = settings.musicEnabled ? 1.0 : 0;
         if (this._masterMusicGain) {
             this._masterMusicGain.gain.setValueAtTime(musicVol, this.ctx.currentTime);
+        }
+        // Eco da música: o send vai direto ao reverb, fora de _masterMusicGain; com a música desligada, zera o send.
+        if (this.musicReverb) {
+            this.musicReverb.gain.setValueAtTime(settings.musicEnabled ? this.MUSIC_REVERB_SEND : 0, this.ctx.currentTime);
         }
     },
     // Música: motor por dados (MusicEngine). Mesma API pública para o resto do jogo.
