@@ -2298,19 +2298,16 @@ function _initCanvas() {
     // Assign to global variables (no 'var' here - we want to assign to the outer scope)
     canvas = document.getElementById('gameCanvas');
     ctx = canvas ? canvas.getContext('2d') : null;
-    // Perda de contexto 2D (GPU/driver): preventDefault permite a restauração. Ao voltar,
-    // invalida os caches pelos mesmos pontos que já existem (map.needsRedraw, _mmDirty, luz).
+    // Perda de contexto 2D (GPU/driver). NÃO chamar preventDefault() aqui: no canvas 2D, cancelar
+    // o contextlost impede a restauração (no WebGL é o contrário). O contextrestored refaz os caches.
     if (canvas) {
-        canvas.addEventListener('contextlost', (e) => {
-            e.preventDefault();
-            console.warn('[Canvas] contexto 2D perdido; aguardando restauração.');
+        canvas.addEventListener('contextlost', () => {
+            console.warn('[Canvas] contexto 2D perdido; aguardando o navegador restaurar.');
+            if (window.CanvasRecovery) CanvasRecovery.onLost();
         });
         canvas.addEventListener('contextrestored', () => {
-            console.warn('[Canvas] contexto 2D restaurado; invalidando caches.');
-            try {
-                if (typeof map !== 'undefined' && map) map.needsRedraw = true;
-                _mmDirty = true; _cachedLightCanvas = null; _lightingThrottle = 0;
-            } catch (err) { console.warn('[Canvas] falha ao invalidar caches:', err); }
+            console.warn('[Canvas] contexto 2D restaurado; reconstruindo caches.');
+            if (window.CanvasRecovery) CanvasRecovery.onRestored('contextrestored');
         });
     }
     lightCanvas = document.createElement('canvas');
@@ -2332,6 +2329,12 @@ function _initCanvas() {
     }
     _mmBuffer = document.createElement('canvas');
     _mmCtx = _mmBuffer.getContext('2d');
+    // Recuperação de canvas (ver CanvasRecovery, logo abaixo)
+    if (window.CanvasRecovery) {
+        CanvasRecovery.init();
+        CanvasRecovery.watch(worldCanvas, 'mundo');
+        CanvasRecovery.watch(_mmBuffer, 'minimapa');
+    }
     
     if (canvas) {
         Debug.info('[Constants] Canvas initialized:', canvas.width, 'x', canvas.height);
@@ -2341,6 +2344,153 @@ function _initCanvas() {
         console.error('[Constants] ERROR: gameCanvas not found!');
     }
 }
+
+// Recuperação de canvas. Em segundo plano, o Chrome (Android) pode descartar os recursos de GPU
+// dos canvas 2D. O canvas principal se redesenha a cada quadro, mas os caches fora da tela
+// (folhas de sprite, sprites assados, buffer de tiles, minimapa, retratos do menu) guardam pixels
+// que não voltam sozinhos. recover() zera esses caches para serem refeitos sob demanda.
+// ATENÇÃO: no canvas 2D NÃO se chama preventDefault() no contextlost. Cancelar esse evento impede
+// a restauração (no WebGL é o contrário) e o canvas fica perdido para sempre.
+const CanvasRecovery = (() => {
+    const AWAY_LIMIT_MS = 30000;    // cinto de segurança: depois de tanto tempo fora, refaz os caches mesmo sem perda
+    const LOST_WAIT_MS = 3000;      // contexto ainda perdido depois disso: oferece recarregar (só com toque)
+    const FOREGROUND_GAP_MS = 1000; // uma volta do segundo plano não repete uma recuperação recente
+    let _hiddenAt = 0, _schedTimer = null, _lastRecoverAt = 0, _lostTimer = null, _promptEl = null, _inited = false;
+
+    function _step(name, fn) {
+        try { fn(); } catch (err) { console.warn('[CanvasRecovery] falha em ' + name + ':', err); }
+    }
+    function _isLost() {
+        return !!(ctx && typeof ctx.isContextLost === 'function' && ctx.isContextLost());
+    }
+
+    // Invalida os caches em canvas. Não muda estado de jogo, posição nem save, e não desenha:
+    // draw() avança fade, banner e zoom, então quem chama só pede um quadro (_frameStale).
+    function recover(reason) {
+        _lastRecoverAt = Date.now();
+        console.warn('[CanvasRecovery] reconstruindo canvas (' + reason + ')');
+        _step('pixelfx', () => { if (typeof PixelFX !== 'undefined') PixelFX.clear(); });
+        _step('folhas', () => { if (typeof SpriteManager !== 'undefined') SpriteManager.invalidate(); });
+        _step('pets', () => { if (typeof PET_SPR_CACHE !== 'undefined') PET_SPR_CACHE.length = 0; });
+        _step('luz', () => {
+            if (typeof LightPixelizer !== 'undefined') LightPixelizer.reset();
+            _cachedLightCanvas = null; _lightingThrottle = 0;
+        });
+        _step('efeitos', () => {
+            if (typeof ScreenEffects === 'undefined') return;
+            ScreenEffects._grainCanvas = null;
+            ScreenEffects._chromaCanvas = null; ScreenEffects._chromaCtx = null;
+        });
+        _step('mapas', () => {
+            // o mapa atual e o snapshot do andar principal (sala secreta), que volta a valer na saída
+            const sn = (typeof _secretRoom !== 'undefined' && _secretRoom) ? _secretRoom.snap : null;
+            for (const m of [typeof map !== 'undefined' ? map : null, sn ? sn.map : null]) if (m) m.needsRedraw = true;
+        });
+        // resize() reaplica o transform de DPR no canvas principal e realoca mundo e luz
+        _step('contexto', () => { if (typeof resize === 'function') resize(); });
+        _step('minimapa', () => { _mmDirty = true; });
+        _step('retratos', () => { if (typeof window._repaintHeroPreviews === 'function') window._repaintHeroPreviews(); });
+        _frameStale = true;
+    }
+
+    // Agenda a recuperação para depois do evento atual; várias chamadas viram uma só.
+    // soft = volta do segundo plano: não repete uma recuperação recente.
+    function _schedule(reason, soft) {
+        if (_schedTimer) return;
+        if (soft && Date.now() - _lastRecoverAt < FOREGROUND_GAP_MS) return;
+        // 250 ms: junta os contextrestored de vários canvas que chegam em sequência
+        _schedTimer = setTimeout(() => { _schedTimer = null; recover(reason); }, 250);
+    }
+
+    // Contexto perdido que não volta: depois de LOST_WAIT_MS, oferece recarregar. Nunca recarrega sozinho.
+    // É um <button> de propósito: os handlers globais de toque (tutorial e touchend) cancelam o click
+    // quando o alvo não é um botão, e o aviso deixaria de responder. Também escuta pointerup.
+    function _showReloadPrompt() {
+        if (_promptEl) return;
+        if (typeof gameState !== 'undefined' && gameState === 'PLAYING' && typeof SaveSystem !== 'undefined') {
+            try { SaveSystem.save(); } catch (e) { console.warn('[CanvasRecovery] save antes do recarregamento falhou:', e); }
+        }
+        const el = document.createElement('button');
+        el.type = 'button';
+        el.id = 'canvas-reload-prompt';
+        // Ocupa a área visível e fica acima do overlay de pausa (z-index 300 dentro da ui-layer)
+        el.style.cssText = 'position:fixed;left:0;top:0;width:100vw;height:100vh;height:100dvh;margin:0;border:0;z-index:99998;' +
+            'display:flex;align-items:center;justify-content:center;box-sizing:border-box;padding:24px;' +
+            'background:rgba(8,8,15,0.92);color:#f0e6ff;font:600 16px system-ui,sans-serif;text-align:center;' +
+            'cursor:pointer;touch-action:manipulation;';
+        const msg = window.I18n ? I18n.t('canvas.reloadPrompt') : '';
+        el.textContent = msg || 'A tela travou. Toque para recarregar.';
+        const go = () => location.reload();
+        el.addEventListener('click', go);
+        el.addEventListener('pointerup', go);
+        document.body.appendChild(el);
+        _promptEl = el;
+        // Pausa o jogo por baixo (sem pausa aberta), para não rodar enquanto o aviso está na tela
+        try {
+            if (typeof PauseSystem !== 'undefined' && typeof gameState !== 'undefined' && gameState === 'PLAYING' && !PauseSystem.active) PauseSystem.pause();
+        } catch (e) { console.warn('[CanvasRecovery] pausa do aviso falhou:', e); }
+    }
+    function _hideReloadPrompt() {
+        if (_promptEl) { _promptEl.remove(); _promptEl = null; }
+    }
+    function _armLostWatch() {
+        if (_lostTimer) return;
+        _lostTimer = setTimeout(() => {
+            _lostTimer = null;
+            if (_isLost()) _showReloadPrompt();
+        }, LOST_WAIT_MS);
+    }
+    function _disarmLostWatch() {
+        if (_lostTimer) { clearTimeout(_lostTimer); _lostTimer = null; }
+        _hideReloadPrompt();
+    }
+
+    // Volta do segundo plano. Com o contexto perdido, não recupera aqui: espera o contextrestored
+    // (e, se ele não vier, o aviso de recarregar). Sem perda, só refaz os caches se o tempo fora passou do limite.
+    function _onForeground() {
+        const away = _hiddenAt ? Date.now() - _hiddenAt : 0;
+        _hiddenAt = 0;
+        if (_isLost()) { _armLostWatch(); return; }
+        if (away > AWAY_LIMIT_MS) _schedule('volta depois de ' + Math.round(away / 1000) + 's', true);
+    }
+
+    // Chamado pelo contextlost do canvas principal (só registra; o canvas 2D não pode cancelar)
+    function onLost() {
+        if (document.visibilityState === 'visible') _armLostWatch();
+    }
+    // Chamado pelo contextrestored do canvas principal
+    function onRestored(reason) {
+        _disarmLostWatch();
+        _schedule(reason || 'contextrestored', false);
+    }
+
+    // Observa um canvas de cache: se o navegador restaurar o contexto, refaz os caches
+    function watch(cv, name) {
+        if (!cv || cv._crWatch || typeof cv.addEventListener !== 'function') return;
+        cv._crWatch = true;
+        cv.addEventListener('contextlost', () => console.warn('[CanvasRecovery] cache perdido: ' + name));
+        cv.addEventListener('contextrestored', () => _schedule('cache restaurado: ' + name, false));
+    }
+
+    function init() {
+        if (_inited) return;
+        _inited = true;
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden') { _hiddenAt = Date.now(); return; }
+            _onForeground();
+        });
+        // Página restaurada do cache de navegação (bfcache): o contexto pode ter sido descartado
+        window.addEventListener('pageshow', (e) => {
+            if (!e.persisted) return;
+            // Com o contexto perdido, não recupera aqui: espera o contextrestored (ou o aviso)
+            if (_isLost()) _armLostWatch();
+            else _schedule('bfcache', true);
+        });
+    }
+
+    return { init, recover, watch, onLost, onRestored };
+})();
+window.CanvasRecovery = CanvasRecovery;
 
 // Wait for DOM
 if (document.readyState === 'loading') {
@@ -4103,6 +4253,7 @@ const I18n = {
             'tutorial.promptQuick': 'Tutorial Rápido (~1 min)',
             'tutorial.promptSkip': 'Pular Tutorial',
             'tutorial.promptNever': 'Nunca Mostrar',
+            'canvas.reloadPrompt': 'A tela travou. Toque para recarregar.',
             'tutorial.stageProgress': 'Etapa ',
             'tutorial.stageOf': ' de ',
             'tutorial.skip': ' Pular',
@@ -5824,6 +5975,7 @@ const I18n = {
             'tutorial.promptQuick': 'Quick Tutorial (~1 min)',
             'tutorial.promptSkip': 'Skip Tutorial',
             'tutorial.promptNever': 'Never Show',
+            'canvas.reloadPrompt': 'The screen froze. Tap to reload.',
             'tutorial.stageProgress': 'Step ',
             'tutorial.stageOf': ' of ',
             'tutorial.skip': ' Skip',
@@ -7545,6 +7697,7 @@ const I18n = {
             'tutorial.promptQuick': 'Tutorial Rápido (~1 min)',
             'tutorial.promptSkip': 'Saltar Tutorial',
             'tutorial.promptNever': 'No Mostrar Nunca',
+            'canvas.reloadPrompt': 'La pantalla se congeló. Toca para recargar.',
             'tutorial.stageProgress': 'Paso ',
             'tutorial.stageOf': ' de ',
             'tutorial.skip': ' Saltar',
@@ -11947,7 +12100,9 @@ const PixelFX = (() => {
         }
     };
     const get = key => cache[key] || null;
-    return { bake, draw, snap, shade, tones, tonal, line, ring, disc, drawDisc, ellipse, drawEllipse, sector, ringE, seg3, get };
+    // Descarta os sprites assados (canvas que podem ter perdido o conteúdo); quem usa refaz por chave
+    const clear = () => { for (const k in cache) delete cache[k]; };
+    return { bake, draw, snap, shade, tones, tonal, line, ring, disc, drawDisc, ellipse, drawEllipse, sector, ringE, seg3, get, clear };
 })();
 
 // Luz em pixel art: o buffer de luz (células grandes, suave) é ampliado para uma grade de 4 px (6 px em aparelho fraco),
@@ -11985,7 +12140,9 @@ const LightPixelizer = (() => {
             dctx.imageSmoothingEnabled = false;
             dctx.drawImage(mid, 0, 0, width, height);
             dctx.imageSmoothingEnabled = prev;
-        }
+        },
+        // Descarta o canvas de amostragem (refeito no próximo apply)
+        reset() { mid = null; mctx = null; }
     };
 })();
 
@@ -21757,7 +21914,11 @@ const SpriteManager = {
         if (!this.palettes[type] || !ART_PACKED[type + '_f_idle0']) type = 'warrior';
         let e = this._sheets[type];
         if (!e) {
-            const mk = () => { const c = document.createElement('canvas'); c.width = 24 * this.COLS; c.height = 24 * 8; return c; };
+            const mk = () => {
+                const c = document.createElement('canvas'); c.width = 24 * this.COLS; c.height = 24 * 8;
+                if (window.CanvasRecovery) CanvasRecovery.watch(c, 'folha ' + type);
+                return c;
+            };
             e = this._sheets[type] = { color: mk(), white: mk(), rows: 0 };
             this.sprites[type] = e.color; this.spritesWhite[type] = e.white;
         }
@@ -21790,6 +21951,14 @@ const SpriteManager = {
         wc.fillStyle = '#ffffff';
         wc.fillRect(0, row * 24, W, 24);
         wc.restore();
+    },
+
+    // Descarta as folhas montadas (os canvas podem ter perdido o conteúdo). sheetRow refaz
+    // cada tipo e direção sob demanda; os dados decodificados (_auth) não são canvas e ficam.
+    invalidate() {
+        this._sheets = {};
+        this.sprites = {};
+        this.spritesWhite = {};
     },
 
     getDirIndex(angle) {
@@ -23741,6 +23910,7 @@ class Map {
             this.buffer.height = this.height * CONFIG.TILE_SIZE;
         }
         this.bufferCtx = this.buffer.getContext('2d');
+        if (window.CanvasRecovery) CanvasRecovery.watch(this.buffer, 'mapa');
         this.needsRedraw = true; // always draw after fresh generation
     }
     // Sala secreta: grade do mesmo tamanho do andar (minimapa e FlowField dependem
@@ -27066,7 +27236,7 @@ const PET_ART_ACC = {
     owl:    { Y: '#f0b040' },
     spirit: { G: '#e8fff6' }
 };
-const PET_SPR_CACHE = [];
+const PET_SPR_CACHE = []; // canvas dos pets; CanvasRecovery esvazia (PET_SPR_CACHE.length = 0)
 function _petRGB(hex) { const n = parseInt(hex.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }
 function _petMix(c, t, k) { return [Math.round(c[0] + (t[0] - c[0]) * k), Math.round(c[1] + (t[1] - c[1]) * k), Math.round(c[2] + (t[2] - c[2]) * k)]; }
 
@@ -36521,6 +36691,9 @@ Input.init();
             SR.drawCharacter(ctx, Math.round(cv.width / 2), cv.height - 24, h.cls,
                 { state: 'idle', time: h.time, angle: 0 }, 0);
         }
+
+        // Repinta os retratos; o CanvasRecovery chama isto quando o navegador descarta os canvas
+        window._repaintHeroPreviews = function () { for (var r = 0; r < heroes.length; r++) paintHero(heroes[r]); };
 
         // First paint also builds the sprite sheets (SpriteManager.init) — this
         // runs during parse, still covered by the splash overlay, so the menu
