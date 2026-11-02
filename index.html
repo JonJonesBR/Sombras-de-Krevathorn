@@ -3091,6 +3091,8 @@ const SaveSystem = {
             dungeonKillTarget: (typeof dungeonKillTarget !== 'undefined') ? dungeonKillTarget : 18,
             // Campo opcional (sem DEFAULTS, sem migração): ausente em saves antigos, ver _floorBossFromSave
             floorBossDefeated: (typeof floorBossDefeated !== 'undefined') ? !!floorBossDefeated : false,
+            // Tempo da run em frames (gameTime): o continue o restaura, para tempo e estrelas não zerarem
+            runTicks: (typeof gameTime === 'number' && Number.isFinite(gameTime)) ? Math.max(0, Math.floor(gameTime)) : 0,
             continuesLeft: (typeof continuesLeft !== 'undefined') ? continuesLeft : 3,
             biome: (typeof BiomeSystem !== 'undefined') ? BiomeSystem.currentBiome : 'dungeon',
             dungeonsCompleted: (typeof BiomeSystem !== 'undefined') ? BiomeSystem.dungeonsCompleted : 0,
@@ -3202,7 +3204,7 @@ const SaveSystem = {
             savedAt: [0, Number.MAX_SAFE_INTEGER], lvl: [1, 10000], kills: [0, 1e9], currency: [0, 1e9],
             skillPoints: [0, 10000], weaponLevel: [1, 1000], dungeonLevel: [1, 10000], dungeonKills: [0, 1e9],
             dungeonKillTarget: [1, 1e9], continuesLeft: [0, 3], dungeonsCompleted: [0, 1e6], prestigeLevel: [0, 100000],
-            totalGamesPlayed: [0, 1e9], secretFloorUsed: [-1, 10000]
+            totalGamesPlayed: [0, 1e9], secretFloorUsed: [-1, 10000], runTicks: [0, Number.MAX_SAFE_INTEGER]
         };
         const numberRanges = {
             xp: [0, 1e9], hp: [0, 1e9], maxHp: [1, 1e9], speed: [0.01, 1000], weaponDamageMult: [0.01, 1000],
@@ -10436,9 +10438,7 @@ function _triggerWin() {
         var mins = Math.floor(elapsed / 60);
         var secs = elapsed % 60;
         var timeStr = mins > 0 ? mins + 'm ' + secs + 's' : secs + 's';
-statsEl.innerHTML = '<div style="margin:8px 0;">'
-            + '<span style="color:#ffcc00;">' + starStr + '</span></div>'
-            + '<table class="go-stats-table">'
+        statsEl.innerHTML = '<table class="go-stats-table">'
             + '<tr><td>' + T('gameover.level') + '</td><td>' + player.lvl + '</td></tr>'
             + '<tr><td>' + T('gameover.kills') + '</td><td>' + player.kills + '</td></tr>'
             + '<tr><td>' + T('gameover.runDamage') + '</td><td>' + (window.RunStats ? Math.round(RunStats.damageDealt) : 0) + '</td></tr>'
@@ -33533,7 +33533,13 @@ window.GameBootstrap = {
             dungeonKills = save.dungeonKills || 0;
             dungeonKillTarget = save.dungeonKillTarget || 18;
             floorBossDefeated = _floorBossFromSave(save);
-            _floorStartTime = gameTime; // o save não guarda gameTime: o andar retomado recomeça a contagem
+            // Tempo da run: _resetState zerou gameTime, então restaura depois dele. Save antigo (sem o campo): segue do zero.
+            if (Number.isSafeInteger(save.runTicks) && save.runTicks >= 0) {
+                gameTime = save.runTicks;
+                // DDA: a carência de ajuste começa no continue, senão a janela vazia alivia os inimigos logo de cara
+                if (typeof DifficultySystem !== 'undefined') DifficultySystem.lastAdjustmentFrame = gameTime;
+            }
+            _floorStartTime = gameTime; // o tempo mínimo do chefe recomeça no andar retomado
             continuesLeft = (typeof save.continuesLeft === 'number') ? save.continuesLeft : 3;
             _secretFloorUsed = Number.isInteger(save.secretFloorUsed) ? save.secretFloorUsed : -1;
             if (typeof BiomeSystem !== 'undefined') {
