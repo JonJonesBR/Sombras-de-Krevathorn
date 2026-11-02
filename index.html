@@ -699,8 +699,11 @@ body.font-small :is(#modal-overlay, #settings-panel, #pause-overlay, #game-over-
 body.font-large :is(#modal-overlay, #settings-panel, #pause-overlay, #game-over-screen, #start-screen) button {
     min-height: calc(24px / var(--font-scale));
 }
-/* Fonte grande: as linhas de botões da tela inicial (classes, tutorial/diário/meta) quebram em vez de vazar. */
-body.font-large #start-screen [style*="gap:6px"] { flex-wrap: wrap; }
+/* Fonte grande: as linhas da tela inicial (classes, segmentos, build) quebram em vez de vazar. */
+body.font-large #start-screen [style*="gap:6px"],
+body.font-large #start-screen .start-seg { flex-wrap: wrap; }
+/* Fonte grande: as 4 classes viram grade 2x2 (cada card continua com largura útil) */
+body.font-large #start-screen .start-classes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 /* Toasts, logs, cartões de item e banner de update fora dos painéis usam o mesmo fator, mas no
    próprio font-size: `calc(Npx * var(--font-scale, 1))`. Não é `zoom`: zoom não muda o font-size
    computado, e o texto px inline não herda o em do #hud. Sem classe de fonte, o valor é o px de antes. */
@@ -794,7 +797,7 @@ body.cb-tritan  { filter: url("#cb-tritan"); }
 
 .mode-tab:active { transform: scale(0.94); }
 
-#tutorial-btn-start:active, #settings-btn-start:active { transform: scale(0.94); }
+.start-tile:active { transform: scale(0.94); }
 
 .stat-dot { transition: all 0.3s ease; }
 
@@ -834,6 +837,75 @@ body.cb-tritan  { filter: url("#cb-tritan"); }
     50% { color: rgba(224, 182, 255, 0.75); }
 }
 #start-screen > * { position: relative; z-index: 1; }
+
+/* ── Tela inicial reorganizada (coluna única, celular 360–420px) ──
+   Ordem: continuar → card "Nova partida" (modo, dificuldade, mutadores, classe)
+   → grade de atalhos → opções avançadas (seed e build) → versão. */
+.start-body { flex: 1; display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 560px; margin-left: auto; margin-right: auto; padding: 8px 8px 0; overflow-y: auto; box-sizing: border-box; }
+.start-body > * { flex-shrink: 0; }
+/* Conteúdo centralizado na vertical quando sobra espaço (margem auto some quando não sobra: sem corte no topo) */
+.start-main { display: flex; flex-direction: column; gap: 8px; margin-top: auto; }
+.start-main > * { flex-shrink: 0; }
+
+/* Continuar: ação principal, cheia e com largura total */
+.start-continue { display: block; width: 100%; box-sizing: border-box; padding: 12px; border-radius: 16px; border: 1.5px solid rgba(60,227,106,0.7); background: linear-gradient(135deg, #0f9a4a, #3ce36a); box-shadow: 0 0 16px rgba(60,227,106,0.25); color: #04140a; font-size: clamp(0.85rem,3vw,1rem); font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; text-align: center; cursor: pointer; touch-action: manipulation; transition: all 0.2s; }
+.start-row-center { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+
+/* Card "Nova partida" */
+.start-card { display: flex; flex-direction: column; gap: 6px; box-sizing: border-box; width: 100%; padding: 8px; border-radius: 16px; border: 1px solid rgba(224,182,255,0.12); background: rgba(255,255,255,0.025); }
+.start-section-title { text-align: center; font-size: clamp(0.55rem,2vw,0.66rem); font-weight: 700; letter-spacing: 0.25em; text-transform: uppercase; color: rgba(224,182,255,0.6); }
+.start-hint { text-align: center; font-size: clamp(0.6rem,2.1vw,0.72rem); line-height: 1.3; color: rgba(255,255,255,0.62); min-height: 1.3em; }
+.start-pick-hint { text-align: center; font-size: clamp(0.6rem,2.1vw,0.72rem); color: rgba(224,182,255,0.6); margin-top: 2px; }
+.start-mutators { box-sizing: border-box; width: 100%; padding: 8px; border-radius: 12px; border: 1px solid rgba(255,190,90,0.2); background: rgba(255,190,90,0.04); }
+.start-classes { display: flex; gap: 4px; }
+.start-classes > .class-mini-card { min-width: 0; }
+.start-class-name { font-size: clamp(0.56rem,2.6vw,0.85rem); letter-spacing: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+
+/* Controle segmentado (modo e dificuldade): container com borda, botões sem borda própria */
+.start-seg { display: flex; gap: 3px; padding: 3px; border: 1px solid rgba(255,255,255,0.12); border-radius: 999px; }
+.start-seg-btn { flex: 1 1 0; min-width: 0; min-height: 40px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 6px 4px; border: 1px solid transparent; border-radius: 999px; background: transparent; color: rgba(255,255,255,0.6); font-size: clamp(0.62rem,2.4vw,0.8rem); font-weight: 600; line-height: 1.1; cursor: pointer; touch-action: manipulation; transition: all 0.2s; }
+.start-seg-btn > .icon-inline { width: 14px; height: 14px; flex: none; }
+.start-seg-btn > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Telas estreitas ou fonte grande: a dificuldade fica só com o rótulo (Pesadelo cabe no segmento) */
+@media (max-width: 400px) { .start-seg-diff .start-seg-btn > .icon-inline { display: none; } }
+body.font-large .start-seg-diff .start-seg-btn > .icon-inline { display: none; }
+.start-seg-mode .start-seg-btn { text-transform: uppercase; letter-spacing: 0.08em; font-size: clamp(0.72rem,2.8vw,0.9rem); font-weight: 700; }
+/* Selecionado: fundo preenchido. Dificuldade define --seg-accent/--seg-tint/--seg-glow inline (cor do preset). */
+.start-seg-btn.is-selected { color: var(--seg-accent, #f0e0ff); background: var(--seg-tint, rgba(224,182,255,0.15)); border-color: var(--seg-accent, rgba(224,182,255,0.5)); box-shadow: 0 0 12px var(--seg-glow, rgba(224,182,255,0.25)); font-weight: 800; }
+.start-seg-btn:focus-visible { outline: 2px solid rgba(224,182,255,0.7); outline-offset: 2px; }
+/* A regra de min-height por font-scale (acima) tem mais especificidade: estes seletores a reafirmam */
+body.font-small #start-screen .start-seg-btn, body.font-large #start-screen .start-seg-btn { min-height: calc(40px / var(--font-scale, 1)); }
+body.font-small #start-screen .start-tile, body.font-large #start-screen .start-tile { min-height: calc(52px / var(--font-scale, 1)); }
+
+/* Grade de atalhos: 3 colunas, estilo neutro; só o ícone tem cor */
+.start-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.start-tile { position: relative; min-width: 0; min-height: 52px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 6px 4px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.75); font-size: 0.68rem; font-weight: 700; line-height: 1.1; text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer; touch-action: manipulation; transition: all 0.2s; }
+.start-tile-ic { width: 18px; height: 18px; flex: none; color: var(--tile-ic, rgba(255,255,255,0.75)); }
+.start-tile-label { display: block; max-width: 100%; font-size: clamp(0.6rem,2.7vw,0.72rem); letter-spacing: 0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.start-tile-tutorial { --tile-ic: #ffcc00; }
+.start-tile-daily { --tile-ic: #9ad0ff; }
+.start-tile-meta { --tile-ic: #ffcc00; }
+.start-tile-collection { --tile-ic: #ffd86b; }
+.start-tile-lore { --tile-ic: #e0b6ff; }
+.start-tile-settings { --tile-ic: rgba(255,255,255,0.6); }
+/* Convite do desafio diário: borda azul + pontinho pulsante (sem animação em reduced-motion e gfx-low) */
+.start-tile.has-invite { border-color: rgba(80,140,255,0.5); }
+.start-tile.has-invite::after { content: ''; position: absolute; top: 5px; right: 5px; width: 7px; height: 7px; border-radius: 50%; background: #5aa2ff; box-shadow: 0 0 6px rgba(90,162,255,0.9); }
+@media (prefers-reduced-motion: no-preference) {
+    body:not(.gfx-low) .start-tile.has-invite::after { animation: startInvitePulse 2s ease-in-out infinite; }
+}
+@keyframes startInvitePulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.35); opacity: 0.6; }
+}
+
+/* Opções avançadas: link de texto discreto e subseções */
+.start-advanced-summary { display: flex; align-items: center; justify-content: center; gap: 5px; padding: 6px; cursor: pointer; color: rgba(224,182,255,0.6); font-size: clamp(0.62rem,2.2vw,0.74rem); letter-spacing: 0.04em; user-select: none; touch-action: manipulation; }
+.start-advanced-summary > .icon-inline { width: 12px; height: 12px; flex: none; }
+.start-chev { width: 12px; height: 12px; flex: none; }
+@media (prefers-reduced-motion: no-preference) { .start-chev { transition: transform 0.2s ease; } }
+#start-options-advanced[open] > summary .start-chev { transform: rotate(90deg); }
+.start-adv-sec { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; padding: 8px 10px; border-radius: 14px; border: 1px solid rgba(224,182,255,0.12); background: rgba(255,255,255,0.02); }
 
 /* ── Class / Mode Cards ── */
 .class-card {
@@ -1146,10 +1218,9 @@ body.gfx-low #start-screen::after { animation: none !important; opacity: 0.5 !im
     50%      { filter: brightness(1.09); }
 }
 
-/* Seed/build <summary> now show a centered svg+label — drop the browser
-   disclosure triangle so the row stays symmetric. */
-#start-options-seed summary::-webkit-details-marker,
-#start-options-build summary::-webkit-details-marker { display: none; }
+/* Opções avançadas (seed + build): sem o triângulo do navegador no summary. */
+#start-options-advanced summary { list-style: none; }
+#start-options-advanced summary::-webkit-details-marker { display: none; }
 
 /* ============================================================
    G2 — skill tree: explicit node states (visual only)
@@ -1408,155 +1479,143 @@ body {
             </div>
         </header>
 
-        <!-- Single unified flow: Mode tabs + Class cards -->
-        <div class="w-full" style="flex:1;display:flex;flex-direction:column;padding:8px 12px 0;overflow-y:auto;">
-            
-            <!-- Mode Tabs (pill-style) -->
-            <div style="display:flex;gap:6px;justify-content:center;margin-bottom:8px;">
-                <button data-mode="dungeon" onclick="window.setMode('dungeon')" class="mode-tab" style="padding:6px 18px;border-radius:999px;font-size:clamp(0.75rem,3vw,0.95rem);font-weight:700;border:1.5px solid rgba(224,182,255,0.5);background:rgba(224,182,255,0.15);color:#f0e0ff;text-transform:uppercase;letter-spacing:0.08em;transition:all 0.25s;touch-action:manipulation;">
-                    <svg class="icon-inline" width="14" height="14" style="margin-right:4px;"><use href="#ic-swords"/></svg> <span data-i18n="start.modeDungeon">Masmorra</span>
-                </button>
-                <button data-mode="abyss" onclick="window.setMode('abyss')" class="mode-tab" style="padding:6px 18px;border-radius:999px;font-size:clamp(0.75rem,3vw,0.95rem);font-weight:700;border:1.5px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:0.08em;transition:all 0.25s;touch-action:manipulation;">
-                    <svg class="icon-inline" width="14" height="14" style="margin-right:4px;"><use href="#ic-dodge"/></svg> <span data-i18n="start.modeAbyss">Abismo</span>
-                </button>
-            </div>
-            
-            <!-- Mode description (dynamic) -->
-            <div id="mode-desc" data-i18n="start.modeDesc" style="text-align:center;font-size:clamp(0.65rem,2.2vw,0.8rem);color:rgba(255,255,255,0.62);margin-bottom:10px;min-height:2.2em;line-height:1.4;padding:0 8px;">
-                Evolua seu personagem em masmorras cada vez mais difíceis.
-            </div>
-            <!-- Mutadores de prestígio (v66): preenchido por RunMutators.render(); oculto até CONFIG.MUTATORS_UNLOCK_PRESTIGE (só dica a partir do prestígio 1) -->
-            <div id="mutator-panel" style="display:none;margin:0 auto 10px;width:100%;max-width:520px;padding:8px;border-radius:12px;border:1px solid rgba(255,190,90,0.2);background:rgba(255,190,90,0.04);"></div>
-            <!-- Daily challenge badge: shows today's active challenge before starting -->
-            <div id="daily-badge" style="display:none;text-align:center;font-size:clamp(0.58rem,2vw,0.7rem);color:#9ad0ff;background:rgba(80,140,255,0.1);border:1.5px solid rgba(80,140,255,0.25);border-radius:10px;padding:5px 10px;margin-bottom:8px;line-height:1.35;"></div>
+            <!-- Corpo da tela inicial (coluna única): continuar, nova partida, atalhos e opções avançadas -->
+            <div class="w-full start-body">
+                <div class="start-main">
 
-            <!-- Difficulty Selection -->
-            <div style="margin-bottom:8px;">
-                <div data-i18n="start.difficultyLabel" style="text-align:center;font-size:clamp(0.55rem,2vw,0.68rem);letter-spacing:0.25em;text-transform:uppercase;color:rgba(255,255,255,0.6);margin-bottom:5px;">Dificuldade</div>
-                <div style="display:flex;gap:5px;">
-                    <button class="diff-btn" data-diff="facil" onclick="window.setDifficulty('facil')" style="flex:1;padding:8px 2px;border-radius:12px;font-size:clamp(0.6rem,2.4vw,0.78rem);font-weight:600;border:1.5px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.45);cursor:pointer;transition:all 0.2s;touch-action:manipulation;display:inline-flex;align-items:center;justify-content:center;gap:4px;"><svg class="icon-inline" style="width:13px;height:13px;flex:none;"><use href="#ic-leaf"/></svg><span data-i18n="start.diff.facil">Fácil</span></button>
-                    <button class="diff-btn" data-diff="normal" onclick="window.setDifficulty('normal')" style="flex:1;padding:8px 2px;border-radius:12px;font-size:clamp(0.6rem,2.4vw,0.78rem);font-weight:600;border:1.5px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.45);cursor:pointer;transition:all 0.2s;touch-action:manipulation;display:inline-flex;align-items:center;justify-content:center;gap:4px;"><svg class="icon-inline" style="width:13px;height:13px;flex:none;"><use href="#ic-swords"/></svg><span data-i18n="start.diff.normal">Normal</span></button>
-                    <button class="diff-btn" data-diff="dificil" onclick="window.setDifficulty('dificil')" style="flex:1;padding:8px 2px;border-radius:12px;font-size:clamp(0.6rem,2.4vw,0.78rem);font-weight:600;border:1.5px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.45);cursor:pointer;transition:all 0.2s;touch-action:manipulation;display:inline-flex;align-items:center;justify-content:center;gap:4px;"><svg class="icon-inline" style="width:13px;height:13px;flex:none;"><use href="#ic-skull"/></svg><span data-i18n="start.diff.dificil">Difícil</span></button>
-                    <button class="diff-btn" data-diff="pesadelo" onclick="window.setDifficulty('pesadelo')" style="flex:1;padding:8px 2px;border-radius:12px;font-size:clamp(0.6rem,2.4vw,0.78rem);font-weight:600;border:1.5px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.45);cursor:pointer;transition:all 0.2s;touch-action:manipulation;display:inline-flex;align-items:center;justify-content:center;gap:4px;"><svg class="icon-inline" style="width:13px;height:13px;flex:none;"><use href="#ic-flame-alt"/></svg><span data-i18n="start.diff.pesadelo">Pesadelo</span></button>
-                </div>
-                <div id="difficulty-desc" data-i18n="start.difficultyDesc" style="text-align:center;font-size:clamp(0.58rem,2vw,0.7rem);color:rgba(255,255,255,0.62);margin-top:4px;min-height:1.2em;line-height:1.3;">A experiência padrão de Krevathorn.</div>
-            </div>
+                <!-- Continuar: ação principal; só aparece se houver partida salva (ver _refreshContinueButton) -->
+                <button id="continue-run-btn" class="start-continue" onclick="window.continueGame()" style="display:none;">
+                    <span class="start-row-center"><svg class="icon-inline" style="width:15px;height:15px;flex:none;"><use href="#ic-play"/></svg><span data-i18n="start.continueRun">Continuar Jogo</span></span>
+                </button>
 
-            <!-- Seed (reproducible runs) — colapsável para reduzir a densidade da primeira dobra -->
-            <details id="start-options-seed">
-                <summary style="cursor:pointer;padding:8px 10px;border-radius:12px;border:1.5px solid rgba(224,182,255,0.22);background:rgba(224,182,255,0.06);color:rgba(224,182,255,0.9);font-size:clamp(0.65rem,2.4vw,0.8rem);font-weight:700;text-align:center;letter-spacing:0.05em;text-transform:uppercase;touch-action:manipulation;user-select:none;list-style:none;"><span style="display:inline-flex;align-items:center;justify-content:center;gap:5px;"><svg class="icon-inline" style="width:14px;height:14px;flex:none;"><use href="#ic-gear"/></svg><span data-i18n="start.seedOptions">Opções — Seed</span></span></summary>
-                <div style="margin:6px 0 8px;padding:8px 10px;border-radius:14px;border:1.5px solid rgba(224,182,255,0.12);background:rgba(255,255,255,0.02);">
-                <div style="margin-bottom:8px;">
-                    <div data-i18n="start.seedLabel" style="text-align:center;font-size:clamp(0.55rem,2vw,0.68rem);letter-spacing:0.25em;text-transform:uppercase;color:rgba(255,255,255,0.6);margin-bottom:5px;">Seed (execuções reprodutíveis)</div>
-                    <div style="display:flex;gap:5px;">
-                        <input id="seed-input" type="text" maxlength="40" placeholder="vazio = aleatório" data-i18n-placeholder="start.seedPlaceholder" style="flex:1;min-width:0;padding:8px 10px;border-radius:12px;font-size:clamp(0.6rem,2.4vw,0.78rem);background:rgba(255,255,255,0.05);border:1.5px solid rgba(255,255,255,0.12);color:#e0e0e0;outline:none;">
-                        <button onclick="window.applySeedInput()" data-i18n="start.seedApply" style="padding:8px 12px;border-radius:12px;font-size:clamp(0.6rem,2.4vw,0.78rem);font-weight:700;border:1.5px solid rgba(224,182,255,0.4);background:rgba(224,182,255,0.12);color:#e0b6ff;cursor:pointer;touch-action:manipulation;">Aplicar</button>
-                        <button onclick="window.clearSeedInput()" data-i18n="start.seedRandom" style="padding:8px 10px;border-radius:12px;font-size:clamp(0.6rem,2.4vw,0.78rem);font-weight:700;border:1.5px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.45);cursor:pointer;touch-action:manipulation;">Aleatório</button>
+                <!-- Nova partida: modo, dificuldade, mutadores e escolha da classe (o toque na classe inicia) -->
+                <section class="start-card" aria-labelledby="start-newrun-title">
+                    <div id="start-newrun-title" class="start-section-title" data-i18n="start.newRun">Nova partida</div>
+
+                    <div class="start-seg start-seg-mode" role="group" aria-label="Modo" data-i18n-aria-label="start.modeLabel">
+                        <button type="button" data-mode="dungeon" onclick="window.setMode('dungeon')" class="mode-tab start-seg-btn is-selected" aria-pressed="true"><svg class="icon-inline" aria-hidden="true"><use href="#ic-swords"/></svg><span data-i18n="start.modeDungeon">Masmorra</span></button>
+                        <button type="button" data-mode="abyss" onclick="window.setMode('abyss')" class="mode-tab start-seg-btn" aria-pressed="false"><svg class="icon-inline" aria-hidden="true"><use href="#ic-dodge"/></svg><span data-i18n="start.modeAbyss">Abismo</span></button>
                     </div>
-                    <div id="seed-status" data-i18n="start.seedStatus" style="text-align:center;font-size:clamp(0.55rem,2vw,0.65rem);color:rgba(255,255,255,0.55);margin-top:4px;min-height:1.1em;">Mesmo seed + mesmo piso = mesmo mapa e mesmos encontros.</div>
-                </div>
-                </div>
-            </details>
+                    <!-- Descrição do modo (dinâmica, uma linha) -->
+                    <div id="mode-desc" class="start-hint">Suba piso a piso até a superfície.</div>
 
-            <!-- Continue (shown only if a saved run exists) -->
-            <button id="continue-run-btn" onclick="window.continueGame()" style="display:none;width:100%;padding:12px;margin-bottom:8px;border-radius:16px;font-size:clamp(0.85rem,3vw,1rem);font-weight:800;border:1.5px solid rgba(60,227,106,0.4);background:linear-gradient(135deg,rgba(0,136,54,0.25),rgba(60,227,106,0.15));color:#3ce36a;text-transform:uppercase;letter-spacing:0.06em;transition:all 0.2s;touch-action:manipulation;">
-                <span style="display:inline-flex;align-items:center;justify-content:center;gap:6px;"><svg class="icon-inline" style="width:15px;height:15px;flex:none;filter:drop-shadow(0 0 4px rgba(60,227,106,0.4));"><use href="#ic-play"/></svg><span data-i18n="start.continueRun">Continuar Jogo</span></span>
-            </button>
+                    <!-- Dificuldade (controle segmentado; a cor do preset vai inline em --seg-accent via _refreshDifficultyUI) -->
+                    <div class="start-seg start-seg-diff" role="group" aria-label="Dificuldade" data-i18n-aria-label="start.difficultyLabel">
+                        <button type="button" class="diff-btn start-seg-btn" data-diff="facil" onclick="window.setDifficulty('facil')" aria-pressed="false"><svg class="icon-inline" aria-hidden="true"><use href="#ic-leaf"/></svg><span data-i18n="start.diff.facil">Fácil</span></button>
+                        <button type="button" class="diff-btn start-seg-btn" data-diff="normal" onclick="window.setDifficulty('normal')" aria-pressed="false"><svg class="icon-inline" aria-hidden="true"><use href="#ic-swords"/></svg><span data-i18n="start.diff.normal">Normal</span></button>
+                        <button type="button" class="diff-btn start-seg-btn" data-diff="dificil" onclick="window.setDifficulty('dificil')" aria-pressed="false"><svg class="icon-inline" aria-hidden="true"><use href="#ic-skull"/></svg><span data-i18n="start.diff.dificil">Difícil</span></button>
+                        <button type="button" class="diff-btn start-seg-btn" data-diff="pesadelo" onclick="window.setDifficulty('pesadelo')" aria-pressed="false"><svg class="icon-inline" aria-hidden="true"><use href="#ic-flame-alt"/></svg><span data-i18n="start.diff.pesadelo">Pesadelo</span></button>
+                    </div>
+                    <div id="difficulty-desc" class="start-hint">A experiência padrão de Krevathorn.</div>
 
-            <!-- Class Selection (inline, no back/forth) -->
-            <div style="display:flex;gap:6px;margin-bottom:6px;">
-                <button type="button" onclick="window._tryStartClass('warrior')" class="class-mini-card warrior" style="appearance:none;-webkit-appearance:none;display:block;font:inherit;color:inherit;text-align:center;flex:1;padding:10px 6px;border-radius:16px;border:1.5px solid rgba(201,162,39,0.38);background:rgba(70,110,142,0.15);cursor:pointer;transition:all 0.2s;touch-action:manipulation;">
+                    <!-- Mutadores de prestígio (v66): preenchido por RunMutators.render(); oculto até CONFIG.MUTATORS_UNLOCK_PRESTIGE (só dica a partir do prestígio 1) -->
+                    <div id="mutator-panel" class="start-mutators" style="display:none;"></div>
+
+                    <div class="start-pick-hint" data-i18n="start.pickClass">Toque numa classe para começar</div>
+                    <div class="start-classes">
+                <button type="button" onclick="window._tryStartClass('warrior')" class="class-mini-card warrior" style="appearance:none;-webkit-appearance:none;display:block;font:inherit;color:inherit;text-align:center;flex:1;padding:10px 3px;border-radius:16px;border:1.5px solid rgba(201,162,39,0.38);background:rgba(70,110,142,0.15);cursor:pointer;transition:all 0.2s;touch-action:manipulation;">
                     <div style="display:flex;justify-content:center;align-items:flex-end;height:60px;margin-bottom:3px;"><canvas class="hero-canvas" data-class="warrior" width="56" height="60" aria-hidden="true"></canvas></div>
-                    <div data-i18n="start.classWarrior" style="font-size:clamp(0.7rem,2.5vw,0.85rem);font-weight:800;text-transform:uppercase;color:#facc15;letter-spacing:0.06em;text-shadow:0 0 8px rgba(201,162,39,0.35);">Guerreiro</div>
+                    <div class="start-class-name" data-i18n="start.classWarrior" style="font-weight:800;text-transform:uppercase;color:#facc15;text-shadow:0 0 8px rgba(201,162,39,0.35);">Guerreiro</div>
                     <div style="display:flex;gap:3px;justify-content:center;margin-top:4px;">
                         <span class="stat-dot" style="width:6px;height:6px;border-radius:50%;background:#dbb55c;box-shadow:0 0 4px #dbb55c;"></span>
                         <span class="stat-dot" style="width:4px;height:6px;border-radius:2px;background:rgba(255,255,255,0.15);"></span>
                         <span class="stat-dot" style="width:4px;height:6px;border-radius:2px;background:rgba(255,255,255,0.15);"></span>
                     </div>
                 </button>
-                <button type="button" onclick="window._tryStartClass('rogue')" class="class-mini-card rogue" style="appearance:none;-webkit-appearance:none;display:block;font:inherit;color:inherit;text-align:center;flex:1;padding:10px 6px;border-radius:16px;border:1.5px solid rgba(224,90,69,0.4);background:rgba(58,24,22,0.5);cursor:pointer;transition:all 0.2s;touch-action:manipulation;">
+                <button type="button" onclick="window._tryStartClass('rogue')" class="class-mini-card rogue" style="appearance:none;-webkit-appearance:none;display:block;font:inherit;color:inherit;text-align:center;flex:1;padding:10px 3px;border-radius:16px;border:1.5px solid rgba(224,90,69,0.4);background:rgba(58,24,22,0.5);cursor:pointer;transition:all 0.2s;touch-action:manipulation;">
                     <div style="display:flex;justify-content:center;align-items:flex-end;height:60px;margin-bottom:3px;"><canvas class="hero-canvas" data-class="rogue" width="56" height="60" aria-hidden="true"></canvas></div>
-                    <div data-i18n="start.classRogue" style="font-size:clamp(0.7rem,2.5vw,0.85rem);font-weight:800;text-transform:uppercase;color:#e8816a;letter-spacing:0.06em;text-shadow:0 0 8px rgba(224,90,69,0.35);">Ladino</div>
+                    <div class="start-class-name" data-i18n="start.classRogue" style="font-weight:800;text-transform:uppercase;color:#e8816a;text-shadow:0 0 8px rgba(224,90,69,0.35);">Ladino</div>
                     <div style="display:flex;gap:3px;justify-content:center;margin-top:4px;">
                         <span class="stat-dot" style="width:4px;height:6px;border-radius:2px;background:rgba(255,255,255,0.15);"></span>
                         <span class="stat-dot" style="width:6px;height:6px;border-radius:50%;background:#e0563e;box-shadow:0 0 4px #e0563e;"></span>
                         <span class="stat-dot" style="width:4px;height:6px;border-radius:2px;background:rgba(255,255,255,0.15);"></span>
                     </div>
                 </button>
-                <button type="button" onclick="window._tryStartClass('mage')" class="class-mini-card mage" style="appearance:none;-webkit-appearance:none;display:block;font:inherit;color:inherit;text-align:center;flex:1;padding:10px 6px;border-radius:16px;border:1.5px solid rgba(140,100,205,0.45);background:rgba(106,61,145,0.17);cursor:pointer;transition:all 0.2s;touch-action:manipulation;">
+                <button type="button" onclick="window._tryStartClass('mage')" class="class-mini-card mage" style="appearance:none;-webkit-appearance:none;display:block;font:inherit;color:inherit;text-align:center;flex:1;padding:10px 3px;border-radius:16px;border:1.5px solid rgba(140,100,205,0.45);background:rgba(106,61,145,0.17);cursor:pointer;transition:all 0.2s;touch-action:manipulation;">
                     <div style="display:flex;justify-content:center;align-items:flex-end;height:60px;margin-bottom:3px;"><canvas class="hero-canvas" data-class="mage" width="56" height="60" aria-hidden="true"></canvas></div>
-                    <div data-i18n="start.classMage" style="font-size:clamp(0.7rem,2.5vw,0.85rem);font-weight:800;text-transform:uppercase;color:#b78be8;letter-spacing:0.06em;text-shadow:0 0 8px rgba(106,61,145,0.5);">Mago</div>
+                    <div class="start-class-name" data-i18n="start.classMage" style="font-weight:800;text-transform:uppercase;color:#b78be8;text-shadow:0 0 8px rgba(106,61,145,0.5);">Mago</div>
                     <div style="display:flex;gap:3px;justify-content:center;margin-top:4px;">
                         <span class="stat-dot" style="width:4px;height:6px;border-radius:2px;background:rgba(255,255,255,0.15);"></span>
                         <span class="stat-dot" style="width:4px;height:6px;border-radius:2px;background:rgba(255,255,255,0.15);"></span>
                         <span class="stat-dot" style="width:6px;height:6px;border-radius:50%;background:#3ad0ff;box-shadow:0 0 4px #3ad0ff;"></span>
                     </div>
                 </button>
-                <button type="button" onclick="window._tryStartClass('elf')" class="class-mini-card elf" style="appearance:none;-webkit-appearance:none;display:block;font:inherit;color:inherit;text-align:center;flex:1;padding:10px 6px;border-radius:16px;border:1.5px solid rgba(219,181,92,0.35);background:rgba(78,110,49,0.16);cursor:pointer;transition:all 0.2s;touch-action:manipulation;">
+                <button type="button" onclick="window._tryStartClass('elf')" class="class-mini-card elf" style="appearance:none;-webkit-appearance:none;display:block;font:inherit;color:inherit;text-align:center;flex:1;padding:10px 3px;border-radius:16px;border:1.5px solid rgba(219,181,92,0.35);background:rgba(78,110,49,0.16);cursor:pointer;transition:all 0.2s;touch-action:manipulation;">
                     <div style="display:flex;justify-content:center;align-items:flex-end;height:60px;margin-bottom:3px;"><canvas class="hero-canvas" data-class="elf" width="56" height="60" aria-hidden="true"></canvas></div>
-                    <div data-i18n="start.classElf" style="font-size:clamp(0.7rem,2.5vw,0.85rem);font-weight:800;text-transform:uppercase;color:#a5cf6e;letter-spacing:0.06em;text-shadow:0 0 8px rgba(165,207,110,0.35);">Elfa</div>
+                    <div class="start-class-name" data-i18n="start.classElf" style="font-weight:800;text-transform:uppercase;color:#a5cf6e;text-shadow:0 0 8px rgba(165,207,110,0.35);">Elfa</div>
                     <div style="display:flex;gap:3px;justify-content:center;margin-top:4px;">
                         <span class="stat-dot" style="width:6px;height:6px;border-radius:50%;background:#dbb55c;box-shadow:0 0 4px #dbb55c;"></span>
                         <span class="stat-dot" style="width:4px;height:6px;border-radius:2px;background:rgba(255,255,255,0.15);"></span>
                         <span class="stat-dot" style="width:4px;height:6px;border-radius:2px;background:rgba(255,255,255,0.15);"></span>
                     </div>
                 </button>
-            </div>
+                    </div>
+                </section>
 
-            <!-- Action Buttons Row -->
-            <div style="display:flex;gap:6px;margin-top:4px;">
-                <button id="tutorial-btn-start" onclick="window._showTutorialMenu()" style="flex:1;padding:10px;border-radius:14px;font-size:clamp(0.75rem,2.8vw,0.9rem);font-weight:700;border:1.5px solid rgba(255,204,0,0.3);background:rgba(255,204,0,0.1);color:#ffcc00;text-transform:uppercase;letter-spacing:0.06em;transition:all 0.2s;touch-action:manipulation;display:inline-flex;align-items:center;justify-content:center;gap:5px;">
-                    <svg class="icon-inline" style="width:15px;height:15px;flex:none;"><use href="#ic-book"/></svg><span data-i18n="start.btnTutorial">Tutorial</span>
-                </button>
-                <button id="daily-btn-start" onclick="if(window.UIManager) window.UIManager.openPanel('daily')" style="flex:1;padding:10px;border-radius:14px;font-size:clamp(0.75rem,2.8vw,0.9rem);font-weight:700;border:1.5px solid rgba(80,140,255,0.3);background:rgba(80,140,255,0.1);color:#9ad0ff;text-transform:uppercase;letter-spacing:0.06em;transition:all 0.2s;touch-action:manipulation;display:inline-flex;align-items:center;justify-content:center;gap:5px;">
-                    <svg class="icon-inline" style="width:15px;height:15px;flex:none;"><use href="#ic-crown"/></svg><span data-i18n="start.btnDaily">Diário</span>
-                </button>
-                <button id="meta-btn-start" onclick="if(window.UIManager) window.UIManager.openPanel('meta')" style="flex:1;padding:10px;border-radius:14px;font-size:clamp(0.75rem,2.8vw,0.9rem);font-weight:700;border:1.5px solid rgba(255,204,0,0.3);background:rgba(255,204,0,0.1);color:#ffcc00;text-transform:uppercase;letter-spacing:0.06em;transition:all 0.2s;touch-action:manipulation;display:inline-flex;align-items:center;justify-content:center;gap:5px;">
-                    <svg class="icon-inline" style="width:15px;height:15px;flex:none;"><use href="#ic-star"/></svg><span data-i18n="start.btnMeta">MetaLoja</span>
-                </button>
-                <button id="settings-btn-start" onclick="window.toggleSettings()" style="padding:10px 14px;border-radius:14px;font-size:clamp(0.75rem,2.8vw,0.9rem);font-weight:700;border:1.5px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.5);transition:all 0.2s;touch-action:manipulation;display:inline-flex;align-items:center;justify-content:center;">
-                    <svg class="icon-inline" style="width:18px;height:18px;"><use href="#ic-gear"/></svg>
-                </button>
-            </div>
-
-            <!-- Coleções de carreira: Conquistas, Bestiário e Grimório vivem como
-                 abas do painel Status, que é o único ponto alcançável por toque.
-                 Antes o painel de conquistas nao tinha nenhum chamador e o
-                 Grimorio so abria pela tecla "L". -->
-            <div style="display:flex;gap:6px;margin-top:4px;">
-                <button id="collection-btn-start" onclick="if(window.UIManager) window.UIManager.setStatsTab('achievements')" style="flex:1;padding:9px;border-radius:14px;font-size:clamp(0.7rem,2.6vw,0.85rem);font-weight:700;border:1.5px solid rgba(255,215,0,0.25);background:rgba(255,215,0,0.08);color:#ffd86b;text-transform:uppercase;letter-spacing:0.05em;transition:all 0.2s;touch-action:manipulation;display:inline-flex;align-items:center;justify-content:center;gap:5px;">
-                    <svg class="icon-inline" style="width:14px;height:14px;flex:none;"><use href="#ic-star"/></svg><span data-i18n="ui.tabAchievements">Conquistas</span>
-                </button>
-                <button id="lore-btn-start" onclick="if(window.UIManager) window.UIManager.setStatsTab('lore')" style="flex:1;padding:9px;border-radius:14px;font-size:clamp(0.7rem,2.6vw,0.85rem);font-weight:700;border:1.5px solid rgba(192,132,252,0.25);background:rgba(192,132,252,0.08);color:#e0b6ff;text-transform:uppercase;letter-spacing:0.05em;transition:all 0.2s;touch-action:manipulation;display:inline-flex;align-items:center;justify-content:center;gap:5px;">
-                    <svg class="icon-inline" style="width:14px;height:14px;flex:none;"><use href="#ic-book"/></svg><span data-i18n="ui.tabLore">Grimório</span>
-                </button>
-            </div>
-
-            <!-- Build (arquétipos + build-code) — colapsável (opção avançada) -->
-            <details id="start-options-build">
-                <summary style="cursor:pointer;padding:8px 10px;border-radius:12px;border:1.5px solid rgba(224,182,255,0.22);background:rgba(224,182,255,0.06);color:rgba(224,182,255,0.9);font-size:clamp(0.65rem,2.4vw,0.8rem);font-weight:700;text-align:center;letter-spacing:0.05em;text-transform:uppercase;touch-action:manipulation;user-select:none;list-style:none;"><span style="display:inline-flex;align-items:center;justify-content:center;gap:5px;"><svg class="icon-inline" style="width:14px;height:14px;flex:none;"><use href="#ic-wrench"/></svg><span data-i18n="start.buildOptions">Opções — Build (código e arquétipos)</span></span></summary>
-                <div style="margin:6px 0 8px;padding:8px 10px;border-radius:14px;border:1.5px solid rgba(224,182,255,0.12);background:rgba(255,255,255,0.02);">
-                <div id="build-row" style="display:flex;gap:6px;margin-top:6px;align-items:center;">
-                    <input id="build-code-input" type="text" placeholder="Código de build" data-i18n-placeholder="start.buildPlaceholder" autocomplete="off"
-                           style="flex:1;min-width:0;padding:8px 10px;border-radius:12px;font-size:clamp(0.7rem,2.4vw,0.82rem);color:#fff;background:rgba(0,0,0,0.35);border:1.5px solid rgba(224,182,255,0.2);outline:none;">
-                    <button id="build-apply-btn" data-i18n="start.buildApply" onclick="window._applyBuildCode()" style="padding:8px 12px;border-radius:12px;font-size:clamp(0.7rem,2.4vw,0.82rem);font-weight:700;border:1.5px solid rgba(224,182,255,0.35);background:rgba(224,182,255,0.12);color:#e0b6ff;text-transform:uppercase;letter-spacing:0.05em;cursor:pointer;touch-action:manipulation;">Aplicar</button>
-                    <button id="build-clear-btn" onclick="window._clearPendingBuild()" style="padding:8px 10px;border-radius:12px;font-size:clamp(0.7rem,2.4vw,0.82rem);font-weight:700;border:1.5px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.55);cursor:pointer;touch-action:manipulation;">✕</button>
+                <!-- Grade de atalhos: 6 botões iguais. Ids e onclick são os mesmos de antes -->
+                <div class="start-tiles">
+                    <button id="tutorial-btn-start" type="button" class="start-tile start-tile-tutorial" onclick="window._showTutorialMenu()">
+                        <svg class="start-tile-ic" aria-hidden="true"><use href="#ic-book"/></svg>
+                        <span class="start-tile-label" data-i18n="start.btnTutorial">Tutorial</span>
+                    </button>
+                    <button id="daily-btn-start" type="button" class="start-tile start-tile-daily" onclick="if(window.UIManager) window.UIManager.openPanel('daily')">
+                        <svg class="start-tile-ic" aria-hidden="true"><use href="#ic-crown"/></svg>
+                        <span class="start-tile-label" data-i18n="start.btnDaily">Diário</span>
+                    </button>
+                    <button id="meta-btn-start" type="button" class="start-tile start-tile-meta" onclick="if(window.UIManager) window.UIManager.openPanel('meta')">
+                        <svg class="start-tile-ic" aria-hidden="true"><use href="#ic-store"/></svg>
+                        <span class="start-tile-label" data-i18n="start.btnMeta">MetaLoja</span>
+                    </button>
+                    <button id="collection-btn-start" type="button" class="start-tile start-tile-collection" onclick="if(window.UIManager) window.UIManager.setStatsTab('achievements')">
+                        <svg class="start-tile-ic" aria-hidden="true"><use href="#ic-star"/></svg>
+                        <span class="start-tile-label" data-i18n="ui.tabAchievements">Conquistas</span>
+                    </button>
+                    <button id="lore-btn-start" type="button" class="start-tile start-tile-lore" onclick="if(window.UIManager) window.UIManager.setStatsTab('lore')">
+                        <svg class="start-tile-ic" aria-hidden="true"><use href="#ic-scroll"/></svg>
+                        <span class="start-tile-label" data-i18n="ui.tabLore">Grimório</span>
+                    </button>
+                    <button id="settings-btn-start" type="button" class="start-tile start-tile-settings" onclick="window.toggleSettings()">
+                        <svg class="start-tile-ic" aria-hidden="true"><use href="#ic-gear"/></svg>
+                        <span class="start-tile-label" data-i18n="start.btnSettings">Ajustes</span>
+                    </button>
                 </div>
-                <div id="build-archetype-row" style="display:flex;gap:5px;flex-wrap:wrap;margin-top:5px;">
-                <button onclick="window._applyArchetype('warrior_muralha')" data-i18n="start.arch.muralha" style="flex:1;min-width:78px;padding:6px 4px;border-radius:10px;font-size:clamp(0.62rem,2vw,0.72rem);font-weight:700;border:1.5px solid rgba(250,204,21,0.25);background:rgba(250,204,21,0.07);color:#facc15;cursor:pointer;touch-action:manipulation;">Muralha</button>
-                <button onclick="window._applyArchetype('warrior_furia')" data-i18n="start.arch.furia" style="flex:1;min-width:78px;padding:6px 4px;border-radius:10px;font-size:clamp(0.62rem,2vw,0.72rem);font-weight:700;border:1.5px solid rgba(255,120,0,0.25);background:rgba(255,120,0,0.07);color:#ff8800;cursor:pointer;touch-action:manipulation;">Fúria</button>
-                <button onclick="window._applyArchetype('rogue_assassino')" data-i18n="start.arch.assassino" style="flex:1;min-width:78px;padding:6px 4px;border-radius:10px;font-size:clamp(0.62rem,2vw,0.72rem);font-weight:700;border:1.5px solid rgba(92,255,130,0.25);background:rgba(92,255,130,0.07);color:#5cff82;cursor:pointer;touch-action:manipulation;">Assassino</button>
-                <button onclick="window._applyArchetype('rogue_sombra')" data-i18n="start.arch.sombra" style="flex:1;min-width:78px;padding:6px 4px;border-radius:10px;font-size:clamp(0.62rem,2vw,0.72rem);font-weight:700;border:1.5px solid rgba(92,255,130,0.25);background:rgba(92,255,130,0.07);color:#5cff82;cursor:pointer;touch-action:manipulation;">Sombra</button>
-                <button onclick="window._applyArchetype('mage_arcano')" data-i18n="start.arch.arcano" style="flex:1;min-width:78px;padding:6px 4px;border-radius:10px;font-size:clamp(0.62rem,2vw,0.72rem);font-weight:700;border:1.5px solid rgba(153,102,255,0.25);background:rgba(153,102,255,0.07);color:#9966ff;cursor:pointer;touch-action:manipulation;">Arcano</button>
-                <button onclick="window._applyArchetype('mage_gelo')" data-i18n="start.arch.gelo" style="flex:1;min-width:78px;padding:6px 4px;border-radius:10px;font-size:clamp(0.62rem,2vw,0.72rem);font-weight:700;border:1.5px solid rgba(102,204,255,0.25);background:rgba(102,204,255,0.07);color:#66ccff;cursor:pointer;touch-action:manipulation;">Gelo</button>
-                <button onclick="window._applyArchetype('elf_vento')" data-i18n="start.arch.vento" style="flex:1;min-width:78px;padding:6px 4px;border-radius:10px;font-size:clamp(0.62rem,2vw,0.72rem);font-weight:700;border:1.5px solid rgba(127,255,212,0.25);background:rgba(127,255,212,0.07);color:#7fffd4;cursor:pointer;touch-action:manipulation;">Vento</button>
-                <button onclick="window._applyArchetype('elf_natureza')" data-i18n="start.arch.natureza" style="flex:1;min-width:78px;padding:6px 4px;border-radius:10px;font-size:clamp(0.62rem,2vw,0.72rem);font-weight:700;border:1.5px solid rgba(88,224,138,0.25);background:rgba(88,224,138,0.07);color:#58e08a;cursor:pointer;touch-action:manipulation;">Natureza</button>
-                </div>
-                <div id="build-status" style="text-align:center;font-size:clamp(0.55rem,2vw,0.65rem);color:rgba(255,255,255,0.6);margin-top:3px;min-height:1.1em;"></div>
-                </div>
-            </details>
 
-            <div id="menu-version" style="text-align:center;margin-top:auto;padding:6px 0 4px;font-size:0.6rem;color:rgba(255,255,255,0.2);letter-spacing:0.1em;"></div>
+                <!-- Opções avançadas (seed e build): colapsadas e discretas -->
+                <details id="start-options-advanced">
+                    <summary class="start-advanced-summary"><svg class="icon-inline" aria-hidden="true"><use href="#ic-gear"/></svg><span data-i18n="start.advancedOptions">Opções avançadas (seed e build)</span><svg class="start-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+                    <div class="start-adv-sec">
+                        <div class="start-section-title" data-i18n="start.seedLabel">Seed (execuções reprodutíveis)</div>
+                        <div style="display:flex;gap:5px;">
+                            <input id="seed-input" type="text" maxlength="40" placeholder="vazio = aleatório" data-i18n-placeholder="start.seedPlaceholder" style="flex:1;min-width:0;padding:8px 10px;border-radius:12px;font-size:clamp(0.6rem,2.4vw,0.78rem);background:rgba(255,255,255,0.05);border:1.5px solid rgba(255,255,255,0.12);color:#e0e0e0;outline:none;">
+                            <button onclick="window.applySeedInput()" data-i18n="start.seedApply" style="padding:8px 12px;border-radius:12px;font-size:clamp(0.6rem,2.4vw,0.78rem);font-weight:700;border:1.5px solid rgba(224,182,255,0.4);background:rgba(224,182,255,0.12);color:#e0b6ff;cursor:pointer;touch-action:manipulation;">Aplicar</button>
+                            <button onclick="window.clearSeedInput()" data-i18n="start.seedRandom" style="padding:8px 10px;border-radius:12px;font-size:clamp(0.6rem,2.4vw,0.78rem);font-weight:700;border:1.5px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.45);cursor:pointer;touch-action:manipulation;">Aleatório</button>
+                        </div>
+                        <div id="seed-status" data-i18n="start.seedStatus" style="text-align:center;font-size:clamp(0.55rem,2vw,0.65rem);color:rgba(255,255,255,0.55);margin-top:4px;min-height:1.1em;">Mesmo seed + mesmo piso = mesmo mapa e mesmos encontros.</div>
+                    </div>
+                    <div class="start-adv-sec">
+                        <div class="start-section-title" data-i18n="start.buildLabel">Build (código e arquétipos)</div>
+                        <div id="build-row" style="display:flex;gap:6px;margin-top:6px;align-items:center;">
+                            <input id="build-code-input" type="text" placeholder="Código de build" data-i18n-placeholder="start.buildPlaceholder" autocomplete="off"
+                                style="flex:1;min-width:0;padding:8px 10px;border-radius:12px;font-size:clamp(0.7rem,2.4vw,0.82rem);color:#fff;background:rgba(0,0,0,0.35);border:1.5px solid rgba(224,182,255,0.2);outline:none;">
+                            <button id="build-apply-btn" data-i18n="start.buildApply" onclick="window._applyBuildCode()" style="padding:8px 12px;border-radius:12px;font-size:clamp(0.7rem,2.4vw,0.82rem);font-weight:700;border:1.5px solid rgba(224,182,255,0.35);background:rgba(224,182,255,0.12);color:#e0b6ff;text-transform:uppercase;letter-spacing:0.05em;cursor:pointer;touch-action:manipulation;">Aplicar</button>
+                            <button id="build-clear-btn" onclick="window._clearPendingBuild()" style="padding:8px 10px;border-radius:12px;font-size:clamp(0.7rem,2.4vw,0.82rem);font-weight:700;border:1.5px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.55);cursor:pointer;touch-action:manipulation;">✕</button>
+                        </div>
+                        <div id="build-archetype-row" style="display:flex;gap:5px;flex-wrap:wrap;margin-top:5px;">
+                            <button onclick="window._applyArchetype('warrior_muralha')" data-i18n="start.arch.muralha" style="flex:1;min-width:78px;padding:6px 4px;border-radius:10px;font-size:clamp(0.62rem,2vw,0.72rem);font-weight:700;border:1.5px solid rgba(250,204,21,0.25);background:rgba(250,204,21,0.07);color:#facc15;cursor:pointer;touch-action:manipulation;">Muralha</button>
+                            <button onclick="window._applyArchetype('warrior_furia')" data-i18n="start.arch.furia" style="flex:1;min-width:78px;padding:6px 4px;border-radius:10px;font-size:clamp(0.62rem,2vw,0.72rem);font-weight:700;border:1.5px solid rgba(255,120,0,0.25);background:rgba(255,120,0,0.07);color:#ff8800;cursor:pointer;touch-action:manipulation;">Fúria</button>
+                            <button onclick="window._applyArchetype('rogue_assassino')" data-i18n="start.arch.assassino" style="flex:1;min-width:78px;padding:6px 4px;border-radius:10px;font-size:clamp(0.62rem,2vw,0.72rem);font-weight:700;border:1.5px solid rgba(92,255,130,0.25);background:rgba(92,255,130,0.07);color:#5cff82;cursor:pointer;touch-action:manipulation;">Assassino</button>
+                            <button onclick="window._applyArchetype('rogue_sombra')" data-i18n="start.arch.sombra" style="flex:1;min-width:78px;padding:6px 4px;border-radius:10px;font-size:clamp(0.62rem,2vw,0.72rem);font-weight:700;border:1.5px solid rgba(92,255,130,0.25);background:rgba(92,255,130,0.07);color:#5cff82;cursor:pointer;touch-action:manipulation;">Sombra</button>
+                            <button onclick="window._applyArchetype('mage_arcano')" data-i18n="start.arch.arcano" style="flex:1;min-width:78px;padding:6px 4px;border-radius:10px;font-size:clamp(0.62rem,2vw,0.72rem);font-weight:700;border:1.5px solid rgba(153,102,255,0.25);background:rgba(153,102,255,0.07);color:#9966ff;cursor:pointer;touch-action:manipulation;">Arcano</button>
+                            <button onclick="window._applyArchetype('mage_gelo')" data-i18n="start.arch.gelo" style="flex:1;min-width:78px;padding:6px 4px;border-radius:10px;font-size:clamp(0.62rem,2vw,0.72rem);font-weight:700;border:1.5px solid rgba(102,204,255,0.25);background:rgba(102,204,255,0.07);color:#66ccff;cursor:pointer;touch-action:manipulation;">Gelo</button>
+                            <button onclick="window._applyArchetype('elf_vento')" data-i18n="start.arch.vento" style="flex:1;min-width:78px;padding:6px 4px;border-radius:10px;font-size:clamp(0.62rem,2vw,0.72rem);font-weight:700;border:1.5px solid rgba(127,255,212,0.25);background:rgba(127,255,212,0.07);color:#7fffd4;cursor:pointer;touch-action:manipulation;">Vento</button>
+                            <button onclick="window._applyArchetype('elf_natureza')" data-i18n="start.arch.natureza" style="flex:1;min-width:78px;padding:6px 4px;border-radius:10px;font-size:clamp(0.62rem,2vw,0.72rem);font-weight:700;border:1.5px solid rgba(88,224,138,0.25);background:rgba(88,224,138,0.07);color:#58e08a;cursor:pointer;touch-action:manipulation;">Natureza</button>
+                        </div>
+                        <div id="build-status" style="text-align:center;font-size:clamp(0.55rem,2vw,0.65rem);color:rgba(255,255,255,0.6);margin-top:3px;min-height:1.1em;"></div>
+                    </div>
+                </details>
+                </div>
+
+                <div id="menu-version" style="text-align:center;margin-top:auto;padding:6px 0 4px;font-size:0.6rem;color:rgba(255,255,255,0.2);letter-spacing:0.1em;"></div>
         </div>
     </div>
     <!-- TUTORIAL PROMPT (shown on first game start) -->
@@ -3559,8 +3618,6 @@ const I18n = {
             'log.bossRewardPost': ' derrotado! Escolha sua recompensa.',
 
             // Start screen
-            'start.seedOptions': 'Opções — Seed',
-            'start.buildOptions': 'Opções — Build (código e arquétipos)',
 
             // Class names
 
@@ -5136,7 +5193,6 @@ const I18n = {
             'toast.equipWorse': 'pior que o anterior',
 
             // Start screen (static labels)
-            'start.modeDesc': 'Evolua seu personagem em masmorras cada vez mais difíceis.',
             'start.dailyInvite': 'Desafio de hoje: {name} — toque para jogar',
             'start.tagline': 'O Abismo Aguarda',
             'start.modeDungeon': 'Masmorra',
@@ -5146,7 +5202,6 @@ const I18n = {
             'start.diff.normal': 'Normal',
             'start.diff.dificil': 'Difícil',
             'start.diff.pesadelo': 'Pesadelo',
-            'start.difficultyDesc': 'A experiência padrão de Krevathorn.',
             'start.seedLabel': 'Seed (execuções reprodutíveis)',
             'start.seedPlaceholder': 'vazio = aleatório',
             'start.seedApply': 'Aplicar',
@@ -5160,6 +5215,12 @@ const I18n = {
             'start.btnTutorial': 'Tutorial',
             'start.btnDaily': 'Diário',
             'start.btnMeta': 'MetaLoja',
+            'start.newRun': 'Nova partida',
+            'start.pickClass': 'Toque numa classe para começar',
+            'start.btnSettings': 'Ajustes',
+            'start.advancedOptions': 'Opções avançadas (seed e build)',
+            'start.buildLabel': 'Build (código e arquétipos)',
+            'start.modeLabel': 'Modo',
             'start.buildPlaceholder': 'Código de build',
             'start.buildApply': 'Aplicar',
             'start.arch.muralha': 'Muralha',
@@ -5180,8 +5241,8 @@ const I18n = {
             'difficulty.dificil.desc': 'Inimigos mais fortes. +30% de XP.',
             'difficulty.pesadelo.name': 'Pesadelo',
             'difficulty.pesadelo.desc': 'Só para veteranos. +60% de XP.',
-            'mode.dungeonDesc': 'Evolua seu personagem em masmorras cada vez mais difíceis até chegar à superfície.',
-            'mode.abyssDesc': 'Sem fim e sem superfície. Desça profundezas infinitas: o boss nunca para de evoluir (fase 5 no piso 20, teto no piso 50).',
+            'mode.dungeonDesc': 'Suba piso a piso até a superfície.',
+            'mode.abyssDesc': 'Descida sem fim: o chefe nunca para de evoluir.',
 
             // Crafting (forge)
             'craft.health.name': 'Forjar Poção de Vida',
@@ -5273,8 +5334,6 @@ const I18n = {
             'log.bossRewardPost': ' defeated! Choose your reward.',
 
             // Start screen
-            'start.seedOptions': 'Options — Seed',
-            'start.buildOptions': 'Options — Build (code & archetypes)',
 
             // Class names
 
@@ -6850,7 +6909,6 @@ const I18n = {
             'toast.equipWorse': 'worse than before',
 
             // Start screen (static labels)
-            'start.modeDesc': 'Evolve your character through ever-harder dungeons.',
             'start.dailyInvite': 'Today\'s challenge: {name} — tap to play',
             'start.tagline': 'The Abyss Awaits',
             'start.modeDungeon': 'Dungeon',
@@ -6860,7 +6918,6 @@ const I18n = {
             'start.diff.normal': 'Normal',
             'start.diff.dificil': 'Hard',
             'start.diff.pesadelo': 'Nightmare',
-            'start.difficultyDesc': 'The standard Krevathorn experience.',
             'start.seedLabel': 'Seed (reproducible runs)',
             'start.seedPlaceholder': 'empty = random',
             'start.seedApply': 'Apply',
@@ -6874,6 +6931,12 @@ const I18n = {
             'start.btnTutorial': 'Tutorial',
             'start.btnDaily': 'Daily',
             'start.btnMeta': 'MetaShop',
+            'start.newRun': 'New run',
+            'start.pickClass': 'Tap a class to start',
+            'start.btnSettings': 'Settings',
+            'start.advancedOptions': 'Advanced options (seed & build)',
+            'start.buildLabel': 'Build (code & archetypes)',
+            'start.modeLabel': 'Mode',
             'start.buildPlaceholder': 'Build code',
             'start.buildApply': 'Apply',
             'start.arch.muralha': 'Bulwark',
@@ -6894,8 +6957,8 @@ const I18n = {
             'difficulty.dificil.desc': 'Stronger enemies. +30% XP.',
             'difficulty.pesadelo.name': 'Nightmare',
             'difficulty.pesadelo.desc': 'Veterans only. +60% XP.',
-            'mode.dungeonDesc': 'Evolve your character through ever-harder dungeons until you reach the surface.',
-            'mode.abyssDesc': 'No end and no surface. Descend infinite depths: the boss never stops evolving (phase 5 at floor 20, cap at floor 50).',
+            'mode.dungeonDesc': 'Climb floor by floor to the surface.',
+            'mode.abyssDesc': 'Endless descent: the boss never stops evolving.',
 
             // Crafting (forge)
             'craft.health.name': 'Forge Health Potion',
@@ -6987,8 +7050,6 @@ const I18n = {
             'log.bossRewardPost': ' derrotado! Elige tu recompensa.',
 
             // Start screen
-            'start.seedOptions': 'Opciones — Semilla',
-            'start.buildOptions': 'Opciones — Build (código y arquetipos)',
 
             // Class names
 
@@ -8561,7 +8622,6 @@ const I18n = {
             'toast.equipWorse': 'peor que el anterior',
 
             // Start screen (static labels)
-            'start.modeDesc': 'Evoluciona tu personaje en mazmorras cada vez más difíciles.',
             'start.dailyInvite': 'Desafío de hoy: {name} — toca para jugar',
             'start.tagline': 'El Abismo Aguarda',
             'start.modeDungeon': 'Masmorra',
@@ -8571,7 +8631,6 @@ const I18n = {
             'start.diff.normal': 'Normal',
             'start.diff.dificil': 'Difícil',
             'start.diff.pesadelo': 'Pesadilla',
-            'start.difficultyDesc': 'La experiencia estándar de Krevathorn.',
             'start.seedLabel': 'Semilla (partidas reproducibles)',
             'start.seedPlaceholder': 'vacío = aleatorio',
             'start.seedApply': 'Aplicar',
@@ -8585,6 +8644,12 @@ const I18n = {
             'start.btnTutorial': 'Tutorial',
             'start.btnDaily': 'Diario',
             'start.btnMeta': 'MetaTienda',
+            'start.newRun': 'Nueva partida',
+            'start.pickClass': 'Toca una clase para empezar',
+            'start.btnSettings': 'Ajustes',
+            'start.advancedOptions': 'Opciones avanzadas (semilla y build)',
+            'start.buildLabel': 'Build (código y arquetipos)',
+            'start.modeLabel': 'Modo',
             'start.buildPlaceholder': 'Código de build',
             'start.buildApply': 'Aplicar',
             'start.arch.muralha': 'Muralla',
@@ -8605,8 +8670,8 @@ const I18n = {
             'difficulty.dificil.desc': 'Enemigos más fuertes. +30% de XP.',
             'difficulty.pesadelo.name': 'Pesadilla',
             'difficulty.pesadelo.desc': 'Solo para veteranos. +60% de XP.',
-            'mode.dungeonDesc': 'Evoluciona tu personaje en mazmorras cada vez más difíciles hasta llegar a la superficie.',
-            'mode.abyssDesc': 'Sin fin y sin superficie. Desciende profundidades infinitas: el jefe no deja de evolucionar (fase 5 en el piso 20, tope en el piso 50).',
+            'mode.dungeonDesc': 'Sube piso a piso hasta la superficie.',
+            'mode.abyssDesc': 'Descenso sin fin: el jefe no deja de evolucionar.',
 
             // Crafting (forge)
             'craft.health.name': 'Forjar Poción de Vida',
@@ -8672,7 +8737,11 @@ const I18n = {
         if (window.SettingsUI && SettingsUI.open) SettingsUI._render();
         // Re-apply data-i18n labels (pause panel and any element using the attribute)
         this.apply();
-        if (typeof _refreshDailyBadge === 'function') _refreshDailyBadge();
+        // Descrições de modo e dificuldade são montadas em JS (sem data-i18n): refaz no idioma novo.
+        // Só texto de UI: nunca setMode aqui, para não mudar gameMode/storage de uma run em andamento.
+        if (window._refreshModeDesc) window._refreshModeDesc();
+        if (window._refreshDifficultyUI) window._refreshDifficultyUI();
+        if (window._refreshDailyBadge) window._refreshDailyBadge();
         // Painel de mutadores tem textos montados em JS (não usa data-i18n)
         if (window.RunMutators) RunMutators.render();
     },
@@ -8697,7 +8766,6 @@ const I18n = {
             if (label && label.textContent.trim()) utilButtons[i].setAttribute('aria-label', label.textContent.trim());
         }
         const namedControls = [
-            ['#settings-btn-start', 'settings.title'],
             ['#minimap-toggle-btn', 'a11y.minimap']
         ];
         for (let i = 0; i < namedControls.length; i++) {
@@ -12936,6 +13004,7 @@ const PauseSystem = {
             if (actRight) actRight.classList.add('hidden');
             if (botUtils) botUtils.classList.add('hidden');
             if (window._refreshContinueButton) window._refreshContinueButton();
+            if (window._refreshDailyBadge) window._refreshDailyBadge();
         });
         // Escape/Voltar passam pelo despachante _handleBack (IIFE do Android)
         document.addEventListener('keydown', function(e) {
@@ -13675,6 +13744,7 @@ function _initEngine() {
                     gameState = 'START';
                     ToastSystem.reset();
                     if (window._refreshContinueButton) window._refreshContinueButton();
+                    if (window._refreshDailyBadge) window._refreshDailyBadge();
                 }, 350);
             }
         };
@@ -15724,6 +15794,8 @@ window.doPrestige = function() {
             gameState = 'START'; ToastSystem.reset(); uiG.classList.add('hidden'); uiS.classList.remove('hidden'); uiS.style.display = '';
             // Prestígio 10 desbloqueia o painel de mutadores na tela inicial (prestígio não é resetado)
             if (window.RunMutators) RunMutators.render();
+            if (window._refreshContinueButton) window._refreshContinueButton();
+            if (window._refreshDailyBadge) window._refreshDailyBadge();
         }
     }, 'doPrestige');
 };
@@ -17610,17 +17682,18 @@ window._refreshDifficultyUI = function() {
     var cur = DifficultySystem.preset;
     var preset = DifficultySystem.getPreset();
     // Start screen buttons
+    // Controle segmentado: só a cor do preset vai inline (variáveis --seg-*); o resto é a classe is-selected
     var btns = document.querySelectorAll('.diff-btn');
     for (var i = 0; i < btns.length; i++) {
         var k = btns[i].getAttribute('data-diff');
         var p = DIFFICULTY_PRESETS[k];
         if (!p) continue;
         var sel = (k === cur);
-        btns[i].style.borderColor = sel ? p.color : 'rgba(255,255,255,0.12)';
-        btns[i].style.background = sel ? p.color + '26' : 'rgba(255,255,255,0.04)';
-        btns[i].style.color = sel ? p.color : 'rgba(255,255,255,0.45)';
-        btns[i].style.boxShadow = sel ? ('0 0 12px ' + p.color + '44') : 'none';
-        btns[i].style.fontWeight = sel ? '800' : '600';
+        btns[i].classList.toggle('is-selected', sel);
+        btns[i].setAttribute('aria-pressed', sel ? 'true' : 'false');
+        btns[i].style.setProperty('--seg-accent', p.color);
+        btns[i].style.setProperty('--seg-tint', p.color + '26');
+        btns[i].style.setProperty('--seg-glow', p.color + '44');
     }
     // Description text under the buttons
     var desc = document.getElementById('difficulty-desc');
@@ -17753,27 +17826,30 @@ const RunMutators = {
 // const de topo não vira window.X: exporta para os guards `if (window.RunMutators)` (start, render, continue)
 window.RunMutators = RunMutators;
 
+// Descrição do modo escolhido (#mode-desc). Só reescreve o texto: não mexe em gameMode
+// nem no storage, então pode rodar na troca de idioma sem alterar uma run em andamento.
+window._refreshModeDesc = function () {
+    var desc = document.getElementById('mode-desc');
+    if (!desc) return;
+    var m = window._selectedMode;
+    desc.textContent = (m === 'abyss')
+        ? (window.I18n ? I18n.t('mode.abyssDesc') : 'Descida sem fim: o chefe nunca para de evoluir.')
+        : (window.I18n ? I18n.t('mode.dungeonDesc') : 'Suba piso a piso até a superfície.');
+};
 window.setMode = function(m) {
     if (m !== 'dungeon' && m !== 'abyss') return;
     window._selectedMode = m;
     if (typeof gameMode !== 'undefined') gameMode = m;
     try { StorageManager.setRaw('mode', m); } catch(e) {}
+    // Controle segmentado: o visual vem da classe is-selected (ver .start-seg-btn)
     var btns = document.querySelectorAll('.mode-tab');
     for (var i = 0; i < btns.length; i++) {
         var k = btns[i].getAttribute('data-mode');
         var sel = (k === m);
-        btns[i].style.borderColor = sel ? 'rgba(224,182,255,0.5)' : 'rgba(255,255,255,0.12)';
-        btns[i].style.background = sel ? 'rgba(224,182,255,0.15)' : 'rgba(255,255,255,0.04)';
-        btns[i].style.color = sel ? '#f0e0ff' : 'rgba(255,255,255,0.45)';
-        btns[i].style.boxShadow = sel ? '0 0 14px rgba(224,182,255,0.25)' : 'none';
-        btns[i].style.fontWeight = sel ? '800' : '600';
+        btns[i].classList.toggle('is-selected', sel);
+        btns[i].setAttribute('aria-pressed', sel ? 'true' : 'false');
     }
-    var desc = document.getElementById('mode-desc');
-    if (desc) {
-        desc.textContent = (m === 'abyss')
-            ? (window.I18n ? I18n.t('mode.abyssDesc') : 'Sem fim e sem superfície. Des\u00e7a profundezas infinitas: o boss nunca para de evoluir (fase 5 no piso 20, teto no piso 50).')
-            : (window.I18n ? I18n.t('mode.dungeonDesc') : 'Evolua seu personagem em masmorras cada vez mais difíceis até chegar à superfície.');
-    }
+    window._refreshModeDesc();
     // Painel de mutadores: adiado para depois do boot (GameSettings é carregado depois)
     setTimeout(function () { if (window.RunMutators) RunMutators.render(); }, 0);
 };
@@ -30951,6 +31027,7 @@ var SettingsUI = {
             if (el) el.classList.add('hidden');
         });
         if (window._refreshContinueButton) window._refreshContinueButton();
+        if (window._refreshDailyBadge) window._refreshDailyBadge();
     },
 
     // animate === true só na abertura (show). Qualquer outro re-render (toque numa opção,
@@ -35598,22 +35675,27 @@ Input.init();
         _refreshContinueButton();
         window._refreshContinueButton = _refreshContinueButton;
         // Desafio diário é opt-in (ver GameBootstrap._applyDailyIfEligible).
-        // O badge do menu é um convite: some se o desafio de hoje já foi
-        // concluído e, ao tocar, abre o painel do diário (botão "Jogar").
+        // Sem faixa no menu: o convite é a classe .has-invite no botão "Diário"
+        // (borda azul + pontinho) e o title/aria-label dizem qual é o desafio.
+        // Some quando o desafio de hoje já foi concluído. O botão já abre o painel.
         function _refreshDailyBadge() {
-            var el = document.getElementById('daily-badge');
-            if (!el) return;
+            var btn = document.getElementById('daily-btn-start');
+            if (!btn) return;
             var dc = window.DailyChallenge;
-            if (!dc || !dc.canPlay()) { el.style.display = 'none'; return; }
-            var ch = dc.getTodayChallenge();
-            if (!ch) { el.style.display = 'none'; return; }
+            var ch = (dc && dc.canPlay()) ? dc.getTodayChallenge() : null;
+            if (!ch) {
+                btn.classList.remove('has-invite');
+                btn.removeAttribute('title');
+                btn.removeAttribute('aria-label');
+                return;
+            }
             var name = (window._L && ch.nameKey) ? _L(ch.nameKey, ch.name) : ch.name;
             var tpl = (window._L) ? _L('start.dailyInvite', 'Desafio de hoje: {name} — toque para jogar') : 'Desafio de hoje: {name} — toque para jogar';
-            el.textContent = tpl.replace('{name}', name);
-            el.style.cursor = 'pointer';
-            el.onclick = function () { if (window.UIManager) window.UIManager.openPanel('daily'); };
-            el.setAttribute('role', 'button'); el.tabIndex = 0;
-            el.style.display = 'block';
+            var txt = tpl.replace('{name}', name);
+            var label = (window._L) ? _L('start.btnDaily', 'Diário') : 'Diário';
+            btn.classList.add('has-invite');
+            btn.setAttribute('title', txt);
+            btn.setAttribute('aria-label', label + ' — ' + txt);
         }
         _refreshDailyBadge();
         window._refreshDailyBadge = _refreshDailyBadge;
