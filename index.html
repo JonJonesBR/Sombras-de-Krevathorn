@@ -841,6 +841,15 @@ body.cb-tritan  { filter: url("#cb-tritan"); }
 .start-card { display: flex; flex-direction: column; gap: 6px; box-sizing: border-box; width: 100%; padding: 8px; border-radius: 16px; border: 1px solid rgba(224,182,255,0.12); background: rgba(255,255,255,0.025); }
 .start-section-title { text-align: center; font-size: clamp(0.55rem,2vw,0.66rem); font-weight: 700; letter-spacing: 0.25em; text-transform: uppercase; color: rgba(224,182,255,0.6); }
 .start-hint { text-align: center; font-size: clamp(0.6rem,2.1vw,0.72rem); line-height: 1.3; color: rgba(255,255,255,0.62); min-height: 1.3em; }
+/* Quadro de recordes do Abismo (abaixo da descrição do modo): mesmo tom do .start-hint, em caixa compacta */
+.abyss-records { box-sizing: border-box; width: 100%; padding: 4px 6px; border-radius: 12px; border: 1px solid rgba(224,182,255,0.16); background: rgba(224,182,255,0.04); }
+.abyss-records-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: clamp(0.56rem,2vw,0.68rem); color: rgba(255,255,255,0.62); }
+.abyss-records-table th, .abyss-records-table td { padding: 3px 2px; text-align: center; font-weight: 600; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; }
+.abyss-records-table thead th { color: rgba(224,182,255,0.6); font-size: 0.92em; font-weight: 700; }
+.abyss-records-table thead th:first-child { width: 26%; text-align: left; }
+.abyss-records-table tbody th { text-align: left; color: rgba(255,255,255,0.5); font-weight: 700; }
+.abyss-records-table td { color: rgba(255,255,255,0.78); font-variant-numeric: tabular-nums; }
+.abyss-records-table .is-current { color: #fff; background: rgba(224,182,255,0.14); border-radius: 6px; }
 .start-pick-hint { text-align: center; font-size: clamp(0.6rem,2.1vw,0.72rem); color: rgba(224,182,255,0.6); margin-top: 2px; }
 .start-mutators { box-sizing: border-box; width: 100%; padding: 8px; border-radius: 12px; border: 1px solid rgba(255,190,90,0.2); background: rgba(255,190,90,0.04); }
 .start-classes { display: flex; gap: 4px; }
@@ -1474,6 +1483,22 @@ body {
                     </div>
                     <!-- Descrição do modo (dinâmica, uma linha) -->
                     <div id="mode-desc" class="start-hint">A campanha: explore cada andar, ache a saída e suba até a superfície.</div>
+                    <!-- Recordes do Abismo por dificuldade: só com o Abismo selecionado; células preenchidas por _refreshAbyssRecords -->
+                    <div id="abyss-records" class="abyss-records" style="display:none;">
+                        <table class="abyss-records-table">
+                            <thead><tr>
+                                <th data-i18n="records.title">Recordes</th>
+                                <th data-head-diff="facil" data-i18n="start.diff.facil">Fácil</th>
+                                <th data-head-diff="normal" data-i18n="start.diff.normal">Normal</th>
+                                <th data-head-diff="dificil" data-i18n="start.diff.dificil">Difícil</th>
+                                <th data-head-diff="pesadelo" data-i18n="start.diff.pesadelo">Pesadelo</th>
+                            </tr></thead>
+                            <tbody>
+                                <tr><th data-i18n="records.floor">Andar</th><td data-diff="facil" data-rec-row="depth">—</td><td data-diff="normal" data-rec-row="depth">—</td><td data-diff="dificil" data-rec-row="depth">—</td><td data-diff="pesadelo" data-rec-row="depth">—</td></tr>
+                                <tr><th data-i18n="records.time">Tempo</th><td data-diff="facil" data-rec-row="time">—</td><td data-diff="normal" data-rec-row="time">—</td><td data-diff="dificil" data-rec-row="time">—</td><td data-diff="pesadelo" data-rec-row="time">—</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
 
                     <!-- Dificuldade (controle segmentado; a cor do preset vai inline em --seg-accent via _refreshDifficultyUI) -->
                     <div class="start-seg start-seg-diff" role="group" aria-label="Dificuldade" data-i18n-aria-label="start.difficultyLabel">
@@ -2879,6 +2904,15 @@ const StorageManager = {
             ambient: 0.08,
             sfx: 0.3,
             _migratedAt: null
+        },
+        // Recordes do Abismo por dificuldade (ver AbyssRecords). Cada dificuldade: depth (andar) e time (segundos).
+        abyssRecords: {
+            _version: 2,
+            facil: { depth: 0, time: 0 },
+            normal: { depth: 0, time: 0 },
+            dificil: { depth: 0, time: 0 },
+            pesadelo: { depth: 0, time: 0 },
+            _migratedAt: null
         }
     },
 
@@ -3069,7 +3103,8 @@ const StorageManager = {
             tutorial: 'aethelgard_tutorial',
             settings: 'aethelgard_settings',
             meta: 'aethelgard_meta',
-            audio: 'aethelgard_audio'
+            audio: 'aethelgard_audio',
+            abyssRecords: 'aethelgard_abyss_records'
         };
         return keyMap[storeName] || `aethelgard_${storeName}`;
     },
@@ -3217,6 +3252,9 @@ const SaveSystem = {
             dungeonKillTarget: (typeof dungeonKillTarget !== 'undefined') ? dungeonKillTarget : 18,
             // Campo opcional (sem DEFAULTS, sem migração): ausente em saves antigos, ver _floorBossFromSave
             floorBossDefeated: (typeof floorBossDefeated !== 'undefined') ? !!floorBossDefeated : false,
+            // Dificuldade da run (ausente em saves antigos: o continue segue a do menu, sem recorde) e marca de run sem recorde do Abismo
+            difficulty: (typeof DifficultySystem !== 'undefined') ? DifficultySystem.preset : 'normal',
+            noRecord: (typeof _abyssNoRecord !== 'undefined') ? !!_abyssNoRecord : false,
             // Tempo da run em frames (gameTime): o continue o restaura, para tempo e estrelas não zerarem
             runTicks: (typeof gameTime === 'number' && Number.isFinite(gameTime)) ? Math.max(0, Math.floor(gameTime)) : 0,
             continuesLeft: (typeof continuesLeft !== 'undefined') ? continuesLeft : 3,
@@ -3354,8 +3392,9 @@ const SaveSystem = {
             if (data[key] === null && (key === 'lr' || key === 'speed')) continue;
             if (data[key] !== undefined && (typeof data[key] !== 'number' || !Number.isFinite(data[key]) || data[key] < min || data[key] > max)) return false;
         }
-        const booleanFields = ['_exported', 'regenerating', 'greedBonus', 'chainLightning', 'slowAura', 'pierce', 'poison', 'spellEcho', 'floorBossDefeated'];
+        const booleanFields = ['_exported', 'regenerating', 'greedBonus', 'chainLightning', 'slowAura', 'pierce', 'poison', 'spellEcho', 'floorBossDefeated', 'noRecord'];
         for (const key of booleanFields) if (data[key] !== undefined && typeof data[key] !== 'boolean') return false;
+        if (data.difficulty !== undefined && (typeof data.difficulty !== 'string' || data.difficulty.length > 20)) return false;
         for (const key of ['unlockedSkills', 'runBoons', 'relics']) {
             if (data[key] !== undefined && (!Array.isArray(data[key]) || data[key].length > 200 || data[key].some(v => typeof v !== 'string' || v.length > 80))) return false;
         }
@@ -5407,6 +5446,11 @@ const I18n = {
             'difficulty.pesadelo.desc': 'Só para veteranos. +60% de XP.',
             'mode.dungeonDesc': 'A campanha: explore cada andar, ache a saída e suba até a superfície.',
             'mode.abyssDesc': 'Competitivo: inimigos sem parar, o mais fundo que conseguir. Bata seus recordes.',
+            'records.title': 'Recordes',
+            'records.floor': 'Andar',
+            'records.time': 'Tempo',
+            'records.new': 'Novo recorde: {items}',
+            'records.itemFloor': 'andar {n}',
 
             // Crafting (forge)
             'craft.health.name': 'Forjar Poção de Vida',
@@ -7147,6 +7191,11 @@ const I18n = {
             'difficulty.pesadelo.desc': 'Veterans only. +60% XP.',
             'mode.dungeonDesc': 'The campaign: explore each floor, find the exit and climb to the surface.',
             'mode.abyssDesc': 'Competitive: endless enemies, the deepest you can get. Beat your records.',
+            'records.title': 'Records',
+            'records.floor': 'Floor',
+            'records.time': 'Time',
+            'records.new': 'New record: {items}',
+            'records.itemFloor': 'floor {n}',
 
             // Crafting (forge)
             'craft.health.name': 'Forge Health Potion',
@@ -8884,6 +8933,11 @@ const I18n = {
             'difficulty.pesadelo.desc': 'Solo para veteranos. +60% de XP.',
             'mode.dungeonDesc': 'La campaña: explora cada piso, encuentra la salida y sube hasta la superficie.',
             'mode.abyssDesc': 'Competitivo: enemigos sin parar, lo más hondo que puedas. Supera tus récords.',
+            'records.title': 'Récords',
+            'records.floor': 'Piso',
+            'records.time': 'Tiempo',
+            'records.new': 'Nuevo récord: {items}',
+            'records.itemFloor': 'piso {n}',
 
             // Crafting (forge)
             'craft.health.name': 'Forjar Poción de Vida',
@@ -10510,6 +10564,7 @@ function _populateGameOverUI() {
     var runCombo = _rs ? (_rs.maxCombo || 0) : 0;
     var runGold = _rs ? _rs.goldEarned() : 0;
     var runBosses = _rs ? (_rs.bosses || 0) : 0;
+    var _abyssRecLine = _abyssNewRecordText();
     var elapsedS = Math.floor(gameTime / GAME_TICKS_PER_SECOND);
     var runScore = Math.max(10, dungeonLevel * 500 - Math.floor(elapsedS / 10));
     var _tile = function(label, value, color) {
@@ -10525,6 +10580,7 @@ function _populateGameOverUI() {
         + _tile(T('gameover.runBosses').toUpperCase(), runBosses, '#c084fc')
         + _tile(T('gameover.points'), runScore, '#9ad0ff')
         + ((window.RunObjectiveSystem && window.RunObjectiveSystem.summaryLine) ? '<div style="grid-column:1 / -1;background:rgba(224,182,255,0.05);border-radius:10px;padding:8px;text-align:center;font-size:11px;font-weight:700;">' + window.RunObjectiveSystem.summaryLine() + '</div>' : '')
+        + (_abyssRecLine ? '<div style="grid-column:1 / -1;text-align:center;font-size:11px;font-weight:800;color:#ffcf7a;">' + _abyssRecLine + '</div>' : '')
         + (_rs && _rs.resumed ? '<div style="grid-column:1 / -1;text-align:center;font-size:9px;color:rgba(255,255,255,0.4);">' + String(T('gameover.resumedNote')).replace('{floor}', _rs.resumedFromFloor) + '</div>' : '')
         + '</div>';
     document.getElementById('game-over-stats').innerHTML = statsHtml;
@@ -11194,8 +11250,37 @@ function _recordDeath(offeredContinue) {
     d.deathsByCause = d.deathsByCause || {};
     d.deathsByCause[cause] = (d.deathsByCause[cause] || 0) + 1;
 }
+// Recordes do Abismo: só runs do Abismo fora do desafio diário, do andar 2 em diante e fora do tutorial.
+// Sobe o recorde com o andar e o tempo do momento (na chegada a cada andar, no fim da run e ao sair para o menu;
+// sempre só sobe). _abyssRun guarda o que esta run bateu (zerado em GameBootstrap.start), para a linha "Novo recorde".
+let _abyssRun = null;
+// Run sem recorde: continue de save diário (os modificadores valem), save sem dificuldade gravada ou já marcado
+let _abyssNoRecord = false;
+function _recordAbyssProgress() {
+    // Fora de uma run (tela inicial), não grava: o estado de gameTime/andar seria o da run anterior
+    if (!player || gameState === 'START' || gameMode !== 'abyss' || window._currentDailyChallenge || _abyssNoRecord) return;
+    if (dungeonLevel < 2 || (typeof TutorialSystem !== 'undefined' && TutorialSystem.active)) return;
+    const diff = DifficultySystem.preset;
+    if (!_abyssRun || _abyssRun.diff !== diff) _abyssRun = { diff: diff, beat: {} };
+    const beat = AbyssRecords.update(diff, {
+        depth: dungeonLevel,
+        time: Math.floor(gameTime / GAME_TICKS_PER_SECOND)
+    });
+    Object.assign(_abyssRun.beat, beat);
+}
+
+// Texto "Novo recorde: andar 14 · 12:31" com o que esta run bateu na dificuldade dela; vazio se nada foi batido
+function _abyssNewRecordText() {
+    if (!_abyssRun || gameMode !== 'abyss' || window._currentDailyChallenge || !Object.keys(_abyssRun.beat).length) return '';
+    const r = AbyssRecords.forDiff(_abyssRun.diff), b = _abyssRun.beat, items = [];
+    if (b.depth) items.push(_L('records.itemFloor', 'andar {n}').replace('{n}', r.depth));
+    if (b.time) items.push(_fmtRecordTime(r.time));
+    return _L('records.new', 'Novo recorde: {items}').replace('{items}', items.join(' · '));
+}
+
 // Fim de run (morte definitiva, desistência ou vitória): tempo médio de run
 function _recordRunEnd() {
+    Debug.safe(() => _recordAbyssProgress(), 'abyssRecordRunEnd');
     if (typeof Statistics === 'undefined' || !Statistics.data) return;
     Statistics.data.runsEnded = (Statistics.data.runsEnded || 0) + 1;
     Statistics.data.runTimeTotal = (Statistics.data.runTimeTotal || 0) + Math.floor((gameTime || 0) / GAME_TICKS_PER_SECOND);
@@ -13088,6 +13173,7 @@ function draw() {
                 // only seeded at run start), so exploration had no payoff.
                 if (window.GameBootstrap && GameBootstrap._spawnFloorChests) GameBootstrap._spawnFloorChests();
                 ScreenEffects.onBossDeath(); Statistics.data.dungeonsCompleted++;
+                Debug.safe(() => _recordAbyssProgress(), 'abyssRecordFloor');
                 Debug.safe(() => SaveSystem.save(), 'autosaveFloor');
                 } catch (e) {
                     // Never let a failure here leave the fade stuck covering the
@@ -13489,6 +13575,7 @@ const PauseSystem = {
         document.getElementById('pause-quit').addEventListener('click', function() {
             if (!QuitConfirm.arm(this)) return;
             self.resume();
+            Debug.safe(() => _recordAbyssProgress(), 'abyssRecordQuit');
             if (typeof SaveSystem !== 'undefined') Debug.safe(() => SaveSystem.save(), 'autosaveQuitToMenu');
             gameState = 'START';
             // Sair para o menu: efeitos de tela e transição da run não sobram para a próxima
@@ -18204,6 +18291,71 @@ function _depoisDoToque(fn) {
     if (typeof requestIdleCallback === 'function') requestIdleCallback(fn, { timeout: 300 });
     else setTimeout(fn, 0);
 }
+// Recordes do Abismo por dificuldade: depth (andar) e time (segundos da run).
+// Só sobem, nunca descem. Ficam no StorageManager ('abyssRecords'), com cache em memória: só um
+// escritor (AbyssRecords.update), então o cache nunca fica para trás do que está gravado.
+const AbyssRecords = {
+    DIFFS: ['facil', 'normal', 'dificil', 'pesadelo'],
+    FIELDS: ['depth', 'time'],
+    _cache: null,
+    // Dado corrompido, ausente ou fora do esperado conta como "sem recorde" (0). Campos antigos (bosses) são ignorados.
+    _clean(v) { return (typeof v === 'number' && Number.isFinite(v) && v > 0) ? Math.min(Math.floor(v), 1e9) : 0; },
+    get() {
+        if (this._cache) return this._cache;
+        let raw = null;
+        try { raw = StorageManager.get('abyssRecords'); } catch (e) { raw = null; }
+        const out = {};
+        this.DIFFS.forEach(d => {
+            const src = (raw && typeof raw[d] === 'object' && raw[d] !== null) ? raw[d] : {};
+            out[d] = { depth: this._clean(src.depth), time: this._clean(src.time) };
+        });
+        this._cache = out;
+        return out;
+    },
+    forDiff(d) { return this.get()[d] || null; },
+    // Sobe os campos que passaram do recorde da dificuldade. Devolve só os que subiram ({ depth?, time? }).
+    update(diff, vals) {
+        if (this.DIFFS.indexOf(diff) < 0) return {};
+        const all = this.get();
+        const cur = all[diff];
+        const beat = {};
+        this.FIELDS.forEach(f => {
+            const v = this._clean(vals[f]);
+            if (v > cur[f]) { cur[f] = v; beat[f] = v; }
+        });
+        if (Object.keys(beat).length) {
+            const data = {};
+            this.DIFFS.forEach(d => { data[d] = { depth: all[d].depth, time: all[d].time }; });
+            try { StorageManager.set('abyssRecords', data); } catch (e) {}
+            _refreshAbyssRecords();
+        }
+        return beat;
+    }
+};
+
+function _fmtRecordTime(s) { return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+
+// Quadro de recordes na tela inicial (#abyss-records): só com o Abismo selecionado. Preenche as células
+// que já existem no HTML (sem reescrever o innerHTML) e destaca a coluna da dificuldade atual.
+function _refreshAbyssRecords() {
+    const box = document.getElementById('abyss-records');
+    if (!box) return;
+    const on = window._selectedMode === 'abyss';
+    box.style.display = on ? '' : 'none';
+    if (!on) return;
+    const cur = DifficultySystem.preset;
+    const all = AbyssRecords.get();
+    const cells = box.querySelectorAll('[data-rec-row]');
+    for (let i = 0; i < cells.length; i++) {
+        const c = cells[i], d = c.getAttribute('data-diff'), row = c.getAttribute('data-rec-row');
+        const v = all[d] ? all[d][row] : 0;
+        c.textContent = v > 0 ? (row === 'time' ? _fmtRecordTime(v) : String(v)) : '—';
+        c.classList.toggle('is-current', d === cur);
+    }
+    const heads = box.querySelectorAll('[data-head-diff]');
+    for (let i = 0; i < heads.length; i++) heads[i].classList.toggle('is-current', heads[i].getAttribute('data-head-diff') === cur);
+}
+
 window.setDifficulty = function(key) {
     if (!DIFFICULTY_PRESETS[key]) return;
     DifficultySystem.preset = key;
@@ -18245,6 +18397,7 @@ window._refreshDifficultyUI = function() {
         badge.style.borderColor = preset.color + '66';
         badge.style.background = preset.color + '14';
     }
+    _refreshAbyssRecords();
 };
 
 // Restore saved difficulty preference
@@ -18369,6 +18522,7 @@ window._refreshModeDesc = function () {
     desc.textContent = (m === 'abyss')
         ? (window.I18n ? I18n.t('mode.abyssDesc') : 'Competitivo: inimigos sem parar, o mais fundo que conseguir. Bata seus recordes.')
         : (window.I18n ? I18n.t('mode.dungeonDesc') : 'A campanha: explore cada andar, ache a saída e suba até a superfície.');
+    _refreshAbyssRecords();
 };
 window.setMode = function(m) {
     if (m !== 'dungeon' && m !== 'abyss') return;
@@ -32358,6 +32512,7 @@ var SettingsUI = {
         if (!QuitConfirm.arm(btn)) return;
         if (window.PauseSystem && PauseSystem.active) PauseSystem.resume();
         // Save where the player stopped so they can continue later
+        Debug.safe(() => _recordAbyssProgress(), 'abyssRecordQuit');
         try { if (typeof SaveSystem !== 'undefined') SaveSystem.save(); } catch(e) {}
         // Close whichever panel opened this button: the UIManager modal overlay
         // (Configuracoes in-game) and/or this SettingsUI panel - both must be
@@ -34774,6 +34929,8 @@ window.GameBootstrap = {
 
         Debug.safe(() => {
             gameMode = (window._selectedMode === 'abyss') ? 'abyss' : 'dungeon';
+            _abyssRun = null; // recordes batidos nesta run começam do zero
+            _abyssNoRecord = false; // run nova sempre grava recorde
             this._resetState(cls);
             // Aplica o build pendente (arquétipo ou build-code) se a classe bater
             if (window.BuildSystem && window._pendingBuild && window._pendingBuild.c === cls && player) {
@@ -34832,6 +34989,13 @@ window.GameBootstrap = {
         Debug.safe(() => {
             const cls = save.type || 'warrior';
             const floor = save.dungeonLevel || 1;
+            // Dificuldade da run salva, antes de _resetState (inimigos e dano dependem dela), como numa run nova.
+            // Save sem o campo segue a do menu, mas a run fica sem recorde: não há como saber com que dificuldade foi feita.
+            const _saveDiff = (typeof save.difficulty === 'string' && DIFFICULTY_PRESETS[save.difficulty]) ? save.difficulty : null;
+            if (_saveDiff) DifficultySystem.preset = _saveDiff;
+            if (window._refreshDifficultyUI) window._refreshDifficultyUI();
+            // Sem recorde: continue de desafio diário (os modificadores valem), save sem dificuldade ou já marcado
+            _abyssNoRecord = !!(save.daily || !_saveDiff || save.noRecord === true);
             // Desafio diário e mutadores da run salva: antes de _resetState (ver _restoreRunRules)
             this._restoreRunRules(save);
             // Modo antes de _resetState: as regras da história (_storyRules) dependem dele ao montar o andar
