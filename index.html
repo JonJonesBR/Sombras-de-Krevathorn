@@ -1469,11 +1469,11 @@ body {
                     <div id="start-newrun-title" class="start-section-title" data-i18n="start.newRun">Nova partida</div>
 
                     <div class="start-seg start-seg-mode" role="group" aria-label="Modo" data-i18n-aria-label="start.modeLabel">
-                        <button type="button" data-mode="dungeon" onclick="window.setMode('dungeon')" class="mode-tab start-seg-btn is-selected" aria-pressed="true"><svg class="icon-inline" aria-hidden="true"><use href="#ic-swords"/></svg><span data-i18n="start.modeDungeon">Masmorra</span></button>
+                        <button type="button" data-mode="dungeon" onclick="window.setMode('dungeon')" class="mode-tab start-seg-btn is-selected" aria-pressed="true"><svg class="icon-inline" aria-hidden="true"><use href="#ic-swords"/></svg><span data-i18n="start.modeDungeon">História</span></button>
                         <button type="button" data-mode="abyss" onclick="window.setMode('abyss')" class="mode-tab start-seg-btn" aria-pressed="false"><svg class="icon-inline" aria-hidden="true"><use href="#ic-dodge"/></svg><span data-i18n="start.modeAbyss">Abismo</span></button>
                     </div>
                     <!-- Descrição do modo (dinâmica, uma linha) -->
-                    <div id="mode-desc" class="start-hint">Suba piso a piso até a superfície.</div>
+                    <div id="mode-desc" class="start-hint">A campanha: explore cada andar, ache a saída e suba até a superfície.</div>
 
                     <!-- Dificuldade (controle segmentado; a cor do preset vai inline em --seg-accent via _refreshDifficultyUI) -->
                     <div class="start-seg start-seg-diff" role="group" aria-label="Dificuldade" data-i18n-aria-label="start.difficultyLabel">
@@ -5359,7 +5359,7 @@ const I18n = {
             // Start screen (static labels)
             'start.dailyInvite': 'Desafio de hoje: {name} — toque para jogar',
             'start.tagline': 'O Abismo Aguarda',
-            'start.modeDungeon': 'Masmorra',
+            'start.modeDungeon': 'História',
             'start.modeAbyss': 'Abismo',
             'start.difficultyLabel': 'Dificuldade',
             'start.diff.facil': 'Fácil',
@@ -5405,8 +5405,8 @@ const I18n = {
             'difficulty.dificil.desc': 'Inimigos mais fortes. +30% de XP.',
             'difficulty.pesadelo.name': 'Pesadelo',
             'difficulty.pesadelo.desc': 'Só para veteranos. +60% de XP.',
-            'mode.dungeonDesc': 'Suba piso a piso até a superfície.',
-            'mode.abyssDesc': 'Descida sem fim: o chefe nunca para de evoluir.',
+            'mode.dungeonDesc': 'A campanha: explore cada andar, ache a saída e suba até a superfície.',
+            'mode.abyssDesc': 'Competitivo: inimigos sem parar, o mais fundo que conseguir. Bata seus recordes.',
 
             // Crafting (forge)
             'craft.health.name': 'Forjar Poção de Vida',
@@ -7099,7 +7099,7 @@ const I18n = {
             // Start screen (static labels)
             'start.dailyInvite': 'Today\'s challenge: {name} — tap to play',
             'start.tagline': 'The Abyss Awaits',
-            'start.modeDungeon': 'Dungeon',
+            'start.modeDungeon': 'Story',
             'start.modeAbyss': 'Abyss',
             'start.difficultyLabel': 'Difficulty',
             'start.diff.facil': 'Easy',
@@ -7145,8 +7145,8 @@ const I18n = {
             'difficulty.dificil.desc': 'Stronger enemies. +30% XP.',
             'difficulty.pesadelo.name': 'Nightmare',
             'difficulty.pesadelo.desc': 'Veterans only. +60% XP.',
-            'mode.dungeonDesc': 'Climb floor by floor to the surface.',
-            'mode.abyssDesc': 'Endless descent: the boss never stops evolving.',
+            'mode.dungeonDesc': 'The campaign: explore each floor, find the exit and climb to the surface.',
+            'mode.abyssDesc': 'Competitive: endless enemies, the deepest you can get. Beat your records.',
 
             // Crafting (forge)
             'craft.health.name': 'Forge Health Potion',
@@ -8836,7 +8836,7 @@ const I18n = {
             // Start screen (static labels)
             'start.dailyInvite': 'Desafío de hoy: {name} — toca para jugar',
             'start.tagline': 'El Abismo Aguarda',
-            'start.modeDungeon': 'Masmorra',
+            'start.modeDungeon': 'Historia',
             'start.modeAbyss': 'Abismo',
             'start.difficultyLabel': 'Dificultad',
             'start.diff.facil': 'Fácil',
@@ -8882,8 +8882,8 @@ const I18n = {
             'difficulty.dificil.desc': 'Enemigos más fuertes. +30% de XP.',
             'difficulty.pesadelo.name': 'Pesadilla',
             'difficulty.pesadelo.desc': 'Solo para veteranos. +60% de XP.',
-            'mode.dungeonDesc': 'Sube piso a piso hasta la superficie.',
-            'mode.abyssDesc': 'Descenso sin fin: el jefe no deja de evolucionar.',
+            'mode.dungeonDesc': 'La campaña: explora cada piso, encuentra la salida y sube hasta la superficie.',
+            'mode.abyssDesc': 'Competitivo: enemigos sin parar, lo más hondo que puedas. Supera tus récords.',
 
             // Crafting (forge)
             'craft.health.name': 'Forjar Poción de Vida',
@@ -11527,6 +11527,14 @@ class Portal {
 const FLOOR_EXIT = { REVEAL_TILES: 6, MARK: '#7d8590', STONE: '#b0b0c0', STONE_DK: '#8a8a9a', EDGE: '#0b0c10' };
 let _exitRevealed = false;               // saída já vista neste andar (minimapa passa a mostrá-la)
 
+// Regras da história: a Masmorra fora do desafio diário (tutorial incluso). Liga saída fixa, selo, baús
+// nas salas, grupos com respiro e portal na saída. Fora dela (Abismo e Desafio Diário) vale o ritmo antigo
+// (v84): início no ponto seguro, portal no jogador, 1 inimigo por tick. Lê gameMode e o desafio da run,
+// então precisa estar definido antes de _resetState (start() e continueGame já garantem isso).
+function _storyRules() {
+    return gameMode === 'dungeon' && !window._currentDailyChallenge;
+}
+
 // Selo fechado em pixel art (células de 3 px): anel de runas de pedra clara com contorno escuro e uma porta
 // trancada no centro. Brilho fraco e lento (alpha pulsa entre 0,6 e 0,9, ciclo de ~2 s), sem drawGlow.
 function _drawSealedExit(ctx, sx, sy) {
@@ -11565,21 +11573,25 @@ function _drawSealedExit(ctx, sx, sy) {
     ctx.restore();
 }
 
-// Mundo: a saída (selada ou o portal aberto, no mesmo ponto) só é desenhada quando cai na tela.
-// O selo some durante o fade de troca de andar; o portal aberto tem margem maior (brilho de ~84 px).
+// Mundo: o portal aberto é desenhado em todos os modos, só quando cai na tela (margem de ~84 px do brilho).
+// O selo fechado é só da história, na saída do andar (sala secreta não tem saída) e some durante o fade de troca.
 function _drawFloorExit(ctx, cx, cy) {
-    if (!map || !map.exitPx) return; // sala secreta: mapa sem saída
-    const p = dungeonPortal || map.getExitSpawn();
-    const sx = p.x - cx, sy = p.y - cy;
-    const m = dungeonPortal ? 90 : 64;
-    if (sx < -m || sx > width + m || sy < -m || sy > height + m) return;
-    if (dungeonPortal) dungeonPortal.draw(ctx, cx, cy);
-    else if (!_transitioning) _drawSealedExit(ctx, sx, sy);
+    if (dungeonPortal) {
+        const px = dungeonPortal.x - cx, py = dungeonPortal.y - cy;
+        if (px < -90 || px > width + 90 || py < -90 || py > height + 90) return;
+        dungeonPortal.draw(ctx, cx, cy);
+        return;
+    }
+    if (!_storyRules() || !map || !map.exitPx || _transitioning) return;
+    const ep = map.getExitSpawn();
+    const sx = ep.x - cx, sy = ep.y - cy;
+    if (sx < -64 || sx > width + 64 || sy < -64 || sy > height + 64) return;
+    _drawSealedExit(ctx, sx, sy);
 }
 
 // Marca a saída como descoberta quando o jogador chega a até REVEAL_TILES dela (uma vez por andar)
 function _updateFloorExitReveal() {
-    if (_exitRevealed || _transitioning || dungeonPortal || !player || !map || !map.exitTile) return;
+    if (!_storyRules() || _exitRevealed || _transitioning || dungeonPortal || !player || !map || !map.exitTile) return;
     const ep = map.getExitSpawn(), R = FLOOR_EXIT.REVEAL_TILES * CONFIG.TILE_SIZE;
     if (Math.hypot(player.x - ep.x, player.y - ep.y) <= R) _exitRevealed = true;
 }
@@ -12043,6 +12055,34 @@ function _spawnWave(center, alive) {
     _waveBreatherFrames = _waveBreatherSecs() * GAME_TICKS_PER_SECOND;
 }
 
+// Ritmo antigo (v84), usado fora da história: um sorteio por tick de 60 frames, nasce 1 inimigo (ou um anel
+// de besouros). Mesma ordem de sorteios da v84, para o desafio diário e o Abismo reproduzirem a versão antiga.
+function _spawnSingleLegacy(eSpawn) {
+    // Central weighted spawn table: single roll makes every type appear reliably
+    const pool = _buildSpawnPool();
+    let total = 0; for(const o of pool) total += o[1];
+    let r = SeedSystem.random() * total, chosen = 'normal';
+    for(const o of pool) { r -= o[1]; if (r <= 0) { chosen = o[0]; break; } }
+    // Teto de pesados vivos (elite e escudeiro): acima do limite vira inimigo normal
+    if (chosen === 'elite' || chosen === 'shielder') {
+        let _heavyAlive = 0;
+        for (let i = 0; i < entities.length; i++) { const _he = entities[i]; if (_he.alive && (_he.elite || _he.isShielder)) _heavyAlive++; }
+        const _heavyCap = CONFIG.MAX_HEAVY_ENEMIES + ((typeof RunMutators !== 'undefined' && RunMutators.eliteMult() > 1) ? 1 : 0);
+        if (_heavyAlive >= _heavyCap) chosen = 'normal';
+    }
+    if (chosen === 'swarm') {
+        // A ameaça é o número, não a vida: nasce um anel de besouros de ossos (SwarmEnemy).
+        for (let s = 0; s < CONFIG.SWARM_SPAWN_COUNT; s++) { const sa = (s / CONFIG.SWARM_SPAWN_COUNT) * Math.PI * 2; const sd = 30 + SeedSystem.random() * 30; entities.push(new SwarmEnemy(eSpawn.x + Math.cos(sa)*sd, eSpawn.y + Math.sin(sa)*sd)); }
+    } else {
+        const factory = ENEMY_SPAWN_FACTORIES[chosen] || ENEMY_SPAWN_FACTORIES.normal;
+        const _ne = factory(eSpawn.x, eSpawn.y);
+        if ((chosen === 'elite' || chosen === 'normal') && typeof BiomeSystem !== 'undefined' && BiomeSystem.applyEnemyVariant) {
+            BiomeSystem.applyEnemyVariant(_ne);
+        }
+        entities.push(_ne);
+    }
+}
+
 function _updateEnemySpawning() {
     if (_transitioning || _secretRoom) return;
     // Only recount alive enemies on spawn ticks (spawning is throttled to gameTime % 60)
@@ -12068,6 +12108,9 @@ function _updateEnemySpawning() {
         const isBoss = bossForced || (bossEligible && _floorSecs >= CONFIG.BOSS_MIN_FLOOR_SECONDS && SeedSystem.random() < CONFIG.BOSS_SPAWN_CHANCE);
         if (isBoss) {
             _spawnFloorBoss(eSpawn);
+        } else if (!_storyRules()) {
+            // Abismo e desafio diário: ritmo antigo, 1 inimigo por tick
+            _spawnSingleLegacy(eSpawn);
         } else {
             // Grupos com respiro: o respiro só corre com poucos vivos (ou com o grupo atual parado há muito
             // tempo, válvula). Quando zera, nasce o próximo grupo; a checagem é o tick de 60 frames.
@@ -12093,8 +12136,9 @@ function _updateEnemySpawning() {
     }
     // Portal só com o chefe do andar derrotado (floorBossDefeated). Os modos dungeon e abyss sempre têm chefe.
     if (dungeonKills >= dungeonKillTarget && !dungeonPortal && !bossActive && floorBossDefeated) {
-        // O portal nasce na saída do andar (longe do início); sem saída, no jogador como antes
-        const _exitPos = map && map.getExitSpawn ? map.getExitSpawn() : null;
+        // História: o portal nasce na saída do andar (longe do início); sem saída, no jogador como antes.
+        // Fora da história, o portal nasce no jogador, como na v84.
+        const _exitPos = _storyRules() && map && map.getExitSpawn ? map.getExitSpawn() : null;
         dungeonPortal = player ? new Portal(_exitPos ? _exitPos.x : player.x, _exitPos ? _exitPos.y : player.y) : null;
         if (player) triggerCamZoom(0.04, 24);
         if (gameMode === 'dungeon') {
@@ -13023,7 +13067,7 @@ function draw() {
                 }
                 if (window.SeedSystem && SeedSystem.isSeeded()) SeedSystem.reseedForFloor(dungeonLevel);
                 map = new Map(); _mmDirty = true; _resetFloorExplore();
-                const sp = map.getStartSpawn(); if (player) { player.x = sp.x; player.y = sp.y; }
+                const sp = _storyRules() ? map.getStartSpawn() : map.getSafeSpawn(); if (player) { player.x = sp.x; player.y = sp.y; }
                 entities = [player]; bullets = []; particles = []; pickups = [];
                 hazards = []; chests = []; pets = []; weaponPickups = []; equipmentPickups = [];
                 guidedBullets = []; rogueClones = []; hitstopFrames = 0; ScreenEffects.resetImpact();
@@ -18217,8 +18261,8 @@ if (document.readyState === 'loading') {
 }
 
 // ============================================================
-// Game mode selection API (start screen tabs: Masmorra / Abismo)
-// Masmorra: floors up to the surface (win at floor 11).
+// Game mode selection API (start screen tabs: História / Abismo)
+// História ('dungeon'): campanha com saída fixa até a superfície (win at floor 11).
 // Abismo: endless descent - no surface, boss never stops evolving
 // (phase 5 at floor 20, scaling cap at floor 50).
 // ============================================================
@@ -18323,8 +18367,8 @@ window._refreshModeDesc = function () {
     if (!desc) return;
     var m = window._selectedMode;
     desc.textContent = (m === 'abyss')
-        ? (window.I18n ? I18n.t('mode.abyssDesc') : 'Descida sem fim: o chefe nunca para de evoluir.')
-        : (window.I18n ? I18n.t('mode.dungeonDesc') : 'Suba piso a piso até a superfície.');
+        ? (window.I18n ? I18n.t('mode.abyssDesc') : 'Competitivo: inimigos sem parar, o mais fundo que conseguir. Bata seus recordes.')
+        : (window.I18n ? I18n.t('mode.dungeonDesc') : 'A campanha: explore cada andar, ache a saída e suba até a superfície.');
 };
 window.setMode = function(m) {
     if (m !== 'dungeon' && m !== 'abyss') return;
@@ -31220,7 +31264,7 @@ const NPCSystem = {
         this._oracleMarkers = [];
         if (window.dungeonPortal) {
             this._oracleMarkers.push({ x: dungeonPortal.x, y: dungeonPortal.y, color: '#cc88ff', label: 'P' });
-        } else if (window.map && map.exitTile) {
+        } else if (_storyRules() && window.map && map.exitTile) {
             // Portal ainda fechado: o oráculo marca a saída selada no lugar dele
             const _ep = map.getExitSpawn();
             this._oracleMarkers.push({ x: _ep.x, y: _ep.y, color: FLOOR_EXIT.MARK, label: 'S' });
@@ -34790,12 +34834,13 @@ window.GameBootstrap = {
             const floor = save.dungeonLevel || 1;
             // Desafio diário e mutadores da run salva: antes de _resetState (ver _restoreRunRules)
             this._restoreRunRules(save);
+            // Modo antes de _resetState: as regras da história (_storyRules) dependem dele ao montar o andar
+            gameMode = save.gameMode || gameMode;
             // Build a fresh floor AT the saved level/biome/seed, then restore the
             // player's progression on top. `player` is still undefined until this
             // call, so no state from the previous run can leak into the new one.
             this._resetState(cls, { resume: true, floor: floor, biome: save.biome });
             SaveSystem.applyTo(player, save);
-            gameMode = save.gameMode || gameMode;
             dungeonKills = save.dungeonKills || 0;
             dungeonKillTarget = save.dungeonKillTarget || 18;
             floorBossDefeated = _floorBossFromSave(save);
@@ -34878,7 +34923,8 @@ window.GameBootstrap = {
         if (window.SeedSystem && SeedSystem.isSeeded()) SeedSystem.reseedForFloor(dungeonLevel);
         map = new Map();
         _mmDirty = true;
-        var pSpawn = map.getStartSpawn();
+        // História: início na sala de início. Fora dela, ponto seguro sorteado, como na v84 (mesma ordem de sorteios)
+        var pSpawn = _storyRules() ? map.getStartSpawn() : map.getSafeSpawn();
         player = new Player(pSpawn.x, pSpawn.y, cls);
 
         entities = [player]; bullets = []; particles = []; pickups = [];
@@ -35026,15 +35072,17 @@ window.GameBootstrap = {
         if (!map) return;
         var count = 3 + Math.floor(SeedSystem.random() * 3);
         var rarityPool = ['comum','comum','comum','raro','raro','epico'];
-        // Baús comuns nos centros das salas (longe do início); o que faltar volta ao sorteio antigo
-        var roomSpots = map.chestRoomSpots(count);
+        // História: baús comuns nos centros das salas (longe do início); o que faltar volta ao sorteio antigo.
+        // Fora da história, roomSpots fica vazio e tudo cai no sorteio antigo (v84).
+        var story = _storyRules();
+        var roomSpots = story ? map.chestRoomSpots(count) : [];
         for (var i = 0; i < count; i++) {
             var pos = roomSpots[i] || map.getSafeSpawn(200);
             var rarity = rarityPool[Math.floor(SeedSystem.random() * rarityPool.length)];
             chests.push(new Chest(pos.x, pos.y, rarity));
         }
         // Escondido: beco sem saída longe do início; sem beco, o sorteio antigo
-        var hiddenPos = map.deadEndSpot(roomSpots) || map.getSafeSpawn(400);
+        var hiddenPos = (story && map.deadEndSpot(roomSpots)) || map.getSafeSpawn(400);
         var hiddenRarity = SeedSystem.random() < 0.4 ? 'epico' : 'raro';
         chests.push(new Chest(hiddenPos.x, hiddenPos.y, hiddenRarity));
     },
@@ -35046,8 +35094,8 @@ window.GameBootstrap = {
         if (!map) return;
         var count = (dungeonLevel % 4 === 0) ? 2 : 1;
         var rarityPool = ['comum','comum','raro','raro','epico'];
-        // Centros das salas, longe do início; o que faltar volta ao sorteio antigo
-        var roomSpots = map.chestRoomSpots(count);
+        // História: centros das salas, longe do início; o que faltar volta ao sorteio antigo (fora da história, tudo)
+        var roomSpots = _storyRules() ? map.chestRoomSpots(count) : [];
         for (var i = 0; i < count; i++) {
             var pos = roomSpots[i] || map.getSafeSpawn(200);
             var rarity = rarityPool[Math.floor(SeedSystem.random() * rarityPool.length)];
