@@ -11556,7 +11556,18 @@ function _updateEntitySimulation() {
     // Freeze/stun countdown is centralized here. It used to tick only inside the
     // base Enemy.draw / Boss.draw, but every subclass overrides draw() without
     // ticking it, so a frozen elite/special stayed frozen forever.
-    for (let i = 0; i < entities.length; i++) { const e = entities[i]; if (e === player) continue; if (e.frozen > 0) e.frozen--; if (e.alive && e.updatePoison) e.updatePoison(); }
+    // O mesmo valia para as marcas de dano extra (Marca da Morte e Marca do Caçador):
+    // só o Enemy.draw base as decrementava, então em quem sobrescreve draw (Esqueleto,
+    // Carregador, Boca de Pedra, Baú Faminto, Salamandra, Espreitador...) o bônus
+    // ficava permanente. As três contagens correm aqui, no relógio da simulação.
+    for (let i = 0; i < entities.length; i++) {
+        const e = entities[i];
+        if (e === player) continue;
+        if (e.frozen > 0) e.frozen--;
+        if (e._deathMarkT > 0) e._deathMarkT--;
+        if (e._huntMarkT > 0) e._huntMarkT--;
+        if (e.alive && e.updatePoison) e.updatePoison();
+    }
     for (let i = 0; i < chests.length; i++) chests[i].update();
     for (let i = chests.length - 1; i >= 0; i--) { if (!chests[i].alive) chests.splice(i, 1); }
     if (window.RelicSystem) RelicSystem.update(player);
@@ -25804,8 +25815,8 @@ class Enemy extends Entity {
         }
         
         if(this.ft > 0) this.ft--;
-        if(this._deathMarkT > 0) this._deathMarkT--;
-        if(this._huntMarkT > 0) this._huntMarkT--;
+        // As marcas de dano extra (Morte/Caçador) decrescem em _updateEntitySimulation,
+        // não aqui: subclasses que sobrescrevem draw nunca decrementavam.
         if(this.frozen > 0) { 
             ctx.globalAlpha = 0.6;
             ctx.fillStyle = 'rgba(51,204,255,0.35)';
