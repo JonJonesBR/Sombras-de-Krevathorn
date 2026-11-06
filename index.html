@@ -35023,6 +35023,11 @@ window.GameBootstrap = {
             const _saveDiff = (typeof save.difficulty === 'string' && DIFFICULTY_PRESETS[save.difficulty]) ? save.difficulty : null;
             if (_saveDiff) DifficultySystem.preset = _saveDiff;
             if (window._refreshDifficultyUI) window._refreshDifficultyUI();
+            // A preferência do menu passa a ser a da run retomada. Sem isso o seletor mostrava
+            // a dificuldade da run, mas a próxima partida nova usava a preferência antiga — e
+            // recarregar a página devolvia a antiga ao seletor. Só grava quando o save tem
+            // dificuldade: save antigo sem o campo segue a preferência do menu (e sem recorde).
+            if (_saveDiff) _depoisDoToque(function () { try { StorageManager.setRaw('difficulty', _saveDiff); } catch(e) {} });
             // Sem recorde: continue de desafio diário (os modificadores valem), save sem dificuldade ou já marcado
             _abyssNoRecord = !!(save.daily || !_saveDiff || save.noRecord === true);
             // Desafio diário e mutadores da run salva: antes de _resetState (ver _restoreRunRules)
