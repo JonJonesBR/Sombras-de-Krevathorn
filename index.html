@@ -23788,8 +23788,11 @@ const WorldSprites = (() => {
         }
         return g;
     };
-    const fire = (color, frame) => build('hz|fire|' + color + '|' + (frame % 6), fireBody(frame),
-        { k: '#3a0e00', o: color, y: '#ffaa00', c: '#fff2b0' }, 3, '#ff4400');
+    const fire = (color, frame, scale) => {
+        const sc = scale || 3;   // 3 = fogo comum; 2 = versão menor (poça da Salamandra)
+        return build('hz|fire|' + color + '|' + (frame % 6) + '|' + sc, fireBody(frame),
+            { k: '#3a0e00', o: color, y: '#ffaa00', c: '#fff2b0' }, sc, '#ff4400');
+    };
 
     // Cristal triangular (gelo): lado escuro à esquerda, claro à direita, faísca em quadros 1 e 3
     const crystalBody = (W, H, frame) => {
@@ -25662,6 +25665,20 @@ class Enemy extends Entity {
         PixelFX.drawDisc(ctx, this.x-cx, this.y-cy, maxR * progress, '#ff0000');
         ctx.globalAlpha = 1;
     }
+    // Nuvem de veneno / sangria (bolhas verdes subindo por cima do inimigo). Fica neste método porque
+    // Salamandra e Espreitador sobrescrevem draw: com o desenho solto no draw base, o veneno não
+    // aparecia neles.
+    _drawPoisonCloud(ctx, px, py) {
+        if (!((this.poisonStacks || 0) > 0)) return;
+        ctx.globalAlpha = 0.55;
+        ctx.fillStyle = '#55cc44';
+        for (let pi = 0; pi < 3; pi++) {
+            const by = py - this.radius - 2 - ((gameTime * 0.4 + pi * 7) % 16);
+            const bxs = px + Math.sin(gameTime * 0.12 + pi * 2.4) * this.radius * 0.6;
+            ctx.fillRect(PixelFX.snap(bxs, 3), PixelFX.snap(by, 3), 3, 3);
+        }
+        ctx.globalAlpha = 1;
+    }
     draw(ctx, cx, cy) {
         if(!this.alive) return;
         this._drawMeleeWindup(ctx, cx, cy);
@@ -25802,17 +25819,7 @@ class Enemy extends Entity {
         if(typeof ElementalSystem !== 'undefined') ElementalSystem.drawStatuses(ctx, this, cx, cy);
         
         // Poison / bleed clouds (rising bubbles above the enemy)
-        if((this.poisonStacks || 0) > 0 && isNear) {
-            ctx.globalAlpha = 0.55;
-            ctx.fillStyle = '#55cc44';
-            const pb = (gameTime * 0.25 + px) % 1;
-            for(let pi = 0; pi < 3; pi++) {
-                const by = py - this.radius - 2 - ((gameTime * 0.4 + pi * 7) % 16);
-                const bxs = px + Math.sin(gameTime * 0.12 + pi * 2.4) * this.radius * 0.6;
-                ctx.fillRect(PixelFX.snap(bxs, 3), PixelFX.snap(by, 3), 3, 3);
-            }
-            ctx.globalAlpha = 1;
-        }
+        if (isNear) this._drawPoisonCloud(ctx, px, py);
         
         if(this.ft > 0) this.ft--;
         // As marcas de dano extra (Morte/Caçador) decrescem em _updateEntitySimulation,
@@ -26949,7 +26956,18 @@ const SalamanderArt = (() => {
         const key = 'sal|' + face + leg + crack;
         return PixelFX.get(key) || PixelFX.bake(key, rows(face, leg, crack), PAL, 3);
     };
-    return { sprite };
+    // Corpo caído: a brasa apaga e o bicho afunda em 5 quadros (topo e laterais são comidos),
+    // sobrando um monte de basalto no chão. Mesma cadência de 4 ticks por quadro dos outros inimigos.
+    const death = f => {
+        const key = 'sal|dead|' + f;
+        const src = cracks(body(0), 0);   // estado 0 = brasa apagada
+        const top = [0, 1, 2, 3, 4][f] || 0;
+        const side = [0, 0, 1, 1, 2][f] || 0;
+        const g = blank();
+        for (let y = top; y < H; y++) for (let x = side; x < W - side; x++) g[y][x] = src[y][x];
+        return PixelFX.get(key) || PixelFX.bake(key, _enemyOutline(g), PAL, 3);
+    };
+    return { sprite, death };
 })();
 
 // ESPREITADOR DO MATO (floresta): arte em grade 13x11 gerada com hash fixo (mesma folhagem em todo o jogo).
@@ -26989,7 +27007,18 @@ const LurkerArt = (() => {
         const key = 'lurk|' + (revealed ? 'shown|' : 'hidden|') + frame;
         return PixelFX.get(key) || PixelFX.bake(key, _enemyOutline(bush(frame ? 7 : 1, revealed)), PAL, 3);
     };
-    return { sprite, eyes };
+    // Morte: o arbusto desmancha em 5 quadros (sem olhos; o topo e as laterais somem primeiro,
+    // sobrando folhas e galhos no chão), na mesma cadência de 4 ticks por quadro.
+    const death = f => {
+        const key = 'lurk|dead|' + f;
+        const src = bush(1, false);
+        const top = [0, 2, 4, 6, 8][f] || 0;
+        const side = [0, 1, 2, 3, 4][f] || 0;
+        const g = []; for (let y = 0; y < H; y++) g.push(new Array(W).fill('.'));
+        for (let y = top; y < H; y++) for (let x = side; x < W - side; x++) g[y][x] = src[y][x];
+        return PixelFX.get(key) || PixelFX.bake(key, _enemyOutline(g), PAL, 3);
+    };
+    return { sprite, death, eyes };
 })();
 
 // Escondido de verdade: espreitador ainda não revelado (ou mímico disfarçado). Usado pela mira, pelo
@@ -27009,8 +27038,9 @@ function _ambientHazardCount() {
     return n;
 }
 
-// Poça da Salamandra: um Hazard 'fire' do inimigo (fere o jogador, nunca o dono). Desenhada na escala do
-// raio de acerto (size), e não no tamanho do fogo comum (size 25).
+// Poça da Salamandra: um Hazard 'fire' do inimigo (fere o jogador, nunca o dono). Usa um bake próprio do
+// fogo em escala 2 (célula de 2 px), do tamanho do raio de acerto (size 16). Escalar o fogo comum
+// (escala 3, raio ~22) por 16/25 = 0,64 quebrava a grade de pixels.
 class SalamanderPuddle extends Hazard {
     constructor(x, y, owner) {
         super(x, y, 'fire', false);
@@ -27020,11 +27050,9 @@ class SalamanderPuddle extends Hazard {
         this._salamander = owner;
     }
     draw(ctx, cx, cy) {
-        const k = this.size / 25;   // 25 = raio do fogo comum, o tamanho do sprite
-        const sp = WorldSprites.fire(this.color, ((gameTime / 5) | 0) + (this.x | 0));
+        const sp = WorldSprites.fire(this.color, ((gameTime / 5) | 0) + (this.x | 0), 2);
         ctx.save();
         ctx.translate(this.x - cx, this.y - cy);
-        ctx.scale(k, k);
         if (window.GFX === undefined || window.GFX.glows) {
             ctx.globalCompositeOperation = 'lighter';
             ctx.globalAlpha = (0.5 + Math.sin(gameTime * 0.1) * 0.2) * 0.5;
@@ -27049,6 +27077,7 @@ class SalamanderEnemy extends Enemy {
         this.xpReward = CONFIG.SALAMANDER_XP;
         this.element = 'fire';      // o contato queima (Enemy.update aplica o elemento no golpe)
         this._trailT = CONFIG.SALAMANDER_TRAIL_INTERVAL;
+        this._deathArt = t => SalamanderArt.death(Math.min(4, (t / 4) | 0));   // corpo caindo (DeathAnimations)
     }
     update(p, m) {
         if (this.frozen > 0) return;
@@ -27096,6 +27125,7 @@ class SalamanderEnemy extends Enemy {
         }
         if (fl) ctx.restore();
         if (typeof ElementalSystem !== 'undefined') ElementalSystem.drawStatuses(ctx, this, cx, cy);
+        this._drawPoisonCloud(ctx, px, py);
         if (this.frozen > 0) {
             ctx.globalAlpha = 0.35;
             ctx.fillStyle = '#33ccff';
@@ -27135,6 +27165,7 @@ class LurkerEnemy extends Enemy {
         this._lungeDx = 1; this._lungeDy = 0;   // direção do bote: travada nos últimos ticks do aviso
         this._bornAt = gameTime;                 // tempo escondido compara com gameTime (o update reduzido de inimigos longe não atrasa)
         this._blinkOff = Math.floor(Math.random() * CONFIG.LURKER_BLINK_PERIOD); // só visual (não consome o RNG da simulação)
+        this._deathArt = t => LurkerArt.death(Math.min(4, (t / 4) | 0));   // arbusto desmanchando (DeathAnimations)
         if (typeof _secretRoom !== 'undefined' && _secretRoom) { this.revealed = true; this._state = 'chase'; }
     }
     // Revela e começa o aviso, já com a mira no jogador (senão o aviso aponta para a direita nos primeiros quadros)
@@ -27142,7 +27173,7 @@ class LurkerEnemy extends Enemy {
         this.revealed = true;
         this._state = 'windup';
         this._stateT = CONFIG.LURKER_WINDUP_FRAMES;
-        if (p) this._aimAt(p);
+        if (p) this._aimLunge(p);
         spawnParticles(this.x, this.y, '#7fc25a', 12, 3);   // folhas que voam
     }
     // Revela sem bote (tempo escondido esgotado): só folhas, e persegue direto
@@ -27151,7 +27182,9 @@ class LurkerEnemy extends Enemy {
         this._state = 'chase';
         spawnParticles(this.x, this.y, '#7fc25a', 4, 2);
     }
-    _aimAt(p) {
+    // Trava a direção do bote (nome próprio: não confundir com Enemy._aimAt(p, bulletSpeed, spread),
+    // que mira projétil e tem outra assinatura)
+    _aimLunge(p) {
         const dx = p.x - this.x, dy = p.y - this.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
         this._lungeDx = dx / d; this._lungeDy = dy / d;
         this.angle = Math.atan2(this._lungeDy, this._lungeDx);
@@ -27167,16 +27200,19 @@ class LurkerEnemy extends Enemy {
         if (this.frozen > 0) return;
         if (!this.revealed) {
             if (gameTime - this._bornAt > CONFIG.LURKER_HIDE_MAX_FRAMES) { this._revealChase(); return; }
-            // Escondido: não anda nem encosta. Revela-se só com o jogador perto e à vista (não através de parede)
+            // Escondido: não anda nem encosta. Revela-se só com o jogador perto e à vista (não através de
+            // parede), e nunca enquanto ele está furtivo (dash, Passo Sombrio): quem passa despercebido
+            // não acorda o arbusto.
             const dx = p.x - this.x, dy = p.y - this.y, rr = CONFIG.LURKER_REVEAL_RANGE;
-            if (dx * dx + dy * dy < rr * rr && hasLineOfSight(m, this.x, this.y, p.x, p.y)) this._reveal(p);
+            const stealthy = (p.stealth || 0) > 0;
+            if (!stealthy && dx * dx + dy * dy < rr * rr && hasLineOfSight(m, this.x, this.y, p.x, p.y)) this._reveal(p);
             return;
         }
         const st = this._state;
         if (st === 'chase') { super.update(p, m); return; }
         if (st === 'windup') {
             // Mira no jogador até os últimos ticks; depois a direção trava
-            if (this._stateT > CONFIG.LURKER_AIM_LOCK_FRAMES) this._aimAt(p);
+            if (this._stateT > CONFIG.LURKER_AIM_LOCK_FRAMES) this._aimLunge(p);
             if (--this._stateT <= 0) {
                 this._state = 'lunge';
                 this._stateT = CONFIG.LURKER_LUNGE_FRAMES;
@@ -27259,6 +27295,7 @@ class LurkerEnemy extends Enemy {
         }
         if (fl) ctx.restore();
         if (typeof ElementalSystem !== 'undefined') ElementalSystem.drawStatuses(ctx, this, cx, cy);
+        this._drawPoisonCloud(ctx, px, py);
         if (this.frozen > 0) {
             ctx.globalAlpha = 0.35;
             ctx.fillStyle = '#33ccff';
@@ -30063,6 +30100,7 @@ class Player extends Entity {
         if(this.critBoost > 0) this.critBoost--;
         if(this.shopDiscountTimer > 0) this.shopDiscountTimer--;
         if(this.invincibleTimer > 0) this.invincibleTimer--;
+        if(this.stealth > 0) this.stealth--;   // furtividade expira (dash e abates com Passo Sombrio)
         // Daily challenge 'noheal': zero passive regen
         // Mutador 'sem regeneração' (v66) desliga a cura passiva como o desafio 'Jejum'
         const _noRegen = (window._dailyMods && window._dailyMods.healthRegen === 0) || (typeof RunMutators !== 'undefined' && RunMutators.noRegen());
@@ -31501,6 +31539,9 @@ const DeathAnimations = {
         };
         // corpo: tipo/escala/ângulo do último desenho, para exibir os quadros de morte
         if (entity._dsT) anim.spr = { t: entity._dsT, s: entity._dsS || 1.5, a: entity._dsA || 0 };
+        // arte própria de morte (Salamandra e Espreitador, que desenham com sprite próprio):
+        // função que recebe o tick e devolve o sprite do quadro
+        if (typeof entity._deathArt === 'function') anim.custom = entity._deathArt;
 
         if (entity.isB) {
             anim.type = 'boss';
@@ -31650,7 +31691,7 @@ const DeathAnimations = {
         // corpo com sprite: fica vivo durante a queda (28 ticks) e o esmaecer (12)
         for (let i = 0; i < this.animations.length; i++) {
             const an = this.animations[i];
-            if (an.spr && an.timer < 40) an.alive = true;
+            if ((an.spr || an.custom) && an.timer < 40) an.alive = true;
         }
 
         // In-place removal instead of .filter() (which allocates a new array
@@ -31704,7 +31745,14 @@ const DeathAnimations = {
     drawAnimations(ctx, camX, camY) {
         for (let i = 0; i < this.animations.length; i++) {
             const anim = this.animations[i];
-            if (anim.spr) {
+            if (anim.custom) {
+                const a = anim.timer < 28 ? 1 : Math.max(0, 1 - (anim.timer - 28) / 12);
+                if (a > 0) {
+                    ctx.globalAlpha = a;
+                    PixelFX.draw(ctx, anim.custom(anim.timer), anim.x - camX, anim.y - camY);
+                    ctx.globalAlpha = 1;
+                }
+            } else if (anim.spr) {
                 const a = anim.timer < 28 ? 1 : Math.max(0, 1 - (anim.timer - 28) / 12);
                 if (a > 0) {
                     ctx.globalAlpha = a;
@@ -31714,7 +31762,7 @@ const DeathAnimations = {
             }
             switch (anim.type) {
                 case 'normal':
-                    if (anim.fadeAlpha > 0 && !anim.spr) {
+                    if (anim.fadeAlpha > 0 && !anim.spr && !anim.custom) {
                         ctx.globalAlpha = anim.fadeAlpha * 0.4;
                         ctx.fillStyle = anim.color;
                         const rad = anim.radius * (1 + anim.timer * 0.02);
