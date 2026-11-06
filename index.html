@@ -27334,6 +27334,85 @@ const BOSS_BLUEPRINTS = [
     { key:'thorn_king', nameKey:'boss.thorn_king.name', name:'Rei dos Espinhos', sprite:'thorn', glow:'#7fd612', hpMult:1.25, speed:1.5, radiusMult:1.0, dmgMult:1.1, regen:1, summonChance:0.3, moves:{1:['corruptionPool','charge'],2:['corruptionPool','projectileBurst','charge'],3:['corruptionPool','spiralBurst','charge'],4:['teleport','guidedProjectile','corruptionPool'],5:['spiralBurst','corruptionPool','charge']} }
 ];
 
+// Asas dos dois chefes alados (Demônio das Profundezas e Guardião Final). Antes eram dois
+// triângulos vetoriais, que destoavam do resto do pixel art: agora cada asa é uma grade própria
+// de 18x16 (braço/ossos + membrana no demônio, penas no guardião), espelhada nas costas do chefe.
+// Dois quadros alternam a batida lenta; a asa é desenhada antes do sprite para ficar atrás do corpo.
+const BossWings = (() => {
+    const W = 18, H = 16;
+    // borda de ataque (braço): sobe do ombro até a ponta; o quadro erguido levanta a ponta
+    const TOP = [11, 10, 10, 9, 9, 8, 7, 7, 6, 6, 5, 4, 4, 3, 3, 2, 1, 1];
+    // borda de baixo: pontas de dedo (morcego) ou de pena (guardião)
+    const BAT_BOT = [14, 15, 15, 14, 12, 10, 11, 13, 14, 13, 11, 12, 14, 15, 14, 11, 8, 4];
+    const FEA_BOT = [12, 13, 14, 13, 11, 12, 14, 13, 11, 12, 14, 13, 11, 12, 13, 10, 8, 4];
+    const PAL = {
+        demon: { k: '#2a0608', B: '#ff8a4a', M: '#85223a', D: '#4c1321', H: '#b8282c', G: '#ffd23a' },
+        final: { k: '#1c0624', B: '#f6d98f', M: '#8a6944', D: '#4a3520', L: '#d9b06a', H: '#ff9a3c' }
+    };
+    // linha de Bresenham na grade (ossos dos dedos e divisas das penas)
+    const line = (g, x0, y0, x1, y1, ch) => {
+        let dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0);
+        const sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1;
+        let err = dx + dy;
+        for (;;) {
+            if (g[y0] && g[y0][x0] !== undefined) g[y0][x0] = ch;
+            if (x0 === x1 && y0 === y1) break;
+            const e2 = 2 * err;
+            if (e2 >= dy) { err += dy; x0 += sx; }
+            if (e2 <= dx) { err += dx; y0 += sy; }
+        }
+    };
+    const rows = (kind, lift) => {
+        const top = TOP.map((v, x) => Math.max(0, v - (lift ? Math.round((x / 17) * 2) : 0)));
+        const bot = (kind === 'demon' ? BAT_BOT : FEA_BOT).map((v, x) => v - (lift ? Math.round(x / 17) : 0));
+        const g = [];
+        for (let y = 0; y < H; y++) g.push(new Array(W).fill('.'));
+        for (let x = 0; x < W; x++) {
+            for (let y = top[x]; y <= bot[x]; y++) {
+                g[y][x] = 'M';
+                if (y >= bot[x] - 1) g[y][x] = 'D';   // sombra na borda de baixo
+                if (y <= top[x] + 1) g[y][x] = 'H';   // luz logo abaixo do braço
+            }
+            g[bot[x]][x] = 'D';
+            g[top[x]][x] = 'B';
+        }
+        if (kind === 'demon') {
+            // três dedos saindo do punho, com brasa na ponta
+            const wrist = [2, top[2] + 1];
+            line(g, wrist[0], wrist[1], 2, bot[2], 'B');
+            line(g, wrist[0], wrist[1], 8, bot[8], 'B');
+            line(g, wrist[0], wrist[1], 13, bot[13], 'B');
+            g[bot[2]][2] = 'G'; g[bot[8]][8] = 'G'; g[bot[13]][13] = 'G';
+        } else {
+            // penas: vales escuros, fio claro na pena seguinte e pontas iluminadas
+            [4, 8, 12, 15].forEach(x => line(g, x, bot[x], x, top[x] + 2, 'D'));
+            [4, 8, 12, 15].forEach(x => line(g, x + 1, bot[x + 1] - 1, x + 1, top[x + 1] + 3, 'L'));
+            [2, 6, 10, 13].forEach(x => { g[bot[x]][x] = 'H'; g[bot[x] - 1][x] = 'H'; });
+        }
+        return _enemyOutline(g.map(r => r.join('')));
+    };
+    const cache = {};
+    const sprite = (kind, lift) => {
+        const key = kind + lift;
+        if (!cache[key]) cache[key] = PixelFX.bake('asas|' + key, rows(kind, lift), PAL[kind], 2);
+        return cache[key];
+    };
+    // px, py = centro do chefe; o ombro da asa fica em py - 10
+    const draw = (ctx, px, py, kind) => {
+        const lift = ((gameTime / 45) | 0) & 1;   // batida lenta (~0,75 s por quadro)
+        const w = sprite(kind, lift);
+        const x = Math.round(px), y = Math.round(py - 10 - TOP[0] * 2);
+        // asa esquerda espelhada
+        ctx.save();
+        ctx.translate(x - 7, y);
+        ctx.scale(-1, 1);
+        ctx.drawImage(w, 0, 0);
+        ctx.restore();
+        ctx.drawImage(w, x + 7, y);
+    };
+    return { draw };
+})();
+
 class Boss extends Enemy {
     constructor(x, y) {
         super(x, y, true);
@@ -27614,6 +27693,13 @@ class Boss extends Enemy {
         shake = 14;
     }
 
+    // Asas: desenhadas atrás do corpo (antes do sprite), só nos dois chefes que as têm
+    _drawBossWings(ctx, px, py) {
+        if (!this._blueprint) return;
+        if (this._blueprint.key === 'deep_demon') BossWings.draw(ctx, px, py, 'demon');
+        else if (this._blueprint.key === 'final_guardian') BossWings.draw(ctx, px, py, 'final');
+    }
+
     // Extra per-boss decoration drawn on top of the sprite
     _drawBossDecor(ctx, px, py) {
         if(!this._blueprint) return;
@@ -27663,12 +27749,6 @@ class Boss extends Enemy {
                 for(let i = 0; i < 3; i++) { PixelFX.ring(ctx, px - R * 0.3 + i * R * 0.3, py - R * 0.2, R * 0.18, '#fff3d6', 3, { a0: Math.PI * 1.15, a1: Math.PI * 1.85 }); }
                 ctx.globalAlpha = 1; break;
             }
-            case 'deep_demon': {
-                ctx.fillStyle = '#ff7a3c';
-                ctx.beginPath(); ctx.moveTo(px - R * 0.9, py - R * 0.4); ctx.lineTo(px - R * 0.35, py - R * 1.1 - pulse); ctx.lineTo(px - R * 0.1, py - R * 0.5); ctx.closePath(); ctx.fill();
-                ctx.beginPath(); ctx.moveTo(px + R * 0.9, py - R * 0.4); ctx.lineTo(px + R * 0.35, py - R * 1.1 - pulse); ctx.lineTo(px + R * 0.1, py - R * 0.5); ctx.closePath(); ctx.fill();
-                break;
-            }
             case 'corrupted': {
                 ctx.fillStyle = '#7fd612';
                 for(let i = 0; i < 4; i++) { const a = i * Math.PI / 2 + gameTime * 0.05; PixelFX.drawDisc(ctx, px + Math.cos(a) * R * 0.85, py + Math.sin(a) * R * 0.85, 3, ctx.fillStyle); }
@@ -27683,13 +27763,6 @@ class Boss extends Enemy {
             case 'thorn_king': {
                 ctx.fillStyle = '#7fd612';
                 for(let i = 0; i < 5; i++) { const a = i * Math.PI * 2 / 5 + gameTime * 0.05; PixelFX.drawDisc(ctx, px + Math.cos(a) * R * 0.95, py + Math.sin(a) * R * 0.95, 2.5, ctx.fillStyle); }
-                break;
-            }
-            case 'final_guardian': {
-                ctx.fillStyle = '#ff8c00';
-                ctx.beginPath(); ctx.moveTo(px - R * 0.9, py - R * 0.3); ctx.lineTo(px - R * 0.4, py - R * 1.2 - pulse); ctx.lineTo(px, py - R * 0.4); ctx.closePath(); ctx.fill();
-                ctx.beginPath(); ctx.moveTo(px + R * 0.9, py - R * 0.3); ctx.lineTo(px + R * 0.4, py - R * 1.2 - pulse); ctx.lineTo(px, py - R * 0.4); ctx.closePath(); ctx.fill();
-                PixelFX.drawDisc(ctx, px, py, R * 0.2, '#fff');
                 break;
             }
         }
@@ -28172,6 +28245,9 @@ class Boss extends Enemy {
             ctx.fillRect(this.x-cx-this.radius-10, this.y-cy-this.radius-10, (this.radius+10)*2, (this.radius+10)*2);
             ctx.restore();
         }
+        // Asas atrás do corpo (Demônio das Profundezas e Guardião Final)
+        this._drawBossWings(ctx, this.x-cx, this.y-cy);
+
         // Boss pose por estado: lunge/dash = attack, windup/telegraph/drain/spiral = cast, movendo = walk
         const bossState = (this.charging || this._dashT > 0) ? 'attack'
             : (this._chargeWindupTimer > 0 || this._burstTelegraph > 0 || this._drainT > 0 || this._spiralTimer > 0) ? 'cast'
