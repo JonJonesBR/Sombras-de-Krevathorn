@@ -843,10 +843,10 @@ body.cb-tritan  { filter: url("#cb-tritan"); }
 .start-hint { text-align: center; font-size: clamp(0.6rem,2.1vw,0.72rem); line-height: 1.3; color: rgba(255,255,255,0.62); min-height: 1.3em; }
 /* Quadro de recordes do Abismo (abaixo da descrição do modo): mesmo tom do .start-hint, em caixa compacta */
 .abyss-records { box-sizing: border-box; width: 100%; padding: 4px 6px; border-radius: 12px; border: 1px solid rgba(224,182,255,0.16); background: rgba(224,182,255,0.04); }
-.abyss-records-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: clamp(0.56rem,2vw,0.68rem); color: rgba(255,255,255,0.62); }
-.abyss-records-table th, .abyss-records-table td { padding: 3px 2px; text-align: center; font-weight: 600; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; }
-.abyss-records-table thead th { color: rgba(224,182,255,0.6); font-size: 0.92em; font-weight: 700; }
-.abyss-records-table thead th:first-child { width: 26%; text-align: left; }
+.abyss-records-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: clamp(0.52rem,2vw,0.68rem); color: rgba(255,255,255,0.62); }
+.abyss-records-table th, .abyss-records-table td { padding: 3px 1px; text-align: center; font-weight: 600; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.abyss-records-table thead th { color: rgba(224,182,255,0.6); font-size: 0.88em; font-weight: 700; }
+.abyss-records-table thead th:first-child { width: 20%; text-align: left; }
 .abyss-records-table tbody th { text-align: left; color: rgba(255,255,255,0.5); font-weight: 700; }
 .abyss-records-table td { color: rgba(255,255,255,0.78); font-variant-numeric: tabular-nums; }
 .abyss-records-table .is-current { color: #fff; background: rgba(224,182,255,0.14); border-radius: 6px; }
@@ -864,6 +864,9 @@ body.cb-tritan  { filter: url("#cb-tritan"); }
 /* Telas estreitas ou fonte grande: a dificuldade fica só com o rótulo (Pesadelo cabe no segmento) */
 @media (max-width: 400px) { .start-seg-diff .start-seg-btn > .icon-inline { display: none; } }
 body.font-large .start-seg-diff .start-seg-btn > .icon-inline { display: none; }
+/* Telas estreitas ou fonte grande: os nomes longos (Nightmare/Pesadilla) ganham uma fonte menor para caber inteiros no quadro */
+@media (max-width: 400px) { .abyss-records-table thead th { font-size: 0.8em; } }
+body.font-large .abyss-records-table thead th { font-size: 0.8em; }
 .start-seg-mode .start-seg-btn { text-transform: uppercase; letter-spacing: 0.08em; font-size: clamp(0.72rem,2.8vw,0.9rem); font-weight: 700; }
 /* Selecionado: fundo preenchido. Dificuldade define --seg-accent/--seg-tint/--seg-glow inline (cor do preset). */
 .start-seg-btn.is-selected { color: var(--seg-accent, #f0e0ff); background: var(--seg-tint, rgba(224,182,255,0.15)); border-color: var(--seg-accent, rgba(224,182,255,0.5)); box-shadow: 0 0 12px var(--seg-glow, rgba(224,182,255,0.25)); font-weight: 800; }
@@ -3255,6 +3258,18 @@ const SaveSystem = {
             // Dificuldade da run (ausente em saves antigos: o continue segue a do menu, sem recorde) e marca de run sem recorde do Abismo
             difficulty: (typeof DifficultySystem !== 'undefined') ? DifficultySystem.preset : 'normal',
             noRecord: (typeof _abyssNoRecord !== 'undefined') ? !!_abyssNoRecord : false,
+            // Recordes batidos nesta run (para a linha "Novo recorde" sobreviver a reload + continuar). Campo opcional (ausente em saves antigos: o continue segue sem a linha, como hoje).
+            abyssRun: (function() {
+                if (typeof _abyssRun === 'undefined' || !_abyssRun || typeof _abyssRun.diff !== 'string' || !_abyssRun.beat || !Object.keys(_abyssRun.beat).length) return null;
+                const beat = {};
+                if (typeof _abyssRun.beat.depth === 'number') beat.depth = Math.floor(_abyssRun.beat.depth);
+                if (typeof _abyssRun.beat.time === 'number') beat.time = Math.floor(_abyssRun.beat.time);
+                if (!Object.keys(beat).length) return null;
+                return { diff: _abyssRun.diff, beat: beat };
+            })(),
+            // Câmara atual da História (o continue retoma nela, com os inimigos dela). Campo
+            // opcional: ausente em saves antigos e fora da História (Abismo e desafio diário).
+            storyRoom: (typeof _storyRoom !== 'undefined' && _storyRoom) ? { i: _storyRoom.i, cleared: !!_storyRoom.cleared } : null,
             // Tempo da run em frames (gameTime): o continue o restaura, para tempo e estrelas não zerarem
             runTicks: (typeof gameTime === 'number' && Number.isFinite(gameTime)) ? Math.max(0, Math.floor(gameTime)) : 0,
             continuesLeft: (typeof continuesLeft !== 'undefined') ? continuesLeft : 3,
@@ -3414,6 +3429,22 @@ const SaveSystem = {
         // Campos aditivos da run (null em saves antigos): ids de mutadores e { id, date } do desafio diário
         if (data.mutators !== undefined && data.mutators !== null && (!Array.isArray(data.mutators) || data.mutators.length > 10 || data.mutators.some(v => typeof v !== 'string' || v.length > 40))) return false;
         if (data.daily !== undefined && data.daily !== null && (typeof data.daily !== 'object' || Array.isArray(data.daily) || typeof data.daily.id !== 'string' || data.daily.id.length > 40 || typeof data.daily.date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(data.daily.date))) return false;
+        if (data.abyssRun !== undefined && data.abyssRun !== null) {
+            const ar = data.abyssRun;
+            if (typeof ar !== 'object' || Array.isArray(ar) || Object.getPrototypeOf(ar) !== Object.prototype) return false;
+            if (typeof ar.diff !== 'string' || ['facil', 'normal', 'dificil', 'pesadelo'].indexOf(ar.diff) < 0) return false;
+            if (!ar.beat || typeof ar.beat !== 'object' || Array.isArray(ar.beat) || Object.getPrototypeOf(ar.beat) !== Object.prototype) return false;
+            for (const [k, v] of Object.entries(ar.beat)) {
+                if ((k !== 'depth' && k !== 'time') || !Number.isSafeInteger(v) || v <= 0 || v > 1e9) return false;
+            }
+        }
+        // Câmara da História: índice e se já foi vencida (campo opcional, como abyssRun)
+        if (data.storyRoom !== undefined && data.storyRoom !== null) {
+            const sr = data.storyRoom;
+            if (typeof sr !== 'object' || Array.isArray(sr) || Object.getPrototypeOf(sr) !== Object.prototype) return false;
+            if (!Number.isSafeInteger(sr.i) || sr.i < 0 || sr.i > 1000) return false;
+            if (typeof sr.cleared !== 'boolean') return false;
+        }
         if (data._migratedAt !== undefined && data._migratedAt !== null && (!Number.isSafeInteger(data._migratedAt) || data._migratedAt < 0)) return false;
         return true;
     },
@@ -4560,6 +4591,12 @@ const I18n = {
         'update.entry.v84.l2': 'O mímico virou o Baú Faminto: parece uma moeda do chão, mas pisca. Revelado, pula atrás de você e rouba moedas a cada mordida; mate-o para recuperar tudo e um pouco mais.',
         'update.entry.v84.l3': 'O menu inicial ficou mais leve: menos animações pesadas e resposta imediata ao tocar nas opções.',
         'update.entry.v84.l4': 'Seus saves continuam funcionando.',
+        'update.entry.v86.title': 'v86 - Câmaras como mapas inteiros',
+        'update.entry.v86.l1': 'Na História, cada câmara agora é um mapa inteiro, com layout próprio — nada de salinhas ligadas por corredor. São quatro câmaras de combate e a do chefe por andar.',
+        'update.entry.v86.l2': 'A passagem para a próxima câmara fica selada até o último inimigo dela cair. Aí o portal abre na saída, e você atravessa com uma caminhada curta enquanto a tela clareia.',
+        'update.entry.v86.l3': 'Cada câmara tem um baú, e a recompensa do chefe cai onde ele morreu.',
+        'update.entry.v86.l4': 'Continuar a run retoma na câmara em que você parou, com os inimigos dela. Seus saves continuam funcionando.',
+        'update.entry.v86.l5': 'A linha "Novo recorde" do Abismo sobrevive a recarregar a página no meio da run, e o quadro de recordes cabe em telas estreitas com fonte grande.',
         'update.entry.v85.title': 'v85 - Modo História e Abismo competitivo',
         'update.entry.v85.l1': 'A Masmorra virou o modo História: cada andar tem uma saída trancada do outro lado do mapa. Explore, ache o selo, vença o chefe e o portal abre ali. Os baús ficam nas salas mais afastadas.',
         'update.entry.v85.l2': 'Na História, os inimigos chegam em grupos, com um respiro entre um grupo e outro.',
@@ -5296,6 +5333,7 @@ const I18n = {
             'log.bossApproaching': 'CHEFE APROXIMANDO: ',
             'log.bossDefeated': 'Chefe abatido!',
             'log.bossChest': 'Bau do Chefe apareceu!',
+            'log.chamberDoorOpen': 'A passagem para a próxima câmara se abriu.',
             'log.stairsUp': 'As escadas para cima aparecem! Suba!',
             'log.surfaceReached': 'SUPERFÍCIE ALCANÇADA! Vá para o portal!',
             'log.zoneCleared': 'Zona limpa! Portal para nova área abriu!',
@@ -5350,6 +5388,7 @@ const I18n = {
             'log.petDefeated': ' foi derrotado!',
             'log.shieldBroken': ' Escudo quebrado!',
             'boss.banner': 'CHEFE!',
+            'chamber.label': 'Câmara',
             'boss.waiting': 'Aguardando...',
             'boss.chargeWarn': ' CARGA!',
             'hud.mapExpanded': 'MAPA EXPANDIDO',
@@ -6315,6 +6354,12 @@ const I18n = {
         'update.entry.v84.l2': 'The mimic became the Hungry Chest: it looks like a floor coin, but it blinks. Once revealed, it hops after you and steals coins with each bite; kill it to get everything back and a bit more.',
         'update.entry.v84.l3': 'The start menu is lighter: fewer heavy animations and instant response when tapping options.',
         'update.entry.v84.l4': 'Your saves keep working.',
+        'update.entry.v86.title': 'v86 - Chambers as full maps',
+        'update.entry.v86.l1': 'In Story mode, each chamber is now a full map with its own layout — no more small rooms linked by a corridor. There are four combat chambers and the boss chamber per floor.',
+        'update.entry.v86.l2': 'The passage to the next chamber stays sealed until the last enemy in it falls. Then the portal opens at the exit, and you walk through as the screen fades back in.',
+        'update.entry.v86.l3': 'Each chamber has a chest, and the boss reward drops where the boss died.',
+        'update.entry.v86.l4': 'Continuing a run resumes in the chamber where you stopped, with its enemies. Your saves keep working.',
+        'update.entry.v86.l5': 'The Abyss "New record" line survives reloading the page mid-run, and the records table fits narrow screens with large fonts.',
         'update.entry.v85.title': 'v85 - Story mode and competitive Abyss',
         'update.entry.v85.l1': 'The Dungeon became Story mode: every floor has a sealed exit on the other side of the map. Explore, find the seal, beat the boss and the portal opens there. Chests sit in the farthest rooms.',
         'update.entry.v85.l2': 'In Story mode, enemies arrive in groups, with a breather between one group and the next.',
@@ -7047,6 +7092,7 @@ const I18n = {
             'log.bossApproaching': 'BOSS APPROACHING: ',
             'log.bossDefeated': 'Boss defeated!',
             'log.bossChest': 'Boss chest appeared!',
+            'log.chamberDoorOpen': 'The passage to the next chamber is open.',
             'log.stairsUp': 'Stairs up appeared! Climb!',
             'log.surfaceReached': 'SURFACE REACHED! Go to the portal!',
             'log.zoneCleared': 'Zone cleared! Portal to a new area opened!',
@@ -7101,6 +7147,7 @@ const I18n = {
             'log.petDefeated': ' was defeated!',
             'log.shieldBroken': ' Shield broken!',
             'boss.banner': 'BOSS!',
+            'chamber.label': 'Chamber',
             'boss.waiting': 'Waiting...',
             'boss.chargeWarn': ' CHARGE!',
             'hud.mapExpanded': 'MAP EXPANDED',
@@ -8080,6 +8127,12 @@ const I18n = {
         'update.entry.v84.l2': 'El mímico se convirtió en el Cofre Hambriento: parece una moneda del suelo, pero parpadea. Revelado, salta tras de ti y roba monedas en cada mordisco; mátalo para recuperarlo todo y un poco más.',
         'update.entry.v84.l3': 'El menú de inicio es más ligero: menos animaciones pesadas y respuesta inmediata al tocar las opciones.',
         'update.entry.v84.l4': 'Tus partidas guardadas siguen funcionando.',
+        'update.entry.v86.title': 'v86 - Cámaras como mapas completos',
+        'update.entry.v86.l1': 'En la Historia, cada cámara ahora es un mapa completo, con su propio diseño — nada de salas pequeñas unidas por un pasillo. Son cuatro cámaras de combate y la del jefe por piso.',
+        'update.entry.v86.l2': 'El paso a la siguiente cámara queda sellado hasta que cae el último enemigo de la actual. Entonces el portal se abre en la salida, y lo cruzas con un breve caminar mientras la pantalla se aclara.',
+        'update.entry.v86.l3': 'Cada cámara tiene un cofre, y la recompensa del jefe cae donde murió.',
+        'update.entry.v86.l4': 'Continuar la partida retoma en la cámara donde te detuviste, con sus enemigos. Tus partidas guardadas siguen funcionando.',
+        'update.entry.v86.l5': 'La línea "Nuevo récord" del Abismo sobrevive a recargar la página a mitad de la partida, y la tabla de récords cabe en pantallas estrechas con fuente grande.',
         'update.entry.v85.title': 'v85 - Modo Historia y Abismo competitivo',
         'update.entry.v85.l1': 'La Mazmorra pasó a ser el modo Historia: cada piso tiene una salida sellada al otro lado del mapa. Explora, encuentra el sello, vence al jefe y el portal se abre allí. Los cofres están en las salas más alejadas.',
         'update.entry.v85.l2': 'En la Historia, los enemigos llegan en grupos, con un respiro entre un grupo y otro.',
@@ -8797,6 +8850,7 @@ const I18n = {
             'log.bossApproaching': 'JEFE ACERCÁNDOSE: ',
             'log.bossDefeated': '¡Jefe derrotado!',
             'log.bossChest': '¡Apareció el cofre del jefe!',
+            'log.chamberDoorOpen': 'El pasillo a la siguiente cámara se abrió.',
             'log.stairsUp': '¡Aparecieron las escaleras hacia arriba! ¡Sube!',
             'log.surfaceReached': '¡SUPERFICIE ALCANZADA! ¡Ve al portal!',
             'log.zoneCleared': '¡Zona limpia! ¡Se abrió el portal a una nueva área!',
@@ -8851,6 +8905,7 @@ const I18n = {
             'log.petDefeated': ' fue derrotado!',
             'log.shieldBroken': ' ¡Escudo roto!',
             'boss.banner': '¡JEFE!',
+            'chamber.label': 'Cámara',
             'boss.waiting': 'Esperando...',
             'boss.chargeWarn': ' ¡EMBESTIDA!',
             'hud.mapExpanded': 'MAPA AMPLIADO',
@@ -9121,6 +9176,10 @@ var CONFIG = {
     MAP_ROOM_MAX_SIZE: 6,
     MAP_CORRIDOR_COUNT: 4,
     MAP_SPAWN_MAX_ATTEMPTS: 100,
+    // História: cada câmara é um mapa inteiro (gerador normal, semente própria por câmara) e a
+    // passagem para a próxima só abre quando todos os inimigos dela caem. O Abismo e o desafio
+    // diário continuam no mapa aberto de sempre.
+    MAP_STORY_ROOMS: 5,             // câmaras por andar: 4 de combate + a do chefe
 
     // Game State
     MAX_ENEMIES: 11,
@@ -11640,11 +11699,12 @@ class Portal {
 // sem brilho, e vira o Portal quando ele nasce. "Descoberta" = o jogador chegou perto dela.
 const FLOOR_EXIT = { REVEAL_TILES: 6, MARK: '#7d8590', STONE: '#b0b0c0', STONE_DK: '#8a8a9a', EDGE: '#0b0c10' };
 let _exitRevealed = false;               // saída já vista neste andar (minimapa passa a mostrá-la)
+let _storyRoom = null;                   // câmara atual da História (null no Abismo, no diário e na sala secreta)
 
 // Regras da história: a Masmorra fora do desafio diário (tutorial incluso). Liga saída fixa, selo, baús
-// nas salas, grupos com respiro e portal na saída. Fora dela (Abismo e Desafio Diário) vale o ritmo antigo
-// (v84): início no ponto seguro, portal no jogador, 1 inimigo por tick. Lê gameMode e o desafio da run,
-// então precisa estar definido antes de _resetState (start() e continueGame já garantem isso).
+// por câmara, câmaras-mapa com passagem selada e portal na saída. Fora dela (Abismo e Desafio Diário)
+// vale o ritmo antigo (v84): início no ponto seguro, portal no jogador, 1 inimigo por tick. Lê gameMode
+// e o desafio da run, então precisa estar definido antes de _resetState (start() e continueGame já garantem).
 function _storyRules() {
     return gameMode === 'dungeon' && !window._currentDailyChallenge;
 }
@@ -11749,6 +11809,14 @@ function _startFloorTransition() {
 
 function _updatePortalAndFloor() {
     if (!dungeonPortal || _transitioning) return;
+    // História: numa câmara comum o portal leva à próxima câmara do mesmo andar. O portal da última
+    // câmara (a do chefe) cai no fluxo normal de troca de andar, com o acampamento entre pisos.
+    if (_storyRules() && _storyRoom && _storyRoom.i < _storyRoom.total - 1) {
+        if (dungeonPortal.update) dungeonPortal.update();
+        else dungeonPortal.timer++;
+        if (player && Math.hypot(player.x - dungeonPortal.x, player.y - dungeonPortal.y) < 55) _startChamberTransition();
+        return;
+    }
     // Descida confirmada pelo acampamento entre pisos
     if (typeof CampSystem !== 'undefined' && CampSystem._descend) {
         _startFloorTransition();
@@ -12197,6 +12265,145 @@ function _spawnSingleLegacy(eSpawn) {
     }
 }
 
+// ── História: câmaras ────────────────────────────────────────────────────────────────────────────
+// Cada câmara é um mapa inteiro (gerador normal, semente própria por câmara). A passagem para a
+// próxima só abre quando todos os inimigos da câmara atual caem; a última câmara é a do chefe.
+// O Abismo e o desafio diário seguem no mapa aberto de sempre (_storyRules() falso).
+
+// Inimigos de uma câmara comum: a meta de abates do andar dividida pelas câmaras de combate
+// (todas menos a do chefe), para limpar todas as câmaras chegar perto da meta.
+function _storyRoomBudget() {
+    const combat = Math.max(1, CONFIG.MAP_STORY_ROOMS - 1);
+    return Math.max(1, Math.ceil(dungeonKillTarget / combat));
+}
+
+// Preenche a câmara atual: um baú e os inimigos do orçamento. O tutorial suprime os nascimentos;
+// nesse caso o spawner solta o resto quando ele termina.
+function _populateStoryRoom() {
+    if (!_storyRoom || _storyRoom.boss) return;
+    _storyRoom.cleared = false;
+    _storyRoom.spawned = 0;
+    _storyRoom.budget = _storyRoomBudget();
+    _cachedAliveEnemies = 0;
+    if (typeof Chest !== 'undefined' && map) {
+        const spots = map.chestRoomSpots(1);
+        const pos = spots[0] || map.getSafeSpawn(200);
+        const rarities = ['comum', 'comum', 'raro', 'raro', 'epico'];
+        chests.push(new Chest(pos.x, pos.y, rarities[Math.floor(SeedSystem.random() * rarities.length)]));
+    }
+    if (typeof TutorialSystem !== 'undefined' && TutorialSystem.active && TutorialSystem.suppressEnemySpawns) return;
+    _spawnStoryRoomEnemies();
+}
+
+// Solta o que falta do orçamento da câmara. Cada inimigo é um sorteio da tabela normal, longe do
+// jogador (getSafeSpawn), então a câmara nunca "nasce em cima" dele.
+function _spawnStoryRoomEnemies() {
+    if (!_storyRoom || _storyRoom.boss || !map) return;
+    const left = Math.max(0, _storyRoom.budget - _storyRoom.spawned);
+    if (left <= 0) return;
+    const slots = Math.max(0, Math.min(left, CONFIG.MAX_ENEMIES - _cachedAliveEnemies));
+    for (let i = 0; i < slots; i++) {
+        _spawnSingleLegacy(map.getSafeSpawn(CONFIG.ENEMY_SPAWN_MIN_DIST));
+        _storyRoom.spawned++;
+    }
+    _cachedAliveEnemies += slots;
+}
+
+// Abre a passagem para a próxima câmara: o portal nasce na saída do mapa, onde estava o selo.
+function _openStoryDoor() {
+    if (!_storyRoom || dungeonPortal || !map) return;
+    const ep = map.getExitSpawn ? map.getExitSpawn() : null;
+    if (!ep) return;
+    dungeonPortal = new Portal(ep.x, ep.y);
+    addLog(_L('log.chamberDoorOpen', 'A passagem para a próxima câmara se abriu.'), true);
+    triggerCamZoom(0.04, 24);
+    if (player) spawnParticles(player.x, player.y, COLORS.CLASS_MAGE, 20, 4);
+    SND.playAchievement && SND.playAchievement(); shake = 15;
+}
+
+// Fecha a câmara até o último inimigo cair: sem portal enquanto houver alguém vivo. Quando o
+// orçamento acabou e a câmara está vazia, a passagem abre. O chefe tem o fluxo próprio (o portal
+// do andar nasce depois de derrotá-lo, no bloco comum de _updateEnemySpawning).
+function _updateStoryRoomSpawning(alive, tutSuppress) {
+    if (!_storyRoom || !player || dungeonPortal || _storyRoom.boss) return;
+    if (tutSuppress || _storyRoom.cleared) return;
+    if (gameTime % 60 !== 0) return;
+    if (_storyRoom.spawned < _storyRoom.budget) {
+        if (alive >= CONFIG.MAX_ENEMIES) return;
+        _spawnStoryRoomEnemies();
+        return;
+    }
+    if (alive > 0) return;
+    _storyRoom.cleared = true;
+    _openStoryDoor();
+}
+
+// Transição para a próxima câmara do andar: fade com o rótulo "Câmara n/N" e o personagem
+// caminhando para dentro da câmara nova enquanto a tela clareia (ver _fadeState.walk no draw).
+function _startChamberTransition() {
+    if (_transitioning || !_storyRoom) return;
+    const next = _storyRoom.i + 1;
+    if (next >= _storyRoom.total) { _startFloorTransition(); return; }
+    _fadeText = _L('chamber.label', 'Câmara') + ' ' + (next + 1) + '/' + _storyRoom.total;
+    _fadeState = { alpha: 0, phase: 'in', kind: 'chamber', next: next };
+    _transitioning = true;
+    triggerCamZoom(0.08, 30);
+}
+
+// Ponto de entrada da caminhada: ~1,5 tile do início, na direção da saída, se houver chão.
+function _storyWalkInTarget() {
+    if (!map || !map.startTile || !map.exitTile) return null;
+    const T = CONFIG.TILE_SIZE;
+    const s = map.startTile, e = map.exitTile;
+    let dx = e.x - s.x, dy = e.y - s.y;
+    const len = Math.hypot(dx, dy) || 1;
+    dx /= len; dy /= len;
+    for (const d of [1.5, 1.0, 0.6]) {
+        const x = (s.x + dx * d) * T + T / 2, y = (s.y + dy * d) * T + T / 2;
+        if (!map.isWall(x, y)) return { x: x, y: y };
+    }
+    return null;
+}
+
+// Constrói a câmara `index` do andar: mapa novo (semente própria), jogador na entrada, baú e
+// inimigos (ou o chefe, na última). Usado na transição entre câmaras e no continue.
+function _buildStoryRoom(index, opts) {
+    opts = opts || {};
+    const total = Math.max(2, CONFIG.MAP_STORY_ROOMS);
+    const boss = index >= total - 1;
+    if (window.SeedSystem && SeedSystem.isSeeded()) SeedSystem.reseedForFloor(dungeonLevel * 100 + index);
+    map = new Map(); _mmDirty = true; _resetFloorExplore();
+    const sp = map.getStartSpawn();
+    if (player) { player.x = sp.x; player.y = sp.y; }
+    entities = [player]; bullets = []; particles = []; pickups = [];
+    hazards = []; chests = []; pets = []; weaponPickups = []; equipmentPickups = [];
+    guidedBullets = []; rogueClones = []; hitstopFrames = 0; ScreenEffects.resetImpact();
+    _cachedAliveEnemies = 0;
+    if (window.NPCSystem) NPCSystem.reset();
+    dungeonPortal = null; bossActive = false;
+    _storyRoom = { i: index, total: total, cleared: false, budget: 0, spawned: 0, boss: boss };
+    if (boss) {
+        // O chefe nasce longe da entrada; o selo da saída só vira portal quando ele cai.
+        if (!opts.bossDefeated) _spawnFloorBoss(map.getSafeSpawn(CONFIG.ENEMY_SPAWN_MIN_DIST));
+    } else if (opts.cleared) {
+        // Câmara já vencida (continue): sem inimigos, passagem aberta
+        _storyRoom.cleared = true;
+        _openStoryDoor();
+    } else {
+        _populateStoryRoom();
+    }
+    // Caminhada curta para dentro da câmara nova, só na troca entre câmaras
+    if (opts.walk !== false && player) {
+        const w = _storyWalkInTarget();
+        if (w && _fadeState) {
+            player.angle = Math.atan2(w.y - sp.y, w.x - sp.x);
+            player.walkTimer = 1;
+            _fadeState.walk = { x0: sp.x, y0: sp.y, x1: w.x, y1: w.y, t: 0 };
+        }
+    }
+    Debug.safe(() => SaveSystem.save(), 'autosaveChamber');
+}
+
 function _updateEnemySpawning() {
     if (_transitioning || _secretRoom) return;
     // Only recount alive enemies on spawn ticks (spawning is throttled to gameTime % 60)
@@ -12206,9 +12413,13 @@ function _updateEnemySpawning() {
     }
     const aliveEnemies = _cachedAliveEnemies;
     const _tutSuppressSpawn = typeof TutorialSystem !== 'undefined' && TutorialSystem.active && TutorialSystem.suppressEnemySpawns;
-    // Meta de abates atingida sem chefe vivo nem derrotado: o chefe nasce já, sem esperar o tick de
-    // 60 frames nem o teto de inimigos. Antes, um salto de abates entre dois ticks deixava o portal abrir sem chefe.
-    if (dungeonKills >= dungeonKillTarget && !dungeonPortal && !bossActive && !floorBossDefeated && !_tutSuppressSpawn) {
+    // História: cada câmara é um mapa e a passagem só abre quando ela esvazia (ver _updateStoryRoomSpawning).
+    // O resto do bloco (chefe, portal) é compartilhado e roda depois, igual para os dois modos.
+    if (_storyRules() && _storyRoom) {
+        _updateStoryRoomSpawning(aliveEnemies, _tutSuppressSpawn);
+    } else if (dungeonKills >= dungeonKillTarget && !dungeonPortal && !bossActive && !floorBossDefeated && !_tutSuppressSpawn) {
+        // Meta de abates atingida sem chefe vivo nem derrotado: o chefe nasce já, sem esperar o tick de
+        // 60 frames nem o teto de inimigos. Antes, um salto de abates entre dois ticks deixava o portal abrir sem chefe.
         _spawnFloorBoss(map.getSafeSpawn(CONFIG.ENEMY_SPAWN_MIN_DIST));
     } else if (aliveEnemies < CONFIG.MAX_ENEMIES && gameTime % 60 === 0 && dungeonKills < dungeonKillTarget && !dungeonPortal && !_tutSuppressSpawn) {
         const eSpawn = map.getSafeSpawn(CONFIG.ENEMY_SPAWN_MIN_DIST);
@@ -12240,7 +12451,13 @@ function _updateEnemySpawning() {
     if (bossActive && !bossAlive) {
         bossActive = false; floorBossDefeated = true; SND.resumeBiomeMusic();
         addLog(window.I18n ? I18n.t('log.bossDefeated') : 'Chefe abatido!', true); player.gainXP(CONFIG.XP_BOSS_REWARD + CONFIG.BOSS_XP_BONUS); ScreenEffects.onBossDeath();
-        const bossPos = map.getSafeSpawn(0);
+        // Na História o baú (e o powerup) cai onde o chefe morreu, na câmara do chefe; fora dela,
+        // no sorteio antigo de um ponto seguro do mapa.
+        let bossPos = map.getSafeSpawn(0);
+        if (_storyRules()) {
+            const _dead = entities.find(e => e.isBoss);
+            if (_dead) bossPos = { x: _dead.x, y: _dead.y };
+        }
         chests.push(new Chest(bossPos.x, bossPos.y, SeedSystem.random() < 0.35 ? 'lendario' : 'epico'));
         // Powerup raro garantido ao abater o chefe: 1 dos 4 igualmente
         // rareRandom: sorteio da v56/v59, não consome o stream principal (SeedSystem)
@@ -13151,10 +13368,13 @@ function draw() {
                 ctx.font = `bold 26px ${COLORS.CANVAS_FONT}`;
                 ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
                 ctx.fillText(_fadeText, width/2, height/2 - 10);
-                ctx.globalAlpha = Math.min(1, _fadeState.alpha * 2);
-                ctx.fillStyle = '#aaa';
-                ctx.font = `14px ${COLORS.CANVAS_FONT}`;
-                ctx.fillText(I18n.t('boss.waiting'), width/2, height/2 + 20);
+                // Na troca de câmara o subtítulo "Aguardando..." não faz sentido: só no fade de andar
+                if (_fadeState.kind !== 'chamber') {
+                    ctx.globalAlpha = Math.min(1, _fadeState.alpha * 2);
+                    ctx.fillStyle = '#aaa';
+                    ctx.font = `14px ${COLORS.CANVAS_FONT}`;
+                    ctx.fillText(I18n.t('boss.waiting'), width/2, height/2 + 20);
+                }
             }
             ctx.restore();
             if (player && (!player.alive || player.hp <= 0) && _fadeState.phase !== 'out') {
@@ -13172,6 +13392,10 @@ function draw() {
             } else if (_fadeState.phase === 'mid' && !_anyPanelOpen()) {
                 try {
                 _cachedLightCanvas = null; _lightingThrottle = 0;
+                if (_fadeState.kind === 'chamber') {
+                    // Troca de câmara da História: mapa novo, sem mexer no andar, nos abates ou no bioma
+                    _buildStoryRoom(_fadeState.next);
+                } else {
                 if ((gameMode === 'abyss' || dungeonLevel <= 10) && typeof BiomeSystem !== 'undefined' && BiomeSystem.onDungeonComplete) {
                     BiomeSystem.onDungeonComplete(); // a cada 3 pisos o cenário muda de bioma
                     // Último piso (Piso B1): bioma SEMPRE diferente dos anteriores
@@ -13180,6 +13404,11 @@ function draw() {
                     }
                 }
                 if (window.SeedSystem && SeedSystem.isSeeded()) SeedSystem.reseedForFloor(dungeonLevel);
+                // História: o andar novo recomeça na primeira câmara, com a semente própria dela
+                if (_storyRules()) {
+                    if (window.SeedSystem && SeedSystem.isSeeded()) SeedSystem.reseedForFloor(dungeonLevel * 100);
+                    _storyRoom = { i: 0, total: Math.max(2, CONFIG.MAP_STORY_ROOMS), cleared: false, budget: 0, spawned: 0, boss: false };
+                }
                 map = new Map(); _mmDirty = true; _resetFloorExplore();
                 const sp = _storyRules() ? map.getStartSpawn() : map.getSafeSpawn(); if (player) { player.x = sp.x; player.y = sp.y; }
                 entities = [player]; bullets = []; particles = []; pickups = [];
@@ -13192,18 +13421,15 @@ function draw() {
                 // the number-free starter floor ever used the ramp. Deeper floors
                 // now open with more simultaneous enemies (density, not HP).
                 const _initCount = (typeof DifficultySystem.getInitialEnemyCount === 'function') ? DifficultySystem.getInitialEnemyCount() : CONFIG.ENEMY_INITIAL_COUNT;
-                for (let i = 0; i < _initCount; i++) {
-                    const ep = map.getSafeSpawn(CONFIG.ENEMY_SPAWN_MIN_DIST);
-                    const _ne = new Enemy(ep.x, ep.y, false);
-                    if (typeof BiomeSystem !== 'undefined' && BiomeSystem.applyEnemyVariant) BiomeSystem.applyEnemyVariant(_ne);
-                    entities.push(_ne);
-                }
+                if (window.GameBootstrap && GameBootstrap._spawnFloorStartEnemies) GameBootstrap._spawnFloorStartEnemies(_initCount, true);
                 // Floors 2-10 previously had no placed chests at all (they were
                 // only seeded at run start), so exploration had no payoff.
-                if (window.GameBootstrap && GameBootstrap._spawnFloorChests) GameBootstrap._spawnFloorChests();
+                // (Na História o baú nasce por câmara, em _populateStoryRoom.)
+                if (!_storyRules() && window.GameBootstrap && GameBootstrap._spawnFloorChests) GameBootstrap._spawnFloorChests();
                 ScreenEffects.onBossDeath(); Statistics.data.dungeonsCompleted++;
                 Debug.safe(() => _recordAbyssProgress(), 'abyssRecordFloor');
                 Debug.safe(() => SaveSystem.save(), 'autosaveFloor');
+                }
                 } catch (e) {
                     // Never let a failure here leave the fade stuck covering the
                     // screen forever - log it, make sure a map/player exist, and
@@ -13215,6 +13441,15 @@ function draw() {
                 _fadeState.phase = 'out';
             } else if (_fadeState.phase === 'out' && !_anyPanelOpen()) {
                 _fadeState.alpha -= 0.04;
+                // Troca de câmara: o personagem dá alguns passos para dentro enquanto a tela clareia
+                if (_fadeState.walk && player) {
+                    const w = _fadeState.walk;
+                    w.t = Math.min(1, w.t + 0.06);
+                    player.x = w.x0 + (w.x1 - w.x0) * w.t;
+                    player.y = w.y0 + (w.y1 - w.y0) * w.t;
+                    player.walkTimer += 3;
+                    if (w.t >= 1) _fadeState.walk = null;
+                }
                 if (_fadeState.alpha <= 0) {
                     _fadeState = null; _fadeText = ''; _transitioning = false;
                 }
@@ -35158,6 +35393,14 @@ window.GameBootstrap = {
             this._restoreRunRules(save);
             // Modo antes de _resetState: as regras da história (_storyRules) dependem dele ao montar o andar
             gameMode = save.gameMode || gameMode;
+            // Recordes batidos na run (para a linha "Novo recorde" sobreviver a reload + continuar). Sem o campo (save antigo), em run sem recorde ou fora do Abismo: null, como hoje.
+            _abyssRun = null;
+            if (!_abyssNoRecord && gameMode === 'abyss' && _saveDiff && save.abyssRun && typeof save.abyssRun.diff === 'string' && save.abyssRun.diff === _saveDiff && save.abyssRun.beat && typeof save.abyssRun.beat === 'object' && !Array.isArray(save.abyssRun.beat)) {
+                const _arBeat = {};
+                if (Number.isSafeInteger(save.abyssRun.beat.depth) && save.abyssRun.beat.depth > 0) _arBeat.depth = save.abyssRun.beat.depth;
+                if (Number.isSafeInteger(save.abyssRun.beat.time) && save.abyssRun.beat.time > 0) _arBeat.time = save.abyssRun.beat.time;
+                if (Object.keys(_arBeat).length) _abyssRun = { diff: save.abyssRun.diff, beat: _arBeat };
+            }
             // Build a fresh floor AT the saved level/biome/seed, then restore the
             // player's progression on top. `player` is still undefined until this
             // call, so no state from the previous run can leak into the new one.
@@ -35183,7 +35426,15 @@ window.GameBootstrap = {
             if (typeof prestigeLevel !== 'undefined' && save.prestigeLevel) prestigeLevel = save.prestigeLevel;
             if (typeof totalGamesPlayed !== 'undefined' && save.totalGamesPlayed) totalGamesPlayed = save.totalGamesPlayed;
             this._initModeSpecific(cls);
-            this._spawnInitialEntities(cls);
+            // História: retoma na câmara salva (mapa e inimigos dela), não na primeira. Save antigo
+            // (sem o campo) cai no comportamento anterior: andar regenerado a partir da primeira câmara.
+            const _sr = save.storyRoom;
+            if (_storyRules() && _sr && Number.isInteger(_sr.i) && _sr.i >= 0) {
+                const _total = Math.max(2, CONFIG.MAP_STORY_ROOMS);
+                _buildStoryRoom(Math.min(_sr.i, _total - 1), { cleared: !!_sr.cleared, bossDefeated: !!floorBossDefeated, walk: false });
+            } else {
+                this._spawnInitialEntities(cls);
+            }
             this._startUI();
             if (window.RunObjectiveSystem) RunObjectiveSystem.restoreSave(save.objective);
             // Resuming starts a fresh measurement window; the run summary says so
@@ -35242,9 +35493,12 @@ window.GameBootstrap = {
         // then the caller overwrote the level without regenerating the map, so a
         // continue at floor 5 got floor 1's layout/seed.)
         dungeonLevel = floor;
-        if (window.SeedSystem && SeedSystem.isSeeded()) SeedSystem.reseedForFloor(dungeonLevel);
+        // História: cada câmara tem a própria semente (dungeonLevel * 100 + índice da câmara)
+        if (window.SeedSystem && SeedSystem.isSeeded()) SeedSystem.reseedForFloor(_storyRules() ? dungeonLevel * 100 : dungeonLevel);
         map = new Map();
         _mmDirty = true;
+        // História: a run começa na primeira câmara (o estado da câmara vive em _storyRoom)
+        _storyRoom = _storyRules() ? { i: 0, total: Math.max(2, CONFIG.MAP_STORY_ROOMS), cleared: false, budget: 0, spawned: 0, boss: false } : null;
         // História: início na sala de início. Fora dela, ponto seguro sorteado, como na v84 (mesma ordem de sorteios)
         var pSpawn = _storyRules() ? map.getStartSpawn() : map.getSafeSpawn();
         player = new Player(pSpawn.x, pSpawn.y, cls);
@@ -35273,7 +35527,8 @@ window.GameBootstrap = {
         // floor uses the normal one-chest-per-floor layout, not starting chests.
         BiomeSystem.reset();
         if (resume && opts.biome && window.BiomeSystem) BiomeSystem.currentBiome = opts.biome;
-        if (resume) this._spawnFloorChests(); else this._spawnMapChests();
+        // Na História o baú nasce por câmara (ver _populateStoryRoom); fora dela, o layout antigo.
+        if (!_storyRules()) { if (resume) this._spawnFloorChests(); else this._spawnMapChests(); }
         DifficultySystem.reset();
         if (window.DifficultySystem) DifficultySystem.dungeonLevel = dungeonLevel;
         SND.clearAudioTimers();
@@ -35334,15 +35589,25 @@ window.GameBootstrap = {
     },
 
     _spawnInitialEntities(cls) {
-        for (var i = 0; i < DifficultySystem.getInitialEnemyCount(); i++) {
-            var eSpawn = map.getSafeSpawn(CONFIG.ENEMY_SPAWN_MIN_DIST);
+        this._spawnFloorStartEnemies(DifficultySystem.getInitialEnemyCount(), false);
+    },
+
+    // Inimigos que abrem o andar. Na História a primeira câmara é um mapa inteiro e é preenchida pelo
+    // orçamento dela (ver _populateStoryRoom); fora da história, o sorteio antigo por todo o mapa.
+    _spawnFloorStartEnemies(count, applyVariant) {
+        if (_storyRules()) { _populateStoryRoom(); return; }
+        if (!(count > 0)) return;
+        for (let i = 0; i < count; i++) {
+            const eSpawn = map.getSafeSpawn(CONFIG.ENEMY_SPAWN_MIN_DIST);
             if (typeof Enemy !== 'undefined') {
                 // Third argument is `isB` (boss stats), NOT "is first enemy". It was
                 // passed `i === 0`, so the first mob of every run/continue silently
                 // got boss HP/radius/speed without going through the Boss lifecycle
                 // (no banner, no bossActive, no boss rewards). Every initial enemy
                 // is a normal one; bosses only spawn via _updateEnemySpawning.
-                entities.push(new Enemy(eSpawn.x, eSpawn.y, false));
+                const e = new Enemy(eSpawn.x, eSpawn.y, false);
+                if (applyVariant && typeof BiomeSystem !== 'undefined' && BiomeSystem.applyEnemyVariant) BiomeSystem.applyEnemyVariant(e);
+                entities.push(e);
             }
         }
     },
@@ -35394,17 +35659,13 @@ window.GameBootstrap = {
         if (!map) return;
         var count = 3 + Math.floor(SeedSystem.random() * 3);
         var rarityPool = ['comum','comum','comum','raro','raro','epico'];
-        // História: baús comuns nos centros das salas (longe do início); o que faltar volta ao sorteio antigo.
-        // Fora da história, roomSpots fica vazio e tudo cai no sorteio antigo (v84).
-        var story = _storyRules();
-        var roomSpots = story ? map.chestRoomSpots(count) : [];
         for (var i = 0; i < count; i++) {
-            var pos = roomSpots[i] || map.getSafeSpawn(200);
+            var pos = map.getSafeSpawn(200);
             var rarity = rarityPool[Math.floor(SeedSystem.random() * rarityPool.length)];
             chests.push(new Chest(pos.x, pos.y, rarity));
         }
         // Escondido: beco sem saída longe do início; sem beco, o sorteio antigo
-        var hiddenPos = (story && map.deadEndSpot(roomSpots)) || map.getSafeSpawn(400);
+        var hiddenPos = map.getSafeSpawn(400);
         var hiddenRarity = SeedSystem.random() < 0.4 ? 'epico' : 'raro';
         chests.push(new Chest(hiddenPos.x, hiddenPos.y, hiddenRarity));
     },
@@ -35416,10 +35677,8 @@ window.GameBootstrap = {
         if (!map) return;
         var count = (dungeonLevel % 4 === 0) ? 2 : 1;
         var rarityPool = ['comum','comum','raro','raro','epico'];
-        // História: centros das salas, longe do início; o que faltar volta ao sorteio antigo (fora da história, tudo)
-        var roomSpots = _storyRules() ? map.chestRoomSpots(count) : [];
         for (var i = 0; i < count; i++) {
-            var pos = roomSpots[i] || map.getSafeSpawn(200);
+            var pos = map.getSafeSpawn(200);
             var rarity = rarityPool[Math.floor(SeedSystem.random() * rarityPool.length)];
             chests.push(new Chest(pos.x, pos.y, rarity));
         }
@@ -37675,7 +37934,7 @@ Input.init();
        current MUST stay in sync with the SW CACHE_VERSION suffix (sw.js).
     */
     window.UPDATE_LOG = {
-        current: 'v85',
+        current: 'v86',
         entries: [
             { v: 'v9', date: '2026-09-10', titleKey: 'update.entry.v9.title', title: 'v9 — Tutorial destravado',
               linesKeys: ['update.entry.v9.l1'],
@@ -37870,6 +38129,13 @@ Input.init();
                       'O celular volta a vibrar ao levar dano, ao subir de nível e nos chefes; dá para desligar em Configurações > Áudio.',
                       'A tela não apaga no meio da run, o desafio diário e os mutadores sobrevivem a recarregar a página, e o aviso do chefe cabe em telas estreitas.',
                       'Seus saves continuam funcionando.'] },
+            { v: 'v86', date: '2026-11-07', titleKey: 'update.entry.v86.title', title: 'v86 — Câmaras como mapas inteiros',
+              linesKeys: ['update.entry.v86.l1', 'update.entry.v86.l2', 'update.entry.v86.l3', 'update.entry.v86.l4', 'update.entry.v86.l5'],
+              lines: ['Na História, cada câmara agora é um mapa inteiro, com layout próprio — nada de salinhas ligadas por corredor. São quatro câmaras de combate e a do chefe por andar.',
+                      'A passagem para a próxima câmara fica selada até o último inimigo dela cair. Aí o portal abre na saída, e você atravessa com uma caminhada curta enquanto a tela clareia.',
+                      'Cada câmara tem um baú, e a recompensa do chefe cai onde ele morreu.',
+                      'Continuar a run retoma na câmara em que você parou, com os inimigos dela. Seus saves continuam funcionando.',
+                      'A linha "Novo recorde" do Abismo sobrevive a recarregar a página no meio da run, e o quadro de recordes cabe em telas estreitas com fonte grande.'] },
             { v: 'v85', date: '2026-11-03', titleKey: 'update.entry.v85.title', title: 'v85 — Modo História e Abismo competitivo',
               linesKeys: ['update.entry.v85.l1', 'update.entry.v85.l2', 'update.entry.v85.l3', 'update.entry.v85.l4', 'update.entry.v85.l5'],
               lines: ['A Masmorra virou o modo História: cada andar tem uma saída trancada do outro lado do mapa. Explore, ache o selo, vença o chefe e o portal abre ali. Os baús ficam nas salas mais afastadas.',
