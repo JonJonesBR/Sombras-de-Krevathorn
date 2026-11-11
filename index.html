@@ -12357,10 +12357,27 @@ const AbyssVeil = {
     _reduced() { return !!(window.GameSettings && GameSettings.reducedMotion); },
     resetRun() { this._runSeen = {}; },
     // F5.1 — abertura de 10 s, uma vez por perfil (não interfere no diário).
-    maybeOpening() {
+    maybeOpening(_waited) {
         if (typeof gameMode !== 'undefined' && gameMode !== 'abyss') return;
         if (window._dailyOptIn && window._currentDailyChallenge) return; // diário: sem cena
         if (typeof Statistics !== 'undefined' && Statistics.data && Statistics.data.abyssOpeningSeen) return;
+        // Na primeira run o prólogo abre logo depois e fica por cima: espera ele (e a abertura) fechar,
+        // senão a fala some escondida e ainda é marcada como vista
+        const busy = () => (typeof PrologueSystem !== 'undefined' && PrologueSystem.visible) ||
+            (typeof OpeningSystem !== 'undefined' && OpeningSystem.visible);
+        // O start chama isto antes de abrir o prólogo: a primeira checagem vai para depois do start
+        if (!_waited || busy()) {
+            const self = this;
+            let tries = 0;
+            const wait = () => {
+                if (typeof gameState === 'undefined' || gameState !== 'PLAYING' || gameMode !== 'abyss') return;
+                // Prólogo aberto por mais de 3 min: desiste nesta run (a fala fica para a próxima, sem marcar como vista)
+                if (busy()) { if (tries++ < 600) setTimeout(wait, 300); return; }
+                self.maybeOpening(true);
+            };
+            setTimeout(wait, 300);
+            return;
+        }
         this.show(ABYSS_VEIL_LINES.opening, 10000, () => {
             if (typeof Statistics !== 'undefined' && Statistics.data) {
                 Statistics.data.abyssOpeningSeen = true;
