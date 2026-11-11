@@ -12805,12 +12805,15 @@ const AbyssVeil = {
         document.body.appendChild(ov);
         this._ov = ov;
         const finish = () => { self._clear(); if (done) done(); };
+        this._finish = finish; // Voltar do Android pula a fala como o botão (ver skip)
         ov.querySelector('button').onclick = finish;
         // Com movimento reduzido não há temporizador: o overlay fica até o botão, que chama done (marca como visto).
         if (!this._reduced()) this._timer = setTimeout(finish, ms || 6000);
         try { ov.querySelector('button').focus(); } catch (e) {}
     },
-    _clear() { if (this._timer) { clearTimeout(this._timer); this._timer = null; } if (this._ov) { try { this._ov.remove(); } catch (e) {} this._ov = null; } }
+    _clear() { this._finish = null; if (this._timer) { clearTimeout(this._timer); this._timer = null; } if (this._ov) { try { this._ov.remove(); } catch (e) {} this._ov = null; } },
+    // Pula a fala aberta (mesmo efeito do botão Pular); devolve true se havia uma
+    skip() { if (!this._ov || !this._finish) return false; this._finish(); return true; }
 };
 window.AbyssVeil = AbyssVeil;
 
@@ -43988,6 +43991,8 @@ Input.init();
         // Despachante único: retorna true quando tratou. Nunca recarrega a página.
         function _handleBack() {
             if (typeof PrologueSystem !== 'undefined' && PrologueSystem.visible) return false;
+            // Fala do Véu no Abismo: Voltar pula, como o botão
+            if (typeof AbyssVeil !== 'undefined' && AbyssVeil.skip()) return true;
             if (typeof SettingsUI !== 'undefined' && SettingsUI.open) { SettingsUI.close(); return true; }
             var pausado = typeof PauseSystem !== 'undefined' && PauseSystem.active;
             if (!pausado && isAnyPanelOpen()) { _closeAll(); return true; }
