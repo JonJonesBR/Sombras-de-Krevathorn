@@ -11421,6 +11421,8 @@ function isAnyPanelOpen() {
            (typeof PrologueSystem !== 'undefined' && PrologueSystem.visible) ||
            (typeof OpeningSystem !== 'undefined' && OpeningSystem.visible) ||
            (typeof ProphecyScene !== 'undefined' && ProphecyScene.visible) ||
+           // Falas do Véu no Abismo (abertura e marcos): overlay em tela cheia, o mundo espera
+           (typeof AbyssVeil !== 'undefined' && !!AbyssVeil._ov) ||
            (typeof SettingsUI !== 'undefined' && SettingsUI.open) ||
            (typeof PauseSystem !== 'undefined' && PauseSystem.active) ||
            (window.UIManager && window.UIManager.currentPanel !== null);
@@ -11975,8 +11977,10 @@ function _triggerWinReal() {
     var epilogueLore = epilogueMap[player && player.type];
     if (epilogueLore && typeof NarrativeSystem !== 'undefined') NarrativeSystem.discover(epilogueLore);
     // F4.10: final + epílogo por combinação (uma vez; essência já guardada por run)
-    if (typeof Statistics !== 'undefined' && Statistics.data && player && player.type && Statistics.data.finalChoice) {
-        var _k = Statistics.data.finalChoice + ':' + player.type;
+    // Só a escolha feita NESTA run (finalChoice em Statistics é de carreira e pode ser de uma vitória antiga)
+    var _runChoice = (window.EndingSystem && EndingSystem._choice) || null;
+    if (typeof Statistics !== 'undefined' && Statistics.data && player && player.type && _runChoice) {
+        var _k = _runChoice + ':' + player.type;
         if (!Array.isArray(Statistics.data.endingsSeen)) Statistics.data.endingsSeen = [];
         if (!Statistics.data.endingsSeen.includes(_k)) Statistics.data.endingsSeen.push(_k);
         if (!Array.isArray(Statistics.data.epiloguesSeen)) Statistics.data.epiloguesSeen = [];
@@ -12054,7 +12058,9 @@ const EndingSystem = {
 
     // F4.2 — chamado pela morte do final_guardian: não morre, cai de joelhos.
     interceptDeath(boss) {
-        if (!boss || boss._kneeling) return false;
+        if (!boss) return false;
+        // Já ajoelhado: golpes extras do mesmo quadro (multitiro, pet, veneno) não o matam de verdade
+        if (boss._kneeling) return true;
         if (typeof gameMode !== 'undefined' && gameMode !== 'dungeon') return false;
         boss._kneeling = true;
         boss.hp = 0;
@@ -12156,8 +12162,8 @@ const EndingSystem = {
             t.textContent = lines[i] || '';
             t.style.opacity = '1';
             i++;
-            if (i < lines.length) self._timer = setTimeout(step, 2000);
-            else self._timer = setTimeout(() => self._sigh(), 2200);
+            if (i < lines.length) self._arm(step, 2000);
+            else self._arm(() => self._sigh(), 2200);
         };
         step();
     },
@@ -12212,7 +12218,7 @@ const EndingSystem = {
         ov.querySelector('#ending-credits-skip').onclick = () => self._emitWin();
         this._armVisibility();
         if (this._reduced()) return;
-        this._timer = setTimeout(() => self._emitWin(), 5000);
+        this._arm(() => self._emitWin(), 5000);
     },
     _emitWin() {
         if (this._emitted) return;
@@ -12223,6 +12229,8 @@ const EndingSystem = {
             Statistics.data.creditsSeen = true;
             if (typeof Statistics.save === 'function') Statistics.save();
         }
+        // Fragmentos do final escolhido (lore_063 na Paz, lore_065 sempre); o _triggerWinReal grava o NarrativeSystem
+        try { if (typeof NarrativeSystem !== 'undefined' && this._choice) NarrativeSystem.unlockEndingLore(this._choice, this._cls); } catch (e) {}
         if (typeof _triggerWinReal === 'function') _triggerWinReal();
     },
     _page(html, next) {
@@ -12248,6 +12256,7 @@ const EndingSystem = {
     },
     _cleanup(full) {
         if (this._timer) { clearTimeout(this._timer); this._timer = null; }
+        this._pending = null;
         if (this._ov) { try { this._ov.remove(); } catch (e) {} this._ov = null; }
         if (full === true) { this.active = false; this._choice = null; this._confirm = null; }
     },
@@ -12258,7 +12267,15 @@ const EndingSystem = {
         this._visBound = true;
         document.addEventListener('visibilitychange', function() {
             if (document.hidden && self.active) self._clearTimerOnly();
+            // De volta ao app: o passo que estava agendado continua (com 1 s de folga para ler)
+            else if (!document.hidden && self.active && self._pending && !self._timer) self._arm(self._pending, 1000);
         });
+    },
+    // Agenda o próximo passo automático da cena e lembra dele para retomar quando o app volta do segundo plano
+    _arm(fn, ms) {
+        if (this._timer) clearTimeout(this._timer);
+        this._pending = fn;
+        this._timer = setTimeout(() => { this._timer = null; this._pending = null; fn(); }, ms);
     },
     _clearTimerOnly() { if (this._timer) { clearTimeout(this._timer); this._timer = null; } },
     cleanup() { this._cleanup(true); }
@@ -12278,8 +12295,11 @@ window._showVeilReturnWinPanel = function() {
     btn.style.cssText = 'width:100%;padding:13px 0;border-radius:12px;color:#e0b6ff;font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:0.05em;background:rgba(157,78,221,0.18);border:1.5px solid rgba(224,182,255,0.5);cursor:pointer;margin-top:4px;touch-action:manipulation;';
     btn.onclick = function() {
         try { EndingSystem.cleanup(); } catch (e) {}
-        gameState = 'START';
         ['win-screen', 'game-over-screen', 'continue-screen'].forEach(function (id) { var el = document.getElementById(id); if (el) el.classList.add('hidden'); });
+        // Mesma saída do "Voltar ao menu" do game over: esconde o HUD e limpa efeitos, fade e avisos da run
+        var rb = document.getElementById('restart-btn');
+        if (rb && typeof rb.onclick === 'function') { rb.onclick(); return; }
+        gameState = 'START';
         if (typeof window.uiS !== 'undefined' && uiS) { uiS.classList.remove('hidden'); }
         if (window._refreshContinueButton) window._refreshContinueButton();
     };
@@ -12830,6 +12850,8 @@ function _anyPanelOpen() {
            (typeof PrologueSystem !== 'undefined' && PrologueSystem.visible) ||
            (typeof OpeningSystem !== 'undefined' && OpeningSystem.visible) ||
            (typeof ProphecyScene !== 'undefined' && ProphecyScene.visible) ||
+           // Falas do Véu no Abismo (abertura e marcos): overlay em tela cheia, o mundo espera
+           (typeof AbyssVeil !== 'undefined' && !!AbyssVeil._ov) ||
            (typeof SettingsUI !== 'undefined' && SettingsUI.open) ||
            (typeof PauseSystem !== 'undefined' && PauseSystem.active) ||
            (window.UIManager && window.UIManager.currentPanel !== null);
@@ -15834,6 +15856,7 @@ const PauseSystem = {
             if (typeof ScreenEffects !== 'undefined') ScreenEffects.resetVisual();
             _fadeState = null; _fadeText = ''; _transitioning = false; _bossBanner = null;
             ToastSystem.reset();
+            if (window.AbyssVeil) AbyssVeil._clear();
             if (window._releaseWakeLock) window._releaseWakeLock();
             if (uiS) { uiS.classList.remove('hidden'); }
             if (uiG) uiG.classList.add('hidden');
@@ -16525,6 +16548,7 @@ function _initEngine() {
                     if (typeof ScreenEffects !== 'undefined') ScreenEffects.resetVisual();
                     _fadeState = null; _fadeText = ''; _transitioning = false; _bossBanner = null;
                     ToastSystem.reset();
+                    if (window.AbyssVeil) AbyssVeil._clear();
                     if (window._refreshContinueButton) window._refreshContinueButton();
                     if (window._refreshDailyBadge) window._refreshDailyBadge();
                 }, 350);
@@ -19867,7 +19891,7 @@ const BossRewardSystem = {
         const key = (boss && boss._blueprint && boss._blueprint.key) || boss.enemyType;
         const w = (key && BOSS_LAST_WORDS[key]) || null;
         if (this._wordsEl) this._wordsEl.textContent = w ? (w[(typeof I18n !== 'undefined' && I18n.lang) || 'pt'] || w.pt) : '';
-        if (typeof addLog === 'function' && w) addLog(this._T ? '' : '“' + (w[(typeof I18n !== 'undefined' && I18n.lang) || 'pt'] || w.pt) + '”');
+        if (typeof addLog === 'function' && w) addLog('“' + (w[(typeof I18n !== 'undefined' && I18n.lang) || 'pt'] || w.pt) + '”');
     },
 
     _trophiesFor(boss) {
@@ -40807,6 +40831,8 @@ const OpeningSystem = {
     _music(on) {
         try {
             if (!window.SND) return;
+            // Só no menu: rever a abertura pelo Grimório no meio da run não troca nem para a música da run
+            if (typeof gameState !== 'undefined' && gameState !== 'START') return;
             if (on) { if (SND.startMusic) SND.startMusic('dungeonB'); }
             else { if (SND.stopMusic) SND.stopMusic(); }
         } catch (e) {}
@@ -40951,6 +40977,8 @@ const ProphecyScene = {
     // não bloqueia: quem pulou pode ouvir numa próxima run).
     maybeTrigger() {
         if (this._triggeredThisRun || this.visible) return;
+        // Ouvida até o fim uma vez (prophecyHeard): não toca de novo a cada run. Quem pulou ainda a encontra.
+        if (typeof Statistics !== 'undefined' && Statistics.data && Statistics.data.prophecyHeard) return;
         if (typeof gameMode !== 'undefined' && gameMode !== 'dungeon') return;
         const lvl = (typeof dungeonLevel !== 'undefined') ? dungeonLevel : 0;
         if (lvl !== 4) return;
@@ -41336,6 +41364,8 @@ window.GameBootstrap = {
             // Build a fresh floor AT the saved level/biome/seed, then restore the
             // player's progression on top. `player` is still undefined until this
             // call, so no state from the previous run can leak into the new one.
+            // F4: estado do final de uma run anterior não vale aqui (o Guardião travaria sem a cena)
+            EndingSystem._emitted = false; EndingSystem.active = false; EndingSystem._choice = null;
             this._resetState(cls, { resume: true, floor: floor, biome: save.biome });
             SaveSystem.applyTo(player, save);
             // Pets ativos da run: restaurados aqui e recriados pelo PetSystem.rebuild (câmara ou andar, abaixo)
@@ -41475,7 +41505,8 @@ window.GameBootstrap = {
         if (window.SceneDirector && SceneDirector.resetRun) SceneDirector.resetRun();
         if (window.AbyssVeil && AbyssVeil.resetRun) AbyssVeil.resetRun();
         // F7: troféus escolhidos nesta run zeram (a coleção de carreira permanece).
-        if (typeof Statistics !== 'undefined' && Statistics.data) { Statistics.data.trophyChoices = {}; if (typeof Statistics.save === 'function') Statistics.save(); }
+        // Só em run nova: o continue mantém a regra de não repetir troféu na mesma run
+        if (!(opts && opts.resume) && typeof Statistics !== 'undefined' && Statistics.data) { Statistics.data.trophyChoices = {}; if (typeof Statistics.save === 'function') Statistics.save(); }
         merchantActive = false; skillTreeOpen = false; statsOpen = false; achievementsOpen = false;
         DamageNumbers.numbers = [];
         DeathAnimations.clearAll();
@@ -44372,7 +44403,9 @@ Input.init();
             const num = (v) => { const m = /v(\d+)/i.exec(String(v)); return m ? parseInt(m[1], 10) : 0; };
             const shown = (ug.entries || [])
                 .filter((e) => num(e.v) > num(lastSeen))
-                .slice(-6).reverse();
+                // O array não está em ordem (v86-v89 antes de v96…v90): ordena pela versão, mais nova primeiro
+                .sort((a, b) => num(b.v) - num(a.v))
+                .slice(0, 6);
             if (!shown.length) {
                 try { StorageManager.setRaw('updateLog', ug.current); } catch (e) {}
                 return;
