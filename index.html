@@ -4130,6 +4130,7 @@ const I18n = {
             'ending.l3': 'Ele não se torna rei nem sombra. Descansa, livre da dívida que o pai assinou por ele.',
             'ending.l4': 'Aldric segue preso entre os dois mundos. Mas, acima, uma fresta de luz volta a aparecer.',
             'ending.continue': 'Continuar',
+            'ending.backMenu': 'Voltar ao menu',
             'npc.tipPrefix': '[Dica] ',
             'gameover.prestigeBtn': 'Prestígio',
             'panel.prestige': 'Prestígio',
@@ -6135,6 +6136,7 @@ const I18n = {
             'ending.l3': 'He becomes neither king nor shadow. He rests, free of the debt his father signed for him.',
             'ending.l4': 'Aldric remains caught between two worlds. But above, a crack of light appears again.',
             'ending.continue': 'Continue',
+            'ending.backMenu': 'Back to menu',
             'npc.tipPrefix': '[Tip] ',
             'gameover.prestigeBtn': 'Prestige',
             'panel.prestige': 'Prestige',
@@ -8140,6 +8142,7 @@ const I18n = {
             'ending.l3': 'No se convierte en rey ni en sombra. Descansa, libre de la deuda que su padre firmó por él.',
             'ending.l4': 'Aldric sigue atrapado entre los dos mundos. Pero arriba vuelve a aparecer una grieta de luz.',
             'ending.continue': 'Continuar',
+            'ending.backMenu': 'Volver al menú',
             'npc.tipPrefix': '[Consejo] ',
             'gameover.prestigeBtn': 'Prestigio',
             'panel.prestige': 'Prestigio',
@@ -11848,11 +11851,17 @@ const ENDING_TEXT = {
     cancel: { pt: 'Voltar', en: 'Back', es: 'Volver' },
     dontKnow: { pt: 'Não sei…', en: 'I don’t know…', es: 'No sé…' },
     dontKnowHint: { pt: 'Vael disse: “Não levante a espada. Levante a pergunta.” O Véu teme o perdão.', en: 'Vael said: “Do not raise the sword. Raise the question.” The Veil fears forgiveness.', es: 'Vael dijo: “No levantes la espada. Levanta la pregunta”. El Velo teme el perdón.' },
-    ctxProphecy: { pt: 'Você ouviu a profecia e conhece os drei pedaços. O Guardião sente a sua memória.', en: 'You heard the prophecy and know the three pieces. The Guardian feels your memory.', es: 'Escuchaste la profecía y conoces las tres piezas. El Guardián siente tu memoria.' },
-    sceneSkip: { pt: 'Pular escena', en: 'Skip scene', es: 'Saltar escena' },
+    ctxProphecy: { pt: 'Você ouviu a profecia e conhece os três pedaços. O Guardião sente a sua memória.', en: 'You heard the prophecy and know the three pieces. The Guardian feels your memory.', es: 'Escuchaste la profecía y conoces las tres piezas. El Guardián siente tu memoria.' },
+    sceneSkip: { pt: 'Pular cena', en: 'Skip scene', es: 'Saltar escena' },
     cont: { pt: 'Continuar', en: 'Continue', es: 'Continuar' },
     backMenu: { pt: 'Voltar ao menu', en: 'Back to menu', es: 'Volver al menú' },
-    fim: { pt: 'FIM', en: 'THE END', es: 'FIN' }
+    fim: { pt: 'FIM', en: 'THE END', es: 'FIN' },
+    // Nome curto do final nos créditos
+    choiceName: {
+        blood: { pt: 'Sangue', en: 'Blood', es: 'Sangre' },
+        freedom: { pt: 'Liberdade', en: 'Freedom', es: 'Libertad' },
+        peace: { pt: 'Paz', en: 'Peace', es: 'Paz' }
+    }
 };
 const ENDING_SCENE_LINES = {
     blood: { pt: ['A espada do pai atravessa o coração do Véu.', 'Aldric sorri antes de virar pó.', 'O reino volta. Eiran, não.'], en: ['The father’s sword pierces the heart of the Veil.', 'Aldric smiles before turning to dust.', 'The kingdom returns. Eiran does not.'], es: ['La espada del padre atraviesa el corazón del Velo.', 'Aldric sonríe antes de volverse polvo.', 'El reino vuelve. Eiran, no.'] },
@@ -12179,7 +12188,7 @@ const EndingSystem = {
     _dialogs() {
         const table = (FINAL_DIALOGS[this._choice] || {})[this._cls] || {};
         const seq = [
-            { who: 'O Guardião Final', text: this._T(table.boss || { pt: '…', en: '…', es: '…' }) },
+            { who: (typeof I18n !== 'undefined' ? I18n.t('boss.final_guardian.name') : 'O Guardião Final'), text: this._T(table.boss || { pt: '…', en: '…', es: '…' }) },
             { who: 'Aldric', text: this._T(table.aldric || { pt: '…', en: '…', es: '…' }) },
             { who: 'Eiran', text: this._T(table.eiran || { pt: '…', en: '…', es: '…' }) }
         ];
@@ -12210,7 +12219,7 @@ const EndingSystem = {
         const ov = this._makeOv();
         ov.innerHTML = '<div style="max-width:420px;width:100%;text-align:center;">'
             + '<h2 style="font-size:14px;font-weight:800;color:#e0b6ff;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 16px;">Krevathorn</h2>'
-            + '<p style="font-size:13px;line-height:1.6;color:rgba(255,255,255,0.85);">Sombras de Krevathorn<br>' + this._choice + ' · ' + this._cls + '<br>' + this._T(ENDING_TEXT.fim) + '</p>'
+            + '<p style="font-size:13px;line-height:1.6;color:rgba(255,255,255,0.85);">Sombras de Krevathorn<br>' + this._T(ENDING_TEXT.choiceName[this._choice] || { pt: '' }) + ' · ' + (typeof I18n !== 'undefined' ? I18n.t('journey.cls.' + this._cls) : this._cls) + '<br>' + this._T(ENDING_TEXT.fim) + '</p>'
             + '<button type="button" id="ending-credits-skip" style="margin-top:16px;padding:10px 18px;border-radius:12px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.7);font-size:12px;font-weight:700;cursor:pointer;touch-action:manipulation;">' + this._T(ENDING_TEXT.cont) + '</button>'
             + '</div>';
         document.body.appendChild(ov);
