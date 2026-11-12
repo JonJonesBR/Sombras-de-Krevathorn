@@ -34,3 +34,20 @@ ERROS CONSOLE.txt
 
 # Ferramenta externa (Command Code)
 .commandcode/
+
+# Arquivos sensíveis e gerados (nunca versionar)
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+local.properties
+*credentials*.json
+secrets*.json
+dist/
+build/
+*.log
+.DS_Store
