@@ -1290,6 +1290,7 @@ body.pause-open #bag-btn-bar { visibility: hidden; }
 .bag-act-primary { background: rgba(157, 78, 221, 0.22); border-color: rgba(224, 182, 255, 0.55); color: #f0e0ff; }
 .bag-act-sell { background: rgba(255, 216, 107, 0.14); border-color: rgba(255, 216, 107, 0.5); color: #ffd86b; }
 .bag-act-danger { background: rgba(255, 80, 80, 0.12); border-color: rgba(255, 120, 120, 0.45); color: #ffb3b3; }
+.bag-act-forge { background: rgba(255, 150, 60, 0.14); border-color: rgba(255, 170, 90, 0.5); color: #ffc98a; }
 .bag-act:disabled { opacity: 0.45; cursor: not-allowed; }
 
 /* ============================================================
@@ -6055,6 +6056,15 @@ const I18n = {
             'inv.equipped': "{name} equipado",
             'inv.selectHint': "Toque em um item para ver detalhes e ações.",
             'inv.equippedHint': "Vestido. Para trocar, equipe outra peça da bolsa.",
+            'inv.fuse': "Fundir",
+            'inv.fuseConfirm': "Fundir 2× {name} em {next} por {n} de ouro?",
+            'inv.fuseNoPair': "Você precisa de duas armas iguais na bolsa para fundir.",
+            'inv.fuseNoGold': "Ouro insuficiente para fundir.",
+            'inv.fuseMaxTier': "Essa arma já está no degrau máximo.",
+            'inv.fuseCombat': "Não dá para fundir em combate.",
+            'inv.fuseNoSpace': "Bolsa sem espaço para a arma fundida.",
+            'inv.fuseInvalid': "Essa arma não pode ser fundida.",
+            'toast.fused': "Você forjou {name}!",
 
             // Start screen (static labels)
             'start.dailyInvite': 'Desafio de hoje: {name} — toque para jogar',
@@ -8218,6 +8228,15 @@ const I18n = {
             'inv.equipped': "{name} equipped",
             'inv.selectHint': "Tap an item to see details and actions.",
             'inv.equippedHint': "Worn. To swap, equip another piece from the bag.",
+            'inv.fuse': "Forge",
+            'inv.fuseConfirm': "Forge 2× {name} into {next} for {n} gold?",
+            'inv.fuseNoPair': "You need two identical weapons in the bag to forge.",
+            'inv.fuseNoGold': "Not enough gold to forge.",
+            'inv.fuseMaxTier': "This weapon is already at the highest step.",
+            'inv.fuseCombat': "You can't forge during combat.",
+            'inv.fuseNoSpace': "No bag space for the forged weapon.",
+            'inv.fuseInvalid': "This weapon can't be forged.",
+            'toast.fused': "You forged {name}!",
 
             // Start screen (static labels)
             'start.dailyInvite': 'Today\'s challenge: {name} — tap to play',
@@ -10378,6 +10397,15 @@ const I18n = {
             'inv.equipped': "{name} equipado",
             'inv.selectHint': "Toca un objeto para ver detalles y acciones.",
             'inv.equippedHint': "Puesto. Para cambiar, equipa otra pieza de la bolsa.",
+            'inv.fuse': "Forjar",
+            'inv.fuseConfirm': "¿Forjar 2× {name} en {next} por {n} de oro?",
+            'inv.fuseNoPair': "Necesitas dos armas iguales en la bolsa para forjar.",
+            'inv.fuseNoGold': "No tienes oro suficiente para forjar.",
+            'inv.fuseMaxTier': "Esta arma ya está en su nivel máximo.",
+            'inv.fuseCombat': "No puedes forjar en combate.",
+            'inv.fuseNoSpace': "No hay espacio en la bolsa para el arma forjada.",
+            'inv.fuseInvalid': "Esta arma no se puede forjar.",
+            'toast.fused': "¡Has forjado {name}!",
 
             // Start screen (static labels)
             'start.dailyInvite': 'Desafío de hoy: {name} — toca para jugar',
@@ -39043,9 +39071,11 @@ window.SkillTreeUI = SkillTreeUI;
     const BagPanel = {
         tab: 'equip',   // aba ativa: 'equip' | 'bag' | 'cons' | 'relics'
         sel: null,      // uid de item da bolsa, ou 'eq:<slot>' / 'eq:weapon' (equipado: só leitura)
-        ask: null,      // { kind: 'sell' | 'discard', uid } enquanto o diálogo de confirmação está aberto
+        ask: null,      // { kind: 'sell' | 'discard' | 'fuse', uid, pair? } enquanto o diálogo de confirmação está aberto
         TABS: ['equip', 'bag', 'cons', 'relics'],
         SORT_ORDER: ['rarity', 'slot', 'recent'],
+        // Fusão de armas da bolsa (2 iguais -> degrau seguinte da mesma escada), preço pelo tier do resultado
+        FUSE_COST: { 1: 80, 2: 150, 3: 240, 4: 320 },
 
         _esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]); },
 
@@ -39304,31 +39334,49 @@ window.SkillTreeUI = SkillTreeUI;
             const sellLabel = _L('inv.sell', 'Vender ({n})').replace('{n}', String(value));
             const sellBtn = '<button type="button" class="bag-act bag-act-sell"' + (canSell ? '' : ' disabled aria-describedby="bag-sell-hint"') + ' onclick="BagPanel.sell(\'' + uid + '\')">' + this._esc(sellLabel) + '</button>';
             const discardBtn = '<button type="button" class="bag-act bag-act-danger" onclick="BagPanel.discard(\'' + uid + '\')">' + this._esc(_L('inv.discard', 'Descartar')) + '</button>';
+            // Fundir só na arma selecionada: 2 iguais na bolsa viram o degrau seguinte da escada
+            const fuseBtn = it.kind === 'weapon'
+                ? '<button type="button" class="bag-act bag-act-forge" onclick="BagPanel.fuse(\'' + uid + '\')">' + this._esc(_L('inv.fuse', 'Fundir')) + '</button>'
+                : '';
             const sellHint = canSell ? '' : hintHtml(inCombat ? _L('inv.sellCombat', 'Não dá para vender em combate.') : _L('inv.sellHint', 'Venda no mercador, na loja ou no acampamento'));
             const bagHint = sellHint ? '<div id="bag-sell-hint">' + sellHint + '</div>' : '';
             return box('<div style="font-size:calc(13px * var(--font-scale,1));font-weight:700;color:' + color + ';">' + this._esc(this._name(it)) + '</div>'
                 + '<div style="font-size:calc(11px * var(--font-scale,1));color:rgba(255,255,255,0.6);margin-bottom:4px;">' + this._esc(this._rarity(it)) + (it.kind === 'consumable' ? '' : ' · ' + this._esc(this._slotLabel(this._slotKey(it)))) + '</div>'
                 + details
-                + '<div class="bag-btns">' + primary + sellBtn + discardBtn + '</div>'
+                + '<div class="bag-btns">' + primary + fuseBtn + sellBtn + discardBtn + '</div>'
                 + bagHint);
         },
 
-        // Diálogo de confirmação (venda Raro+ ou arma tier 3+; descarte sempre). Fica dentro do painel.
+        // Diálogo de confirmação (venda Raro+ ou arma tier 3+; descarte sempre; fusão). Fica dentro do painel.
         renderConfirm() {
             const a = this.ask;
             const it = a ? Inventory.get(a.uid) : null;
             if (!it) return '';
             const name = this._name(it);
-            const text = a.kind === 'sell'
-                ? _L('inv.sellConfirm', 'Vender {name} por {n} moedas?').replace('{name}', name).replace('{n}', String(Inventory.sellValue(it)))
-                : _L('inv.discardConfirm', 'Descartar {name}? Não dá para recuperar.').replace('{name}', name);
-            const yes = a.kind === 'sell' ? _L('inv.confirmSell', 'Vender') : _L('inv.confirmDiscard', 'Descartar');
+            let text, yes, yesClass;
+            if (a.kind === 'sell') {
+                text = _L('inv.sellConfirm', 'Vender {name} por {n} moedas?').replace('{name}', name).replace('{n}', String(Inventory.sellValue(it)));
+                yes = _L('inv.confirmSell', 'Vender');
+                yesClass = 'bag-act-sell';
+            } else if (a.kind === 'fuse') {
+                const next = this._fuseNext(it.payload);
+                text = _L('inv.fuseConfirm', 'Fundir 2× {name} em {next} por {n} de ouro?')
+                    .replace('{name}', name)
+                    .replace('{next}', next ? (WeaponSystem.displayName(next) || next.name || '') : '—')
+                    .replace('{n}', String(next ? this._fuseCost(next.tier) : 0));
+                yes = _L('inv.fuse', 'Fundir');
+                yesClass = 'bag-act-forge';
+            } else {
+                text = _L('inv.discardConfirm', 'Descartar {name}? Não dá para recuperar.').replace('{name}', name);
+                yes = _L('inv.confirmDiscard', 'Descartar');
+                yesClass = 'bag-act-danger';
+            }
             return '<div id="bag-confirm" role="dialog" aria-modal="true" aria-labelledby="bag-confirm-text" style="position:absolute;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(8,6,14,0.86);border-radius:inherit;" onkeydown="if(event.key===\'Escape\'){event.preventDefault();event.stopPropagation();BagPanel.askNo();}">'
                 + '<div style="width:100%;max-width:320px;padding:16px;border-radius:14px;background:rgba(20,15,30,0.98);border:1.5px solid rgba(224,182,255,0.35);">'
                 + '<p id="bag-confirm-text" style="margin:0;font-size:calc(13px * var(--font-scale,1));color:#fff;line-height:1.35;">' + this._esc(text) + '</p>'
                 + '<div class="bag-btns">'
                 + '<button type="button" class="bag-act" data-autofocus onclick="BagPanel.askNo()">' + this._esc(_L('inv.cancel', 'Cancelar')) + '</button>'
-                + '<button type="button" class="bag-act ' + (a.kind === 'sell' ? 'bag-act-sell' : 'bag-act-danger') + '" onclick="BagPanel.askYes()">' + this._esc(yes) + '</button>'
+                + '<button type="button" class="bag-act ' + yesClass + '" onclick="BagPanel.askYes()">' + this._esc(yes) + '</button>'
                 + '</div></div></div>';
         },
 
@@ -39339,6 +39387,83 @@ window.SkillTreeUI = SkillTreeUI;
             if (it.kind === 'equip') return CONFIG.EQUIPMENT_RARITIES.indexOf(it.rarity) >= 2;
             if (it.kind === 'weapon') return (it.tier | 0) >= 3;
             return false;
+        },
+
+        // Escadas de arma do CONFIG: a fusão entrega o degrau seguinte da MESMA escada (mesma classe)
+        _ladders() { return [CONFIG.WEAPONS_WARRIOR, CONFIG.WEAPONS_ROGUE, CONFIG.WEAPONS_MAGE]; },
+
+        // Arma-resultado da fusão (entrada do CONFIG), ou null se já está no topo ou fora de uma escada
+        _fuseNext(w) {
+            if (!w || typeof w.id !== 'string') return null;
+            for (const list of this._ladders()) {
+                if (!Array.isArray(list)) continue;
+                const cur = list.find(x => x && x.id === w.id);
+                if (!cur) continue;
+                return list.find(x => x && x.tier === (cur.tier | 0) + 1) || null;
+            }
+            return null;
+        },
+
+        _fuseCost(tier) { return this.FUSE_COST[tier | 0] || 0; },
+
+        // Cópia rasa da arma-resultado: o jogo muta o payload (Bullet liga pierce no objeto da arma,
+        // ~34160) e a mesma referência iria para a bolsa, para o equipamento e para o save.
+        _fuseWeapon(src) {
+            const copy = {};
+            if (src) Object.keys(src).forEach(k => { copy[k] = src[k]; });
+            copy.tier = Math.max(0, Math.min(CONFIG.WEAPON_TIERS.length - 1, copy.tier | 0));
+            return copy;
+        },
+
+        // Fusão pedida pelo rodapé: confere e abre a confirmação com o preço
+        fuse(uid) {
+            const it = Inventory.get(uid);
+            if (!it || it.kind !== 'weapon') return;
+            if (Inventory.inCombat()) { this._toast(_L('inv.fuseCombat', 'Não dá para fundir em combate.')); return; }
+            const next = this._fuseNext(it.payload);
+            if (!next) { this._toast(_L('inv.fuseMaxTier', 'Essa arma já está no degrau máximo.')); return; }
+            const pair = Inventory.items.find(i => i.uid !== it.uid && i.kind === 'weapon' && i.id === it.id);
+            if (!pair) { this._toast(_L('inv.fuseNoPair', 'Você precisa de duas armas iguais na bolsa para fundir.')); return; }
+            if (((player && player.currency) || 0) < this._fuseCost(next.tier)) { this._toast(_L('inv.fuseNoGold', 'Ouro insuficiente para fundir.')); return; }
+            this.ask = { kind: 'fuse', uid: it.uid, pair: pair.uid };
+            this._refresh();
+        },
+
+        // Executa a fusão: revê tudo, tira as duas da bolsa, cobra o ouro e entrega a nova.
+        // Se a entrega falhar, o ouro volta e as duas voltam para a bolsa: nada fica pela metade.
+        _doFuse(a) {
+            this.ask = null;
+            const it = a ? Inventory.get(a.uid) : null;
+            const pair = a ? Inventory.get(a.pair) : null;
+            const refuse = (key, fallback) => { this._toast(_L(key, fallback)); this._refresh(); };
+            if (!it || !pair || it.kind !== 'weapon' || pair.kind !== 'weapon' || it.id !== pair.id) {
+                return refuse('inv.fuseNoPair', 'Você precisa de duas armas iguais na bolsa para fundir.');
+            }
+            if (Inventory.inCombat()) return refuse('inv.fuseCombat', 'Não dá para fundir em combate.');
+            const next = this._fuseNext(it.payload);
+            if (!next) return refuse('inv.fuseMaxTier', 'Essa arma já está no degrau máximo.');
+            const forged = this._fuseWeapon(next);
+            if (!Inventory._isWeapon(forged)) return refuse('inv.fuseInvalid', 'Essa arma não pode ser fundida.');
+            const cost = this._fuseCost(next.tier);
+            if (!(cost > 0)) return refuse('inv.fuseInvalid', 'Essa arma não pode ser fundida.');
+            // Confere espaço ANTES de cobrar: saem as duas e entra uma, então com o teto de 12 sempre sobra
+            // (a arma trocada, no pior caso, ocupa o lugar de uma delas). A checagem fica aqui para o teto mudar.
+            if (Inventory.count() - 2 >= Inventory.CAP) return refuse('inv.fuseNoSpace', 'Bolsa sem espaço para a arma fundida.');
+            const gold = (player && player.currency) || 0;
+            if (gold < cost) return refuse('inv.fuseNoGold', 'Ouro insuficiente para fundir.');
+            const payloadA = it.payload, payloadB = pair.payload;
+            Inventory.remove(it.uid);
+            Inventory.remove(pair.uid);
+            if (player) player.currency = gold - cost;
+            if (!Inventory.collectWeapon(player, forged).collected) {
+                if (player) player.currency = gold;
+                Inventory._insert({ kind: 'weapon', payload: payloadA });
+                Inventory._insert({ kind: 'weapon', payload: payloadB });
+                return refuse('inv.fuseNoSpace', 'Bolsa sem espaço para a arma fundida.');
+            }
+            this._toast(_L('toast.fused', 'Você forjou {name}!').replace('{name}', WeaponSystem.displayName(forged) || forged.name || ''));
+            this.sel = null;
+            this._refresh();
         },
 
         equip(uid) {
@@ -39406,7 +39531,9 @@ window.SkillTreeUI = SkillTreeUI;
         askYes() {
             const a = this.ask;
             if (!a) return;
-            if (a.kind === 'sell') this._doSell(a.uid); else this._doDiscard(a.uid);
+            if (a.kind === 'sell') this._doSell(a.uid);
+            else if (a.kind === 'fuse') this._doFuse(a);
+            else this._doDiscard(a.uid);
         },
 
         setTab(t) {
