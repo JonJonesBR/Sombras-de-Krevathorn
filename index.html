@@ -12494,7 +12494,9 @@ const EndingSystem = {
             this._confirm = null;
             un.textContent = this._T(ENDING_TEXT.dontKnowHint);
             const self = this;
-            setTimeout(() => { if (self.active && !self._choice) self.showChoice(); }, 10000);
+            // Repetição da pergunta passa pelo _arm: pausa com a aba em segundo plano e é
+            // cancelada no _cleanup (sair do final ou escolher não deixa timer solto).
+            this._arm(() => { if (self.active && !self._choice) self.showChoice(); }, CONFIG.LORE_FINAL_CHOICE_REPEAT_MS);
         };
         const cf = ov.querySelector('#ending-confirm');
         if (cf) cf.onclick = () => this._pick(this._confirm);
