@@ -1245,17 +1245,20 @@ body.gfx-low #start-screen::after { animation: none !important; opacity: 0.5 !im
 .skill-node.state-affordable .sk-status { color: #ffcc00; }
 .skill-node.state-locked-req,
 .skill-node.state-locked-funds,
-.skill-node.state-speed-locked {
+.skill-node.state-speed-locked,
+.skill-node.state-floor-locked {
     border: 1.5px solid rgba(255, 255, 255, 0.08);
     background: rgba(20, 15, 30, 0.6);
     opacity: 0.6;
 }
 .skill-node.state-locked-req .sk-name,
 .skill-node.state-locked-funds .sk-name,
-.skill-node.state-speed-locked .sk-name { color: #9ca3af; }
+.skill-node.state-speed-locked .sk-name,
+.skill-node.state-floor-locked .sk-name { color: #9ca3af; }
 .skill-node.state-locked-req .sk-status,
 .skill-node.state-locked-funds .sk-status,
-.skill-node.state-speed-locked .sk-status { color: #6b7280; }
+.skill-node.state-speed-locked .sk-status,
+.skill-node.state-floor-locked .sk-status { color: #6b7280; }
 
 body.pause-open #bag-btn-bar { visibility: hidden; }
 
@@ -2084,12 +2087,12 @@ body {
 
     <!-- BOSS REWARD (post-guardian boon choice) -->
     <div id="boss-reward-overlay" class="hidden" role="dialog" aria-modal="true" aria-labelledby="boss-reward-title" style="position:fixed;inset:0;z-index:1950;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;pointer-events:auto;background:rgba(6,2,8,0.82);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);animation:overlayIn 0.3s ease;">
-        <div class="glass-panel" style="width:100%;max-width:22rem;padding:24px;display:flex;flex-direction:column;align-items:center;gap:14px;background:rgba(24,16,34,0.98);border:1.5px solid rgba(224,182,255,0.4);border-radius:24px;box-shadow:0 6px 30px rgba(0,0,0,0.6);">
+        <div class="glass-panel" style="width:100%;max-width:22rem;max-height:85vh;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:24px;display:flex;flex-direction:column;align-items:center;gap:14px;background:rgba(24,16,34,0.98);border:1.5px solid rgba(224,182,255,0.4);border-radius:24px;box-shadow:0 6px 30px rgba(0,0,0,0.6);">
             <h2 id="boss-reward-title" data-i18n="bossReward.title" style="font-size:18px;font-weight:800;color:#e0b6ff;text-transform:uppercase;letter-spacing:0.1em;text-shadow:0 0 18px rgba(224,182,255,0.5);">🏆 Troféu do Guardião</h2>
             <p id="boss-last-words" style="font-size:12px;color:#cbb8e8;font-style:italic;text-align:center;line-height:1.4;min-height:1.2em;"></p>
             <p id="boss-reward-sub" data-i18n="bossReward.sub" style="font-size:11px;color:rgba(255,255,255,0.55);text-align:center;line-height:1.4;">O chefe caiu — escolha uma recompensa para a run.</p>
-            <div id="boss-reward-options" style="display:flex;flex-direction:column;gap:8px;width:100%;"></div>
-            <button onclick="if(window.BossRewardSystem) BossRewardSystem.choose(-1)" data-i18n="bossReward.dismiss" style="font-size:10px;color:rgba(255,255,255,0.7);background:none;border:none;cursor:pointer;touch-action:manipulation;padding:4px;">Dispensar agora</button>
+            <div id="boss-reward-options" style="display:flex;flex-direction:column;gap:8px;width:100%;min-height:0;"></div>
+            <button type="button" id="boss-reward-dismiss" onclick="if(window.BossRewardSystem) BossRewardSystem.dismissClick()" data-i18n="bossReward.dismiss" style="min-height:44px;padding:10px 16px;font-size:10px;color:rgba(255,255,255,0.7);background:none;border:none;cursor:pointer;touch-action:manipulation;line-height:1.2;border-radius:10px;">Dispensar agora</button>
         </div>
     </div>
 
@@ -3386,6 +3389,9 @@ const SaveSystem = {
         storyFlags: null, sceneState: null,
         // Pets ativos da run (PetSystem.petActive): [] em saves antigos; ver _cleanPets
         petActive: [],
+        // Compras de habilidade no andar (teto do SkillTree): 0 em saves antigos.
+        // `floorPurchasesLevel` diz a que andar a contagem pertence; andar diferente = 0.
+        floorPurchasesCount: 0, floorPurchasesLevel: 1,
         // Bolsa (Inventory): [] em saves antigos. Não rejeita o save por item ruim: Inventory.restore descarta o item
         inventory: []
     },
@@ -3494,7 +3500,11 @@ const SaveSystem = {
             // Pets ativos da run (campo opcional: ausente em saves antigos, que carregam []). Só tipos válidos.
             petActive: (typeof PetSystem !== 'undefined') ? this._cleanPets(PetSystem.petActive) : [],
             // Bolsa da run (campo opcional: save antigo carrega []). A sala secreta não mexe nela.
-            inventory: (typeof Inventory !== 'undefined') ? Inventory.serialize() : []
+            inventory: (typeof Inventory !== 'undefined') ? Inventory.serialize() : [],
+            // Teto de habilidades por andar: o continue não pode devolver as compras do andar.
+            // floorPurchasesUsed já sincroniza com o andar corrente (0 quando a contagem é de outro).
+            floorPurchasesCount: (typeof SkillTree !== 'undefined' && player) ? Math.min(99, SkillTree.floorPurchasesUsed(player)) : 0,
+            floorPurchasesLevel: (typeof dungeonLevel !== 'undefined') ? dungeonLevel : 1
         };
     },
 
@@ -3623,7 +3633,8 @@ const SaveSystem = {
             savedAt: [0, Number.MAX_SAFE_INTEGER], lvl: [1, 10000], kills: [0, 1e9], currency: [0, 1e9],
             weaponLevel: [1, 1000], dungeonLevel: [1, 10000], dungeonKills: [0, 1e9],
             dungeonKillTarget: [1, 1e9], continuesLeft: [0, 3], dungeonsCompleted: [0, 1e6], prestigeLevel: [0, 100000],
-            totalGamesPlayed: [0, 1e9], secretFloorUsed: [-1, 10000], runTicks: [0, Number.MAX_SAFE_INTEGER]
+            totalGamesPlayed: [0, 1e9], secretFloorUsed: [-1, 10000], runTicks: [0, Number.MAX_SAFE_INTEGER],
+            floorPurchasesCount: [0, 99], floorPurchasesLevel: [0, 10000]
         };
         const numberRanges = {
             xp: [0, 1e9], hp: [0, 1e9], maxHp: [1, 1e9], speed: [0.01, 1000], weaponDamageMult: [0.01, 1000],
@@ -3721,6 +3732,10 @@ const SaveSystem = {
         p.relicLevels = (data.relicLevels && typeof data.relicLevels === 'object' && !Array.isArray(data.relicLevels)) ? Object.assign({}, data.relicLevels) : {};
         p.critBoost = data.critBoost || 0;
         p.shopDiscountTimer = data.shopDiscountTimer || 0;
+        // Teto de habilidades por andar: save antigo (sem os campos) recomeça com 0.
+        // A contagem só vale no andar a que pertence (SkillTree.floorPurchasesUsed confere).
+        p.floorPurchasesCount = (Number.isSafeInteger(data.floorPurchasesCount) && data.floorPurchasesCount > 0) ? Math.min(99, data.floorPurchasesCount) : 0;
+        p.floorPurchasesLevel = (Number.isSafeInteger(data.floorPurchasesLevel) && data.floorPurchasesLevel > 0) ? data.floorPurchasesLevel : ((typeof dungeonLevel !== 'undefined') ? dungeonLevel : 1);
         p.regenerating = !!data.regenerating;
         p.greedBonus = !!data.greedBonus;
         p.heatMaxBonus = data.heatMaxBonus || 0;
@@ -4087,6 +4102,8 @@ const I18n = {
             'log.eventNoCoins': 'Moedas insuficientes.',
             'log.bossRewardPre': ' 🏆 ',
             'log.bossRewardPost': ' derrotado! Escolha sua recompensa.',
+            'log.bossRewardEmpty': ' derrotado, mas não há recompensa disponível.',
+            'log.bossRewardDead': 'O chefe caiu, mas você não sobreviveu — nenhuma recompensa foi aplicada.',
 
             // Start screen
 
@@ -4301,6 +4318,7 @@ const I18n = {
             'shop.tabUpgrade': 'Melhorias',
             'shop.tabPets': 'Pets',
             'shop.goldRush': '| FOME DE OURO ATIVA',
+            'shop.inCombatBlocked': 'Termine o combate para negociar.',
             'skills.damage': 'DANO',
             'skills.crit': 'CRÍTICO',
             'skills.speed': 'VEL.',
@@ -4309,6 +4327,33 @@ const I18n = {
             'skills.ability': 'HABILIDADE',
             'skills.requires': 'Requer: ',
             'skills.blockedBy': 'Bloqueado por ',
+            'skills.exclusiveSuffix': ' (escolha exclusiva)',
+            'skills.floorPurchases': 'HABILIDADES DESTE ANDAR',
+            'skills.floorLimitShort': 'limite atingido, desça um andar',
+            'skills.floorLimitNode': 'Limite do andar',
+            'skills.floorLimitDetail': 'Limite de {n} habilidades por andar',
+            'skills.floorLimitHint': 'desça um andar para comprar mais',
+            'skills.floorLimitBtn': '⛔ LIMITE DO ANDAR',
+            'skills.limitWord': 'LIMITE',
+            'skills.speedLimitDetail': 'Limite de velocidade atingido',
+            'skills.speedTag': 'VEL',
+            'skills.alreadyOwned': 'Já desbloqueado',
+            'skills.specialAbility': 'Habilidade especial',
+            'skills.speedNote': 'Velocidade (máx {n}x por run)',
+            'skills.cost': 'Custo:',
+            'skills.back': '← VOLTAR',
+            'skills.reqUnlocked': 'desbloqueado',
+            'skills.reqLocked': 'bloqueado',
+            'skills.reqFirst': 'Desbloqueie a habilidade anterior primeiro.',
+            'skills.goldMissing': 'Moedas insuficientes (faltam {n})',
+            'skills.unknownNode': 'habilidade anterior',
+            'skills.unavailable': 'Habilidades indisponíveis',
+            'skills.failOwned': 'Você já desbloqueou esta habilidade.',
+            'skills.failRequires': 'Falta o pré-requisito: {name}',
+            'skills.failFloorLimit': 'Limite de {n} habilidades por andar — desça um andar.',
+            'skills.failSpeedLimit': 'Limite de velocidade atingido ({n}/{lim}) — esta classe não compra mais velocidade.',
+            'skills.failGold': 'Ouro insuficiente — faltam {n} moedas.',
+            'skills.failGeneric': 'Não foi possível desbloquear esta habilidade agora.',
             'skill.warrior.quake.name': 'Terremoto', 'skill.warrior.quake.desc': 'Ground Slam dá um segundo pulso de dano',
             'skill.warrior.bloodlust.name': 'Sede de Sangue', 'skill.warrior.bloodlust.desc': 'Abates curam 2 HP e dão velocidade curta',
             'skill.warrior.bulwark.name': 'Muralha', 'skill.warrior.bulwark.desc': 'Sofre 40% menos dano enquanto houver escudo',
@@ -5655,6 +5700,7 @@ const I18n = {
             'npc.merchant.useless': 'Não surtiria efeito agora.',
             'npc.merchant.prev': '\n[< Anterior]',
             'npc.merchant.next': '\n[Próximo >]',
+            'npc.tapToTalk': 'Toque para falar',
 
             // ============================================================
             // Meta system
@@ -6110,6 +6156,7 @@ const I18n = {
             'bossReward.sub': 'O chefe caiu — escolha uma recompensa para a run.',
             'bossReward.subNamed': 'O {n} caiu — escolha uma recompensa para o resto da run:',
             'bossReward.dismiss': 'Dispensar agora',
+            'bossReward.dismissConfirm': 'Dispensar mesmo?',
             'continue.in': 'Continue em',
             'win.title': 'SUPERFÍCIE ALCANÇADA!',
             'win.playAgain': 'JOGAR NOVAMENTE',
@@ -6218,6 +6265,8 @@ const I18n = {
             'log.eventNoCoins': 'Not enough coins.',
             'log.bossRewardPre': ' 🏆 ',
             'log.bossRewardPost': ' defeated! Choose your reward.',
+            'log.bossRewardEmpty': ' defeated, but no reward is available.',
+            'log.bossRewardDead': 'The boss fell, but you did not survive — no reward was applied.',
 
             // Start screen
 
@@ -6432,6 +6481,7 @@ const I18n = {
             'shop.tabUpgrade': 'Upgrades',
             'shop.tabPets': 'Pets',
             'shop.goldRush': '| GOLD RUSH ACTIVE',
+            'shop.inCombatBlocked': 'End the fight to trade.',
             'skills.damage': 'DMG',
             'skills.crit': 'CRIT',
             'skills.speed': 'SPD',
@@ -6440,6 +6490,33 @@ const I18n = {
             'skills.ability': 'ABILITY',
             'skills.requires': 'Requires: ',
             'skills.blockedBy': 'Blocked by ',
+            'skills.exclusiveSuffix': ' (exclusive choice)',
+            'skills.floorPurchases': 'SKILLS THIS FLOOR',
+            'skills.floorLimitShort': 'limit reached, go down a floor',
+            'skills.floorLimitNode': 'Floor limit',
+            'skills.floorLimitDetail': 'Limit of {n} skills per floor',
+            'skills.floorLimitHint': 'go down a floor to buy more',
+            'skills.floorLimitBtn': '⛔ FLOOR LIMIT',
+            'skills.limitWord': 'LIMIT',
+            'skills.speedLimitDetail': 'Speed limit reached',
+            'skills.speedTag': 'SPD',
+            'skills.alreadyOwned': 'Already unlocked',
+            'skills.specialAbility': 'Special ability',
+            'skills.speedNote': 'Speed (max {n}x per run)',
+            'skills.cost': 'Cost:',
+            'skills.back': '← BACK',
+            'skills.reqUnlocked': 'unlocked',
+            'skills.reqLocked': 'locked',
+            'skills.reqFirst': 'Unlock the previous skill first.',
+            'skills.goldMissing': 'Not enough coins ({n} short)',
+            'skills.unknownNode': 'previous skill',
+            'skills.unavailable': 'Skills unavailable',
+            'skills.failOwned': 'You already unlocked this skill.',
+            'skills.failRequires': 'Missing prerequisite: {name}',
+            'skills.failFloorLimit': 'Limit of {n} skills per floor — go down a floor.',
+            'skills.failSpeedLimit': 'Speed limit reached ({n}/{lim}) — this class cannot buy more speed.',
+            'skills.failGold': 'Not enough gold — {n} coins short.',
+            'skills.failGeneric': 'Could not unlock this skill right now.',
             'skill.warrior.quake.name': 'Earthquake', 'skill.warrior.quake.desc': 'Ground Slam gets a second damage pulse',
             'skill.warrior.bloodlust.name': 'Bloodlust', 'skill.warrior.bloodlust.desc': 'Kills heal 2 HP and grant short speed',
             'skill.warrior.bulwark.name': 'Bulwark', 'skill.warrior.bulwark.desc': 'Takes 40% less damage while a shield is up',
@@ -7786,6 +7863,7 @@ const I18n = {
             'npc.merchant.useless': 'It would have no effect right now.',
             'npc.merchant.prev': '\n[< Previous]',
             'npc.merchant.next': '\n[Next >]',
+            'npc.tapToTalk': 'Tap to talk',
 
             // ============================================================
             // Meta system
@@ -8241,6 +8319,7 @@ const I18n = {
             'bossReward.sub': 'The boss fell — choose a run reward.',
             'bossReward.subNamed': '{n} has fallen — choose a reward for the rest of the run:',
             'bossReward.dismiss': 'Dismiss now',
+            'bossReward.dismissConfirm': 'Dismiss anyway?',
             'continue.in': 'Continue in',
             'win.title': 'SURFACE REACHED!',
             'win.playAgain': 'PLAY AGAIN',
@@ -8349,6 +8428,8 @@ const I18n = {
             'log.eventNoCoins': 'Monedas insuficientes.',
             'log.bossRewardPre': ' 🏆 ',
             'log.bossRewardPost': ' derrotado! Elige tu recompensa.',
+            'log.bossRewardEmpty': ' derrotado, pero no hay recompensa disponible.',
+            'log.bossRewardDead': 'El jefe cayó, pero no sobreviviste: no se aplicó ninguna recompensa.',
 
             // Start screen
 
@@ -8563,6 +8644,7 @@ const I18n = {
             'shop.tabUpgrade': 'Mejoras',
             'shop.tabPets': 'Mascotas',
             'shop.goldRush': '| FIEBRE DEL ORO ACTIVA',
+            'shop.inCombatBlocked': 'Termina el combate para negociar.',
             'skills.damage': 'DAÑO',
             'skills.crit': 'CRÍTICO',
             'skills.speed': 'VEL.',
@@ -8571,6 +8653,33 @@ const I18n = {
             'skills.ability': 'HABILIDAD',
             'skills.requires': 'Requiere: ',
             'skills.blockedBy': 'Bloqueado por ',
+            'skills.exclusiveSuffix': ' (elección exclusiva)',
+            'skills.floorPurchases': 'HABILIDADES DE ESTE PISO',
+            'skills.floorLimitShort': 'límite alcanzado, baja un piso',
+            'skills.floorLimitNode': 'Límite del piso',
+            'skills.floorLimitDetail': 'Límite de {n} habilidades por piso',
+            'skills.floorLimitHint': 'baja un piso para comprar más',
+            'skills.floorLimitBtn': '⛔ LÍMITE DEL PISO',
+            'skills.limitWord': 'LÍMITE',
+            'skills.speedLimitDetail': 'Límite de velocidad alcanzado',
+            'skills.speedTag': 'VEL',
+            'skills.alreadyOwned': 'Ya desbloqueado',
+            'skills.specialAbility': 'Habilidad especial',
+            'skills.speedNote': 'Velocidad (máx {n}x por partida)',
+            'skills.cost': 'Coste:',
+            'skills.back': '← VOLVER',
+            'skills.reqUnlocked': 'desbloqueado',
+            'skills.reqLocked': 'bloqueado',
+            'skills.reqFirst': 'Desbloquea primero la habilidad anterior.',
+            'skills.goldMissing': 'Monedas insuficientes (faltan {n})',
+            'skills.unknownNode': 'habilidad anterior',
+            'skills.unavailable': 'Habilidades no disponibles',
+            'skills.failOwned': 'Ya desbloqueaste esta habilidad.',
+            'skills.failRequires': 'Falta el requisito: {name}',
+            'skills.failFloorLimit': 'Límite de {n} habilidades por piso — baja un piso.',
+            'skills.failSpeedLimit': 'Límite de velocidad alcanzado ({n}/{lim}) — esta clase no compra más velocidad.',
+            'skills.failGold': 'Oro insuficiente — faltan {n} monedas.',
+            'skills.failGeneric': 'No se pudo desbloquear esta habilidad ahora.',
             'skill.warrior.quake.name': 'Terremoto', 'skill.warrior.quake.desc': 'Ground Slam da un segundo pulso de daño',
             'skill.warrior.bloodlust.name': 'Sed de Sangre', 'skill.warrior.bloodlust.desc': 'Los abates curan 2 HP y dan velocidad breve',
             'skill.warrior.bulwark.name': 'Muralla', 'skill.warrior.bulwark.desc': 'Recibe 40% menos daño mientras haya escudo',
@@ -9916,6 +10025,7 @@ const I18n = {
             'npc.merchant.useless': 'No tendría efecto ahora.',
             'npc.merchant.prev': '\n[< Anterior]',
             'npc.merchant.next': '\n[Siguiente >]',
+            'npc.tapToTalk': 'Toca para hablar',
 
             // ============================================================
             // Meta system
@@ -10369,6 +10479,7 @@ const I18n = {
             'bossReward.sub': 'El jefe cayó: elige una recompensa para la partida.',
             'bossReward.subNamed': '{n} ha caído: elige una recompensa para el resto de la partida:',
             'bossReward.dismiss': 'Descartar ahora',
+            'bossReward.dismissConfirm': '¿Descartar de verdad?',
             'continue.in': 'Continúa en',
             'win.title': '¡SUPERFICIE ALCANZADA!',
             'win.playAgain': 'JUGAR DE NUEVO',
@@ -11808,7 +11919,15 @@ function isAnyPanelOpen() {
 
 window.isAnyPanelOpen = isAnyPanelOpen;
 
-window.toggleShop = function() { window.UIManager.openPanel('shop'); };
+window.toggleShop = function() {
+    // Loja não abre com inimigo vivo: nada de comprar/curar no meio do combate
+    // (mesmo critério da bolsa: Inventory.inCombat). O acampamento entre andares não passa aqui.
+    if (typeof Inventory !== 'undefined' && typeof Inventory.inCombat === 'function' && Inventory.inCombat()) {
+        if (typeof showToast === 'function') showToast(window.I18n ? I18n.t('shop.inCombatBlocked') : 'Termine o combate para negociar.', 'info');
+        return;
+    }
+    window.UIManager.openPanel('shop');
+};
 window.toggleSkillTree = function() { window.UIManager.openPanel('skills'); };
 window.toggleStats = function() { window.UIManager.openPanel('stats'); };
 // Routes to the Achievements tab of the Status hub: this function had zero
@@ -13713,7 +13832,12 @@ function _updateEntitySimulation() {
         if (window.AbyssVeil) AbyssVeil.checkMilestones();
         // F3: sem NPC aleatório enquanto a cena canônica do andar está pendente.
         const _canonPending = window.SceneDirector && !SceneDirector.isDone('floor.' + (typeof dungeonLevel !== 'undefined' ? dungeonLevel : 0));
-        if (gameTime % 600 === 0 && !_secretRoom && !_canonPending && SeedSystem.random() < 0.25) NPCSystem.spawnNPC();
+        // Viajante aleatório só com a sala limpa: em combate ele atrapalhava (o painel abria no meio da luta).
+        // Critério de combate = inimigo vivo (Inventory._enemiesAlive, o mesmo da loja/bolsa).
+        const _npcCombat = (window.Inventory && typeof Inventory._enemiesAlive === 'function')
+            ? Inventory._enemiesAlive()
+            : (typeof _cachedAliveEnemies !== 'undefined' && _cachedAliveEnemies > 0);
+        if (gameTime % 600 === 0 && !_secretRoom && !_canonPending && !_npcCombat && SeedSystem.random() < 0.25) NPCSystem.spawnNPC();
     }
     for (let i = entities.length - 1; i >= 0; i--) {
         if (!entities[i].alive && entities[i] !== player) {
@@ -14660,8 +14784,6 @@ function _buildStoryRoom(index, opts) {
     PetSystem.rebuild(); // pets da run voltam ao lado do jogador nesta câmara
     PetRescue.reset(); // objetos de resgate são da câmara: a nova é montada logo abaixo
     if (window.NPCSystem) NPCSystem.reset();
-    // F3: canônico persiste entre câmaras do mesmo andar até a cena.
-    if (window.SceneDirector && SceneDirector.onFloorBuilt) SceneDirector.onFloorBuilt();
     dungeonPortal = null; bossActive = false;
     _storyRoom = { i: index, total: total, cleared: false, budget: 0, spawned: 0, boss: boss };
     if (boss) {
@@ -14675,6 +14797,9 @@ function _buildStoryRoom(index, opts) {
     } else {
         _populateStoryRoom();
     }
+    // F3: canônico persiste entre câmaras do mesmo andar até a cena. Depois do chefe, para o
+    // spawnCanon poder recusar um ponto perto dele (câmara do chefe).
+    if (window.SceneDirector && SceneDirector.onFloorBuilt) SceneDirector.onFloorBuilt();
     // Caminhada curta para dentro da câmara nova, só na troca entre câmaras
     if (opts.walk !== false && player) {
         const w = _storyWalkInTarget();
@@ -16872,13 +16997,15 @@ function _initEngine() {
     canvas.addEventListener('click', (e) => {
         if(typeof TutorialSystem !== 'undefined' && TutorialSystem.active) return;
         if(gameState !== 'PLAYING') return;
-        if(typeof NPCSystem === 'undefined' || typeof NPCInteractionPanel === 'undefined' || !NPCInteractionPanel.visible) return;
-        // A touch was already consumed by the NPC panel moments ago -> ignore the synthetic click
+        if(typeof NPCSystem === 'undefined' || typeof NPCInteractionPanel === 'undefined') return;
+        // A touch was already consumed by the NPC panel (or by the NPC) moments ago -> ignore the synthetic click
         if(performance.now() < _npcSuppressClickUntil) return;
         const rect = canvas.getBoundingClientRect();
         const x = (e.clientX - rect.left) * (width / rect.width);
         const y = (e.clientY - rect.top) * (height / rect.height);
-        NPCSystem.handleTouch(x, y);
+        if(NPCInteractionPanel.visible) { NPCSystem.handleTouch(x, y); return; }
+        // Painel fechado: o viajante aleatório só abre com clique em cima dele
+        if(NPCSystem.handleNpcTap(x, y)) _npcSuppressClickUntil = performance.now() + 400;
     });
 
     // UI Click Handlers for canvas
@@ -16925,6 +17052,18 @@ function _initEngine() {
                 const _npcCx = (t.clientX - _npcRect.left) * (width / _npcRect.width);
                 const _npcCy = (t.clientY - _npcRect.top) * (height / _npcRect.height);
                 if(NPCSystem.handleTouch(_npcCx, _npcCy)) { _npcSuppressClickUntil = performance.now() + 400; if(window.Input) Input._uiTapTs = e.timeStamp; return; }
+            }
+        }
+
+        // Toque no viajante aleatório (painel fechado): abre só encostando nele; o toque
+        // não vira joystick/ataque
+        if(gameState === 'PLAYING' && window.NPCSystem && window.NPCInteractionPanel && !NPCInteractionPanel.visible) {
+            const _tapRect = canvas.getBoundingClientRect();
+            for(let i = 0; i < e.changedTouches.length; i++) {
+                const t = e.changedTouches[i];
+                const _tX = (t.clientX - _tapRect.left) * (width / _tapRect.width);
+                const _tY = (t.clientY - _tapRect.top) * (height / _tapRect.height);
+                if(NPCSystem.handleNpcTap(_tX, _tY)) { _npcSuppressClickUntil = performance.now() + 400; if(window.Input) Input._uiTapTs = e.timeStamp; return; }
             }
         }
 
@@ -19436,8 +19575,21 @@ const SkillTree = {
     // Teto de habilidades compradas por andar: reduz a quantidade de poderes
     // acumulados entre níveis (economia de progressão).
     FLOOR_PURCHASE_LIMIT: 2,
-    _floorSeen: -1,
-    floorPurchaseCount: 0,
+
+    // Compras feitas no andar corrente: fonte única da UI, do unlock e do save.
+    // O estado vive no jogador (persistido junto da run) e a contagem só vale para
+    // o andar em que foi feita: andar diferente zera, run nova nasce zerada.
+    floorPurchasesUsed(p) {
+        const pl = p || window.player;
+        if (!pl) return 0;
+        const lvl = (typeof dungeonLevel !== 'undefined') ? dungeonLevel : 0;
+        if (pl.floorPurchasesLevel !== lvl) {
+            pl.floorPurchasesLevel = lvl;
+            pl.floorPurchasesCount = 0;
+        }
+        const n = Number.isSafeInteger(pl.floorPurchasesCount) ? pl.floorPurchasesCount : 0;
+        return n > 0 ? n : 0;
+    },
 
     // Retorna o id do nó já comprado que excluí este (escolha exclusiva), ou null
     blockedBy(player, skill) {
@@ -19466,11 +19618,7 @@ const SkillTree = {
 
         // Teto por andar (arquétipos/build-codes ignoram para aplicar o preset inteiro)
         if (!bypassLimit) {
-            if (typeof dungeonLevel !== 'undefined' && dungeonLevel !== this._floorSeen) {
-                this._floorSeen = dungeonLevel;
-                this.floorPurchaseCount = 0;
-            }
-            if (this.floorPurchaseCount >= this.FLOOR_PURCHASE_LIMIT) return false;
+            if (this.floorPurchasesUsed(player) >= this.FLOOR_PURCHASE_LIMIT) return false;
         }
 
         // Limite de habilidades de velocidade por classe (ex.: ladino máx 1x)
@@ -19520,7 +19668,10 @@ const SkillTree = {
             if (skill.flag) player.skills[skill.flag] = true;
 
             player.unlockedSkills.push(skillId);
-            if (!bypassLimit) this.floorPurchaseCount++;
+            if (!bypassLimit) {
+                // Já sincronizado com o andar pela checagem do teto; conta mais uma compra
+                player.floorPurchasesCount = this.floorPurchasesUsed(player) + 1;
+            }
             return true;
         }
         return false;
@@ -20283,13 +20434,44 @@ const BossRewardSystem = {
     active: false,
     pending: null,
     _isTrophy: false,
-    _el: null, _subEl: null, _optionsEl: null, _wordsEl: null,
+    _el: null, _subEl: null, _optionsEl: null, _wordsEl: null, _dismissEl: null,
+    // A tela abre no instante da morte do chefe, com o dedo ainda no botão de ataque:
+    // nenhum toque escolhe recompensa nos primeiros 700 ms (mesmo padrão de _lockEndScreenButtons).
+    _armedAt: 0,
+    _ARM_MS: 700,
+    // "Dispensar agora" em dois toques; o segundo tem 3 s para acontecer.
+    _dismissArmed: false,
+    _dismissTimer: null,
 
     init() {
         this._el = document.getElementById('boss-reward-overlay');
         this._subEl = document.getElementById('boss-reward-sub');
         this._optionsEl = document.getElementById('boss-reward-options');
         this._wordsEl = document.getElementById('boss-last-words');
+        this._dismissEl = document.getElementById('boss-reward-dismiss');
+    },
+
+    _stillArmed() { return (Date.now() - (this._armedAt || 0)) < this._ARM_MS; },
+
+    // Volta o "Dispensar" ao estado neutro (usado ao armar, ao expirar e ao fechar o painel).
+    _resetDismiss() {
+        if (this._dismissTimer) { clearTimeout(this._dismissTimer); this._dismissTimer = null; }
+        this._dismissArmed = false;
+        if (this._dismissEl) this._dismissEl.textContent = window.I18n ? I18n.t('bossReward.dismiss') : 'Dispensar agora';
+    },
+
+    // Dois toques: o primeiro só arma e troca o texto, o segundo dispensa de fato.
+    dismissClick() {
+        if (!this.active || this._stillArmed()) return;
+        if (!this._dismissArmed) {
+            this._dismissArmed = true;
+            if (this._dismissEl) this._dismissEl.textContent = window.I18n ? I18n.t('bossReward.dismissConfirm') : 'Dispensar mesmo?';
+            if (this._dismissTimer) clearTimeout(this._dismissTimer);
+            this._dismissTimer = setTimeout(() => this._resetDismiss(), 3000);
+            return;
+        }
+        this._resetDismiss();
+        this.choose(-1);
     },
 
     // F7.1 — últimas palavras (3 s antes da recompensa; some se painel abrir).
@@ -20357,16 +20539,25 @@ const BossRewardSystem = {
         }
         this.pending = options;
         this._isTrophy = isTrophy;
+        // Lista vazia (RunBoons.roll pode devolver []): não abre painel nenhum, o jogo segue.
+        if (!options || !options.length) {
+            this.pending = null;
+            this._isTrophy = false;
+            if (typeof addLog === 'function') addLog((window.I18n ? I18n.t('log.bossRewardPre') : ' 🏆 ') + (_bossNome(boss) || (window.I18n ? I18n.t('boss.fallbackName') : 'O Guardião')) + (window.I18n ? I18n.t('log.bossRewardEmpty') : ' derrotado, mas não há recompensa disponível.'), true);
+            return;
+        }
         this.active = true;
+        this._armedAt = Date.now();
+        this._resetDismiss();
         this._el.classList.remove('hidden');
         if (this._subEl) this._subEl.textContent = (window.I18n ? I18n.t('bossReward.subNamed') : 'O {n} caiu — escolha uma recompensa para o resto da run:').replace('{n}', _bossNome(boss) || 'Guardião');
         if (this._optionsEl) {
             this._optionsEl.innerHTML = options.map((b, i) => isTrophy
-                ? '<button onclick="window.BossRewardSystem.choose(' + i + ')" style="display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;padding:10px 12px;border-radius:12px;font-weight:700;font-size:13px;text-align:left;border:1.5px solid rgba(255,216,107,0.4);background:rgba(255,216,107,0.08);color:#ffd86b;cursor:pointer;touch-action:manipulation;transition:transform 0.15s;">' +
+                ? '<button onclick="window.BossRewardSystem.choose(' + i + ')" style="flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;padding:10px 12px;border-radius:12px;font-weight:700;font-size:13px;text-align:left;border:1.5px solid rgba(255,216,107,0.4);background:rgba(255,216,107,0.08);color:#ffd86b;cursor:pointer;touch-action:manipulation;transition:transform 0.15s;">' +
                     '🏆 ' + _trT(b.name) +
                     '<span style="display:block;font-size:10px;font-weight:400;color:rgba(255,255,255,0.55);line-height:1.3;">' + _trT(b.desc) + ' · ' + _trT(b.lore) + (this._trophyCapped(window.player, b) ? ' · ' + (window.I18n ? I18n.t('trophy.capped') : '(teto atingido)') : '') + '</span>' +
                 '</button>'
-                : '<button onclick="window.BossRewardSystem.choose(' + i + ')" style="display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;padding:10px 12px;border-radius:12px;font-weight:700;font-size:13px;text-align:left;border:1.5px solid ' + (b.curse ? 'rgba(255,96,96,0.55)' : 'rgba(255,216,107,0.4)') + ';background:' + (b.curse ? 'rgba(255,64,64,0.08)' : 'rgba(255,216,107,0.08)') + ';color:' + (b.curse ? '#ff9a9a' : '#ffd86b') + ';cursor:pointer;touch-action:manipulation;transition:transform 0.15s;">' +
+                : '<button onclick="window.BossRewardSystem.choose(' + i + ')" style="flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;padding:10px 12px;border-radius:12px;font-weight:700;font-size:13px;text-align:left;border:1.5px solid ' + (b.curse ? 'rgba(255,96,96,0.55)' : 'rgba(255,216,107,0.4)') + ';background:' + (b.curse ? 'rgba(255,64,64,0.08)' : 'rgba(255,216,107,0.08)') + ';color:' + (b.curse ? '#ff9a9a' : '#ffd86b') + ';cursor:pointer;touch-action:manipulation;transition:transform 0.15s;">' +
                     b.icon + ' ' + b.name + RunBoons.tagHtml(b) +
                     '<span style="display:block;font-size:10px;font-weight:400;color:rgba(255,255,255,0.55);line-height:1.3;">' + b.desc + (RunBoons.hint(window.player, b.id) ? ' · ' + RunBoons.hint(window.player, b.id) : '') + '</span>' +
                 '</button>'
@@ -20383,13 +20574,25 @@ const BossRewardSystem = {
 
     choose(idx) {
         if (!this.active) { if (this._el) this._el.classList.add('hidden'); return; }
+        // Trava de toque: o toque que ainda está martelando o ataque não escolhe recompensa.
+        if (this._stillArmed()) return;
         const b = (this.pending && idx >= 0 && idx < this.pending.length) ? this.pending[idx] : null;
         const wasTrophy = this._isTrophy;
+        // Chefe e herói morrendo no mesmo quadro: a recompensa não vale (nada é aplicado nem gravado).
+        const heroDead = (typeof player !== 'undefined' && player) ? (player.alive === false || player.hp <= 0) : false;
+        this._resetDismiss();
         this.active = false;
         this.pending = null;
         this._isTrophy = false;
         if (this._el) this._el.classList.add('hidden');
         if (typeof gameState !== 'undefined') gameState = 'PLAYING';
+        if (b && heroDead) {
+            // Herói e chefe no mesmo quadro: a recompensa não teve efeito, então também não entra em trophyChoices.
+            const _msg = window.I18n ? I18n.t('log.bossRewardDead') : 'O chefe caiu, mas você não sobreviveu — nenhuma recompensa foi aplicada.';
+            if (typeof addLog === 'function') addLog(_msg, true);
+            if (typeof showToast === 'function') showToast(_msg, 'info');
+            return;
+        }
         if (b && typeof player !== 'undefined' && player) {
             if (wasTrophy) {
                 const _aplicou = this._applyTrophy(player, b);
@@ -20416,12 +20619,17 @@ const BossRewardSystem = {
                 }
             }
         }
+        // Grava depois de voltar a PLAYING: a serialização só roda nesse estado (~3415).
+        // Sem isso, fechar o app logo após a escolha perdia o troféu. Herói morto não grava (hp 0 no save).
+        if (!heroDead && typeof SaveSystem !== 'undefined' && typeof SaveSystem.save === 'function') SaveSystem.save();
     },
 
     reset() {
         this.active = false;
         this.pending = null;
         this._isTrophy = false;
+        this._armedAt = 0;
+        this._resetDismiss();
         if (this._el) this._el.classList.add('hidden');
     }
 };
@@ -34230,7 +34438,8 @@ class Player extends Entity {
                 const e = entities[j];
                 if(e !== this && e.alive && typeof Enemy !== 'undefined' && (e instanceof Enemy || e.isEnemy)) {
                     const dx = e.x - pl.x, dy = e.y - pl.y;
-                    if(dx * dx + dy * dy < rSq) {
+                    const dSq = dx * dx + dy * dy;
+                    if(dSq < rSq && (dSq <= 3600 || hasLineOfSight(map, pl.x, pl.y, e.x, e.y))) {
                         e.takeDamage(CONFIG.VENOM_POOL_DMG, map, this, true);
                         e.poisonStacks = Math.min(CONFIG.ROGUE_POISON_MAX_STACKS, (e.poisonStacks || 0) + 1);
                         e.poisonTimer = Math.max(e.poisonTimer || 0, CONFIG.ROGUE_POISON_DURATION);
@@ -34248,7 +34457,8 @@ class Player extends Entity {
             const e = entities[i];
             if(e !== this && e.alive && typeof Enemy !== 'undefined' && (e instanceof Enemy || e.isEnemy)) {
                 const dx = e.x - pu.x, dy = e.y - pu.y;
-                if(dx * dx + dy * dy < rSq) { e.takeDamage(pu.dmg, map, this, true); spawnParticles(e.x, e.y, pu.color, 6, 4); }
+                const dSq = dx * dx + dy * dy;
+                if(dSq < rSq && (dSq <= 3600 || hasLineOfSight(map, pu.x, pu.y, e.x, e.y))) { e.takeDamage(pu.dmg, map, this, true); spawnParticles(e.x, e.y, pu.color, 6, 4); }
             }
         }
     }
@@ -34495,7 +34705,8 @@ class Player extends Entity {
                     const e = entities[i];
                     if(e !== this && e.alive) {
                         const edx = e.x - this.x, edy = e.y - this.y;
-                        if(edx*edx + edy*edy < burstSq) {
+                        const dSq = edx*edx + edy*edy;
+                        if(dSq < burstSq && (dSq <= 3600 || hasLineOfSight(map, this.x, this.y, e.x, e.y))) {
                             e.takeDamage(45, map, this, true);
                             ScreenEffects.specialHit(e, edx, edy);
                             spawnParticles(e.x, e.y, '#66ccff', 8, 4);
@@ -34532,7 +34743,8 @@ class Player extends Entity {
                     const e = entities[i];
                     if(e !== this && e.alive && typeof Enemy !== 'undefined' && (e instanceof Enemy || e.isEnemy)) {
                         const edx = e.x - this.x, edy = e.y - this.y;
-                        if(edx*edx + edy*edy < rootSq) {
+                        const dSq = edx*edx + edy*edy;
+                        if(dSq < rootSq && (dSq <= 3600 || hasLineOfSight(map, this.x, this.y, e.x, e.y))) {
                             e.frozen = Math.max(e.frozen || 0, 90);
                             e.poisonStacks = (e.poisonStacks || 0) + 2;
                             e.poisonTimer = Math.max(e.poisonTimer || 0, CONFIG.ROGUE_POISON_DURATION);
@@ -34802,7 +35014,8 @@ class Player extends Entity {
                             const e = entities[i];
                             if(e !== this && e.alive && typeof Enemy !== 'undefined' && (e instanceof Enemy || e.isEnemy)) {
                                 const edx = e.x - this.x, edy = e.y - this.y;
-                                if(edx*edx + edy*edy < aoeSq) {
+                                const dSq = edx*edx + edy*edy;
+                                if(dSq < aoeSq && (dSq <= 3600 || hasLineOfSight(m, this.x, this.y, e.x, e.y))) {
                                     e.takeDamage(aoeD, m, this);
                                     spawnParticles(e.x, e.y, '#aa66ff', 8, 4);
                                 }
@@ -35888,8 +36101,9 @@ class NPC {
             NPCInteractionPanel.hide();
         }
 
-        // Show interaction prompt when nearby and no panel open
-        if (this.nearPlayer && !NPCInteractionPanel.visible && !this.interacted) {
+        // Viajante aleatório não abre sozinho: só pelo toque nele (NPCSystem.handleNpcTap).
+        // Cena canônica e NPC de História continuam abrindo por aproximação, como antes.
+        if (this.nearPlayer && !NPCInteractionPanel.visible && !this.interacted && this.canon) {
             this._openDialog();
         }
         // F3: cancelar a cena sem concluir permite reabrir depois de sair e
@@ -36070,6 +36284,17 @@ class NPC {
         ctx.fillText(this.indicator, sx, bobY);
         ctx.textBaseline = 'alphabetic';
 
+        // Viajante aleatório: o painel só abre tocando nele — a dica aparece ao chegar perto
+        if (!this.canon && this.nearPlayer && !(window.NPCInteractionPanel && NPCInteractionPanel.visible)) {
+            ctx.save();
+            ctx.globalAlpha = 0.85;
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 10px ' + COLORS.CANVAS_FONT;
+            ctx.textAlign = 'center';
+            ctx.fillText(window.I18n ? I18n.t('npc.tapToTalk') : 'Toque para falar', sx, bobY - 20);
+            ctx.restore();
+        }
+
         // Lifetime warning fade
         if (this.lifetime < 120) {
             ctx.globalAlpha = this.lifetime / 120;
@@ -36101,6 +36326,33 @@ const NPCSystem = {
         if (window.addLog) addLog(window.I18n ? I18n.t('log.travelerSpawned') : 'Um viajante misterioso apareceu!');
     },
 
+    // Ponto bom para o canônico: chão livre e a pelo menos ~150 px do chefe, do
+    // portal/selo de saída e de hazards (antes ele podia nascer em cima deles).
+    _canonSpotOk(x, y) {
+        if (!map) return false;
+        if (!map.isWall) return true;
+        if (map.isWall(x, y)) return false;
+        const D = 150;
+        const near = (ax, ay) => Math.hypot(x - ax, y - ay) < D;
+        if (typeof entities !== 'undefined' && entities) {
+            for (let i = 0; i < entities.length; i++) {
+                const e = entities[i];
+                if (e && e.alive && (e.isBoss || e.isB) && near(e.x, e.y)) return false;
+            }
+        }
+        if (typeof hazards !== 'undefined' && hazards) {
+            for (let i = 0; i < hazards.length; i++) {
+                const h = hazards[i];
+                if (h && h.alive && near(h.x, h.y)) return false;
+            }
+        }
+        if (typeof dungeonPortal !== 'undefined' && dungeonPortal && dungeonPortal.alive && near(dungeonPortal.x, dungeonPortal.y)) return false;
+        if (typeof secretPortal !== 'undefined' && secretPortal && secretPortal.alive && near(secretPortal.x, secretPortal.y)) return false;
+        const ex = (map.getExitSpawn ? map.getExitSpawn() : null);
+        if (ex && near(ex.x, ex.y)) return false;
+        return true;
+    },
+
     // F3: NPC canônico em ponto fixo do andar (perto da entrada, em direção à
     // saída), com marcador próprio no minimapa. Não usa RNG.
     spawnCanon(scene) {
@@ -36115,7 +36367,14 @@ const NPCSystem = {
         let pos = null;
         for (const dist of [170, 240, 120, 320, 80]) {
             const x = sp.x + dx * dist, y = sp.y + dy * dist;
-            if (!map || !map.isWall || !map.isWall(x, y)) { pos = { x, y }; break; }
+            if (this._canonSpotOk(x, y)) { pos = { x, y }; break; }
+        }
+        if (!pos) {
+            // Nenhum ponto do eixo serve (chefe, portal/selo ou hazard por perto): sorteia longe deles.
+            for (let i = 0; i < 12 && !pos; i++) {
+                const p = map.getSafeSpawn(150);
+                if (this._canonSpotOk(p.x, p.y)) pos = p;
+            }
         }
         if (!pos) pos = map.getSafeSpawn(150);
         const npc = new NPC(pos.x, pos.y, scene.npcType, {
@@ -36180,6 +36439,36 @@ const NPCSystem = {
             return true;
         }
         return false;
+    },
+
+    // Toque no viajante aleatório com o painel fechado: abre só quando o toque acerta o
+    // NPC (44 px de folga) e o jogador está perto. Cena canônica e História seguem
+    // abrindo por aproximação (ver NPC.update).
+    handleNpcTap(tx, ty) {
+        if (!this.npcs.length) return false;
+        if (typeof gameState !== 'undefined' && gameState !== 'PLAYING') return false;
+        if (!window.player || !map) return false;
+        if (NPCInteractionPanel.visible) return false;
+        // Controles: no analógico fixo o toque no anel continua sendo movimento
+        if (typeof Input !== 'undefined' && Input._ctrlType === 'touch' && Input._joyMode === 'fixed') {
+            const R = Math.floor(CONFIG.JOYSTICK_RADIUS * getFontScale()) + 16;
+            if (Math.hypot(tx - Input._lx, ty - Input._ly) < R) return false;
+            if (Math.hypot(tx - Input._rx, ty - Input._ry) < R) return false;
+        }
+        const wx = tx + camX, wy = ty + camY;
+        let best = null, bd = 44;
+        for (let i = 0; i < this.npcs.length; i++) {
+            const n = this.npcs[i];
+            if (!n.alive || n.canon) continue;
+            const d = Math.hypot(wx - n.x, wy - n.y);
+            if (d < bd) { bd = d; best = n; }
+        }
+        if (!best) return false;
+        if (Math.hypot(player.x - best.x, player.y - best.y) > 80) return false;
+        best.interacted = false; // o toque é intenção: pode reabrir o painel
+        best._openDialog();
+        if (window.Vibrate) Vibrate.trigger('ui');
+        return true;
     },
 
     // Oracle reveals portal and nearest chest on minimap
@@ -39836,7 +40125,7 @@ window.SkillTreeUI = SkillTreeUI;
         },
 
         renderSkillsContent() {
-            if (!window.SkillTree || !window.player) return `<p style="text-align:center;color:${COLORS.TEXT_DIM}">Habilidades indisponíveis</p>`;
+            if (!window.SkillTree || !window.player) return `<p style="text-align:center;color:${COLORS.TEXT_DIM}">${_L('skills.unavailable', 'Habilidades indisponíveis')}</p>`;
 
             if (this._skillDetail) {
                 return this.renderSkillDetail(this._skillDetail);
@@ -39880,6 +40169,12 @@ window.SkillTreeUI = SkillTreeUI;
             });
             skills.forEach(s => { if (!placed.has(s.id)) groups.push([s]); });
 
+            // Teto de compras do andar: mesma contagem usada por SkillTree.unlock
+            // (zera sozinha na troca de andar, então o painel nunca fica defasado).
+            const floorLimit = SkillTree.FLOOR_PURCHASE_LIMIT;
+            const floorUsed = SkillTree.floorPurchasesUsed(p);
+            const floorReached = floorUsed >= floorLimit;
+
             const renderNode = (s) => {
                 const isUnlocked = p.unlockedSkills.includes(s.id);
                 const speedLocked = s.cat === 'speed' && !isUnlocked && speedBought >= speedLimit;
@@ -39887,18 +40182,21 @@ window.SkillTreeUI = SkillTreeUI;
                 const fundsOk = p.currency >= s.cost;
                 // Escolha exclusiva (v56): id do irmão já comprado que bloqueia este nó, ou null
                 const blocker = isUnlocked ? null : SkillTree.blockedBy(p, s);
+                // Teto do andar: sem compras neste andar, qualquer nó novo trava
+                const floorLocked = !isUnlocked && floorReached;
                 // Estado explícito do nó (G2): state-bought | state-affordable |
-                // state-locked-req | state-locked-funds | state-speed-locked
+                // state-locked-req | state-locked-funds | state-speed-locked | state-floor-locked
                 const state = isUnlocked ? 'state-bought'
                     : speedLocked ? 'state-speed-locked'
+                    : floorLocked ? 'state-floor-locked'
                     : !reqOk || blocker ? 'state-locked-req'
                     : fundsOk ? 'state-affordable'
                     : 'state-locked-funds';
-                const canUnlock = !isUnlocked && !speedLocked && reqOk && fundsOk && !blocker;
+                const canUnlock = !isUnlocked && !speedLocked && !floorLocked && reqOk && fundsOk && !blocker;
                 const locked = !isUnlocked && !canUnlock;
                 const isAbility = !!s.ability;
                 const limitBadge = speedLocked
-                    ? `<span style="font-size:calc(10px * var(--font-scale,1));padding:2px 8px;border-radius:999px;background:rgba(248,113,113,0.15);color:#f87171;font-weight:bold">LIMITE ${speedBought}/${speedLimit}</span>`
+                    ? `<span style="font-size:calc(10px * var(--font-scale,1));padding:2px 8px;border-radius:999px;background:rgba(248,113,113,0.15);color:#f87171;font-weight:bold">${_L('skills.limitWord', 'LIMITE')} ${speedBought}/${speedLimit}</span>`
                     : '';
                 return `
                     <div class="skill-node ${state}" style="width:100%;padding:10px;border-radius:12px;cursor:pointer;transition:all 0.2s"
@@ -39907,15 +40205,16 @@ window.SkillTreeUI = SkillTreeUI;
                             <div class="sk-name">${_L('skill.' + p.type + '.' + s.id + '.name', s.name)} ${isUnlocked ? '<span class="sk-check">✓</span>' : ''}</div>
                             <div style="display:flex;gap:4px;align-items:center">
                                 ${isAbility ? '<span style="font-size:calc(10px * var(--font-scale,1));padding:2px 8px;border-radius:999px;background:rgba(250,204,21,0.2);color:' + COLORS.GOLD + ';font-weight:bold">' + _L('skills.ability', 'HABILIDADE') + '</span>' : ''}
-                                ${s.cat === 'speed' ? '<span style="font-size:calc(10px * var(--font-scale,1));padding:2px 8px;border-radius:999px;background:rgba(96,165,250,0.2);color:#60a5fa;font-weight:bold">VEL</span>' : ''}
+                                ${s.cat === 'speed' ? '<span style="font-size:calc(10px * var(--font-scale,1));padding:2px 8px;border-radius:999px;background:rgba(96,165,250,0.2);color:#60a5fa;font-weight:bold">' + _L('skills.speedTag', 'VEL') + '</span>' : ''}
                                 ${limitBadge}
                             </div>
                         </div>
                         <div style="font-size:10px;color:${COLORS.TEXT_DIM};line-height:1.3">${_L('skill.' + p.type + '.' + s.id + '.desc', s.desc)}</div>
-                        ${blocker ? `<div style="font-size:calc(10px * var(--font-scale,1));color:#f87171;margin-top:3px">${_L('skills.blockedBy', 'Bloqueado por ')}${_L('skill.' + p.type + '.' + blocker + '.name', (byId[blocker] || {}).name || blocker)} (escolha exclusiva)</div>` : ''}
+                        ${blocker ? `<div style="font-size:calc(10px * var(--font-scale,1));color:#f87171;margin-top:3px">${_L('skills.blockedBy', 'Bloqueado por ')}${_L('skill.' + p.type + '.' + blocker + '.name', (byId[blocker] || {}).name || blocker)}${_L('skills.exclusiveSuffix', ' (escolha exclusiva)')}</div>` : ''}
+                        ${floorLocked ? `<div style="font-size:calc(10px * var(--font-scale,1));color:#f87171;margin-top:3px">⛔ ${_L('skills.floorLimitNode', 'Limite do andar')} ${floorUsed}/${floorLimit}</div>` : ''}
                         <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
-                            <div style="font-size:calc(10px * var(--font-scale,1));color:${COLORS.TEXT_MUTED}">${s.requires ? _L('skills.requires', 'Requer: ') + (byId[s.requires] ? _L('skill.' + p.type + '.' + byId[s.requires].id + '.name', byId[s.requires].name) : '?') : _L('skills.tier', 'Tier ') + (s.tier || 1)}</div>
-                            <div class="sk-status">${isUnlocked ? _L('skills.unlocked', 'DESBLOQUEADO') : (speedLocked ? 'LIMITE' : (locked ? '<svg class="lock-s" width="10" height="10" style="color:#9ca3af;flex:none"><use href="#ic-lock"/></svg> ' + s.cost + ' <svg class="coin-s" width="10" height="10" style="color:#ffcc00;flex:none"><use href="#ic-coin"/></svg>' : s.cost + ' <svg class="coin-s" width="10" height="10" style="color:#ffcc00;flex:none"><use href="#ic-coin"/></svg>'))}</div>
+                            <div style="font-size:calc(10px * var(--font-scale,1));color:${COLORS.TEXT_MUTED}">${s.requires ? _L('skills.requires', 'Requer: ') + (byId[s.requires] ? _L('skill.' + p.type + '.' + byId[s.requires].id + '.name', byId[s.requires].name) : _L('skills.unknownNode', 'habilidade anterior')) : _L('skills.tier', 'Tier ') + (s.tier || 1)}</div>
+                            <div class="sk-status">${isUnlocked ? _L('skills.unlocked', 'DESBLOQUEADO') : (speedLocked ? _L('skills.limitWord', 'LIMITE') : (locked ? '<svg class="lock-s" width="10" height="10" style="color:#9ca3af;flex:none"><use href="#ic-lock"/></svg> ' + s.cost + ' <svg class="coin-s" width="10" height="10" style="color:#ffcc00;flex:none"><use href="#ic-coin"/></svg>' : s.cost + ' <svg class="coin-s" width="10" height="10" style="color:#ffcc00;flex:none"><use href="#ic-coin"/></svg>'))}</div>
                         </div>
                     </div>
                 `;
@@ -39931,7 +40230,10 @@ window.SkillTreeUI = SkillTreeUI;
 
             return `
                 <div style="text-align:center;margin-bottom:12px;color:${COLORS.GOLD};font-weight:bold;letter-spacing:0.1em;font-size:13px;background:rgba(40,30,20,0.6);padding:8px 0;border-radius:12px;border:1.5px solid rgba(250,204,21,0.35);box-shadow:0 0 10px rgba(255,204,0,0.1)">
-                    <svg class="coin-s" width="12" height="12" style="color:#ffcc00;vertical-align:-1px;margin-right:4px"><use href="#ic-coin"/></svg> SEU OURO: ${p.currency}
+                    <svg class="coin-s" width="12" height="12" style="color:#ffcc00;vertical-align:-1px;margin-right:4px"><use href="#ic-coin"/></svg> ${_L('shop.yourGold', 'SEU OURO')}: ${p.currency}
+                </div>
+                <div style="text-align:center;margin-bottom:12px;font-size:calc(11px * var(--font-scale,1));font-weight:bold;padding:6px 0;border-radius:10px;border:1px solid ${floorReached ? 'rgba(248,113,113,0.4)' : 'rgba(255,255,255,0.12)'};background:${floorReached ? 'rgba(248,113,113,0.12)' : 'rgba(255,255,255,0.04)'};color:${floorReached ? '#f87171' : COLORS.TEXT_DIM}">
+                    ${_L('skills.floorPurchases', 'HABILIDADES DESTE ANDAR')}: ${floorUsed}/${floorLimit}${floorReached ? ' — ' + _L('skills.floorLimitShort', 'limite atingido, desça um andar') : ''}
                 </div>
                 <div style="display:flex;gap:6px;margin-bottom:14px">
                     ${statChip('HP', p.maxHp, '#4ade80')}
@@ -39963,6 +40265,11 @@ window.SkillTreeUI = SkillTreeUI;
             if (!s) { this._skillDetail = null; return this.renderSkillsContent(); }
             const isUnlocked = p.unlockedSkills.includes(s.id);
             const reqOk = !s.requires || p.unlockedSkills.includes(s.requires);
+            // Pré-requisito pelo nome localizado (o id cru não aparece na tela)
+            const reqNode = s.requires ? SkillTree.getNodes(p.type).find(n => n.id === s.requires) : null;
+            const reqName = reqNode
+                ? _L('skill.' + p.type + '.' + reqNode.id + '.name', reqNode.name)
+                : _L('skills.unknownNode', 'habilidade anterior');
             const speedCount = p.unlockedSkills.filter(id => {
                 const n = SkillTree.getNodes(p.type).find(x => x.id === id);
                 return n && n.cat === 'speed';
@@ -39971,38 +40278,50 @@ window.SkillTreeUI = SkillTreeUI;
             const speedLocked = s.cat === 'speed' && !isUnlocked && speedCount >= speedLimit;
             // Escolha exclusiva (v56): irmão já comprado que bloqueia este nó
             const blocker = isUnlocked ? null : SkillTree.blockedBy(p, s);
-            const canUnlock = !isUnlocked && !speedLocked && p.currency >= s.cost && reqOk && !blocker;
+            const blockerName = blocker
+                ? _L('skill.' + p.type + '.' + blocker + '.name', (SkillTree.getNodes(p.type).find(x => x.id === blocker) || {}).name || blocker)
+                : '';
+            // Teto de compras do andar: mesma contagem usada por SkillTree.unlock
+            const floorLimit = SkillTree.FLOOR_PURCHASE_LIMIT;
+            const floorUsed = SkillTree.floorPurchasesUsed(p);
+            const floorLocked = !isUnlocked && floorUsed >= floorLimit;
+            const canUnlock = !isUnlocked && !speedLocked && !floorLocked && p.currency >= s.cost && reqOk && !blocker;
             const isAbility = !!s.ability;
 
             const statusLine = isUnlocked
-                ? '<div style="text-align:center;color:#4ade80;font-weight:bold;font-size:13px">✓ Já desbloqueado</div>'
+                ? `<div style="text-align:center;color:#4ade80;font-weight:bold;font-size:13px">✓ ${_L('skills.alreadyOwned', 'Já desbloqueado')}</div>`
                 : speedLocked
-                    ? `<div style="text-align:center;color:#f87171;font-weight:bold;font-size:12px;padding:10px;border-radius:10px;background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3)">⛔ Limite de velocidade atingido (${speedCount}/${speedLimit}) — o ladino já é naturalmente veloz!</div>`
+                    ? `<div style="text-align:center;color:#f87171;font-weight:bold;font-size:12px;padding:10px;border-radius:10px;background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3)">⛔ ${_L('skills.speedLimitDetail', 'Limite de velocidade atingido')} (${speedCount}/${speedLimit})</div>`
                     : blocker
-                        ? '<div style="text-align:center;color:#f87171;font-weight:bold;font-size:12px;padding:10px;border-radius:10px;background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3)">' + _L('skills.blockedBy', 'Bloqueado por ') + _L('skill.' + p.type + '.' + blocker + '.name', (SkillTree.getNodes(p.type).find(x => x.id === blocker) || { name: blocker }).name) + ' (escolha exclusiva)</div>'
+                        ? '<div style="text-align:center;color:#f87171;font-weight:bold;font-size:12px;padding:10px;border-radius:10px;background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3)">' + _L('skills.blockedBy', 'Bloqueado por ') + blockerName + _L('skills.exclusiveSuffix', ' (escolha exclusiva)') + '</div>'
+                    : floorLocked
+                        // Sem compra possível: o botão continua clicável só para mostrar o motivo (toast)
+                        ? `<div style="text-align:center;color:#f87171;font-weight:bold;font-size:12px;padding:10px;border-radius:10px;background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3)">⛔ ${_L('skills.floorLimitDetail', 'Limite de {n} habilidades por andar').replace('{n}', String(floorLimit))} (${floorUsed}/${floorLimit}) — ${_L('skills.floorLimitHint', 'desça um andar para comprar mais')}</div>
+                            <button style="width:100%;padding:12px;border-radius:12px;font-weight:bold;font-size:12px;color:#fca5a5;background:rgba(255,255,255,0.04);border:1px dashed rgba(248,113,113,0.45);cursor:pointer;touch-action:manipulation"
+                                onclick="UIManager.unlockSkill('${s.id}')">${_L('skills.floorLimitBtn', '⛔ LIMITE DO ANDAR')} (${floorUsed}/${floorLimit})</button>`
                     : canUnlock
                         ? `<button style="width:100%;padding:14px;border-radius:12px;font-weight:bold;font-size:14px;color:#1a0e00;background:linear-gradient(90deg,#ffdd00,#ffb800);cursor:pointer;border:none;transition:transform 0.15s"
                             onclick="UIManager.unlockSkill('${s.id}')">${_L('skills.unlock', '⚡ DESBLOQUEAR')} (${s.cost} <svg class="coin-s" width="11" height="11" style="color:#7a5200;vertical-align:-1px"><use href="#ic-coin"/></svg>)</button>`
-                        : `<div style="text-align:center;color:${COLORS.TEXT_MUTED};font-size:12px">Moedas insuficientes (faltam ${Math.max(0, s.cost - p.currency)} <svg class="coin-s" width="10" height="10" style="color:#9ca3af;vertical-align:-1px"><use href="#ic-coin"/></svg>)</div>`;
+                        : `<div style="text-align:center;color:${COLORS.TEXT_MUTED};font-size:12px">${_L('skills.goldMissing', 'Moedas insuficientes (faltam {n})').replace('{n}', String(Math.max(0, s.cost - p.currency)))} <svg class="coin-s" width="10" height="10" style="color:#9ca3af;vertical-align:-1px"><use href="#ic-coin"/></svg></div>`;
 
             return `
                 <div style="display:flex;flex-direction:column;gap:14px">
                     <div style="padding:18px;border-radius:16px;border:1.5px solid ${isUnlocked ? 'rgba(167,139,250,0.6)' : (canUnlock ? 'rgba(250,204,21,0.5)' : 'rgba(255,255,255,0.1)')};background:${isUnlocked ? 'linear-gradient(135deg, rgba(167,139,250,0.25), rgba(120,80,220,0.2))' : 'rgba(255,255,255,0.04)'};text-align:center">
                         <div style="height:30px;display:flex;align-items:center;justify-content:center;margin-bottom:6px">${isAbility ? '<svg width="26" height="26" style="color:#ffd86b"><use href="#ic-bolt"/></svg>' : (s.cat === 'speed' ? '<svg width="26" height="26" style="color:#60a5fa"><use href="#ic-wind"/></svg>' : '<svg width="26" height="26" style="color:#e0b6ff"><use href="#ic-star"/></svg>')}</div>
                         <div style="font-size:18px;font-weight:bold;color:#fff">${_L('skill.' + p.type + '.' + s.id + '.name', s.name)}</div>
-                        ${isAbility ? '<div style="font-size:10px;margin-top:4px;color:' + COLORS.GOLD + ';font-weight:bold;text-transform:uppercase;letter-spacing:0.1em">Habilidade especial</div>' : ''}
-                        ${s.cat === 'speed' ? `<div style="font-size:10px;margin-top:4px;color:#60a5fa;font-weight:bold;text-transform:uppercase;letter-spacing:0.1em">Velocidade (máx ${speedLimit}x por run)</div>` : ''}
+                        ${isAbility ? '<div style="font-size:10px;margin-top:4px;color:' + COLORS.GOLD + ';font-weight:bold;text-transform:uppercase;letter-spacing:0.1em">' + _L('skills.specialAbility', 'Habilidade especial') + '</div>' : ''}
+                        ${s.cat === 'speed' ? `<div style="font-size:10px;margin-top:4px;color:#60a5fa;font-weight:bold;text-transform:uppercase;letter-spacing:0.1em">${_L('skills.speedNote', 'Velocidade (máx {n}x por run)').replace('{n}', String(speedLimit))}</div>` : ''}
                         <p style="font-size:13px;color:${COLORS.TEXT_DIM};line-height:1.5;margin-top:8px">${_L('skill.' + p.type + '.' + s.id + '.desc', s.desc)}</p>
                     </div>
                     <div style="display:flex;justify-content:space-between;font-size:12px;color:${COLORS.TEXT_DIM};padding:0 4px">
-                        <span>Custo: <b style="color:${COLORS.GOLD}">${s.cost} <svg class="coin-s" width="10" height="10" style="color:#ffcc00;vertical-align:-1px"><use href="#ic-coin"/></svg></b></span>
+                        <span>${_L('skills.cost', 'Custo:')} <b style="color:${COLORS.GOLD}">${s.cost} <svg class="coin-s" width="10" height="10" style="color:#ffcc00;vertical-align:-1px"><use href="#ic-coin"/></svg></b></span>
                         <span>${_L('skills.tier', 'Tier ').trim()}: <b>${s.tier || 1}</b></span>
                     </div>
-                    ${s.requires ? `<div style="font-size:11px;color:${reqOk ? '#4ade80' : '#f87171'};text-align:center;padding:8px;border-radius:10px;background:rgba(255,255,255,0.04)">Requer: ${s.requires} (${reqOk ? 'desbloqueado' : 'bloqueado'})</div>` : ''}
-                    ${!reqOk ? `<div style="font-size:11px;color:#f87171;text-align:center">Desbloqueie a habilidade anterior primeiro.</div>` : ''}
+                    ${s.requires ? `<div style="font-size:11px;color:${reqOk ? '#4ade80' : '#f87171'};text-align:center;padding:8px;border-radius:10px;background:rgba(255,255,255,0.04)">${_L('skills.requires', 'Requer: ')}${reqName} (${reqOk ? _L('skills.reqUnlocked', 'desbloqueado') : _L('skills.reqLocked', 'bloqueado')})</div>` : ''}
+                    ${!reqOk ? `<div style="font-size:11px;color:#f87171;text-align:center">${_L('skills.reqFirst', 'Desbloqueie a habilidade anterior primeiro.')}</div>` : ''}
                     ${statusLine}
                     <button style="width:100%;padding:12px;border-radius:12px;font-weight:bold;font-size:12px;color:${COLORS.TEXT};background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);cursor:pointer"
-                        onclick="UIManager.closeSkillDetail()">← VOLTAR</button>
+                        onclick="UIManager.closeSkillDetail()">${_L('skills.back', '← VOLTAR')}</button>
                 </div>
             `;
         },
@@ -40012,11 +40331,41 @@ window.SkillTreeUI = SkillTreeUI;
                 const node = SkillTree.getNodes(player.type).find(n => n.id === skillId);
                 player.currency -= node.cost;
                 if (node.ability) {
-                    addLog(' ' + node.name + (window.I18n ? I18n.t('log.unlockedSuffix') : ' desbloqueada!'));
+                    addLog(' ' + _L('skill.' + player.type + '.' + node.id + '.name', node.name) + (window.I18n ? I18n.t('log.unlockedSuffix') : ' desbloqueada!'));
                     if (window.SND && SND.playAchievement) SND.playAchievement();
                 }
                 this.openPanel('skills');
+                return;
             }
+            // Falha do SkillTree.unlock: diz o motivo real em vez de deixar o botão mudo
+            const p = player;
+            const node = SkillTree.getNodes(p.type).find(n => n.id === skillId);
+            if (!node) return;
+            const byId = {};
+            SkillTree.getNodes(p.type).forEach(n => byId[n.id] = n);
+            const nameOf = (id) => _L('skill.' + p.type + '.' + id + '.name', (byId[id] || {}).name || _L('skills.unknownNode', 'habilidade anterior'));
+            const speedLimit = SkillTree.SPEED_LIMIT[p.type] || 99;
+            const speedCount = p.unlockedSkills.filter(id => byId[id] && byId[id].cat === 'speed').length;
+            const blocker = SkillTree.blockedBy(p, node);
+            let msg;
+            if (p.unlockedSkills.includes(node.id)) {
+                msg = _L('skills.failOwned', 'Você já desbloqueou esta habilidade.');
+            } else if (node.requires && !p.unlockedSkills.includes(node.requires)) {
+                msg = _L('skills.failRequires', 'Falta o pré-requisito: {name}').replace('{name}', nameOf(node.requires));
+            } else if (blocker) {
+                msg = _L('skills.blockedBy', 'Bloqueado por ') + nameOf(blocker) + _L('skills.exclusiveSuffix', ' (escolha exclusiva)');
+            } else if (SkillTree.floorPurchasesUsed(p) >= SkillTree.FLOOR_PURCHASE_LIMIT) {
+                msg = _L('skills.failFloorLimit', 'Limite de {n} habilidades por andar — desça um andar.').replace('{n}', String(SkillTree.FLOOR_PURCHASE_LIMIT));
+            } else if (node.cat === 'speed' && speedCount >= speedLimit) {
+                msg = _L('skills.failSpeedLimit', 'Limite de velocidade atingido ({n}/{lim}) — esta classe não compra mais velocidade.').replace('{n}', String(speedCount)).replace('{lim}', String(speedLimit));
+            } else if (p.currency < node.cost) {
+                msg = _L('skills.failGold', 'Ouro insuficiente — faltam {n} moedas.').replace('{n}', String(node.cost - p.currency));
+            } else {
+                msg = _L('skills.failGeneric', 'Não foi possível desbloquear esta habilidade agora.');
+            }
+            if (window.SND && SND.playError) SND.playError();
+            if (typeof showToast === 'function') showToast(msg, 'error');
+            this.openPanel('skills');
         },
 
         // The Status panel is the one career surface already reachable from the thumb
