@@ -10579,9 +10579,9 @@ var CONFIG = {
     // Grupos de inimigos com respiro: o próximo grupo só entra quando sobram poucos vivos e depois de uma pausa.
     WAVE_NEXT_WHEN_ALIVE: 2,       // o próximo grupo só vem com no máximo 2 inimigos vivos
     WAVE_SIZE_BASE: 3,             // tamanho base do grupo (+1 a cada 3 pisos)
-    WAVE_SIZE_MAX: 6,              // teto do tamanho do grupo pelo andar
+    WAVE_SIZE_MAX: 5,              // teto do tamanho do grupo pelo andar
     WAVE_BREATHER_START: 6,        // segundos de respiro no andar 1 (cai 0,25 s por andar)
-    WAVE_BREATHER_MIN: 3.5,        // respiro mínimo, em segundos
+    WAVE_BREATHER_MIN: 4,          // respiro mínimo, em segundos
     WAVE_STALL_SECONDS: 25,        // válvula: grupo vivo há mais que isso libera o próximo mesmo com mais de 2 vivos
 
     // Performance Tuning
@@ -10786,20 +10786,20 @@ var CONFIG = {
     SALAMANDER_TRAIL_MAX: 3,         // poças vivas por salamandra
     SALAMANDER_TRAIL_TOTAL_MAX: 10,  // poças de salamandra vivas no mapa inteiro
     SALAMANDER_TRAIL_MIN_GAP: 40,    // distância mínima (px) entre poças da mesma salamandra
-    SALAMANDER_TRAIL_FRAMES: 120,    // duração de cada poça (frames)
+    SALAMANDER_TRAIL_FRAMES: 90,     // duração de cada poça (frames)
     SALAMANDER_TRAIL_RADIUS: 16,     // raio de acerto da poça (a chama comum tem 25)
-    SALAMANDER_TRAIL_DAMAGE: 1.5,    // dano por tique no jogador (HAZARD_FIRE_DAMAGE é 2)
+    SALAMANDER_TRAIL_DAMAGE: 1.2,    // dano por tique no jogador (HAZARD_FIRE_DAMAGE é 2)
 
     // Espreitador do Mato (floresta): escondido em folhas; revelado, avisa e dá UM bote com veneno (ver LurkerEnemy)
     LURKER_HP_MULT: 1.1,             // vida: ~1,1x o inimigo comum
     LURKER_XP: 14,
     LURKER_COLOR: '#4f9a3c',
     LURKER_REVEAL_RANGE: 150,        // revela-se com o jogador a esta distância e com linha de visão, ou ao levar dano
-    LURKER_WINDUP_FRAMES: 35,        // aviso no chão, com o alcance real do bote
+    LURKER_WINDUP_FRAMES: 45,        // aviso no chão, com o alcance real do bote
     LURKER_AIM_LOCK_FRAMES: 8,       // últimos ticks do aviso: a mira trava
     LURKER_LUNGE_SPEED: 9,           // px por tick no bote
     LURKER_LUNGE_FRAMES: 12,         // alcance do bote: 9 x 12 = 108 px
-    LURKER_LUNGE_DAMAGE_MULT: 1.4,   // dano do bote, x dano de contato do inimigo comum
+    LURKER_LUNGE_DAMAGE_MULT: 1.25,  // dano do bote, x dano de contato do inimigo comum
     LURKER_RECOVER_FRAMES: 60,       // parado depois do bote, antes de voltar a perseguir
     LURKER_BLINK_PERIOD: 240,        // escondido, os olhos piscam a cada ~4 s
     LURKER_BLINK_FRAMES: 3,          // quadros em que os olhos ficam acesos
