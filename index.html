@@ -11066,8 +11066,28 @@ var CONFIG = {
     BIOME_FOREST_AMBIENT_CHANCE: 0.025,
 
     // Scaling Difficulty - Enemy stat growth per dungeon level
-    DIFFICULTY_HP_PER_LEVEL: 0.19,     // +19% HP per dungeon level (rebalanced: player procs buffed)
-    DIFFICULTY_DAMAGE_PER_LEVEL: 0.115, // +11.5% damage per dungeon level
+    DIFFICULTY_HP_PER_LEVEL: 0.19,     // +19% HP per dungeon level, linear (base term, used by getEnemyHpMult/floorScale)
+    // Crescimento COMPOSTO de HP por andar, multiplicado em cima do linear acima (ENEMY_HP_GROWTH^andar).
+    // Motivo: o dano do jogador cresce em produto (dano base × nível da arma ×
+    // multiplicador da arma × bônus de habilidade), e só o +19% linear não
+    // acompanhava — no andar 5 o inimigo comum morria de um golpe.
+    // Contas (ENEMY_HP 30, sem DDA nem preset; valor antigo entre parênteses):
+    //   andar 1: 30 (30); andar 2: 39 (35); andar 5: 77 (52, +47%);
+    //   andar 10: 178 (81); andar 20: 304 (138); andar 50: 680 (309);
+    //   profundidade 100 do Abismo: 1024 (465) — nunca mais que 2,2× o antigo.
+    //   O teto começa a cortar no andar 10 (1,10^9 = 2,36 é cortado em 2,2); do 10
+    //   em diante o comum fica no máximo 2,2× mais tanque que antes do composto.
+    // Calibrar no teste: 1.00 desliga o composto; 1.06 fica mais leve no meio de
+    // jogo; 1.15/1.20 engrossam o meio sem estourar o fundo (o teto segura).
+    // Não usar valor abaixo de 1.
+    ENEMY_HP_GROWTH: 1.10,
+    // Teto do fator composto (não do linear, que usa DIFFICULTY_MAX_SCALING_LEVEL).
+    // Protege o Abismo fundo: lá o nível efetivo passa de 50 e o composto sozinho
+    // levaria o comum da profundidade 100 a ~107× o HP de hoje (49,7 mil por
+    // inimigo). Com o teto em 2,2 o comum de qualquer andar fica no máximo 2,2×
+    // mais tanque que antes do composto, e o Abismo mantém recorde e progressão.
+    ENEMY_HP_GROWTH_CAP: 2.2,
+    DIFFICULTY_DAMAGE_PER_LEVEL: 0.115, // +11.5% damage per dungeon level (só linear, de propósito: o HP máximo do jogador quase não cresce; ver getEnemyDamageMult)
     DIFFICULTY_MAX_SCALING_LEVEL: 50,  // linear up to dungeon 50, logarithmic beyond (DifficultySystem.effectiveLevelFor)
 
     // Boss scaling - extra power at high dungeons
@@ -11630,6 +11650,34 @@ var CONFIG = {
         { id: 'w_froststaff', name: 'Cajado Glacial', desc: '+70% dmg, slow aura', damageMult: 1.7, fireRate: 0.9, range: 1.4, color: '#cc66ff', tier: 3, slowAura: true, element: 'ice', unique: 'frostNova' },
         { id: 'w_voidstaff', name: 'Cajado do Vazio', desc: '+120% dmg, spell echo', damageMult: 2.2, fireRate: 0.95, range: 1.5, color: '#ff8800', tier: 4, spellEcho: true, element: 'lightning', unique: 'spellEcho' },
     ],
+};
+
+// Elenco de inimigos por andar: [tipo, peso], na ordem em que a roleta lê. A MAIOR linha menor ou
+// igual ao andar vale para ele (a linha 6 é o elenco do 6 em diante); ajustar o jogo = mexer só aqui.
+// O peso aceita número ou função (o elite cresce com o andar, via DifficultySystem).
+// '@biome' é o tipo do bioma atual (esqueleto, salamandra ou espreitador), na posição da ordem antiga.
+// Por cima da tabela continuam valendo canSpawnType() (presets de dificuldade), o teto de
+// espreitadores (CONFIG.LURKER_MAX_HIDDEN), o carregador fora da luta contra o chefe e a fábrica
+// de ENEMY_SPAWN_FACTORIES (tipo sem fábrica não entra no pool).
+// O pool mudou nesta versão: o andar 1 ganhou o carregador e o curador (3 tipos, mesmo no bioma
+// padrão), então a composição do desafio diário no mesmo dia muda — mapa, chefes e drops seguem os mesmos.
+CONFIG.ENEMY_FLOOR_ROSTER = {
+    // Andar 1: 3 tipos já aqui — carregador (telegrafa a investida antes de correr) e curador em peso
+    // baixo, que vira alvo de prioridade e ensina a escolher o alvo, sem subir a dificuldade. O curador
+    // no 1 não degenera: ele nunca cura a si mesmo nem a outro curador e, sem aliados por perto, só foge.
+    // Ordem: o bioma fica na frente (o intervalo [0, peso do bioma) sorteia o mesmo tipo de antes) e os
+    // raros entram logo depois, deixando 'normal' como o rabo único do pool.
+    1: [['@biome', 0], ['charger', 0.05], ['healer', 0.04], ['normal', 1.0]],
+    // Andar 2: entra o curador; o trap está na linha, mas o preset de dificuldade só o libera no 4
+    2: [['trap', CONFIG.TRAP_SPAWN_CHANCE], ['healer', CONFIG.HEALER_SPAWN_CHANCE], ['@biome', 0], ['charger', 0.05], ['normal', 1.0]],
+    // Andar 3: entra o enxame e o convocador; o carregador volta ao peso normal (a partir daqui)
+    3: [['trap', CONFIG.TRAP_SPAWN_CHANCE], ['swarm', CONFIG.SWARM_CHANCE], ['healer', CONFIG.HEALER_SPAWN_CHANCE], ['summoner', 0.05], ['@biome', 0], ['charger', CONFIG.CHARGER_SPAWN_CHANCE], ['normal', 1.0]],
+    // Andar 4: entra o escudeiro
+    4: [['trap', CONFIG.TRAP_SPAWN_CHANCE], ['swarm', CONFIG.SWARM_CHANCE], ['shielder', CONFIG.SHIELDER_SPAWN_CHANCE], ['healer', CONFIG.HEALER_SPAWN_CHANCE], ['summoner', 0.05], ['@biome', 0], ['charger', CONFIG.CHARGER_SPAWN_CHANCE], ['normal', 1.0]],
+    // Andar 5: entra o elite (peso pelo preset de dificuldade)
+    5: [['trap', CONFIG.TRAP_SPAWN_CHANCE], ['elite', () => DifficultySystem.getEliteChance()], ['swarm', CONFIG.SWARM_CHANCE], ['shielder', CONFIG.SHIELDER_SPAWN_CHANCE], ['healer', CONFIG.HEALER_SPAWN_CHANCE], ['summoner', 0.05], ['@biome', 0], ['charger', CONFIG.CHARGER_SPAWN_CHANCE], ['normal', 1.0]],
+    // Andar 6 (e todos acima): entra o baú imitador
+    6: [['mimic', CONFIG.MIMIC_SPAWN_CHANCE], ['trap', CONFIG.TRAP_SPAWN_CHANCE], ['elite', () => DifficultySystem.getEliteChance()], ['swarm', CONFIG.SWARM_CHANCE], ['shielder', CONFIG.SHIELDER_SPAWN_CHANCE], ['healer', CONFIG.HEALER_SPAWN_CHANCE], ['summoner', 0.05], ['@biome', 0], ['charger', CONFIG.CHARGER_SPAWN_CHANCE], ['normal', 1.0]]
 };
 
 
@@ -14469,22 +14517,51 @@ function _leaveSecretRoom(byExit) {
 // Single source of truth for the enemy types the spawner can roll. A type added
 // to the pool without a matching factory would otherwise silently fall through to
 // a normal enemy — which is exactly how `summoner` spent a release unreachable.
+// O elenco vem de CONFIG.ENEMY_FLOOR_ROSTER (tabela por andar, ver comentário lá).
+// Linha que vale para o andar: a última chave <= dungeonLevel. Andar sem linha (ou tabela vazia)
+// cai no comportamento antigo: só 'normal' mais o que as condições de sempre liberarem.
+function _floorRosterRow(level) {
+    const R = CONFIG.ENEMY_FLOOR_ROSTER || {};
+    let best = null;
+    for (const k in R) {
+        const n = Number(k);
+        if (!(n <= level)) continue;
+        if (best === null || n > best) best = n;
+    }
+    const row = (best === null) ? null : R[best];
+    return (row && row.length) ? row : [['normal', 1.0]];
+}
+
+// Peso da entrada: número fixo ou função (o elite cresce com o andar).
+function _rosterWeight(w) { return (typeof w === 'function') ? w() : w; }
+
+// Tipo do bioma atual, na posição que a linha marca com '@biome'. O teto de espreitadores vale aqui.
+function _pushBiomeEnemy(push) {
+    if (typeof BiomeSystem === 'undefined') return;
+    if (BiomeSystem.currentBiome === 'crypt') push('skeleton', 0.35);
+    else if (BiomeSystem.currentBiome === 'lavaCave') push('salamander', 0.3);
+    else if (BiomeSystem.currentBiome === 'forest' && _hiddenLurkerCount() < CONFIG.LURKER_MAX_HIDDEN) push('lurker', 0.3);
+}
+
 function _buildSpawnPool() {
     const pool = [];
-    const push = (type, weight) => { if (weight > 0) pool.push([type, weight]); };
-    if (DifficultySystem.canSpawnType('mimic')) push('mimic', CONFIG.MIMIC_SPAWN_CHANCE);
-    if (DifficultySystem.canSpawnType('trap')) push('trap', CONFIG.TRAP_SPAWN_CHANCE);
-    if (DifficultySystem.canSpawnType('elite')) push('elite', DifficultySystem.getEliteChance());
-    if (DifficultySystem.canSpawnType('swarm')) push('swarm', CONFIG.SWARM_CHANCE);
-    if (DifficultySystem.canSpawnType('shielder') && dungeonLevel >= CONFIG.SHIELDER_SPAWN_DUNGEON) push('shielder', CONFIG.SHIELDER_SPAWN_CHANCE);
-    if (dungeonLevel >= 2) push('healer', CONFIG.HEALER_SPAWN_CHANCE);
-    if (dungeonLevel >= 3) push('summoner', 0.05);
-    if (typeof BiomeSystem !== 'undefined' && BiomeSystem.currentBiome === 'crypt') push('skeleton', 0.35);
-    if (typeof BiomeSystem !== 'undefined' && BiomeSystem.currentBiome === 'lavaCave') push('salamander', 0.3);
-    if (typeof BiomeSystem !== 'undefined' && BiomeSystem.currentBiome === 'forest' && _hiddenLurkerCount() < CONFIG.LURKER_MAX_HIDDEN) push('lurker', 0.3);
-    // Carregador (v67): a partir do piso 3, fora da luta contra o chefe (salas secretas já são barradas no spawner)
-    if (dungeonLevel >= CONFIG.CHARGER_SPAWN_DUNGEON && !bossActive) push('charger', CONFIG.CHARGER_SPAWN_CHANCE);
-    push('normal', 1.0);
+    // Tipo sem fábrica em ENEMY_SPAWN_FACTORIES cairia no fallback mudo (normal): não entra no pool.
+    // canSpawnType() (presets de dificuldade) continua filtrando cada tipo.
+    const push = (type, weight) => {
+        if (!(weight > 0)) return;
+        if (!window.ENEMY_SPAWN_FACTORIES || !window.ENEMY_SPAWN_FACTORIES[type]) return;
+        if (!DifficultySystem.canSpawnType(type)) return;
+        pool.push([type, weight]);
+    };
+    const row = _floorRosterRow(dungeonLevel);
+    for (let i = 0; i < row.length; i++) {
+        const type = row[i][0];
+        if (type === '@biome') { _pushBiomeEnemy(push); continue; }
+        // Carregador: fora da luta contra o chefe (salas secretas já são barradas no spawner)
+        if (type === 'charger' && bossActive) continue;
+        push(type, _rosterWeight(row[i][1]));
+    }
+    if (pool.length === 0) pool.push(['normal', 1.0]); // nunca um elenco vazio
     return pool;
 }
 
@@ -21638,7 +21715,8 @@ const DifficultySystem = {
         return this.effectiveLevelFor(this.dungeonLevel);
     },
 
-    // Linear até DIFFICULTY_MAX_SCALING_LEVEL (pisos 1-50 inalterados); acima dele
+    // Nível usado pelo HP/dano de inimigo comum: soma linear + composto (ENEMY_HP_GROWTH)
+    // e o ramp do desafio diário. Linear até DIFFICULTY_MAX_SCALING_LEVEL (pisos 1-50); acima dele
     // cresce em log, para a dificuldade continuar subindo sem explodir no Abismo.
     effectiveLevelFor(level) {
         const cap = CONFIG.DIFFICULTY_MAX_SCALING_LEVEL;
@@ -21651,7 +21729,17 @@ const DifficultySystem = {
     getEnemyHpMult() {
         const lvl = this.getEffectiveLevel();
         const ramp = (window._dailyMods && window._dailyMods.difficultyRamp) || 1;
-        return (1 + (lvl - 1) * CONFIG.DIFFICULTY_HP_PER_LEVEL) * Math.pow(ramp, lvl - 1);
+        // Linear (+19%/andar) × composto (ENEMY_HP_GROWTH por andar, cortado em
+        // ENEMY_HP_GROWTH_CAP) × ramp do desafio diário.
+        // O expoente do composto para no cap de nível (DIFFICULTY_MAX_SCALING_LEVEL) e o
+        // fator tem teto próprio: no Abismo fundo o HP cresce só pelo log do termo linear.
+        // A cópia desta fórmula em KrevathornBalance.floorScale (~45640) tem de ficar igual,
+        // senão a ferramenta de balanço discorda do jogo.
+        const growthLvl = Math.min(lvl, CONFIG.DIFFICULTY_MAX_SCALING_LEVEL) - 1;
+        const compound = Math.min(Math.pow(CONFIG.ENEMY_HP_GROWTH, growthLvl), CONFIG.ENEMY_HP_GROWTH_CAP);
+        return (1 + (lvl - 1) * CONFIG.DIFFICULTY_HP_PER_LEVEL)
+            * compound
+            * Math.pow(ramp, lvl - 1);
     },
 
     // ============================================================
@@ -21660,6 +21748,11 @@ const DifficultySystem = {
     getEnemyDamageMult() {
         const lvl = this.getEffectiveLevel();
         const ramp = (window._dailyMods && window._dailyMods.difficultyRamp) || 1;
+        // Só linear, de propósito: o HP máximo do jogador quase não cresce na run
+        // (compras de loja e upgrades permanentes), então um termo composto aqui
+        // puniria em dobro e no Abismo fundo viraria morte em um golpe. Ex.:
+        // metade do crescimento de HP (+5%/andar) levaria o contato de 2,5 de base
+        // a ~267 de dano na profundidade 100, contra 60-180 de HP do jogador.
         return (1 + (lvl - 1) * CONFIG.DIFFICULTY_DAMAGE_PER_LEVEL) * Math.pow(ramp, lvl - 1);
     },
 
@@ -26690,11 +26783,20 @@ const BiomeSystem = {
         }
     },
 
+    // O desbloqueio de meta filtra bioma só em run aleatória. Run com seed fixa (opções avançadas,
+    // Abismo reproduzível) e desafio diário sorteiam do conjunto completo: com o filtro, dois perfis
+    // com a mesma seed pegavam biomas (e elencos) diferentes, e o diário não era o mesmo para todos.
+    _biomeGateByMeta() {
+        if (window._currentDailyChallenge) return false;
+        if (typeof SeedSystem !== 'undefined' && SeedSystem.isSeeded()) return false;
+        return true;
+    },
+
     // Pick a new random biome (different from current)
     changeBiome() {
         let available = CONFIG.BIOME_NAMES.filter(b => b !== this.currentBiome);
         // Gating de meta-progressão: só sorteia biomas já desbloqueados
-        if (window.MetaSystem) available = available.filter(b => MetaSystem.isBiomeUnlocked(b));
+        if (window.MetaSystem && this._biomeGateByMeta()) available = available.filter(b => MetaSystem.isBiomeUnlocked(b));
         if (available.length === 0) return; // sem outros biomas desbloqueados: mantém o atual
         const prev = this.currentBiome;
         this.currentBiome = available[Math.floor(SeedSystem.random() * available.length)];
@@ -26710,11 +26812,11 @@ const BiomeSystem = {
     // Força um bioma diferente de TODOS os já visitados (usado no piso final)
     forceDifferentBiome() {
         let available = CONFIG.BIOME_NAMES.filter(b => this.biomeHistory.indexOf(b) === -1);
-        if (window.MetaSystem) available = available.filter(b => MetaSystem.isBiomeUnlocked(b));
+        if (window.MetaSystem && this._biomeGateByMeta()) available = available.filter(b => MetaSystem.isBiomeUnlocked(b));
         if (available.length === 0) {
             // Todos visitados: cai para "diferente do atual"
             available = CONFIG.BIOME_NAMES.filter(b => b !== this.currentBiome);
-            if (window.MetaSystem) available = available.filter(b => MetaSystem.isBiomeUnlocked(b));
+            if (window.MetaSystem && this._biomeGateByMeta()) available = available.filter(b => MetaSystem.isBiomeUnlocked(b));
         }
         if (available.length === 0) return false;
         const prev = this.currentBiome;
@@ -45542,7 +45644,13 @@ Input.init();
 
     function floorScale(floor, ddaMult, presetHpMult) {
         const lvl = DifficultySystem.effectiveLevelFor(floor);
-        return (1 + (lvl - 1) * CONFIG.DIFFICULTY_HP_PER_LEVEL) * _num(ddaMult, 1) * _num(presetHpMult, 1);
+        // Mesma conta de DifficultySystem.getEnemyHpMult (sem o ramp do diário):
+        // linear + composto, com o composto parando no cap de nível e no teto.
+        const growthLvl = Math.min(lvl, CONFIG.DIFFICULTY_MAX_SCALING_LEVEL) - 1;
+        const compound = Math.min(Math.pow(CONFIG.ENEMY_HP_GROWTH, growthLvl), CONFIG.ENEMY_HP_GROWTH_CAP);
+        return (1 + (lvl - 1) * CONFIG.DIFFICULTY_HP_PER_LEVEL)
+            * compound
+            * _num(ddaMult, 1) * _num(presetHpMult, 1);
     }
 
     function bossHpAtFloor(floor, ddaMult, presetBossHpMult, blueprintHpMult) {
