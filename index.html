@@ -10736,6 +10736,9 @@ var CONFIG = {
     // padrão (~240 tiles); abaixo disso a forma cai para 'default'.
     MAP_FLOOR_SHAPES: ['default', 'halls', 'cells', 'rows', 'plaza', 'cross', 'ring', 'rooms2', 'circle', 'plateau'],
     MAP_SHAPE_MIN_FLOOR: 144,
+    // Deslocamento da forma do andar por classe (0 a 8: as 9 formas comuns). Cada personagem entra em
+    // um layout diferente no mesmo andar; 'default' (piso 1) e 'plateau' (piso 10) não são deslocados.
+    CLASS_SHAPE_OFFSET: { warrior: 0, rogue: 3, mage: 6, elf: 8 },
 
     // Game State
     MAX_ENEMIES: 11,
@@ -11056,6 +11059,9 @@ var CONFIG = {
     BIOME_CHANGE_INTERVAL: 3,          // dungeons before biome changes
     BIOME_DEFAULT: 'dungeon',
     BIOME_NAMES: ['dungeon', 'lavaCave', 'crypt', 'forest'],
+    // Bioma de casa de cada classe: usado na PRIMEIRA troca de bioma da run (só se estiver desbloqueado
+    // na meta-progressão e fora do desafio diário / de run com seed fixa). Depois vale o sorteio normal.
+    CLASS_BIOME: { warrior: 'dungeon', rogue: 'crypt', mage: 'lavaCave', elf: 'forest' },
 
     // Biome: Dungeon (default)
     BIOME_DUNGEON_WALL_COLOR: '#3b4156',
@@ -14016,12 +14022,32 @@ function _storyRules() {
 // Opções de geração do Map (E4b): piso do tema (obstáculos temáticos) e semente local da câmara.
 // Desafio diário: nada (o mapa semeado continua igual). Abismo e demais modos: tema da faixa de profundidade.
 // Forma (E4b-2): a do piso; a câmara do chefe da História é sempre 'plateau' (arena aberta).
-function _mapGenOpts(index) {
+// Identidade por classe: o índice da forma desloca pelo personagem (CONFIG.CLASS_SHAPE_OFFSET), para
+// dois personagens no mesmo andar caírem em layouts diferentes. A semente NÃO muda. O piso 1 ('default')
+// fica igual para todos (apresentação do tutorial) e o piso 10 ('plateau') não é deslocado.
+// cls: classe da run (o continue chama antes de criar o player, então ela vem por parâmetro).
+function _mapGenOpts(index, cls) {
     if (window._currentDailyChallenge) return {};
     const th = BiomeSystem.getFloorTheme();
     if (!th) return {};
     const boss = _storyRules() && (index || 0) >= Math.max(2, CONFIG.MAP_STORY_ROOMS) - 1;
-    return { floor: th.piso, seed: dungeonLevel * 100 + (index || 0), shape: boss ? 'plateau' : CONFIG.MAP_FLOOR_SHAPES[th.piso - 1] };
+    return { floor: th.piso, seed: dungeonLevel * 100 + (index || 0), shape: boss ? 'plateau' : _floorShapeFor(th.piso, cls) };
+}
+
+// Forma do andar para a classe: as 9 formas comuns rotacionam pelo deslocamento da classe; 'default'
+// (piso 1) e 'plateau' (piso 10) ficam fixos para não descaracterizar o tutorial nem a arena do chefe.
+function _floorShapeFor(piso, cls) {
+    const shapes = CONFIG.MAP_FLOOR_SHAPES;
+    const i = (piso || 1) - 1;
+    const base = shapes[i];
+    if (!base || base === 'default' || base === 'plateau') return base;
+    // Run com seed fixa (como o diário, que já sai antes em _mapGenOpts): a forma é a do piso, sem
+    // deslocamento de classe — mesma seed tem que gerar o mesmo mapa para qualquer personagem/perfil.
+    if (typeof SeedSystem !== 'undefined' && SeedSystem.isSeeded()) return base;
+    const type = cls || (typeof player !== 'undefined' && player ? player.type : null);
+    const off = (type && CONFIG.CLASS_SHAPE_OFFSET[type]) || 0;
+    if (!off) return base;
+    return shapes[(i + off) % 9];
 }
 
 // Selo fechado em pixel art (células de 3 px): anel de runas de pedra clara com contorno escuro e uma porta
@@ -26814,14 +26840,33 @@ const BiomeSystem = {
         return true;
     },
 
+    // Bioma de casa da classe (CONFIG.CLASS_BIOME) na PRIMEIRA troca da run: histórico ainda só com o
+    // bioma inicial e menos de dois intervalos de troca completos (o continue restaura o bioma e o
+    // dungeonsCompleted, mas não o histórico). Fora do desafio diário e de run com seed fixa — mesmo
+    // motivo de _biomeGateByMeta — e só vale se o bioma estiver desbloqueado na meta-progressão.
+    _classBiomePick() {
+        if (window._currentDailyChallenge) return null;
+        if (typeof SeedSystem !== 'undefined' && SeedSystem.isSeeded()) return null;
+        if (!(this.biomeHistory && this.biomeHistory.length <= 1)) return null;
+        if (this.dungeonsCompleted > CONFIG.BIOME_CHANGE_INTERVAL) return null;
+        const type = (typeof player !== 'undefined' && player) ? player.type : null;
+        const b = type && CONFIG.CLASS_BIOME[type];
+        if (!b || b === this.currentBiome) return null;
+        if (window.MetaSystem && !MetaSystem.isBiomeUnlocked(b)) return null;
+        return b;
+    },
+
     // Pick a new random biome (different from current)
     changeBiome() {
+        // Na primeira troca da run a classe puxa o próprio bioma, sem consumir SeedSystem.random():
+        // o sorteio normal segue igual nas trocas seguintes e no desafio diário (_classBiomePick sai antes).
+        const pick = this._classBiomePick();
         let available = CONFIG.BIOME_NAMES.filter(b => b !== this.currentBiome);
         // Gating de meta-progressão: só sorteia biomas já desbloqueados
         if (window.MetaSystem && this._biomeGateByMeta()) available = available.filter(b => MetaSystem.isBiomeUnlocked(b));
-        if (available.length === 0) return; // sem outros biomas desbloqueados: mantém o atual
+        if (!pick && available.length === 0) return; // sem outros biomas desbloqueados: mantém o atual
         const prev = this.currentBiome;
-        this.currentBiome = available[Math.floor(SeedSystem.random() * available.length)];
+        this.currentBiome = pick || available[Math.floor(SeedSystem.random() * available.length)];
         if (this.currentBiome !== prev) {
             this.biomeHistory.push(this.currentBiome);
             if (this.biomeHistory.length > 10) this.biomeHistory.shift();
@@ -42496,7 +42541,8 @@ window.GameBootstrap = {
         dungeonLevel = floor;
         // História: cada câmara tem a própria semente (dungeonLevel * 100 + índice da câmara)
         if (window.SeedSystem && SeedSystem.isSeeded()) SeedSystem.reseedForFloor(_storyRules() ? dungeonLevel * 100 : dungeonLevel);
-        map = new Map(null, _mapGenOpts(0));
+        // cls explícita: o player desta run só nasce algumas linhas abaixo, e a forma do andar depende da classe
+        map = new Map(null, _mapGenOpts(0, cls));
         _mmDirty = true;
         // História: a run começa na primeira câmara (o estado da câmara vive em _storyRoom)
         _storyRoom = _storyRules() ? { i: 0, total: Math.max(2, CONFIG.MAP_STORY_ROOMS), cleared: false, budget: 0, spawned: 0, boss: false } : null;
