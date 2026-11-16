@@ -4347,6 +4347,9 @@ const I18n = {
             'skills.reqLocked': 'bloqueado',
             'skills.reqFirst': 'Desbloqueie a habilidade anterior primeiro.',
             'skills.goldMissing': 'Moedas insuficientes (faltam {n})',
+            'skills.noLevelReq': 'Sem requisito de nível',
+            'skills.goldVsCost': 'seu ouro: {g} / custo: {c}',
+            'skills.goldMissingShort': 'faltam {n}',
             'skills.unknownNode': 'habilidade anterior',
             'skills.unavailable': 'Habilidades indisponíveis',
             'skills.failOwned': 'Você já desbloqueou esta habilidade.',
@@ -6531,6 +6534,9 @@ const I18n = {
             'skills.reqLocked': 'locked',
             'skills.reqFirst': 'Unlock the previous skill first.',
             'skills.goldMissing': 'Not enough coins ({n} short)',
+            'skills.noLevelReq': 'No level requirement',
+            'skills.goldVsCost': 'your gold: {g} / cost: {c}',
+            'skills.goldMissingShort': '{n} short',
             'skills.unknownNode': 'previous skill',
             'skills.unavailable': 'Skills unavailable',
             'skills.failOwned': 'You already unlocked this skill.',
@@ -8715,6 +8721,9 @@ const I18n = {
             'skills.reqLocked': 'bloqueado',
             'skills.reqFirst': 'Desbloquea primero la habilidad anterior.',
             'skills.goldMissing': 'Monedas insuficientes (faltan {n})',
+            'skills.noLevelReq': 'Sin requisito de nivel',
+            'skills.goldVsCost': 'tu oro: {g} / costo: {c}',
+            'skills.goldMissingShort': 'faltan {n}',
             'skills.unknownNode': 'habilidad anterior',
             'skills.unavailable': 'Habilidades no disponibles',
             'skills.failOwned': 'Ya desbloqueaste esta habilidad.',
@@ -40750,6 +40759,9 @@ window.SkillTreeUI = SkillTreeUI;
             const floorUsed = SkillTree.floorPurchasesUsed(p);
             const floorLocked = !isUnlocked && floorUsed >= floorLimit;
             const canUnlock = !isUnlocked && !speedLocked && !floorLocked && p.currency >= s.cost && reqOk && !blocker;
+            // Bloqueio por ouro: a tela mostra o que falta em vez de só "moedas insuficientes".
+            const fundsOk = (p.currency || 0) >= s.cost;
+            const missingGold = Math.max(0, s.cost - (p.currency || 0));
             const isAbility = !!s.ability;
 
             const statusLine = isUnlocked
@@ -40780,6 +40792,9 @@ window.SkillTreeUI = SkillTreeUI;
                     <div style="display:flex;justify-content:space-between;font-size:12px;color:${COLORS.TEXT_DIM};padding:0 4px">
                         <span>${_L('skills.cost', 'Custo:')} <b style="color:${COLORS.GOLD}">${s.cost} <svg class="coin-s" width="10" height="10" style="color:#ffcc00;vertical-align:-1px"><use href="#ic-coin"/></svg></b></span>
                         <span>${_L('skills.tier', 'Tier ').trim()}: <b>${s.tier || 1}</b></span>
+                    </div>
+                    <div style="text-align:center;font-size:calc(11px * var(--font-scale,1));line-height:1.4;color:${isUnlocked ? COLORS.TEXT_DIM : (fundsOk ? '#4ade80' : '#f87171')};padding:6px 8px;border-radius:10px;background:rgba(255,255,255,0.04)">
+                        ${_L('skills.noLevelReq', 'Sem requisito de nível')} · ${_L('skills.goldVsCost', 'seu ouro: {g} / custo: {c}').replace('{g}', String(p.currency || 0)).replace('{c}', String(s.cost))}${(!isUnlocked && !fundsOk) ? ' — ' + _L('skills.goldMissingShort', 'faltam {n}').replace('{n}', String(missingGold)) : ''}
                     </div>
                     ${s.requires ? `<div style="font-size:11px;color:${reqOk ? '#4ade80' : '#f87171'};text-align:center;padding:8px;border-radius:10px;background:rgba(255,255,255,0.04)">${_L('skills.requires', 'Requer: ')}${reqName} (${reqOk ? _L('skills.reqUnlocked', 'desbloqueado') : _L('skills.reqLocked', 'bloqueado')})</div>` : ''}
                     ${!reqOk ? `<div style="font-size:11px;color:#f87171;text-align:center">${_L('skills.reqFirst', 'Desbloqueie a habilidade anterior primeiro.')}</div>` : ''}
