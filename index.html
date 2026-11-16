@@ -34020,6 +34020,17 @@ function hasLineOfSight(m, x1, y1, x2, y2) {
     return true;
 }
 
+// Roubo de vida (arma + equipamento): uma conta só, usada pelo projétil e pelo golpe corpo a corpo.
+function applyLifesteal(source, dealtDamage) {
+    if(!source || !(dealtDamage > 0)) return 0;
+    const rate = (source.weaponLifesteal || 0) + (source.equipLifesteal || 0);
+    if(rate <= 0) return 0;
+    const heal = Math.floor(dealtDamage * rate);
+    source.hp = Math.min(source.maxHp, source.hp + heal);
+    DamageNumbers.add(source.x, source.y, `+${heal}`, 'heal');
+    return heal;
+}
+
 // ============================================================
 // SHARED NAVIGATION FIELD
 // One BFS distance map from the player's tile, reused by every pursuer. It is
@@ -34387,11 +34398,7 @@ class Bullet {
                         spawnParticles(e.x, e.y, '#33ff33', 5, 2);
                     }
                     // Lifesteal from weapon + equipment
-                    if(this.isP && source && ((source.weaponLifesteal || 0) + (source.equipLifesteal || 0)) > 0) {
-                        const heal = Math.floor(this.dmg * ((source.weaponLifesteal || 0) + (source.equipLifesteal || 0)));
-                        source.hp = Math.min(source.maxHp, source.hp + heal);
-                        DamageNumbers.add(source.x, source.y, `+${heal}`, 'heal');
-                    }
+                    if(this.isP) applyLifesteal(source, this.dmg);
                     // Slow aura from weapon  temporary, floored at 30% of original speed
                     if(this.isP && source && source.slowAura && typeof Enemy !== 'undefined' && e instanceof Enemy) {
                         // Lentidão temporária (ver Enemy.move): fator 0.5 renovado a cada acerto
@@ -35179,6 +35186,7 @@ class Player extends Entity {
                             if(diff > Math.PI) diff = Math.PI * 2 - diff;
                             if(diff <= arcHalf) {
                                 e.takeDamage(dmg, m, this); hitAny = true;
+                                applyLifesteal(this, dmg); // Vampirismo, Excalibur, Pacto Vampírico etc.
                                 // Brutalidade (v56): o finalizador abre sangramento nos inimigos atingidos
                                 if(chainStep === 3 && this.skills.brutal) { e.poisonStacks = Math.min(CONFIG.ROGUE_POISON_MAX_STACKS, (e.poisonStacks || 0) + CONFIG.BRUTAL_BLEED_STACKS); e.poisonTimer = Math.max(e.poisonTimer || 0, CONFIG.ROGUE_POISON_DURATION); spawnParticles(e.x, e.y, '#ff2222', 5, 3); }
                                 // VIBRATION FEEDBACK
