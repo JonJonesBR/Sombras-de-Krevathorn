@@ -44235,15 +44235,15 @@ const Input = {
     },
 
     // Escolhe o alvo do botão. Só inimigos atacáveis: pula o herói, balas, barreiras de gelo,
-    // mortos, mímicos ainda disfarçados de moeda e espreitadores escondidos. Ordem: armadilha ainda não ativada por último;
-    // depois com linha de visão (hasLineOfSight); depois dentro da tela (margem 40 px); depois o mais
-    // próximo. A linha de visão só é checada para quem bateria o melhor candidato com visão.
+    // mortos, mímicos ainda disfarçados de moeda e espreitadores escondidos. Ordem: com linha de visão
+    // (hasLineOfSight); armadilha ainda não ativada por último; dentro da tela (margem 40 px) antes de
+    // fora dela; depois o mais próximo. Sem nenhum alvo visível devolve null e quem chama usa a direção
+    // do movimento/herói — mirar no mais próximo atrás da parede só desperdiçava o disparo.
     _pickAimTarget(rangeSq) {
         const m = (typeof map !== 'undefined' && map) ? map : null;
         const px = player.x, py = player.y;
         const L = camX - 40, R = camX + width + 40, T = camY - 40, B = camY + height + 40;
-        let visT = null, visTier = 9, visD = Infinity; // melhor com linha de visão
-        let anyT = null, anyTier = 9, anyD = Infinity; // melhor de todos
+        let best = null, bestTier = 9, bestD = Infinity;
         for (let i = 0; i < entities.length; i++) {
             const e = entities[i];
             if (!e.alive || !e.isEnemy || e === player || e.isP || e.isBarrier) continue;
@@ -44253,14 +44253,11 @@ const Input = {
             if (dSq < 1 || dSq > rangeSq) continue;
             // Tier: 2 = armadilha ainda não ativada; +1 = fora da tela
             const tier = (e.enemyType === 'trap' && !e.triggered ? 2 : 0) + (e.x < L || e.x > R || e.y < T || e.y > B ? 1 : 0);
-            if (tier < anyTier || (tier === anyTier && dSq < anyD)) { anyT = e; anyTier = tier; anyD = dSq; }
-            if (tier < visTier || (tier === visTier && dSq < visD)) {
-                if (hasLineOfSight(m, px, py, e.x, e.y)) { visT = e; visTier = tier; visD = dSq; }
+            if (tier < bestTier || (tier === bestTier && dSq < bestD)) {
+                if (hasLineOfSight(m, px, py, e.x, e.y)) { best = e; bestTier = tier; bestD = dSq; }
             }
         }
-        // Com visão: usa o melhor com visão, salvo se ele for armadilha inativa e houver outra opção
-        if (visT && (visTier < 2 || anyTier >= 2)) return visT;
-        return anyT;
+        return best;
     },
 
     // Mouse mode: aim toward the cursor, fire while the left button is held
