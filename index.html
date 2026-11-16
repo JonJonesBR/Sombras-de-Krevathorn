@@ -11161,6 +11161,12 @@ var CONFIG = {
     DIFFICULTY_DAMAGE_PER_LEVEL: 0.115, // +11.5% damage per dungeon level (só linear, de propósito: o HP máximo do jogador quase não cresce; ver getEnemyDamageMult)
     DIFFICULTY_MAX_SCALING_LEVEL: 50,  // linear up to dungeon 50, logarithmic beyond (DifficultySystem.effectiveLevelFor)
 
+    // Fim de campanha da História (andares 7-10): bônus de HP/dano por andar, só na História.
+    // O Abismo e o desafio diário não recebem (ver DifficultySystem._storyLateMult).
+    STORY_LATE_FLOOR_START: 7,
+    STORY_LATE_HP_STEP: 0.15,        // +15% de HP por andar a partir do 7 (andar 10: x1,45)
+    STORY_LATE_DAMAGE_STEP: 0.10,    // +10% de dano por andar a partir do 7 (andar 10: x1,30)
+
     // Boss scaling - extra power at high dungeons
     BOSS_HP_PER_LEVEL: 0.38,           // +38% HP per dungeon level (multiplicative - keeps pace with the player's multiplicative damage growth so bosses stop melting in late floors)
     BOSS_SCALING_PHASE4_THRESHOLD: 10, // phase 4 starts at dungeon 10
@@ -11724,7 +11730,9 @@ var CONFIG = {
 };
 
 // Elenco de inimigos por andar: [tipo, peso], na ordem em que a roleta lê. A MAIOR linha menor ou
-// igual ao andar vale para ele (a linha 6 é o elenco do 6 em diante); ajustar o jogo = mexer só aqui.
+// igual ao andar vale para ele; ajustar o jogo = mexer só aqui. As linhas vão do andar 1 ao 10 (o
+// último da campanha), e do 7 ao 10 os pesos crescem a cada andar: a câmara fica mais dura e variada
+// sem depender só da curva de HP/dano.
 // O peso aceita número ou função (o elite cresce com o andar, via DifficultySystem).
 // '@biome' é o tipo do bioma atual (esqueleto, salamandra ou espreitador), na posição da ordem antiga.
 // Por cima da tabela continuam valendo canSpawnType() (presets de dificuldade), o teto de
@@ -11747,8 +11755,25 @@ CONFIG.ENEMY_FLOOR_ROSTER = {
     4: [['trap', CONFIG.TRAP_SPAWN_CHANCE], ['swarm', CONFIG.SWARM_CHANCE], ['shielder', CONFIG.SHIELDER_SPAWN_CHANCE], ['healer', CONFIG.HEALER_SPAWN_CHANCE], ['summoner', 0.05], ['@biome', 0], ['charger', CONFIG.CHARGER_SPAWN_CHANCE], ['normal', 1.0]],
     // Andar 5: entra o elite (peso pelo preset de dificuldade)
     5: [['trap', CONFIG.TRAP_SPAWN_CHANCE], ['elite', () => DifficultySystem.getEliteChance()], ['swarm', CONFIG.SWARM_CHANCE], ['shielder', CONFIG.SHIELDER_SPAWN_CHANCE], ['healer', CONFIG.HEALER_SPAWN_CHANCE], ['summoner', 0.05], ['@biome', 0], ['charger', CONFIG.CHARGER_SPAWN_CHANCE], ['normal', 1.0]],
-    // Andar 6 (e todos acima): entra o baú imitador
-    6: [['mimic', CONFIG.MIMIC_SPAWN_CHANCE], ['trap', CONFIG.TRAP_SPAWN_CHANCE], ['elite', () => DifficultySystem.getEliteChance()], ['swarm', CONFIG.SWARM_CHANCE], ['shielder', CONFIG.SHIELDER_SPAWN_CHANCE], ['healer', CONFIG.HEALER_SPAWN_CHANCE], ['summoner', 0.05], ['@biome', 0], ['charger', CONFIG.CHARGER_SPAWN_CHANCE], ['normal', 1.0]]
+    // Andar 6: entra o baú imitador
+    6: [['mimic', CONFIG.MIMIC_SPAWN_CHANCE], ['trap', CONFIG.TRAP_SPAWN_CHANCE], ['elite', () => DifficultySystem.getEliteChance()], ['swarm', CONFIG.SWARM_CHANCE], ['shielder', CONFIG.SHIELDER_SPAWN_CHANCE], ['healer', CONFIG.HEALER_SPAWN_CHANCE], ['summoner', 0.05], ['@biome', 0], ['charger', CONFIG.CHARGER_SPAWN_CHANCE], ['normal', 1.0]],
+    // Andares 7-9: o fim de campanha. Os pesos sobem a cada andar (elite, escudeiro, carregador,
+    // enxame) e o curandeiro cai: a câmara fica visivelmente mais dura e variada que a do 6.
+    7: [['mimic', 0.08], ['trap', CONFIG.TRAP_SPAWN_CHANCE], ['elite', 0.10], ['swarm', 0.22], ['shielder', 0.10], ['healer', 0.10], ['summoner', 0.06], ['@biome', 0], ['charger', 0.10], ['normal', 1.0]],
+    8: [['mimic', 0.09], ['trap', CONFIG.TRAP_SPAWN_CHANCE], ['elite', 0.12], ['swarm', 0.24], ['shielder', 0.12], ['healer', 0.09], ['summoner', 0.07], ['@biome', 0], ['charger', 0.12], ['normal', 1.0]],
+    9: [['mimic', 0.10], ['trap', 0.11], ['elite', 0.14], ['swarm', 0.26], ['shielder', 0.14], ['healer', 0.08], ['summoner', 0.08], ['@biome', 0], ['charger', 0.14], ['normal', 1.0]],
+    // Andar 10: último andar, o mais pesado de todos.
+    10: [['mimic', 0.11], ['trap', 0.12], ['elite', 0.16], ['swarm', 0.28], ['shielder', 0.16], ['healer', 0.06], ['summoner', 0.09], ['@biome', 0], ['charger', 0.16], ['normal', 1.0]]
+};
+
+// Viés de elenco por classe: só muda o peso na roleta. HP, dano e a semente continuam iguais,
+// e o sorteio continua consumindo uma rolagem por membro (muda onde o valor cai, não o stream).
+// 1 = neutro, >1 aparece mais, <1 aparece menos.
+CONFIG.CLASS_SPAWN_BIAS = {
+    warrior: { charger: 1.6, elite: 1.3, shielder: 1.2 },
+    rogue:   { healer: 1.5, summoner: 1.4, swarm: 0.7 },
+    mage:    { swarm: 1.5, trap: 1.3, healer: 1.2 },
+    elf:     { lurker: 1.6, charger: 1.3, summoner: 1.2 }
 };
 
 
@@ -14636,9 +14661,16 @@ function _pushBiomeEnemy(push) {
 
 function _buildSpawnPool() {
     const pool = [];
+    // Viés por classe: multiplica o peso do tipo. A rolagem por membro continua a mesma.
+    const _classBias = (type) => {
+        if (typeof player === 'undefined' || !player || !player.type) return 1;
+        const b = CONFIG.CLASS_SPAWN_BIAS[player.type];
+        return (b && b[type]) || 1;
+    };
     // Tipo sem fábrica em ENEMY_SPAWN_FACTORIES cairia no fallback mudo (normal): não entra no pool.
     // canSpawnType() (presets de dificuldade) continua filtrando cada tipo.
     const push = (type, weight) => {
+        weight *= _classBias(type);
         if (!(weight > 0)) return;
         if (!window.ENEMY_SPAWN_FACTORIES || !window.ENEMY_SPAWN_FACTORIES[type]) return;
         if (!DifficultySystem.canSpawnType(type)) return;
@@ -21838,6 +21870,17 @@ const DifficultySystem = {
         return (1 + (lvl - 1) * CONFIG.DIFFICULTY_DAMAGE_PER_LEVEL) * Math.pow(ramp, lvl - 1);
     },
 
+    // Bônus de fim de campanha da História (andares 7-10). Fica fora do Abismo e do desafio diário
+    // de propósito: lá o dano do jogador não pode virar morte em um golpe e os recordes não mudam.
+    // Só o inimigo comum recebe o bônus de HP; o chefe tem curva própria (isBoss).
+    _storyLateMult(kind) {
+        if (typeof _storyRules !== 'function' || !_storyRules()) return 1;
+        const start = CONFIG.STORY_LATE_FLOOR_START;
+        if (this.dungeonLevel < start) return 1;
+        const steps = this.dungeonLevel - start;
+        return 1 + steps * (kind === 'hp' ? CONFIG.STORY_LATE_HP_STEP : CONFIG.STORY_LATE_DAMAGE_STEP);
+    },
+
     // ============================================================
     // Get scaled HP for a regular enemy
     // ============================================================
@@ -21853,6 +21896,7 @@ const DifficultySystem = {
             hp *= 1 + (this.getEffectiveLevel() - 1) * CONFIG.BOSS_HP_PER_LEVEL;
         } else {
             hp *= this.getEnemyHpMult();
+            hp *= this._storyLateMult('hp');
         }
 
         // Apply DDA
@@ -21881,6 +21925,7 @@ const DifficultySystem = {
         // once for a fast-clearing player was a hidden double punishment. It now
         // only ever eases enemy HP for a struggling player (see updateDDA).
         let dmg = baseDmg * this.getEnemyDamageMult();
+        dmg *= this._storyLateMult('dmg');
         return Math.max(0.1, dmg);
     },
 
