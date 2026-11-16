@@ -36325,8 +36325,10 @@ class NPC {
         }
 
         // Viajante aleatório não abre sozinho: só pelo toque nele (NPCSystem.handleNpcTap).
-        // Cena canônica e NPC de História continuam abrindo por aproximação, como antes.
-        if (this.nearPlayer && !NPCInteractionPanel.visible && !this.interacted && this.canon) {
+        // Cena canônica e NPC de História continuam abrindo por aproximação, como antes,
+        // mas nunca no meio do combate: fica pendente até a sala esvaziar.
+        const inCombat = typeof Inventory !== 'undefined' && typeof Inventory.inCombat === 'function' && Inventory.inCombat();
+        if (this.nearPlayer && !NPCInteractionPanel.visible && !this.interacted && this.canon && !inCombat) {
             this._openDialog();
         }
         // F3: cancelar a cena sem concluir permite reabrir depois de sair e
@@ -36975,6 +36977,12 @@ const SceneDirector = {
 
     sceneFor(floor) { return FLOOR_SCENES.find(s => s.floor === floor) || null; },
 
+    // Há inimigo vivo? A cena não abre no meio do combate: fica pendente
+    // e abre quando a sala esvaziar e o jogador continuar por perto.
+    _inCombat() {
+        return !!(typeof Inventory !== 'undefined' && typeof Inventory.inCombat === 'function' && Inventory.inCombat());
+    },
+
     isDone(id) { return this.done.indexOf(id) !== -1; },
 
     // Pré-requisitos F3.7: a "Pergunta Única" (B3) exige profecia ouvida e a
@@ -36998,6 +37006,8 @@ const SceneDirector = {
             const c = (window.ShopSystem && typeof ShopSystem.floorPurchaseCount === 'number') ? ShopSystem.floorPurchaseCount : 0;
             if (c < 3) return false;
         }
+        // Combate primeiro: sem inimigo vivo a cena abre normalmente.
+        if (this._inCombat()) return false;
         return true;
     },
 
