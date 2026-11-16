@@ -6178,6 +6178,7 @@ const I18n = {
             'bossReward.subNamed': 'O {n} caiu — escolha uma recompensa para o resto da run:',
             'bossReward.dismiss': 'Dispensar agora',
             'bossReward.dismissConfirm': 'Dispensar mesmo?',
+            'bossReward.confirmHint': 'Toque de novo para confirmar',
             'continue.in': 'Continue em',
             'win.title': 'SUPERFÍCIE ALCANÇADA!',
             'win.playAgain': 'JOGAR NOVAMENTE',
@@ -8361,6 +8362,7 @@ const I18n = {
             'bossReward.subNamed': '{n} has fallen — choose a reward for the rest of the run:',
             'bossReward.dismiss': 'Dismiss now',
             'bossReward.dismissConfirm': 'Dismiss anyway?',
+            'bossReward.confirmHint': 'Tap again to confirm',
             'continue.in': 'Continue in',
             'win.title': 'SURFACE REACHED!',
             'win.playAgain': 'PLAY AGAIN',
@@ -10541,6 +10543,7 @@ const I18n = {
             'bossReward.subNamed': '{n} ha caído: elige una recompensa para el resto de la partida:',
             'bossReward.dismiss': 'Descartar ahora',
             'bossReward.dismissConfirm': '¿Descartar de verdad?',
+            'bossReward.confirmHint': 'Toca otra vez para confirmar',
             'continue.in': 'Continúa en',
             'win.title': '¡SUPERFICIE ALCANZADA!',
             'win.playAgain': 'JUGAR DE NUEVO',
@@ -15126,6 +15129,8 @@ function update() {
     if (hitstopFrames > 0) { if (window.GameSettings && GameSettings.hitstopEnabled === false) { hitstopFrames = 0; } else { hitstopFrames--; return; } }
     // Gamepad no menu de NPC: lido antes do bloqueio, pois o painel congela a simulação
     Input.pollGamepadMenu();
+    // Recompensa de chefe enfileirada (painel aberto na morte): mostra quando o painel fechar.
+    if (window.BossRewardSystem && typeof BossRewardSystem.flushPending === 'function') BossRewardSystem.flushPending();
     if (_anyPanelOpen()) return;
     Debug.safe(() => _updateSystems(), 'updateSystems');
     Debug.safe(() => _updateWorldSim(), 'updateWorldSim');
@@ -20606,6 +20611,11 @@ const BossRewardSystem = {
     // "Dispensar agora" em dois toques; o segundo tem 3 s para acontecer.
     _dismissArmed: false,
     _dismissTimer: null,
+    // Escolha da recompensa em dois toques: o primeiro marca, o segundo aplica (3 s).
+    _choiceIdx: -1,
+    _choiceTimer: null,
+    // Recompensa suspensa: o chefe morreu com painel aberto ou o jogo fora de PLAYING.
+    _pendingBoss: null,
 
     init() {
         this._el = document.getElementById('boss-reward-overlay');
@@ -20624,6 +20634,49 @@ const BossRewardSystem = {
         if (this._dismissEl) this._dismissEl.textContent = window.I18n ? I18n.t('bossReward.dismiss') : 'Dispensar agora';
     },
 
+    // Limpa a marca da opção (expirada, trocada ou já aplicada) e o seu timeout.
+    _resetChoice() {
+        if (this._choiceTimer) { clearTimeout(this._choiceTimer); this._choiceTimer = null; }
+        this._choiceIdx = -1;
+        if (!this._optionsEl) return;
+        const btns = this._optionsEl.querySelectorAll('button');
+        for (let i = 0; i < btns.length; i++) {
+            btns[i].style.outline = '';
+            btns[i].setAttribute('aria-pressed', 'false');
+            const hint = btns[i].querySelector('.boss-reward-confirm');
+            if (hint) hint.remove();
+        }
+    },
+
+    // Primeiro toque: marca a opção e pede confirmação; o segundo toque aplica.
+    _markChoice(i) {
+        this._resetChoice();
+        this._choiceIdx = i;
+        if (!this._optionsEl) return;
+        const btns = this._optionsEl.querySelectorAll('button');
+        const b = btns[i];
+        if (!b) return;
+        b.style.outline = '2px solid #fff';
+        b.style.outlineOffset = '-2px';
+        b.setAttribute('aria-pressed', 'true');
+        const hint = document.createElement('span');
+        hint.className = 'boss-reward-confirm';
+        hint.style.cssText = 'display:block;font-size:10px;font-weight:700;color:#fff;line-height:1.3;';
+        hint.textContent = window.I18n ? I18n.t('bossReward.confirmHint') : 'Toque de novo para confirmar';
+        b.appendChild(hint);
+        this._choiceTimer = setTimeout(() => this._resetChoice(), 3000);
+    },
+
+    // Chefe morreu com painel aberto/fora de PLAYING: mostra quando o jogo voltar.
+    flushPending() {
+        if (!this._pendingBoss || this.active) return;
+        if (typeof gameState !== 'undefined' && gameState !== 'PLAYING') return;
+        if (typeof _anyPanelOpen === 'function' && _anyPanelOpen()) return;
+        const boss = this._pendingBoss;
+        this._pendingBoss = null;
+        this.trigger(boss);
+    },
+
     // Dois toques: o primeiro só arma e troca o texto, o segundo dispensa de fato.
     dismissClick() {
         if (!this.active || this._stillArmed()) return;
@@ -20635,7 +20688,7 @@ const BossRewardSystem = {
             return;
         }
         this._resetDismiss();
-        this.choose(-1);
+        this._applyChoice(-1);
     },
 
     // F7.1 — últimas palavras (3 s antes da recompensa; some se painel abrir).
@@ -20687,9 +20740,14 @@ const BossRewardSystem = {
 
     trigger(boss) {
         if (this.active) return;
-        if (typeof gameState !== 'undefined' && gameState !== 'PLAYING') return;
-        if (typeof _anyPanelOpen === 'function' && _anyPanelOpen()) return;
         if (typeof boss === 'undefined' || !boss) return;
+        // Painel aberto ou jogo fora de PLAYING: não perde a recompensa, mostra depois
+        // (flushPending roda no laço quando o painel fecha e o jogo volta a PLAYING).
+        if ((typeof gameState !== 'undefined' && gameState !== 'PLAYING') ||
+            (typeof _anyPanelOpen === 'function' && _anyPanelOpen())) {
+            this._pendingBoss = boss;
+            return;
+        }
         if (!this._el) this.init();
         if (!this._el) return;
         this._showLastWords(boss);
@@ -20713,6 +20771,7 @@ const BossRewardSystem = {
         this.active = true;
         this._armedAt = Date.now();
         this._resetDismiss();
+        this._resetChoice();
         this._el.classList.remove('hidden');
         if (this._subEl) this._subEl.textContent = (window.I18n ? I18n.t('bossReward.subNamed') : 'O {n} caiu — escolha uma recompensa para o resto da run:').replace('{n}', _bossNome(boss) || 'Guardião');
         if (this._optionsEl) {
@@ -20740,11 +20799,21 @@ const BossRewardSystem = {
         if (!this.active) { if (this._el) this._el.classList.add('hidden'); return; }
         // Trava de toque: o toque que ainda está martelando o ataque não escolhe recompensa.
         if (this._stillArmed()) return;
+        // Dois toques na mesma opção: o primeiro marca (3 s), o segundo aplica.
+        if (!(this.pending && idx >= 0 && idx < this.pending.length)) return;
+        if (this._choiceIdx !== idx) { this._markChoice(idx); return; }
+        this._applyChoice(idx);
+    },
+
+    _applyChoice(idx) {
+        // Trava de toque: o toque que ainda está martelando o ataque não escolhe recompensa.
+        if (this._stillArmed()) return;
         const b = (this.pending && idx >= 0 && idx < this.pending.length) ? this.pending[idx] : null;
         const wasTrophy = this._isTrophy;
         // Chefe e herói morrendo no mesmo quadro: a recompensa não vale (nada é aplicado nem gravado).
         const heroDead = (typeof player !== 'undefined' && player) ? (player.alive === false || player.hp <= 0) : false;
         this._resetDismiss();
+        this._resetChoice();
         this.active = false;
         this.pending = null;
         this._isTrophy = false;
@@ -20793,6 +20862,8 @@ const BossRewardSystem = {
         this.pending = null;
         this._isTrophy = false;
         this._armedAt = 0;
+        this._pendingBoss = null;
+        this._resetChoice();
         this._resetDismiss();
         if (this._el) this._el.classList.add('hidden');
     }
