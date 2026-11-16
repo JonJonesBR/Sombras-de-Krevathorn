@@ -13981,7 +13981,7 @@ function _updateEntitySimulation() {
         const _canonPending = window.SceneDirector && !SceneDirector.isDone('floor.' + (typeof dungeonLevel !== 'undefined' ? dungeonLevel : 0));
         // Viajante aleatório só com a sala limpa: em combate ele atrapalhava (o painel abria no meio da luta).
         // Critério de combate = inimigo vivo (Inventory._enemiesAlive, o mesmo da loja/bolsa).
-        const _npcCombat = (window.Inventory && typeof Inventory._enemiesAlive === 'function')
+        const _npcCombat = (typeof Inventory !== 'undefined' && typeof Inventory._enemiesAlive === 'function')
             ? Inventory._enemiesAlive()
             : (typeof _cachedAliveEnemies !== 'undefined' && _cachedAliveEnemies > 0);
         if (gameTime % 600 === 0 && !_secretRoom && !_canonPending && !_npcCombat && SeedSystem.random() < 0.25) NPCSystem.spawnNPC();
