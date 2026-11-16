@@ -14739,74 +14739,6 @@ function _resetWaveState() {
     _waveSpawnedAt = gameTime;
 }
 
-// Já há um membro deste grupo a menos de 16 px do ponto (evita dois no mesmo lugar)
-function _waveTaken(placed, x, y) {
-    for (let i = 0; i < placed.length; i++) {
-        if (Math.hypot(placed[i].x - x, placed[i].y - y) < 16) return true;
-    }
-    return false;
-}
-
-// Posição de um membro do grupo: 30-60 px em volta do centro. Se o ponto cai em parede ou em outro membro,
-// tenta até 6 ângulos seguintes; depois os centros dos tiles vizinhos livres; por último, 3 px por índice
-// (dentro do tile do centro, então nunca em parede).
-function _waveMemberPos(c, m, n, placed) {
-    const base = (m / n) * Math.PI * 2 + SeedSystem.random() * 0.6;
-    const d = 30 + SeedSystem.random() * 30;
-    for (let k = 0; k < 6; k++) {
-        const a = base + k * Math.PI / 3;
-        const x = c.x + Math.cos(a) * d, y = c.y + Math.sin(a) * d;
-        if (!map.isWall(x, y) && !_waveTaken(placed, x, y)) return { x: x, y: y };
-    }
-    const T = CONFIG.TILE_SIZE, tx = Math.floor(c.x / T), ty = Math.floor(c.y / T);
-    for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) {
-        const nx = tx + dx, ny = ty + dy;
-        if ((!dx && !dy) || !map.tiles[nx] || !map.tiles[nx][ny] || map.tiles[nx][ny].t !== 0) continue;
-        const x = nx * T + T / 2, y = ny * T + T / 2;
-        if (!_waveTaken(placed, x, y)) return { x: x, y: y };
-    }
-    return { x: c.x + 3 * m, y: c.y };
-}
-
-// Um grupo em volta de `center` (ponto andável a ENEMY_SPAWN_MIN_DIST do jogador). Cada membro é um sorteio
-// normal de _buildSpawnPool, com o teto de pesados e a variante do bioma. Um sorteio de enxame vira o anel
-// de besouros e encerra o grupo. O tamanho respeita o teto de vivos e os abates que faltam (mínimo 1).
-function _spawnWave(center, alive) {
-    const killsLeft = dungeonKillTarget - dungeonKills - alive;
-    const size = Math.max(1, Math.min(_waveSize(), CONFIG.MAX_ENEMIES - alive, killsLeft));
-    const placed = [];
-    for (let m = 0; m < size; m++) {
-        const pos = _waveMemberPos(center, m, size, placed);
-        placed.push(pos);
-        // Central weighted spawn table: single roll makes every type appear reliably
-        const pool = _buildSpawnPool();
-        let total = 0; for(const o of pool) total += o[1];
-        let r = SeedSystem.random() * total, chosen = 'normal';
-        for(const o of pool) { r -= o[1]; if (r <= 0) { chosen = o[0]; break; } }
-        // Teto de pesados vivos (elite e escudeiro): acima do limite vira inimigo normal
-        if (chosen === 'elite' || chosen === 'shielder') {
-            let _heavyAlive = 0;
-            for (let i = 0; i < entities.length; i++) { const _he = entities[i]; if (_he.alive && (_he.elite || _he.isShielder)) _heavyAlive++; }
-            const _heavyCap = CONFIG.MAX_HEAVY_ENEMIES + ((typeof RunMutators !== 'undefined' && RunMutators.eliteMult() > 1) ? 1 : 0);
-            if (_heavyAlive >= _heavyCap) chosen = 'normal';
-        }
-        if (chosen === 'swarm') {
-            // A ameaça é o número, não a vida: nasce um anel de besouros de ossos (SwarmEnemy). Encerra o grupo.
-            // Respeita o teto: o anel só cabe no espaço que sobra até MAX_ENEMIES.
-            _spawnSwarmRing(center.x, center.y, CONFIG.MAX_ENEMIES - alive - m);
-            break;
-        }
-        const factory = ENEMY_SPAWN_FACTORIES[chosen] || ENEMY_SPAWN_FACTORIES.normal;
-        const _ne = factory(pos.x, pos.y);
-        if ((chosen === 'elite' || chosen === 'normal') && typeof BiomeSystem !== 'undefined' && BiomeSystem.applyEnemyVariant) {
-            BiomeSystem.applyEnemyVariant(_ne);
-        }
-        entities.push(_ne);
-    }
-    _waveSpawnedAt = gameTime;
-    _waveBreatherFrames = _waveBreatherSecs() * GAME_TICKS_PER_SECOND;
-}
-
 // Anel de besouros (SwarmEnemy): nasce até SWARM_SPAWN_COUNT, sem passar de maxBorn. Devolve quantos nasceram.
 function _spawnSwarmRing(x, y, maxBorn) {
     const n = Math.max(0, Math.min(CONFIG.SWARM_SPAWN_COUNT, maxBorn));
@@ -14920,7 +14852,7 @@ function _updateStoryRoomSpawning(alive, tutSuppress) {
     if (_storyRoom.spawned < _storyRoom.budget) {
         if (alive >= CONFIG.MAX_ENEMIES) return;
         // Próximo lote: só com poucos vivos (ou o lote atual parado há muito tempo, válvula) e com o respiro
-        // zerado. O respiro só corre com a porta do grupo aberta, igual ao _spawnWave do mapa aberto.
+        // zerado. O respiro só corre com a porta do lote aberta, o mesmo critério do Abismo.
         const _stalled = (gameTime - _waveSpawnedAt) / GAME_TICKS_PER_SECOND > CONFIG.WAVE_STALL_SECONDS;
         if (!(alive <= CONFIG.WAVE_NEXT_WHEN_ALIVE || _stalled)) return;
         if (_waveBreatherFrames > 0) {
@@ -15037,17 +14969,10 @@ function _updateEnemySpawning() {
         const isBoss = bossForced || (bossEligible && _floorSecs >= CONFIG.BOSS_MIN_FLOOR_SECONDS && SeedSystem.random() < CONFIG.BOSS_SPAWN_CHANCE);
         if (isBoss) {
             _spawnFloorBoss(eSpawn);
-        } else if (!_storyRules()) {
-            // Abismo e desafio diário: ritmo antigo, 1 inimigo por tick
-            _spawnSingleLegacy(eSpawn, CONFIG.MAX_ENEMIES - aliveEnemies);
         } else {
-            // Grupos com respiro: o respiro só corre com poucos vivos (ou com o grupo atual parado há muito
-            // tempo, válvula). Quando zera, nasce o próximo grupo; a checagem é o tick de 60 frames.
-            const _stalled = (gameTime - _waveSpawnedAt) / GAME_TICKS_PER_SECOND > CONFIG.WAVE_STALL_SECONDS;
-            const _gateOpen = aliveEnemies <= CONFIG.WAVE_NEXT_WHEN_ALIVE || _stalled;
-            // Respiro em frames: cada tick de 60 frames desconta 1 s
-            if (_gateOpen && _waveBreatherFrames > 0) _waveBreatherFrames -= GAME_TICKS_PER_SECOND;
-            if (_gateOpen && _waveBreatherFrames <= 0) _spawnWave(eSpawn, aliveEnemies);
+            // Abismo e desafio diário: ritmo antigo, 1 inimigo por tick. Na História a câmara montada já
+            // saiu no ramo de cima (_updateStoryRoomSpawning); sem câmara (não ocorre hoje), cai aqui também.
+            _spawnSingleLegacy(eSpawn, CONFIG.MAX_ENEMIES - aliveEnemies);
         }
     }
     let bossAlive = false;
