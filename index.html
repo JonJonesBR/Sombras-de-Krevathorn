@@ -36578,8 +36578,52 @@ const NPCSystem = {
         return true;
     },
 
+    // T5: tira o canônico do meio do caminho. Varredura determinística (sem RNG) do
+    // tile mais próximo do ponto atual que seja canto/beco (≥3 vizinhos cardinais de
+    // parede), fora da faixa do eixo entrada→saída e longe de chefe, hazards, portais
+    // e saída (mesmo critério de _canonSpotOk). Sem candidato, devolve null e o ponto
+    // atual é mantido.
+    _canonSnapSpot(pos, sp, ep) {
+        if (!map || !map.tiles || !map.isWall) return null;
+        const T = (typeof CONFIG !== 'undefined' && CONFIG.TILE_SIZE) ? CONFIG.TILE_SIZE : 48;
+        const W = map.width, H = map.height;
+        const startTx = Math.floor(pos.x / T), startTy = Math.floor(pos.y / T);
+        const ax = sp.x, ay = sp.y, abx = ep.x - ax, aby = ep.y - ay;
+        const abLenSq = abx * abx + aby * aby;
+        // Faixa em volta do eixo entrada→saída: 1,5 tile. Fora do trecho não conta.
+        const inPath = (cx, cy) => {
+            if (abLenSq <= 0) return false;
+            const t = ((cx - ax) * abx + (cy - ay) * aby) / abLenSq;
+            if (t <= 0 || t >= 1) return false;
+            const px = ax + abx * t, py = ay + aby * t;
+            return Math.hypot(cx - px, cy - py) < T * 1.5;
+        };
+        let best = null, bestD = Infinity, bestTx = 0, bestTy = 0;
+        for (let tx = 1; tx < W - 1; tx++) {
+            for (let ty = 1; ty < H - 1; ty++) {
+                if (map.tiles[tx][ty].t !== 0) continue;
+                let walls = 0;
+                if (map.tiles[tx - 1][ty].t !== 0) walls++;
+                if (map.tiles[tx + 1][ty].t !== 0) walls++;
+                if (map.tiles[tx][ty - 1].t !== 0) walls++;
+                if (map.tiles[tx][ty + 1].t !== 0) walls++;
+                if (walls < 3) continue;
+                const cx = tx * T + T / 2, cy = ty * T + T / 2;
+                if (inPath(cx, cy)) continue;
+                if (!this._canonSpotOk(cx, cy)) continue;
+                const d = Math.abs(tx - startTx) + Math.abs(ty - startTy);
+                if (d < bestD || (d === bestD && (ty < bestTy || (ty === bestTy && tx < bestTx)))) {
+                    best = { x: cx, y: cy }; bestD = d; bestTx = tx; bestTy = ty;
+                }
+            }
+        }
+        return best;
+    },
+
     // F3: NPC canônico em ponto fixo do andar (perto da entrada, em direção à
-    // saída), com marcador próprio no minimapa. Não usa RNG.
+    // saída), com marcador próprio no minimapa. A posição de partida usa o
+    // getSafeSpawn (que sorteia); o encaixe em beco/canto é determinístico e
+    // não consome SeedSystem.random.
     spawnCanon(scene) {
         if (!window.map || !window.SceneDirector || !scene) return null;
         // Já existe um canônico desta cena neste mapa: não duplica.
@@ -36602,15 +36646,24 @@ const NPCSystem = {
             }
         }
         if (!pos) pos = map.getSafeSpawn(150);
+        // Sai do meio do caminho: encaixa no beco/canto mais próximo, sem RNG.
+        const snapped = this._canonSnapSpot(pos, sp, ep);
+        if (snapped) pos = snapped;
         const npc = new NPC(pos.x, pos.y, scene.npcType, {
             canon: true, sceneId: scene.id,
             name: scene.npcName, color: scene.color, nameColor: scene.nameColor, indicator: scene.indicator, art: scene.art
         });
         this.npcs.push(npc);
         if (scene.object) {
-            // Objeto interativo ao lado do NPC (beliche, altar, árvore...).
-            const ox = pos.x + 70, oy = pos.y + 30;
-            const free = (!map || !map.isWall || !map.isWall(ox, oy)) ? { x: ox, y: oy } : { x: pos.x - 70, y: pos.y + 30 };
+            // Objeto interativo ao lado do NPC (beliche, altar, árvore...). No beco o
+            // lado de +70/+30 pode ser parede: tenta offsets fixos até achar chão.
+            const offs = [[70, 30], [-70, 30], [70, 0], [-70, 0], [0, 30], [0, -30], [0, 70], [0, -70]];
+            let free = null;
+            for (let i = 0; i < offs.length; i++) {
+                const fx = pos.x + offs[i][0], fy = pos.y + offs[i][1];
+                if (!map || !map.isWall || !map.isWall(fx, fy)) { free = { x: fx, y: fy }; break; }
+            }
+            if (!free) free = { x: pos.x + 70, y: pos.y + 30 };
             SceneDirector.setObject(scene.id, { x: free.x, y: free.y, type: scene.object, label: scene.objectLabel });
         }
         return npc;
