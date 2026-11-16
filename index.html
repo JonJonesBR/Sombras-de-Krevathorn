@@ -11082,6 +11082,8 @@ var CONFIG = {
     BIOME_NAMES: ['dungeon', 'lavaCave', 'crypt', 'forest'],
     // Bioma de casa de cada classe: usado na PRIMEIRA troca de bioma da run (só se estiver desbloqueado
     // na meta-progressão e fora do desafio diário / de run com seed fixa). Depois vale o sorteio normal.
+    // Exceção: o guerreiro já começa em 'dungeon' (o bioma de casa dele), então a primeira troca dele
+    // segue o sorteio normal, como as seguintes — não há para onde "voltar".
     CLASS_BIOME: { warrior: 'dungeon', rogue: 'crypt', mage: 'lavaCave', elf: 'forest' },
 
     // Biome: Dungeon (default)
@@ -26933,6 +26935,8 @@ const BiomeSystem = {
     // bioma inicial e menos de dois intervalos de troca completos (o continue restaura o bioma e o
     // dungeonsCompleted, mas não o histórico). Fora do desafio diário e de run com seed fixa — mesmo
     // motivo de _biomeGateByMeta — e só vale se o bioma estiver desbloqueado na meta-progressão.
+    // Se o bioma de casa já é o atual (guerreiro, que começa em 'dungeon'), devolve null e a troca
+    // segue o sorteio normal.
     _classBiomePick() {
         if (window._currentDailyChallenge) return null;
         if (typeof SeedSystem !== 'undefined' && SeedSystem.isSeeded()) return null;
@@ -26947,8 +26951,9 @@ const BiomeSystem = {
 
     // Pick a new random biome (different from current)
     changeBiome() {
-        // Na primeira troca da run a classe puxa o próprio bioma, sem consumir SeedSystem.random():
-        // o sorteio normal segue igual nas trocas seguintes e no desafio diário (_classBiomePick sai antes).
+        // Na primeira troca da run a classe puxa o próprio bioma (quando ele ainda não é o atual),
+        // sem consumir SeedSystem.random(): o sorteio normal segue igual nas trocas seguintes e no
+        // desafio diário (_classBiomePick sai antes).
         const pick = this._classBiomePick();
         let available = CONFIG.BIOME_NAMES.filter(b => b !== this.currentBiome);
         // Gating de meta-progressão: só sorteia biomas já desbloqueados
