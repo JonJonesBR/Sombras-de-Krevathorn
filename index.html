@@ -29446,7 +29446,7 @@ class Entity {
         if (this !== player && !this.isB && window._dailyMods && window._dailyMods.enemyOneHit) {
             a = this.hp + (this.shield || 0); finalDmg = a;
         }
-        if(source && source.mutations) { if(source.mutations.vampiric) { const heal = finalDmg * CONFIG.VAMPIRIC_LIFESTEAL; source.hp = Math.min(source.maxHp, source.hp + heal); DamageNumbers.add(source.x, source.y, heal, 'heal'); } if(source.mutations.lightning && !_chainLightningActive && SeedSystem.random() < CONFIG.LIGHTNING_CHAIN_CHANCE) { dmgType = 'lightning'; finalDmg *= CONFIG.LIGHTNING_DAMAGE_MULT; const chainHeal = finalDmg * 0.03; if(source.hp != null) source.hp = Math.min(source.maxHp, source.hp + chainHeal); const chainRangeSq = CONFIG.LIGHTNING_CHAIN_RANGE * CONFIG.LIGHTNING_CHAIN_RANGE; _chainLightningActive = true; try { for(let i = 0; i < entities.length; i++) { const e = entities[i]; if(e !== this && e.alive) { const dx = e.x-this.x, dy = e.y-this.y; if(dx*dx + dy*dy < chainRangeSq) { e.takeDamage(finalDmg * 0.5, m, source, true); spawnParticles(e.x, e.y, '#ffff33', 3, 2); } } } } finally { _chainLightningActive = false; } } if(source.mutations.freeze && SeedSystem.random() < CONFIG.FREEZE_CHANCE) { this.frozen = CONFIG.FREEZE_DURATION; spawnParticles(this.x, this.y, '#33ccff', 10, 4); } }
+        if(source && source.mutations) { if(source.mutations.vampiric) { const heal = finalDmg * CONFIG.VAMPIRIC_LIFESTEAL; source.hp = Math.min(source.maxHp, source.hp + heal); DamageNumbers.add(source.x, source.y, heal, 'heal'); } if(source.mutations.lightning && !_chainLightningActive && SeedSystem.random() < CONFIG.LIGHTNING_CHAIN_CHANCE) { dmgType = 'lightning'; finalDmg *= CONFIG.LIGHTNING_DAMAGE_MULT; const chainHeal = finalDmg * 0.03; if(source.hp != null) source.hp = Math.min(source.maxHp, source.hp + chainHeal); const chainRangeSq = CONFIG.LIGHTNING_CHAIN_RANGE * CONFIG.LIGHTNING_CHAIN_RANGE; _chainLightningActive = true; try { for(let i = 0; i < entities.length; i++) { const e = entities[i]; if(e !== this && e.alive) { const dx = e.x-this.x, dy = e.y-this.y; if(dx*dx + dy*dy < chainRangeSq && hasLineOfSight(m, this.x, this.y, e.x, e.y)) { e.takeDamage(finalDmg * 0.5, m, source, true); spawnParticles(e.x, e.y, '#ffff33', 3, 2); } } } } finally { _chainLightningActive = false; } } if(source.mutations.freeze && SeedSystem.random() < CONFIG.FREEZE_CHANCE) { this.frozen = CONFIG.FREEZE_DURATION; spawnParticles(this.x, this.y, '#33ccff', 10, 4); } }
         if(source && source.skills && source.skills.execute && this.hp < this.maxHp * CONFIG.ROGUE_ASSASSINATE_THRESHOLD) { finalDmg = this.isB ? Math.min(this.maxHp * 0.10, Math.max(10, this.maxHp * CONFIG.ROGUE_ASSASSINATE_DAMAGE_PCT)) : Math.max(10, this.maxHp * CONFIG.ROGUE_ASSASSINATE_DAMAGE_PCT); dmgType = 'crit'; if(typeof DamageNumbers !== 'undefined') DamageNumbers.add(this.x, this.y, 'EXEC!', 'execute'); }
         if(source && source.skills && source.skills.deathmark && this._deathMarkT > 0) { finalDmg = Math.floor(finalDmg * 1.5); dmgType = 'crit'; }
         if(source && source.skills && source.skills.stun && SeedSystem.random() < 0.10) { this.frozen = Math.max(this.frozen || 0, Math.floor(40 * (this.elite ? 0.5 : this.isB ? 0.25 : 1))); spawnParticles(this.x, this.y, '#ffcc00', 6, 3); if(typeof DamageNumbers !== 'undefined') DamageNumbers.add(this.x, this.y, 'STUN!', 'stun'); if(typeof Statistics !== 'undefined' && source === player) { Statistics.data.stunsApplied = (Statistics.data.stunsApplied || 0) + 1; const _sb = Statistics._stunWin || (Statistics._stunWin = { t: -9999, n: 0 }); if (gameTime - _sb.t > GAME_TICKS_PER_SECOND) { _sb.t = gameTime; _sb.n = 0; } _sb.n++; if (_sb.n > (Statistics.data.maxStunBurst || 0)) Statistics.data.maxStunBurst = _sb.n; } }
@@ -29530,7 +29530,7 @@ class Entity {
                 const _ce = entities[_ci];
                 if (_ce !== this && _ce !== player && _ce.alive && (_ce.isEnemy || _ce instanceof Enemy || _ce.isB)) {
                     const _cdx = _ce.x - this.x, _cdy = _ce.y - this.y, _cdSq = _cdx*_cdx + _cdy*_cdy;
-                    if (_cdSq < _chainBestSq) { _chainBestSq = _cdSq; _chainBest = _ce; }
+                    if (_cdSq < _chainBestSq && hasLineOfSight(m, this.x, this.y, _ce.x, _ce.y)) { _chainBestSq = _cdSq; _chainBest = _ce; }
                 }
             }
             if (_chainBest) {
@@ -34261,6 +34261,7 @@ class Bullet {
         if (this.trail) this.trail.addPoint(this.x, this.y);
         if(m.isWall(this.x, this.y)) { this.alive = false; spawnParticles(this.x, this.y, this.color, 5, 2); }
         if(this.distTraveled > this.range) { this.alive = false; } // range limit
+        if(!this.alive) return; // morreu na parede/alcance: não acerta inimigos neste quadro
         // PERF: Use spatial hash for both player and enemy bullets
         const targets = window.spatialHash ? spatialHash.query(this.x, this.y, 25) : ents;
 
@@ -34413,7 +34414,7 @@ class Bullet {
                             const _be = entities[_bi];
                             if(_be !== e && _be.alive && typeof Enemy !== 'undefined' && (_be instanceof Enemy || _be.isEnemy)) {
                                 const _bdx = _be.x - e.x, _bdy = _be.y - e.y;
-                                if(_bdx * _bdx + _bdy * _bdy < _bR2) _be.takeDamage(_bDmg, m, source, true);
+                                if(_bdx * _bdx + _bdy * _bdy < _bR2 && hasLineOfSight(m, e.x, e.y, _be.x, _be.y)) _be.takeDamage(_bDmg, m, source, true);
                             }
                         }
                         ScreenEffects._addRing(e.x, e.y, this.color, CONFIG.COMBO_CHAIN_BLAST_RADIUS, 12, 3, 0);
@@ -34652,7 +34653,7 @@ class Player extends Entity {
                 if(e !== this && e.alive && typeof Enemy !== 'undefined' && (e instanceof Enemy || e.isEnemy)) {
                     const dx = e.x - pl.x, dy = e.y - pl.y;
                     const dSq = dx * dx + dy * dy;
-                    if(dSq < rSq && (dSq <= 3600 || hasLineOfSight(map, pl.x, pl.y, e.x, e.y))) {
+                    if(dSq < rSq && hasLineOfSight(map, pl.x, pl.y, e.x, e.y)) {
                         e.takeDamage(CONFIG.VENOM_POOL_DMG, map, this, true);
                         e.poisonStacks = Math.min(CONFIG.ROGUE_POISON_MAX_STACKS, (e.poisonStacks || 0) + 1);
                         e.poisonTimer = Math.max(e.poisonTimer || 0, CONFIG.ROGUE_POISON_DURATION);
@@ -34671,7 +34672,7 @@ class Player extends Entity {
             if(e !== this && e.alive && typeof Enemy !== 'undefined' && (e instanceof Enemy || e.isEnemy)) {
                 const dx = e.x - pu.x, dy = e.y - pu.y;
                 const dSq = dx * dx + dy * dy;
-                if(dSq < rSq && (dSq <= 3600 || hasLineOfSight(map, pu.x, pu.y, e.x, e.y))) { e.takeDamage(pu.dmg, map, this, true); spawnParticles(e.x, e.y, pu.color, 6, 4); }
+                if(dSq < rSq && hasLineOfSight(map, pu.x, pu.y, e.x, e.y)) { e.takeDamage(pu.dmg, map, this, true); spawnParticles(e.x, e.y, pu.color, 6, 4); }
             }
         }
     }
@@ -34919,7 +34920,7 @@ class Player extends Entity {
                     if(e !== this && e.alive) {
                         const edx = e.x - this.x, edy = e.y - this.y;
                         const dSq = edx*edx + edy*edy;
-                        if(dSq < burstSq && (dSq <= 3600 || hasLineOfSight(map, this.x, this.y, e.x, e.y))) {
+                        if(dSq < burstSq && hasLineOfSight(map, this.x, this.y, e.x, e.y)) {
                             e.takeDamage(45, map, this, true);
                             ScreenEffects.specialHit(e, edx, edy);
                             spawnParticles(e.x, e.y, '#66ccff', 8, 4);
@@ -34957,7 +34958,7 @@ class Player extends Entity {
                     if(e !== this && e.alive && typeof Enemy !== 'undefined' && (e instanceof Enemy || e.isEnemy)) {
                         const edx = e.x - this.x, edy = e.y - this.y;
                         const dSq = edx*edx + edy*edy;
-                        if(dSq < rootSq && (dSq <= 3600 || hasLineOfSight(map, this.x, this.y, e.x, e.y))) {
+                        if(dSq < rootSq && hasLineOfSight(map, this.x, this.y, e.x, e.y)) {
                             e.frozen = Math.max(e.frozen || 0, 90);
                             e.poisonStacks = (e.poisonStacks || 0) + 2;
                             e.poisonTimer = Math.max(e.poisonTimer || 0, CONFIG.ROGUE_POISON_DURATION);
@@ -35229,7 +35230,7 @@ class Player extends Entity {
                             if(e !== this && e.alive && typeof Enemy !== 'undefined' && (e instanceof Enemy || e.isEnemy)) {
                                 const edx = e.x - this.x, edy = e.y - this.y;
                                 const dSq = edx*edx + edy*edy;
-                                if(dSq < aoeSq && (dSq <= 3600 || hasLineOfSight(m, this.x, this.y, e.x, e.y))) {
+                                if(dSq < aoeSq && hasLineOfSight(m, this.x, this.y, e.x, e.y)) {
                                     e.takeDamage(aoeD, m, this);
                                     spawnParticles(e.x, e.y, '#aa66ff', 8, 4);
                                 }
