@@ -23,9 +23,11 @@ package-lock.json
 playwright.config.js
 .github/*
 !.github/workflows/
+!.github/gitleaks.toml
 .github/workflows/*
 !.github/workflows/limpar-deployments.yml
 !.github/workflows/validar-jogo.yml
+!.github/workflows/gitleaks.yml
 
 # Exportação/pasta do Google Drive e lixo de ferramentas
 graficos_melhores/
