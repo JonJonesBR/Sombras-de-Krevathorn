@@ -1,0 +1,9 @@
+# Configuração do gitleaks: regras padrão + exceções estreitas para falsos positivos conhecidos.
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Chaves de tradução do jogo (descKey: 'meta.x.desc'), que não são segredos"
+targetRules = ["generic-api-key"]
+regexTarget = "line"
+regexes = ['''descKey:\s*.[A-Za-z0-9_.]+.''']
