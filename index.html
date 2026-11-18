@@ -6365,6 +6365,8 @@ const I18n = {
             'race.exit': 'Sair',
             'race.shareTitle': 'Corrida em Krevathorn',
             'race.shareText': 'Corrida ({seed}) em Krevathorn: {result} | {time} | {pts} pts',
+            'specter.joined': 'Espectro aliado invocado!',
+            'specter.tag': 'Espectro',
             'prologue.p1': 'Há cem anos, um reino inteiro desapareceu.\n\nNão em guerra. Não em fogo.\n\nEm silêncio.',
             'prologue.p2': 'O reino se chamava Krevathorn.\n\nSeu rei se chamava Aldric.\n\nSeu filho se chamava Eiran.\n\nNinguém mais se lembra de nenhum dos três.',
             'prologue.p3': 'Dizem que, no fundo do vale, uma fenda se abriu no mundo.\n\nDizem que algo vive lá dentro.\n\nAlgo que não devora corpos. Devora memórias.\n\nAlgo que não sabe que está errado.',
@@ -8605,6 +8607,8 @@ const I18n = {
             'race.exit': 'Leave',
             'race.shareTitle': 'Krevathorn Seed Race',
             'race.shareText': 'Seed race ({seed}) in Krevathorn: {result} | {time} | {pts} pts',
+            'specter.joined': 'Allied specter summoned!',
+            'specter.tag': 'Specter',
             'prologue.p1': 'A hundred years ago, an entire kingdom disappeared.\n\nNot in war. Not in fire.\n\nIn silence.',
             'prologue.p2': 'The kingdom was called Krevathorn.\n\nIts king was called Aldric.\n\nHis son was called Eiran.\n\nNo one remembers any of the three anymore.',
             'prologue.p3': 'They say that, at the bottom of the valley, a rift opened in the world.\n\nThey say something lives inside.\n\nSomething that does not devour bodies. It devours memories.\n\nSomething that does not know it is wrong.',
@@ -10842,6 +10846,8 @@ const I18n = {
             'race.exit': 'Salir',
             'race.shareTitle': 'Carrera en Krevathorn',
             'race.shareText': 'Carrera ({seed}) en Krevathorn: {result} | {time} | {pts} pts',
+            'specter.joined': '¡Espectro aliado invocado!',
+            'specter.tag': 'Espectro',
             'prologue.p1': 'Hace cien años, un reino entero desapareció.\n\nNo en guerra. No en fuego.\n\nEn silencio.',
             'prologue.p2': 'El reino se llamaba Krevathorn.\n\nSu rey se llamaba Aldric.\n\nSu hijo se llamaba Eiran.\n\nNadie recuerda ya a ninguno de los tres.',
             'prologue.p3': 'Dicen que, en el fondo del valle, se abrió una grieta en el mundo.\n\nDicen que algo vive ahí dentro.\n\nAlgo que no devora cuerpos. Devora recuerdos.\n\nAlgo que no sabe que está equivocado.',
@@ -14007,7 +14013,7 @@ function _anyPanelOpen() {
 
 function _updateWorldSim() {
     if (_transitioning) return;
-    gameTime++; player.update(map); pets.forEach(p => p.update(map)); DamageNumbers.update(); Statistics.data.totalPlayTime++;
+    gameTime++; player.update(map); pets.forEach(p => p.update(map)); if (window.AllySpecter) AllySpecter.update(map); DamageNumbers.update(); Statistics.data.totalPlayTime++;
     Debug.time('fx', () => ScreenEffects.update());
     Debug.time('death', () => DeathAnimations.update());
     // Ambient biome particles (throttled)
@@ -15462,6 +15468,7 @@ function _buildStoryRoom(index, opts) {
     guidedBullets = []; rogueClones = []; hitstopFrames = 0; ScreenEffects.resetImpact();
     _cachedAliveEnemies = 0;
     PetSystem.rebuild(); // pets da run voltam ao lado do jogador nesta câmara
+    if (window.AllySpecter) AllySpecter.onFloorChange();
     PetRescue.reset(); // objetos de resgate são da câmara: a nova é montada logo abaixo
     if (window.NPCSystem) NPCSystem.reset();
     dungeonPortal = null; bossActive = false;
@@ -16059,6 +16066,7 @@ function _drawWorldLayer() {
                 }
             }
         }
+        if (window.AllySpecter) AllySpecter.draw(wctx, camX, camY);
     }
     
 }
@@ -16567,8 +16575,10 @@ function draw() {
                 hazards = []; chests = []; weaponPickups = []; equipmentPickups = [];
                 guidedBullets = []; rogueClones = []; hitstopFrames = 0; ScreenEffects.resetImpact();
                 PetSystem.rebuild(); // pets da run acompanham o jogador para o novo andar
+                if (window.AllySpecter) AllySpecter.onFloorChange();
                 PetRescue.reset(); // objetos de resgate do andar anterior somem (a câmara 0 do andar novo não tem)
                 if (window.NPCSystem) NPCSystem.reset();
+        if (window.AllySpecter) AllySpecter.maybeSpawnForRace();
                 if (window.SceneDirector && SceneDirector.onFloorBuilt) SceneDirector.onFloorBuilt();
                 if (window.RelicSystem) RelicSystem.onNewDungeon(player);
                 DifficultySystem.dungeonLevel = dungeonLevel;
@@ -35090,6 +35100,160 @@ class Pet {
 
 // Tap-to-mount: detect tap near pet
 
+// ============================================================
+// AllySpecter (Multiplayer Stage 2): phantom ally from SeedRace rival
+// ============================================================
+window.AllySpecter = {
+    active: false,
+    cls: 'warrior',
+    x: 0,
+    y: 0,
+    angle: 0,
+    cooldown: 0,
+    atkAnim: 0,
+    timer: 0,
+    state: 'idle',
+
+    reset() {
+        this.active = false;
+        this.cooldown = 0;
+        this.atkAnim = 0;
+        this.timer = 0;
+        this.state = 'idle';
+    },
+
+    spawn(cls, silent) {
+        if (typeof player === 'undefined' || !player) return;
+        const valid = ['warrior', 'rogue', 'mage', 'elf'];
+        this.cls = valid.indexOf(cls) >= 0 ? cls : 'warrior';
+        this.x = (typeof map !== 'undefined' && map && map.isWall && !map.isWall(player.x + 44, player.y)) ? player.x + 44 : player.x;
+        this.y = player.y;
+        this.angle = 0;
+        this.cooldown = 30;
+        this.atkAnim = 0;
+        this.timer = 0;
+        this.state = 'idle';
+        this.active = true;
+        if (!silent) {
+            if (typeof spawnParticles === 'function') spawnParticles(this.x, this.y, '#7dd3fc', 16, 4);
+            if (typeof addLog === 'function') addLog(window.I18n ? I18n.t('specter.joined') : 'Espectro aliado invocado!');
+        }
+    },
+
+    maybeSpawnForRace() {
+        if (window.SeedRace && SeedRace.active && SeedRace.rival && typeof player !== 'undefined' && player) {
+            this.spawn(SeedRace.rival.cls, false);
+        } else {
+            this.reset();
+        }
+    },
+
+    onFloorChange() {
+        if (!this.active || typeof player === 'undefined' || !player) return;
+        this.x = (typeof map !== 'undefined' && map && map.isWall && !map.isWall(player.x + 40, player.y)) ? player.x + 40 : player.x;
+        this.y = player.y;
+        this.cooldown = 20;
+    },
+
+    _stepToward(m, tx, ty, spd) {
+        const dx = tx - this.x, dy = ty - this.y;
+        const d = Math.hypot(dx, dy);
+        if (d < 1) return false;
+        const nx = this.x + (dx / d) * spd;
+        const ny = this.y + (dy / d) * spd;
+        if (!m || !m.isWall || !m.isWall(nx, this.y)) this.x = nx;
+        if (!m || !m.isWall || !m.isWall(this.x, ny)) this.y = ny;
+        this.angle = Math.atan2(dy, dx);
+        return true;
+    },
+
+    update(m) {
+        if (!this.active || typeof player === 'undefined' || !player || !player.alive) return;
+        this.timer++;
+        if (this.cooldown > 0) this.cooldown--;
+        if (this.atkAnim > 0) this.atkAnim--;
+
+        // Teleport softly if too far from player
+        const pd = Math.hypot(player.x - this.x, player.y - this.y);
+        if (pd > 360) {
+            this.x = player.x + 36;
+            this.y = player.y;
+        }
+
+        // Find nearest enemy with line of sight
+        let target = null, minDSq = 260 * 260;
+        const list = (typeof spatialHash !== 'undefined' && spatialHash && spatialHash.grid && spatialHash.grid.size > 0)
+            ? spatialHash.query(player.x, player.y, 260)
+            : (typeof entities !== 'undefined' ? entities : []);
+        for (let i = 0; i < list.length; i++) {
+            const e = list[i];
+            if (!e || !e.alive || !e.isEnemy || e.isBarrier) continue;
+            const dSq = (e.x - this.x) * (e.x - this.x) + (e.y - this.y) * (e.y - this.y);
+            if (dSq < minDSq && (typeof hasLineOfSight !== 'function' || hasLineOfSight(m, this.x, this.y, e.x, e.y))) {
+                minDSq = dSq;
+                target = e;
+            }
+        }
+
+        const isRanged = (this.cls === 'mage' || this.cls === 'elf');
+        if (target) {
+            const d = Math.sqrt(minDSq);
+            const desired = isRanged ? 140 : 42;
+            let moved = false;
+            if (d > desired + 12) moved = this._stepToward(m, target.x, target.y, 2.7);
+            else this.angle = Math.atan2(target.y - this.y, target.x - this.x);
+
+            this.state = this.atkAnim > 0 ? 'attack' : (moved ? 'walk' : 'idle');
+
+            if (d <= desired + 28 && this.cooldown <= 0 && typeof target.takeDamage === 'function') {
+                const lvl = typeof dungeonLevel !== 'undefined' ? dungeonLevel : 1;
+                const dmg = Math.round((8 + lvl * 2.5) * (isRanged ? 0.9 : 1.1));
+                target.takeDamage(dmg, m, player, true);
+                if (typeof spawnParticles === 'function') {
+                    spawnParticles(target.x, target.y, '#7dd3fc', 6, 3);
+                    if (isRanged) {
+                        for (let s = 1; s <= 3; s++) {
+                            spawnParticles(this.x + (target.x - this.x) * (s / 4), this.y + (target.y - this.y) * (s / 4), '#bae6fd', 2, 2);
+                        }
+                    }
+                }
+                this.cooldown = isRanged ? 58 : 48;
+                this.atkAnim = 14;
+                this.state = 'attack';
+            }
+        } else {
+            const orbitA = this.timer * 0.025;
+            const tx = player.x + Math.cos(orbitA) * 64;
+            const ty = player.y + Math.sin(orbitA) * 64;
+            const moved = (Math.hypot(tx - this.x, ty - this.y) > 12) ? this._stepToward(m, tx, ty, 2.5) : false;
+            this.state = moved ? 'walk' : 'idle';
+        }
+    },
+
+    draw(ctx, cx, cy) {
+        if (!this.active || typeof player === 'undefined' || !player) return;
+        const sx = this.x - cx, sy = this.y - cy;
+        ctx.save();
+        ctx.globalAlpha = 0.24;
+        ctx.fillStyle = '#38bdf8';
+        ctx.beginPath(); ctx.arc(sx, sy + 6, 15, 0, Math.PI * 2); ctx.fill();
+        ctx.globalAlpha = 0.58;
+        if (typeof SpriteManager !== 'undefined' && typeof SpriteManager.draw === 'function') {
+            SpriteManager.draw(ctx, sx, sy, this.cls, this.timer, false, this.angle, 1.35, this.state);
+        } else {
+            ctx.fillStyle = '#7dd3fc';
+            ctx.beginPath(); ctx.arc(sx, sy, 12, 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.globalAlpha = 0.8;
+        ctx.fillStyle = '#bae6fd';
+        ctx.font = 'bold 9px ' + COLORS.CANVAS_FONT;
+        ctx.textAlign = 'center';
+        const tag = window.I18n ? I18n.t('specter.tag') : 'Espectro';
+        ctx.fillText(tag, sx, sy - 26);
+        ctx.restore();
+    }
+};
+
 
 </script>
 <script>
@@ -43840,6 +44004,7 @@ window.GameBootstrap = {
         weather = null; weatherTimer = 0;
 
         if (window.NPCSystem) NPCSystem.reset();
+        if (window.AllySpecter) AllySpecter.maybeSpawnForRace();
         // F0: flags de cena da run. O continue restaura o snapshot logo depois de
         // _initModeSpecific; run nova sempre começa limpa.
         if (window.StoryFlags) StoryFlags.resetRun();
