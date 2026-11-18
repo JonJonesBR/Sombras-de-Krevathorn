@@ -81,7 +81,7 @@ Since the game is built with vanilla web technologies, running it is incredibly 
     Open `index.html` in a modern browser.
 3.  *(Optional)* For the best experience, serve it through a local development server (e.g., VSCode Live Server or Python's `http.server`). This enables PWA install and the offline service worker — both require `http(s)://` (opening the file directly always works, just without them).
 
-The game is a single self-contained `index.html` plus a `sw.js` service worker — no build step, no runtime dependencies. This repository intentionally contains only the files GitHub Pages serves; development tooling (tests, CI, linting) lives outside the repo.
+The game is a single self-contained `index.html` plus a `sw.js` service worker, a `manifest.webmanifest` and its icons — no build step, no runtime dependencies. This repository intentionally contains only the files GitHub Pages serves; development tooling (tests, CI, linting) lives outside the repo.
 
 ---
 
