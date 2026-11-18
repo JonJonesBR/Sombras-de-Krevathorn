@@ -36,6 +36,7 @@
 
 /* ── Reset & Base ── */
 :root {
+    color-scheme: dark;
     /* Two-family system: display serif reserved for the brand logo only,
        one system-ui stack everywhere else (DOM + canvas share it). */
     --font-body: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
@@ -664,9 +665,8 @@ body.gfx-low #modal-overlay.hidden {
 /* Campos de texto: podem ser selecionados (o user-select:none global bloqueia) e mostram o foco */
 input, textarea { -webkit-user-select: text; user-select: text; }
 input:focus-visible, textarea:focus-visible { outline: 2px solid #e0b6ff; outline-offset: 2px; }
-/* Área de toque de 44px do botão de fechar das Missões, sem mudar o desenho de 24px */
-#quest-panel-close { position: relative; }
-#quest-panel-close::after { content: ""; position: absolute; inset: -10px; }
+/* Área de toque de 44px do botão de fechar das Missões */
+#quest-panel-close { position: relative; min-width: 44px; min-height: 44px; }
 /* Toques no painel: sem zoom de duplo toque nem atraso de clique nos botões */
 #settings-panel button { touch-action: manipulation; }
 /* Re-render com o painel já aberto não repete a animação de entrada (ver SettingsUI._render) */
@@ -2037,8 +2037,8 @@ body.reduce-motion .end-art .ea-emb { animation: none !important; opacity: 0.35;
         <div id="quest-panel" class="hidden" style="position:absolute;top:calc(env(safe-area-inset-top,8px) + 148px);right:max(8px,env(safe-area-inset-right,8px));width:min(240px,44vw);z-index:180;pointer-events:auto;background:rgba(18,14,28,0.92);border:1.5px solid rgba(224,182,255,0.22);border-radius:12px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 4px 16px rgba(0,0,0,0.45);padding:8px 10px;">
             <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:6px;">
                 <div data-i18n="ui.questsTitle" style="font-size:calc(10px * var(--font-scale,1));letter-spacing:0.18em;text-transform:uppercase;color:rgba(224,182,255,0.55);">📜 Missões da Profecia</div>
-                <button id="quest-panel-close" onclick="if(window.QuestSystem) QuestSystem.toggle()" style="flex:none;width:24px;height:24px;border-radius:6px;border:1px solid rgba(224,182,255,0.2);background:rgba(224,182,255,0.08);color:rgba(224,182,255,0.7);display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer;touch-action:manipulation;" data-i18n-aria-label="a11y.closeQuests" aria-label="Fechar missões">
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                <button id="quest-panel-close" onclick="if(window.QuestSystem) QuestSystem.toggle()" style="flex:none;width:44px;height:44px;border-radius:10px;border:1px solid rgba(224,182,255,0.2);background:rgba(224,182,255,0.08);color:rgba(224,182,255,0.7);display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer;touch-action:manipulation;" data-i18n-aria-label="a11y.closeQuests" aria-label="Fechar missões">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
                 </button>
             </div>
             <div id="quest-list" style="display:flex;flex-direction:column;gap:8px;font-size:10px;color:#e5d9f5;"></div>
@@ -43408,6 +43408,7 @@ window.FloorIntro = FloorIntro;
 // ---------- Sussurros de Eiran (não bloqueantes, sem repetir na run) ----------
 const WhisperSystem = {
     _timer: null,
+    _waitSeq: 0,
     _shownThisRun: {},
     FLOORS: [2, 5, 7, 9, 10],
     ABYSS: [10, 20, 30],
@@ -43415,14 +43416,24 @@ const WhisperSystem = {
     _el(id) { return document.getElementById(id); },
 
     resetRun() {
+        this._waitSeq++;
         this._shownThisRun = {};
         this._clearTimer();
         const el = this._el('whisper-overlay');
         if (el) el.classList.remove('show');
     },
 
+    _hasCombat() {
+        if (typeof _storyRules === 'function' && _storyRules()) {
+            if (typeof _storyRoom !== 'undefined' && _storyRoom && !_storyRoom.cleared) return true;
+        }
+        return typeof entities !== 'undefined' && Array.isArray(entities)
+            && entities.some(e => e && e !== player && e.alive);
+    },
+
     // Uma linha por andar; a flag de carreira (eiranWhisperHeard) só é marcada
     // quando a linha fica visível até o fim (não pulável, sem crossfade curto).
+    // Na História, espera a câmara esvaziar para não sobrepor combate.
     request() {
         const key = (typeof gameMode !== 'undefined' && gameMode === 'abyss')
             ? ('abyss:' + dungeonLevel)
@@ -43437,12 +43448,19 @@ const WhisperSystem = {
             if (this.FLOORS.indexOf(dungeonLevel) === -1) return;
             i18nKey = 'whisper.f' + dungeonLevel;
         }
-        this._shownThisRun[key] = true;
         const self = this;
-        // Sussurro espera o fade de troca de andar terminar.
+        const seq = ++this._waitSeq;
+        const isStory = typeof _storyRules === 'function' && _storyRules();
+        // Sussurro espera o fade de troca de andar terminar (e na História, a câmara esvaziar).
         let tries = 0;
         const wait = function() {
-            if (typeof _transitioning !== 'undefined' && _transitioning && tries++ < 80) { setTimeout(wait, 300); return; }
+            if (seq !== self._waitSeq) return;
+            if (typeof gameState !== 'undefined' && (gameState === 'MENU' || gameState === 'GAME_OVER' || gameState === 'WIN')) return;
+            const busy = (typeof _transitioning !== 'undefined' && _transitioning)
+                || (isStory && self._hasCombat());
+            if (busy && tries++ < 600) { setTimeout(wait, 300); return; }
+            if (busy) return;
+            self._shownThisRun[key] = true;
             self.show(i18nKey);
         };
         setTimeout(wait, 400);
