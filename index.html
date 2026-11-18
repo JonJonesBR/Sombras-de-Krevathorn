@@ -2355,9 +2355,17 @@ const Debug = {
         }
     },
 
-    // Performance tracking
-    beginFrame() {
-        this.lastFrameTime = performance.now();
+    // Performance tracking (local frame time ring buffer + EMA + 1s window max)
+    frameTimeAvg: 0,
+    frameTimeWindowMax: 0,
+    slowFrames: 0,
+    _ftBuf: new Float32Array(120),
+    _ftIdx: 0,
+    _ftCount: 0,
+    _ftWindowReset: 0,
+
+    beginFrame(now) {
+        this.lastFrameTime = (typeof now === 'number' && now > 0) ? now : performance.now();
     },
 
     endFrame() {
@@ -2369,13 +2377,39 @@ const Debug = {
             // reflects current performance instead of a lifetime average that
             // dilutes away real stutters the longer the game has been running
             this.fps = this.fpsSamples === 0 ? instantFps : this.fps + (instantFps - this.fps) * 0.1;
+            this.frameTimeAvg = this.fpsSamples === 0 ? this.frameTime : this.frameTimeAvg + (this.frameTime - this.frameTimeAvg) * 0.1;
             this.fpsSamples++;
+            this._ftBuf[this._ftIdx] = this.frameTime;
+            this._ftIdx = (this._ftIdx + 1) % this._ftBuf.length;
+            if (this._ftCount < this._ftBuf.length) this._ftCount++;
+            if (this.frameTime > 16.7) this.slowFrames++;
+            if (now - this._ftWindowReset > 1000) {
+                this.frameTimeWindowMax = this.frameTime;
+                this._ftWindowReset = now;
+            } else if (this.frameTime > this.frameTimeWindowMax) {
+                this.frameTimeWindowMax = this.frameTime;
+            }
         }
+    },
+
+    getFrameStats() {
+        const n = this._ftCount;
+        if (n === 0) return { avg: 0, p95: 0, max: 0, slowFrames: this.slowFrames, samples: 0 };
+        const arr = Array.from(this._ftBuf.subarray(0, n)).sort((a, b) => a - b);
+        const sum = arr.reduce((a, b) => a + b, 0);
+        const p95 = arr[Math.min(n - 1, Math.floor(n * 0.95))];
+        return {
+            avg: Math.round((sum / n) * 100) / 100,
+            p95: Math.round(p95 * 100) / 100,
+            max: Math.round(arr[n - 1] * 100) / 100,
+            slowFrames: this.slowFrames,
+            samples: n
+        };
     },
 
     // Get debug info string
     getInfo() {
-        return `FPS: ${Math.round(this.fps)} | Frame: ${this.frameTime.toFixed(1)}ms | Errors: ${this.errorCount} | Warnings: ${this.warnCount}`;
+        return `FPS: ${Math.round(this.fps)} | Frame: ${this.frameTimeAvg.toFixed(1)}ms (max ${this.frameTimeWindowMax.toFixed(1)}ms) | Errors: ${this.errorCount} | Warnings: ${this.warnCount}`;
     },
 
     // Clear errors
@@ -15587,15 +15621,20 @@ function _checkLowHpAlert() {
     if (window.Vibrate) Vibrate.trigger('lowHealth');
 }
 
+function _tickMusicLayers() { if (window.SND && SND.tickLayers) SND.tickLayers(); }
+function _tickEntities() { Debug.time('entities', _updateEntitySimulation); }
+function _tickQuestSystem() { if (window.QuestSystem) QuestSystem.update(); }
+function _tickAutosave() { SaveSystem.save(); }
+
 function update() {
     // Audio layers track real time, not the simulation clock. The sim freezes
     // while a panel is open, so a layer started before the panel (the boss
     // climax drone) would never receive its stop and would drone on forever.
-    if (window.SND && SND.tickLayers) Debug.safe(() => SND.tickLayers(), 'musicLayers');
+    if (window.SND && SND.tickLayers) Debug.safe(_tickMusicLayers, 'musicLayers');
     if (gameState !== 'PLAYING') return;
-    Debug.safe(() => _handlePlayerDeath(), 'handlePlayerDeath');
+    Debug.safe(_handlePlayerDeath, 'handlePlayerDeath');
     if (gameState !== 'PLAYING') return;
-    Debug.safe(() => _checkLowHpAlert(), 'lowHpAlert');
+    Debug.safe(_checkLowHpAlert, 'lowHpAlert');
     // --- Phase 4: Hitstop  freeze world for N frames on kill ---
     // Brief hitstop for punchy combat (2 frames)
     if (hitstopFrames > 0) { if (window.GameSettings && GameSettings.hitstopEnabled === false) { hitstopFrames = 0; } else { hitstopFrames--; return; } }
@@ -15604,22 +15643,22 @@ function update() {
     // Recompensa de chefe enfileirada (painel aberto na morte): mostra quando o painel fechar.
     if (window.BossRewardSystem && typeof BossRewardSystem.flushPending === 'function') BossRewardSystem.flushPending();
     if (_anyPanelOpen()) return;
-    Debug.safe(() => _updateSystems(), 'updateSystems');
-    Debug.safe(() => _updateWorldSim(), 'updateWorldSim');
+    Debug.safe(_updateSystems, 'updateSystems');
+    Debug.safe(_updateWorldSim, 'updateWorldSim');
     // Durante o fade de troca de andar o jogador está congelado e gameTime parado: perigos com
     // gameTime % N === 0 feririam em todo tick e spawnHazard dispararia em série. Não simular entidades.
-    if (!_transitioning) Debug.safe(() => Debug.time('entities', _updateEntitySimulation), 'updateEntitySimulation');
-    Debug.safe(() => _updatePortalAndFloor(), 'updatePortalAndFloor');
-    Debug.safe(() => _updateFloorExitReveal(), 'floorExitReveal');
-    Debug.safe(() => _updateSecretRoom(), 'secretRoom');
-    Debug.safe(() => _updateEnemySpawning(), 'updateEnemySpawning');
-    Debug.safe(() => { if (window.QuestSystem) QuestSystem.update(); }, 'questSystem');
+    if (!_transitioning) Debug.safe(_tickEntities, 'updateEntitySimulation');
+    Debug.safe(_updatePortalAndFloor, 'updatePortalAndFloor');
+    Debug.safe(_updateFloorExitReveal, 'floorExitReveal');
+    Debug.safe(_updateSecretRoom, 'secretRoom');
+    Debug.safe(_updateEnemySpawning, 'updateEnemySpawning');
+    Debug.safe(_tickQuestSystem, 'questSystem');
     // Achievements are defined but checkAchievements() was never invoked, so no
     // achievement ever unlocked. Throttle the check (iterates a small list and
     // only touches storage on unlock) to keep per-frame cost negligible.
-    if (gameTime % 30 === 0) Debug.safe(() => checkAchievements(), 'checkAchievements');
-    Debug.safe(() => _updateCameraAndHUD(), 'updateCameraAndHUD');
-    if (gameTime % 1200 === 0) { Debug.safe(() => SaveSystem.save(), 'autosaveTimer'); }
+    if (gameTime % 30 === 0) Debug.safe(checkAchievements, 'checkAchievements');
+    Debug.safe(_updateCameraAndHUD, 'updateCameraAndHUD');
+    if (gameTime % 1200 === 0) { Debug.safe(_tickAutosave, 'autosaveTimer'); }
 }
 
 // ============================================================
@@ -17443,7 +17482,7 @@ window.EquipmentCard = EquipmentCard;
 // ============================================================
 // GAME LOOP
 // ============================================================
-let _lastTime = 0, _fpsFrames = 0, _fpsTime = 0, _simulationAccumulator = 0;
+let _lastTime = 0, _fpsFrames = 0, _fpsTime = 0, _simulationAccumulator = 0, _frameClockMs = 0;
 const SIMULATION_STEP_MS = 1000 / GAME_TICKS_PER_SECOND;
 const SIMULATION_MAX_STEPS_PER_FRAME = 5;
 
@@ -17461,7 +17500,7 @@ function _advanceSimulation(deltaMs) {
     _simulationAccumulator = Math.min(_simulationAccumulator + Math.min(deltaMs, maxDelta), maxDelta);
     let steps = 0;
     while (_simulationAccumulator + 0.000001 >= SIMULATION_STEP_MS && steps < SIMULATION_MAX_STEPS_PER_FRAME) {
-        Debug.safe(() => update(), 'update');
+        Debug.safe(update, 'update');
         _simulationAccumulator -= SIMULATION_STEP_MS;
         steps++;
     }
@@ -17476,6 +17515,7 @@ function _canSkipRedraw() {
 }
 
 function loop(timestamp) {
+    _frameClockMs = timestamp || performance.now();
     if (!_lastTime) _lastTime = timestamp;
     
     // Single, efficient FPS calculation for all displays
@@ -17506,7 +17546,7 @@ function loop(timestamp) {
         if (el) {
             if (debugVisible) {
                 el.classList.add('visible');
-                el.innerText = `FPS: ${fps}`;
+                el.innerText = `FPS: ${fps} | ${Debug.frameTimeAvg.toFixed(1)}ms (max ${Debug.frameTimeWindowMax.toFixed(1)}ms)`;
                 if (fps >= 55) el.style.color = COLORS.FPS_OK;
                 else if (fps >= 30) el.style.color = COLORS.FPS_WARN;
                 else el.style.color = COLORS.FPS_BAD;
@@ -17566,7 +17606,7 @@ function loop(timestamp) {
     // Em START a tela inicial é opaca e draw() já sai no primeiro if: não chama. _frameStale
     // continua true enquanto não for pulável, então o primeiro quadro fora do START redesenha.
     if (gameState !== 'START' && (_steps > 0 || _frameStale || !_skippable)) {
-        Debug.safe(() => draw(), 'draw');
+        Debug.safe(draw, 'draw');
     }
     _frameStale = !_skippable;
     Debug.endFrame();
@@ -28385,7 +28425,7 @@ const ElementalSystem = {
         for (const status of entity.elementalStatuses) {
             const color = colors[status.type] || '#ffffff';
             ctx.fillStyle = color;
-            ctx.globalAlpha = 0.7 + Math.sin(Date.now() * 0.005) * 0.3;
+            ctx.globalAlpha = 0.7 + Math.sin((_frameClockMs || Date.now()) * 0.005) * 0.3;
             // Ícone em pixel (7x7 células) no lugar do emoji; fonte e i18n dos números não mudam
             PixelFX.draw(ctx, WorldSprites.status(status.type, color), entity.x - cx + xOff, entity.y - cy + yOff);
             
