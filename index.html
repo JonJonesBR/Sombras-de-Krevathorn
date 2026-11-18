@@ -1688,6 +1688,13 @@ body.reduce-motion .end-art .ea-emb { animation: none !important; opacity: 0.35;
 
                 <!-- Nova partida: modo, dificuldade, mutadores e escolha da classe (o toque na classe inicia) -->
                 <section class="start-card" aria-labelledby="start-newrun-title">
+                    <div id="seed-race-banner" style="display:none;margin-bottom:10px;padding:8px 10px;border-radius:12px;background:rgba(120,180,255,0.1);border:1.5px solid rgba(120,180,255,0.35);font-size:clamp(0.62rem,2.2vw,0.74rem);color:#dbeafe;">
+                        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                            <div id="seed-race-banner-title" style="font-weight:800;color:#9ad0ff;"></div>
+                            <button type="button" onclick="if(window.SeedRace) SeedRace.clear()" data-i18n="race.exit" style="padding:3px 8px;border-radius:8px;font-size:10px;font-weight:700;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.7);cursor:pointer;touch-action:manipulation;">Sair</button>
+                        </div>
+                        <div id="seed-race-banner-sub" style="margin-top:3px;color:rgba(255,255,255,0.75);font-size:clamp(0.58rem,2vw,0.68rem);"></div>
+                    </div>
                     <div id="start-newrun-title" class="start-section-title" data-i18n="start.newRun">Nova partida</div>
 
                     <div class="start-seg start-seg-mode" role="group" aria-label="Modo" data-i18n-aria-label="start.modeLabel">
@@ -1809,6 +1816,7 @@ body.reduce-motion .end-art .ea-emb { animation: none !important; opacity: 0.35;
                             <button onclick="window.clearSeedInput()" data-i18n="start.seedRandom" style="padding:8px 10px;border-radius:12px;font-size:clamp(0.6rem,2.4vw,0.78rem);font-weight:700;border:1.5px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.45);cursor:pointer;touch-action:manipulation;">Aleatório</button>
                         </div>
                         <div id="seed-status" data-i18n="start.seedStatus" style="text-align:center;font-size:clamp(0.55rem,2vw,0.65rem);color:rgba(255,255,255,0.55);margin-top:4px;min-height:1.1em;">Mesmo seed + mesmo piso = mesmo mapa e mesmos encontros.</div>
+                        <button type="button" id="seed-race-copy-btn" onclick="if(window.SeedRace) SeedRace.copyStartLink()" data-i18n="race.copyLink" style="width:100%;margin-top:6px;padding:8px 10px;border-radius:12px;font-size:clamp(0.6rem,2.4vw,0.76rem);font-weight:700;border:1.5px solid rgba(120,180,255,0.35);background:rgba(80,140,255,0.12);color:#9ad0ff;cursor:pointer;touch-action:manipulation;">🏁 Copiar link da corrida</button>
                     </div>
                     <div class="start-adv-sec">
                         <div class="start-section-title" data-i18n="start.buildLabel">Build (código e arquétipos)</div>
@@ -2122,11 +2130,13 @@ body.reduce-motion .end-art .ea-emb { animation: none !important; opacity: 0.35;
             </div>
             <div id="game-over-stats" class="w-full text-sm" style="color:rgba(255,255,255,0.6);"></div>
             <div id="go-best-stats" style="width:100%;"></div>
+            <div id="go-race-compare" style="width:100%;display:none;"></div>
             <div id="go-records" style="width:100%;text-align:center;"></div>
             <div id="go-tip" class="text-xs hidden text-center px-4" style="color:#ffcc00;"></div>
             <div id="go-lore-teaser" class="text-xs hidden text-center px-4" style="color:#e0b6ff;"></div>
             <button id="go-newrun-btn" data-i18n="gameover.newRun" onclick="_startNewRunSameClass()" style="position:sticky;bottom:0;z-index:2;width:100%;padding:16px 0;border-radius:12px;color:#fff;font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:0.05em;background:linear-gradient(135deg,#b8000f,#e84525);border:1px solid rgba(255,100,80,0.3);box-shadow:0 4px 20px rgba(200,0,15,0.3);transition:all 0.3s;text-shadow:0 1px 4px rgba(0,0,0,0.4);cursor:pointer;">NOVA RUN</button>
             <button id="go-share-btn" data-i18n="gameover.share" style="width:100%;padding:10px 0;border-radius:12px;color:#9ad0ff;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;background:rgba(80,140,255,0.1);border:1px solid rgba(80,140,255,0.3);cursor:pointer;transition:all 0.3s;">&#128279; COMPARTILHAR RESULTADO</button>
+            <button id="go-race-btn" data-i18n="race.challengeBtn" style="display:none;width:100%;padding:10px 0;border-radius:12px;color:#9ad0ff;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;background:rgba(80,140,255,0.14);border:1px solid rgba(120,180,255,0.35);cursor:pointer;transition:all 0.3s;">&#127937; DESAFIAR COM ESTA SEED</button>
             <button id="go-prestige-btn" data-i18n="gameover.prestigeBtn" onclick="if(window.UIManager) window.UIManager.openPanel('prestige')" style="width:100%;padding:10px 0;border-radius:12px;color:#ff8c42;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.06em;background:rgba(255,140,66,0.12);border:1px solid rgba(255,140,66,0.35);cursor:pointer;transition:all 0.3s;">Prestígio</button>
             <button id="restart-btn" data-i18n="gameover.restart" style="width:100%;padding:12px 0;border-radius:12px;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.5);background:rgba(40,30,55,0.6);transition:all 0.2s;cursor:pointer;">VOLTAR AO MENU</button>
         </div>
@@ -2168,8 +2178,10 @@ body.reduce-motion .end-art .ea-emb { animation: none !important; opacity: 0.35;
             <h1 id="win-title" class="text-3xl font-bold epic-glow-text" data-i18n="win.title" style="color:#3ce36a;text-shadow:0 0 25px rgba(60,227,106,0.5),0 0 50px rgba(60,227,106,0.2);">SUPERFÍCIE ALCANÇADA!</h1>
             <div id="win-stars" class="text-4xl"></div>
             <div id="win-stats" class="text-sm" style="color:rgba(255,255,255,0.6);"></div>
+            <div id="win-race-compare" style="width:100%;display:none;"></div>
             <button id="win-playagain-btn" data-i18n="win.playAgain" style="width:100%;padding:16px 0;border-radius:12px;color:#fff;font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:0.05em;background:linear-gradient(135deg,#008836,#3ce36a);border:1px solid rgba(60,227,106,0.3);box-shadow:0 4px 20px rgba(0,136,54,0.3);transition:all 0.3s;text-shadow:0 1px 4px rgba(0,0,0,0.4);cursor:pointer;" onclick="_startNewRunSameClass()">JOGAR NOVAMENTE</button>
             <button id="win-share-btn" data-i18n="win.share" style="width:100%;padding:10px 0;border-radius:12px;color:#9ad0ff;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;background:rgba(80,140,255,0.1);border:1px solid rgba(80,140,255,0.3);cursor:pointer;transition:all 0.3s;">&#128279; COMPARTILHAR VITÓRIA</button>
+            <button id="win-race-btn" data-i18n="race.challengeBtn" style="display:none;width:100%;padding:10px 0;border-radius:12px;color:#9ad0ff;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;background:rgba(80,140,255,0.14);border:1px solid rgba(120,180,255,0.35);cursor:pointer;transition:all 0.3s;">&#127937; DESAFIAR COM ESTA SEED</button>
         </div>
     </div>
 
@@ -6303,6 +6315,22 @@ const I18n = {
             'win.share': '🔗 COMPARTILHAR VITÓRIA',
             'win.shareVictory': 'Vitória',
             'win.shareText': 'Krevathorn — {cls} | {ending} | {stars}/3 estrelas | {time}',
+            'race.copyLink': '🏁 Copiar link da corrida',
+            'race.linkCopied': 'Link da corrida copiado!',
+            'race.challengeBtn': '🏁 DESAFIAR COM ESTA SEED',
+            'race.bannerTitle': 'Corrida por semente',
+            'race.rivalTarget': 'Meta do rival',
+            'race.you': 'Você',
+            'race.rival': 'Rival',
+            'race.won': 'Você venceu a corrida!',
+            'race.lost': 'O rival venceu a corrida!',
+            'race.tie': 'Empate na corrida!',
+            'race.victory': 'Vitória',
+            'race.resultCol': 'Resultado',
+            'race.floorVal': 'Piso {n}',
+            'race.exit': 'Sair',
+            'race.shareTitle': 'Corrida em Krevathorn',
+            'race.shareText': 'Corrida ({seed}) em Krevathorn: {result} | {time} | {pts} pts',
             'prologue.p1': 'Há cem anos, um reino inteiro desapareceu.\n\nNão em guerra. Não em fogo.\n\nEm silêncio.',
             'prologue.p2': 'O reino se chamava Krevathorn.\n\nSeu rei se chamava Aldric.\n\nSeu filho se chamava Eiran.\n\nNinguém mais se lembra de nenhum dos três.',
             'prologue.p3': 'Dizem que, no fundo do vale, uma fenda se abriu no mundo.\n\nDizem que algo vive lá dentro.\n\nAlgo que não devora corpos. Devora memórias.\n\nAlgo que não sabe que está errado.',
@@ -8527,6 +8555,22 @@ const I18n = {
             'win.share': '🔗 SHARE VICTORY',
             'win.shareVictory': 'Victory',
             'win.shareText': 'Krevathorn — {cls} | {ending} | {stars}/3 stars | {time}',
+            'race.copyLink': '🏁 Copy race link',
+            'race.linkCopied': 'Race link copied!',
+            'race.challengeBtn': '🏁 CHALLENGE WITH THIS SEED',
+            'race.bannerTitle': 'Seed Race',
+            'race.rivalTarget': 'Rival target',
+            'race.you': 'You',
+            'race.rival': 'Rival',
+            'race.won': 'You won the race!',
+            'race.lost': 'Rival won the race!',
+            'race.tie': 'Race tied!',
+            'race.victory': 'Victory',
+            'race.resultCol': 'Result',
+            'race.floorVal': 'Floor {n}',
+            'race.exit': 'Leave',
+            'race.shareTitle': 'Krevathorn Seed Race',
+            'race.shareText': 'Seed race ({seed}) in Krevathorn: {result} | {time} | {pts} pts',
             'prologue.p1': 'A hundred years ago, an entire kingdom disappeared.\n\nNot in war. Not in fire.\n\nIn silence.',
             'prologue.p2': 'The kingdom was called Krevathorn.\n\nIts king was called Aldric.\n\nHis son was called Eiran.\n\nNo one remembers any of the three anymore.',
             'prologue.p3': 'They say that, at the bottom of the valley, a rift opened in the world.\n\nThey say something lives inside.\n\nSomething that does not devour bodies. It devours memories.\n\nSomething that does not know it is wrong.',
@@ -10748,6 +10792,22 @@ const I18n = {
             'win.share': '🔗 COMPARTIR VICTORIA',
             'win.shareVictory': 'Victoria',
             'win.shareText': 'Krevathorn — {cls} | {ending} | {stars}/3 estrellas | {time}',
+            'race.copyLink': '🏁 Copiar enlace de carrera',
+            'race.linkCopied': '¡Enlace de carrera copiado!',
+            'race.challengeBtn': '🏁 DESAFIAR CON ESTA SEMILLA',
+            'race.bannerTitle': 'Carrera por semilla',
+            'race.rivalTarget': 'Meta del rival',
+            'race.you': 'Tú',
+            'race.rival': 'Rival',
+            'race.won': '¡Ganaste la carrera!',
+            'race.lost': '¡El rival ganó la carrera!',
+            'race.tie': '¡Empate en la carrera!',
+            'race.victory': 'Victoria',
+            'race.resultCol': 'Resultado',
+            'race.floorVal': 'Piso {n}',
+            'race.exit': 'Salir',
+            'race.shareTitle': 'Carrera en Krevathorn',
+            'race.shareText': 'Carrera ({seed}) en Krevathorn: {result} | {time} | {pts} pts',
             'prologue.p1': 'Hace cien años, un reino entero desapareció.\n\nNo en guerra. No en fuego.\n\nEn silencio.',
             'prologue.p2': 'El reino se llamaba Krevathorn.\n\nSu rey se llamaba Aldric.\n\nSu hijo se llamaba Eiran.\n\nNadie recuerda ya a ninguno de los tres.',
             'prologue.p3': 'Dicen que, en el fondo del valle, se abrió una grieta en el mundo.\n\nDicen que algo vive ahí dentro.\n\nAlgo que no devora cuerpos. Devora recuerdos.\n\nAlgo que no sabe que está equivocado.',
@@ -12602,6 +12662,7 @@ function _populateGameOverUI() {
         + (_rs && _rs.resumed ? '<div style="grid-column:1 / -1;text-align:center;font-size:calc(10px * var(--font-scale,1));color:rgba(255,255,255,0.4);">' + String(T('gameover.resumedNote')).replace('{floor}', _rs.resumedFromFloor) + '</div>' : '')
         + '</div>';
     document.getElementById('game-over-stats').innerHTML = statsHtml;
+    if (window.SeedRace) SeedRace.renderEndScreen(false, { floor: dungeonLevel, secs: elapsedS, kills: thisKills, score: runScore, cls: player.type }, 'go');
 
     // Share button
     var shareBtn = document.getElementById('go-share-btn');
@@ -12891,6 +12952,10 @@ function _triggerWinReal() {
     }
 
     // Compartilhar a vitória: mesmo padrão do game over (navigator.share, clipboard como reserva).
+    if (window.SeedRace) {
+        var winScore = Math.max(10, dungeonLevel * 500 - Math.floor(elapsed / 10));
+        SeedRace.renderEndScreen(true, { floor: dungeonLevel, secs: elapsed, kills: (player && player.kills) || 0, score: winScore, cls: player && player.type }, 'win');
+    }
     var winShareBtn = document.getElementById('win-share-btn');
     if (winShareBtn) {
         winShareBtn.onclick = function() {
@@ -22979,10 +23044,12 @@ window.applySeedInput = function() {
     if (window.SeedSystem) {
         if (v) {
             var n = SeedSystem.setSeedString(v);
+            if (window.SeedRace) { SeedRace.seedLabel = v; SeedRace.refreshBanner(); }
             if (status) status.textContent = (window.I18n ? I18n.t('log.seedActivePre') : 'Seed ativa (#') + n + (window.I18n ? I18n.t('log.seedActivePost') : ') - nova partida terá mapa e encontros determinísticos por piso.');
             if (typeof addLog === 'function') addLog((window.I18n ? I18n.t('log.seedApplied') : 'Seed aplicada: ') + v);
         } else {
             SeedSystem.clearSeed();
+            if (window.SeedRace) { SeedRace.active = false; SeedRace.seedLabel = ''; SeedRace.rival = null; SeedRace.refreshBanner(); }
             if (status) status.textContent = window.I18n ? I18n.t('log.seedCleared') : 'Seed limpa - partidas aleatórias.';
             if (typeof addLog === 'function') addLog(window.I18n ? I18n.t('log.seedCleared') : 'Seed limpa - partidas aleatórias');
         }
@@ -22993,6 +23060,7 @@ window.clearSeedInput = function() {
     if (el) el.value = '';
     try { StorageManager.removeRaw('seed'); } catch(e) {}
     if (window.SeedSystem) SeedSystem.clearSeed();
+    if (window.SeedRace) { SeedRace.active = false; SeedRace.seedLabel = ''; SeedRace.rival = null; SeedRace.refreshBanner(); }
     var status = document.getElementById('seed-status');
     if (status) status.textContent = window.I18n ? I18n.t('log.seedCleared') : 'Seed limpa - partidas aleatórias.';
     if (typeof addLog === 'function') addLog(window.I18n ? I18n.t('log.seedCleared') : 'Seed limpa - partidas aleatórias');
@@ -23004,6 +23072,287 @@ try {
     if (_seedEl) _seedEl.value = _savedSeed || '';
     if (_savedSeed && window.SeedSystem) SeedSystem.setSeedString(_savedSeed);
 } catch(e) {}
+
+// ============================================================
+// Seed Race (Multiplayer Stage 1): ?seed=...&mode=...&diff=...&r=...
+// ============================================================
+window.SeedRace = {
+    active: false,
+    seedLabel: '',
+    rival: null,
+    _CLS_TO_CODE: { warrior: 'w', rogue: 'r', mage: 'm', elf: 'e' },
+    _CODE_TO_CLS: { w: 'warrior', r: 'rogue', m: 'mage', e: 'elf' },
+
+    _T(k, fb) {
+        if (window.I18n && typeof I18n.t === 'function') {
+            var v = I18n.t(k);
+            if (v && v !== k) return v;
+        }
+        return fb || k;
+    },
+
+    _esc(s) {
+        return String(s).replace(/[&<>"']/g, function(c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+    },
+
+    _fmtTime(secs) {
+        var s = Math.max(0, Math.floor(secs || 0));
+        var m = Math.floor(s / 60);
+        return m > 0 ? (m + 'm ' + (s % 60) + 's') : (s + 's');
+    },
+
+    _clsName(cls) {
+        var map = {
+            warrior: this._T('start.classWarrior', 'Guerreiro'),
+            rogue: this._T('start.classRogue', 'Ladino'),
+            mage: this._T('start.classMage', 'Mago'),
+            elf: this._T('start.classElf', 'Elfa')
+        };
+        return map[cls] || cls || '—';
+    },
+
+    encodeResult(res) {
+        return [
+            res.win ? 1 : 0,
+            Math.max(1, Math.floor(res.floor || 1)),
+            Math.max(0, Math.floor(res.secs || 0)),
+            Math.max(0, Math.floor(res.kills || 0)),
+            Math.max(0, Math.floor(res.score || 0)),
+            this._CLS_TO_CODE[res.cls] || 'w'
+        ].join('.');
+    },
+
+    decodeResult(str) {
+        if (!str || typeof str !== 'string') return null;
+        var p = str.trim().split('.');
+        if (p.length !== 6) return null;
+        if (p[0] !== '0' && p[0] !== '1') return null;
+        var floor = parseInt(p[1], 10);
+        var secs = parseInt(p[2], 10);
+        var kills = parseInt(p[3], 10);
+        var score = parseInt(p[4], 10);
+        var cls = this._CODE_TO_CLS[p[5]];
+        if (!isFinite(floor) || floor < 1 || !isFinite(secs) || secs < 0 ||
+            !isFinite(kills) || kills < 0 || !isFinite(score) || score < 0 || !cls) return null;
+        return { win: p[0] === '1', floor: floor, secs: secs, kills: kills, score: score, cls: cls };
+    },
+
+    compare(you, rival) {
+        if (you.win !== rival.win) return you.win ? 'win' : 'loss';
+        if (you.win) {
+            if (you.secs !== rival.secs) return you.secs < rival.secs ? 'win' : 'loss';
+            if (you.score !== rival.score) return you.score > rival.score ? 'win' : 'loss';
+            if (you.kills !== rival.kills) return you.kills > rival.kills ? 'win' : 'loss';
+            return 'tie';
+        }
+        if (you.floor !== rival.floor) return you.floor > rival.floor ? 'win' : 'loss';
+        if (you.score !== rival.score) return you.score > rival.score ? 'win' : 'loss';
+        if (you.kills !== rival.kills) return you.kills > rival.kills ? 'win' : 'loss';
+        if (you.secs !== rival.secs) return you.secs < rival.secs ? 'win' : 'loss';
+        return 'tie';
+    },
+
+    ensureSeedLabel() {
+        var el = document.getElementById('seed-input');
+        var typed = el ? (el.value || '').trim() : '';
+        if (typed) {
+            this.seedLabel = typed;
+            if (window.SeedSystem) SeedSystem.setSeedString(typed);
+            return typed;
+        }
+        if (this.seedLabel) return this.seedLabel;
+        if (window.SeedSystem && SeedSystem.isSeeded()) return String(SeedSystem.getSeed());
+        var gen = 'KREV-' + Math.random().toString(36).slice(2, 6).toUpperCase();
+        this.seedLabel = gen;
+        if (el) el.value = gen;
+        if (window.SeedSystem) {
+            var n = SeedSystem.setSeedString(gen);
+            var status = document.getElementById('seed-status');
+            if (status) status.textContent = this._T('log.seedActivePre', 'Seed ativa (#') + n + this._T('log.seedActivePost', ')');
+        }
+        return gen;
+    },
+
+    buildUrl(res) {
+        var base = (window.location.origin && window.location.origin !== 'null')
+            ? (window.location.origin + window.location.pathname)
+            : window.location.href.split('?')[0].split('#')[0];
+        var params = new URLSearchParams();
+        params.set('seed', this.ensureSeedLabel());
+        var mode = (typeof gameMode !== 'undefined' && (gameMode === 'abyss' || gameMode === 'dungeon'))
+            ? gameMode : (window._selectedMode || 'dungeon');
+        params.set('mode', mode);
+        var diff = (typeof DifficultySystem !== 'undefined' && DifficultySystem.preset) ? DifficultySystem.preset : 'normal';
+        params.set('diff', diff);
+        if (res) params.set('r', this.encodeResult(res));
+        return base + '?' + params.toString();
+    },
+
+    _copyOrShare(url, shareText) {
+        var copiedMsg = this._T('race.linkCopied', 'Link da corrida copiado!');
+        if (navigator.share) {
+            navigator.share({ title: this._T('race.shareTitle', 'Corrida em Krevathorn'), text: shareText || '', url: url }).catch(function(){});
+            return;
+        }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(url).then(function() {
+                if (typeof showToast === 'function') showToast(copiedMsg, 'success');
+                if (typeof addLog === 'function') addLog(copiedMsg);
+            }).catch(function(){});
+        }
+    },
+
+    copyStartLink() {
+        var url = this.buildUrl(null);
+        this.active = true;
+        this.refreshBanner();
+        this._copyOrShare(url, '');
+    },
+
+    shareResult(win, res) {
+        var payload = Object.assign({}, res, { win: !!win });
+        var url = this.buildUrl(payload);
+        var resultLabel = payload.win
+            ? this._T('race.victory', 'Vitória')
+            : this._T('race.floorVal', 'Piso {n}').replace('{n}', payload.floor);
+        var text = this._T('race.shareText', 'Corrida ({seed}) em Krevathorn: {result} | {time} | {pts} pts')
+            .replace('{seed}', this.ensureSeedLabel())
+            .replace('{result}', resultLabel)
+            .replace('{time}', this._fmtTime(payload.secs))
+            .replace('{pts}', payload.score);
+        this._copyOrShare(url, text);
+    },
+
+    refreshBanner() {
+        var banner = document.getElementById('seed-race-banner');
+        if (!banner) return;
+        if (!this.active) { banner.style.display = 'none'; return; }
+        banner.style.display = 'block';
+        var titleEl = document.getElementById('seed-race-banner-title');
+        var subEl = document.getElementById('seed-race-banner-sub');
+        if (titleEl) {
+            titleEl.textContent = '🏁 ' + this._T('race.bannerTitle', 'Corrida por semente') + ': ' + this.seedLabel;
+        }
+        if (subEl) {
+            if (this.rival) {
+                var rRes = this.rival.win
+                    ? this._T('race.victory', 'Vitória')
+                    : this._T('race.floorVal', 'Piso {n}').replace('{n}', this.rival.floor);
+                subEl.textContent = this._T('race.rivalTarget', 'Meta do rival') + ': ' + rRes
+                    + ' · ' + this._fmtTime(this.rival.secs)
+                    + ' · ' + this.rival.score + ' pts · ' + this.rival.kills + ' abates';
+            } else {
+                var mLabel = (window._selectedMode === 'abyss') ? this._T('start.modeAbyss', 'Abismo') : this._T('start.modeDungeon', 'História');
+                var dKey = (typeof DifficultySystem !== 'undefined' && DifficultySystem.preset) ? DifficultySystem.preset : 'normal';
+                var dLabel = this._T('start.diff.' + dKey, dKey);
+                subEl.textContent = mLabel + ' · ' + dLabel;
+            }
+        }
+    },
+
+    clear() {
+        this.active = false;
+        this.seedLabel = '';
+        this.rival = null;
+        if (typeof window.clearSeedInput === 'function') window.clearSeedInput();
+        this.refreshBanner();
+        try {
+            if (window.history && window.history.replaceState) {
+                window.history.replaceState(null, '', window.location.pathname + window.location.hash);
+            }
+        } catch(e) {}
+    },
+
+    renderEndScreen(win, myRes, prefix) {
+        var cmpEl = document.getElementById(prefix + '-race-compare');
+        var btnEl = document.getElementById(prefix + '-race-btn');
+        var seeded = (window.SeedSystem && SeedSystem.isSeeded()) && !window._currentDailyChallenge;
+        if (!seeded) {
+            if (cmpEl) { cmpEl.style.display = 'none'; cmpEl.innerHTML = ''; }
+            if (btnEl) btnEl.style.display = 'none';
+            return;
+        }
+        var you = Object.assign({}, myRes, { win: !!win });
+        if (btnEl) {
+            btnEl.style.display = '';
+            btnEl.onclick = function() { window.SeedRace.shareResult(win, you); };
+        }
+        if (!cmpEl) return;
+        if (!this.rival) {
+            cmpEl.style.display = 'none';
+            cmpEl.innerHTML = '';
+            return;
+        }
+        var rival = this.rival;
+        var outcome = this.compare(you, rival);
+        var badgeColor = outcome === 'win' ? '#4ade80' : (outcome === 'loss' ? '#ff6b6b' : '#ffcf7a');
+        var badgeText = outcome === 'win'
+            ? this._T('race.won', 'Você venceu a corrida!')
+            : (outcome === 'loss' ? this._T('race.lost', 'O rival venceu a corrida!') : this._T('race.tie', 'Empate na corrida!'));
+        var youResult = you.win ? this._T('race.victory', 'Vitória') : this._T('race.floorVal', 'Piso {n}').replace('{n}', you.floor);
+        var rivalResult = rival.win ? this._T('race.victory', 'Vitória') : this._T('race.floorVal', 'Piso {n}').replace('{n}', rival.floor);
+        var row = function(label, a, b, winA) {
+            var ca = winA === 1 ? '#4ade80' : (winA === -1 ? 'rgba(255,255,255,0.65)' : '#ffcf7a');
+            var cb = winA === -1 ? '#4ade80' : (winA === 1 ? 'rgba(255,255,255,0.65)' : '#ffcf7a');
+            return '<tr style="font-size:11px;border-top:1px solid rgba(255,255,255,0.06);">'
+                + '<td style="padding:4px 0;color:rgba(255,255,255,0.45);">' + label + '</td>'
+                + '<td style="padding:4px 0;text-align:right;font-weight:700;color:' + ca + ';">' + a + '</td>'
+                + '<td style="padding:4px 0;text-align:right;font-weight:700;color:' + cb + ';">' + b + '</td>'
+                + '</tr>';
+        };
+        var resCmp = (you.win !== rival.win) ? (you.win ? 1 : -1) : (you.floor === rival.floor ? 0 : (you.floor > rival.floor ? 1 : -1));
+        var timeCmp = you.secs === rival.secs ? 0 : (you.secs < rival.secs ? 1 : -1);
+        var scoreCmp = you.score === rival.score ? 0 : (you.score > rival.score ? 1 : -1);
+        var killsCmp = you.kills === rival.kills ? 0 : (you.kills > rival.kills ? 1 : -1);
+
+        cmpEl.innerHTML = '<div style="padding:10px 12px;border-radius:12px;background:rgba(80,140,255,0.08);border:1px solid rgba(120,180,255,0.28);">'
+            + '<div style="display:flex;justify-content:space-between;align-items:center;gap:6px;margin-bottom:6px;">'
+            + '<span style="font-size:11px;font-weight:800;color:#9ad0ff;">🏁 ' + this._esc(this._T('race.bannerTitle', 'Corrida por semente')) + '</span>'
+            + '<span style="font-size:11px;font-weight:800;color:' + badgeColor + ';">' + this._esc(badgeText) + '</span>'
+            + '</div>'
+            + '<table style="width:100%;border-collapse:collapse;">'
+            + '<tr style="font-size:10px;color:rgba(255,255,255,0.4);"><th></th><th style="text-align:right;padding-bottom:3px;">' + this._esc(this._T('race.you', 'Você')) + '</th><th style="text-align:right;padding-bottom:3px;">' + this._esc(this._T('race.rival', 'Rival')) + '</th></tr>'
+            + row(this._esc(this._T('race.resultCol', 'Resultado')), this._esc(youResult), this._esc(rivalResult), resCmp)
+            + row(this._esc(this._T('gameover.time', 'Tempo')), this._fmtTime(you.secs), this._fmtTime(rival.secs), timeCmp)
+            + row(this._esc(this._T('gameover.points', 'Pontos')), you.score, rival.score, scoreCmp)
+            + row(this._esc(this._T('gameover.kills', 'Abates')), you.kills, rival.kills, killsCmp)
+            + '<tr style="font-size:10px;border-top:1px solid rgba(255,255,255,0.06);color:rgba(255,255,255,0.45);"><td style="padding:4px 0;">' + this._esc(this._T('start.classLabel', 'Classe')) + '</td><td style="text-align:right;">' + this._esc(this._clsName(you.cls)) + '</td><td style="text-align:right;">' + this._esc(this._clsName(rival.cls)) + '</td></tr>'
+            + '</table></div>';
+        cmpEl.style.display = 'block';
+    },
+
+    initFromUrl() {
+        try {
+            var sp = new URLSearchParams(window.location.search || '');
+            var seed = (sp.get('seed') || '').trim().slice(0, 40);
+            if (!seed) return;
+            this.active = true;
+            this.seedLabel = seed;
+            var el = document.getElementById('seed-input');
+            if (el) el.value = seed;
+            if (window.SeedSystem) {
+                var n = SeedSystem.setSeedString(seed);
+                var status = document.getElementById('seed-status');
+                if (status) status.textContent = this._T('log.seedActivePre', 'Seed ativa (#') + n + this._T('log.seedActivePost', ')');
+            }
+            var mode = sp.get('mode');
+            if ((mode === 'dungeon' || mode === 'abyss') && typeof window.setMode === 'function') {
+                window.setMode(mode);
+            }
+            var diff = sp.get('diff');
+            if (diff && typeof DIFFICULTY_PRESETS !== 'undefined' && DIFFICULTY_PRESETS[diff] && typeof window.setDifficulty === 'function') {
+                window.setDifficulty(diff);
+            }
+            var r = sp.get('r');
+            if (r) this.rival = this.decodeResult(r);
+            this.refreshBanner();
+        } catch(e) {}
+    }
+};
+// Init SeedRace after SeedSystem is defined
+
 
 
 </script>
@@ -23318,6 +23667,7 @@ window.SeedSystem = {
     reseedForFloor,
     presets: SEED_PRESETS
 };
+if (window.SeedRace) window.SeedRace.initFromUrl();
 
 
 </script>
