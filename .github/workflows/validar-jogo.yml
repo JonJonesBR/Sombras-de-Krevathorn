@@ -1,6 +1,8 @@
 # Gate mínimo de regressão que roda no próprio repositório publicado (que só tem
-# index.html, sw.js, README, LICENSE): sintaxe do JS inline, sintaxe do sw.js e
-# paridade CACHE_VERSION <-> UPDATE_LOG.current. Os testes E2E completos continuam locais.
+# index.html, sw.js, README, LICENSE): sintaxe do JS inline, sintaxe do sw.js,
+# teto de tamanho do index.html (cru e gzip), paridade das tabelas de tradução
+# pt/en/es e paridade CACHE_VERSION <-> UPDATE_LOG.current. Os testes E2E
+# completos continuam locais.
 name: Validar jogo
 
 on:
@@ -20,11 +22,36 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Sintaxe do JS inline e paridade de versão
+      - name: Sintaxe do JS inline, tamanho, i18n e paridade de versão
         run: |
           node - <<'JS'
-          const fs = require('fs'), vm = require('vm');
-          const html = fs.readFileSync('index.html', 'utf8');
+          const fs = require('fs'), vm = require('vm'), zlib = require('zlib');
+
+          // Tetos do index.html: tamanho cru e comprimido (gzip nível 9).
+          // Folga para o lote narrativo em andamento.
+          const TETO_CRU = 3.8 * 1024 * 1024;   // 3.984.128 bytes (3,80 MiB)
+          const TETO_GZIP = 950 * 1024;         // 972.800 bytes (950 KiB)
+
+          // Chaves que existem só em pt por design (tela exclusiva do pt etc.).
+          // Acrescente aqui com comentário; nunca desligue a checagem de paridade.
+          const I18N_SO_PT = [
+            // ex.: 'debug.somentePt', // painel interno sem tradução
+          ];
+
+          const falhas = [];
+          function falha(msg) { falhas.push(msg); console.error('FALHA: ' + msg); }
+          function kb(n) { return (n / 1024).toFixed(1) + ' KB'; }
+
+          const bruto = fs.readFileSync('index.html');
+          const html = bruto.toString('utf8');
+
+          // --- 1) Teto de tamanho (cru e gzip) ---
+          const comprimido = zlib.gzipSync(bruto, { level: 9 });
+          console.log('tamanho do index.html: ' + kb(bruto.length) + ' crus, ' + kb(comprimido.length) + ' gzip (tetos: ' + kb(TETO_CRU) + ' / ' + kb(TETO_GZIP) + ')');
+          if (bruto.length > TETO_CRU) falha('index.html tem ' + kb(bruto.length) + ' crus, acima do teto de ' + kb(TETO_CRU) + ' — corte conteúdo ou divida o arquivo');
+          if (comprimido.length > TETO_GZIP) falha('index.html pesa ' + kb(comprimido.length) + ' comprimido (gzip), acima do teto de ' + kb(TETO_GZIP));
+
+          // --- 2) Sintaxe dos scripts inline ---
           const re = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi;
           let m, n = 0, bad = 0;
           while ((m = re.exec(html))) {
@@ -33,11 +60,75 @@ jobs:
             try { new vm.Script(m[2]); } catch (e) { bad++; console.error('ERRO DE SINTAXE no script', n, e.message); }
           }
           console.log(n + ' scripts validados, ' + bad + ' erros');
-          if (!n || bad) process.exit(1);
+          if (!n || bad) falha(n ? 'erro de sintaxe no JS inline' : 'nenhum script inline encontrado');
+
+          // --- 3) Paridade das tabelas de tradução do I18n (pt/en/es) ---
+          // Acha o fim do bloco aberto em s[i] === '{', respeitando strings (' " `), escapes e comentários.
+          function fimDoBloco(s, i) {
+            let profundidade = 0, aspas = null;
+            for (let j = i; j < s.length; j++) {
+              const c = s[j];
+              if (aspas) {
+                if (c === '\\') { j++; continue; }
+                if (c === aspas) aspas = null;
+                continue;
+              }
+              if (c === "'" || c === '"' || c === '`') { aspas = c; continue; }
+              if (c === '/' && s[j + 1] === '/') { const k = s.indexOf('\n', j); j = k < 0 ? s.length : k; continue; }
+              if (c === '/' && s[j + 1] === '*') { const k = s.indexOf('*/', j); j = k < 0 ? s.length : k + 1; continue; }
+              if (c === '{') profundidade++;
+              else if (c === '}') { profundidade--; if (profundidade === 0) return j; }
+            }
+            return -1;
+          }
+          function chavesDoBloco(corpo) {
+            const reChave = /^\s*(?:'((?:\\.|[^'\\])*)'|"((?:\\.|[^"\\])*)"|([A-Za-z_$][\w$]*))\s*:/gm;
+            const lista = [];
+            let k;
+            while ((k = reChave.exec(corpo))) lista.push(k[1] || k[2] || k[3]);
+            return lista;
+          }
+          function checarI18n() {
+            const ancora = html.indexOf('const I18n');
+            if (ancora < 0) return falha('tabela de tradução do I18n não encontrada no index.html');
+            const posStrings = html.indexOf('STRINGS', ancora);
+            if (posStrings < 0) return falha('bloco STRINGS do I18n não encontrado no index.html');
+            const abre = html.indexOf('{', posStrings);
+            const fim = abre < 0 ? -1 : fimDoBloco(html, abre);
+            if (fim < 0) return falha('não foi possível ler o bloco STRINGS do I18n (chaves desbalanceadas)');
+            const corpo = html.slice(abre + 1, fim);
+            const idiomas = ['pt', 'en', 'es'], conjuntos = {};
+            for (const lg of idiomas) {
+              const achou = new RegExp('(^|\\n)\\s*' + lg + '\\s*:\\s*\\{').exec(corpo);
+              if (!achou) return falha('tabela de tradução "' + lg + '" não encontrada no STRINGS do I18n');
+              const abreLg = achou.index + achou[0].lastIndexOf('{');
+              const fimLg = fimDoBloco(corpo, abreLg);
+              if (fimLg < 0) return falha('tabela de tradução "' + lg + '" com chaves desbalanceadas');
+              conjuntos[lg] = new Set(chavesDoBloco(corpo.slice(abreLg + 1, fimLg)));
+              console.log('i18n ' + lg + ': ' + conjuntos[lg].size + ' chaves');
+            }
+            const pt = conjuntos.pt;
+            if (!pt.size) return falha('tabela de tradução "pt" está vazia');
+            for (const lg of ['en', 'es']) {
+              const faltando = [...pt].filter(k => !conjuntos[lg].has(k) && I18N_SO_PT.indexOf(k) < 0);
+              const sobrando = [...conjuntos[lg]].filter(k => !pt.has(k));
+              if (faltando.length) {
+                falha('i18n "' + lg + '": ' + faltando.length + ' chave(s) de pt sem tradução' + (faltando.length > 10 ? ' (mostrando 10)' : '') + ': ' + faltando.slice(0, 10).join(', '));
+              }
+              if (sobrando.length) {
+                falha('i18n "' + lg + '": ' + sobrando.length + ' chave(s) que não existem em pt' + (sobrando.length > 10 ? ' (mostrando 10)' : '') + ': ' + sobrando.slice(0, 10).join(', '));
+              }
+            }
+          }
+          checarI18n();
+
+          // --- 4) Paridade CACHE_VERSION (sw.js) x UPDATE_LOG.current (index.html) ---
           const sw = fs.readFileSync('sw.js', 'utf8').match(/CACHE_VERSION\s*=\s*['"]krevathorn-(v\d+)['"]/);
           const cur = html.match(/UPDATE_LOG\s*=\s*\{[\s\S]*?current:\s*['"](v\d+)['"]/);
           console.log('sw.js:', sw && sw[1], '| index.html:', cur && cur[1]);
-          if (!sw || !cur || sw[1] !== cur[1]) { console.error('Versão dessincronizada entre sw.js e index.html'); process.exit(1); }
+          if (!sw || !cur || sw[1] !== cur[1]) falha('versão dessincronizada entre sw.js e index.html');
+
+          if (falhas.length) process.exit(1);
           JS
       - name: Sintaxe do sw.js
         run: node --check sw.js
