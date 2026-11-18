@@ -1817,6 +1817,7 @@ body.reduce-motion .end-art .ea-emb { animation: none !important; opacity: 0.35;
                         </div>
                         <div id="seed-status" data-i18n="start.seedStatus" style="text-align:center;font-size:clamp(0.55rem,2vw,0.65rem);color:rgba(255,255,255,0.55);margin-top:4px;min-height:1.1em;">Mesmo seed + mesmo piso = mesmo mapa e mesmos encontros.</div>
                         <button type="button" id="seed-race-copy-btn" onclick="if(window.SeedRace) SeedRace.copyStartLink()" data-i18n="race.copyLink" style="width:100%;margin-top:6px;padding:8px 10px;border-radius:12px;font-size:clamp(0.6rem,2.4vw,0.76rem);font-weight:700;border:1.5px solid rgba(120,180,255,0.35);background:rgba(80,140,255,0.12);color:#9ad0ff;cursor:pointer;touch-action:manipulation;">🏁 Copiar link da corrida</button>
+                        <button type="button" id="coop-open-btn" onclick="if(window.CoopP2P) CoopP2P.openModal()" data-i18n="coop.openBtn" style="width:100%;margin-top:6px;padding:8px 10px;border-radius:12px;font-size:clamp(0.6rem,2.4vw,0.76rem);font-weight:700;border:1.5px solid rgba(74,222,128,0.35);background:rgba(34,197,94,0.12);color:#86efac;cursor:pointer;touch-action:manipulation;">🤝 Co-op P2P (experimental)</button>
                     </div>
                     <div class="start-adv-sec">
                         <div class="start-section-title" data-i18n="start.buildLabel">Build (código e arquétipos)</div>
@@ -2182,6 +2183,28 @@ body.reduce-motion .end-art .ea-emb { animation: none !important; opacity: 0.35;
             <button id="win-playagain-btn" data-i18n="win.playAgain" style="width:100%;padding:16px 0;border-radius:12px;color:#fff;font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:0.05em;background:linear-gradient(135deg,#008836,#3ce36a);border:1px solid rgba(60,227,106,0.3);box-shadow:0 4px 20px rgba(0,136,54,0.3);transition:all 0.3s;text-shadow:0 1px 4px rgba(0,0,0,0.4);cursor:pointer;" onclick="_startNewRunSameClass()">JOGAR NOVAMENTE</button>
             <button id="win-share-btn" data-i18n="win.share" style="width:100%;padding:10px 0;border-radius:12px;color:#9ad0ff;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;background:rgba(80,140,255,0.1);border:1px solid rgba(80,140,255,0.3);cursor:pointer;transition:all 0.3s;">&#128279; COMPARTILHAR VITÓRIA</button>
             <button id="win-race-btn" data-i18n="race.challengeBtn" style="display:none;width:100%;padding:10px 0;border-radius:12px;color:#9ad0ff;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;background:rgba(80,140,255,0.14);border:1px solid rgba(120,180,255,0.35);cursor:pointer;transition:all 0.3s;">&#127937; DESAFIAR COM ESTA SEED</button>
+        </div>
+    </div>
+
+    <!-- CO-OP P2P MODAL (Stage 4: WebRTC serverless) -->
+    <div id="coop-modal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="coop-modal-title" style="position:fixed;inset:0;z-index:2100;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;pointer-events:auto;background:rgba(6,2,8,0.88);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);">
+        <div class="glass-panel" style="width:100%;max-width:24rem;max-height:85vh;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:12px;background:rgba(20,24,32,0.98);border:1.5px solid rgba(74,222,128,0.4);border-radius:22px;">
+            <h2 id="coop-modal-title" data-i18n="coop.title" style="font-size:16px;font-weight:800;color:#86efac;text-align:center;">Co-op P2P (sem servidor)</h2>
+            <p data-i18n="coop.note" style="font-size:11px;color:rgba(255,255,255,0.68);line-height:1.4;text-align:center;">Conexão direta por código (WebRTC). Partidas co-op não gravam save, recorde, essência nem diário.</p>
+            <div style="display:flex;gap:8px;">
+                <button type="button" onclick="if(window.CoopP2P) CoopP2P.startHost()" data-i18n="coop.hostBtn" style="flex:1;min-height:44px;padding:8px;border-radius:12px;font-weight:700;font-size:12px;border:1.5px solid rgba(74,222,128,0.4);background:rgba(34,197,94,0.16);color:#86efac;cursor:pointer;">Criar sala</button>
+                <button type="button" onclick="if(window.CoopP2P) CoopP2P.startJoin()" data-i18n="coop.joinBtn" style="flex:1;min-height:44px;padding:8px;border-radius:12px;font-weight:700;font-size:12px;border:1.5px solid rgba(120,180,255,0.4);background:rgba(80,140,255,0.16);color:#9ad0ff;cursor:pointer;">Entrar na sala</button>
+            </div>
+            <div id="coop-status" style="font-size:11px;color:#ffcf7a;text-align:center;min-height:1.2em;"></div>
+            <div id="coop-out-box" style="display:none;flex-direction:column;gap:6px;">
+                <textarea id="coop-out-code" readonly rows="3" style="width:100%;padding:8px;border-radius:10px;background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.16);color:#e2e8f0;font-size:10px;font-family:monospace;"></textarea>
+                <button type="button" onclick="if(window.CoopP2P) CoopP2P.copyOut()" data-i18n="coop.copyCode" style="min-height:44px;padding:8px;border-radius:10px;font-weight:700;font-size:11px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.08);color:#fff;cursor:pointer;">Copiar código</button>
+            </div>
+            <div id="coop-in-box" style="display:none;flex-direction:column;gap:6px;">
+                <textarea id="coop-in-code" rows="3" placeholder="Cole o código aqui" style="width:100%;padding:8px;border-radius:10px;background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.16);color:#fff;font-size:10px;font-family:monospace;"></textarea>
+                <button type="button" onclick="if(window.CoopP2P) CoopP2P.submitIn()" data-i18n="coop.connectBtn" style="min-height:44px;padding:8px;border-radius:10px;font-weight:700;font-size:12px;border:1.5px solid rgba(74,222,128,0.4);background:rgba(34,197,94,0.2);color:#86efac;cursor:pointer;">Conectar</button>
+            </div>
+            <button type="button" onclick="if(window.CoopP2P) CoopP2P.closeModal()" data-i18n="coop.closeBtn" style="min-height:44px;padding:8px;border-radius:12px;font-weight:700;font-size:12px;border:1px solid rgba(255,255,255,0.14);background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.7);cursor:pointer;">Fechar</button>
         </div>
     </div>
 
@@ -3627,6 +3650,7 @@ const SaveSystem = {
             // Um save aqui faria "Continuar" cair no piso 1 sem tutorial. Só o save de RUN
             // para; configurações, estatísticas e meta são gravados por outros caminhos.
             if (window.TutorialSystem && window.TutorialSystem.active) return false;
+            if (window.CoopP2P && CoopP2P.isActive()) return false;
             const data = this._serialize();
             if (!data) return false;
             if (!this._validate(data)) {
@@ -4035,6 +4059,7 @@ const MetaSystem = {
     // Essência conquistada ao fim da run (morte ou vitória).
     // Fórmula: 10 + piso*1.5 + abates*0.5 (cap 50) + nível; Abismo x1.5; vitória x2+25.
     awardEndOfRun(opts) {
+        if (window.CoopP2P && CoopP2P.isActive()) return { essence: 0 };
         this._ensure();
         if (!this.data) return { essence: 0 };
         opts = opts || {};
@@ -6367,6 +6392,21 @@ const I18n = {
             'race.shareText': 'Corrida ({seed}) em Krevathorn: {result} | {time} | {pts} pts',
             'specter.joined': 'Espectro aliado invocado!',
             'specter.tag': 'Espectro',
+            'ghost.tag': 'Fantasma',
+            'coop.openBtn': '🤝 Co-op P2P (experimental)',
+            'coop.title': 'Co-op P2P (sem servidor)',
+            'coop.note': 'Conexão direta por código (WebRTC). Partidas co-op não gravam save, recorde, essência nem diário.',
+            'coop.hostBtn': 'Criar sala',
+            'coop.joinBtn': 'Entrar na sala',
+            'coop.copyCode': 'Copiar código',
+            'coop.connectBtn': 'Conectar',
+            'coop.closeBtn': 'Fechar',
+            'coop.offerPlaceholder': 'Cole o código da sala aqui',
+            'coop.answerPlaceholder': 'Cole a resposta do convidado aqui',
+            'coop.partner': 'Parceiro',
+            'coop.connected': 'Conectado! Iniciando partida co-op...',
+            'coop.waiting': 'Aguardando conexão...',
+            'coop.badCode': 'Código inválido.',
             'prologue.p1': 'Há cem anos, um reino inteiro desapareceu.\n\nNão em guerra. Não em fogo.\n\nEm silêncio.',
             'prologue.p2': 'O reino se chamava Krevathorn.\n\nSeu rei se chamava Aldric.\n\nSeu filho se chamava Eiran.\n\nNinguém mais se lembra de nenhum dos três.',
             'prologue.p3': 'Dizem que, no fundo do vale, uma fenda se abriu no mundo.\n\nDizem que algo vive lá dentro.\n\nAlgo que não devora corpos. Devora memórias.\n\nAlgo que não sabe que está errado.',
@@ -8609,6 +8649,21 @@ const I18n = {
             'race.shareText': 'Seed race ({seed}) in Krevathorn: {result} | {time} | {pts} pts',
             'specter.joined': 'Allied specter summoned!',
             'specter.tag': 'Specter',
+            'ghost.tag': 'Ghost',
+            'coop.openBtn': '🤝 P2P Co-op (experimental)',
+            'coop.title': 'P2P Co-op (serverless)',
+            'coop.note': 'Direct code connection (WebRTC). Co-op runs never save progress, records, essence, or daily.',
+            'coop.hostBtn': 'Create room',
+            'coop.joinBtn': 'Join room',
+            'coop.copyCode': 'Copy code',
+            'coop.connectBtn': 'Connect',
+            'coop.closeBtn': 'Close',
+            'coop.offerPlaceholder': 'Paste room code here',
+            'coop.answerPlaceholder': 'Paste guest answer here',
+            'coop.partner': 'Partner',
+            'coop.connected': 'Connected! Starting co-op run...',
+            'coop.waiting': 'Waiting for connection...',
+            'coop.badCode': 'Invalid code.',
             'prologue.p1': 'A hundred years ago, an entire kingdom disappeared.\n\nNot in war. Not in fire.\n\nIn silence.',
             'prologue.p2': 'The kingdom was called Krevathorn.\n\nIts king was called Aldric.\n\nHis son was called Eiran.\n\nNo one remembers any of the three anymore.',
             'prologue.p3': 'They say that, at the bottom of the valley, a rift opened in the world.\n\nThey say something lives inside.\n\nSomething that does not devour bodies. It devours memories.\n\nSomething that does not know it is wrong.',
@@ -10848,6 +10903,21 @@ const I18n = {
             'race.shareText': 'Carrera ({seed}) en Krevathorn: {result} | {time} | {pts} pts',
             'specter.joined': '¡Espectro aliado invocado!',
             'specter.tag': 'Espectro',
+            'ghost.tag': 'Fantasma',
+            'coop.openBtn': '🤝 Co-op P2P (experimental)',
+            'coop.title': 'Co-op P2P (sin servidor)',
+            'coop.note': 'Conexión directa por código (WebRTC). Las partidas co-op no guardan save, récord, esencia ni diario.',
+            'coop.hostBtn': 'Crear sala',
+            'coop.joinBtn': 'Unirse a sala',
+            'coop.copyCode': 'Copiar código',
+            'coop.connectBtn': 'Conectar',
+            'coop.closeBtn': 'Cerrar',
+            'coop.offerPlaceholder': 'Pega el código de la sala aquí',
+            'coop.answerPlaceholder': 'Pega la respuesta del invitado aquí',
+            'coop.partner': 'Compañero',
+            'coop.connected': '¡Conectado! Iniciando partida co-op...',
+            'coop.waiting': 'Esperando conexión...',
+            'coop.badCode': 'Código inválido.',
             'prologue.p1': 'Hace cien años, un reino entero desapareció.\n\nNo en guerra. No en fuego.\n\nEn silencio.',
             'prologue.p2': 'El reino se llamaba Krevathorn.\n\nSu rey se llamaba Aldric.\n\nSu hijo se llamaba Eiran.\n\nNadie recuerda ya a ninguno de los tres.',
             'prologue.p3': 'Dicen que, en el fondo del valle, se abrió una grieta en el mundo.\n\nDicen que algo vive ahí dentro.\n\nAlgo que no devora cuerpos. Devora recuerdos.\n\nAlgo que no sabe que está equivocado.',
@@ -12702,6 +12772,7 @@ function _populateGameOverUI() {
         + (_rs && _rs.resumed ? '<div style="grid-column:1 / -1;text-align:center;font-size:calc(10px * var(--font-scale,1));color:rgba(255,255,255,0.4);">' + String(T('gameover.resumedNote')).replace('{floor}', _rs.resumedFromFloor) + '</div>' : '')
         + '</div>';
     document.getElementById('game-over-stats').innerHTML = statsHtml;
+    if (window.GhostReplay) GhostReplay.saveForSeed();
     if (window.SeedRace) SeedRace.renderEndScreen(false, { floor: dungeonLevel, secs: elapsedS, kills: thisKills, score: runScore, cls: player.type }, 'go');
 
     // Share button
@@ -12993,6 +13064,7 @@ function _triggerWinReal() {
 
     // Compartilhar a vitória: mesmo padrão do game over (navigator.share, clipboard como reserva).
     if (window.SeedRace) {
+        if (window.GhostReplay) GhostReplay.saveForSeed();
         var winScore = Math.max(10, dungeonLevel * 500 - Math.floor(elapsed / 10));
         SeedRace.renderEndScreen(true, { floor: dungeonLevel, secs: elapsed, kills: (player && player.kills) || 0, score: winScore, cls: player && player.type }, 'win');
     }
@@ -14013,7 +14085,7 @@ function _anyPanelOpen() {
 
 function _updateWorldSim() {
     if (_transitioning) return;
-    gameTime++; player.update(map); pets.forEach(p => p.update(map)); if (window.AllySpecter) AllySpecter.update(map); DamageNumbers.update(); Statistics.data.totalPlayTime++;
+    gameTime++; player.update(map); pets.forEach(p => p.update(map)); if (window.AllySpecter) AllySpecter.update(map); if (window.GhostReplay) GhostReplay.update(); if (window.CoopP2P) CoopP2P.update(); DamageNumbers.update(); Statistics.data.totalPlayTime++;
     Debug.time('fx', () => ScreenEffects.update());
     Debug.time('death', () => DeathAnimations.update());
     // Ambient biome particles (throttled)
@@ -14147,6 +14219,7 @@ function _abyssNewRecordText() {
 function _recordRunEnd() {
     PetSystem.reset(); // fim da run (vitória, morte sem continuar ou desistência): os pets não passam para a próxima
     Inventory.clear(); // e a bolsa também: é da run
+    if (window.CoopP2P && CoopP2P.isActive()) return;
     Debug.safe(() => _recordAbyssProgress(), 'abyssRecordRunEnd');
     if (typeof Statistics === 'undefined' || !Statistics.data) return;
     Statistics.data.runsEnded = (Statistics.data.runsEnded || 0) + 1;
@@ -15469,6 +15542,7 @@ function _buildStoryRoom(index, opts) {
     _cachedAliveEnemies = 0;
     PetSystem.rebuild(); // pets da run voltam ao lado do jogador nesta câmara
     if (window.AllySpecter) AllySpecter.onFloorChange();
+    if (window.GhostReplay) GhostReplay.onFloorChange();
     PetRescue.reset(); // objetos de resgate são da câmara: a nova é montada logo abaixo
     if (window.NPCSystem) NPCSystem.reset();
     dungeonPortal = null; bossActive = false;
@@ -16067,6 +16141,8 @@ function _drawWorldLayer() {
             }
         }
         if (window.AllySpecter) AllySpecter.draw(wctx, camX, camY);
+        if (window.GhostReplay) GhostReplay.draw(wctx, camX, camY);
+        if (window.CoopP2P) CoopP2P.draw(wctx, camX, camY);
     }
     
 }
@@ -16576,9 +16652,11 @@ function draw() {
                 guidedBullets = []; rogueClones = []; hitstopFrames = 0; ScreenEffects.resetImpact();
                 PetSystem.rebuild(); // pets da run acompanham o jogador para o novo andar
                 if (window.AllySpecter) AllySpecter.onFloorChange();
+                if (window.GhostReplay) GhostReplay.onFloorChange();
                 PetRescue.reset(); // objetos de resgate do andar anterior somem (a câmara 0 do andar novo não tem)
                 if (window.NPCSystem) NPCSystem.reset();
         if (window.AllySpecter) AllySpecter.maybeSpawnForRace();
+        if (window.GhostReplay) GhostReplay.beginRun();
                 if (window.SceneDirector && SceneDirector.onFloorBuilt) SceneDirector.onFloorBuilt();
                 if (window.RelicSystem) RelicSystem.onNewDungeon(player);
                 DifficultySystem.dungeonLevel = dungeonLevel;
@@ -23888,6 +23966,7 @@ const DailyChallenge = {
     },
 
     complete(dungeonLevel, timeSeconds, extras) {
+        if (window.CoopP2P && CoopP2P.isActive()) return null;
         this._updateDate();
         // Once per day: the panel advertises "pode jogar uma vez por dia" and
         // the leaderboard is meant to hold one entry per day per player.
@@ -35254,6 +35333,342 @@ window.AllySpecter = {
     }
 };
 
+// ============================================================
+// GhostReplay (Multiplayer Stage 3): local/seed ghost playback
+// ============================================================
+window.GhostReplay = {
+    _rec: [],
+    _play: null,
+    _cls: 'warrior',
+    _playIdx: 0,
+    _floorTick: 0,
+    _cur: null,
+    MAX_FRAMES: 1200,
+    SAMPLE_EVERY: 15,
+
+    _storageKey() {
+        if (!window.SeedSystem || !SeedSystem.isSeeded()) return null;
+        return 'krev_ghost_' + SeedSystem.getSeed();
+    },
+
+    reset() {
+        this._rec = [];
+        this._play = null;
+        this._playIdx = 0;
+        this._floorTick = 0;
+        this._cur = null;
+    },
+
+    beginRun() {
+        this.reset();
+        const key = this._storageKey();
+        if (!key) return;
+        try {
+            const raw = localStorage.getItem(key);
+            if (!raw) return;
+            const parsed = JSON.parse(raw);
+            if (parsed && Array.isArray(parsed.f) && parsed.f.length > 0) {
+                this._play = parsed.f;
+                this._cls = parsed.c || 'warrior';
+            }
+        } catch (e) {}
+    },
+
+    onFloorChange() {
+        this._floorTick = 0;
+        this._cur = null;
+    },
+
+    saveForSeed() {
+        if (window.CoopP2P && CoopP2P.isActive()) return;
+        const key = this._storageKey();
+        if (!key || this._rec.length < 2) return;
+        try {
+            const cls = (typeof player !== 'undefined' && player) ? player.type : 'warrior';
+            localStorage.setItem(key, JSON.stringify({ c: cls, f: this._rec }));
+        } catch (e) {}
+    },
+
+    update() {
+        if (typeof player === 'undefined' || !player || !player.alive) return;
+        const fl = typeof dungeonLevel !== 'undefined' ? dungeonLevel : 1;
+        const ch = (typeof _storyRoom !== 'undefined' && _storyRoom) ? _storyRoom.i : 0;
+        if (this._rec.length < this.MAX_FRAMES && this._floorTick % this.SAMPLE_EVERY === 0) {
+            this._rec.push([
+                this._floorTick, fl, ch,
+                Math.round(player.x), Math.round(player.y),
+                Math.round((player.facingAngle || 0) * 100) / 100
+            ]);
+        }
+        if (this._play && this._play.length > 0) {
+            let match = null;
+            for (let i = 0; i < this._play.length; i++) {
+                const fr = this._play[i];
+                if (fr[1] === fl && fr[2] === ch && fr[0] <= this._floorTick) {
+                    match = fr;
+                } else if (fr[1] > fl || (fr[1] === fl && fr[2] > ch)) {
+                    break;
+                }
+            }
+            this._cur = match ? { x: match[3], y: match[4], a: match[5] } : null;
+        }
+        this._floorTick++;
+    },
+
+    draw(ctx, cx, cy) {
+        if (!this._cur) return;
+        const sx = this._cur.x - cx, sy = this._cur.y - cy;
+        ctx.save();
+        ctx.globalAlpha = 0.36;
+        if (typeof SpriteManager !== 'undefined' && typeof SpriteManager.draw === 'function') {
+            SpriteManager.draw(ctx, sx, sy, this._cls, this._floorTick, false, this._cur.a, 1.35, 'walk');
+        } else {
+            ctx.fillStyle = '#c084fc';
+            ctx.beginPath(); ctx.arc(sx, sy, 11, 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.globalAlpha = 0.7;
+        ctx.fillStyle = '#e9d5ff';
+        ctx.font = 'bold 9px ' + COLORS.CANVAS_FONT;
+        ctx.textAlign = 'center';
+        ctx.fillText(window.I18n ? I18n.t('ghost.tag') : 'Fantasma', sx, sy - 26);
+        ctx.restore();
+    }
+};
+
+// ============================================================
+// CoopP2P (Multiplayer Stage 4): WebRTC DataChannel serverless co-op
+// Never writes save, records, essence, or daily challenge.
+// ============================================================
+window.CoopP2P = {
+    pc: null,
+    dc: null,
+    isHost: false,
+    connected: false,
+    remote: null, // { x, y, a, st, cls, hp, maxHp, fl }
+    _tick: 0,
+
+    isActive() {
+        return !!this.connected;
+    },
+
+    _T(k, fb) {
+        if (window.I18n && typeof I18n.t === 'function') {
+            const v = I18n.t(k);
+            if (v && v !== k) return v;
+        }
+        return fb || k;
+    },
+
+    _setStatus(msg) {
+        const el = document.getElementById('coop-status');
+        if (el) el.textContent = msg || '';
+    },
+
+    openModal() {
+        const m = document.getElementById('coop-modal');
+        if (m) m.classList.remove('hidden');
+        this._setStatus('');
+    },
+
+    closeModal() {
+        const m = document.getElementById('coop-modal');
+        if (m) m.classList.add('hidden');
+    },
+
+    _encode(obj) {
+        return 'COOP1:' + btoa(unescape(encodeURIComponent(JSON.stringify(obj))));
+    },
+
+    _decode(str) {
+        const s = String(str || '').trim();
+        if (!s.startsWith('COOP1:')) return null;
+        return JSON.parse(decodeURIComponent(escape(atob(s.slice(6)))));
+    },
+
+    _createPeer() {
+        this.disconnect();
+        const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+        this.pc = pc;
+        pc.onconnectionstatechange = () => {
+            if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed' || pc.connectionState === 'closed') {
+                this.connected = false;
+                this.remote = null;
+            }
+        };
+        return pc;
+    },
+
+    _gatherIce(pc) {
+        return new Promise(resolve => {
+            if (pc.iceGatheringState === 'complete') { resolve(); return; }
+            const done = () => { pc.removeEventListener('icegatheringstatechange', onChg); resolve(); };
+            const onChg = () => { if (pc.iceGatheringState === 'complete') done(); };
+            pc.addEventListener('icegatheringstatechange', onChg);
+            setTimeout(done, 1500);
+        });
+    },
+
+    _wireChannel(dc) {
+        this.dc = dc;
+        dc.onopen = () => {
+            this.connected = true;
+            this._setStatus(this._T('coop.connected', 'Conectado! Iniciando partida co-op...'));
+            const cls = (window.MetaSystem && MetaSystem.selectedClass) || 'warrior';
+            if (this.isHost) {
+                const seed = (window.SeedRace && SeedRace.ensureSeedLabel) ? SeedRace.ensureSeedLabel() : ('COOP-' + Math.random().toString(36).slice(2, 6).toUpperCase());
+                const mode = window._selectedMode || 'dungeon';
+                const diff = (typeof DifficultySystem !== 'undefined' && DifficultySystem.preset) ? DifficultySystem.preset : 'normal';
+                dc.send(JSON.stringify({ t: 'start', seed, mode, diff, cls }));
+                this._launchRun(seed, mode, diff, cls);
+            } else {
+                dc.send(JSON.stringify({ t: 'hello', cls }));
+            }
+        };
+        dc.onclose = () => { this.connected = false; this.remote = null; };
+        dc.onmessage = (ev) => {
+            try {
+                const msg = JSON.parse(ev.data);
+                if (!msg || !msg.t) return;
+                if (msg.t === 'start') {
+                    this._launchRun(msg.seed, msg.mode, msg.diff, msg.cls);
+                } else if (msg.t === 'hello') {
+                    this.remote = this.remote || { x: 0, y: 0, a: 0, st: 'idle', cls: msg.cls || 'warrior', hp: 100, maxHp: 100, fl: 1 };
+                } else if (msg.t === 'pos') {
+                    this.remote = msg;
+                }
+            } catch (e) {}
+        };
+    },
+
+    _launchRun(seed, mode, diff, peerCls) {
+        if (window.SeedSystem && seed) SeedSystem.setSeedString(seed);
+        if (typeof window.setMode === 'function' && (mode === 'dungeon' || mode === 'abyss')) window.setMode(mode);
+        if (typeof window.setDifficulty === 'function' && diff) window.setDifficulty(diff);
+        this.remote = this.remote || { x: 0, y: 0, a: 0, st: 'idle', cls: peerCls || 'warrior', hp: 100, maxHp: 100, fl: 1 };
+        this.closeModal();
+        const myCls = (typeof window._selectedClass === 'string') ? window._selectedClass : 'warrior';
+        if (typeof window._originalStartGame === 'function') window._originalStartGame(myCls);
+    },
+
+    async startHost() {
+        try {
+            this.isHost = true;
+            const pc = this._createPeer();
+            this._wireChannel(pc.createDataChannel('krev'));
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+            await this._gatherIce(pc);
+            const outBox = document.getElementById('coop-out-box');
+            const inBox = document.getElementById('coop-in-box');
+            const outEl = document.getElementById('coop-out-code');
+            const inEl = document.getElementById('coop-in-code');
+            if (outEl) outEl.value = this._encode(pc.localDescription);
+            if (outBox) outBox.style.display = 'flex';
+            if (inBox) inBox.style.display = 'flex';
+            if (inEl) { inEl.value = ''; inEl.placeholder = this._T('coop.answerPlaceholder', 'Cole a resposta do convidado aqui'); }
+            this._setStatus(this._T('coop.waiting', 'Aguardando conexão...'));
+        } catch (e) {
+            this._setStatus(this._T('coop.badCode', 'Código inválido.'));
+        }
+    },
+
+    startJoin() {
+        this.isHost = false;
+        this._createPeer();
+        const outBox = document.getElementById('coop-out-box');
+        const inBox = document.getElementById('coop-in-box');
+        const inEl = document.getElementById('coop-in-code');
+        if (outBox) outBox.style.display = 'none';
+        if (inBox) inBox.style.display = 'flex';
+        if (inEl) { inEl.value = ''; inEl.placeholder = this._T('coop.offerPlaceholder', 'Cole o código da sala aqui'); }
+        this._setStatus(this._T('coop.waiting', 'Aguardando conexão...'));
+    },
+
+    async submitIn() {
+        try {
+            const inEl = document.getElementById('coop-in-code');
+            const desc = this._decode(inEl && inEl.value);
+            if (!desc || !this.pc) { this._setStatus(this._T('coop.badCode', 'Código inválido.')); return; }
+            if (this.isHost) {
+                await this.pc.setRemoteDescription(desc);
+            } else {
+                this.pc.ondatachannel = (ev) => this._wireChannel(ev.channel);
+                await this.pc.setRemoteDescription(desc);
+                const ans = await this.pc.createAnswer();
+                await this.pc.setLocalDescription(ans);
+                await this._gatherIce(this.pc);
+                const outBox = document.getElementById('coop-out-box');
+                const outEl = document.getElementById('coop-out-code');
+                if (outEl) outEl.value = this._encode(this.pc.localDescription);
+                if (outBox) outBox.style.display = 'flex';
+            }
+            this._setStatus(this._T('coop.waiting', 'Aguardando conexão...'));
+        } catch (e) {
+            this._setStatus(this._T('coop.badCode', 'Código inválido.'));
+        }
+    },
+
+    copyOut() {
+        const outEl = document.getElementById('coop-out-code');
+        if (!outEl || !outEl.value) return;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(outEl.value).catch(function(){});
+        }
+    },
+
+    disconnect() {
+        this.connected = false;
+        this.remote = null;
+        try { if (this.dc) this.dc.close(); } catch (e) {}
+        try { if (this.pc) this.pc.close(); } catch (e) {}
+        this.dc = null;
+        this.pc = null;
+    },
+
+    update() {
+        if (!this.connected || !this.dc || this.dc.readyState !== 'open') return;
+        if (typeof player === 'undefined' || !player) return;
+        this._tick++;
+        if (this._tick % 4 !== 0) return;
+        try {
+            this.dc.send(JSON.stringify({
+                t: 'pos',
+                x: Math.round(player.x),
+                y: Math.round(player.y),
+                a: Math.round((player.facingAngle || 0) * 100) / 100,
+                st: player.state || 'idle',
+                cls: player.type || 'warrior',
+                hp: Math.round(player.hp || 0),
+                maxHp: Math.round(player.maxHp || 100),
+                fl: typeof dungeonLevel !== 'undefined' ? dungeonLevel : 1
+            }));
+        } catch (e) {}
+    },
+
+    draw(ctx, cx, cy) {
+        if (!this.connected || !this.remote) return;
+        const fl = typeof dungeonLevel !== 'undefined' ? dungeonLevel : 1;
+        if (this.remote.fl && this.remote.fl !== fl) return;
+        const sx = this.remote.x - cx, sy = this.remote.y - cy;
+        ctx.save();
+        ctx.globalAlpha = 0.25;
+        ctx.fillStyle = '#4ade80';
+        ctx.beginPath(); ctx.arc(sx, sy + 6, 15, 0, Math.PI * 2); ctx.fill();
+        ctx.globalAlpha = 0.92;
+        if (typeof SpriteManager !== 'undefined' && typeof SpriteManager.draw === 'function') {
+            SpriteManager.draw(ctx, sx, sy, this.remote.cls || 'warrior', this._tick, false, this.remote.a || 0, 1.35, this.remote.st || 'idle');
+        } else {
+            ctx.fillStyle = '#4ade80';
+            ctx.beginPath(); ctx.arc(sx, sy, 12, 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.fillStyle = '#86efac';
+        ctx.font = 'bold 9px ' + COLORS.CANVAS_FONT;
+        ctx.textAlign = 'center';
+        ctx.fillText(this._T('coop.partner', 'Parceiro'), sx, sy - 26);
+        ctx.restore();
+    }
+};
+
 
 </script>
 <script>
@@ -44005,6 +44420,7 @@ window.GameBootstrap = {
 
         if (window.NPCSystem) NPCSystem.reset();
         if (window.AllySpecter) AllySpecter.maybeSpawnForRace();
+        if (window.GhostReplay) GhostReplay.beginRun();
         // F0: flags de cena da run. O continue restaura o snapshot logo depois de
         // _initModeSpecific; run nova sempre começa limpa.
         if (window.StoryFlags) StoryFlags.resetRun();
