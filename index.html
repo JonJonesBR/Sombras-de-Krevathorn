@@ -30973,13 +30973,16 @@ class Enemy extends Entity {
         }
         return { x: nx, y: ny };
     }
-    // Separação entre inimigos próximos: evita empilhamento em um ponto só
+    // Separação entre inimigos próximos: usa SpatialHash por vizinhança (O(1) por inimigo)
     _separateFromOthers(m) {
         if (!entities || this.isB) return;
         const minD = this.radius * 2.1;
         const minDSq = minD * minD;
-        for (let i = 0; i < entities.length; i++) {
-            const e = entities[i];
+        const list = (typeof spatialHash !== 'undefined' && spatialHash && spatialHash.grid && spatialHash.grid.size > 0)
+            ? spatialHash.query(this.x, this.y, minD + 20)
+            : entities;
+        for (let i = 0; i < list.length; i++) {
+            const e = list[i];
             if (e === this || !e.alive || !e.isEnemy || e.isP || e.isB || e.isBarrier) continue;
             const edx = this.x - e.x, edy = this.y - e.y;
             const edSq = edx * edx + edy * edy;
@@ -37006,17 +37009,33 @@ const NPCInteractionPanel = {
             fbW = Math.min(ctx.measureText(this.feedback).width, innerW * 0.62);
         }
 
-        // Retrato do falante (F3): disco na cor do NPC com o indicador (símbolo
-        // de quem fala). O nome desloca para a direita do retrato.
+        // Retrato do falante: sprite do NPC quando disponível (WorldSprites.npc), ou disco com indicador.
         const portraitX = panelX + pad + 9, portraitY = panelY + M.headBase - 4;
         if (this.npc) {
-            ctx.fillStyle = this.npc.color || '#ffcc00';
-            ctx.beginPath(); ctx.arc(portraitX, portraitY, 9, 0, Math.PI * 2); ctx.fill();
-            ctx.strokeStyle = 'rgba(255,255,255,0.65)'; ctx.lineWidth = 1; ctx.stroke();
-            ctx.fillStyle = '#14101f'; ctx.font = 'bold 10px ' + COLORS.CANVAS_FONT;
-            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-            ctx.fillText(this.npc.indicator || '?', portraitX, portraitY + 1);
-            ctx.textBaseline = 'alphabetic';
+            const npcArt = this.npc.art || this.npc.type;
+            const sp = (npcArt && typeof WorldSprites !== 'undefined' && typeof WorldSprites.npc === 'function')
+                ? WorldSprites.npc(npcArt, this.npc.color || '#ffcc00', 0)
+                : null;
+            if (sp) {
+                ctx.save();
+                ctx.fillStyle = 'rgba(20, 16, 36, 0.92)';
+                ctx.beginPath(); ctx.arc(portraitX, portraitY, 10, 0, Math.PI * 2); ctx.fill();
+                ctx.clip();
+                ctx.imageSmoothingEnabled = false;
+                ctx.drawImage(sp, portraitX - 11, portraitY - 9, 22, 22);
+                ctx.restore();
+                ctx.strokeStyle = this.npc.color || 'rgba(255,255,255,0.65)';
+                ctx.lineWidth = 1.25;
+                ctx.beginPath(); ctx.arc(portraitX, portraitY, 10, 0, Math.PI * 2); ctx.stroke();
+            } else {
+                ctx.fillStyle = this.npc.color || '#ffcc00';
+                ctx.beginPath(); ctx.arc(portraitX, portraitY, 9, 0, Math.PI * 2); ctx.fill();
+                ctx.strokeStyle = 'rgba(255,255,255,0.65)'; ctx.lineWidth = 1; ctx.stroke();
+                ctx.fillStyle = '#14101f'; ctx.font = 'bold 10px ' + COLORS.CANVAS_FONT;
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.fillText(this.npc.indicator || '?', portraitX, portraitY + 1);
+                ctx.textBaseline = 'alphabetic';
+            }
         }
 
         // Nome do NPC no cabeçalho
