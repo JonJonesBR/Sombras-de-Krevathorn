@@ -3884,7 +3884,7 @@ const MetaSystem = {
         };
     },
 
-    isClassUnlocked(cls) { this._ensure(); return cls === 'warrior' || this.isUnlocked('class_' + cls); },
+    isClassUnlocked(cls) { this._ensure(); if (typeof CONFIG !== 'undefined' && CONFIG.ALL_CLASSES_UNLOCKED) return true; return cls === 'warrior' || this.isUnlocked('class_' + cls); },
     isBiomeUnlocked(biome) { this._ensure(); return biome === 'dungeon' || this.isUnlocked('biome_' + biome); },
     isMutationUnlocked(id) { this._ensure(); return id !== 'incinerate' || this.isUnlocked('mutation_incinerate'); },
 
@@ -3926,7 +3926,7 @@ const MetaSystem = {
             var el = document.querySelector('.class-mini-card.' + cls);
             if (!el) continue;
             var unlockId = (cls === 'warrior') ? null : 'class_' + cls;
-            var locked = unlockId && !this.isUnlocked(unlockId);
+            var locked = unlockId && !this.isClassUnlocked(cls);
             if (locked) {
                 el.style.filter = 'grayscale(0.85)';
                 el.style.opacity = '0.55';
@@ -4533,7 +4533,7 @@ const I18n = {
             'daily.pickClass': 'Escolha uma classe para iniciar o desafio de hoje',
             'daily.expiredOnResume': 'O desafio de ontem expirou: a run segue sem as regras do dia.',
             'meta.acquired': 'Acumulado',
-            'meta.earnHint': 'Ganhe Essência ao completar runs (vitórias rendem mais). Invista para desbloquear classes, biomas e melhorias permanentes.',
+            'meta.earnHint': 'Ganhe Essência ao completar runs (vitórias rendem mais). Investir para desbloquear biomas, mutações e melhorias permanentes.',
             'meta.passives': 'Melhorias permanentes',
             'meta.unlocks': 'Desbloqueios',
 
@@ -4990,6 +4990,10 @@ const I18n = {
         'update.entry.v102.l3': 'A cena de NPC espera o combate terminar, e o NPC da história nasce em um beco fora do caminho.',
         'update.entry.v102.l4': 'A recompensa do chefe pede um segundo toque para confirmar e não se perde mais quando há um painel aberto.',
         'update.entry.v102.l5': 'A tela de habilidade mostra quanto ouro falta e deixa claro que não há requisito de nível. Seus saves continuam funcionando.',
+        'update.entry.v104.title': 'v104 - Dash previsível e ataques respeitando paredes',
+        'update.entry.v104.l1': 'O dash agora sai uma vez por toque, na direção do joystick ou da última direção em que você andou, e para antes das paredes.',
+        'update.entry.v104.l2': 'Habilidades de área, pets, tempestade, explosões e os golpes do chefe não ferem mais do outro lado da parede.',
+        'update.entry.v104.l3': 'As quatro classes — guerreiro, ladino, mago e elfa — já estão liberadas desde o início para os testes.',
         'update.entry.v103.title': 'v103 - Fim de campanha mais forte e elenco por classe',
         'update.entry.v103.l1': 'Do andar 7 ao 10 a masmorra fica mais dura: mais elites, escudeiros, carregadores e enxames, e os inimigos comuns ganham vida e dano a cada andar. O último andar não cai mais num golpe só.',
         'update.entry.v103.l2': 'Cada personagem enfrenta um elenco um pouco diferente: o guerreiro vê mais investidas e elites, o mago mais enxames, o ladino mais curandeiros e a elfa mais espreitadores. A dificuldade escolhida não muda.',
@@ -6731,7 +6735,7 @@ const I18n = {
             'daily.pickClass': 'Pick a class to start today\'s challenge',
             'daily.expiredOnResume': 'Yesterday\'s challenge expired: the run continues without the daily rules.',
             'meta.acquired': 'TOTAL EARNED',
-            'meta.earnHint': 'Earn Essence by completing runs (wins pay more). Invest to unlock classes, biomes and permanent upgrades.',
+            'meta.earnHint': 'Earn Essence by completing runs (wins pay more). Invest to unlock biomes, mutations and permanent upgrades.',
             'meta.passives': 'Permanent upgrades',
             'meta.unlocks': 'Unlocks',
 
@@ -7192,6 +7196,10 @@ const I18n = {
         'update.entry.v102.l3': 'NPC scenes wait for combat to end, and the story NPC spawns in a dead end off the path.',
         'update.entry.v102.l4': 'The boss reward now asks for a second tap to confirm and is no longer lost while a panel is open.',
         'update.entry.v102.l5': 'The skill screen shows how much gold is missing and makes clear there is no level requirement. Your saves keep working.',
+        'update.entry.v104.title': 'v104 - Predictable dash and attacks that respect walls',
+        'update.entry.v104.l1': 'The dash now fires once per tap, in the direction of the joystick or the last direction you walked, and stops before walls.',
+        'update.entry.v104.l2': 'Area skills, pets, storm, explosions and boss blows no longer hurt through a wall.',
+        'update.entry.v104.l3': 'All four classes — warrior, rogue, mage and elf — are already unlocked from the start for testing.',
         'update.entry.v103.title': 'v103 - Tougher endgame and roster per class',
         'update.entry.v103.l1': 'From floor 7 to 10 the dungeon gets tougher: more elites, shielders, chargers and swarms, and common enemies gain health and damage each floor. The last floor no longer falls in a single hit.',
         'update.entry.v103.l2': 'Each character faces a slightly different roster: the warrior meets more charges and elites, the mage more swarms, the rogue more healers and the elf more lurkers. The chosen difficulty does not change.',
@@ -8929,7 +8937,7 @@ const I18n = {
             'daily.pickClass': 'Elige una clase para iniciar el desafío de hoy',
             'daily.expiredOnResume': 'El desafío de ayer expiró: la partida sigue sin las reglas del día.',
             'meta.acquired': 'ACUMULADO',
-            'meta.earnHint': 'Gana Esencia al completar runs (las victorias rinden más). Invierte para desbloquear clases, biomas y mejoras permanentes.',
+            'meta.earnHint': 'Gana Esencia al completar runs (las victorias rinden más). Invierte para desbloquear biomas, mutaciones y mejoras permanentes.',
             'meta.passives': 'Mejoras permanentes',
             'meta.unlocks': 'Desbloqueos',
 
@@ -9404,6 +9412,10 @@ const I18n = {
         'update.entry.v102.l3': 'La escena de PNJ espera a que termine el combate, y el PNJ de la historia nace en un callejón sin salida fuera del camino.',
         'update.entry.v102.l4': 'La recompensa del jefe pide un segundo toque para confirmar y ya no se pierde cuando hay un panel abierto.',
         'update.entry.v102.l5': 'La pantalla de habilidad muestra cuánto oro falta y deja claro que no hay requisito de nivel. Tus partidas guardadas siguen funcionando.',
+        'update.entry.v104.title': 'v104 - Dash predecible y ataques que respetan las paredes',
+        'update.entry.v104.l1': 'El dash ahora sale una vez por toque, en la dirección del joystick o de la última dirección en que caminaste, y se detiene antes de las paredes.',
+        'update.entry.v104.l2': 'Las habilidades de área, las mascotas, la tormenta, las explosiones y los golpes del jefe ya no hieren al otro lado de la pared.',
+        'update.entry.v104.l3': 'Las cuatro clases — guerrero, pícaro, mago y elfa — ya están desbloqueadas desde el inicio para las pruebas.',
         'update.entry.v103.title': 'v103 - Final de campaña más duro y elenco por clase',
         'update.entry.v103.l1': 'Del piso 7 al 10 la mazmorra se vuelve más dura: más élites, escuderos, embestidas y enjambres, y los enemigos comunes ganan vida y daño en cada piso. El último piso ya no cae de un solo golpe.',
         'update.entry.v103.l2': 'Cada personaje enfrenta un elenco algo distinto: el guerrero ve más embestidas y élites, el mago más enjambres, el pícaro más curanderos y la elfa más acechadores. La dificultad elegida no cambia.',
@@ -10763,6 +10775,7 @@ window.I18n = I18n;
     <script>
 // CONFIGURATION - Central constants for balancing and tuning
 var CONFIG = {
+    ALL_CLASSES_UNLOCKED: true, // Teste com testadores: as quatro classes liberadas desde o início; a MetaLoja deixa de vender classe
      // Canvas & Rendering
     TILE_SIZE: 48,
     WALL_COLOR: '#22242f',
@@ -13607,7 +13620,7 @@ function _updateWeather() {
                 if (e === player || !e.alive) continue;
                 const dx = e.x - player.x, dy = e.y - player.y;
                 const dSq = dx*dx + dy*dy;
-                if (dSq < nearestDistSq) { nearestDistSq = dSq; nearest = e; }
+                if (dSq < nearestDistSq && hasLineOfSight(map, player.x, player.y, e.x, e.y)) { nearestDistSq = dSq; nearest = e; }
             }
             if (nearest) {
                 nearest.takeDamage(CONFIG.WEATHER_STORM_DAMAGE, map, player, true);
@@ -28073,7 +28086,7 @@ class Hazard {
                     const e = entities[i];
                     if(e === p || !e.alive || e.isBarrier || e.isP) continue;
                     const edx = e.x-this.x, edy = e.y-this.y;
-                    if(edx*edx + edy*edy < this.size * this.size) e.takeDamage(this.damage, m, p, true);
+                    if(edx*edx + edy*edy < this.size * this.size && hasLineOfSight(m, this.x, this.y, e.x, e.y)) e.takeDamage(this.damage, m, p, true);
                 }
             }
             return;
@@ -29765,7 +29778,7 @@ class Entity {
                         const e = entities[i];
                         if (e !== this && e.alive && (!e.isP || e === player)) {
                             const dx = e.x - this.x, dy = e.y - this.y;
-                            if(dx * dx + dy * dy < explSq) {
+                            if(dx * dx + dy * dy < explSq && hasLineOfSight(m, this.x, this.y, e.x, e.y)) {
                                 e.takeDamage(explDmg, m, source, true);
                                 spawnParticles(e.x, e.y, '#ff6600', 6, 4);
                             }
@@ -29784,7 +29797,7 @@ class Entity {
                         const e = entities[i];
                         if (e !== this && e.alive && (!e.isP || e === player)) {
                             const dx = e.x - this.x, dy = e.y - this.y;
-                            if(dx * dx + dy * dy < incSq) {
+                            if(dx * dx + dy * dy < incSq && hasLineOfSight(m, this.x, this.y, e.x, e.y)) {
                                 e.takeDamage(incDmg, m, source, true);
                                 spawnParticles(e.x, e.y, '#ff8800', 6, 5);
                             }
@@ -32108,7 +32121,7 @@ class Boss extends Enemy {
         const pa = Math.atan2(player.y - this.y, player.x - this.x);
         if (typeof DamageNumbers !== 'undefined') DamageNumbers.addSlash(this.x + Math.cos(pa) * this.radius, this.y + Math.sin(pa) * this.radius, pa, this.radius * 2, '#b48cff');
         const pd = Math.hypot(player.x - this.x, player.y - this.y);
-        if(pd < this.radius * 2 + player.radius) player.takeDamage(CONFIG.ENEMY_MELEE_DAMAGE * 1.2, m);
+        if(pd < this.radius * 2 + player.radius && hasLineOfSight(m, this.x, this.y, player.x, player.y)) player.takeDamage(CONFIG.ENEMY_MELEE_DAMAGE * 1.2, m);
     }
 
     _ab_darkNova(p, m) {
@@ -32133,7 +32146,7 @@ class Boss extends Enemy {
         }
         spawnParticles(this.x, this.y, '#ff8a8a', 18, 5);
         const d = Math.hypot(p.x - this.x, p.y - this.y);
-        if(d < 120) p.takeDamage(CONFIG.ENEMY_MELEE_DAMAGE * 1.4, m);
+        if(d < 120 && hasLineOfSight(m, this.x, this.y, p.x, p.y)) p.takeDamage(CONFIG.ENEMY_MELEE_DAMAGE * 1.4, m);
         shake = 10;
     }
 
@@ -32518,7 +32531,7 @@ class Boss extends Enemy {
         if(this._poundTelegraph > 0 && --this._poundTelegraph === 0) {
             const pdx = p.x - this.x, pdy = p.y - this.y;
             spawnParticles(this.x, this.y, '#ff6600', 30, 5); shake = 18;
-            if(pdx * pdx + pdy * pdy < this._poundRange * this._poundRange) {
+            if(pdx * pdx + pdy * pdy < this._poundRange * this._poundRange && hasLineOfSight(m, this.x, this.y, p.x, p.y)) {
                 p.takeDamage(this._poundDmg, m);
                 spawnParticles(p.x, p.y, '#ff3300', 15, 5);
             }
@@ -33874,7 +33887,7 @@ class Pet {
                 if((e instanceof Enemy || e.isEnemy) && e.alive) {
                     const edx = e.x - this.x, edy = e.y - this.y;
                     const dSq = edx * edx + edy * edy;
-                    if(dSq < minDSq) { minDSq = dSq; nearest = e; }
+                    if(dSq < minDSq && hasLineOfSight(m, this.x, this.y, e.x, e.y)) { minDSq = dSq; nearest = e; }
                 }
             }
             if(nearest) {
@@ -33893,14 +33906,14 @@ class Pet {
                 if((e instanceof Enemy || e.isEnemy) && e.alive) {
                     const edx = e.x - this.x, edy = e.y - this.y;
                     const dSq = edx * edx + edy * edy;
-                    if(dSq < minDSq) { minDSq = dSq; nearest = e; }
+                    if(dSq < minDSq && hasLineOfSight(m, this.x, this.y, e.x, e.y)) { minDSq = dSq; nearest = e; }
                 }
             }
             if(nearest) {
                 nearest.takeDamage(this.data.diveDamage * this._synMult(), m, player, true);
                 spawnParticles(nearest.x, nearest.y, this.color, 10, 3);
                 this._atkT = 14;
-                this.x = nearest.x; this.y = nearest.y;
+                if(!m.isWall(nearest.x, nearest.y)) { this.x = nearest.x; this.y = nearest.y; }
             }
         }
 
@@ -33911,7 +33924,7 @@ class Pet {
                     const e = entities[i];
                     if((e instanceof Enemy || e.isEnemy) && e.alive) {
                         const edx = e.x-this.x, edy = e.y-this.y;
-                        if(edx*edx + edy*edy < trampleSq) {
+                        if(edx*edx + edy*edy < trampleSq && hasLineOfSight(m, this.x, this.y, e.x, e.y)) {
                             e.takeDamage(this.damage * 0.5 * this._synMult(), m, player, true);
                             this._atkT = 14;
                         }
@@ -33928,7 +33941,7 @@ class Pet {
                 if((e instanceof Enemy || e.isEnemy) && e.alive) {
                     const edx = e.x - this.x, edy = e.y - this.y;
                     const dSq = edx * edx + edy * edy;
-                    if(dSq < minDSq) { minDSq = dSq; nearest = e; }
+                    if(dSq < minDSq && hasLineOfSight(m, this.x, this.y, e.x, e.y)) { minDSq = dSq; nearest = e; }
                 }
             }
             if(nearest) {
@@ -34437,7 +34450,7 @@ class Bullet {
                                     const _fe = entities[_fi];
                                     if(_fe.alive && _fe !== e) {
                                         const fdx = _fe.x - e.x, fdy = _fe.y - e.y;
-                                        if(fdx*fdx + fdy*fdy < 120*120) {
+                                        if(fdx*fdx + fdy*fdy < 120*120 && hasLineOfSight(m, e.x, e.y, _fe.x, _fe.y)) {
                                             _fe.frozen = Math.max(_fe.frozen || 0, 60);
                                             if(typeof ElementalSystem !== 'undefined') ElementalSystem.applyStatus(_fe, 'ice', 2, 180, source);
                                         }
@@ -34453,7 +34466,7 @@ class Bullet {
                                     const _ce = entities[_ci];
                                     if(_ce.alive && _ce !== e) {
                                         const cdx = _ce.x - e.x, cdy = _ce.y - e.y;
-                                        if(cdx*cdx + cdy*cdy < 60*60) {
+                                        if(cdx*cdx + cdy*cdy < 60*60 && hasLineOfSight(m, e.x, e.y, _ce.x, _ce.y)) {
                                             _ce.takeDamage(Math.floor(this.dmg * 0.6), m, source, true);
                                             if(typeof spawnParticles !== 'undefined') spawnParticles(_ce.x, _ce.y, '#ffaa00', 3, 4);
                                         }
@@ -34643,6 +34656,7 @@ class Player extends Entity {
         this.shootAnim = 0;
         this.walkTimer = 0;
         this.angle = Math.PI / 2; // Default South
+        this._lastMoveAngle = this.angle; // último ângulo de movimento real (dash sem direção usa este, não a mira automática)
         this.spriteAngle = this.angle;
         // Combo de golpes (estado próprio; comboCount é kill-streak): passo atual 0-3, frames desde o último golpe, giro do finalizador
         this.chainStep = 0;
@@ -34770,42 +34784,57 @@ class Player extends Entity {
         // gamepad triggers are edge-based, so the press would otherwise be lost.
         if(this.dodgeCooldown > 0) { this._dodgeBuffer = CONFIG.INPUT_BUFFER_FRAMES; return; }
         
-        let dx = Input.left.active ? Input.left.dx : ((Input.keys['d'] || Input.keys['arrowright'])?1:(Input.keys['a'] || Input.keys['arrowleft'])?-1:0);
-        let dy = Input.left.active ? Input.left.dy : ((Input.keys['s'] || Input.keys['arrowdown'])?1:(Input.keys['w'] || Input.keys['arrowup'])?-1:0);
-        
-        // If no movement input, dash in current facing direction
+        let dx = 0, dy = 0;
+        const _jl = Input.left;
+        if (_jl && _jl.active && Math.hypot(_jl.dx, _jl.dy) > 0.35) { dx = _jl.dx; dy = _jl.dy; }
+        else {
+            dx = ((Input.keys['d'] || Input.keys['arrowright'])?1:(Input.keys['a'] || Input.keys['arrowleft'])?-1:0);
+            dy = ((Input.keys['s'] || Input.keys['arrowdown'])?1:(Input.keys['w'] || Input.keys['arrowup'])?-1:0);
+        }
+
+        // Sem direção no joystick/teclado: segue a última direção de movimento real.
+        // this.angle muda com a mira automática e mandaria o dash para o inimigo.
         if (dx === 0 && dy === 0) {
-            dx = Math.cos(this.angle);
-            dy = Math.sin(this.angle);
+            const _da = (typeof this._lastMoveAngle === 'number') ? this._lastMoveAngle : this.angle;
+            dx = Math.cos(_da);
+            dy = Math.sin(_da);
         }
         
         const magSq = dx * dx + dy * dy;
         if (magSq > 0) {
             const dashDist = 120;
+            const dashStep = 6;
             const invMag = 1 / Math.sqrt(magSq);
             let nx = dx * invMag;
             let ny = dy * invMag;
-            
-            let targetX = this.x + nx * dashDist;
-            let targetY = this.y + ny * dashDist;
-            
-            // If the direct dash is blocked by a wall, try nearby angles so the
-            // dodge still fires. Prevents the tutorial dash stage (and normal
-            // play) from softlocking when the player dashes while facing a wall.
-            if(map.isWall(targetX, targetY) && map.isWall) {
+
+            // O dash avança em passos e para antes da parede: testar só o destino
+            // deixava atravessar paredes no meio do caminho.
+            const firstStepClear = (ux, uy) => _entityClear(map, this.x + ux * dashStep, this.y + uy * dashStep, this.radius);
+            // Primeiro passo bloqueado: gira para um ângulo alternativo, para o dash
+            // ainda sair quando se está encostado na parede (etapa do tutorial).
+            if (!firstStepClear(nx, ny)) {
                 const baseA = Math.atan2(ny, nx);
                 const am = [0.5, -0.5, 1, -1, 0.785, -0.785, 1.5, -1.5, 2, -2];
+                let altFound = false;
                 for(let k = 0; k < am.length; k++) {
                     const a = baseA + am[k];
-                    const tx = this.x + Math.cos(a) * dashDist;
-                    const ty = this.y + Math.sin(a) * dashDist;
-                    if(!map.isWall(tx, ty)) { nx = Math.cos(a); ny = Math.sin(a); targetX = tx; targetY = ty; break; }
+                    const ax = Math.cos(a), ay = Math.sin(a);
+                    if(firstStepClear(ax, ay)) { nx = ax; ny = ay; altFound = true; break; }
                 }
+                if(!altFound) { nx = 0; ny = 0; }
             }
-            
-            if(!map.isWall(targetX, targetY)) {
-                this.x = targetX;
-                this.y = targetY;
+
+            if(nx !== 0 || ny !== 0) {
+                let destX = this.x, destY = this.y;
+                for(let d = dashStep; d <= dashDist; d += dashStep) {
+                    const px = this.x + nx * d;
+                    const py = this.y + ny * d;
+                    if(!_entityClear(map, px, py, this.radius)) break;
+                    destX = px; destY = py;
+                }
+                this.x = destX;
+                this.y = destY;
             }
             if (typeof SND !== 'undefined') SND.play(400, 'square', 0.1, 0.1);
             this.dodgeCooldown = 60;
@@ -34922,7 +34951,7 @@ class Player extends Entity {
                     if(e !== this && e.alive) {
                         const edx = e.x - this.x, edy = e.y - this.y;
                         const execDmg = e.isB ? Math.min(e.maxHp * 0.10, Math.max(10, e.maxHp * CONFIG.ROGUE_ASSASSINATE_DAMAGE_PCT)) : Math.max(10, e.maxHp * CONFIG.ROGUE_ASSASSINATE_DAMAGE_PCT);
-                        if(edx*edx + edy*edy < assassRangeSq && e.hp / e.maxHp < threshold) { e.takeDamage(execDmg, map, this, true); ScreenEffects.specialHit(e, edx, edy); }
+                        if(edx*edx + edy*edy < assassRangeSq && e.hp / e.maxHp < threshold && hasLineOfSight(map, this.x, this.y, e.x, e.y)) { e.takeDamage(execDmg, map, this, true); ScreenEffects.specialHit(e, edx, edy); }
                     }
                 }
             }
@@ -34959,7 +34988,7 @@ class Player extends Entity {
                     const e = entities[i];
                     if(e !== this && e.alive) {
                         const edx = e.x-this.x, edy = e.y-this.y;
-                        if(edx*edx + edy*edy < meteorRangeSq) {
+                        if(edx*edx + edy*edy < meteorRangeSq && hasLineOfSight(map, this.x, this.y, e.x, e.y)) {
                             e.takeDamage(CONFIG.MAGE_METEOR_DAMAGE, map, this, true);
                             spawnParticles(e.x, e.y, '#ff4400', 10, 5);
                             ScreenEffects.triggerShake(6);
@@ -35069,7 +35098,7 @@ class Player extends Entity {
                     if(e !== this && e.alive && typeof Enemy !== 'undefined' && (e instanceof Enemy || e.isEnemy)) {
                         const edx = e.x - this.x, edy = e.y - this.y;
                         const dSq = edx*edx + edy*edy;
-                        if(dSq < gustRangeSq) {
+                        if(dSq < gustRangeSq && hasLineOfSight(map, this.x, this.y, e.x, e.y)) {
                             e.takeDamage(Math.floor(CONFIG.ELF_WIND_DAMAGE * this.weaponLevel * this.weaponDamageMult), map, this, true);
                             // Knockback: empurra para longe
                             const d = Math.sqrt(dSq) || 1;
@@ -35116,6 +35145,7 @@ class Player extends Entity {
             this.move(dx * currentSpeed, dy * currentSpeed, m);
             this.walkTimer += currentSpeed;
             this.angle = Math.atan2(dy, dx);
+            this._lastMoveAngle = this.angle;
             if (window.SpriteManager && SpriteManager.lerpAngle) this.spriteAngle = SpriteManager.lerpAngle(this.spriteAngle, this.angle, 0.35);
             else this.spriteAngle = this.angle;
             this._footstepTimer = (this._footstepTimer || 0) + 1;
@@ -35399,7 +35429,6 @@ class Player extends Entity {
             }
         }
         if(Input.keys[' ']) this.useSkill();
-        if(Input.keys['Shift'] || Input.keys['shift']) this.dodge();
     }
 
     draw(ctx, cx, cy) {
@@ -40033,7 +40062,15 @@ window.SkillTreeUI = SkillTreeUI;
             if(btns.stats) btns.stats.onclick = () => window.toggleStats ? window.toggleStats() : this.openPanel('stats');
 
             if(btns.dodge) {
-                const fire = () => { if(window.player && player.dodge) player.dodge(); };
+                // Toque + click sintético podem chegar em sequência no mesmo toque:
+                // ignora a chamada duplicada dentro de 250 ms.
+                let _lastDodgeBtn = 0;
+                const fire = () => {
+                    const now = performance.now();
+                    if (now - _lastDodgeBtn < 250) return;
+                    _lastDodgeBtn = now;
+                    if(window.player && player.dodge) player.dodge();
+                };
                 btns.dodge.onclick = fire;
                 // Touch: fire immediately on touchstart (click alone is unreliable on mobile
                 // while the other thumb is moving the joystick). preventDefault stops the
@@ -41502,6 +41539,7 @@ renderAchievementsContent() {
             let unlockCards = '';
             Object.keys(M.UNLOCKS).forEach(id => {
                 const u = M.UNLOCKS[id];
+                if (u.kind === 'class' && typeof CONFIG !== 'undefined' && CONFIG.ALL_CLASSES_UNLOCKED) return;
                 const owned = M.isUnlocked(id);
                 const canBuy = !owned && ess >= u.cost;
                 unlockCards += `
@@ -44441,11 +44479,21 @@ const Input = {
             if (CanvasMenuNav.handleKey(e)) return;
             const k = e.key.toLowerCase();
             this.keys[k] = true;
+            // Dash no Shift: uma vez por pressão (segurar a tecla não repete o dash).
+            if (k === 'shift' && !e.repeat && gameState === 'PLAYING') {
+                const _tag = e.target && e.target.tagName;
+                if (_tag !== 'INPUT' && _tag !== 'TEXTAREA' && _tag !== 'SELECT' && !(window.isAnyPanelOpen && window.isAnyPanelOpen())) {
+                    if (window.player && player.dodge) player.dodge();
+                }
+            }
             // Prevent the browser's default handling (page scroll on space,
             // etc.) from eating movement/skill keys while playing on desktop
             if (gameState === 'PLAYING' && _movementKeys.includes(k)) e.preventDefault();
         });
         window.addEventListener('keyup', e => this.keys[e.key.toLowerCase()] = false);
+        // Perder o foco (trocar de app, alt-tab) engole o keyup: sem limpar, o
+        // Shift fica preso e o herói anda/dasha sozinho ao voltar.
+        window.addEventListener('blur', () => { this.keys = {}; this._releaseSticks(); });
 
         // ---- MOUSE ----
         window.addEventListener('mousemove', e => {
@@ -44577,7 +44625,7 @@ const Input = {
         // touchend: release the sticks or the hero keeps walking and new touches
         // are ignored (the side still looks "active" under the old id).
         window.addEventListener('touchcancel', () => this._releaseSticks(), { passive: true });
-        document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') this._releaseSticks(); });
+        document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') { this.keys = {}; this._releaseSticks(); } });
         window.addEventListener('pagehide', () => this._releaseSticks());
     },
 
@@ -45204,8 +45252,13 @@ Input.init();
        current MUST stay in sync with the SW CACHE_VERSION suffix (sw.js).
     */
     window.UPDATE_LOG = {
-        current: 'v103',
+        current: 'v104',
         entries: [
+            { v: 'v104', date: '2026-11-18', titleKey: 'update.entry.v104.title', title: 'v104 — Dash previsível e ataques respeitando paredes',
+              linesKeys: ['update.entry.v104.l1', 'update.entry.v104.l2', 'update.entry.v104.l3'],
+              lines: ['O dash agora sai uma vez por toque, na direção do joystick ou da última direção em que você andou, e para antes das paredes.',
+                      'Habilidades de área, pets, tempestade, explosões e os golpes do chefe não ferem mais do outro lado da parede.',
+                      'As quatro classes — guerreiro, ladino, mago e elfa — já estão liberadas desde o início para os testes.'] },
             { v: 'v103', date: '2026-11-16', titleKey: 'update.entry.v103.title', title: 'v103 — Fim de campanha mais forte e elenco por classe',
               linesKeys: ['update.entry.v103.l1', 'update.entry.v103.l2', 'update.entry.v103.l3', 'update.entry.v103.l4'],
               lines: ['Do andar 7 ao 10 a masmorra fica mais dura: mais elites, escudeiros, carregadores e enxames, e os inimigos comuns ganham vida e dano a cada andar. O último andar não cai mais num golpe só.',
