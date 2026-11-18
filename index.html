@@ -19,9 +19,9 @@
     <meta name="application-name" content="Krevathorn">
     <meta name="msapplication-TileColor" content="#0a0a12">
 
-    <!-- PWA: installable via data-URI manifest + inline SVG icon (single-file friendly) -->
-<link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Krevathorn%22%2C%22short_name%22%3A%22Krevathorn%22%2C%22description%22%3A%22Roguelike%20dungeon%20crawler%20offline%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22fullscreen%22%2C%22orientation%22%3A%22portrait%22%2C%22background_color%22%3A%22%230a0a12%22%2C%22theme_color%22%3A%22%230a0a12%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fpng%3Bbase64%2CiVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAABS3GwHAAAF40lEQVR42u3dv4scZRgH8PkLttl2YRGEgKgINrekslGsJMIiWmpnwLDYp4hYmOIggoLEzsq1iaJWVhZHQkyqFMFKPEwgBAQR25VX5mC827nd2Z2f7%2FsZ%2BMJxt7twzz2f%2BfW%2B816WtbyNR9PZeDSdj0fTZZ6j8Wi6kiRzVOiD0BOzLLZtPJpOxqPpIv8l%2FdFlmyzznpkMufEX9u5S01FiMbTGP%2FaHk5pz3GsIGl%2BShJBf1Gp86QLCrOvmP%2FSHkI5z2NWdHXt96dPRYNJW8881v%2FQUwbyN5lds6XPmml8g0PwCgeYXCNztEXeHdgWg%2BWXwCAxyicGyHaY3KJzElJlTH3EqtOWsTgWTGLOw9xdHAXt%2FcRSw9%2B80z184WN345OZ%2FCV%2BrScdHAXv%2FevPbj6szeXx7tfrn6fkJr1n3XjVt%2BCjgAXYAUnrQft2UB4UBIKVMnP4A4DQoB2DRKgBSy7IIQEEASC7m%2FQBgfpAHXgBI%2BoEZ5%2F8AJH0dAAAAqQMwANYSgN9%2F2gwgvAaAFgfEFKE9ACGbAJS9T00buhOkCAAAIAAAIAAAIAAAIPvny6vf1wYgfJaaAgCAAACAAACAAACAAACAAACAAACAAACAAACAAACAAACAANBNPr58szYA4bPUFIBB5a1X368NQPgsNQUAAAEAAAEAAAEAAAEAAAEAAAEAAAGg%2FytD7AJALQGIBsCfv5Y3f%2FgZAAAAAAAAAAAAAAAAAACAWgIAgAAQw0MxVQF4GAYAANQSAAAEAAAEAAAEAAAEgCHOCK0KwExQAABQSwBiAfD0QTmA8DMAAIgawOPb5QDCzwAAAAAAAIghzz1zsDeA8BlqCUA0E%2BKqAlBDAAAQAAAQAAAQAIY9HaIKANMgAABADQEAQAAAQAAYXtb9r7Btl0X0v8EAiHI6xLYATIMAAAA1BAAAAWCgeeXlSzsDCO9VQwCiGw3eFoDaAQCAAACAADDg3PnqUWUA4T1qB0CUo8F%2FPzrb%2FOF7RoEBSALAuqVRTi%2BJAgAAAKgdADHkg7c%2FqgwgvEftAIhyNHgbAEaBAQBA7QAAQACIbDBsGwBqBgAAAkCMAJ7cPwsgfA8AAKLNdzfunftccPF54PBaNQMg2sGwTQAMggEAgJoBEOvqEJsAWA0CgKjHAjYBMAYAAABqBgAAAkCkYwHnPQ2mVgAAIAAAIABEOhZQBsAYAAAAqBUAAAgAEd8KLQPgFigASQAoPhNQfBYAAACiTXGl6DIAVoQGIIlboWUA1AgAAASAWHOyUO46ABbEBWDvXL9ySxoMAAAAAAAAAAAAAAAA9C2rh5elwQAAAAAAAAAAAK4BXAMAAAAAAAAAAAAAAABA57n44hu9TNVG6%2BvvAYC0cmRSMwAAEAAAEAAAEAAAEAAAEAAAEAAAEAAAEAAAEAAAEAAAEAAAEAAAEAAAEAAAEAAAEAAAEAAAEAAAEAC6A%2FDtp1%2BsHv5w7X8J3wMAgKgB3P36%2BsalB8NrAAAgqrzw7IXVX798uPX6m%2BG14T1q1w6AI4Votvn%2F%2BPm9yovQhvdA0HiOAoClQjSXu9%2B8s%2FNKzOG9atholgA0mNcuvrT3cuThM9SyWQBzhWgmtz57c28A4TPUsrHMA4CZQjQT%2F5Si95llYVOIZi5%2B6wLgYrihO0Anm%2BuA%2BvPupYPaAITPUtMGzv8LABYK4giQWBZFABMFcQ2QWCZZcTMg5i5QUgNgpzenQcYBkjz9OYXgWHGMBEee46xscxQwFyjZvb%2BjQH8QaP4O9v6OAs3n86uvb2z%2B8Bq16mjv7yjQ3iBZuLtTjMGuHuz9CwDMD5I45%2F1UQHCoaBJJDrNdNqdCktSpzxoAEwhkyM1%2FZsrDDgg8MCPDfeCljg0CSbb5IZDkmx8CSb75TyFwYSx9vOBttvndHZJo7%2FbsCMFgmQxzkKtGBDNHA%2Blorz%2FL%2BrLls0hBkDYaf5H1dQNBkmz8EggetJe9H2AfVOOX3DFaWHxLKmSZ98wki23LL5rn%2BS%2B5dJRIfu9%2B0gfzLi5q%2FwWKnku24wNwPwAAAABJRU5ErkJggg%3D%3D%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fpng%22%2C%22purpose%22%3A%22any%22%7D%2C%7B%22src%22%3A%22data%3Aimage%2Fpng%3Bbase64%2CiVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAYAAAD0eNT6AAATjUlEQVR42u3dwWsc1x3A8f0LdNFVIAKBQGhKwRcvOfmStqfggAjOpTSGUiJwK3opJTUlxi0tdEGBBIJNoKRQuoHiGKenUKgOQknqXuqDERRChCQoBpFiet3yc7VBuLY0Ozsz%2B968z8AHSlmtdmdive%2FOvHk7GNga25aXVofLS6trx0bLS6vjE%2FaWl1YnAJxq77G%2FnaMTf1eHRhpbKgP99D9Q%2F2gBujX9%2BysMbK0O%2BNNP9Nv%2B0QEka3t6xsDIZTPgAwgCQWA7c9B3Oh%2Bg35cNxIDNoA8gBmylTeAb%2BY8fgGMjEwn7PfBvuKYPwBlzBjaMmP0Y9FeOB3734AMwy1oEMXasGEnzHPid5gegicsDQsDAD4AQsBn4ARACtoVO7nONH4BO5wgYgRd7O5%2BBH4BFhoDbBzs%2B3W%2FxHgBSWlTIZYGWB%2F81n%2FoBSPRsgJUFfeoHwNkAm0%2F9ADgbYJtp8PepH4BszwYYyeud8vepH4A%2BnA1wSWCGU%2F7%2BowGgT1wSOGPwt5ofAH01MtK73g%2BAeQGu97veD4B5AQZ%2FABAB1vIHgN5GwLC0wd9MfwAo6Q4Bgz8AFBYBBn8AKCwCDP4AUFgEHE%2F4c2AB4GzDvgz%2BbvUDgJJuETT4A0CBEWDwB4D6EWBtfwAo0zi3wd%2B3%2BgFAM0a5DP5u9wOAkm4PPJ7050ABQPNWTPoDAJMCTfoDAJMCXfcHAPMBLPYDAP26FJDEfACn%2FgGgsEsBTv0DQGGXApz6B4ACLwU49Q8AhV0KiO8qttMBIAlDC%2F4AQIGXAroa%2FDfsbABIyoaJfwBgQqCv%2BQWAQoza%2FPRvBwNAulZ8%2BgcAZwF8%2BgcAZwF8%2BgcAZwF8%2BgcAZwHc9w8F%2BOnGtUfsC7AugFX%2FoJCB%2F5%2F%2FOJj858HkkfjfQgD6ty6AT%2F%2FA5BvPnZ9s%2FvrG14P%2B08Rj4rH2GRR%2BFmB5aXXbDoRu3bx6Z%2FLFnye1HO5Mzhzk64rnrvu64j05ttC5bd%2F4BwJAAECZhm79AwEgAMAtgZUCwI4DASAAIHOzDv5rdhoIAAEAvbA2SwCM7TAQAAIAemHs9D8IAAEALgM4%2FQ8CQACAywBO%2F4MAEABQ7mUAOwkEgACAwi4DOP0PAkAAQIGXASz%2BAwJAAECBiwJZ%2Bx%2FyDoD9rfYCIJ5bAEDWtl3%2Fh54GQGgrAOZ5TQIAEp4H4Po%2FCAABAAXOA3D9HwSAAIAC5wG4%2Fg8CQABAgfMA7BQQAAIACpsHsLy0OrRTQAAIACjC0ARAEAACAEqeCGj9fxAAAgCKMRYAIAAEABQeAHYICAABAKVNBLQzIB1XLl3rXQDEe3JsIbEAcAcApOXVl97oXQDEe3JsIbE7AdwBAAJAAECBdwIIABAAAgDKDADfAQACQABAWUZuAQQBIACgxFsBBQAIAAEAAgAQAAIACgmAPTsCBIAAgKLsWQQIBIAAgBIXA7ITQAAIABAAgAAQACAAAAEgAEAAAAJAAIAAAASAAAABAAgAAQACABAAAgAEACAAAAEACABAAAACABAAIAAEACAAQAAIAEAAQN%2F1LQAcUxAAgAAABAAgAAABAAgAQACAABAAgAAAASAAAAEAAkAAAAIABIAAAAQACAABAAgAEAACABAAIAAEAAgAOwIEgAAAAQAIAAEAAgAQAAIABADQvtubd3sTAPFeHFMQAEAFN6%2FeqT3gPjxofvCP56z7euK9OKYgAICWA%2BBot%2FkAiOcUACAAAAEgAEAAAAJAAIAAAASAAAABAAgAxxQEACAAAAEACABAAAACABAAIAAEACAAoBjX12%2F0JgDivTimIACACl596Y3eBEC8F8cUBAAgAAABAAgAQAAAAgAQACAABAAgAEAACABAAIAAEACAAAABIAAAAQACQAAAAgCycuHcxd4EQLwXxxQEAFBRXwLAsQQBAAgAQAAAAgAQAIAAAAQACIB6A%2B7hTvMBEM8pAEAAAAJAAIAAAASAAAABAAgAAQACAKjn9ubd7AMg3oNjCQIAmMHNq3eyD4B4D44lCABAAAACABAAgAAABAAgAEAACABAAIAAEACAAAABIAAAAQA9dOXStewDIN6DYwkCAJjBqy%2B9kX0AxHtwLEEAAAIAEACAAAAEACAAAAEAAkAAAAIABEBF%2B1vNB0A8pwAAAQB04MK5i7UG3dB0ANR9HfEeHEsQAMCMcg8AxxAEACAAAAEACABAAAACABAAgAAABAAIAAEACAAox%2B3Nu9kGQLx2xxAEAFDDzat3sg2AeO2OIQgAQAAAAgAQAIAAAAQAIAAAAQAIABAAAgAQAFCOul8JnEIA%2BCpgEABAxwHw8KC5wT%2BeSwCAAAAyCICj3eYCIJ5LAIAAAASAAAABAAgAAQACABAAAgAEADC%2FXAPAsQMBAAgAQAAAAgAQAIAAAAQAIAAAAQACQAAAAgDKU%2BcLgRYdAL4ICAQAIAAAAQAIAEAAAK0EwIN7zQVAPJcAAAEAZBAAhzvNBUA8lwAAAQB07Pr6jewCIF6zYwcCAJhDnS8EWnQA%2BCIgEACAAAAEACAAAAEACABAAAACABAAwLHcAsAxAwEACABAAAACABAAgAAABAAgAAABAByb9fsAvvykuQCI5%2FI9ACAAgAwCIDQVAL4ICAQAIAAEAAgAQAAIABAAgAAQACAAgObUWQ54UQFgGWAQAIAAAAQAIAAAAQAIAEAAAAIAEADAY3IJAMcKBACwwAB4eDD%2F4B%2FPIQBAAAAZBcDR7vwBEM8hAEAAAAJAAIAAALr06QcHyQdAvEbHCgQA0KBZlwNeRABYBhgEACAAAAEACABAAAACABAAwNlmXQ1wEQFgFUAQAIAAAAQAIAAAAQC0HgAP7s0fAPEcAgAEALBAF85dnGkwPtyZPwDiOWb5nfEaHSsQAEDDUg8AxwgEACAAAAEACABAAAACABAAQDWzrAbYdQBYBRAEACAAAAEACABAAAACABAAQHWzrAbYdQBYBRAEAJBAAIR5A8AywCAAAAEgAEAAAAJAAIAAADrx%2FDPnkw2AeG2OEQgAoCWpBoBjAwIAEACAAAAEACAAgLnc3rybXADEa3JsQAAALZplNcCuAsAqgCAAgIQC4Ksv6g%2F%2B8bMCAAQAkGEAHO3WD4D4WQEAAgBIxJVL15ILgHhNjg0IAKBFs6wG2FUAWAUQBAAgAAABAAgAQAAAjUgtABwTEACAAAAEACAAAAEAdBoAD%2B7VD4D4WQEAAgBISNXFgA536gdA%2FKxFgEAAAAJAAIAAAASAAAABAHTq%2BvqNZAIgXotjAgIA6EDVxYC6CACLAIEAAAQAIAAAAQAIAKAxzz9zPpkAiNfimIAAADpSZXD%2B8pP6ARA%2FaxEgEABAhgEQ6gaAVQBBAAACQACAAABSUHUxoDYDwCJAIAAAAQAIAEAAAAIAaNyVS9cWHgDxGhwLEABAh6ouBtRmAFgECAQAkGgAPDyYffCPnxEAIACAjAPgaHf2AIifEQAgAICM1wJoMwAcAxAAgAAABAAgAAABALTi9ubdhQVA%2FG7HAAQAsABVFgNqKwAsAgQCABAAgAAAunJ9%2FcbCAiB%2Bt2MAAgBIdC2Aw53ZAyB%2BxhoAIAAAASAAQAAAAkAAgAAAkl4LoK0AsO9BAAACABAAgAAABADQqrNWA2wjAKwCCAIAWLCzFgPa35o9AOJnLAIEAgDIOADCrAFgFUAQAEDirly61nkAxO%2B070EAAImvBdB0AFgDAAQAIAAAAQB07cK5i50HQPxO%2Bx4EAJD4WgBNB4B9DgIAEACAAAAW4dMPDk4dsL%2F6ovrgH4897bnid9nnIACADNYCONqtHgDxWGsAgAAABIAAAAEACAABAAIAyGItgCYDwBoAIAAAAQAIAEAAAAIASGYtgAf3qgdAPNYaACAAgB4EwOFO9QCIxwoAEACAABAAIACAHG8FbCoA3AIIAgAQAIAAAAQAIACApG4FbCoA3AIIAgDIKAD2t6oHQDxWAIAAAHoQAKFqAFgECAQA0KNbAZsIAPsYBAAgAAABAKTg0w8OWguAeG77GAQAkNmtgPMGgFsAQQAAAgAQAEAqrq%2FfeOoA%2FvDg7ME%2FHvO0n4%2Fnto9BAACZ3Qp4tHt2AMRj3AIIAgAQAAIABACQuuefOd9aAMRz28cgAIDM1gKYNwDsWxAAgAAABACQktubdxsPgHhO%2BxYEAJDhWgD%2F%2BvvZARCPsQYACACgRwFwuHN2AMRjBAAIAKBHtwLOEwBuAQQBAAgAQAAAqblw7mLjARDPad%2BCAKBA3xl%2Bb%2FL6y78gE3%2F41Wf%2F54%2B%2F%2FWzyp%2FdOF4950s%2Fap%2FmIf6v%2BZiEAaEz8YfnNj24BiYt%2Fq%2F5mIQAQACAAQAAgAEAAgABAAIAAQACAAAABgAAAAQACAAGAABAAIAAQAAgAQAAgABAAgABAACAAAAGAAKAP3vzBjycfvf0ekLj4t%2BpvFgKAxtx655XJ5P46kLj4t%2BpvFgIAAQACAAQAAgAEAAgABAAIAAQACAAQAAgAEAAgABAACAABAAIAAUBx3v359yf3P34LSFz8W%2FU3CwGAlQDBSoAgABAAIABAACAAQAAgAEAAgABAAIAAAAGAAEAACAAQAAgABAAgABAACABAACAAEACAAEAAIAAAAYAAQAAAAgABANTz4jdfXvhgE6%2FBsQABAAgAQAAAAgAQAIAAAAQAIAAAAQAIAEAAAAIAEACAAAAEACAAAAEAAkAAAAIABIAAAAQACAABAAgAEAACABAAIAAEAAgAQAAIABAAgAAQACAAAAEgAEAAAAJAAIAAAAQAIAAAAQAIAEAAAAIAEACAAAAEACAAAAEACABAAAACABAAgAAAASAAAAEAAkAAAAIABIAAAAQACAABAAgAEAACAAQAIAAEAAgAQAAIABAAgAAQACAAAAEgAEAAAAIAEACAAAAEACAAAAEACABAAAACABAAgAAABAAgAAABAAgAQACAABAAgAAAASAAAAEAAkAAAAIABIAAAAQACAABAAIAEAACAAQAIAAEAAgAQAAIABAAgAAQACAAAAEACABAAAACABAAgAAAEgiA3%2F%2Fyd5OP3n7vkfjfAgAEANCzAIhB%2Fv7Hb032%2F%2FqzyeT%2B%2BqniMfHY%2BBkBAAIAyCwAYgCvMuBXCYLTYkAAgAAAEgiAv7y%2FOfn3334y98D%2FuHjOeG4BAAIASCgA4jp%2BE5%2F4q5wRODlnQABA3gGwZ0dAvgEQn8zbHvgfNz0bIAAgW3sRAGM7AvIMgJiw1%2FXgPxW%2FWwBAtsYCADL0wrPPTfa3Li9s8P%2F6ksDW5UevxTEBAQAUMviLAMg%2FAEZ2BOTj8w9fS2bwn4rX5NhAVkYRAGt2BOTh1juvJDf4T8Vrc4wgG2sCADLx%2BsXzyQ7%2BU%2FEaHSvIJwCGdgSkL6Xr%2FqfNB3CsIAvDQWx2BKTt3avfTX7wn4rX6phB2gbTzc6AtGf95zL4T7krAPIJALcCgk%2F%2FzgJAKbcACgBw7d9cACg7ANwJAGb%2BuyMASrkD4EQAuBMA3PdvXQAo6Q4AEwHB6X%2BXAaDACYAnAmDbjoG05Dr4TzmGkJztJwWA7wQA1%2F%2FNA4B%2BGz0pAEwEBAEgAKCUCYDmAYD7%2F60HAIVe%2FzcPANwB4E4AKPD6v3kAIAAEABR4%2Fd88ABAAAgAKvf5vHgCk5c0fXsg%2BAOI9OJaQ%2BPV%2F3wsA7gJwFwD01rhKALgMAAn49ovfyj4A4j04lpDB6X%2BXASAtVgIEOjn97zIApOXzD1%2FLdvCP1%2B4YQian%2F10GAIsBWQQICj397zIAmAfg%2Bj8UePrfokDgMoDT%2F1DA4j%2BnBMDQjgPrAbj%2FH7I2HNTZfDcApGF%2F63I2g3%2B8VscMkrA9qLstL61u2IFgUSCL%2F0CWNgbzbMtLq3t2IpgL4No%2FZGVvMO%2FmLACk4YVnn0s%2BAOI1OlbQg0%2F%2FxwGwYkeCSwFO%2FUNWVgZNbG4JBIsDWfQHenzrn7MAkIdb77ySzOAfr8UxgR5%2B%2BncWAESAwR8K%2FPTvLACYE%2BCaPxT66d9ZAEhXrLnf5UJB8bus8w%2BFfPp%2F7CyAdQGg0MmBJvtBuvf9t%2Fbp37oAkMdaAW2EQDyne%2Fyh5%2Ff9Wx0Q%2BiG%2BkGee1QPjZ32pD%2BTx6X%2FQ1eabAiG%2FyYLxKT5m7T%2Fp7oHp%2Fx%2BPMbkPsjMcdLktL62O7XQAWKjxoOvNhEAA6PnEv1MiYM0BAICFWBsscnMpAAAKOPXvUgAAFHrq36UAACj01L9LAQBQ4Kl%2FCwQBQLen%2Fgepbr4xEABaszJIeTMfAAB6ft3f1wYDQOtGg5w2kwIBoKeT%2FkwKBIACJ%2F1ZJAgA2hn8k5%2F0JwIAwOD%2FtAgYOqAAUMlw0KfN7YEA0JPb%2FUQAABj8RQAAGPxFAAAY%2FJ88MdDdAQCUPNt%2FOChxc4sgAG71K3QTAQAY%2FMsOAd8dAEDfjY34vkUQgLKMjPTuEADATH%2BbeQEAuN5vMy8AANf7RcCjSwLOBgCQ06d%2Bp%2FwbvCTgbAAAyX%2Fqd8rf2QAAfOq3ORsAgE%2F9Nt8lAEAfPvUPjciLC4ENIQBAxwP%2FhhE4ncsCVhEEoG0jp%2FuFAAAGfpsQAMDAb0spBMwRAGDma%2FwG%2Fn5NFtz2HzYAT7Ftcl%2F%2Fbx90eQCAk6f53c5XWAysWVQIoNjFe6zcZxMDAAZ9mxj4XwyMzBkAyP6a%2FsigbxMEAAZ8m23uiYTTSwYuGwAs5nT%2B%2BPhvsQl8tmTCYHrGYHyCtQgAqt2Df%2FJv5%2BjE31UDfYPbfwEK36aEgQ1XbAAAAABJRU5ErkJggg%3D%3D%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fpng%22%2C%22purpose%22%3A%22any%22%7D%2C%7B%22src%22%3A%22data%3Aimage%2Fpng%3Bbase64%2CiVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAYAAAD0eNT6AAATjUlEQVR42u3dwWsc1x3A8f0LdNFVIAKBQGhKwRcvOfmStqfggAjOpTSGUiJwK3opJTUlxi0tdEGBBIJNoKRQuoHiGKenUKgOQknqXuqDERRChCQoBpFiet3yc7VBuLY0Ozsz%2B968z8AHSlmtdmdive%2FOvHk7GNga25aXVofLS6trx0bLS6vjE%2FaWl1YnAJxq77G%2FnaMTf1eHRhpbKgP99D9Q%2F2gBujX9%2BysMbK0O%2BNNP9Nv%2B0QEka3t6xsDIZTPgAwgCQWA7c9B3Oh%2Bg35cNxIDNoA8gBmylTeAb%2BY8fgGMjEwn7PfBvuKYPwBlzBjaMmP0Y9FeOB3734AMwy1oEMXasGEnzHPid5gegicsDQsDAD4AQsBn4ARACtoVO7nONH4BO5wgYgRd7O5%2BBH4BFhoDbBzs%2B3W%2FxHgBSWlTIZYGWB%2F81n%2FoBSPRsgJUFfeoHwNkAm0%2F9ADgbYJtp8PepH4BszwYYyeud8vepH4A%2BnA1wSWCGU%2F7%2BowGgT1wSOGPwt5ofAH01MtK73g%2BAeQGu97veD4B5AQZ%2FABAB1vIHgN5GwLC0wd9MfwAo6Q4Bgz8AFBYBBn8AKCwCDP4AUFgEHE%2F4c2AB4GzDvgz%2BbvUDgJJuETT4A0CBEWDwB4D6EWBtfwAo0zi3wd%2B3%2BgFAM0a5DP5u9wOAkm4PPJ7050ABQPNWTPoDAJMCTfoDAJMCXfcHAPMBLPYDAP26FJDEfACn%2FgGgsEsBTv0DQGGXApz6B4ACLwU49Q8AhV0KiO8qttMBIAlDC%2F4AQIGXAroa%2FDfsbABIyoaJfwBgQqCv%2BQWAQoza%2FPRvBwNAulZ8%2BgcAZwF8%2BgcAZwF8%2BgcAZwF8%2BgcAZwHc9w8F%2BOnGtUfsC7AugFX%2FoJCB%2F5%2F%2FOJj858HkkfjfQgD6ty6AT%2F%2FA5BvPnZ9s%2FvrG14P%2B08Rj4rH2GRR%2BFmB5aXXbDoRu3bx6Z%2FLFnye1HO5Mzhzk64rnrvu64j05ttC5bd%2F4BwJAAECZhm79AwEgAMAtgZUCwI4DASAAIHOzDv5rdhoIAAEAvbA2SwCM7TAQAAIAemHs9D8IAAEALgM4%2FQ8CQACAywBO%2F4MAEABQ7mUAOwkEgACAwi4DOP0PAkAAQIGXASz%2BAwJAAECBiwJZ%2Bx%2FyDoD9rfYCIJ5bAEDWtl3%2Fh54GQGgrAOZ5TQIAEp4H4Po%2FCAABAAXOA3D9HwSAAIAC5wG4%2Fg8CQABAgfMA7BQQAAIACpsHsLy0OrRTQAAIACjC0ARAEAACAEqeCGj9fxAAAgCKMRYAIAAEABQeAHYICAABAKVNBLQzIB1XLl3rXQDEe3JsIbEAcAcApOXVl97oXQDEe3JsIbE7AdwBAAJAAECBdwIIABAAAgDKDADfAQACQABAWUZuAQQBIACgxFsBBQAIAAEAAgAQAAIACgmAPTsCBIAAgKLsWQQIBIAAgBIXA7ITQAAIABAAgAAQACAAAAEgAEAAAAJAAIAAAASAAAABAAgAAQACABAAAgAEACAAAAEACABAAAACABAAIAAEACAAQAAIAEAAQN%2F1LQAcUxAAgAAABAAgAAABAAgAQACAABAAgAAAASAAAAEAAkAAAAIABIAAAAQACAABAAgAEAACABAAIAAEAAgAOwIEgAAAAQAIAAEAAgAQAAIABADQvtubd3sTAPFeHFMQAEAFN6%2FeqT3gPjxofvCP56z7euK9OKYgAICWA%2BBot%2FkAiOcUACAAAAEgAEAAAAJAAIAAAASAAAABAAgAxxQEACAAAAEACABAAAACABAAIAAEACAAoBjX12%2F0JgDivTimIACACl596Y3eBEC8F8cUBAAgAAABAAgAQAAAAgAQACAABAAgAEAACABAAIAAEACAAAABIAAAAQACQAAAAgCycuHcxd4EQLwXxxQEAFBRXwLAsQQBAAgAQAAAAgAQAIAAAAQACIB6A%2B7hTvMBEM8pAEAAAAJAAIAAAASAAAABAAgAAQACAKjn9ubd7AMg3oNjCQIAmMHNq3eyD4B4D44lCABAAAACABAAgAAABAAgAEAACABAAIAAEACAAAABIAAAAQA9dOXStewDIN6DYwkCAJjBqy%2B9kX0AxHtwLEEAAAIAEACAAAAEACAAAAEAAkAAAAIABEBF%2B1vNB0A8pwAAAQB04MK5i7UG3dB0ANR9HfEeHEsQAMCMcg8AxxAEACAAAAEACABAAAACABAAgAAABAAIAAEACAAox%2B3Nu9kGQLx2xxAEAFDDzat3sg2AeO2OIQgAQAAAAgAQAIAAAAQAIAAAAQAIABAAAgAQAFCOul8JnEIA%2BCpgEABAxwHw8KC5wT%2BeSwCAAAAyCICj3eYCIJ5LAIAAAASAAAABAAgAAQACABAAAgAEADC%2FXAPAsQMBAAgAQAAAAgAQAIAAAAQAIAAAAQACQAAAAgDKU%2BcLgRYdAL4ICAQAIAAAAQAIAEAAAK0EwIN7zQVAPJcAAAEAZBAAhzvNBUA8lwAAAQB07Pr6jewCIF6zYwcCAJhDnS8EWnQA%2BCIgEACAAAAEACAAAAEACABAAAACABAAwLHcAsAxAwEACABAAAACABAAgAAABAAgAAABAByb9fsAvvykuQCI5%2FI9ACAAgAwCIDQVAL4ICAQAIAAEAAgAQAAIABAAgAAQACAAgObUWQ54UQFgGWAQAIAAAAQAIAAAAQAIAEAAAAIAEADAY3IJAMcKBACwwAB4eDD%2F4B%2FPIQBAAAAZBcDR7vwBEM8hAEAAAAJAAIAAALr06QcHyQdAvEbHCgQA0KBZlwNeRABYBhgEACAAAAEACABAAAACABAAwNlmXQ1wEQFgFUAQAIAAAAQAIAAAAQC0HgAP7s0fAPEcAgAEALBAF85dnGkwPtyZPwDiOWb5nfEaHSsQAEDDUg8AxwgEACAAAAEACABAAAACABAAQDWzrAbYdQBYBRAEACAAAAEACABAAAACABAAQHWzrAbYdQBYBRAEAJBAAIR5A8AywCAAAAEgAEAAAAJAAIAAADrx%2FDPnkw2AeG2OEQgAoCWpBoBjAwIAEACAAAAEACAAgLnc3rybXADEa3JsQAAALZplNcCuAsAqgCAAgIQC4Ksv6g%2F%2B8bMCAAQAkGEAHO3WD4D4WQEAAgBIxJVL15ILgHhNjg0IAKBFs6wG2FUAWAUQBAAgAAABAAgAQAAAjUgtABwTEACAAAAEACAAAAEAdBoAD%2B7VD4D4WQEAAgBISNXFgA536gdA%2FKxFgEAAAAJAAIAAAASAAAABAHTq%2BvqNZAIgXotjAgIA6EDVxYC6CACLAIEAAAQAIAAAAQAIAKAxzz9zPpkAiNfimIAAADpSZXD%2B8pP6ARA%2FaxEgEABAhgEQ6gaAVQBBAAACQACAAABSUHUxoDYDwCJAIAAAAQAIAEAAAAIAaNyVS9cWHgDxGhwLEABAh6ouBtRmAFgECAQAkGgAPDyYffCPnxEAIACAjAPgaHf2AIifEQAgAICM1wJoMwAcAxAAgAAABAAgAAABALTi9ubdhQVA%2FG7HAAQAsABVFgNqKwAsAgQCABAAgAAAunJ9%2FcbCAiB%2Bt2MAAgBIdC2Aw53ZAyB%2BxhoAIAAAASAAQAAAAkAAgAAAkl4LoK0AsO9BAAACABAAgAAABADQqrNWA2wjAKwCCAIAWLCzFgPa35o9AOJnLAIEAgDIOADCrAFgFUAQAEDirly61nkAxO%2B070EAAImvBdB0AFgDAAQAIAAAAQB07cK5i50HQPxO%2Bx4EAJD4WgBNB4B9DgIAEACAAAAW4dMPDk4dsL%2F6ovrgH4897bnid9nnIACADNYCONqtHgDxWGsAgAAABIAAAAEACAABAAIAyGItgCYDwBoAIAAAAQAIAEAAAAIASGYtgAf3qgdAPNYaACAAgB4EwOFO9QCIxwoAEACAABAAIACAHG8FbCoA3AIIAgAQAIAAAAQAIACApG4FbCoA3AIIAgDIKAD2t6oHQDxWAIAAAHoQAKFqAFgECAQA0KNbAZsIAPsYBAAgAAABAKTg0w8OWguAeG77GAQAkNmtgPMGgFsAQQAAAgAQAEAqrq%2FfeOoA%2FvDg7ME%2FHvO0n4%2Fnto9BAACZ3Qp4tHt2AMRj3AIIAgAQAAIABACQuuefOd9aAMRz28cgAIDM1gKYNwDsWxAAgAAABACQktubdxsPgHhO%2BxYEAJDhWgD%2F%2BvvZARCPsQYACACgRwFwuHN2AMRjBAAIAKBHtwLOEwBuAQQBAAgAQAAAqblw7mLjARDPad%2BCAKBA3xl%2Bb%2FL6y78gE3%2F41Wf%2F54%2B%2F%2FWzyp%2FdOF4950s%2Fap%2FmIf6v%2BZiEAaEz8YfnNj24BiYt%2Fq%2F5mIQAQACAAQAAgAEAAgABAAIAAQACAAAABgAAAAQACAAGAABAAIAAQAAgAQAAgABAAgABAACAAAAGAAKAP3vzBjycfvf0ekLj4t%2BpvFgKAxtx655XJ5P46kLj4t%2BpvFgIAAQACAAQAAgAEAAgABAAIAAQACAAQAAgAEAAgABAACAABAAIAAUBx3v359yf3P34LSFz8W%2FU3CwGAlQDBSoAgABAAIABAACAAQAAgAEAAgABAAIAAAAGAAEAACAAQAAgABAAgABAACABAACAAEACAAEAAIAAAAYAAQAAAAgABANTz4jdfXvhgE6%2FBsQABAAgAQAAAAgAQAIAAAAQAIAAAAQAIAEAAAAIAEACAAAAEACAAAAEAAkAAAAIABIAAAAQACAABAAgAEAACABAAIAAEAAgAQAAIABAAgAAQACAAAAEgAEAAAAJAAIAAAAQAIAAAAQAIAEAAAAIAEACAAAAEACAAAAEACABAAAACABAAgAAAASAAAAEAAkAAAAIABIAAAAQACAABAAgAEAACAAQAIAAEAAgAQAAIABAAgAAQACAAAAEgAEAAAAIAEACAAAAEACAAAAEACABAAAACABAAgAAABAAgAAABAAgAQACAABAAgAAAASAAAAEAAkAAAAIABIAAAAQACAABAAIAEAACAAQAIAAEAAgAQAAIABAAgAAQACAAAAEACABAAAACABAAgAAAEgiA3%2F%2Fyd5OP3n7vkfjfAgAEANCzAIhB%2Fv7Hb032%2F%2FqzyeT%2B%2BqniMfHY%2BBkBAAIAyCwAYgCvMuBXCYLTYkAAgAAAEgiAv7y%2FOfn3334y98D%2FuHjOeG4BAAIASCgA4jp%2BE5%2F4q5wRODlnQABA3gGwZ0dAvgEQn8zbHvgfNz0bIAAgW3sRAGM7AvIMgJiw1%2FXgPxW%2FWwBAtsYCADL0wrPPTfa3Li9s8P%2F6ksDW5UevxTEBAQAUMviLAMg%2FAEZ2BOTj8w9fS2bwn4rX5NhAVkYRAGt2BOTh1juvJDf4T8Vrc4wgG2sCADLx%2BsXzyQ7%2BU%2FEaHSvIJwCGdgSkL6Xr%2FqfNB3CsIAvDQWx2BKTt3avfTX7wn4rX6phB2gbTzc6AtGf95zL4T7krAPIJALcCgk%2F%2FzgJAKbcACgBw7d9cACg7ANwJAGb%2BuyMASrkD4EQAuBMA3PdvXQAo6Q4AEwHB6X%2BXAaDACYAnAmDbjoG05Dr4TzmGkJztJwWA7wQA1%2F%2FNA4B%2BGz0pAEwEBAEgAKCUCYDmAYD7%2F60HAIVe%2FzcPANwB4E4AKPD6v3kAIAAEABR4%2Fd88ABAAAgAKvf5vHgCk5c0fXsg%2BAOI9OJaQ%2BPV%2F3wsA7gJwFwD01rhKALgMAAn49ovfyj4A4j04lpDB6X%2BXASAtVgIEOjn97zIApOXzD1%2FLdvCP1%2B4YQian%2F10GAIsBWQQICj397zIAmAfg%2Bj8UePrfokDgMoDT%2F1DA4j%2BnBMDQjgPrAbj%2FH7I2HNTZfDcApGF%2F63I2g3%2B8VscMkrA9qLstL61u2IFgUSCL%2F0CWNgbzbMtLq3t2IpgL4No%2FZGVvMO%2FmLACk4YVnn0s%2BAOI1OlbQg0%2F%2FxwGwYkeCSwFO%2FUNWVgZNbG4JBIsDWfQHenzrn7MAkIdb77ySzOAfr8UxgR5%2B%2BncWAESAwR8K%2FPTvLACYE%2BCaPxT66d9ZAEhXrLnf5UJB8bus8w%2BFfPp%2F7CyAdQGg0MmBJvtBuvf9t%2Fbp37oAkMdaAW2EQDyne%2Fyh5%2Ff9Wx0Q%2BiG%2BkGee1QPjZ32pD%2BTx6X%2FQ1eabAiG%2FyYLxKT5m7T%2Fp7oHp%2Fx%2BPMbkPsjMcdLktL62O7XQAWKjxoOvNhEAA6PnEv1MiYM0BAICFWBsscnMpAAAKOPXvUgAAFHrq36UAACj01L9LAQBQ4Kl%2FCwQBQLen%2Fgepbr4xEABaszJIeTMfAAB6ft3f1wYDQOtGg5w2kwIBoKeT%2FkwKBIACJ%2F1ZJAgA2hn8k5%2F0JwIAwOD%2FtAgYOqAAUMlw0KfN7YEA0JPb%2FUQAABj8RQAAGPxFAAAY%2FJ88MdDdAQCUPNt%2FOChxc4sgAG71K3QTAQAY%2FMsOAd8dAEDfjY34vkUQgLKMjPTuEADATH%2BbeQEAuN5vMy8AANf7RcCjSwLOBgCQ06d%2Bp%2FwbvCTgbAAAyX%2Fqd8rf2QAAfOq3ORsAgE%2F9Nt8lAEAfPvUPjciLC4ENIQBAxwP%2FhhE4ncsCVhEEoG0jp%2FuFAAAGfpsQAMDAb0spBMwRAGDma%2FwG%2Fn5NFtz2HzYAT7Ftcl%2F%2Fbx90eQCAk6f53c5XWAysWVQIoNjFe6zcZxMDAAZ9mxj4XwyMzBkAyP6a%2FsigbxMEAAZ8m23uiYTTSwYuGwAs5nT%2B%2BPhvsQl8tmTCYHrGYHyCtQgAqt2Df%2FJv5%2BjE31UDfYPbfwEK36aEgQ1XbAAAAABJRU5ErkJggg%3D%3D%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fpng%22%2C%22purpose%22%3A%22maskable%22%7D%5D%7D">
-    <link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAABS3GwHAAAF40lEQVR42u3dv4scZRgH8PkLttl2YRGEgKgINrekslGsJMIiWmpnwLDYp4hYmOIggoLEzsq1iaJWVhZHQkyqFMFKPEwgBAQR25VX5mC827nd2Z2f7/sZ+MJxt7twzz2f+fW+816WtbyNR9PZeDSdj0fTZZ6j8Wi6kiRzVOiD0BOzLLZtPJpOxqPpIv8l/dFlmyzznpkMufEX9u5S01FiMbTGP/aHk5pz3GsIGl+ShJBf1Gp86QLCrOvmP/SHkI5z2NWdHXt96dPRYNJW8881v/QUwbyN5lds6XPmml8g0PwCgeYXCNztEXeHdgWg+WXwCAxyicGyHaY3KJzElJlTH3EqtOWsTgWTGLOw9xdHAXt/cRSw9+80z184WN345OZ/CV+rScdHAXv/evPbj6szeXx7tfrn6fkJr1n3XjVt+CjgAXYAUnrQft2UB4UBIKVMnP4A4DQoB2DRKgBSy7IIQEEASC7m/QBgfpAHXgBI+oEZ5/8AJH0dAAAAqQMwANYSgN9/2gwgvAaAFgfEFKE9ACGbAJS9T00buhOkCAAAIAAAIAAAIAAAIPvny6vf1wYgfJaaAgCAAACAAACAAACAAACAAACAAACAAACAAACAAACAAACAANBNPr58szYA4bPUFIBB5a1X368NQPgsNQUAAAEAAAEAAAEAAAEAAAEAAAEAAAGg/ytD7AJALQGIBsCfv5Y3f/gZAAAAAAAAAAAAAAAAAACAWgIAgAAQw0MxVQF4GAYAANQSAAAEAAAEAAAEAAAEgCHOCK0KwExQAABQSwBiAfD0QTmA8DMAAIgawOPb5QDCzwAAAAAAAIghzz1zsDeA8BlqCUA0E+KqAlBDAAAQAAAQAAAQAIY9HaIKANMgAABADQEAQAAAQAAYXtb9r7Btl0X0v8EAiHI6xLYATIMAAAA1BAAAAWCgeeXlSzsDCO9VQwCiGw3eFoDaAQCAAACAADDg3PnqUWUA4T1qB0CUo8F/Pzrb/OF7RoEBSALAuqVRTi+JAgAAAKgdADHkg7c/qgwgvEftAIhyNHgbAEaBAQBA7QAAQACIbDBsGwBqBgAAAkCMAJ7cPwsgfA8AAKLNdzfunftccPF54PBaNQMg2sGwTQAMggEAgJoBEOvqEJsAWA0CgKjHAjYBMAYAAABqBgAAAkCkYwHnPQ2mVgAAIAAAIABEOhZQBsAYAAAAqBUAAAgAEd8KLQPgFigASQAoPhNQfBYAAACiTXGl6DIAVoQGIIlboWUA1AgAAASAWHOyUO46ABbEBWDvXL9ySxoMAAAAAAAAAAAAAAAA9C2rh5elwQAAAAAAAAAAAK4BXAMAAAAAAAAAAAAAAABA57n44hu9TNVG6+vvAYC0cmRSMwAAEAAAEAAAEAAAEAAAEAAAEAAAEAAAEAAAEAAAEAAAEAAAEAAAEAAAEAAAEAAAEAAAEAAAEAAAEAC6A/Dtp1+sHv5w7X8J3wMAgKgB3P36+salB8NrAAAgqrzw7IXVX798uPX6m+G14T1q1w6AI4Votvn/+Pm9yovQhvdA0HiOAoClQjSXu9+8s/NKzOG9atholgA0mNcuvrT3cuThM9SyWQBzhWgmtz57c28A4TPUsrHMA4CZQjQT/5Si95llYVOIZi5+6wLgYrihO0Anm+uA+vPupYPaAITPUtMGzv8LABYK4giQWBZFABMFcQ2QWCZZcTMg5i5QUgNgpzenQcYBkjz9OYXgWHGMBEee46xscxQwFyjZvb+jQH8QaP4O9v6OAs3n86uvb2z+8Bq16mjv7yjQ3iBZuLtTjMGuHuz9CwDMD5I45/1UQHCoaBJJDrNdNqdCktSpzxoAEwhkyM1/ZsrDDgg8MCPDfeCljg0CSbb5IZDkmx8CSb75TyFwYSx9vOBttvndHZJo7/bsCMFgmQxzkKtGBDNHA+lorz/L+rLls0hBkDYaf5H1dQNBkmz8EggetJe9H2AfVOOX3DFaWHxLKmSZ98wki23LL5rn+S+5dJRIfu9+0gfzLi5q/wWKnku24wNwPwAAAABJRU5ErkJggg==">
+    <!-- PWA: manifest e ícones em arquivos próprios (em data: URI o start_url relativo quebra a instalação) -->
+    <link rel="manifest" href="./manifest.webmanifest">
+    <link rel="apple-touch-icon" href="./apple-touch-icon.png">
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='96' fill='%23130e1f'/%3E%3Ctext x='256' y='300' font-size='260' text-anchor='middle' fill='%23e0b6ff'%3E%E2%9A%94%EF%B8%8F%3C/text%3E%3C/svg%3E">
 
     <title>Krevathorn</title>
@@ -1544,6 +1544,52 @@ body {
     .lore-pulse { animation: none !important; box-shadow: 0 0 12px 2px rgba(224,182,255,0.55); }
 }
 
+/* ===== Finais: cena desenhada (SVG inline) atrás do texto =====
+   Sem canvas nem rAF: só SVG estático + animação CSS curta (termina) ou laço barato
+   nos créditos (pausado com a aba oculta e desligado com reducedMotion). */
+#ending-overlay > .end-art { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+#ending-overlay > .end-art svg { display: block; width: 100%; height: 100%; opacity: 0.62; }
+#ending-overlay > div:not(.end-art) { position: relative; z-index: 1; }
+#ending-overlay h2, #ending-overlay p { text-shadow: 0 1px 14px rgba(0,0,0,0.9), 0 0 3px rgba(0,0,0,0.95); }
+.end-art .ea-glow { transform-box: fill-box; transform-origin: center; animation: endGlow 4.5s ease-out both; }
+.end-art .ea-em, .end-art .ea-mt { animation: endRise 3.8s ease-out both; }
+.end-art .ea-em2, .end-art .ea-mt2 { animation-delay: 0.9s; }
+.end-art .ea-em3, .end-art .ea-mt3 { animation-delay: 1.7s; }
+.end-art .ea-em4, .end-art .ea-mt4 { animation-delay: 2.4s; }
+.end-art .ea-veilL { animation: endPartL 4.2s ease-out both; }
+.end-art .ea-veilR { animation: endPartR 4.2s ease-out both; }
+@keyframes endGlow { from { opacity: 0.25; transform: scale(0.86); } to { opacity: 1; transform: scale(1); } }
+@keyframes endRise {
+    0% { opacity: 0; transform: translateY(0); }
+    22% { opacity: 0.9; }
+    100% { opacity: 0; transform: translateY(-96px); }
+}
+@keyframes endPartL { from { opacity: 0.2; transform: translateX(10px); } to { opacity: 1; transform: translateX(-10px); } }
+@keyframes endPartR { from { opacity: 0.2; transform: translateX(-10px); } to { opacity: 1; transform: translateX(10px); } }
+/* Créditos: estrelas e brasa lentas (laço leve, só enquanto o overlay existe) */
+.end-art .ea-star, .end-art .ea-emb { position: absolute; border-radius: 50%; display: block; }
+.end-art .ea-star { width: 2px; height: 2px; background: #efe6ff; animation: endTwinkle 5.5s ease-in-out infinite; }
+.end-art .ea-emb { width: 3px; height: 3px; background: #ffb866; box-shadow: 0 0 6px rgba(255,184,102,0.7); animation: endFloat 9s linear infinite; }
+@keyframes endTwinkle { 0%, 100% { opacity: 0.18; } 50% { opacity: 0.95; } }
+@keyframes endFloat {
+    0% { opacity: 0; transform: translateY(0); }
+    12% { opacity: 0.7; }
+    78% { opacity: 0.5; }
+    100% { opacity: 0; transform: translateY(-240px); }
+}
+#ending-overlay.end-paused .ea-star, #ending-overlay.end-paused .ea-emb { animation-play-state: paused; }
+body.reduce-motion .end-art .ea-glow { animation: none !important; }
+body.reduce-motion .end-art .ea-veilL, body.reduce-motion .end-art .ea-veilR { animation: none !important; opacity: 1; }
+body.reduce-motion .end-art .ea-em, body.reduce-motion .end-art .ea-mt { animation: none !important; opacity: 0.55; }
+body.reduce-motion .end-art .ea-star { animation: none !important; opacity: 0.6; }
+body.reduce-motion .end-art .ea-emb { animation: none !important; opacity: 0.35; }
+@media (prefers-reduced-motion: reduce) {
+    .end-art .ea-glow, .end-art .ea-veilL, .end-art .ea-veilR { animation: none !important; opacity: 1; }
+    .end-art .ea-em, .end-art .ea-mt { animation: none !important; opacity: 0.55; }
+    .end-art .ea-star { animation: none !important; opacity: 0.6; }
+    .end-art .ea-emb { animation: none !important; opacity: 0.35; }
+}
+
 </style>
 
 </head>
@@ -2123,6 +2169,7 @@ body {
             <div id="win-stars" class="text-4xl"></div>
             <div id="win-stats" class="text-sm" style="color:rgba(255,255,255,0.6);"></div>
             <button id="win-playagain-btn" data-i18n="win.playAgain" style="width:100%;padding:16px 0;border-radius:12px;color:#fff;font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:0.05em;background:linear-gradient(135deg,#008836,#3ce36a);border:1px solid rgba(60,227,106,0.3);box-shadow:0 4px 20px rgba(0,136,54,0.3);transition:all 0.3s;text-shadow:0 1px 4px rgba(0,0,0,0.4);cursor:pointer;" onclick="_startNewRunSameClass()">JOGAR NOVAMENTE</button>
+            <button id="win-share-btn" data-i18n="win.share" style="width:100%;padding:10px 0;border-radius:12px;color:#9ad0ff;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;background:rgba(80,140,255,0.1);border:1px solid rgba(80,140,255,0.3);cursor:pointer;transition:all 0.3s;">&#128279; COMPARTILHAR VITÓRIA</button>
         </div>
     </div>
 
@@ -3358,6 +3405,8 @@ function _floorBossFromSave(save) {
 // ============================================================
 const SaveSystem = {
     KEY: 'aethelgard_save',
+    // Cópia do save reprovado no load, antes de qualquer autosave sobrescrever o arquivo.
+    BAK_KEY: 'krev_save_bak',
     VERSION: 3,
     lastLoadError: null,
 
@@ -3388,6 +3437,8 @@ const SaveSystem = {
         // F0: estado das cenas narrativas. `storyFlags` é o snapshot das flags de run;
         // `sceneState` é o snapshot do diretor de cenas, quando ele existir.
         storyFlags: null, sceneState: null,
+        // F4: final da História aberto na escolha ({ stage: 'choice' }). null em saves antigos.
+        endingPending: null,
         // Pets ativos da run (PetSystem.petActive): [] em saves antigos; ver _cleanPets
         petActive: [],
         // Compras de habilidade no andar (teto do SkillTree): 0 em saves antigos.
@@ -3415,11 +3466,22 @@ const SaveSystem = {
         }
     },
 
+    // F4: final da História aberto esperando a escolha. Só essa etapa é retomável:
+    // depois do _pick a cena segue e o save volta a ser bloqueado como antes.
+    _endingPending() {
+        const es = (typeof window !== 'undefined') ? window.EndingSystem : null;
+        if (!es || !es.active || es._emitted || es._choice) return null;
+        return { stage: 'choice' };
+    },
+
     _serialize() {
         // Só PLAYING gera save. Em CONTINUE o jogador está morto e continuesLeft ainda
         // não foi decrementado: gravar ali deixava um reload restaurar 1 HP com continues
         // intactos (abuso). Nesse caso o último save válido (pré-morte) é preservado.
-        if (!player || gameState !== 'PLAYING') return null;
+        // F4: exceção única — o final aberto na escolha (gameState CUTSCENE). Sem isso,
+        // um reload no meio do final refazia a luta do Guardião inteira.
+        const _endingPending = this._endingPending();
+        if (!player || (gameState !== 'PLAYING' && !_endingPending)) return null;
         return {
             _version: this.VERSION,
             savedAt: Date.now(),
@@ -3498,6 +3560,8 @@ const SaveSystem = {
             // uma cena interrompida (morte/saída/reload) não recomece do zero.
             storyFlags: (window.StoryFlags && typeof StoryFlags.snapshot === 'function') ? StoryFlags.snapshot() : null,
             sceneState: (window.SceneDirector && typeof SceneDirector.exportState === 'function') ? SceneDirector.exportState() : null,
+            // F4: etapa retomável do final (a escolha). Campo opcional: null fora do final.
+            endingPending: _endingPending,
             // Pets ativos da run (campo opcional: ausente em saves antigos, que carregam []). Só tipos válidos.
             petActive: (typeof PetSystem !== 'undefined') ? this._cleanPets(PetSystem.petActive) : [],
             // Bolsa da run (campo opcional: save antigo carrega []). A sala secreta não mexe nela.
@@ -3553,6 +3617,7 @@ const SaveSystem = {
                 data = JSON.parse(raw);
             } catch (e) {
                 this.lastLoadError = 'corrupt-json';
+                this._preserveCorrupt(raw);
                 Debug.warn('[SaveSystem] Save is corrupt and was preserved', { error: e && e.message });
                 return null;
             }
@@ -3562,6 +3627,7 @@ const SaveSystem = {
                 normalized = this.prepare(data);
             } catch (e) {
                 this.lastLoadError = e && e.message ? e.message : 'invalid-save';
+                this._preserveCorrupt(raw);
                 Debug.warn('[SaveSystem] Save failed validation and was preserved', { error: this.lastLoadError });
                 return null;
             }
@@ -3576,6 +3642,22 @@ const SaveSystem = {
 
     hasSave() {
         return Debug.safe(() => localStorage.getItem(this.KEY) !== null, 'SaveSystem.hasSave', false);
+    },
+
+    // Save reprovado no load: guarda a string original numa chave separada, antes de
+    // qualquer autosave poder sobrescrever o arquivo. É o próprio conteúdo do save,
+    // nada a mais; o "Continuar" avisa que a cópia existe (hasBackup).
+    _preserveCorrupt(raw) {
+        if (typeof raw !== 'string' || !raw) return false;
+        try { localStorage.setItem(this.BAK_KEY, raw); return true; }
+        catch (e) {
+            Debug.warn('[SaveSystem] Cópia do save danificado não pôde ser guardada', { error: e && e.message });
+            return false;
+        }
+    },
+
+    hasBackup() {
+        return Debug.safe(() => localStorage.getItem(this.BAK_KEY) !== null, 'SaveSystem.hasBackup', false);
     },
 
     clear() {
@@ -3707,6 +3789,12 @@ const SaveSystem = {
         if (data.sceneState !== undefined && data.sceneState !== null) {
             const ss = data.sceneState;
             if (typeof ss !== 'object' || Array.isArray(ss) || Object.getPrototypeOf(ss) !== Object.prototype) return false;
+        }
+        // F4: etapa do final pendente. Opcional (null em save antigo); hoje só 'choice'.
+        if (data.endingPending !== undefined && data.endingPending !== null) {
+            const ep = data.endingPending;
+            if (typeof ep !== 'object' || Array.isArray(ep) || Object.getPrototypeOf(ep) !== Object.prototype) return false;
+            if (ep.stage !== 'choice') return false;
         }
         if (data._migratedAt !== undefined && data._migratedAt !== null && (!Number.isSafeInteger(data._migratedAt) || data._migratedAt < 0)) return false;
         return true;
@@ -4990,6 +5078,12 @@ const I18n = {
         'update.entry.v102.l3': 'A cena de NPC espera o combate terminar, e o NPC da história nasce em um beco fora do caminho.',
         'update.entry.v102.l4': 'A recompensa do chefe pede um segundo toque para confirmar e não se perde mais quando há um painel aberto.',
         'update.entry.v102.l5': 'A tela de habilidade mostra quanto ouro falta e deixa claro que não há requisito de nível. Seus saves continuam funcionando.',
+        'update.entry.v105.title': 'v105 - A história aparece, e o progresso não se perde',
+        'update.entry.v105.l1': 'Uma cena abre antes do chefe final e as trocas de câmara ganharam cartão próprio: a história aparece nos momentos em que o ritmo pede.',
+        'update.entry.v105.l2': 'No primeiro acesso, a abertura conta a história uma vez só. O prólogo que repetia as mesmas cenas não aparece mais.',
+        'update.entry.v105.l3': 'Os três finais ganharam arte própria e os créditos têm fundo animado — que fica parado se você prefere menos movimento.',
+        'update.entry.v105.l4': 'Se o jogo fechar no meio do final, "Continuar" retoma a escolha sem repetir a luta. Recompensa de cena não paga duas vezes, e save que não carrega guarda uma cópia.',
+        'update.entry.v105.l5': 'A tela de vitória agora tem "Compartilhar vitória" com classe, final e estrelas, e o app instala de verdade no celular.',
         'update.entry.v104.title': 'v104 - Dash previsível e ataques respeitando paredes',
         'update.entry.v104.l1': 'O dash agora sai uma vez por toque, na direção do joystick ou da última direção em que você andou, e para antes das paredes.',
         'update.entry.v104.l2': 'Habilidades de área, pets, tempestade, explosões e os golpes do chefe não ferem mais do outro lado da parede.',
@@ -5934,6 +6028,8 @@ const I18n = {
             'log.saveCopied': 'Save copiado para a área de transferência!',
             'log.saveImported': 'Save importado! Reinicie a run para aplicar.',
             'log.saveInvalid': 'Save inválido ou incompatível; o arquivo atual foi preservado.',
+            'log.saveBackup': 'Uma cópia do arquivo danificado ficou guardada no aparelho.',
+            'scene.rewardFailed': 'A recompensa não foi aplicada por inteiro; a cena foi encerrada.',
             'log.equipped': 'Equipou: ',
             'log.soldPrefix': 'Vendeu por ',
             'log.coins': 'moedas',
@@ -5982,6 +6078,10 @@ const I18n = {
             'log.shieldBroken': ' Escudo quebrado!',
             'boss.banner': 'CHEFE!',
             'chamber.label': 'Câmara',
+            'chamber.line.dungeon': 'Pedra gasta por séculos de passos que nunca voltaram.',
+            'chamber.line.lavaCave': 'O calor sobe do chão como uma lembrança que se recusa a apagar.',
+            'chamber.line.crypt': 'Os mortos daqui foram enterrados de pé, para não esquecerem o caminho.',
+            'chamber.line.forest': 'As árvores cresceram em volta do silêncio, não do sol.',
             'boss.waiting': 'Aguardando...',
             'boss.chargeWarn': ' CARGA!',
             'hud.mapExpanded': 'MAPA EXPANDIDO',
@@ -6200,6 +6300,9 @@ const I18n = {
             'continue.in': 'Continue em',
             'win.title': 'SUPERFÍCIE ALCANÇADA!',
             'win.playAgain': 'JOGAR NOVAMENTE',
+            'win.share': '🔗 COMPARTILHAR VITÓRIA',
+            'win.shareVictory': 'Vitória',
+            'win.shareText': 'Krevathorn — {cls} | {ending} | {stars}/3 estrelas | {time}',
             'prologue.p1': 'Há cem anos, um reino inteiro desapareceu.\n\nNão em guerra. Não em fogo.\n\nEm silêncio.',
             'prologue.p2': 'O reino se chamava Krevathorn.\n\nSeu rei se chamava Aldric.\n\nSeu filho se chamava Eiran.\n\nNinguém mais se lembra de nenhum dos três.',
             'prologue.p3': 'Dizem que, no fundo do vale, uma fenda se abriu no mundo.\n\nDizem que algo vive lá dentro.\n\nAlgo que não devora corpos. Devora memórias.\n\nAlgo que não sabe que está errado.',
@@ -6231,6 +6334,13 @@ const I18n = {
             'prophecy.l10': 'Quando você chegar ao fundo,\nnão levante a espada. Levante a pergunta:\n“Você me perdoa?”',
             'prophecy.l11': 'Se ele responder que sim, o reino volta.\nSe responder que não, você volta como ele — esquecido, mas vivo.',
             'prophecy.l12': 'Mas se você erguer a espada, Chave...\naí o Véu ganha. Sempre ganha.',
+            'cutscene.boss.speaker': 'O Véu',
+            'cutscene.boss.p1': 'O último andar não tem eco.\n\nAqui o Véu não sussurra: ele escuta.',
+            'cutscene.boss.p2': 'Do outro lado da porta, o Guardião respira sem lembrar por quê.\n\nCada passo seu é uma memória que ele não consegue segurar.',
+            'cutscene.boss.p3': 'Ele vai tentar te matar. Não é ódio: é medo com armadura.\n\nAbaixo de vocês dois, algo espera a sua escolha.',
+            'cutscene.boss.skip': 'Pular',
+            'cutscene.boss.next': 'Continuar',
+            'cutscene.boss.begin': 'Enfrentar o Guardião',
             'floor.theme.1': 'A Entrada',
             'floor.theme.2': 'Os Salões',
             'floor.theme.3': 'As Casernas',
@@ -7196,6 +7306,12 @@ const I18n = {
         'update.entry.v102.l3': 'NPC scenes wait for combat to end, and the story NPC spawns in a dead end off the path.',
         'update.entry.v102.l4': 'The boss reward now asks for a second tap to confirm and is no longer lost while a panel is open.',
         'update.entry.v102.l5': 'The skill screen shows how much gold is missing and makes clear there is no level requirement. Your saves keep working.',
+        'update.entry.v105.title': 'v105 - The story shows up, and progress is not lost',
+        'update.entry.v105.l1': 'A scene opens before the final boss and chamber transitions now have their own card: the story appears where the pacing asks for it.',
+        'update.entry.v105.l2': 'On first launch the opening tells the story once. The prologue that repeated the same scenes no longer appears.',
+        'update.entry.v105.l3': 'The three endings got their own art and the credits have an animated background — still if you prefer less motion.',
+        'update.entry.v105.l4': 'If the game closes mid-ending, "Continue" resumes at the choice without replaying the fight. Scene rewards never pay twice, and a save that fails to load keeps a backup.',
+        'update.entry.v105.l5': 'The victory screen now has "Share victory" with class, ending and stars, and the app actually installs on your phone.',
         'update.entry.v104.title': 'v104 - Predictable dash and attacks that respect walls',
         'update.entry.v104.l1': 'The dash now fires once per tap, in the direction of the joystick or the last direction you walked, and stops before walls.',
         'update.entry.v104.l2': 'Area skills, pets, storm, explosions and boss blows no longer hurt through a wall.',
@@ -8136,6 +8252,8 @@ const I18n = {
             'log.saveCopied': 'Save copied to clipboard!',
             'log.saveImported': 'Save imported! Restart the run to apply.',
             'log.saveInvalid': 'Save is invalid or incompatible; the current file was preserved.',
+            'log.saveBackup': 'A copy of the damaged file was kept on this device.',
+            'scene.rewardFailed': 'The reward was not fully applied; the scene was closed.',
             'log.equipped': 'Equipped: ',
             'log.soldPrefix': 'Sold for ',
             'log.coins': 'coins',
@@ -8184,6 +8302,10 @@ const I18n = {
             'log.shieldBroken': ' Shield broken!',
             'boss.banner': 'BOSS!',
             'chamber.label': 'Chamber',
+            'chamber.line.dungeon': 'Stone worn by centuries of steps that never came back.',
+            'chamber.line.lavaCave': 'Heat rises from the floor like a memory that refuses to fade.',
+            'chamber.line.crypt': 'The dead here were buried standing, so they would not forget the way.',
+            'chamber.line.forest': 'The trees grew around the silence, not the sun.',
             'boss.waiting': 'Waiting...',
             'boss.chargeWarn': ' CHARGE!',
             'hud.mapExpanded': 'MAP EXPANDED',
@@ -8402,6 +8524,9 @@ const I18n = {
             'continue.in': 'Continue in',
             'win.title': 'SURFACE REACHED!',
             'win.playAgain': 'PLAY AGAIN',
+            'win.share': '🔗 SHARE VICTORY',
+            'win.shareVictory': 'Victory',
+            'win.shareText': 'Krevathorn — {cls} | {ending} | {stars}/3 stars | {time}',
             'prologue.p1': 'A hundred years ago, an entire kingdom disappeared.\n\nNot in war. Not in fire.\n\nIn silence.',
             'prologue.p2': 'The kingdom was called Krevathorn.\n\nIts king was called Aldric.\n\nHis son was called Eiran.\n\nNo one remembers any of the three anymore.',
             'prologue.p3': 'They say that, at the bottom of the valley, a rift opened in the world.\n\nThey say something lives inside.\n\nSomething that does not devour bodies. It devours memories.\n\nSomething that does not know it is wrong.',
@@ -8433,6 +8558,13 @@ const I18n = {
             'prophecy.l10': 'When you reach the bottom,\ndo not raise the sword. Raise the question:\n“Will you forgive me?”',
             'prophecy.l11': 'If he says yes, the kingdom returns.\nIf he says no, you return as he did — forgotten, but alive.',
             'prophecy.l12': 'But if you raise the sword, Key...\nthen the Veil wins. It always wins.',
+            'cutscene.boss.speaker': 'The Veil',
+            'cutscene.boss.p1': 'The last floor has no echo.\n\nHere the Veil does not whisper: it listens.',
+            'cutscene.boss.p2': 'Beyond the door, the Guardian breathes without remembering why.\n\nEvery step you take is a memory he cannot hold.',
+            'cutscene.boss.p3': 'He will try to kill you. It is not hatred: it is fear wearing armor.\n\nBeneath you both, something waits for your choice.',
+            'cutscene.boss.skip': 'Skip',
+            'cutscene.boss.next': 'Continue',
+            'cutscene.boss.begin': 'Face the Guardian',
             'floor.theme.1': 'The Entrance',
             'floor.theme.2': 'The Halls',
             'floor.theme.3': 'The Barracks',
@@ -9412,6 +9544,12 @@ const I18n = {
         'update.entry.v102.l3': 'La escena de PNJ espera a que termine el combate, y el PNJ de la historia nace en un callejón sin salida fuera del camino.',
         'update.entry.v102.l4': 'La recompensa del jefe pide un segundo toque para confirmar y ya no se pierde cuando hay un panel abierto.',
         'update.entry.v102.l5': 'La pantalla de habilidad muestra cuánto oro falta y deja claro que no hay requisito de nivel. Tus partidas guardadas siguen funcionando.',
+        'update.entry.v105.title': 'v105 - La historia aparece y el progreso no se pierde',
+        'update.entry.v105.l1': 'Una escena se abre antes del jefe final y los cambios de cámara ahora tienen su propia tarjeta: la historia aparece donde el ritmo lo pide.',
+        'update.entry.v105.l2': 'En el primer acceso la apertura cuenta la historia una sola vez. El prólogo que repetía las mismas escenas ya no aparece.',
+        'update.entry.v105.l3': 'Los tres finales ganaron arte propio y los créditos tienen fondo animado — quieto si prefieres menos movimiento.',
+        'update.entry.v105.l4': 'Si el juego se cierra en medio del final, "Continuar" retoma la elección sin repetir la lucha. La recompensa de escena no se paga dos veces, y la partida que no carga guarda una copia.',
+        'update.entry.v105.l5': 'La pantalla de victoria ahora tiene "Compartir victoria" con clase, final y estrellas, y la app se instala de verdad en el celular.',
         'update.entry.v104.title': 'v104 - Dash predecible y ataques que respetan las paredes',
         'update.entry.v104.l1': 'El dash ahora sale una vez por toque, en la dirección del joystick o de la última dirección en que caminaste, y se detiene antes de las paredes.',
         'update.entry.v104.l2': 'Las habilidades de área, las mascotas, la tormenta, las explosiones y los golpes del jefe ya no hieren al otro lado de la pared.',
@@ -10337,6 +10475,8 @@ const I18n = {
             'log.saveCopied': '¡Partida copiada al portapapeles!',
             'log.saveImported': '¡Partida importada! Reinicia la run para aplicarla.',
             'log.saveInvalid': 'La partida no es válida o compatible; se conservó el archivo actual.',
+            'log.saveBackup': 'Se guardó una copia del archivo dañado en este dispositivo.',
+            'scene.rewardFailed': 'La recompensa no se aplicó por completo; la escena se cerró.',
             'log.equipped': 'Equipado: ',
             'log.soldPrefix': 'Vendido por ',
             'log.coins': 'monedas',
@@ -10385,6 +10525,10 @@ const I18n = {
             'log.shieldBroken': ' ¡Escudo roto!',
             'boss.banner': '¡JEFE!',
             'chamber.label': 'Cámara',
+            'chamber.line.dungeon': 'Piedra gastada por siglos de pasos que nunca volvieron.',
+            'chamber.line.lavaCave': 'El calor sube del suelo como un recuerdo que se niega a apagarse.',
+            'chamber.line.crypt': 'A los muertos de aquí los enterraron de pie, para que no olvidaran el camino.',
+            'chamber.line.forest': 'Los árboles crecieron alrededor del silencio, no del sol.',
             'boss.waiting': 'Esperando...',
             'boss.chargeWarn': ' ¡EMBESTIDA!',
             'hud.mapExpanded': 'MAPA AMPLIADO',
@@ -10601,6 +10745,9 @@ const I18n = {
             'continue.in': 'Continúa en',
             'win.title': '¡SUPERFICIE ALCANZADA!',
             'win.playAgain': 'JUGAR DE NUEVO',
+            'win.share': '🔗 COMPARTIR VICTORIA',
+            'win.shareVictory': 'Victoria',
+            'win.shareText': 'Krevathorn — {cls} | {ending} | {stars}/3 estrellas | {time}',
             'prologue.p1': 'Hace cien años, un reino entero desapareció.\n\nNo en guerra. No en fuego.\n\nEn silencio.',
             'prologue.p2': 'El reino se llamaba Krevathorn.\n\nSu rey se llamaba Aldric.\n\nSu hijo se llamaba Eiran.\n\nNadie recuerda ya a ninguno de los tres.',
             'prologue.p3': 'Dicen que, en el fondo del valle, se abrió una grieta en el mundo.\n\nDicen que algo vive ahí dentro.\n\nAlgo que no devora cuerpos. Devora recuerdos.\n\nAlgo que no sabe que está equivocado.',
@@ -10632,6 +10779,13 @@ const I18n = {
             'prophecy.l10': 'Cuando llegues al fondo,\nno levantes la espada. Levanta la pregunta:\n«¿Me perdonas?»',
             'prophecy.l11': 'Si responde que sí, el reino vuelve.\nSi responde que no, vuelves como él: olvidado, pero vivo.',
             'prophecy.l12': 'Pero si levantas la espada, Llave...\nel Velo gana. Siempre gana.',
+            'cutscene.boss.speaker': 'El Velo',
+            'cutscene.boss.p1': 'El último nivel no tiene eco.\n\nAquí el Velo no susurra: escucha.',
+            'cutscene.boss.p2': 'Al otro lado de la puerta, el Guardián respira sin recordar por qué.\n\nCada paso tuyo es un recuerdo que no logra retener.',
+            'cutscene.boss.p3': 'Intentará matarte. No es odio: es miedo con armadura.\n\nBajo vosotros, algo espera tu elección.',
+            'cutscene.boss.skip': 'Saltar',
+            'cutscene.boss.next': 'Continuar',
+            'cutscene.boss.begin': 'Enfrentar al Guardián',
             'floor.theme.1': 'La Entrada',
             'floor.theme.2': 'Los Salones',
             'floor.theme.3': 'Los Barracones',
@@ -12112,6 +12266,8 @@ function isAnyPanelOpen() {
            (typeof ProphecyScene !== 'undefined' && ProphecyScene.visible) ||
            // Falas do Véu no Abismo (abertura e marcos): overlay em tela cheia, o mundo espera
            (typeof AbyssVeil !== 'undefined' && !!AbyssVeil._ov) ||
+           // Cena do último andar (B1): o Véu fala antes do Guardião, o mundo espera
+           (typeof NarrativeSystem !== 'undefined' && NarrativeSystem.bossCutsceneOpen) ||
            (typeof SettingsUI !== 'undefined' && SettingsUI.open) ||
            (typeof PauseSystem !== 'undefined' && PauseSystem.active) ||
            (window.UIManager && window.UIManager.currentPanel !== null);
@@ -12733,6 +12889,26 @@ function _triggerWinReal() {
             _showFinalEpilogue(function() { ws.classList.remove('hidden'); _lockEndScreenButtons(['win-playagain-btn']); });
         }
     }
+
+    // Compartilhar a vitória: mesmo padrão do game over (navigator.share, clipboard como reserva).
+    var winShareBtn = document.getElementById('win-share-btn');
+    if (winShareBtn) {
+        winShareBtn.onclick = function() {
+            var winClassMap = { warrior: T('start.classWarrior'), rogue: T('start.classRogue'), mage: T('start.classMage'), elf: T('start.classElf') };
+            var shareEnding = (_runChoice && typeof ENDING_TEXT !== 'undefined')
+                ? EndingSystem._T(ENDING_TEXT[_runChoice]) : T('win.shareVictory');
+            var shareText = T('win.shareText')
+                .replace('{cls}', winClassMap[player.type] || player.type)
+                .replace('{ending}', shareEnding)
+                .replace('{stars}', stars)
+                .replace('{time}', typeof timeStr === 'string' ? timeStr : '');
+            if (navigator.share) {
+                navigator.share({ title: 'Krevathorn', text: shareText }).catch(function(){});
+            } else if (navigator.clipboard) {
+                navigator.clipboard.writeText(shareText).then(function(){ if (typeof addLog !== 'undefined') addLog(T('log.copyResult')); });
+            }
+        };
+    }
 }
 
 // ============================================================
@@ -12740,6 +12916,114 @@ function _triggerWinReal() {
 // Máquina: queda → escolha → cena → suspiro → sussurro → diálogos →
 // epílogo → pós-créditos → créditos → _triggerWinReal (vitória).
 // ============================================================
+// Cenas dos finais: um SVG inline por desfecho (paths simples, paleta própria).
+// Ficam atrás do texto no overlay; só animação CSS curta, nada de canvas.
+const ENDING_ART = {
+    blood:
+        '<svg viewBox="0 0 400 700" preserveAspectRatio="xMidYMax slice" aria-hidden="true" focusable="false">'
+        + '<defs>'
+        + '<linearGradient id="eabBg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a080a"/><stop offset="0.55" stop-color="#140306"/><stop offset="1" stop-color="#050103"/></linearGradient>'
+        + '<radialGradient id="eabGlow" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#ff5c3a" stop-opacity="0.5"/><stop offset="1" stop-color="#ff5c3a" stop-opacity="0"/></radialGradient>'
+        + '<linearGradient id="eabBlade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe9d2"/><stop offset="1" stop-color="#8a322a"/></linearGradient>'
+        + '</defs>'
+        + '<rect width="400" height="700" fill="url(#eabBg)"/>'
+        + '<ellipse class="ea-glow" cx="228" cy="500" rx="118" ry="132" fill="url(#eabGlow)"/>'
+        + '<path d="M0 598 Q80 578 160 592 T300 590 T400 600 V700 H0 Z" fill="#150406"/>'
+        + '<path d="M0 630 Q120 612 230 624 T400 628 V700 H0 Z" fill="#0b0204"/>'
+        + '<rect x="224" y="400" width="8" height="32" rx="3" fill="#a34a37"/>'
+        + '<circle cx="228" cy="396" r="7" fill="#c96a4a"/>'
+        + '<rect x="198" y="428" width="60" height="11" rx="4" fill="#8a372c"/>'
+        + '<rect x="216" y="426" width="24" height="4" rx="2" fill="#c96a4a"/>'
+        + '<path d="M225 438 h6 v152 h-6 z" fill="url(#eabBlade)"/>'
+        + '<path d="M122 602 q2 -48 28 -68 q26 20 28 68 z" fill="#080103"/>'
+        + '<circle cx="150" cy="532" r="15" fill="#080103"/>'
+        + '<path d="M172 558 q22 8 24 28 q1 8 -8 9 l-11 0 q-8 -1 -8 -11 z" fill="#080103"/>'
+        + '<path d="M292 606 l7 -16 l8 9 l7 -14 l7 14 l8 -9 l5 16 z" fill="#8a3227"/>'
+        + '<g fill="#ffb866">'
+        + '<circle class="ea-em" cx="168" cy="536" r="2.6"/>'
+        + '<circle class="ea-em ea-em2" cx="196" cy="512" r="2"/>'
+        + '<circle class="ea-em ea-em3" cx="262" cy="528" r="2.4"/>'
+        + '<circle class="ea-em ea-em4" cx="292" cy="558" r="2"/>'
+        + '</g>'
+        + '</svg>',
+    freedom:
+        '<svg viewBox="0 0 400 700" preserveAspectRatio="xMidYMax slice" aria-hidden="true" focusable="false">'
+        + '<defs>'
+        + '<linearGradient id="eafBg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#072a30"/><stop offset="0.5" stop-color="#04141a"/><stop offset="1" stop-color="#020609"/></linearGradient>'
+        + '<radialGradient id="eafSun" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#fff3c4" stop-opacity="0.9"/><stop offset="0.5" stop-color="#ffd86b" stop-opacity="0.45"/><stop offset="1" stop-color="#ff9a5a" stop-opacity="0"/></radialGradient>'
+        + '</defs>'
+        + '<rect width="400" height="700" fill="url(#eafBg)"/>'
+        + '<circle class="ea-glow" cx="200" cy="236" r="96" fill="url(#eafSun)"/>'
+        + '<circle cx="200" cy="236" r="38" fill="#ffdc8e" opacity="0.45"/>'
+        + '<path d="M0 520 Q90 502 180 514 T400 508 V700 H0 Z" fill="#05343a"/>'
+        + '<path d="M0 562 Q110 544 210 558 T400 552 V700 H0 Z" fill="#031d21"/>'
+        + '<path d="M0 612 Q120 594 240 606 T400 600 V700 H0 Z" fill="#020d10"/>'
+        + '<g fill="#0d3a41" transform="translate(0,80)">'
+        + '<circle cx="188" cy="446" r="12"/>'
+        + '<path d="M176 460 q12 -6 24 0 l5 62 q-17 9 -34 0 z"/>'
+        + '<path d="M178 468 q-18 8 -24 26 q-2 7 5 8 l7 0 q6 -1 8 -7 z"/>'
+        + '<path d="M198 468 q18 8 24 26 q2 7 -5 8 l-7 0 q-6 -1 -8 -7 z"/>'
+        + '</g>'
+        + '<g fill="#17606a" opacity="0.5" transform="translate(0,16)">'
+        + '<path d="M286 596 q2 -40 24 -56 q22 16 24 56 z"/>'
+        + '<circle cx="310" cy="532" r="11"/>'
+        + '</g>'
+        + '<g fill="#9df0e0" transform="translate(0,16)">'
+        + '<circle class="ea-mt" cx="298" cy="520" r="2.4"/>'
+        + '<circle class="ea-mt ea-mt2" cx="320" cy="508" r="1.8"/>'
+        + '<circle class="ea-mt ea-mt3" cx="286" cy="500" r="2"/>'
+        + '<circle class="ea-mt ea-mt4" cx="326" cy="488" r="1.6"/>'
+        + '<circle class="ea-mt ea-mt2" cx="272" cy="486" r="1.6"/>'
+        + '<circle class="ea-mt ea-mt4" cx="306" cy="472" r="1.4"/>'
+        + '</g>'
+        + '</svg>',
+    peace:
+        '<svg viewBox="0 0 400 700" preserveAspectRatio="xMidYMax slice" aria-hidden="true" focusable="false">'
+        + '<defs>'
+        + '<linearGradient id="eapBg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#180b2c"/><stop offset="0.55" stop-color="#0b0619"/><stop offset="1" stop-color="#04020a"/></linearGradient>'
+        + '<radialGradient id="eapGlow" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#e6d9ff" stop-opacity="0.4"/><stop offset="1" stop-color="#b98cff" stop-opacity="0"/></radialGradient>'
+        + '</defs>'
+        + '<rect width="400" height="700" fill="url(#eapBg)"/>'
+        + '<ellipse class="ea-glow" cx="200" cy="440" rx="86" ry="200" fill="url(#eapGlow)"/>'
+        + '<path class="ea-veilL" d="M0 0 H162 Q144 200 154 372 Q122 512 62 636 Q34 676 20 700 H0 Z" fill="#1b1030" stroke="#3d2a63" stroke-width="1.5"/>'
+        + '<path class="ea-veilR" d="M400 0 H238 Q256 200 246 372 Q278 512 338 636 Q366 676 380 700 H400 Z" fill="#1b1030" stroke="#3d2a63" stroke-width="1.5"/>'
+        + '<path d="M0 632 Q90 612 190 626 T400 620 V700 H0 Z" fill="#0a0518"/>'
+        + '<g stroke="#7fe0a8" stroke-width="2.4" fill="none" opacity="0.45">'
+        + '<path d="M92 646 q56 -26 108 -6"/>'
+        + '<path d="M308 646 q-56 -26 -108 -6"/>'
+        + '<path d="M150 660 q50 -18 100 -4"/>'
+        + '</g>'
+        + '<circle class="ea-glow" cx="200" cy="586" r="64" fill="url(#eapGlow)" opacity="0.55"/>'
+        + '<path d="M200 640 q-2 -30 0 -46" stroke="#7fe0a8" stroke-width="2.4" fill="none" opacity="0.6"/>'
+        + '<g fill="#f7f2ff">'
+        + '<ellipse cx="200" cy="566" rx="7" ry="11"/><ellipse cx="200" cy="606" rx="7" ry="11"/>'
+        + '<ellipse cx="180" cy="586" rx="11" ry="7"/><ellipse cx="220" cy="586" rx="11" ry="7"/>'
+        + '<ellipse cx="186" cy="572" rx="9" ry="9"/><ellipse cx="214" cy="572" rx="9" ry="9"/>'
+        + '<ellipse cx="186" cy="600" rx="9" ry="9"/><ellipse cx="214" cy="600" rx="9" ry="9"/>'
+        + '<circle cx="200" cy="586" r="4.5" fill="#ffd86b"/>'
+        + '</g>'
+        + '<g fill="#241a44">'
+        + '<ellipse cx="112" cy="640" rx="9" ry="5"/><ellipse cx="292" cy="638" rx="9" ry="5"/>'
+        + '</g>'
+        + '<g fill="#7fe0a8" opacity="0.6">'
+        + '<circle class="ea-mt" cx="168" cy="524" r="2.2"/>'
+        + '<circle class="ea-mt ea-mt2" cx="228" cy="512" r="1.8"/>'
+        + '<circle class="ea-mt ea-mt3" cx="200" cy="496" r="2"/>'
+        + '</g>'
+        + '</svg>'
+};
+// Fundo dos créditos: céu parado + estrelas/brasas em CSS (o laço é leve e morre com o overlay)
+const ENDING_ART_CREDITS =
+    '<svg viewBox="0 0 400 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">'
+    + '<defs>'
+    + '<linearGradient id="eacBg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0c0720"/><stop offset="0.6" stop-color="#070312"/><stop offset="1" stop-color="#030106"/></linearGradient>'
+    + '<radialGradient id="eacGlow" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#9d4edd" stop-opacity="0.4"/><stop offset="1" stop-color="#9d4edd" stop-opacity="0"/></radialGradient>'
+    + '</defs>'
+    + '<rect width="400" height="700" fill="url(#eacBg)"/>'
+    + '<ellipse cx="200" cy="600" rx="230" ry="150" fill="url(#eacGlow)"/>'
+    + '<path d="M0 628 Q100 604 200 618 T400 612 V700 H0 Z" fill="#08040f"/>'
+    + '</svg>';
+
 const EndingSystem = {
     active: false, _emitted: false, _choice: null, _cls: null, _confirm: null,
     _ov: null, _timer: null, _pause: false,
@@ -12747,6 +13031,22 @@ const EndingSystem = {
     _T(o) { const l = (typeof I18n !== 'undefined' && I18n.lang) ? I18n.lang : 'pt'; return o[l] || o.pt || ''; },
     _reduced() { return !!(window.GameSettings && GameSettings.reducedMotion); },
     _clsNow() { return (window.player && player.type) || 'warrior'; },
+
+    // Cena desenhada por final (SVG estático + CSS). Sem escolha válida: sem arte.
+    _art(kind) {
+        if (kind === 'credits') {
+            let s = '';
+            for (let i = 0; i < 26; i++) {
+                s += '<span class="ea-star" style="left:' + ((i * 37 + 11) % 97) + '%;top:' + ((i * 53 + 7) % 86) + '%;animation-delay:' + (((i * 17) % 50) / 10) + 's"></span>';
+            }
+            for (let j = 0; j < 8; j++) {
+                s += '<span class="ea-emb" style="left:' + ((j * 61 + 23) % 92) + '%;top:' + (56 + ((j * 29) % 38)) + '%;animation-delay:' + (((j * 23) % 90) / 10) + 's"></span>';
+            }
+            return '<div class="end-art end-art-credits" aria-hidden="true">' + ENDING_ART_CREDITS + s + '</div>';
+        }
+        if (!ENDING_ART[kind]) return '';
+        return '<div class="end-art end-art-' + kind + '" aria-hidden="true">' + ENDING_ART[kind] + '</div>';
+    },
 
     begin(finalChoice) {
         // F4.1: begin(finalChoice). Se vier escolha, pulamos o painel (debug).
@@ -12758,6 +13058,26 @@ const EndingSystem = {
         return true;
     },
     beginChoice() { return this.active || this._emitted ? true : this.begin(); },
+
+    // F4: retoma um final interrompido por reload (save.endingPending): volta direto
+    // para a escolha, sem repetir a luta do Guardião. Só na História, com o final
+    // desta run ainda não emitido (win-screen já encerrou e limpou o save).
+    resumePending(pending) {
+        if (this.active || this._emitted) return false;
+        if (!pending || typeof pending !== 'object' || pending.stage !== 'choice') return false;
+        if (typeof gameMode !== 'undefined' && gameMode !== 'dungeon') return false;
+        if (!window.player) return false;
+        this.active = true;
+        this._cls = this._clsNow();
+        this._choice = null;
+        this._confirm = null;
+        // Combate parado como no interceptDeath: a luta não recomeça atrás do painel.
+        if (typeof gameState !== 'undefined') gameState = 'CUTSCENE';
+        if (typeof bossActive !== 'undefined') bossActive = false;
+        try { if (typeof SND !== 'undefined' && SND.stopMusic) SND.stopMusic(); } catch (e) {}
+        this.showChoice();
+        return true;
+    },
 
     // F4.2 — chamado pela morte do final_guardian: não morre, cai de joelhos.
     interceptDeath(boss) {
@@ -12844,7 +13164,7 @@ const EndingSystem = {
         const _sceneLines = ENDING_SCENE_LINES[this._choice] || {};
         const _lang = (typeof I18n !== 'undefined' && I18n.lang) ? I18n.lang : 'pt';
         const lines = _sceneLines[_lang] || _sceneLines.pt || [];
-        ov.innerHTML = '<div style="max-width:420px;width:100%;text-align:center;">'
+        ov.innerHTML = this._art(this._choice) + '<div style="max-width:420px;width:100%;text-align:center;">'
             + '<h2 style="font-size:14px;font-weight:800;color:#e0b6ff;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 16px;">' + title + '</h2>'
             + '<p id="ending-scene-text" style="font-size:15px;line-height:1.6;color:rgba(255,255,255,0.9);min-height:5em;white-space:pre-line;margin:0 0 18px;"></p>'
             + '<button type="button" id="ending-skip" style="padding:10px 18px;border-radius:12px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.7);font-size:12px;font-weight:700;cursor:pointer;touch-action:manipulation;">' + this._T(ENDING_TEXT.sceneSkip) + '</button>'
@@ -12913,7 +13233,7 @@ const EndingSystem = {
     _credits() {
         const self = this;
         const ov = this._makeOv();
-        ov.innerHTML = '<div style="max-width:420px;width:100%;text-align:center;">'
+        ov.innerHTML = this._art('credits') + '<div style="max-width:420px;width:100%;text-align:center;">'
             + '<h2 style="font-size:14px;font-weight:800;color:#e0b6ff;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 16px;">Krevathorn</h2>'
             + '<p style="font-size:13px;line-height:1.6;color:rgba(255,255,255,0.85);">Sombras de Krevathorn<br>' + this._T(ENDING_TEXT.choiceName[this._choice] || { pt: '' }) + ' · ' + (typeof I18n !== 'undefined' ? I18n.t('journey.cls.' + this._cls) : this._cls) + '<br>' + this._T(ENDING_TEXT.fim) + '</p>'
             + '<button type="button" id="ending-credits-skip" style="margin-top:16px;padding:10px 18px;border-radius:12px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.7);font-size:12px;font-weight:700;cursor:pointer;touch-action:manipulation;">' + this._T(ENDING_TEXT.cont) + '</button>'
@@ -12941,7 +13261,7 @@ const EndingSystem = {
     _page(html, next) {
         const self = this;
         const ov = this._makeOv();
-        ov.innerHTML = '<div style="max-width:420px;width:100%;text-align:center;">'
+        ov.innerHTML = this._art(this._choice) + '<div style="max-width:420px;width:100%;text-align:center;">'
             + '<p style="font-size:14px;line-height:1.65;color:rgba(255,255,255,0.9);white-space:pre-line;margin:0 0 18px;">' + html + '</p>'
             + '<button type="button" class="ending-next" style="padding:11px 24px;border-radius:12px;border:1.5px solid rgba(255,184,102,0.6);background:rgba(255,140,0,0.15);color:#ffd9a8;font-size:13px;font-weight:700;cursor:pointer;touch-action:manipulation;">' + this._T(ENDING_TEXT.cont) + '</button>'
             + '</div>';
@@ -12974,6 +13294,8 @@ const EndingSystem = {
             if (document.hidden && self.active) self._clearTimerOnly();
             // De volta ao app: o passo que estava agendado continua (com 1 s de folga para ler)
             else if (!document.hidden && self.active && self._pending && !self._timer) self._arm(self._pending, 1000);
+            // Fundo animado dos créditos (e brasas das cenas) para de rodar escondido
+            if (self._ov) self._ov.classList.toggle('end-paused', document.hidden);
         });
     },
     // Agenda o próximo passo automático da cena e lembra dele para retomar quando o app volta do segundo plano
@@ -13577,6 +13899,8 @@ function _anyPanelOpen() {
            (typeof ProphecyScene !== 'undefined' && ProphecyScene.visible) ||
            // Falas do Véu no Abismo (abertura e marcos): overlay em tela cheia, o mundo espera
            (typeof AbyssVeil !== 'undefined' && !!AbyssVeil._ov) ||
+           // Cena do último andar (B1): o Véu fala antes do Guardião, o mundo espera
+           (typeof NarrativeSystem !== 'undefined' && NarrativeSystem.bossCutsceneOpen) ||
            (typeof SettingsUI !== 'undefined' && SettingsUI.open) ||
            (typeof PauseSystem !== 'undefined' && PauseSystem.active) ||
            (window.UIManager && window.UIManager.currentPanel !== null);
@@ -14217,17 +14541,25 @@ function _resetFloorExplore() {
 const DESCENT_STEPS = { in: 42, card: 54, out: 36 };   // ~0,7 s / 0,9 s / 0,6 s
 const DESCENT_QUAKE_STEPS = 10;                         // tremor curto no início da entrada
 const DESCENT_STEPS_RM = { in: 12, card: 40, out: 18 }; // reducedMotion: só fade e título (~1,1 s)
+// Troca de câmara da História: mesmo cartão, compacto (câmara n/N + linha do bioma).
+// Curto de propósito: ~0,17 s de entrada + 0,4 s de cartão + 0,17 s de saída (~0,7 s, como antes).
+const CHAMBER_STEPS = { in: 10, card: 24, out: 10 };
+const CHAMBER_STEPS_RM = { in: 6, card: 18, out: 6 };   // reducedMotion: ainda mais curto, sem destaque
 
-// Durações da descida: a versão reduzida é lida no início (_startFloorTransition) e fica fixa
+// Durações da transição: a versão reduzida é lida no início (_startFloorTransition/_startChamberTransition)
+// e fica fixa. 'descent' (piso) e 'chamber' (câmara da História) têm tabelas próprias.
 function _descentSteps() {
-    return (_fadeState && _fadeState.rm) ? DESCENT_STEPS_RM : DESCENT_STEPS;
+    const rm = !!(_fadeState && _fadeState.rm);
+    if (_fadeState && _fadeState.kind === 'chamber') return rm ? CHAMBER_STEPS_RM : CHAMBER_STEPS;
+    return rm ? DESCENT_STEPS_RM : DESCENT_STEPS;
 }
 // Pular: toque ou tecla anda a descida 6 vezes mais depressa (entrada, cartão e saída)
 function _descentRate() {
     return (_fadeState && _fadeState.skip) ? 6 : 1;
 }
 function _descentSkip() {
-    if (_fadeState && _fadeState.kind === 'descent' && _fadeState.phase !== 'out') _fadeState.skip = true;
+    if (!_fadeState) return;
+    if ((_fadeState.kind === 'descent' || _fadeState.kind === 'chamber') && _fadeState.phase !== 'out') _fadeState.skip = true;
 }
 window.addEventListener('keydown', _descentSkip, true);
 window.addEventListener('pointerdown', _descentSkip, true);
@@ -14240,10 +14572,67 @@ function _descentCode(n) {
     return entry ? entry.canon : ('B' + (11 - n));
 }
 
+// Cartão compacto da troca de câmara (História): "Câmara n/N" e uma linha do bioma atual, no
+// mesmo traço do cartão de descida (sem deslize e sem redemoinho). Entra e sai junto com o fade.
+function _drawChamberCard(ctx, w, h, f) {
+    const a = Math.max(0, Math.min(1, f.alpha || 0));
+    const total = f.total || (_storyRoom ? _storyRoom.total : 0);
+    const n = (f.next || 0) + 1;
+    const acc = (window.BiomeSystem && BiomeSystem.getAmbientTint) ? BiomeSystem.getAmbientTint().color : '#9d4edd';
+    const biome = (window.BiomeSystem && BiomeSystem.currentBiome) || 'dungeon';
+    const line = _L('chamber.line.' + biome, I18n.t('descent.line'));
+    const cy = h * 0.44, maxW = w - 40;
+    ctx.save();
+    ctx.fillStyle = '#000';
+    ctx.globalAlpha = a;
+    ctx.fillRect(0, 0, w, h);
+    // Clarão do bioma, discreto e estático (reducedMotion não muda nada aqui: nada anima)
+    const g = ctx.createRadialGradient(w / 2, cy, 0, w / 2, cy, Math.max(w, h) * 0.45);
+    g.addColorStop(0, acc); g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.globalAlpha = a * (f.rm ? 0.10 : 0.14);
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, w, h);
+    // Número da câmara n/total
+    ctx.globalAlpha = a;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#ffffff';
+    ctx.font = `bold 24px ${COLORS.CANVAS_FONT}`;
+    ctx.fillText(_L('chamber.label', 'Câmara') + ' ' + n + '/' + total, w / 2, cy);
+    // Filete do bioma
+    ctx.globalAlpha = a * 0.8;
+    ctx.fillStyle = acc;
+    ctx.fillRect(w / 2 - 26, cy + 22, 52, 2);
+    // Uma linha de lore do bioma: fonte encolhe para caber; se ainda não couber, quebra em duas
+    if (line) {
+        ctx.globalAlpha = a;
+        ctx.fillStyle = '#cbb8de';
+        let size = 12;
+        const fit = function() { ctx.font = `italic ${size}px ${COLORS.CANVAS_FONT}`; };
+        fit();
+        while (size > 9 && ctx.measureText(line).width > maxW) { size--; fit(); }
+        if (ctx.measureText(line).width > maxW) {
+            const mid = Math.floor(line.length / 2);
+            let cut = line.lastIndexOf(' ', mid);
+            if (cut <= 0) cut = line.indexOf(' ', mid);
+            if (cut > 0) {
+                ctx.fillText(line.slice(0, cut), w / 2, cy + 38);
+                ctx.fillText(line.slice(cut + 1), w / 2, cy + 54);
+            } else {
+                ctx.fillText(line, w / 2, cy + 44);
+            }
+        } else {
+            ctx.fillText(line, w / 2, cy + 44);
+        }
+    }
+    ctx.restore();
+}
+
 // Cartão do andar de destino (fase 'card'): o código desliza do andar anterior para o novo,
 // com o nome canônico do andar e uma linha curta. Cores do bioma que acabou de ser montado.
 function _drawDescentCard(ctx, w, h, t) {
     const f = _fadeState;
+    // Troca de câmara da História: o mesmo cartão, na versão compacta
+    if (f.kind === 'chamber') { _drawChamberCard(ctx, w, h, f); return; }
     const n = dungeonLevel, cy = h * 0.42;
     const acc = (window.BiomeSystem && BiomeSystem.getAmbientTint) ? BiomeSystem.getAmbientTint().color : '#9d4edd';
     const isAbyss = gameMode === 'abyss';
@@ -14362,10 +14751,12 @@ function _startFloorTransition() {
         if (dungeonLevel === 50) addLog(window.I18n ? I18n.t('log.abyssPrimordial') : 'O Abismo atinge o ápice: Guardiões PRIMORDIAIS emergem das sombras!');
     }
 
-    if (dungeonLevel === 10 && !window._bossCutsceneTriggered) {
+    // Cena do último andar (B1): só na História de verdade (_storyRules exclui Abismo e diário)
+    // e uma vez por run. Ela mesma espera a descida terminar e devolve gameState a 'PLAYING'
+    // em todo caminho (ver triggerBossCutscene).
+    if (_storyRules() && dungeonLevel === 10 && !window._bossCutsceneTriggered) {
         window._bossCutsceneTriggered = true;
-        if (typeof NarrativeSystem.triggerBossCutscene === 'function') {
-            gameState = 'CUTSCENE';
+        if (typeof NarrativeSystem !== 'undefined' && typeof NarrativeSystem.triggerBossCutscene === 'function') {
             NarrativeSystem.triggerBossCutscene();
         }
     }
@@ -14927,15 +15318,17 @@ function _updateStoryRoomSpawning(alive, tutSuppress) {
     _openStoryDoor();
 }
 
-// Transição para a próxima câmara do andar: fade com o rótulo "Câmara n/N" e o personagem
-// caminhando para dentro da câmara nova enquanto a tela clareia (ver _fadeState.walk no draw).
+// Transição para a próxima câmara do andar: cartão compacto "Câmara n/N" com uma linha do
+// bioma e o personagem caminhando para dentro da câmara nova enquanto a tela clareia
+// (ver _fadeState.walk no draw). Pula com toque/tecla (_descentSkip), como a descida.
 function _startChamberTransition() {
     if (_transitioning || !_storyRoom) return;
     const next = _storyRoom.i + 1;
     if (next >= _storyRoom.total) { _startFloorTransition(); return; }
     if (window.SND && SND.playPortal) SND.playPortal(); // portal da câmara (o de andar toca em _startFloorTransition)
-    _fadeText = _L('chamber.label', 'Câmara') + ' ' + (next + 1) + '/' + _storyRoom.total;
-    _fadeState = { alpha: 0, phase: 'in', kind: 'chamber', next: next };
+    _fadeText = ''; // o número da câmara vai no cartão (ver _drawChamberCard)
+    _fadeState = { alpha: 0, phase: 'in', kind: 'chamber', next: next, total: _storyRoom.total, t: 0,
+        rm: !!(window.GameSettings && GameSettings.reducedMotion), skip: false };
     _transitioning = true;
     triggerCamZoom(0.08, 30);
 }
@@ -16005,6 +16398,9 @@ function draw() {
                 _drawDescentIn(ctx, width, height, _fadeState.alpha);
             } else if (_fadeState.kind === 'descent' && _fadeState.phase === 'card') {
                 _drawDescentCard(ctx, width, height, _fadeState.t);
+            } else if (_fadeState.kind === 'chamber') {
+                // Troca de câmara: cartão compacto em todas as fases (entra e sai com o alpha)
+                _drawDescentCard(ctx, width, height, _fadeState.t);
             } else {
             ctx.save();
             ctx.globalAlpha = _fadeState.alpha;
@@ -16033,7 +16429,7 @@ function draw() {
                 _fadeState.phase = 'out';
                 _fadeState.alpha = 1;
             } else if (_fadeState.phase === 'in' && !_anyPanelOpen()) {
-                _fadeState.alpha += (_fadeState.kind === 'descent' ? _descentRate() / _descentSteps().in : 0.05) * _drawSteps;
+                _fadeState.alpha += (_descentRate() / _descentSteps().in) * _drawSteps;
                 if (_fadeState.kind === 'descent') _fadeState.t += _drawSteps * _descentRate(); // relógio do redemoinho
                 if (_fadeState.alpha >= 1) {
                     _fadeState.alpha = 1;
@@ -16093,8 +16489,8 @@ function draw() {
                     if (!map) { try { map = new Map(); _mmDirty = true; } catch(e2) {} }
                     if (!entities || !entities.length) entities = player ? [player] : [];
                 }
-                // Descida entre pisos: o cartão do andar fica antes de clarear
-                _fadeState.phase = (_fadeState.kind === 'descent') ? 'card' : 'out';
+                // Descida entre pisos e troca de câmara: o cartão fica antes de clarear
+                _fadeState.phase = 'card';
                 _fadeState.t = 0;
                 // Tom grave descendente, baixo, quando o cartão do andar aparece (respeita sfxEnabled em SND.play)
                 if (_fadeState.kind === 'descent' && window.SND && SND.play) SND.play(196, 'sine', 0.7, 0.05, 'sfx', null, null, 58);
@@ -16102,14 +16498,15 @@ function draw() {
                 _fadeState.t += _drawSteps * _descentRate();
                 if (_fadeState.t >= _descentSteps().card) _fadeState.phase = 'out';
             } else if (_fadeState.phase === 'out' && !_anyPanelOpen()) {
-                _fadeState.alpha -= (_fadeState.kind === 'descent' ? _descentRate() / _descentSteps().out : 0.04) * _drawSteps;
+                _fadeState.alpha -= (_descentRate() / _descentSteps().out) * _drawSteps;
                 // Troca de câmara: o personagem dá alguns passos para dentro enquanto a tela clareia
+                // (com o pulo, a caminhada acelera junto, senão ele chega depois do fade)
                 if (_fadeState.walk && player) {
                     const w = _fadeState.walk;
-                    w.t = Math.min(1, w.t + 0.06 * _drawSteps);
+                    w.t = Math.min(1, w.t + 0.06 * _drawSteps * _descentRate());
                     player.x = w.x0 + (w.x1 - w.x0) * w.t;
                     player.y = w.y0 + (w.y1 - w.y0) * w.t;
-                    player.walkTimer += 3 * _drawSteps;
+                    player.walkTimer += 3 * _drawSteps * _descentRate();
                     if (w.t >= 1) _fadeState.walk = null;
                 }
                 if (_fadeState.alpha <= 0) {
@@ -21768,6 +22165,202 @@ const NarrativeSystem = {
         if (map[cls]) this.discover(map[cls]);
         if (ending === 'peace') this.discover('lore_063');
         this.discover('lore_065');
+    },
+
+    // ============================================================
+    // Cena do último andar (B1): o Véu fala antes do Guardião. Uma vez por
+    // run, só na História. Mesmo padrão dos overlays de cena (AbyssVeil/
+    // PrologueSystem): DOM criado na hora, Pular/Continuar, Escape fecha.
+    // Só abre com a descida terminada, e gameState volta a 'PLAYING' sempre.
+    // ============================================================
+    bossCutsceneOpen: false,
+    _bossCutsceneSeen: false,
+    _bossPage: 0,
+    _bossOv: null,
+    _bossBound: false,
+    _bossReturnFocus: null,
+    _bossPrevState: null,
+    _bossTimer: null,
+    _bossRunToken: 0,
+    BOSS_PAGE_KEYS: ['cutscene.boss.p1', 'cutscene.boss.p2', 'cutscene.boss.p3'],
+
+    _bossReduced() { return !!(window.GameSettings && GameSettings.reducedMotion); },
+
+    // Cancela a espera pendente e invalida o token: um wait de run anterior nunca abre a cena
+    // na run nova (chamado em todo _resetState, novo jogo ou continue).
+    cancelBossCutscene() {
+        if (this._bossTimer) { clearTimeout(this._bossTimer); this._bossTimer = null; }
+        this._bossRunToken = (this._bossRunToken || 0) + 1;
+    },
+
+    // Nova run pode ouvir a cena de novo (o continue não repete).
+    resetBossCutscene() {
+        this.cancelBossCutscene();
+        this._bossCutsceneSeen = false;
+        window._bossCutsceneTriggered = false;
+    },
+
+    // A cena só vale na descida para o B1 da História de verdade: Abismo e diário ficam fora.
+    _bossRunValid() {
+        if (typeof _storyRules !== 'function' || !_storyRules()) return false;
+        if (typeof gameMode !== 'undefined' && gameMode !== 'dungeon') return false;
+        if (typeof dungeonLevel === 'undefined' || dungeonLevel !== 10) return false;
+        if (typeof player !== 'undefined' && player && (!player.alive || player.hp <= 0)) return false;
+        return true;
+    },
+
+    triggerBossCutscene() {
+        if (typeof _storyRules !== 'function' || !_storyRules()) return false;
+        if (this._bossCutsceneSeen || this.bossCutsceneOpen) return false;
+        this._bossCutsceneSeen = true;
+        window._bossCutsceneTriggered = true;
+        const self = this;
+        const token = this._bossRunToken;   // muda em cancelBossCutscene/resetBossCutscene
+        let tries = 0;
+        // Espera a descida terminar: o fade, o cartão do andar e a sala montada seguem inteiros.
+        const wait = function() {
+            self._bossTimer = null;
+            try {
+                // Outra run começou (novo jogo ou continue): este agendamento morre com ela.
+                if (token !== self._bossRunToken) return;
+                if (!self._bossRunValid()) { self._bossCutsceneSeen = false; return; }
+                if (tries++ > 700) { self._bossCutsceneSeen = false; return; }
+                if (typeof _transitioning !== 'undefined' && _transitioning) { self._bossTimer = setTimeout(wait, 100); return; }
+                if (typeof gameState !== 'undefined' && gameState !== 'PLAYING') { self._bossTimer = setTimeout(wait, 250); return; }
+                self._openBossCutscene(token);
+            } catch (e) {
+                Debug.warn('triggerBossCutscene', e);
+                self._closeBossCutscene();
+            }
+        };
+        this._bossTimer = setTimeout(wait, 150);
+        return true;
+    },
+
+    _bossBind() {
+        if (this._bossBound) return;
+        this._bossBound = true;
+        const self = this;
+        window.addEventListener('keydown', function(e) {
+            if (!self.bossCutsceneOpen) return;
+            e.stopImmediatePropagation();
+            if (e.key === 'Escape') { e.preventDefault(); self._closeBossCutscene(); }
+            else if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+                if (e.target && e.target.tagName === 'BUTTON') return;
+                e.preventDefault(); self._bossNext();
+            } else if (e.key === 'Tab') {
+                e.preventDefault();
+                const s = self._bossEl('boss-cutscene-skip'), n = self._bossEl('boss-cutscene-next');
+                if (s && n) (document.activeElement === n ? s : n).focus();
+            }
+        }, true);
+    },
+
+    _bossEl(id) { return document.getElementById(id); },
+
+    _openBossCutscene(token) {
+        if (this.bossCutsceneOpen) return;
+        // Revalidação no momento de abrir: o agendamento pode ter sobrado de outra run, de outro
+        // andar, do diário/Abismo ou depois da morte do jogador.
+        if (token !== undefined && token !== this._bossRunToken) return;
+        if (!this._bossRunValid() || !window._bossCutsceneTriggered) return;
+        if (this._bossTimer) { clearTimeout(this._bossTimer); this._bossTimer = null; }
+        this._bossBind();
+        this.bossCutsceneOpen = true;
+        this._bossPage = 0;
+        this._bossReturnFocus = document.activeElement;
+        // Estado a devolver no fim (nunca CUTSCENE, nunca vazio).
+        this._bossPrevState = (typeof gameState !== 'undefined' && gameState && gameState !== 'CUTSCENE') ? gameState : 'PLAYING';
+        try {
+            const ov = document.createElement('div');
+            ov.id = 'boss-cutscene-overlay';
+            ov.setAttribute('role', 'dialog');
+            ov.setAttribute('aria-modal', 'true');
+            ov.style.cssText = 'position:fixed;inset:0;z-index:2001;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;background:rgba(6,2,8,0.96);';
+            ov.innerHTML = '<div style="max-width:380px;width:100%;text-align:center;">'
+                + '<div id="boss-cutscene-speaker" style="font-size:11px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:#c084fc;margin:0 0 14px;"></div>'
+                + '<p id="boss-cutscene-text" aria-live="polite" style="font-size:16px;line-height:1.65;color:rgba(255,255,255,0.92);font-style:italic;white-space:pre-line;margin:0 0 22px;min-height:9em;"></p>'
+                + '<div style="display:flex;gap:10px;">'
+                + '<button type="button" id="boss-cutscene-skip" style="flex:1;padding:10px;border-radius:12px;font-size:0.8rem;font-weight:700;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.55);cursor:pointer;touch-action:manipulation;"></button>'
+                + '<button type="button" id="boss-cutscene-next" style="flex:1;padding:10px;border-radius:12px;font-size:0.8rem;font-weight:700;background:linear-gradient(135deg,rgba(100,60,200,0.3),rgba(157,78,221,0.2));border:1.5px solid rgba(157,78,221,0.45);color:#c084fc;cursor:pointer;touch-action:manipulation;"></button>'
+                + '</div></div>';
+            document.body.appendChild(ov);
+            this._bossOv = ov;
+            const self = this;
+            const skip = this._bossEl('boss-cutscene-skip'), next = this._bossEl('boss-cutscene-next');
+            if (skip) skip.addEventListener('click', function() { self._closeBossCutscene(); });
+            if (next) next.addEventListener('click', function() { self._bossNext(); });
+            // Tocar no texto também avança (a cena é curta; o Pular segue à mão).
+            ov.addEventListener('click', function(e) {
+                const tag = e.target && e.target.tagName;
+                if (tag === 'BUTTON') return;
+                if (self.bossCutsceneOpen) self._bossNext();
+            });
+            this._bossRender();
+            // Com movimento reduzido não há transição: o overlay já aparece inteiro.
+            if (!this._bossReduced()) {
+                ov.style.transition = 'opacity 0.25s ease';
+                ov.style.opacity = '0';
+                requestAnimationFrame(function() { if (self._bossOv) self._bossOv.style.opacity = '1'; });
+            }
+            if (next) { try { next.focus(); } catch (e) {} }
+            // A simulação espera pelo overlay (isAnyPanelOpen) e pelo estado de cena.
+            gameState = 'CUTSCENE';
+        } catch (e) {
+            Debug.warn('openBossCutscene', e);
+            this._closeBossCutscene();
+        }
+    },
+
+    _bossRender() {
+        const tr = function(k, d) { return (window.I18n ? I18n.t(k) : d); };
+        const t = this._bossEl('boss-cutscene-text');
+        const sp = this._bossEl('boss-cutscene-speaker');
+        const sk = this._bossEl('boss-cutscene-skip');
+        const nx = this._bossEl('boss-cutscene-next');
+        const key = this.BOSS_PAGE_KEYS[this._bossPage] || this.BOSS_PAGE_KEYS[0];
+        if (t) t.textContent = tr(key, key);
+        if (sp) sp.textContent = tr('cutscene.boss.speaker', 'O Véu');
+        if (sk) sk.textContent = tr('cutscene.boss.skip', 'Pular');
+        if (nx) {
+            const last = this._bossPage >= this.BOSS_PAGE_KEYS.length - 1;
+            nx.textContent = last ? tr('cutscene.boss.begin', 'Enfrentar o Guardião') : tr('cutscene.boss.next', 'Continuar');
+        }
+    },
+
+    _bossNext() {
+        if (!this.bossCutsceneOpen) return;
+        if (this._bossPage < this.BOSS_PAGE_KEYS.length - 1) {
+            this._bossPage++;
+            this._bossRender();
+            return;
+        }
+        this._closeBossCutscene();
+    },
+
+    // Voltar do Android pula a cena, como o botão (ver _handleBack).
+    skipBossCutscene() {
+        if (!this.bossCutsceneOpen) return false;
+        this._closeBossCutscene();
+        return true;
+    },
+
+    // Único caminho de saída: tira o overlay, descarta a espera pendente e devolve o jogo ao
+    // estado de antes (PLAYING, no caso normal). Nunca sobra CUTSCENE, nem com erro no meio.
+    _closeBossCutscene() {
+        try {
+            if (this._bossTimer) { clearTimeout(this._bossTimer); this._bossTimer = null; }
+            const focus = this._bossReturnFocus;
+            this._bossReturnFocus = null;
+            this.bossCutsceneOpen = false;
+            this._bossPage = 0;
+            if (this._bossOv) { try { this._bossOv.remove(); } catch (e) {} this._bossOv = null; }
+            if (focus && typeof _restaurarFoco === 'function') _restaurarFoco(focus);
+        } finally {
+            const prev = this._bossPrevState;
+            this._bossPrevState = null;
+            gameState = (!prev || prev === 'CUTSCENE') ? 'PLAYING' : prev;
+        }
     },
 
     // ============================================================
@@ -37396,20 +37989,42 @@ const SceneDirector = {
     _finish(choice) {
         const a = this.active;
         if (!a) { NPCInteractionPanel.hide(); return; }
-        this._applyReward(a.scene, choice);
-        if (this.done.indexOf(a.scene.id) === -1) this.done.push(a.scene.id);
-        if (typeof Statistics !== 'undefined' && Statistics.data) {
-            if (!Array.isArray(Statistics.data.canonScenesSeen)) Statistics.data.canonScenesSeen = [];
-            if (!Statistics.data.canonScenesSeen.includes(a.scene.id)) Statistics.data.canonScenesSeen.push(a.scene.id);
-            if (typeof Statistics.save === 'function') Statistics.save();
+        // Idempotência: a recompensa sai no máximo uma vez por escolha deste painel. A
+        // marca entra ANTES de aplicar — um erro no meio não paga de novo no toque seguinte.
+        const rewardId = a.scene.id + ':' + ((choice && choice.id) || 'none');
+        if (!Array.isArray(a.rewardIds)) a.rewardIds = [];
+        const paid = a.rewardIds.indexOf(rewardId) !== -1;
+        if (!paid) a.rewardIds.push(rewardId);
+        try {
+            if (!paid) this._applyReward(a.scene, choice);
+        } catch (e) {
+            Debug.warn('[F3] recompensa da cena não aplicada por inteiro', { scene: a.scene.id, error: e && e.message });
+            if (typeof showToast === 'function') showToast(window.I18n ? I18n.t('scene.rewardFailed') : 'A recompensa não foi aplicada por inteiro; a cena foi encerrada.', 'error');
         }
-        if (a.npc && typeof a.npc === 'object' && a.npc.canon) {
-            // NPC canônico some após a cena concluída (combate segue).
-            a.npc.alive = false;
+        // Fecha a cena mesmo com erro: painel aberto com recompensa já paga fazia o
+        // toque seguinte pagar de novo.
+        try {
+            if (this.done.indexOf(a.scene.id) === -1) this.done.push(a.scene.id);
+            if (typeof Statistics !== 'undefined' && Statistics.data) {
+                if (!Array.isArray(Statistics.data.canonScenesSeen)) Statistics.data.canonScenesSeen = [];
+                if (!Statistics.data.canonScenesSeen.includes(a.scene.id)) Statistics.data.canonScenesSeen.push(a.scene.id);
+                if (typeof Statistics.save === 'function') Statistics.save();
+            }
+            if (a.npc && typeof a.npc === 'object' && a.npc.canon) {
+                // NPC canônico some após a cena concluída (combate segue).
+                a.npc.alive = false;
+            }
+        } catch (e) {
+            Debug.warn('[F3] fechamento da cena com erro parcial', { scene: a.scene.id, error: e && e.message });
         }
         this.active = null;
         NPCInteractionPanel.hide();
-        if (typeof SaveSystem !== 'undefined' && typeof SaveSystem.save === 'function') SaveSystem.save();
+        // Falha ao gravar não desfaz a recompensa: o save é o último passo e não relança.
+        try {
+            if (typeof SaveSystem !== 'undefined' && typeof SaveSystem.save === 'function') SaveSystem.save();
+        } catch (e) {
+            Debug.warn('[F3] save após a cena falhou', { error: e && e.message });
+        }
     },
 
     cancel() {
@@ -41775,7 +42390,9 @@ renderAchievementsContent() {
 Debug.info("====== BOOTSTRAP.JS IS EXECUTING ======");
 
 // ============================================================
-// PRÓLOGO (F2): 4 páginas canônicas só na primeira run da vida do jogador.
+// PRÓLOGO (F2): 4 páginas de lore canônico. NÃO entra na primeira run: o conteúdo
+// é o mesmo da abertura (opening.s1..s4), que sempre é exibida antes do menu.
+// Fica como rede de segurança para o caso raro de run sem abertura exibida.
 // Enquanto visible, _anyPanelOpen/isAnyPanelOpen congelam a simulação.
 // Flag de carreira: Statistics.data.prologueSeen (+ legado RAW 'prologue').
 // Skip/Descer fecham e marcam como visto (senão repete no retorno).
@@ -41811,10 +42428,13 @@ const PrologueSystem = {
         }
     },
 
-    // Abertura assistida até o fim (não pulada) já conta a mesma história: o prólogo é
-    // dispensado e marcado como visto. Pular a abertura não dispensa (openingFinished = false).
+    // A abertura conta a mesma história do prólogo: basta ter sido EXIBIDA (assistida
+    // até o fim ou pulada) para o prólogo ser dispensado e marcado como visto.
+    // `finished()` deixou de ser exigido: pular a abertura também não repete lore.
     dispensarPorAbertura() {
-        if (typeof OpeningSystem !== 'undefined' && OpeningSystem.finished() && !this.hasSeen()) this.markSeen();
+        if (typeof OpeningSystem === 'undefined') return;
+        if (!OpeningSystem.hasSeen() && !OpeningSystem.visible) return;
+        if (!this.hasSeen()) this.markSeen();
     },
 
     _bind() {
@@ -41916,9 +42536,10 @@ window.PrologueSystem = PrologueSystem;
 // ============================================================
 // F2 — ABERTURA, PROFECIA, CARTÃO DE PISO E SUSSURROS
 // ------------------------------------------------------------
-// Ordem do primeiro acesso (F2.6): abertura -> menu -> classe -> prólogo
-// -> tutorial. OpeningSystem roda sobre o menu; PrologueSystem roda em
-// GameBootstrap.start (pós-classe, pré-tutorial via startGame wrapper).
+// Ordem do primeiro acesso (F2.6): abertura -> menu -> classe -> tutorial.
+// O prólogo saiu dessa ordem: repete a abertura palavra por palavra, então a
+// abertura exibida (assistida ou pulada) já o marca como visto. PrologueSystem
+// continua existindo (overlay, chaves prologue.*) só como rede de segurança.
 // Skip da abertura/prólogo marca "visto" (não repete no retorno); skip da
 // profecia/sussurro NÃO marca a flag de "ouviu" (prophecyHeard /
 // eiranWhisperHeard só com a linha completa).
@@ -42155,6 +42776,9 @@ const OpeningSystem = {
         if (!this.visible) return;
         this.visible = false;
         this.markSeen();
+        // Abertura exibida (aqui: assistida até o fim ou pulada) já contou a história:
+        // o prólogo é dispensado na hora, sem esperar o startGame.
+        if (window.PrologueSystem) PrologueSystem.dispensarPorAbertura();
         this._clearTimer();
         this._stopEmbers();
         this._music(false);
@@ -42568,7 +43192,8 @@ window.GameBootstrap = {
             if (window.AbyssVeil && gameMode === 'abyss') AbyssVeil.maybeOpening();
             // F3: NPC canônico do Piso 1 (perto da entrada).
             if (window.SceneDirector && SceneDirector.onFloorBuilt) SceneDirector.onFloorBuilt();
-            // Prólogo: só na primeira run da vida do jogador (continuar save não passa por start()).
+            // Prólogo: dispensado pela abertura (mesma história). Só aparece se run
+            // começou sem abertura exibida (caso raro); continuar save não passa por start().
             PrologueSystem.dispensarPorAbertura();
             if (!PrologueSystem.hasSeen()) PrologueSystem.show();
             Debug.info('Game started: ' + cls + ' class, mode: ' + gameMode);
@@ -42605,8 +43230,12 @@ window.GameBootstrap = {
         if (!save) {
             if (SaveSystem.hasSave()) {
                 const message = window.I18n ? I18n.t('log.saveInvalid') : 'Save inválido ou incompatível; o arquivo atual foi preservado.';
-                if (typeof showToast === 'function') showToast(message, 'error');
-                if (typeof addLog === 'function') addLog(message);
+                // Save reprovado no load deixou cópia em SaveSystem.BAK_KEY (krev_save_bak)
+                const _bak = (typeof SaveSystem.hasBackup === 'function' && SaveSystem.hasBackup())
+                    ? ' ' + (window.I18n ? I18n.t('log.saveBackup') : 'Uma cópia do arquivo danificado ficou guardada no aparelho.')
+                    : '';
+                if (typeof showToast === 'function') showToast(message + _bak, 'error');
+                if (typeof addLog === 'function') addLog(message + _bak);
                 return;
             }
             this.start('warrior');
@@ -42703,6 +43332,11 @@ window.GameBootstrap = {
             // startRun(true): continue mantém as missões já pagas nesta run (_doneIds) para não pagarem de novo.
             if (window.QuestSystem) QuestSystem.startRun(true);
             addLog((window.I18n ? I18n.t('log.progressRestored') : 'Progresso restaurado - Piso ') + dungeonLevel);
+            // F4: final interrompido por reload. Retoma na escolha em vez de refazer a
+            // luta do Guardião. Save antigo (sem o campo) segue o fluxo normal.
+            if (save.endingPending && window.EndingSystem && typeof EndingSystem.resumePending === 'function') {
+                EndingSystem.resumePending(save.endingPending);
+            }
             Debug.info('Game continued: floor ' + dungeonLevel + ', class ' + cls);
         }, 'continueGame');
     },
@@ -42785,6 +43419,10 @@ window.GameBootstrap = {
         // F3: diretor de cenas também zerado (continue restaura sceneState depois).
         if (window.SceneDirector && SceneDirector.resetRun) SceneDirector.resetRun();
         if (window.AbyssVeil && AbyssVeil.resetRun) AbyssVeil.resetRun();
+        // Cena do último andar (B1): qualquer run (nova ou continue) descarta a espera pendente da
+        // anterior; run nova pode ouvi-la de novo, o continue não repete.
+        if (typeof NarrativeSystem !== 'undefined' && typeof NarrativeSystem.cancelBossCutscene === 'function') NarrativeSystem.cancelBossCutscene();
+        if (!resume && typeof NarrativeSystem !== 'undefined' && typeof NarrativeSystem.resetBossCutscene === 'function') NarrativeSystem.resetBossCutscene();
         // F7: troféus escolhidos nesta run zeram (a coleção de carreira permanece).
         // Só em run nova: o continue mantém a regra de não repetir troféu na mesma run
         if (!(opts && opts.resume) && typeof Statistics !== 'undefined' && Statistics.data) { Statistics.data.trophyChoices = {}; if (typeof Statistics.save === 'function') Statistics.save(); }
@@ -43268,7 +43906,8 @@ const TutorialSystem = {
                     origStart(cls);
                 }
             };
-            // Abertura vista até o fim: prólogo redundante, dispensado (ver dispensarPorAbertura).
+            // Abertura exibida (assistida ou pulada) já contou a história: prólogo
+            // dispensado e marcado como visto (ver dispensarPorAbertura).
             if (typeof PrologueSystem !== 'undefined') PrologueSystem.dispensarPorAbertura();
             if (typeof PrologueSystem !== 'undefined' && !PrologueSystem.hasSeen()) {
                 PrologueSystem._afterClose = _go;
@@ -44886,6 +45525,8 @@ Input.init();
             if (typeof PrologueSystem !== 'undefined' && PrologueSystem.visible) return false;
             // Fala do Véu no Abismo: Voltar pula, como o botão
             if (typeof AbyssVeil !== 'undefined' && AbyssVeil.skip()) return true;
+            // Cena do último andar (B1): Voltar pula, como o botão
+            if (typeof NarrativeSystem !== 'undefined' && typeof NarrativeSystem.skipBossCutscene === 'function' && NarrativeSystem.skipBossCutscene()) return true;
             if (typeof SettingsUI !== 'undefined' && SettingsUI.open) { SettingsUI.close(); return true; }
             var pausado = typeof PauseSystem !== 'undefined' && PauseSystem.active;
             if (!pausado && isAnyPanelOpen()) { _closeAll(); return true; }
@@ -45252,8 +45893,15 @@ Input.init();
        current MUST stay in sync with the SW CACHE_VERSION suffix (sw.js).
     */
     window.UPDATE_LOG = {
-        current: 'v104',
+        current: 'v105',
         entries: [
+            { v: 'v105', date: '2026-11-18', titleKey: 'update.entry.v105.title', title: 'v105 — A história aparece, e o progresso não se perde',
+              linesKeys: ['update.entry.v105.l1', 'update.entry.v105.l2', 'update.entry.v105.l3', 'update.entry.v105.l4', 'update.entry.v105.l5'],
+              lines: ['Uma cena abre antes do chefe final e as trocas de câmara ganharam cartão próprio: a história aparece nos momentos em que o ritmo pede.',
+                      'No primeiro acesso, a abertura conta a história uma vez só. O prólogo que repetia as mesmas cenas não aparece mais.',
+                      'Os três finais ganharam arte própria e os créditos têm fundo animado — que fica parado se você prefere menos movimento.',
+                      'Se o jogo fechar no meio do final, "Continuar" retoma a escolha sem repetir a luta. Recompensa de cena não paga duas vezes, e save que não carrega guarda uma cópia.',
+                      'A tela de vitória agora tem "Compartilhar vitória" com classe, final e estrelas, e o app instala de verdade no celular.'] },
             { v: 'v104', date: '2026-11-18', titleKey: 'update.entry.v104.title', title: 'v104 — Dash previsível e ataques respeitando paredes',
               linesKeys: ['update.entry.v104.l1', 'update.entry.v104.l2', 'update.entry.v104.l3'],
               lines: ['O dash agora sai uma vez por toque, na direção do joystick ou da última direção em que você andou, e para antes das paredes.',
