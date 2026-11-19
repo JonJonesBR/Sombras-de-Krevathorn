@@ -26,7 +26,11 @@
 const CACHE_VERSION = 'krevathorn-v105';
 const CACHE_NAME = CACHE_VERSION;
 const APP_SHELL = ['./', './index.html', './manifest.webmanifest',
-    './icon-192.png', './icon-512.png', './icon-maskable-512.png', './apple-touch-icon.png'];
+    './icon-192.png', './icon-512.png', './icon-maskable-512.png', './apple-touch-icon.png',
+    './cutscenes/opening-1.webp', './cutscenes/opening-2.webp',
+    './cutscenes/opening-3.webp', './cutscenes/opening-4.webp',
+    './cutscenes/prophecy-vael.webp', './cutscenes/boss-guardian.webp',
+    './cutscenes/ending-blood.webp', './cutscenes/ending-freedom.webp', './cutscenes/ending-peace.webp'];
 
 self.addEventListener('install', (event) => {
     event.waitUntil(

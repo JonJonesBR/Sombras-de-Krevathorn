@@ -1462,15 +1462,31 @@ body {
     position: fixed; inset: 0; z-index: 99990; display: none;
     flex-direction: column; align-items: center; justify-content: center;
     background: radial-gradient(circle at 50% 58%, #1b0f26 0%, #07030c 68%);
-    padding: 24px; box-sizing: border-box; color: #eadcf7;
+    padding: 24px; box-sizing: border-box; color: #eadcf7; overflow-y: auto;
 }
 #opening-overlay { z-index: 99991; }
 #prophecy-overlay { z-index: 99970; background: rgba(4, 2, 8, 0.94); }
 #opening-particles { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 .op-inner { position: relative; z-index: 1; width: 100%; max-width: 380px; text-align: center; }
+.cutscene-frame {
+    position: relative; width: 100%; max-width: 340px; aspect-ratio: 4 / 3; max-height: 31vh;
+    margin: 0 auto 14px; border-radius: 14px; overflow: hidden;
+    border: 1px solid rgba(192,132,252,0.32);
+    background: radial-gradient(circle at 50% 45%, rgba(60,24,105,0.38), rgba(8,4,14,0.92));
+    box-shadow: 0 12px 34px rgba(0,0,0,0.72), inset 0 0 24px rgba(157,78,221,0.16);
+}
+.cutscene-frame::after {
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(ellipse at center, transparent 54%, rgba(6,2,10,0.68) 100%);
+}
+.cutscene-img {
+    display: block; width: 100%; height: 100%; object-fit: cover;
+    opacity: 0; transform: scale(1.02); transition: opacity 0.45s ease, transform 7.5s ease-out;
+}
+.cutscene-img.is-loaded { opacity: 1; transform: scale(1.07); }
 .op-scene {
-    display: flex; align-items: center; justify-content: center; min-height: 10.5em;
-    font-size: clamp(1rem, 4.2vw, 1.2rem); line-height: 1.7;
+    display: flex; align-items: center; justify-content: center; min-height: 6.8em;
+    font-size: clamp(0.95rem, 3.8vw, 1.12rem); line-height: 1.6;
     white-space: pre-line; opacity: 0; transition: opacity 0.9s ease;
 }
 .op-scene.on { opacity: 1; }
@@ -1497,8 +1513,8 @@ body {
     text-transform: uppercase; color: #c084fc;
 }
 #prophecy-text {
-    display: flex; align-items: center; justify-content: center; min-height: 9em;
-    font-size: clamp(0.95rem, 3.7vw, 1.12rem); line-height: 1.65; white-space: pre-line;
+    display: flex; align-items: center; justify-content: center; min-height: 5.5em;
+    font-size: clamp(0.95rem, 3.6vw, 1.1rem); line-height: 1.6; white-space: pre-line;
     opacity: 0; transition: opacity 0.45s ease;
 }
 #prophecy-text.on { opacity: 1; }
@@ -1541,14 +1557,26 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
     #opening-overlay, #prophecy-overlay, #floor-intro, #whisper-overlay { transition: none !important; }
+    .cutscene-img, .end-art .ea-bg-img { transition: none !important; transform: none !important; }
     .lore-pulse { animation: none !important; box-shadow: 0 0 12px 2px rgba(224,182,255,0.55); }
 }
 
-/* ===== Finais: cena desenhada (SVG inline) atrás do texto =====
-   Sem canvas nem rAF: só SVG estático + animação CSS curta (termina) ou laço barato
+/* ===== Finais: cena desenhada (SVG inline + arte de cutscene) atrás do texto =====
+   Sem canvas nem rAF: só arte estática + animação CSS curta (termina) ou laço barato
    nos créditos (pausado com a aba oculta e desligado com reducedMotion). */
 #ending-overlay > .end-art { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
 #ending-overlay > .end-art svg { display: block; width: 100%; height: 100%; opacity: 0.62; }
+#ending-overlay > .end-art .ea-bg-img {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; object-position: center bottom;
+    opacity: 0; transition: opacity 0.6s ease;
+}
+#ending-overlay > .end-art .ea-bg-img.is-loaded { opacity: 0.92; }
+#ending-overlay > .end-art .ea-scrim {
+    position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(180deg, rgba(6,2,8,0.58) 0%, rgba(6,2,8,0.72) 48%, rgba(6,2,8,0.38) 100%);
+}
+body.reduce-motion .cutscene-img, body.reduce-motion .end-art .ea-bg-img { transition: none !important; transform: none !important; }
 #ending-overlay > div:not(.end-art) { position: relative; z-index: 1; }
 #ending-overlay h2, #ending-overlay p { text-shadow: 0 1px 14px rgba(0,0,0,0.9), 0 0 3px rgba(0,0,0,0.95); }
 .end-art .ea-glow { transform-box: fill-box; transform-origin: center; animation: endGlow 4.5s ease-out both; }
@@ -1878,6 +1906,7 @@ body.reduce-motion .end-art .ea-emb { animation: none !important; opacity: 0.35;
         <canvas id="opening-particles" aria-hidden="true"></canvas>
         <button id="opening-skip" type="button" class="op-btn-ghost op-skip" data-i18n="opening.skip">Pular abertura</button>
         <div class="op-inner">
+            <div class="cutscene-frame"><img id="opening-art" class="cutscene-img" alt="" decoding="async"></div>
             <p id="opening-scene" class="op-scene" aria-live="polite"></p>
             <div id="opening-dots" class="op-dots" aria-hidden="true"></div>
             <div class="op-actions">
@@ -1889,6 +1918,7 @@ body.reduce-motion .end-art .ea-emb { animation: none !important; opacity: 0.35;
     <!-- PROFECIA DE VAEL (Piso 4 · B7 — ver ProphecyScene) -->
     <div id="prophecy-overlay" role="dialog" aria-modal="true" aria-labelledby="prophecy-speaker">
         <div class="op-inner">
+            <div class="cutscene-frame"><img id="prophecy-art" class="cutscene-img" alt="" decoding="async"></div>
             <div id="prophecy-speaker" data-i18n="prophecy.speaker">Vael, o Oráculo</div>
             <p id="prophecy-text" aria-live="polite"></p>
             <button id="prophecy-skip" type="button" class="op-btn-ghost" data-i18n="prophecy.skip">Pular</button>
@@ -1906,9 +1936,10 @@ body.reduce-motion .end-art .ea-emb { animation: none !important; opacity: 0.35;
     <div id="whisper-overlay" aria-live="polite"><span id="whisper-text"></span></div>
 
     <!-- PRÓLOGO (só na primeira run da vida do jogador; controlado por PrologueSystem) -->
-    <div id="prologue-overlay" role="dialog" aria-modal="true" aria-labelledby="prologue-text" style="display:none;position:fixed;inset:0;z-index:99980;flex-direction:column;align-items:center;justify-content:center;background:rgba(4,2,8,0.96);padding:24px;box-sizing:border-box;">
-        <div style="max-width:360px;width:100%;text-align:center;">
-            <p id="prologue-text" aria-live="polite" style="font-size:clamp(0.95rem,3.4vw,1.1rem);line-height:1.6;color:#eadcf7;margin:0 0 26px;min-height:10em;white-space:pre-line;"></p>
+    <div id="prologue-overlay" role="dialog" aria-modal="true" aria-labelledby="prologue-text" style="display:none;position:fixed;inset:0;z-index:99980;flex-direction:column;align-items:center;justify-content:center;background:rgba(4,2,8,0.96);padding:24px;box-sizing:border-box;overflow-y:auto;">
+        <div style="max-width:380px;width:100%;text-align:center;">
+            <div class="cutscene-frame"><img id="prologue-art" class="cutscene-img" alt="" decoding="async"></div>
+            <p id="prologue-text" aria-live="polite" style="font-size:clamp(0.95rem,3.4vw,1.08rem);line-height:1.58;color:#eadcf7;margin:0 0 20px;min-height:6.5em;white-space:pre-line;"></p>
             <div style="display:flex;gap:10px;">
                 <button id="prologue-skip" type="button" data-i18n="prologue.skip" style="flex:1;padding:10px;border-radius:12px;font-size:0.8rem;font-weight:700;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.5);cursor:pointer;touch-action:manipulation;">Pular</button>
                 <button id="prologue-next" type="button" data-i18n="prologue.continue" style="flex:1;padding:10px;border-radius:12px;font-size:0.8rem;font-weight:700;background:linear-gradient(135deg,rgba(100,60,200,0.3),rgba(157,78,221,0.2));border:1.5px solid rgba(157,78,221,0.45);color:#c084fc;cursor:pointer;touch-action:manipulation;">Continuar</button>
@@ -12445,6 +12476,22 @@ function isAnyPanelOpen() {
 
 window.isAnyPanelOpen = isAnyPanelOpen;
 
+function _setCutsceneImg(img, src) {
+    if (!img) return;
+    const frame = img.parentElement;
+    if (!src) { if (frame) frame.style.display = 'none'; return; }
+    if (frame) frame.style.display = '';
+    img.classList.remove('is-loaded');
+    const markLoaded = () => {
+        requestAnimationFrame(() => requestAnimationFrame(() => img.classList.add('is-loaded')));
+    };
+    img.onload = markLoaded;
+    img.onerror = () => { if (frame) frame.style.display = 'none'; };
+    if (img.getAttribute('src') !== src) img.setAttribute('src', src);
+    if (img.complete && img.naturalWidth > 0) markLoaded();
+}
+window._setCutsceneImg = _setCutsceneImg;
+
 window.toggleShop = function() {
     // Loja não abre com inimigo vivo: nada de comprar/curar no meio do combate
     // (mesmo critério da bolsa: Inventory.inCombat). O acampamento entre andares não passa aqui.
@@ -13222,7 +13269,11 @@ const EndingSystem = {
             return '<div class="end-art end-art-credits" aria-hidden="true">' + ENDING_ART_CREDITS + s + '</div>';
         }
         if (!ENDING_ART[kind]) return '';
-        return '<div class="end-art end-art-' + kind + '" aria-hidden="true">' + ENDING_ART[kind] + '</div>';
+        return '<div class="end-art end-art-' + kind + '" aria-hidden="true">'
+            + ENDING_ART[kind]
+            + '<img class="ea-bg-img" src="cutscenes/ending-' + kind + '.webp" alt="" decoding="async" onload="this.classList.add(\'is-loaded\');if(this.previousElementSibling)this.previousElementSibling.style.display=\'none\';" onerror="this.remove()">'
+            + '<div class="ea-scrim"></div>'
+            + '</div>';
     },
 
     begin(finalChoice) {
@@ -22469,16 +22520,18 @@ const NarrativeSystem = {
             ov.id = 'boss-cutscene-overlay';
             ov.setAttribute('role', 'dialog');
             ov.setAttribute('aria-modal', 'true');
-            ov.style.cssText = 'position:fixed;inset:0;z-index:2001;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;background:rgba(6,2,8,0.96);';
+            ov.style.cssText = 'position:fixed;inset:0;z-index:2001;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;background:rgba(6,2,8,0.96);overflow-y:auto;';
             ov.innerHTML = '<div style="max-width:380px;width:100%;text-align:center;">'
-                + '<div id="boss-cutscene-speaker" style="font-size:11px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:#c084fc;margin:0 0 14px;"></div>'
-                + '<p id="boss-cutscene-text" aria-live="polite" style="font-size:16px;line-height:1.65;color:rgba(255,255,255,0.92);font-style:italic;white-space:pre-line;margin:0 0 22px;min-height:9em;"></p>'
+                + '<div class="cutscene-frame" style="border-color:rgba(255,184,102,0.28);"><img id="boss-cutscene-art" class="cutscene-img" alt="" decoding="async"></div>'
+                + '<div id="boss-cutscene-speaker" style="font-size:11px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:#c084fc;margin:0 0 12px;"></div>'
+                + '<p id="boss-cutscene-text" aria-live="polite" style="font-size:15.5px;line-height:1.6;color:rgba(255,255,255,0.92);font-style:italic;white-space:pre-line;margin:0 0 20px;min-height:6em;"></p>'
                 + '<div style="display:flex;gap:10px;">'
                 + '<button type="button" id="boss-cutscene-skip" style="flex:1;padding:10px;border-radius:12px;font-size:0.8rem;font-weight:700;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.55);cursor:pointer;touch-action:manipulation;"></button>'
                 + '<button type="button" id="boss-cutscene-next" style="flex:1;padding:10px;border-radius:12px;font-size:0.8rem;font-weight:700;background:linear-gradient(135deg,rgba(100,60,200,0.3),rgba(157,78,221,0.2));border:1.5px solid rgba(157,78,221,0.45);color:#c084fc;cursor:pointer;touch-action:manipulation;"></button>'
                 + '</div></div>';
             document.body.appendChild(ov);
             this._bossOv = ov;
+            if (window._setCutsceneImg) _setCutsceneImg(this._bossEl('boss-cutscene-art'), 'cutscenes/boss-guardian.webp');
             const self = this;
             const skip = this._bossEl('boss-cutscene-skip'), next = this._bossEl('boss-cutscene-next');
             if (skip) skip.addEventListener('click', function() { self._closeBossCutscene(); });
@@ -43396,6 +43449,7 @@ const PrologueSystem = {
     visible: false,
     page: 0,
     PAGE_KEYS: ['prologue.p1', 'prologue.p2', 'prologue.p3', 'prologue.p4'],
+    SCENE_ARTS: ['cutscenes/opening-1.webp', 'cutscenes/opening-2.webp', 'cutscenes/opening-3.webp', 'cutscenes/opening-4.webp'],
     _bound: false,
     _hideTimer: null,
 
@@ -43459,6 +43513,7 @@ const PrologueSystem = {
     },
 
     _render() {
+        if (window._setCutsceneImg) _setCutsceneImg(this._el('prologue-art'), this.SCENE_ARTS[this.page]);
         const p = this._el('prologue-text');
         if (p) p.textContent = window.I18n ? I18n.t(this.PAGE_KEYS[this.page]) : this.PAGE_KEYS[this.page];
         // Última página: o botão principal vira "Descer".
@@ -43538,6 +43593,7 @@ const OpeningSystem = {
     visible: false,
     scene: 0,
     SCENE_KEYS: ['opening.s1', 'opening.s2', 'opening.s3', 'opening.s4'],
+    SCENE_ARTS: ['cutscenes/opening-1.webp', 'cutscenes/opening-2.webp', 'cutscenes/opening-3.webp', 'cutscenes/opening-4.webp'],
     _bound: false,
     _timer: null,
     _raf: 0,
@@ -43617,6 +43673,7 @@ const OpeningSystem = {
     },
 
     _render() {
+        if (window._setCutsceneImg) _setCutsceneImg(this._el('opening-art'), this.SCENE_ARTS[this.scene]);
         const p = this._el('opening-scene');
         if (p) {
             p.classList.remove('on');
@@ -43734,6 +43791,10 @@ const OpeningSystem = {
         this.visible = true;
         this.scene = 0;
         this._paused = false;
+        if (!this._preloaded && Array.isArray(this.SCENE_ARTS)) {
+            this._preloaded = true;
+            this.SCENE_ARTS.forEach(function(src) { const im = new Image(); im.src = src; });
+        }
         this._render();
         el.style.display = 'flex';
         el.style.opacity = '1';
@@ -43896,6 +43957,7 @@ const ProphecyScene = {
         this.visible = true;
         this.line = 0;
         this._paused = false;
+        if (window._setCutsceneImg) _setCutsceneImg(this._el('prophecy-art'), 'cutscenes/prophecy-vael.webp');
         this._render();
         el.style.display = 'flex';
         el.style.opacity = '1';
