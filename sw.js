@@ -30,7 +30,11 @@ const APP_SHELL = ['./', './index.html', './manifest.webmanifest',
     './cutscenes/opening-1.webp', './cutscenes/opening-2.webp',
     './cutscenes/opening-3.webp', './cutscenes/opening-4.webp',
     './cutscenes/prophecy-vael.webp', './cutscenes/boss-guardian.webp',
-    './cutscenes/ending-blood.webp', './cutscenes/ending-freedom.webp', './cutscenes/ending-peace.webp'];
+    './cutscenes/ending-blood.webp', './cutscenes/ending-freedom.webp', './cutscenes/ending-peace.webp',
+    './art/menu-bg.webp', './art/abyss-opening.webp', './art/camp-banner.webp',
+    './art/gameover-veil.webp', './art/win-surface.webp',
+    './art/biome-dungeon.webp', './art/biome-crypt.webp', './art/biome-lava.webp', './art/biome-forest.webp',
+    './art/hero-warrior.webp', './art/hero-rogue.webp', './art/hero-mage.webp', './art/hero-elf.webp'];
 
 self.addEventListener('install', (event) => {
     event.waitUntil(
