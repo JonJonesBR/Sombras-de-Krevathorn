@@ -38,8 +38,11 @@ const APP_SHELL = ['./', './index.html', './manifest.webmanifest',
     './art/npc-guide.webp', './art/npc-merchant.webp', './art/npc-oracle.webp',
     './art/boss-shadow_warden.webp', './art/boss-dark_lord.webp', './art/boss-death_herald.webp',
     './art/boss-stone_colossus.webp', './art/boss-specter.webp', './art/boss-soul_devourer.webp',
-    './art/boss-bone_lord.webp', './art/boss-corrupted.webp', './art/boss-magma_titan.webp',
-    './art/boss-thorn_king.webp'];
+    './art/boss-bone_lord.webp', './art/boss-corrupted.webp', './art/boss-deep_demon.webp',
+    './art/boss-magma_titan.webp', './art/boss-thorn_king.webp',
+    './art/relic-vampiro.webp', './art/relic-ventos.webp', './art/relic-pedra.webp', './art/relic-alma.webp',
+    './art/relic-regen.webp', './art/relic-trovao.webp', './art/relic-aguia.webp', './art/relic-espinhos.webp',
+    './art/relic-mirror.webp', './art/relic-explosao.webp', './art/relic-furia.webp', './art/relic-berserker.webp'];
 
 self.addEventListener('install', (event) => {
     event.waitUntil(

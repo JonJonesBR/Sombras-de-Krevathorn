@@ -39552,6 +39552,28 @@ const RELICS = {
     oraculo:       { id:'oraculo',       nameKey:'relic.oraculo.name',        name:'Olho do Oráculo',     descKey:'relic.oraculo.desc',        desc:'Dano +15% e fraqueza do chefe revelada', lore:'Vael o fez com a própria visão, antes de ser cego. Não mostra o caminho: mostra onde o Guardião não pode se defender. A fraqueza só aparece no primeiro golpe.', icon:'', color:'#cc88ff', rarity:'epico'    },
 };
 
+const _RELIC_ART_FILES = {
+    vampiro: 'art/relic-vampiro.webp',
+    ventos: 'art/relic-ventos.webp',
+    pedra: 'art/relic-pedra.webp',
+    alma: 'art/relic-alma.webp',
+    regen: 'art/relic-regen.webp',
+    trovao: 'art/relic-trovao.webp',
+    aguia: 'art/relic-aguia.webp',
+    espinhos: 'art/relic-espinhos.webp',
+    mirror: 'art/relic-mirror.webp',
+    explosao: 'art/relic-explosao.webp',
+    furia: 'art/relic-furia.webp',
+    berserker: 'art/relic-berserker.webp'
+};
+function _relicArtHtml(id, color, size) {
+    const src = _RELIC_ART_FILES[id];
+    if (!src) return '';
+    const sz = size || 40;
+    const b = color ? color + '55' : 'rgba(224,182,255,0.3)';
+    return '<img src="' + src + '" alt="" aria-hidden="true" decoding="async" style="width:' + sz + 'px;height:' + sz + 'px;border-radius:10px;object-fit:cover;flex-shrink:0;border:1px solid ' + b + ';background:#0a0612" onerror="this.remove()">';
+}
+
 const RelicSystem = {
     // Initializer to avoid errors in GameInit
     init() {
@@ -41386,12 +41408,16 @@ window.SkillTreeUI = SkillTreeUI;
                 const r = RELICS[id];
                 if (!r) return '';
                 const lv = RelicSystem.level(player, id);
+                const art = _relicArtHtml(id, r.color, 42);
                 return '<div class="bag-card" style="cursor:default;border-color:' + r.color + '66;">'
+                    + '<div style="display:flex;gap:10px;align-items:center;">'
+                    + art
+                    + '<div style="flex:1;min-width:0;">'
                     + '<span style="display:flex;justify-content:space-between;gap:8px;align-items:center;">'
                     + '<span style="font-size:calc(12px * var(--font-scale,1));font-weight:700;color:' + r.color + ';">' + this._esc(_L(r.nameKey, r.name)) + '</span>'
                     + '<span style="flex:none;font-size:calc(10px * var(--font-scale,1));font-weight:800;color:#e6d0ff;">' + this._esc(_L('inv.relicLevel', 'Nv.{n}').replace('{n}', String(lv))) + '</span></span>'
                     + '<span style="display:block;font-size:calc(11px * var(--font-scale,1));color:#fff;margin-top:4px;line-height:1.3;">' + this._esc(_L(r.descKey, r.desc)) + '</span>'
-                    + '</div>';
+                    + '</div></div></div>';
             }).join('') + '</div>';
         },
 
@@ -42695,6 +42721,7 @@ renderBestiaryContent() {
         soul_devourer: 'art/boss-soul_devourer.webp',
         bone_lord: 'art/boss-bone_lord.webp',
         corrupted: 'art/boss-corrupted.webp',
+        deep_demon: 'art/boss-deep_demon.webp',
         magma_titan: 'art/boss-magma_titan.webp',
         thorn_king: 'art/boss-thorn_king.webp',
         final_guardian: 'cutscenes/boss-guardian.webp'
@@ -43164,12 +43191,18 @@ renderAchievementsContent() {
                 const r = RELICS[id];
                 const known = !!seen[id];
                 const color = r.color || COLORS.TEXT_DIM;
+                const art = known ? _relicArtHtml(id, color, 44) : '';
                 return `<div style="padding:10px 12px;border-radius:12px;border:1px solid ${known ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.06)'};background:${known ? 'rgba(30,20,60,0.5)' : 'rgba(255,255,255,0.02)'};${known ? '' : 'opacity:0.7'}">
-                    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
-                        <span style="font-weight:700;font-size:12px;color:${known ? color : COLORS.TEXT_MUTED}">${known ? _L(r.nameKey, r.name) : '???'}</span>
-                        <span style="font-size:calc(10px * var(--font-scale,1));color:${COLORS.TEXT_MUTED};text-transform:uppercase;letter-spacing:0.05em">${known ? _L(r.descKey, r.desc) : _L('ui.bestiaryLocked', 'Bloqueado')}</span>
+                    <div style="display:flex;gap:10px;align-items:center">
+                        ${art}
+                        <div style="flex:1;min-width:0">
+                            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+                                <span style="font-weight:700;font-size:12px;color:${known ? color : COLORS.TEXT_MUTED}">${known ? _L(r.nameKey, r.name) : '???'}</span>
+                                <span style="font-size:calc(10px * var(--font-scale,1));color:${COLORS.TEXT_MUTED};text-transform:uppercase;letter-spacing:0.05em">${known ? _L(r.descKey, r.desc) : _L('ui.bestiaryLocked', 'Bloqueado')}</span>
+                            </div>
+                            <div style="font-size:10px;color:${COLORS.TEXT_DIM};margin-top:4px;line-height:1.4">${known ? _L('relic.' + r.id + '.lore', r.lore || '') : _L('relic.locked', 'Relíquia ainda não encontrada.')}</div>
+                        </div>
                     </div>
-                    <div style="font-size:10px;color:${COLORS.TEXT_DIM};margin-top:4px;line-height:1.4">${known ? _L('relic.' + r.id + '.lore', r.lore || '') : _L('relic.locked', 'Relíquia ainda não encontrada.')}</div>
                 </div>`;
             }).join('');
             return `
