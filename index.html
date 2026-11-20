@@ -2823,10 +2823,11 @@ const CanvasRecovery = (() => {
         _step('luz', () => {
             if (typeof LightPixelizer !== 'undefined') LightPixelizer.reset();
             _cachedLightCanvas = null; _lightingThrottle = 0;
+            if (typeof _airGradCanvas !== 'undefined') { _airGradCanvas = null; _airGradColor = null; }
         });
         _step('efeitos', () => {
             if (typeof ScreenEffects === 'undefined') return;
-            ScreenEffects._grainCanvas = null;
+            ScreenEffects._grainCanvas = null; ScreenEffects._grainPattern = null;
             ScreenEffects._chromaCanvas = null; ScreenEffects._chromaCtx = null;
         });
         _step('mapas', () => {
@@ -3194,6 +3195,7 @@ function _resizeWorldBuffers() {
         worldCanvas.width = bufW;
         worldCanvas.height = bufH;
     }
+    if (wctx) wctx.imageSmoothingEnabled = false;
     _frameStale = true;
 }
 
@@ -14568,21 +14570,56 @@ function _updateWeather() {
 
 function _drawWeatherOverlay(ctx) {
     if (!weather) return;
+    if (weather.type !== 'rain' && weather.type !== 'storm') return;
+    const isStorm = weather.type === 'storm';
+    const rm = !!(window.GameSettings && GameSettings.reducedMotion);
     ctx.save();
-    if (weather.type === 'rain') {
-        ctx.strokeStyle = 'rgba(150,180,255,0.25)';
-        ctx.lineWidth = 1;
-        for (let i = 0; i < 40; i++) {
-            const rx = (i * 37 + gameTime * 4) % (width + 40) - 20;
-            const ry = (i * 53 + gameTime * 9) % (height + 40) - 20;
-            ctx.beginPath();
-            ctx.moveTo(rx, ry);
-            ctx.lineTo(rx - 4, ry + 14);
-            ctx.stroke();
+    // Gotas de chuva agrupadas em um único beginPath/stroke (custo mínimo no mobile)
+    const count = isStorm ? 64 : 40;
+    const dx = isStorm ? -7 : -4, dy = isStorm ? 18 : 14;
+    const spdX = isStorm ? 7 : 4, spdY = isStorm ? 13 : 9;
+    const t = rm ? 0 : gameTime;
+    ctx.strokeStyle = isStorm ? 'rgba(170,200,255,0.32)' : 'rgba(150,180,255,0.25)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let i = 0; i < count; i++) {
+        const rx = (i * 37 + t * spdX) % (width + 40) - 20;
+        const ry = (i * 53 + t * spdY) % (height + 40) - 20;
+        ctx.moveTo(rx, ry);
+        ctx.lineTo(rx + dx, ry + dy);
+    }
+    ctx.stroke();
+
+    // Respingos pixelados determinísticos no chão (hash de índice + tempo quantizado)
+    if (!rm && width > 20 && height > 20) {
+        const splashCount = isStorm ? 8 : 6;
+        const tick = gameTime >> 2;
+        const frame = (gameTime >> 1) & 1;
+        ctx.fillStyle = isStorm ? 'rgba(190,220,255,0.38)' : 'rgba(170,200,255,0.30)';
+        for (let i = 0; i < splashCount; i++) {
+            let h = Math.imul(((i + 1) * 73856093) ^ (tick * 19349663), 0x9E3779B1) >>> 0;
+            h ^= h >>> 15;
+            const sx = (h % (width - 16)) + 8;
+            const sy = ((h >>> 10) % (height - 16)) + 8;
+            if (frame === 0) {
+                ctx.fillRect(sx - 1, sy, 3, 1);
+            } else {
+                ctx.fillRect(sx - 3, sy - 1, 2, 1);
+                ctx.fillRect(sx + 2, sy - 1, 2, 1);
+            }
         }
     }
-    // Tempestade: sem véu escuro sobre a tela (antes escurecia o mapa inteiro a cada ~20 s).
-    // O efeito da tempestade é o raio (flash e dano em _updateWeather), não escuridão.
+
+    // Tempestade: pulso sutil pré-raio sem escurecer a tela (o clarão principal ocorre no impacto em _updateWeather)
+    if (isStorm && !rm) {
+        const iv = CONFIG.WEATHER_STORM_STRIKE_INTERVAL || 240;
+        const rem = iv - (gameTime % iv);
+        if (rem <= 12 && rem > 0) {
+            const pulse = (rem <= 3 || (rem >= 8 && rem <= 10)) ? 0.08 : 0.03;
+            ctx.fillStyle = 'rgba(200,225,255,' + pulse + ')';
+            ctx.fillRect(0, 0, width, height);
+        }
+    }
     ctx.restore();
 }
 
@@ -14773,10 +14810,14 @@ function _updateEntitySimulation() {
 
     for (let i = 0; i < bullets.length; i++) bullets[i].update(map, entities, player);
     
-    // Update visual trails
+    // Update visual trails (pooled on expiry)
     for (let i = trails.length - 1; i >= 0; i--) {
         trails[i].update();
-        if (!trails[i].alive) trails.splice(i, 1);
+        if (!trails[i].alive) {
+            if (window.PoolManager) PoolManager.release('Trail', trails[i]);
+            trails[i] = trails[trails.length - 1];
+            trails.pop();
+        }
     }
 
     // Staggered particle updates
@@ -15739,6 +15780,35 @@ const ENEMY_SPAWN_FACTORIES = {
 };
 if (typeof window !== 'undefined') window.ENEMY_SPAWN_FACTORIES = ENEMY_SPAWN_FACTORIES;
 
+const BOSS_PORTRAIT_FILES = {
+    shadow_warden: 'art/boss-shadow_warden.webp',
+    boss: 'art/boss-shadow_warden.webp',
+    dark_lord: 'art/boss-dark_lord.webp',
+    death_herald: 'art/boss-death_herald.webp',
+    stone_colossus: 'art/boss-stone_colossus.webp',
+    specter: 'art/boss-specter.webp',
+    soul_devourer: 'art/boss-soul_devourer.webp',
+    bone_lord: 'art/boss-bone_lord.webp',
+    corrupted: 'art/boss-corrupted.webp',
+    deep_demon: 'art/boss-deep_demon.webp',
+    magma_titan: 'art/boss-magma_titan.webp',
+    thorn_king: 'art/boss-thorn_king.webp',
+    final_guardian: 'cutscenes/boss-guardian.webp'
+};
+const _bossPortraitCache = {};
+function _getBossPortrait(key) {
+    if (!key || !BOSS_PORTRAIT_FILES[key]) return null;
+    let im = _bossPortraitCache[key];
+    if (!im) {
+        im = new Image();
+        im._failed = false;
+        im.onerror = () => { im._failed = true; };
+        im.src = BOSS_PORTRAIT_FILES[key];
+        _bossPortraitCache[key] = im;
+    }
+    return (!im._failed && im.complete && im.naturalWidth > 0) ? im : null;
+}
+
 // Chefe do andar: marca a luta, cria o Boss, anuncia no log e no banner. Usada pelo sorteio normal
 // e pela aparição imediata (meta de abates atingida sem chefe), para não duplicar o bloco.
 function _spawnFloorBoss(eSpawn) {
@@ -15776,7 +15846,9 @@ function _spawnFloorBoss(eSpawn) {
     bossActive = true;
     if (player) player._hitSinceBoss = false; // início da luta: conta dano desde aqui (conquista 'Intocável')
     SND.playBoss(); SND.startBossMusic(boss._blueprint ? boss._blueprint.key : null); shake = 20; ScreenEffects.onBossSpawn(); triggerCamZoom(0.10, 40);
-    _bossBanner = { name: _bossNome(boss), nameKey: null, timer: 90, line: (boss._blueprint && window.I18n) ? I18n.t('boss.' + boss._blueprint.key + '.intro') : null };
+    const _bannerKey = boss._blueprint ? boss._blueprint.key : null;
+    if (_bannerKey) _getBossPortrait(_bannerKey);
+    _bossBanner = { name: _bossNome(boss), nameKey: null, key: _bannerKey, timer: 90, line: (boss._blueprint && window.I18n) ? I18n.t('boss.' + boss._blueprint.key + '.intro') : null };
 }
 
 // Estado dos grupos (por andar): respiro restante em frames (conta só com poucos vivos, 60 por tick) e o
@@ -16465,9 +16537,58 @@ function drawGlow(ctx2, px, py, r, color, intensity = 0.35) {
     if (window.GFX !== undefined && window.GFX.glows === false) return;
     const prev = ctx2.globalCompositeOperation;
     ctx2.globalCompositeOperation = 'lighter';
-    // Brilho discreto em pixel: 1 disco com só a borda externa em xadrez (~0.55x do raio anterior)
-    ctx2.globalAlpha = intensity * 0.3;
-    PixelFX.drawDisc(ctx2, px, py, r * 1.2, color, null, true);
+    ctx2.globalAlpha = intensity * 0.35;
+    const rc = Math.max(1, Math.min(20, Math.round((r * 1.2) / 3)));
+    const key = 'glow|' + rc + '|' + color;
+    let spr = PixelFX.get(key);
+    if (!spr) {
+        let cr = 255, cg = 220, cb = 160, parsed = false;
+        if (typeof color === 'string') {
+            if (color[0] === '#') {
+                if (color.length === 7) {
+                    cr = parseInt(color.slice(1, 3), 16);
+                    cg = parseInt(color.slice(3, 5), 16);
+                    cb = parseInt(color.slice(5, 7), 16);
+                    parsed = !isNaN(cr) && !isNaN(cg) && !isNaN(cb);
+                } else if (color.length === 4) {
+                    cr = parseInt(color[1] + color[1], 16);
+                    cg = parseInt(color[2] + color[2], 16);
+                    cb = parseInt(color[3] + color[3], 16);
+                    parsed = !isNaN(cr) && !isNaN(cg) && !isNaN(cb);
+                }
+            } else if (color.startsWith('rgb')) {
+                const m = color.match(/\d+/g);
+                if (m && m.length >= 3) {
+                    cr = +m[0]; cg = +m[1]; cb = +m[2];
+                    parsed = true;
+                }
+            }
+        }
+        if (parsed) {
+            const rows = [];
+            const r2 = rc * rc;
+            const c2 = r2 * 0.36;
+            for (let dy = -rc; dy <= rc; dy++) {
+                let row = '';
+                for (let dx = -rc; dx <= rc; dx++) {
+                    const d2 = dx * dx + dy * dy;
+                    if (d2 <= c2) row += 'c';
+                    else if (d2 <= r2 && ((dx + dy) & 1) === 0) row += 'h';
+                    else row += '.';
+                }
+                rows.push(row);
+            }
+            spr = PixelFX.bake(key, rows, {
+                c: `rgba(${cr},${cg},${cb},0.9)`,
+                h: `rgba(${cr},${cg},${cb},0.42)`
+            }, 3);
+        }
+    }
+    if (spr) {
+        PixelFX.draw(ctx2, spr, Math.round(px - spr.width * 0.5), Math.round(py - spr.height * 0.5));
+    } else {
+        PixelFX.drawDisc(ctx2, px, py, r * 1.2, color, null, true);
+    }
     ctx2.globalCompositeOperation = prev;
     ctx2.globalAlpha = 1;
 }
@@ -16496,6 +16617,7 @@ function _drawWorldLayer() {
     // Map logical coordinates into the (possibly scaled) world buffer so the
     // world draws at full logical size while the buffer stays cheap at low autoRes.
     wctx.setTransform(_autoResScale || 1, 0, 0, _autoResScale || 1, 0, 0);
+    wctx.imageSmoothingEnabled = false;
     // Clear world canvas (+2 covers the buffer rounding on the far edge/bottom)
     wctx.clearRect(0, 0, width + 2, height + 2);
     
@@ -16556,32 +16678,27 @@ function _drawWorldLayer() {
         const batch = batchByColor[color];
         if (batch._frame !== _pframe || batch.length === 0) continue;
         wctx.fillStyle = color;
-        wctx.strokeStyle = color;
         for (let j = 0; j < batch.length; j++) {
             const p = batch[j];
             const alpha = Math.max(0, p.life);
-            wctx.globalAlpha = alpha;
             const s = p.s * (p.life / p.maxLife);
             const px = p.x - camX;
             const py = p.y - camY;
+            const sz = Math.max(2, Math.round(s * 2));
+            const gx = Math.round((px - sz * 0.5) * 0.5) * 2;
+            const gy = Math.round((py - sz * 0.5) * 0.5) * 2;
 
-            if (p.shape === 'circle') {
-                wctx.beginPath();
-                wctx.arc(px, py, Math.max(s, 0.5), 0, Math.PI * 2);
-                wctx.fill();
-            } else {
-                wctx.fillRect(px - s, py - s, s * 2, s * 2);
-            }
-
-            // Streak trail: squared-magnitude compare avoids Math.sqrt per particle
+            // Pixel-art trail behind fast particles (squared-magnitude compare avoids Math.sqrt)
             if (p.vx * p.vx + p.vy * p.vy > 4) {
-                wctx.lineWidth = Math.max(s, 1) * 2;
-                wctx.lineCap = 'round';
-                wctx.beginPath();
-                wctx.moveTo(px, py);
-                wctx.lineTo(px - p.vx * 2, py - p.vy * 2);
-                wctx.stroke();
+                const ts = Math.max(2, Math.round(sz * 0.5));
+                const tx = Math.round((px - p.vx * 1.5 - ts * 0.5) * 0.5) * 2;
+                const ty = Math.round((py - p.vy * 1.5 - ts * 0.5) * 0.5) * 2;
+                wctx.globalAlpha = alpha * 0.5;
+                wctx.fillRect(tx, ty, ts, ts);
             }
+
+            wctx.globalAlpha = alpha;
+            wctx.fillRect(gx, gy, sz, sz);
         }
     }
     wctx.globalAlpha = 1;
@@ -16652,24 +16769,33 @@ function _drawWorldLayer() {
 
 // Screen-space ambient dust motes drifting in the dark (cheap: pure rects,
 // redrawn every frame over the world). Reads as torch-candle dust.
+const _AMBIENT_MOTE_STYLES = {
+    dungeon:  { color: '#ffe9c8', speedMult: 1.0,  sizeBase: 1, alphaMult: 1.0  },
+    lavaCave: { color: '#ff8a45', speedMult: 1.65, sizeBase: 2, alphaMult: 1.25 },
+    crypt:    { color: '#b7f4ff', speedMult: 0.72, sizeBase: 1, alphaMult: 1.15 },
+    forest:   { color: '#c8ffa8', speedMult: 0.85, sizeBase: 1, alphaMult: 1.1  }
+};
 function _drawAmbientMotes(ctx) {
     if (gameState !== 'PLAYING') return;
     if (window.GFX && window.GFX.ambientMotes === false) return;
     if (window.GameSettings && GameSettings.particlesEnabled === false) return;
     const W = width, H = height;
     const N = Math.min(26, Math.max(10, Math.floor((W * H) / 70000)));
+    const biome = (typeof BiomeSystem !== 'undefined' && BiomeSystem.currentBiome) ? BiomeSystem.currentBiome : 'dungeon';
+    const mStyle = _AMBIENT_MOTE_STYLES[biome] || _AMBIENT_MOTE_STYLES.dungeon;
     ctx.save();
-    ctx.fillStyle = '#ffe9c8';
+    ctx.fillStyle = mStyle.color;
     const t = gameTime * 0.018;
     for (let i = 0; i < N; i++) {
         const s1 = (i * 97) & 0xFF, s2 = (i * 173) & 0xFF;
-        const speed = 0.35 + ((s2 % 3) * 0.18);
-        let mx = ((s1 * 53 + Math.floor(t * 2.4 + i * 7) * 13) % (W + 80)) - 40;
+        const speed = (0.35 + ((s2 % 3) * 0.18)) * mStyle.speedMult;
+        let mx = ((s1 * 53 + Math.floor(t * 2.4 * mStyle.speedMult + i * 7) * 13) % (W + 80)) - 40;
         let my = ((s2 * 71 - Math.floor(t * speed * 11 + i * 11)) % (H + 80)) - 40;
         if (mx < 0) mx += W + 80;
         if (my < 0) my += H + 80;
-        ctx.globalAlpha = 0.05 + ((s1 % 5) * 0.02);
-        ctx.fillRect(mx, my, 1 + (s1 % 2), 1 + (s1 % 2));
+        ctx.globalAlpha = Math.min(0.28, (0.05 + ((s1 % 5) * 0.02)) * mStyle.alphaMult);
+        const sz = mStyle.sizeBase + (s1 % 2);
+        ctx.fillRect(mx, my, sz, sz);
     }
     // Ember motes rising from light props in view (torches/braziers/crystals)
     if (typeof map !== 'undefined' && map && map.litProps && map.litProps.length && typeof BiomeSystem !== 'undefined') {
@@ -16697,6 +16823,8 @@ function _drawAmbientMotes(ctx) {
 
 let _lightingThrottle = 0;
 let _cachedLightCanvas = null;
+let _airGradCanvas = null;
+let _airGradColor = null;
 let _particleBatch = Object.create(null);
 let _particleBatchFrame = 0;
 let _cachedAliveEnemies = 0;
@@ -16817,17 +16945,26 @@ function _drawLightingLayer() {
             // colored atmosphere (single gradient + fill per recompose, gated
             // exactly like the tint pass above).
             const lc = BiomeSystem.getLightColor();
-            const lr_ = parseInt(lc.slice(1, 3), 16), lg_ = parseInt(lc.slice(3, 5), 16), lb_ = parseInt(lc.slice(5, 7), 16);
-            const airCx = width * 0.5, airCy = height * 0.5;
-            const airR = Math.sqrt(airCx * airCx + airCy * airCy);
-            const agrad = T.createRadialGradient(airCx, airCy, 0, airCx, airCy, airR);
-            agrad.addColorStop(0, `rgba(${lr_},${lg_},${lb_},0.08)`);
-            agrad.addColorStop(0.45, `rgba(${lr_},${lg_},${lb_},0.03)`);
-            agrad.addColorStop(1, `rgba(${lr_},${lg_},${lb_},0)`);
+            if (!_airGradCanvas || _airGradColor !== lc) {
+                if (!_airGradCanvas) {
+                    _airGradCanvas = document.createElement('canvas');
+                    _airGradCanvas.width = 64;
+                    _airGradCanvas.height = 64;
+                }
+                const ac = _airGradCanvas.getContext('2d');
+                ac.clearRect(0, 0, 64, 64);
+                const lr_ = parseInt(lc.slice(1, 3), 16), lg_ = parseInt(lc.slice(3, 5), 16), lb_ = parseInt(lc.slice(5, 7), 16);
+                const agrad = ac.createRadialGradient(32, 32, 0, 32, 32, 45.26);
+                agrad.addColorStop(0, `rgba(${lr_},${lg_},${lb_},0.08)`);
+                agrad.addColorStop(0.45, `rgba(${lr_},${lg_},${lb_},0.03)`);
+                agrad.addColorStop(1, `rgba(${lr_},${lg_},${lb_},0)`);
+                ac.fillStyle = agrad;
+                ac.fillRect(0, 0, 64, 64);
+                _airGradColor = lc;
+            }
             T.save();
             T.globalCompositeOperation = 'lighter';
-            T.fillStyle = agrad;
-            T.fillRect(0, 0, width, height);
+            T.drawImage(_airGradCanvas, 0, 0, width, height);
             T.restore();
         }
         
@@ -17056,29 +17193,50 @@ function draw() {
             ctx.save();
             const ba = bt > 50 ? Math.min(1, (90 - bt) / 20) : Math.max(0, bt / 50);
             ctx.globalAlpha = ba;
-            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.fillStyle = 'rgba(0,0,0,0.6)';
             const bLine = _bossBanner.line;
+            const bImg = _bossBanner.key ? _getBossPortrait(_bossBanner.key) : null;
             const bH = bLine ? 104 : 80;
             // Largura da moldura acompanha a tela (celular de 360 px CSS = ~270 lógicos)
-            const bw = Math.min(300, width - 16);
-            ctx.fillRect(width/2 - bw/2, height/2 - 50, bw, bH);
+            const bw = Math.min(bImg ? 330 : 300, width - 16);
+            const bx = width / 2 - bw / 2, by = height / 2 - 50;
+            ctx.fillRect(bx, by, bw, bH);
             ctx.strokeStyle = '#ff4444';
             ctx.lineWidth = 2;
-            ctx.strokeRect(width/2 - bw/2, height/2 - 50, bw, bH);
+            ctx.strokeRect(bx, by, bw, bH);
+            let textCX = width / 2, textMaxW = bw - 24;
+            if (bImg) {
+                const ps = 48;
+                const px = bx + 12, py = by + Math.round((bH - ps) / 2);
+                ctx.save();
+                ctx.fillStyle = '#0a0612';
+                ctx.fillRect(px, py, ps, ps);
+                ctx.imageSmoothingEnabled = true;
+                ctx.drawImage(bImg, px, py, ps, ps);
+                ctx.restore();
+                ctx.strokeStyle = 'rgba(255,68,68,0.85)';
+                ctx.lineWidth = 1.5;
+                ctx.strokeRect(px, py, ps, ps);
+                const textLeft = px + ps + 10;
+                textMaxW = Math.max(80, bx + bw - textLeft - 10);
+                textCX = textLeft + textMaxW / 2;
+            }
             ctx.fillStyle = '#ff4444';
             ctx.font = `bold 14px ${COLORS.CANVAS_FONT}`;
             ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-            ctx.fillText(I18n.t('boss.banner'), width/2, height/2 - 20);
+            ctx.fillText(I18n.t('boss.banner'), textCX, height/2 - 20);
             ctx.fillStyle = '#fff';
             ctx.font = `bold 18px ${COLORS.CANVAS_FONT}`;
             const bName = (_bossBanner.nameKey && window._L) ? _L(_bossBanner.nameKey, _bossBanner.name) : _bossBanner.name;
-            if (ctx.measureText(bName).width > bw - 24) ctx.font = `bold 14px ${COLORS.CANVAS_FONT}`;
-            ctx.fillText(bName, width/2, height/2 + 10);
+            if (ctx.measureText(bName).width > textMaxW) ctx.font = `bold 14px ${COLORS.CANVAS_FONT}`;
+            if (ctx.measureText(bName).width > textMaxW) ctx.font = `bold 12px ${COLORS.CANVAS_FONT}`;
+            ctx.fillText(bName, textCX, height/2 + 10);
             if (bLine) {
                 ctx.fillStyle = '#e8d8ff';
                 ctx.font = `italic 12px ${COLORS.CANVAS_FONT}`;
-                if (ctx.measureText(bLine).width > bw - 24) ctx.font = `italic 10px ${COLORS.CANVAS_FONT}`;
-                ctx.fillText(bLine, width/2, height/2 + 36);
+                if (ctx.measureText(bLine).width > textMaxW) ctx.font = `italic 10px ${COLORS.CANVAS_FONT}`;
+                if (ctx.measureText(bLine).width > textMaxW) ctx.font = `italic 9px ${COLORS.CANVAS_FONT}`;
+                ctx.fillText(bLine, textCX, height/2 + 36);
             }
             ctx.restore();
             if (_bossBanner.timer <= 0) _bossBanner = null;
@@ -17276,20 +17434,22 @@ function _drawNavArrow(ctx, wx, wy, color) {
     ctx.translate(ax, ay);
     ctx.rotate(angle);
     ctx.scale(pulse, pulse);
-    // Forma da seta (sem texto): ~40 px de comprimento, contorno escuro de 2 px e brilho da cor
-    ctx.fillStyle = color;
-    ctx.strokeStyle = 'rgba(0,0,0,0.9)';
-    ctx.lineWidth = 2;
-    ctx.shadowColor = color;
-    ctx.shadowBlur = 10;
+    // Forma da seta (sem texto): ~40 px de comprimento, halo externo translucido + contorno escuro de 2 px
     ctx.beginPath();
     ctx.moveTo(0, 0);
     ctx.lineTo(-34, -18);
     ctx.lineTo(-26, 0);
     ctx.lineTo(-34, 18);
     ctx.closePath();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 5;
+    ctx.globalAlpha = 0.28;
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = color;
     ctx.fill();
-    ctx.shadowBlur = 0;
+    ctx.strokeStyle = 'rgba(0,0,0,0.9)';
+    ctx.lineWidth = 2;
     ctx.stroke();
     // Ponto branco no miolo da seta
     ctx.fillStyle = 'rgba(255,255,255,0.85)';
@@ -24876,6 +25036,8 @@ const ScreenEffects = {
     _bloodSplatterAlpha: 0,
     _bloodSplatterColor: '#ff0000',
     _bloodSplatterTimer: 0,
+    _splatterSeed: 1,
+    _grainPattern: null,
     
     triggerShake(intensity) {
         if (window.GameSettings && GameSettings.reducedMotion) return; // Fase B: prefers-reduced-motion
@@ -24907,6 +25069,7 @@ const ScreenEffects = {
                 this._bloodSplatterAlpha = Math.min(0.1 + damage * 0.005, 0.5);
                 this._bloodSplatterColor = '#ff0000';
                 this._bloodSplatterTimer = 15;
+                this._splatterSeed = (this._splatterSeed * 1664525 + 1013904223) >>> 0;
             }
             return;
         }
@@ -24931,6 +25094,7 @@ const ScreenEffects = {
             this._bloodSplatterAlpha = 0.6;
             this._bloodSplatterColor = '#ff8800';
             this._bloodSplatterTimer = 30;
+            this._splatterSeed = (this._splatterSeed * 1664525 + 1013904223) >>> 0;
         }
     },
     
@@ -24939,12 +25103,14 @@ const ScreenEffects = {
         this.triggerFlash(0.15, COLORS.ELITE);
         this._bloodSplatterAlpha = Math.min(this._bloodSplatterAlpha + 0.2, 0.4);
         this._bloodSplatterColor = '#ff8800';
+        this._splatterSeed = (this._splatterSeed * 1664525 + 1013904223) >>> 0;
     },
     
     onChargeHit() {
         this.triggerShake(10);
         this.triggerFlash(0.25, COLORS.DMG_CRIT);
         this._bloodSplatterAlpha = Math.min(this._bloodSplatterAlpha + 0.3, 0.6);
+        this._splatterSeed = (this._splatterSeed * 1664525 + 1013904223) >>> 0;
     },
     
     onBossPhase3(isFinal) {
@@ -25043,6 +25209,7 @@ const ScreenEffects = {
         this.triggerChromatic(6);
         this._bloodSplatterAlpha = Math.min(this._bloodSplatterAlpha + 0.4, 0.7);
         this._bloodSplatterColor = '#ff6600';
+        this._splatterSeed = (this._splatterSeed * 1664525 + 1013904223) >>> 0;
     },
     
     onLevelUp() {
@@ -25068,6 +25235,7 @@ const ScreenEffects = {
         this.triggerFlash(0.15, color);
         this._bloodSplatterAlpha = Math.min(this._bloodSplatterAlpha + 0.2, 0.5);
         this._bloodSplatterColor = color;
+        this._splatterSeed = (this._splatterSeed * 1664525 + 1013904223) >>> 0;
     },
     
     // Decaimento visual por tempo real, chamado em loop() a cada quadro (antes da simulação).
@@ -25267,6 +25435,10 @@ const ScreenEffects = {
             }
             gg.putImageData(img, 0, 0);
             this._grainCanvas = gc;
+            this._grainPattern = null;
+        }
+        if (this._grainCanvas && !this._grainPattern) {
+            this._grainPattern = ctx.createPattern(this._grainCanvas, 'repeat');
         }
         // Flash overlay
         if (this._flashAlpha > 0.01) {
@@ -25375,13 +25547,20 @@ const ScreenEffects = {
             ctx.globalAlpha = _splA * 0.4;
             ctx.fillStyle = this._bloodSplatterColor;
 
-            // Draw random blood drops on screen edges
+            // Draw deterministic blood drops on screen edges (fixed per splatter event)
             const count = 2 + Math.floor(_splA * 8);
+            const baseSeed = this._splatterSeed | 0;
             for (let i = 0; i < count; i++) {
-                const isTop = Math.random() > 0.5;
-                const sx = Math.random() * width;
-                const sy = isTop ? Math.random() * height * 0.15 : height - Math.random() * height * 0.15;
-                const size = 2 + Math.random() * 6;
+                let h = Math.imul(baseSeed ^ (i * 0x9e3779b1), 0x85ebca6b) >>> 0;
+                h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35) >>> 0;
+                const r0 = (h & 0xFFFF) / 65536;
+                const r1 = ((h >>> 16) & 0xFFFF) / 65536;
+                const h2 = Math.imul(h + 1013904223, 1664525) >>> 0;
+                const r2 = (h2 & 0xFFFF) / 65536;
+                const isTop = (h2 & 0x10000) !== 0;
+                const sx = r0 * width;
+                const sy = isTop ? r1 * height * 0.15 : height - r1 * height * 0.15;
+                const size = 2 + r2 * 6;
                 // Gota de sangue em células de 3 px (raio de 1 a 4 células)
                 const nC = Math.max(1, Math.round(size / 3));
                 const gx0 = PixelFX.snap(sx, 3), gy0 = PixelFX.snap(sy, 3);
@@ -25393,12 +25572,18 @@ const ScreenEffects = {
             ctx.restore();
         }
         
-        // Film grain (pre-generated noise canvas, drawn with low alpha)
+        // Film grain (pre-generated noise canvas, tiled across full viewport with low alpha)
         if ((window.GFX === undefined || window.GFX.grain) && this._grainCanvas) {
             ctx.save();
             ctx.globalAlpha = 0.035;
-            const gOff = (typeof gameTime !== 'undefined') ? Math.sin(gameTime * 0.01) * 4 - 4 : 0;
-            ctx.drawImage(this._grainCanvas, gOff, 0);
+            const gOff = (typeof gameTime !== 'undefined') ? Math.round(Math.sin(gameTime * 0.01) * 4 - 4) : 0;
+            if (this._grainPattern) {
+                ctx.translate(gOff, 0);
+                ctx.fillStyle = this._grainPattern;
+                ctx.fillRect(-gOff, 0, width + 8, height);
+            } else {
+                ctx.drawImage(this._grainCanvas, gOff, 0);
+            }
             ctx.restore();
         }
     }
@@ -28242,40 +28427,57 @@ class SlashEffect {
 }
 
 class Trail {
-    constructor(x, y, color, width=10) {
-        this.points = [{x, y, a: 1.0}];
-        this.color = color;
+    constructor(x = 0, y = 0, color = '#fff', width = 10) {
+        this.maxPoints = 8;
+        this._buf = new Float32Array(24); // 8 * (x, y, a) sem alocacao por quadro
+        this.init(x, y, color, width);
+    }
+    init(x = 0, y = 0, color = '#fff', width = 10) {
+        this._buf[0] = x; this._buf[1] = y; this._buf[2] = 1.0;
+        this.count = 1;
+        this.color = color || '#fff';
         this.width = width;
         this.alive = true;
-        this.maxPoints = 8;
+        return this;
     }
     addPoint(x, y) {
-        this.points.unshift({x, y, a: 1.0});
-        if (this.points.length > this.maxPoints) this.points.pop();
+        const b = this._buf;
+        const shiftCount = Math.min(this.count, this.maxPoints - 1);
+        for (let i = shiftCount * 3 - 1; i >= 0; i--) {
+            b[i + 3] = b[i];
+        }
+        b[0] = x; b[1] = y; b[2] = 1.0;
+        if (this.count < this.maxPoints) this.count++;
     }
     update() {
         let active = false;
-        this.points.forEach(p => {
-            p.a -= 0.1;
-            if (p.a > 0) active = true;
-        });
+        const b = this._buf;
+        const len = this.count * 3;
+        for (let i = 2; i < len; i += 3) {
+            b[i] -= 0.1;
+            if (b[i] > 0) active = true;
+        }
         if (!active) this.alive = false;
     }
     draw(ctx, cx, cy) {
         // Rastro em quadrados 2x2 alinhados à grade; alpha decresce com p.a; a cabeça é mais clara
-        if (this.points.length < 2) return;
+        if (this.count < 2) return;
+        const b = this._buf;
         ctx.save();
-        for (let i = 0; i < this.points.length - 1; i++) {
-            const p1 = this.points[i], p2 = this.points[i + 1];
-            if (p1.a <= 0) continue;
-            const dx = p2.x - p1.x, dy = p2.y - p1.y;
+        for (let i = 0; i < this.count - 1; i++) {
+            const o1 = i * 3, o2 = o1 + 3;
+            const a1 = b[o1 + 2];
+            if (a1 <= 0) continue;
+            const x1 = b[o1], y1 = b[o1 + 1];
+            const x2 = b[o2], y2 = b[o2 + 1], a2 = b[o2 + 2];
+            const dx = x2 - x1, dy = y2 - y1;
             const n = Math.max(1, Math.ceil(Math.hypot(dx, dy) / 2));
             for (let s = 0; s <= n; s++) {
                 const t = s / n;
-                const a = p1.a + (p2.a - p1.a) * t;
+                const a = a1 + (a2 - a1) * t;
                 if (a <= 0) continue;
                 const size = Math.max(2, PixelFX.snap(this.width * a * 0.5, 2));
-                const x = p1.x + dx * t - cx, y = p1.y + dy * t - cy;
+                const x = x1 + dx * t - cx, y = y1 + dy * t - cy;
                 const head = (i === 0 && s === 0);
                 ctx.globalAlpha = head ? a * 0.8 : a * 0.5;
                 ctx.fillStyle = head ? '#ffffff' : this.color;
@@ -28827,7 +29029,7 @@ const BiomeSystem = {
     },
 
     // Draw biome-specific floor details
-    drawFloorDetail(ctx, px, py, ts, tx, ty) {
+    drawFloorDetail(ctx, px, py, ts, tx, ty, map) {
         const biome = this.getBiome();
         if (!biome.floorDetail) return;
         const h = (tx * 374761393 + ty * 668265263) & 0xFFFF;
@@ -28860,6 +29062,12 @@ const BiomeSystem = {
             A.pxLine(ctx, px, py, 8, 6, 14, 12, '#ff4400', glow * 0.3);
             A.pxLine(ctx, px, py, 1, 13, 8, 5, '#ff4400', glow * 0.8);
             A.pxLine(ctx, px, py, 8, 5, 14, 11, '#ff4400', glow * 0.8);
+            if (map && map._lavaSparks && map._lavaSparks.length < 120) {
+                map._lavaSparks.push({ x: px + sx * 3 + 1, y: py + sy * 3 + 1, seed: h & 0xFF });
+                if ((h & 3) === 0 && map._lavaSparks.length < 120) {
+                    map._lavaSparks.push({ x: px + 24, y: py + 17, seed: (h >> 8) & 0xFF });
+                }
+            }
         } else if (this.currentBiome === 'crypt') {
             // As juntas vêm do tile base. Ossos/caveira só em ~5% dos pisos
             if (h % 100 < 5) {
@@ -30060,7 +30268,7 @@ window.SpatialHash = SpatialHash;
 const PoolManager = {
     pools: {},
     init() {
-        this.pools = { Bullet: [], Particle: [] };
+        this.pools = { Bullet: [], Particle: [], Trail: [] };
     },
     acquire(type, ...args) {
         if (!this.pools[type]) this.pools[type] = [];
@@ -30073,13 +30281,16 @@ const PoolManager = {
         // Fallback to dynamic instantiation if pool is empty
         if (type === 'Bullet') return new Bullet(...args);
         if (type === 'Particle') return new Particle(...args);
+        if (type === 'Trail') return new Trail(...args);
         if (type === 'DamageNumber') return new DamageNumber().init(...args);
         if (type === 'SlashEffect') return new SlashEffect().init(...args);
         return null;
     },
     release(type, item) {
+        if (!item) return;
         if (!this.pools[type]) this.pools[type] = [];
         item.alive = false;
+        if (type === 'Bullet') { item.trail = null; item.weapon = null; item.chainLastHit = null; }
         this.pools[type].push(item);
     }
 };
@@ -30184,20 +30395,25 @@ const MapTileArt = (() => {
                 g[y][x] = c;
             }
         }
+        if (mask & 2) {
+            // Cornija clara ('l'/'w') no topo da face sul + tijolos escuros alternados ('x'/'o')
+            for (let x = 0; x < N; x++) {
+                g[11][x] = (x & 3) === 1 ? 'w' : 'l';
+                g[12][x] = 'o';
+                g[13][x] = ((x + 2) & 7) === 0 ? 'o' : 'x';
+                g[14][x] = ((x >> 2) & 1) ? 'x' : 'o';
+                g[15][x] = ((x + 6) & 7) === 0 ? 'o' : 'x';
+            }
+        }
         if (mask & 4) for (let y = 0; y < N; y++) g[y][0] = 'x';
         if (mask & 8) for (let y = 0; y < N; y++) g[y][N - 1] = 'x';
-        if (mask & 2) {
-            // Face frontal (chão ao sul): 3 px de arte com junta no topo
-            for (let x = 0; x < N; x++) { g[13][x] = 'o'; g[14][x] = 'x'; g[15][x] = 'x'; }
-            for (let x = 0; x < N; x++) if (((x + 4) & 7) === 0) g[14][x] = 'o';
-        }
         if (mask & 1) for (let x = 0; x < N; x++) g[0][x] = 'L'; // topo iluminado (chão ao norte)
         return toRows(g);
     };
 
     // Piso: lajes de 16x8 px de arte com junta sutil ('j') e 8 variantes de layout:
     // bit0/bit1 = offset vertical da junta de cada fiada, bit2 = deslocamento das juntas horizontais.
-    // Algumas lajes recebem 1 tom diferente ('p' ou 'q'). Sombra de contato em 2 degraus ('x' e 'e').
+    // Algumas lajes recebem 1 tom diferente ('p' ou 'q'). Sombra de contato em 4 degraus com dither.
     const floorRows = (mask, v) => {
         const g = grid();
         const hs = ((v >> 2) & 1) ? 4 : 0;
@@ -30214,7 +30430,14 @@ const MapTileArt = (() => {
                 g[y][x] = c;
             }
         }
-        if (mask & 1) for (let x = 0; x < N; x++) { g[0][x] = 'x'; g[1][x] = 'e'; }
+        if (mask & 1) {
+            for (let x = 0; x < N; x++) {
+                g[0][x] = 'x';
+                g[1][x] = 'x';
+                g[2][x] = 'e';
+                if (((x + 3) & 1) === 0) g[3][x] = 'e';
+            }
+        }
         if (mask & 2) for (let x = 0; x < N; x++) { g[15][x] = 'x'; g[14][x] = 'e'; }
         if (mask & 4) for (let y = 0; y < N; y++) { g[y][0] = 'x'; g[y][1] = 'e'; }
         if (mask & 8) for (let y = 0; y < N; y++) { g[y][N - 1] = 'x'; g[y][N - 2] = 'e'; }
@@ -30362,7 +30585,82 @@ const MapTileArt = (() => {
     // Sprite do obstáculo temático (E4b-1): 16x16 células, só o miolo 12x12 é desenhado (o resto é a rocha
     // do tile). Padrão por `pat` (pedra, tábua, faixa, folhagem), tingido pelo tom do tema. Cacheado por subtipo
     // e cor (chave 'theme|obst|...', purgada junto com o resto do tema ao trocar de andar).
-    const obstacleChar = (pat, x, y) => {
+    const obstacleChar = (pat, ob, x, y) => {
+        if (ob === 'tree') {
+            const dx = x - 7.5, dy = y - 5.5, d2 = dx * dx + dy * dy;
+            if (d2 <= 26) {
+                if (d2 >= 18) return 'o';
+                if (dx <= -1 && dy <= -1) return 'l';
+                if (dx >= 2 || dy >= 2) return 's';
+                return ((x * 7 + y * 3) % 5 === 0) ? 'l' : 'b';
+            }
+            if (y >= 9 && y <= 14 && x >= 6 && x <= 9) {
+                return (x === 6 || x === 9 || y === 14) ? 'o' : (x >= 8 ? 's' : 'a');
+            }
+            return '.';
+        }
+        if (ob === 'column' || ob === 'pillar') {
+            if (y < 2 || y > 14) return '.';
+            const isCap = y <= 3, isBase = y >= 12;
+            const xMin = isBase ? 3 : (isCap ? 4 : 5);
+            const xMax = isBase ? 12 : (isCap ? 11 : 10);
+            if (x < xMin || x > xMax) return '.';
+            if (x === xMin || x === xMax || y === 2 || y === 14) return 'o';
+            if ((isCap && y === 3) || (isBase && y === 12)) return ob === 'pillar' ? 'a' : 'l';
+            if (x >= 9) return 's';
+            if (x <= 6) return 'l';
+            return ob === 'pillar' && (x === 7 || x === 8) && (y & 1) ? 'a' : 'b';
+        }
+        if (ob === 'altar') {
+            if (y < 3 || y > 14 || x < 2 || x > 13) return '.';
+            if (y >= 7 && y <= 10 && (x < 4 || x > 11)) return '.';
+            if (y === 3 || y === 14 || x === 2 || x === 13 || (y >= 7 && y <= 10 && (x === 4 || x === 11))) return 'o';
+            if (y === 6 || y === 11) return 'o';
+            if (y <= 5 && x >= 6 && x <= 9) return 'a';
+            if (y >= 8 && y <= 10 && (x === 7 || x === 8)) return 'a';
+            return (y >= 12 || x >= 11) ? 's' : (y === 4 ? 'l' : 'b');
+        }
+        if (ob === 'throne') {
+            if (y < 1 || y > 14 || x < 3 || x > 12) return '.';
+            if (y <= 7 && (x < 4 || x > 11)) return '.';
+            if (y === 1 && x !== 4 && x !== 7 && x !== 8 && x !== 11) return '.';
+            if (y === 1 || y === 14 || x === 3 || x === 12 || (y <= 7 && (x === 4 || x === 11))) return 'o';
+            if (y >= 8 && y <= 10 && x >= 5 && x <= 10) return 'a';
+            if (y <= 4 && (x === 7 || x === 8)) return 'a';
+            return (x >= 10 || y >= 12) ? 's' : (y <= 3 ? 'l' : 'b');
+        }
+        if (ob === 'tent') {
+            if (y < 2 || y > 13) return '.';
+            const hw = Math.min(6, Math.max(1, Math.floor((y - 1) * 0.55)));
+            const xMin = 8 - hw, xMax = 7 + hw;
+            if (x < xMin || x > xMax) return '.';
+            if (x === xMin || x === xMax || y === 2 || y === 13) return 'o';
+            if (y >= 9 && (x === 7 || x === 8)) return 'o';
+            if (x % 4 === 0) return 'a';
+            return x >= 9 ? 's' : (x <= 6 ? 'l' : 'b');
+        }
+        if (ob === 'bunk') {
+            if (x < 2 || x > 13 || y < 3 || y > 13) return '.';
+            if (x === 2 || x === 13 || y === 3 || y === 13) return 'o';
+            if (y >= 5 && y <= 7 && x >= 3 && x <= 5) return 'l';
+            if (y >= 5 && y <= 11 && x >= 7 && x <= 12) return (y >= 10 ? 's' : 'a');
+            return y % 4 === 0 ? 'o' : 'b';
+        }
+        if (ob === 'shelf') {
+            if (x < 3 || x > 12 || y < 2 || y > 13) return '.';
+            if (x === 3 || x === 12 || y === 2 || y === 13 || y === 5 || y === 9) return 'o';
+            if (((x * 5 + y * 3) % 4) === 0) return 'a';
+            return x >= 10 ? 's' : (((x + y) % 3 === 0) ? 'l' : 'b');
+        }
+        if (ob === 'basalt') {
+            if (y < 1 || y > 14) return '.';
+            const xMin = y < 4 ? 6 : (y < 9 ? 5 : 4);
+            const xMax = y < 4 ? 9 : (y < 9 ? 10 : 11);
+            if (x < xMin || x > xMax) return '.';
+            if (x === xMin || x === xMax || y === 1 || y === 14) return 'o';
+            if (x === 7 && y >= 4 && y <= 10) return 'a';
+            return x >= 9 ? 's' : (x <= 6 ? 'l' : 'b');
+        }
         if (x < 2 || x > 13 || y < 2 || y > 13) return '.';
         if (x === 2 || x === 13 || y === 2 || y === 13) return 'o';
         const sh = x >= 12 || y >= 12, lt = x <= 4 || y <= 4;
@@ -30378,7 +30676,7 @@ const MapTileArt = (() => {
         const rows = [];
         for (let y = 0; y < 16; y++) {
             let row = '';
-            for (let x = 0; x < 16; x++) row += obstacleChar(spec.pat, x, y);
+            for (let x = 0; x < 16; x++) row += obstacleChar(spec.pat, spec.ob, x, y);
             rows.push(row);
         }
         const pal = { o: PixelFX.shade(mat, -0.6), s: PixelFX.shade(mat, -0.3), b: mat, l: PixelFX.shade(mat, 0.25), a: th.accent || th.particle };
@@ -30945,9 +31243,10 @@ class Map {
             bctx.globalCompositeOperation = 'lighter';
             for (let i = -9; i <= 9; i++) {
                 for (let j = -9; j <= 9; j++) {
-                    const d = Math.max(Math.abs(i), Math.abs(j));
-                    if (d > 6 && ((i + j) & 1)) continue; // borda externa em xadrez
-                    bctx.fillStyle = pal.glow + (d <= 3 ? '0.1)' : (d <= 6 ? '0.07)' : '0.05)'));
+                    const d2 = i * i + j * j;
+                    if (d2 > 81) continue;
+                    if (d2 > 42 && ((i + j) & 1)) continue; // borda externa em xadrez
+                    bctx.fillStyle = pal.glow + (d2 <= 12 ? '0.11)' : (d2 <= 42 ? '0.075)' : '0.045)'));
                     bctx.fillRect(px + (8 + i) * 3, py + (8 + j) * 3, 3, 3);
                 }
             }
@@ -30991,17 +31290,33 @@ class Map {
         }
     }
 
-    // Chamas animadas (4 quadros pixel art por tempo de jogo) desenhadas por frame sobre o buffer
+    // Chamas animadas (4 quadros pixel art por tempo de jogo) e brasas na lava sobre o buffer
     _drawFlames(ctx, cx, cy) {
+        if (typeof gameTime !== 'number') return;
         const fl = this._flames;
-        if (!fl || !fl.length || typeof gameTime !== 'number') return;
-        for (let i = 0; i < fl.length; i++) {
-            const f = fl[i];
-            const sx = Math.round(f.x - cx), sy = Math.round(f.y - cy);
-            if (sx < -60 || sx > width + 60 || sy < -60 || sy > height + 60) continue;
-            const frame = (((gameTime / 6) | 0) + f.seed) & 3;
-            const cv = MapTileArt.flameFrame(f.kind, frame, f.p3);
-            ctx.drawImage(cv, sx, sy);
+        if (fl && fl.length) {
+            for (let i = 0; i < fl.length; i++) {
+                const f = fl[i];
+                const sx = Math.round(f.x - cx), sy = Math.round(f.y - cy);
+                if (sx < -60 || sx > width + 60 || sy < -60 || sy > height + 60) continue;
+                const frame = (((gameTime / 6) | 0) + f.seed) & 3;
+                const cv = MapTileArt.flameFrame(f.kind, frame, f.p3);
+                ctx.drawImage(cv, sx, sy);
+            }
+        }
+        const spk = this._lavaSparks;
+        if (spk && spk.length) {
+            for (let i = 0; i < spk.length; i++) {
+                const sp = spk[i];
+                const sx = Math.round(sp.x - cx), sy = Math.round(sp.y - cy);
+                if (sx < -16 || sx > width + 16 || sy < -16 || sy > height + 16) continue;
+                const ph = Math.sin(gameTime * 0.08 + sp.seed * 0.25);
+                const ry = ((gameTime * 0.22 + sp.seed) % 9) | 0;
+                ctx.fillStyle = ph > 0.3 ? '#ffd466' : '#ff6611';
+                ctx.globalAlpha = 0.35 + 0.55 * (0.5 + 0.5 * ph);
+                ctx.fillRect(sx, sy - ry, 2, 2);
+            }
+            ctx.globalAlpha = 1;
         }
     }
 
@@ -31169,6 +31484,7 @@ class Map {
         if (this.needsRedraw) {
             this.bufferCtx.clearRect(0, 0, this.buffer.width, this.buffer.height);
             this._flames = []; // chamas animadas registradas pelo bake de _drawLightProp
+            this._lavaSparks = []; // brasas deterministicas em lavaCave registradas no bake
             const ts = CONFIG.TILE_SIZE;
             const wallColor = BiomeSystem.getWallColor();
             const floorColor = BiomeSystem.getFloorColor();
@@ -31201,7 +31517,26 @@ class Map {
                     PixelFX.draw(bctx, MapTileArt.floor(floorColor, fmask, (h1 >> 4) & 7), px + ts/2, py + ts/2);
                     MapTileArt.floorDetail(bctx, floorColor, px, py, h1);
 
-                    try { BiomeSystem.drawFloorDetail(bctx, px, py, ts, x, y); } catch(e) {}
+                    const wNW = !wN && !wW && x > 0 && y > 0 && this.tiles[x-1][y-1].t === 1;
+                    const wNE = !wN && !wE && x < this.width-1 && y > 0 && this.tiles[x+1][y-1].t === 1;
+                    const wSW = !wS && !wW && x > 0 && y < this.height-1 && this.tiles[x-1][y+1].t === 1;
+                    const wSE = !wS && !wE && x < this.width-1 && y < this.height-1 && this.tiles[x+1][y+1].t === 1;
+                    if (wNW || wNE || wSW || wSE) {
+                        bctx.fillStyle = '#000000';
+                        for (let oy = 0; oy < 3; oy++) {
+                            for (let ox = 0; ox < 3; ox++) {
+                                if (ox + oy > 2 || ((ox + oy) & 1)) continue;
+                                bctx.globalAlpha = (ox === 0 && oy === 0) ? 0.34 : 0.2;
+                                if (wNW) bctx.fillRect(px + ox * 3, py + oy * 3, 3, 3);
+                                if (wNE) bctx.fillRect(px + (15 - ox) * 3, py + oy * 3, 3, 3);
+                                if (wSW) bctx.fillRect(px + ox * 3, py + (15 - oy) * 3, 3, 3);
+                                if (wSE) bctx.fillRect(px + (15 - ox) * 3, py + (15 - oy) * 3, 3, 3);
+                            }
+                        }
+                        bctx.globalAlpha = 1;
+                    }
+
+                    try { BiomeSystem.drawFloorDetail(bctx, px, py, ts, x, y, this); } catch(e) {}
 
                     if (this.tiles[x][y].t === 2) {
                         // Rocha em pixel art (sprite cacheado por cor de parede e de chão)
@@ -31224,7 +31559,21 @@ class Map {
             this.needsRedraw = false;
         }
 
-        ctx.drawImage(this.buffer, -cx, -cy);
+        const bw = this.buffer.width, bh = this.buffer.height;
+        const rcx = Math.round(cx), rcy = Math.round(cy);
+        const vw = (typeof width === 'number' ? width : bw) + 2;
+        const vh = (typeof height === 'number' ? height : bh) + 2;
+        const sx = Math.max(0, rcx);
+        const sy = Math.max(0, rcy);
+        const ex = Math.min(bw, rcx + vw);
+        const ey = Math.min(bh, rcy + vh);
+        const sw = ex - sx, sh = ey - sy;
+        if (sw > 0 && sh > 0) {
+            const prevSmooth = ctx.imageSmoothingEnabled;
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(this.buffer, sx, sy, sw, sh, sx - rcx, sy - rcy, sw, sh);
+            ctx.imageSmoothingEnabled = prevSmooth;
+        }
         this._drawFlames(ctx, cx, cy);
     }
 }
@@ -31681,24 +32030,34 @@ class Entity {
     <script>
 // === js/entities/enemy.js ===
 // ENEMY & BOSS CLASSES
-// Véu de congelado (só desenho): véu azul translúcido e cristais no topo. Usado por Enemy e EliteEnemy.
-// Com reducedMotion os cristais ficam parados.
+// Sprites pixel art cacheados em PixelFX para coroa de elite e cristal de congelamento
+const _ELITE_CROWN_ART = [
+    '.o..o..o.',
+    '.gb.w.bg.',
+    '.gbbwbbg.',
+    'ogbbbbbgo',
+    '.ooooooo.'
+];
+const _ELITE_CROWN_PAL = { o: '#5c3300', g: '#d98800', b: '#ffcc33', w: '#fff5b0' };
+const _ICE_CRYSTAL_ART = [
+    '...w...',
+    '..wlw..',
+    '.wblbw.',
+    'sbbwbbs',
+    '.sssss.'
+];
+const _ICE_CRYSTAL_PAL = { s: '#1c7ea8', b: '#5fd4ff', l: '#a8ecff', w: '#ffffff' };
+
+// Véu de congelado (só desenho): disco ciano dithered e cristal pixelado no topo. Usado por Enemy, EliteEnemy e Boss.
+// Com reducedMotion o cristal fica parado.
 function _drawFrozenVeil(ctx, px, py, r) {
     const reduced = !!(window.GameSettings && GameSettings.reducedMotion);
-    ctx.globalAlpha = 0.6;
-    ctx.fillStyle = 'rgba(51,204,255,0.35)';
-    ctx.fillRect(px - r - 3, py - r - 3, (r + 3) * 2, (r + 3) * 2);
-    // Cristais no topo
-    ctx.globalAlpha = 0.85;
-    ctx.fillStyle = '#c8f0ff';
-    const cw = r * 0.9;
-    const bob = reduced ? 0 : Math.sin(gameTime * 0.2) * 2;
-    ctx.beginPath();
-    ctx.moveTo(px - cw * 0.5, py - r - 5);
-    ctx.lineTo(px, py - r - 12 - bob);
-    ctx.lineTo(px + cw * 0.5, py - r - 5);
-    ctx.closePath();
-    ctx.fill();
+    ctx.globalAlpha = 0.45;
+    PixelFX.drawDisc(ctx, px, py, r + 3, '#33ccff', '#c8f0ff', true);
+    const crystal = PixelFX.get('fx|icecrystal') || PixelFX.bake('fx|icecrystal', _ICE_CRYSTAL_ART, _ICE_CRYSTAL_PAL, 2);
+    const bob = reduced ? 0 : Math.round(Math.sin(gameTime * 0.2) * 2);
+    ctx.globalAlpha = 0.9;
+    PixelFX.draw(ctx, crystal, px, py - r - 8 - bob);
     ctx.globalAlpha = 1;
 }
 
@@ -31961,16 +32320,8 @@ class Enemy extends Entity {
                 PixelFX.ring(ctx, px, py, this.radius + 12 + Math.sin(gameTime * 0.2) * 2, '#ff4444', 3);
                 ctx.globalAlpha = 1;
             } else if(this.elite) {
-                ctx.fillStyle = '#ffcc44';
-                const cw2 = this.radius * 0.8;
-                ctx.beginPath();
-                ctx.moveTo(px - cw2, py - this.radius - 8);
-                ctx.lineTo(px - cw2 * 0.4, py - this.radius - 12);
-                ctx.lineTo(px, py - this.radius - 8);
-                ctx.lineTo(px + cw2 * 0.4, py - this.radius - 12);
-                ctx.lineTo(px + cw2, py - this.radius - 8);
-                ctx.closePath();
-                ctx.fill();
+                const crown = PixelFX.get('elite|crown') || PixelFX.bake('elite|crown', _ELITE_CROWN_ART, _ELITE_CROWN_PAL, 2);
+                PixelFX.draw(ctx, crown, px, py - this.radius - 19);
             }
         }
         
@@ -32006,19 +32357,15 @@ class Enemy extends Entity {
             ctx.restore();
         }
 
-        // Melee enemy indicator (small triangles around)
+        // Melee enemy indicator (4 células 3x3 alinhadas à grade)
         if(this.enemyType === 'melee' && this.isB !== true && isNear) {
-            ctx.globalAlpha = 0.2;
+            ctx.globalAlpha = 0.25;
             ctx.fillStyle = '#ff4444';
-            const mi = this.radius + 12;
+            const mi = this.radius + 10;
+            const sw = Math.sin(gameTime * 0.05) * 0.2;
             for (let md = 0; md < 4; md++) {
-                const ma = md * Math.PI / 2 + Math.sin(gameTime * 0.05) * 0.2;
-                ctx.beginPath();
-                ctx.moveTo(px + Math.cos(ma) * mi, py + Math.sin(ma) * mi);
-                ctx.lineTo(px + Math.cos(ma + 0.5) * (mi - 4), py + Math.sin(ma + 0.5) * (mi - 4));
-                ctx.lineTo(px + Math.cos(ma - 0.5) * (mi - 4), py + Math.sin(ma - 0.5) * (mi - 4));
-                ctx.closePath();
-                ctx.fill();
+                const ma = md * Math.PI / 2 + sw;
+                ctx.fillRect(PixelFX.snap(px + Math.cos(ma) * mi - 1, 3), PixelFX.snap(py + Math.sin(ma) * mi - 1, 3), 3, 3);
             }
             ctx.globalAlpha = 1;
         }
@@ -32263,6 +32610,17 @@ class EliteEnemy extends Enemy {
         SpriteRenderer.drawEnemy.call(this, ctx, ex, ey, this.enemyType, (this.attackAnim > 0 ? 12 - this.attackAnim : this.walkTimer), this.angle, 1.9, this.ft > 0, this.attackAnim > 0 ? 'attack' : (this.walkTimer > 0 ? 'walk' : 'idle'));
         if (_flinch) ctx.restore();
         if(this.ft > 0) this.ft--;
+        // Variante de bioma (anel e halo) + coroa pixelada de elite
+        if (this._variant) {
+            ctx.save();
+            ctx.globalAlpha = 0.13 + Math.sin(gameTime * 0.13 + ex) * 0.05;
+            PixelFX.drawDisc(ctx, ex, ey, this.radius + 7, this.variantAura || 'rgba(255,200,100,0.25)');
+            ctx.globalAlpha = 0.5;
+            PixelFX.ring(ctx, ex, ey, this.radius + 3, this.variantColor || '#fff', 3);
+            ctx.restore();
+        }
+        const crown = PixelFX.get('elite|crown') || PixelFX.bake('elite|crown', _ELITE_CROWN_ART, _ELITE_CROWN_PAL, 2);
+        PixelFX.draw(ctx, crown, ex, ey - this.radius - 17);
         // Estados de status, como no Enemy.draw: congelado, elementos, veneno, lentidão e marcas
         if (this.frozen > 0) _drawFrozenVeil(ctx, ex, ey, this.radius);
         if (typeof ElementalSystem !== 'undefined') ElementalSystem.drawStatuses(ctx, this, cx, cy);
@@ -33124,11 +33482,13 @@ class GuidedBullet {
     }
     draw(ctx, cx, cy) {
         if(!this.alive) return;
-        ctx.fillStyle = '#ff00aa';
-        ctx.fillRect(this.x-cx-7, this.y-cy-7, 14, 14);
-        ctx.globalAlpha = 0.25;
-        ctx.fillRect(this.x-cx-14, this.y-cy-14, 28, 28);
+        const gx = this.x - cx, gy = this.y - cy;
+        const f = Math.floor(gameTime / 6) % 2;
+        const pulse = (window.GameSettings && GameSettings.reducedMotion) ? 0.45 : (0.35 + Math.sin(gameTime * 0.25) * 0.2);
+        ctx.globalAlpha = pulse;
+        PixelFX.ring(ctx, gx, gy, 11 + f * 2, '#ff66cc', 3);
         ctx.globalAlpha = 1;
+        PixelFX.draw(ctx, PixelFX.tonal('guided' + f, PICKUP_ART.orb, f ? '#ff66cc' : '#ff00aa', 2), gx, gy);
     }
 }
 
@@ -34527,24 +34887,23 @@ class Boss extends Enemy {
     draw(ctx, cx, cy) {
         if(!this.alive) return;
 
-        // Boss aura effect - simplified (base tint is the boss identity color)
+        const bx = this.x - cx, by = this.y - cy;
+        // Boss aura effect: disco pixelado com dither + anel de fase (sem fillRect)
         const _glowB = this._bpGlow || '#ff00ff';
         const auraColor = this.phase >= 3 ? '#ff2200' : (this.phase === 2 ? '#ff8800' : _glowB);
-        ctx.globalAlpha = 0.15;
-        ctx.fillStyle = auraColor;
-        ctx.fillRect(this.x-cx-this.radius-10, this.y-cy-this.radius-10, (this.radius+10)*2, (this.radius+10)*2);
-        ctx.globalAlpha = 1;
-
-        // Boss body with phase tint
-        const phaseTint = this.phase >= 5 ? 1.0 : (this.phase >= 4 ? 0.7 : (this.phase === 3 ? 0.5 : (this.phase === 2 ? 0.3 : 0)));
-        if (phaseTint > 0) {
-            ctx.save();
-            ctx.globalCompositeOperation = 'overlay';
-            ctx.globalAlpha = phaseTint * 0.3;
-            ctx.fillStyle = this.phase >= 4 ? '#ff2200' : '#ff8800';
-            ctx.fillRect(this.x-cx-this.radius-10, this.y-cy-this.radius-10, (this.radius+10)*2, (this.radius+10)*2);
-            ctx.restore();
+        ctx.save();
+        ctx.globalAlpha = 0.16;
+        PixelFX.drawDisc(ctx, bx, by, this.radius + 10, auraColor, null, true);
+        if (this.phase >= 2) {
+            const phaseCol = this.phase >= 4 ? '#ff2200' : '#ff8800';
+            const phaseAlpha = this.phase >= 5 ? 0.55 : (this.phase >= 4 ? 0.42 : (this.phase === 3 ? 0.32 : 0.24));
+            ctx.globalAlpha = phaseAlpha;
+            PixelFX.ring(ctx, bx, by, this.radius + 8, phaseCol, 3);
+            ctx.globalAlpha = phaseAlpha * 0.45;
+            ctx.globalCompositeOperation = 'lighter';
+            PixelFX.drawDisc(ctx, bx, by, this.radius + 4, phaseCol, null, true);
         }
+        ctx.restore();
         // Asas atrás do corpo (Demônio das Profundezas e Guardião Final)
         this._drawBossWings(ctx, this.x-cx, this.y-cy);
 
@@ -34680,7 +35039,7 @@ class Boss extends Enemy {
         }
 
         if(this.ft > 0) this.ft--;
-        if(this.frozen > 0) { ctx.globalAlpha = 0.5; ctx.fillStyle = '#33ccff'; ctx.fillRect(this.x-cx-this.radius-3, this.y-cy-this.radius-3, (this.radius+3)*2, (this.radius+3)*2); ctx.globalAlpha = 1; }
+        if(this.frozen > 0) _drawFrozenVeil(ctx, this.x - cx, this.y - cy, this.radius);
 
         // Guarda de fase (dano do jogador reduzido logo após a transição): anel ciano; sem pulsar com reducedMotion
         if (this._phaseGuardFrames > 0) {
@@ -36573,8 +36932,10 @@ class Bullet {
         this.applyPoison = weapon && weapon.poison;
         
         if (this.isP) {
-            this.trail = new Trail(x, y, this.color, 4);
-            if (typeof trails !== 'undefined') trails.push(this.trail);
+            this.trail = window.PoolManager
+                ? PoolManager.acquire('Trail', x, y, this.color, 4)
+                : new Trail(x, y, this.color, 4);
+            if (typeof trails !== 'undefined' && this.trail) trails.push(this.trail);
         }
         return this;
     }
@@ -36818,12 +37179,9 @@ class Bullet {
             PixelFX.line(ctx, sx + r + 4, sy - 3, sx + r + 7, sy + 3, '#ffff00', 0.7);
         }
         if((this.weapon && this.weapon.pierce) || this.chainPierce) {
-            const pr = r + 3;
-            const pc = '#00ffff';
-            PixelFX.line(ctx, sx - pr, sy - pr, sx + pr, sy - pr, pc, 0.5);
-            PixelFX.line(ctx, sx + pr, sy - pr, sx + pr, sy + pr, pc, 0.5);
-            PixelFX.line(ctx, sx + pr, sy + pr, sx - pr, sy + pr, pc, 0.5);
-            PixelFX.line(ctx, sx - pr, sy + pr, sx - pr, sy - pr, pc, 0.5);
+            ctx.globalAlpha = 0.55;
+            PixelFX.ring(ctx, sx, sy, r + 3, '#00ffff', 3, { dash: 2 });
+            ctx.globalAlpha = 1;
             // Rastro do golpe perfurante do finalizador (elfa): faixa atrás da flecha
             if(this.chainPierce && this.projType === 'arrow') {
                 const ca = Math.cos(vAng), sa = Math.sin(vAng);
@@ -36831,9 +37189,11 @@ class Bullet {
             }
         }
         if(this.weapon && this.weapon.lifesteal) {
-            ctx.globalAlpha = 0.4; ctx.fillStyle = '#ff0055';
-            const lr = r + 2;
-            ctx.fillRect(PixelFX.snap(sx - lr, 2), PixelFX.snap(sy - lr, 2), PixelFX.snap(lr * 2, 2), PixelFX.snap(lr * 2, 2));
+            ctx.globalAlpha = 0.45;
+            PixelFX.drawDisc(ctx, sx, sy, r + 2, '#ff0055', null, true);
+            ctx.globalAlpha = 0.85;
+            ctx.fillStyle = '#ffd1e3';
+            ctx.fillRect(PixelFX.snap(sx - 1, 2), PixelFX.snap(sy - 1, 2), 2, 2);
             ctx.globalAlpha = 1;
         }
         ctx.restore();
@@ -37717,13 +38077,14 @@ class Player extends Entity {
         PixelFX.drawDisc(ctx, sx, sy, auraRadius * 0.5, this.color);
         ctx.restore();
 
-        // Escudo: bolha ciano que enfraquece conforme player.shield cai (some em 0)
+        // Escudo: bolha ciano única que enfraquece conforme player.shield cai (some em 0)
         if (this.shield > 0) {
             const shStr = Math.min(1, this.shield / 50);
+            const shPulse = (window.GameSettings && GameSettings.reducedMotion) ? 0 : Math.sin(gameTime * 0.1) * 0.12;
             ctx.save();
             ctx.globalAlpha = 0.05 + 0.14 * shStr;
             PixelFX.drawDisc(ctx, sx, sy, this.radius * 1.5, COLORS.PICKUP_SHIELD);
-            ctx.globalAlpha = 0.2 + 0.5 * shStr;
+            ctx.globalAlpha = Math.max(0.18, 0.28 + 0.5 * shStr + shPulse);
             PixelFX.ring(ctx, sx, sy, this.radius * 1.5, COLORS.PICKUP_SHIELD, 3);
             ctx.restore();
         }
@@ -37828,23 +38189,15 @@ class Player extends Entity {
             isHit: this.ft > 0
         });
         
-        // Weapon level glow (weapon visible in sprite sheet, glow shows tier)
-        if (this.weaponLevel > 1 && (window.GFX === undefined || window.GFX.glows)) {
-            const wlColors = { 2: '#4ade80', 3: '#60a5fa', 4: '#c084fc', 5: '#ffcc00' };
-            const wc = wlColors[this.weaponLevel] || '#ffcc00';
+        // Weapon level glow (disco pixelado em cache)
+        const wlColors = { 2: '#4ade80', 3: '#60a5fa', 4: '#c084fc', 5: '#ffcc00' };
+        const wc = this.weaponLevel > 1 ? (wlColors[this.weaponLevel] || '#ffcc00') : null;
+        if (wc && (window.GFX === undefined || window.GFX.glows)) {
             const wpr = this.radius + 8 + Math.sin(gameTime * 0.15) * 2;
             ctx.globalCompositeOperation = 'lighter';
             ctx.globalAlpha = 0.18 + Math.sin(gameTime * 0.15) * 0.08;
-            ctx.fillStyle = wc;
-            ctx.beginPath();
-            ctx.arc(sx + 2, sy - 2, wpr, 0, Math.PI * 2);
-            ctx.fill();
+            PixelFX.drawDisc(ctx, sx, sy, wpr, wc, null, true);
             ctx.globalCompositeOperation = 'source-over';
-            ctx.globalAlpha = 0.9;
-            ctx.fillStyle = wc;
-            ctx.font = 'bold 8px ' + COLORS.CANVAS_FONT;
-            ctx.textAlign = 'center';
-            ctx.fillText('+' + this.weaponLevel, sx, sy - this.radius - 10);
             ctx.globalAlpha = 1;
         }
         // Indicador do combo: 3 pontinhos que acendem conforme o passo (somem após a janela sem atacar)
@@ -37858,19 +38211,40 @@ class Player extends Entity {
         }
         ctx.restore();
 
-        // Shield indicator with animated ring
-        if(this.shield > 0) {
+        // Indicadores sobre a cabeça (coordenadas separadas para não colidir)
+        if (wc && (window.GFX === undefined || window.GFX.glows)) {
             ctx.save();
-            const shieldAlpha = 0.5 + Math.sin(gameTime * 0.1) * 0.2;
-            ctx.globalAlpha = shieldAlpha;
-            ctx.strokeStyle = '#33ccff';
-            ctx.lineWidth = 3;
-            PixelFX.ring(ctx, sx, sy, this.radius + 6, '#33ccff', 3);
+            ctx.globalAlpha = 0.9;
+            ctx.fillStyle = wc;
+            ctx.font = 'bold 8px ' + COLORS.CANVAS_FONT;
+            ctx.textAlign = 'center';
+            ctx.fillText('+' + this.weaponLevel, sx - 13, sy - this.radius - 10);
+            ctx.restore();
+        }
+        if (this.shield > 0) {
+            ctx.save();
             ctx.font = 'bold 9px ' + COLORS.CANVAS_FONT;
             ctx.textAlign = 'center';
             ctx.fillStyle = '#33ccff';
-            ctx.fillText(Math.ceil(this.shield) + '', sx, sy - this.radius - 8);
+            ctx.fillText(Math.ceil(this.shield) + '', sx, sy - this.radius - 20);
             ctx.restore();
+        }
+        if (this.mutations) {
+            let mi = 0;
+            const rMut = this.radius + 7;
+            for (const mk in this.mutations) {
+                const mut = this.mutations[mk];
+                if (!mut) continue;
+                if (mi === 0) {
+                    ctx.save();
+                    ctx.globalAlpha = 0.9;
+                }
+                ctx.fillStyle = mut.color || '#ff44ff';
+                const ma = (rmPw ? 0.8 : gameTime * 0.08) + mi * Math.PI;
+                ctx.fillRect(PixelFX.snap(sx + Math.cos(ma) * rMut - 1, 2), PixelFX.snap(sy + Math.sin(ma) * rMut * 0.7 - 1, 2), 2, 2);
+                if (++mi >= 2) break;
+            }
+            if (mi > 0) ctx.restore();
         }
         
         // Freeze indicator
@@ -37896,7 +38270,7 @@ class Player extends Entity {
             ctx.fillStyle = '#ff8800';
             ctx.font = 'bold 11px ' + COLORS.CANVAS_FONT;
             ctx.textAlign = 'center';
-            ctx.fillText('\u26A1' + this.furyStacks, sx, sy - this.radius - 10);
+            ctx.fillText('\u26A1' + this.furyStacks, sx + 13, sy - this.radius - 10);
             ctx.restore();
         }
         if(this.type === 'rogue' && this.critZoomTimer > 0) {
@@ -39812,6 +40186,21 @@ window.FLOOR_SCENES = FLOOR_SCENES;
 </script>
 
     <script>
+const _BOSS_SKULL_ART = [
+    '...gggggg...',
+    '..gbbbbbbg..',
+    '.gbbllllbbg.',
+    '.gbblbbblbg.',
+    '.gbbo..obbg.',
+    '.gboo..oobg.',
+    '..gbbssbbg..',
+    '..gbsbbsbg..',
+    '...gssssg...',
+    '...gb..bg...',
+    '...go..og...',
+    '....g..g....'
+];
+
 // === js/rendering/death-animations.js ===
 // DEATH ANIMATIONS MODULE - Visual death effects for different enemy types
 const DeathAnimations = {
@@ -40016,14 +40405,9 @@ const DeathAnimations = {
             if (r.alpha <= 0) continue;
             ctx.globalAlpha = Math.max(0, r.alpha);
             if (r.type === 'bossRemains') {
-                ctx.fillStyle = r.color;
-                ctx.fillRect(r.x - camX - r.radius, r.y - camY - r.radius, r.radius * 2, r.radius * 2);
-                ctx.fillStyle = '#000';
-                ctx.fillRect(r.x - camX - r.radius * 0.6, r.y - camY - r.radius * 0.6, r.radius * 1.2, r.radius * 1.2);
-                ctx.fillStyle = '#ff0000';
-                const eyeOff = r.radius * 0.3;
-                ctx.fillRect(r.x - camX - eyeOff - 3, r.y - camY - eyeOff * 0.5 - 3, 6, 6);
-                ctx.fillRect(r.x - camX + eyeOff - 3, r.y - camY - eyeOff * 0.5 - 3, 6, 6);
+                const px = r.x - camX, py = r.y - camY;
+                PixelFX.drawEllipse(ctx, px, py + r.radius * 0.25, r.radius * 1.25, r.radius * 0.65, r.color);
+                PixelFX.draw(ctx, PixelFX.tonal('bossSkull', _BOSS_SKULL_ART, r.color, 2), px, py - 2);
             } else {
                 // poça achatada e irregular (em vez de um quadrado chapado)
                 const px = r.x - camX, py = r.y - camY + r.radius * 0.25, rr = r.radius;
@@ -40060,23 +40444,19 @@ const DeathAnimations = {
                 case 'normal':
                     if (anim.fadeAlpha > 0 && !anim.spr && !anim.custom) {
                         ctx.globalAlpha = anim.fadeAlpha * 0.4;
-                        ctx.fillStyle = anim.color;
                         const rad = anim.radius * (1 + anim.timer * 0.02);
-                        ctx.fillRect(anim.x - camX - rad, anim.y - camY - rad, rad * 2, rad * 2);
+                        PixelFX.drawDisc(ctx, anim.x - camX, anim.y - camY, rad, anim.color, null, true);
                     }
                     break;
 
                 case 'elite':
                     if (anim.fadeAlpha > 0) {
+                        const ex = anim.x - camX, ey = anim.y - camY;
                         ctx.globalAlpha = anim.fadeAlpha * 0.5;
-                        ctx.fillStyle = anim.color;
-                        if (!anim.spr) ctx.fillRect(anim.x - camX - anim.radius, anim.y - camY - anim.radius, anim.radius * 2, anim.radius * 2);
+                        if (!anim.spr) PixelFX.drawDisc(ctx, ex, ey, anim.radius, anim.color, null, true);
                         if (anim.ringRadius > 0) {
-                            ctx.globalAlpha = anim.fadeAlpha * 0.6;
-                            ctx.strokeStyle = '#ff8800';
-                            ctx.lineWidth = 3;
-                            const rr = anim.ringRadius;
-                            ctx.strokeRect(anim.x - camX - rr, anim.y - camY - rr, rr * 2, rr * 2);
+                            ctx.globalAlpha = anim.fadeAlpha * 0.65;
+                            PixelFX.ring(ctx, ex, ey, anim.ringRadius, '#ff8800', 3);
                         }
                     }
                     break;
@@ -40093,16 +40473,13 @@ const DeathAnimations = {
                 case 'boss':
                     if (anim.shockwaveRadius > 0) {
                         const progress = anim.shockwaveRadius / anim.shockwaveMaxRadius;
-                        ctx.globalAlpha = 0.7 * (1 - progress);
-                        ctx.strokeStyle = '#ff00ff';
-                        ctx.lineWidth = 5 * (1 - progress);
+                        const bx = anim.x - camX, by = anim.y - camY;
                         const sr = anim.shockwaveRadius;
-                        ctx.strokeRect(anim.x - camX - sr, anim.y - camY - sr, sr * 2, sr * 2);
+                        ctx.globalAlpha = 0.75 * (1 - progress);
+                        PixelFX.ring(ctx, bx, by, sr, '#ff00ff', Math.max(3, Math.round(6 * (1 - progress))));
                         if (progress < 0.3) {
-                            ctx.globalAlpha = 0.8 * (1 - progress / 0.3);
-                            ctx.fillStyle = '#ffffff';
-                            const flashR = sr * 0.5;
-                            ctx.fillRect(anim.x - camX - flashR, anim.y - camY - flashR, flashR * 2, flashR * 2);
+                            ctx.globalAlpha = 0.75 * (1 - progress / 0.3);
+                            PixelFX.drawDisc(ctx, bx, by, sr * 0.5, '#ffffff', '#ff88ff', true);
                         }
                     }
                     break;
@@ -43360,27 +43737,12 @@ renderBestiaryContent() {
     const chip = (on, label, onclick) => `<button onclick="${onclick}"
         style="padding:6px 11px;border-radius:999px;font-size:10px;font-weight:bold;border:1px solid ${on ? COLORS.PRIMARY : 'rgba(255,255,255,0.15)'};background:${on ? 'rgba(224,182,255,0.2)' : 'rgba(255,255,255,0.05)'};color:${on ? COLORS.PRIMARY : COLORS.TEXT_DIM};cursor:pointer">${label}</button>`;
 
-    const bestiaryArtMap = {
-        shadow_warden: 'art/boss-shadow_warden.webp',
-        boss: 'art/boss-shadow_warden.webp',
-        dark_lord: 'art/boss-dark_lord.webp',
-        death_herald: 'art/boss-death_herald.webp',
-        stone_colossus: 'art/boss-stone_colossus.webp',
-        specter: 'art/boss-specter.webp',
-        soul_devourer: 'art/boss-soul_devourer.webp',
-        bone_lord: 'art/boss-bone_lord.webp',
-        corrupted: 'art/boss-corrupted.webp',
-        deep_demon: 'art/boss-deep_demon.webp',
-        magma_titan: 'art/boss-magma_titan.webp',
-        thorn_king: 'art/boss-thorn_king.webp',
-        final_guardian: 'cutscenes/boss-guardian.webp'
-    };
     const rows = filtered.map(type => {
         const m = Bestiary._monsters[type];
         const e = Bestiary._entries[type];
         const seen = !!e;
         const color = catColors[m.category] || COLORS.TEXT_DIM;
-        const artSrc = seen ? bestiaryArtMap[type] : null;
+        const artSrc = seen ? BOSS_PORTRAIT_FILES[type] : null;
         const artHtml = artSrc ? `<img src="${artSrc}" alt="" aria-hidden="true" decoding="async" style="width:56px;height:56px;border-radius:10px;object-fit:cover;object-position:center 20%;flex-shrink:0;border:1px solid ${color}55;background:#0a0612" onerror="this.remove()">` : '';
         const pips = Array.from({ length: 10 }, (_, i) => `<span style="width:5px;height:5px;border-radius:999px;background:${i < m.difficulty ? color : 'rgba(255,255,255,0.12)'};display:inline-block"></span>`).join('');
         const floorLabel = m.floor ? _L('best.floor', 'Piso {n} · B{b}').replace('{n}', m.floor).replace('{b}', 11 - m.floor) : '';
@@ -45323,7 +45685,8 @@ window.GameBootstrap = {
 
         entities = [player]; bullets = []; particles = []; pickups = [];
         hazards = []; chests = []; pets = []; weaponPickups = []; equipmentPickups = [];
-        guidedBullets = []; rogueClones = []; hitstopFrames = 0; ScreenEffects.resetImpact();
+        guidedBullets = []; rogueClones = []; if (typeof trails !== 'undefined') trails.length = 0;
+        hitstopFrames = 0; ScreenEffects.resetImpact();
 
         if (window.ShopSystem) ShopSystem.reset();
         if (window.CampSystem) CampSystem.reset();
