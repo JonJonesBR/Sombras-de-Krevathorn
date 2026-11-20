@@ -419,18 +419,24 @@ return { idPrimeiro, idComprado, custo, ouro0, ouro1, ouro2, ofertasAntes, ofert
 ${PREPARO}
 if (window.UIManager && UIManager.closePanel) { try { UIManager.closePanel(); } catch (e) {} }
 const TS = CONFIG.TILE_SIZE;
+const raio = player.radius;
 const parede = (tx, ty) => {
   if (tx < 0 || ty < 0 || tx >= map.width || ty >= map.height) return true;
   const t = map.tiles[tx][ty].t;
   return t === 1 || t === 2;
 };
-// Chão livre com parede logo à direita e vizinhos livres (sem canto que force o dash a desviar)
+// Varre o mapa inteiro na ordem y/x e fica com o PRIMEIRO chão com parede sólida logo
+// à direita: todo mapa tem pelo menos um (o chão mais à direita de cada linha termina
+// em parede ou borda), então o cenário não depende mais da semente do mapa.
 let muroX = null, px = null, py = null;
-for (let ty = 2; ty < map.height - 2 && px === null; ty++) {
-  for (let tx = 3; tx < map.width - 2; tx++) {
+for (let ty = 0; ty < map.height && px === null; ty++) {
+  for (let tx = 0; tx < map.width; tx++) {
     if (parede(tx, ty) || !parede(tx + 1, ty)) continue;
-    if (parede(tx - 1, ty) || parede(tx, ty - 1) || parede(tx, ty + 1)) continue;
-    px = tx * TS + TS / 2; py = ty * TS + TS / 2; muroX = (tx + 1) * TS; break;
+    // Encostado na parede, mas com o primeiro passo do dash livre e o corpo todo no chão
+    const xIni = (tx + 1) * TS - raio - 18;
+    if (xIni - raio < tx * TS) continue;
+    if (!_entityClear(map, xIni + 6, ty * TS + TS / 2, raio)) continue;
+    px = xIni; py = ty * TS + TS / 2; muroX = (tx + 1) * TS; break;
   }
 }
 if (muroX === null) return { erro: 'nenhuma parede à direita com chão livre no mapa' };
@@ -441,9 +447,8 @@ player.skills = {};
 player.frozen = 0;
 player.shield = 0; player.aegisTimer = 0; player.invincibleTimer = 0;
 player.dodgeCooldown = 0; player._dodgeBuffer = 0;
-const raio = player.radius;
-// Encostado na parede, mas com o primeiro passo do dash livre: o dash tem que parar nela
-player.x = muroX - raio - 18; player.y = py;
+// Teleporta para o tile livre achado; o dash tem que parar na parede
+player.x = px; player.y = py;
 const xAntes = player.x;
 const primeiroPassoLivre = _entityClear(map, player.x + 6, player.y, raio);
 
