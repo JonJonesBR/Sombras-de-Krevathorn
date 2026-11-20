@@ -4917,6 +4917,7 @@ const I18n = {
             'continue.remains': 'restantes',
             'continue.give_up': 'Desistir',
             'continue.revived': 'Revivido! Seja mais cuidadoso!',
+            'continue.cost': '−{n} de ouro',
 
             // Pause panel
             'pause.title': 'PAUSADO',
@@ -5339,6 +5340,10 @@ const I18n = {
         'update.entry.v102.l3': 'A cena de NPC espera o combate terminar, e o NPC da história nasce em um beco fora do caminho.',
         'update.entry.v102.l4': 'A recompensa do chefe pede um segundo toque para confirmar e não se perde mais quando há um painel aberto.',
         'update.entry.v102.l5': 'A tela de habilidade mostra quanto ouro falta e deixa claro que não há requisito de nível. Seus saves continuam funcionando.',
+        'update.entry.v108.title': 'v108 - Escolha na forja e morte com preço',
+        'update.entry.v108.l1': 'Fundir duas armas iguais agora abre dois caminhos: Pesada (+15% dano, -10% cadência) ou Ágil (+15% cadência, -10% dano). O nome da arma mostra o caminho escolhido.',
+        'update.entry.v108.l2': 'A primeira continuação da run segue grátis; a segunda custa 30% do seu ouro e a terceira, 45%, sempre limitado ao que você tem.',
+        'update.entry.v108.l3': 'O resto segue como na v107. Seus saves continuam funcionando.',
         'update.entry.v107.title': 'v107 - Combate com mais peso e sem perder a run',
         'update.entry.v107.l1': 'O tremor e o congelamento do golpe ficam sempre ligados: mesmo com o celular mais lento, o combate mantém o peso.',
         'update.entry.v107.l2': 'A câmera acompanha firme, o primeiro toque no lado direito já atira e o seu tiro não some mais quando a tela enche.',
@@ -6229,6 +6234,11 @@ const I18n = {
             'weapon.w_staff1.name': 'Cajado Trovão',
             'weapon.w_froststaff.name': 'Cajado Glacial',
             'weapon.w_voidstaff.name': 'Cajado do Vazio',
+            // Caminhos da fusão (a mesma arma do degrau seguinte, com ritmo diferente)
+            'weapon.variant.heavy': 'Pesada',
+            'weapon.variant.swift': 'Ágil',
+            'weapon.variant.heavyDesc': '+15% dano, -10% cadência',
+            'weapon.variant.swiftDesc': '+15% cadência, -10% dano',
 
             // ============================================================
             // Camp / panels
@@ -6480,6 +6490,7 @@ const I18n = {
             'inv.selectHint': "Toque em um item para ver detalhes e ações.",
             'inv.equippedHint': "Vestido. Para trocar, equipe outra peça da bolsa.",
             'inv.fuse': "Fundir",
+            'inv.fusePick': "Escolha o caminho da arma fundida:",
             'inv.fuseConfirm': "Fundir 2× {name} em {next} por {n} de ouro?",
             'inv.fuseNoPair': "Você precisa de duas armas iguais na bolsa para fundir.",
             'inv.fuseNoGold': "Ouro insuficiente para fundir.",
@@ -7209,6 +7220,7 @@ const I18n = {
             'continue.remains': 'remaining',
             'continue.give_up': 'Give Up',
             'continue.revived': 'Revived! Be more careful!',
+            'continue.cost': '−{n} gold',
 
             // Pause panel
             'pause.title': 'PAUSED',
@@ -7635,6 +7647,10 @@ const I18n = {
         'update.entry.v102.l3': 'NPC scenes wait for combat to end, and the story NPC spawns in a dead end off the path.',
         'update.entry.v102.l4': 'The boss reward now asks for a second tap to confirm and is no longer lost while a panel is open.',
         'update.entry.v102.l5': 'The skill screen shows how much gold is missing and makes clear there is no level requirement. Your saves keep working.',
+        'update.entry.v108.title': 'v108 - A choice at the forge, and death has a price',
+        'update.entry.v108.l1': 'Fusing two identical weapons now opens two paths: Heavy (+15% damage, -10% fire rate) or Swift (+15% fire rate, -10% damage). The weapon name shows the chosen path.',
+        'update.entry.v108.l2': 'The first continue in a run is still free; the second costs 30% of your gold and the third 45%, always capped at what you have.',
+        'update.entry.v108.l3': 'Everything else stays as in v107. Your saves keep working.',
         'update.entry.v107.title': 'v107 - Heavier combat, no lost runs',
         'update.entry.v107.l1': 'Hitstop and screen shake stay on even on slower phones: every hit keeps its weight.',
         'update.entry.v107.l2': 'The camera follows tighter, the first tap on the right side already fires, and your shot no longer vanishes when the screen fills up.',
@@ -8521,6 +8537,11 @@ const I18n = {
             'weapon.w_staff1.name': 'Thunder Staff',
             'weapon.w_froststaff.name': 'Glacial Staff',
             'weapon.w_voidstaff.name': 'Staff of the Void',
+            // Fusion paths (same next-tier weapon, different rhythm)
+            'weapon.variant.heavy': 'Heavy',
+            'weapon.variant.swift': 'Swift',
+            'weapon.variant.heavyDesc': '+15% damage, -10% fire rate',
+            'weapon.variant.swiftDesc': '+15% fire rate, -10% damage',
 
             // ============================================================
             // Camp / panels
@@ -8772,6 +8793,7 @@ const I18n = {
             'inv.selectHint': "Tap an item to see details and actions.",
             'inv.equippedHint': "Worn. To swap, equip another piece from the bag.",
             'inv.fuse': "Forge",
+            'inv.fusePick': "Choose the path of the forged weapon:",
             'inv.fuseConfirm': "Forge 2× {name} into {next} for {n} gold?",
             'inv.fuseNoPair': "You need two identical weapons in the bag to forge.",
             'inv.fuseNoGold': "Not enough gold to forge.",
@@ -9501,6 +9523,7 @@ const I18n = {
             'continue.remains': 'restantes',
             'continue.give_up': 'Rendirse',
             'continue.revived': 'Revivido! Sé más cuidadoso!',
+            'continue.cost': '−{n} de oro',
 
             // Pause panel
             'pause.title': 'PAUSADO',
@@ -9941,6 +9964,10 @@ const I18n = {
         'update.entry.v102.l3': 'La escena de PNJ espera a que termine el combate, y el PNJ de la historia nace en un callejón sin salida fuera del camino.',
         'update.entry.v102.l4': 'La recompensa del jefe pide un segundo toque para confirmar y ya no se pierde cuando hay un panel abierto.',
         'update.entry.v102.l5': 'La pantalla de habilidad muestra cuánto oro falta y deja claro que no hay requisito de nivel. Tus partidas guardadas siguen funcionando.',
+        'update.entry.v108.title': 'v108 - Elección en la forja y muerte con precio',
+        'update.entry.v108.l1': 'Fundir dos armas iguales ahora abre dos caminos: Pesada (+15% daño, -10% cadencia) o Ágil (+15% cadencia, -10% daño). El nombre del arma muestra el camino elegido.',
+        'update.entry.v108.l2': 'La primera continuación de la partida sigue gratis; la segunda cuesta el 30% de tu oro y la tercera el 45%, siempre limitado a lo que tienes.',
+        'update.entry.v108.l3': 'El resto sigue como en la v107. Tus partidas guardadas siguen funcionando.',
         'update.entry.v107.title': 'v107 - Combate con más peso y sin perder la partida',
         'update.entry.v107.l1': 'El golpe conserva su peso: el parón y el temblor quedan siempre activos, incluso en teléfonos más lentos.',
         'update.entry.v107.l2': 'La cámara sigue más firme, el primer toque en el lado derecho ya dispara y tu disparo no desaparece cuando la pantalla se llena.',
@@ -10812,6 +10839,11 @@ const I18n = {
             'weapon.w_staff1.name': 'Cayado del Trueno',
             'weapon.w_froststaff.name': 'Cayado Glacial',
             'weapon.w_voidstaff.name': 'Cayado del Vacío',
+            // Caminos de la fusión (el mismo arma del siguiente grado, con otro ritmo)
+            'weapon.variant.heavy': 'Pesada',
+            'weapon.variant.swift': 'Ágil',
+            'weapon.variant.heavyDesc': '+15% daño, -10% cadencia',
+            'weapon.variant.swiftDesc': '+15% cadencia, -10% daño',
 
             // ============================================================
             // Camp / panels
@@ -11061,6 +11093,7 @@ const I18n = {
             'inv.selectHint': "Toca un objeto para ver detalles y acciones.",
             'inv.equippedHint': "Puesto. Para cambiar, equipa otra pieza de la bolsa.",
             'inv.fuse': "Forjar",
+            'inv.fusePick': "Elige el camino del arma forjada:",
             'inv.fuseConfirm': "¿Forjar 2× {name} en {next} por {n} de oro?",
             'inv.fuseNoPair': "Necesitas dos armas iguales en la bolsa para forjar.",
             'inv.fuseNoGold': "No tienes oro suficiente para forjar.",
@@ -12461,7 +12494,7 @@ function _statisticsDefaults() {
         relicsFound: 0, comboFinishers: 0, bossNoHitKills: 0, synergiesActivated: 0, perfectDodges: 0,
         // Telemetria local "Minha jornada" (v66): agregados de carreira; ausentes = vazio ('—' na tela)
         runsEnded: 0, runTimeTotal: 0, deathsByFloor: {}, deathsByCause: {}, bestFloorByClass: {},
-        continuesOffered: 0, continuesUsed: 0,
+        continuesOffered: 0, continuesUsed: 0, continueGoldSpent: 0,
         // Flags narrativas (F0). Save antigo não tem as chaves: o default cobre.
         finalChoice: null,                                  // 'blood' | 'freedom' | 'peace' | null
         endingsSeen: [],                                    // ids de final já vistos
@@ -12932,6 +12965,18 @@ document.addEventListener('visibilitychange', function() {
     if (!document.hidden && _continueActive && !_continueTimer) _startContinueTimer();
 });
 
+// Custo em ouro da próxima continuação, pelo continuesLeft de ANTES do decremento:
+// a primeira da run (3) é grátis, a segunda (2) custa 30% do ouro atual e a terceira (1)
+// custa 45%. Arredonda para baixo e nunca passa do ouro que o jogador tem: sem ouro,
+// a continuação sai de graça em vez de ficar bloqueada ou deixar a bolsa negativa.
+const _CONTINUE_GOLD_PCT = { 3: 0, 2: 0.30, 1: 0.45 };
+function _continueGoldCost() {
+    const pct = _CONTINUE_GOLD_PCT[continuesLeft] || 0;
+    if (!pct) return 0;
+    const gold = (typeof player !== 'undefined' && player) ? Math.max(0, Math.floor(player.currency || 0)) : 0;
+    return Math.max(0, Math.min(gold, Math.floor(gold * pct)));
+}
+
 function _updateContinueUI() {
     const el = document.getElementById('continue-screen');
     if (!el) return;
@@ -12947,7 +12992,13 @@ function _updateContinueUI() {
     if (btnEl) {
         const rem = window.I18n ? I18n.t('continue.remains') : 'restantes';
         const btnLabel = window.I18n ? I18n.t('continue.btn') : 'Sim!';
-        btnEl.innerHTML = btnLabel + ` <span id="continues-left" style="font-size:12px; margin-left: 5px;">(${continuesLeft} ${rem})</span>`;
+        const cost = _continueGoldCost();
+        let costTxt = '';
+        if (cost > 0) {
+            const tmpl = window.I18n ? I18n.t('continue.cost') : '−{n} de ouro';
+            costTxt = ' <span id="continue-cost" style="font-size:12px; opacity:0.85;">(' + tmpl.replace('{n}', cost) + ')</span>';
+        }
+        btnEl.innerHTML = btnLabel + costTxt + ` <span id="continues-left" style="font-size:12px; margin-left: 5px;">(${continuesLeft} ${rem})</span>`;
     }
 }
 
@@ -12957,9 +13008,17 @@ function _doContinue() {
     _stopContinueTimer();
     const el = document.getElementById('continue-screen');
     if (el) el.classList.add('hidden');
+    // Custo calculado ANTES do decremento, igual ao mostrado no botão (uma única cobrança:
+    // a segunda chamada do clique rápido já cai no guard do _continueActive).
+    const goldCost = _continueGoldCost();
     // Revive player
     continuesLeft--;
     if (typeof Statistics !== 'undefined') Statistics.data.continuesUsed = (Statistics.data.continuesUsed || 0) + 1;
+    if (goldCost > 0 && typeof player !== 'undefined' && player) {
+        player.currency = Math.max(0, (player.currency || 0) - goldCost);
+        if (typeof Statistics !== 'undefined') Statistics.data.continueGoldSpent = (Statistics.data.continueGoldSpent || 0) + goldCost;
+        if (window.CurrencyHUD && CurrencyHUD.update) CurrencyHUD.update();
+    }
     player.hp = Math.max(1, Math.floor((player.maxHp || 100) * 0.3));
     player.alive = true;
     player.stealth = 0;
@@ -22059,14 +22118,26 @@ class ActiveEvent {
 // === js/systems/weapons.js ===
 // WEAPON SYSTEM - Player weapon definitions and effects
 const WeaponSystem = {
+    // Caminhos da fusão: a MESMA arma do degrau seguinte, com ritmo diferente (DPS ~igual)
+    VARIANTS: {
+        heavy: { damageMult: 1.15, fireRate: 0.90 },
+        swift: { damageMult: 0.90, fireRate: 1.15 }
+    },
+
     // Nome exibido da arma: chave i18n por id; cai no nome PT do CONFIG se faltar
     displayName(weapon) {
         if (!weapon) return '';
+        let base;
         // A Elfa compartilha a escada do Ladino, mas vê nome de arco (nameElf no CONFIG)
         if (weapon.nameElf && typeof player !== 'undefined' && player && player.type === 'elf') {
-            return _L('weapon.' + weapon.id + '.elf.name', weapon.nameElf);
+            base = _L('weapon.' + weapon.id + '.elf.name', weapon.nameElf);
+        } else {
+            base = _L('weapon.' + weapon.id + '.name', weapon.name);
         }
-        return _L('weapon.' + weapon.id + '.name', weapon.name);
+        // Arma fundida: acrescenta o caminho escolhido (Pesada/Ágil)
+        const v = (weapon.variant === 'heavy' || weapon.variant === 'swift') ? weapon.variant : null;
+        if (!v) return base;
+        return base + ' · ' + _L('weapon.variant.' + v, v === 'heavy' ? 'Pesada' : 'Ágil');
     },
 
     // Get weapon list for a class
@@ -42031,31 +42102,50 @@ window.SkillTreeUI = SkillTreeUI;
             const it = a ? Inventory.get(a.uid) : null;
             if (!it) return '';
             const name = this._name(it);
-            let text, yes, yesClass;
+            let text, yes, yesClass, hint = '';
             if (a.kind === 'sell') {
                 text = _L('inv.sellConfirm', 'Vender {name} por {n} moedas?').replace('{name}', name).replace('{n}', String(Inventory.sellValue(it)));
                 yes = _L('inv.confirmSell', 'Vender');
                 yesClass = 'bag-act-sell';
             } else if (a.kind === 'fuse') {
                 const next = this._fuseNext(it.payload);
+                // O preço aparece uma vez só; os dois botões escolhem o caminho da MESMA arma
                 text = _L('inv.fuseConfirm', 'Fundir 2× {name} em {next} por {n} de ouro?')
                     .replace('{name}', name)
                     .replace('{next}', next ? (WeaponSystem.displayName(next) || next.name || '') : '—')
                     .replace('{n}', String(next ? this._fuseCost(next.tier) : 0));
-                yes = _L('inv.fuse', 'Fundir');
+                hint = _L('inv.fusePick', 'Escolha o caminho da arma fundida:');
+                yes = '';
                 yesClass = 'bag-act-forge';
             } else {
                 text = _L('inv.discardConfirm', 'Descartar {name}? Não dá para recuperar.').replace('{name}', name);
                 yes = _L('inv.confirmDiscard', 'Descartar');
                 yesClass = 'bag-act-danger';
             }
+            const cancelBtn = '<button type="button" class="bag-act" data-autofocus onclick="BagPanel.askNo()">' + this._esc(_L('inv.cancel', 'Cancelar')) + '</button>';
+            let btns;
+            if (a.kind === 'fuse') {
+                // Dois caminhos sobre a arma do degrau seguinte: mais dano ou mais cadência
+                const variantBtn = (v) => {
+                    const label = _L('weapon.variant.' + v, v === 'heavy' ? 'Pesada' : 'Ágil');
+                    const desc = _L('weapon.variant.' + v + 'Desc', '');
+                    return '<button type="button" class="bag-act ' + yesClass + '" aria-label="' + this._esc(label + ': ' + desc) + '" onclick="BagPanel.askYes(\'' + v + '\')">'
+                        + this._esc(label)
+                        + '<span style="display:block;font-size:calc(10px * var(--font-scale,1));font-weight:600;opacity:0.85;">' + this._esc(desc) + '</span></button>';
+                };
+                btns = '<div class="bag-btns">' + variantBtn('heavy') + variantBtn('swift') + '</div>'
+                    + '<div class="bag-btns" style="grid-template-columns:1fr;">' + cancelBtn + '</div>';
+            } else {
+                btns = '<div class="bag-btns">' + cancelBtn
+                    + '<button type="button" class="bag-act ' + yesClass + '" onclick="BagPanel.askYes()">' + this._esc(yes) + '</button>'
+                    + '</div>';
+            }
             return '<div id="bag-confirm" role="dialog" aria-modal="true" aria-labelledby="bag-confirm-text" style="position:absolute;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(8,6,14,0.86);border-radius:inherit;" onkeydown="if(event.key===\'Escape\'){event.preventDefault();event.stopPropagation();BagPanel.askNo();}">'
                 + '<div style="width:100%;max-width:320px;padding:16px;border-radius:14px;background:rgba(20,15,30,0.98);border:1.5px solid rgba(224,182,255,0.35);">'
                 + '<p id="bag-confirm-text" style="margin:0;font-size:calc(13px * var(--font-scale,1));color:#fff;line-height:1.35;">' + this._esc(text) + '</p>'
-                + '<div class="bag-btns">'
-                + '<button type="button" class="bag-act" data-autofocus onclick="BagPanel.askNo()">' + this._esc(_L('inv.cancel', 'Cancelar')) + '</button>'
-                + '<button type="button" class="bag-act ' + yesClass + '" onclick="BagPanel.askYes()">' + this._esc(yes) + '</button>'
-                + '</div></div></div>';
+                + (hint ? '<p style="margin:6px 0 0;font-size:calc(11px * var(--font-scale,1));color:rgba(255,255,255,0.72);">' + this._esc(hint) + '</p>' : '')
+                + btns
+                + '</div></div>';
         },
 
         _toast(msg) { if (typeof ToastSystem !== 'undefined' && ToastSystem.show) ToastSystem.show(msg, 'info', 2200); },
@@ -42086,10 +42176,20 @@ window.SkillTreeUI = SkillTreeUI;
 
         // Cópia rasa da arma-resultado: o jogo muta o payload (Bullet liga pierce no objeto da arma,
         // ~34160) e a mesma referência iria para a bolsa, para o equipamento e para o save.
-        _fuseWeapon(src) {
+        // `variant` ('heavy'|'swift') aplica o caminho da fusão na cópia; sem escolha, a arma fica
+        // equilibrada (stats base do CONFIG, sem multiplicador).
+        _fuseWeapon(src, variant) {
             const copy = {};
             if (src) Object.keys(src).forEach(k => { copy[k] = src[k]; });
             copy.tier = Math.max(0, Math.min(CONFIG.WEAPON_TIERS.length - 1, copy.tier | 0));
+            const v = (variant === 'heavy' || variant === 'swift') ? WeaponSystem.VARIANTS[variant] : null;
+            if (v) {
+                // 3 casas: 1e-9 só compensa a representação binária (0,8625 viraria 0,862)
+                const r3 = (x) => Math.round(x * 1000 + 1e-9) / 1000;
+                copy.damageMult = r3((copy.damageMult || 1) * v.damageMult);
+                copy.fireRate = r3((copy.fireRate || 1) * v.fireRate);
+                copy.variant = variant;
+            }
             return copy;
         },
 
@@ -42109,7 +42209,7 @@ window.SkillTreeUI = SkillTreeUI;
 
         // Executa a fusão: revê tudo, tira as duas da bolsa, cobra o ouro e entrega a nova.
         // Se a entrega falhar, o ouro volta e as duas voltam para a bolsa: nada fica pela metade.
-        _doFuse(a) {
+        _doFuse(a, variant) {
             this.ask = null;
             const it = a ? Inventory.get(a.uid) : null;
             const pair = a ? Inventory.get(a.pair) : null;
@@ -42120,7 +42220,7 @@ window.SkillTreeUI = SkillTreeUI;
             if (Inventory.inCombat()) return refuse('inv.fuseCombat', 'Não dá para fundir em combate.');
             const next = this._fuseNext(it.payload);
             if (!next) return refuse('inv.fuseMaxTier', 'Essa arma já está no degrau máximo.');
-            const forged = this._fuseWeapon(next);
+            const forged = this._fuseWeapon(next, variant);
             if (!Inventory._isWeapon(forged)) return refuse('inv.fuseInvalid', 'Essa arma não pode ser fundida.');
             const cost = this._fuseCost(next.tier);
             if (!(cost > 0)) return refuse('inv.fuseInvalid', 'Essa arma não pode ser fundida.');
@@ -42206,11 +42306,11 @@ window.SkillTreeUI = SkillTreeUI;
 
         askNo() { this.ask = null; this._refresh(); },
 
-        askYes() {
+        askYes(variant) {
             const a = this.ask;
             if (!a) return;
             if (a.kind === 'sell') this._doSell(a.uid);
-            else if (a.kind === 'fuse') this._doFuse(a);
+            else if (a.kind === 'fuse') this._doFuse(a, (variant === 'heavy' || variant === 'swift') ? variant : null);
             else this._doDiscard(a.uid);
         },
 
@@ -47743,8 +47843,13 @@ Input.init();
        current MUST stay in sync with the SW CACHE_VERSION suffix (sw.js).
     */
     window.UPDATE_LOG = {
-        current: 'v107',
+        current: 'v108',
         entries: [
+            { v: 'v108', date: '2026-11-20', titleKey: 'update.entry.v108.title', title: 'v108 — Escolha na forja e morte com preço',
+              linesKeys: ['update.entry.v108.l1', 'update.entry.v108.l2', 'update.entry.v108.l3'],
+              lines: ['Fundir duas armas iguais agora abre dois caminhos: Pesada (+15% dano, -10% cadência) ou Ágil (+15% cadência, -10% dano). O nome da arma mostra o caminho escolhido.',
+                      'A primeira continuação da run segue grátis; a segunda custa 30% do seu ouro e a terceira, 45%, sempre limitado ao que você tem.',
+                      'O resto segue como na v107. Seus saves continuam funcionando.'] },
             { v: 'v107', date: '2026-11-20', titleKey: 'update.entry.v107.title', title: 'v107 — Combate com mais peso e sem perder a run',
               linesKeys: ['update.entry.v107.l1', 'update.entry.v107.l2', 'update.entry.v107.l3', 'update.entry.v107.l4', 'update.entry.v107.l5'],
               lines: ['O tremor e o congelamento do golpe ficam sempre ligados: mesmo com o celular mais lento, o combate mantém o peso.',
