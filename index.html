@@ -37510,6 +37510,28 @@ function announce(text) {
     if (el.textContent !== t) el.textContent = t;
 }
 
+const _NPC_PORTRAIT_FILES = {
+    guide: 'art/npc-guide.webp',
+    merchant: 'art/npc-merchant.webp',
+    oracle: 'art/npc-oracle.webp'
+};
+const _npcPortraitCache = {};
+function _getNpcPortrait(npc) {
+    if (!npc) return null;
+    const raw = npc.art || npc.npcType || npc.type;
+    const key = _NPC_PORTRAIT_FILES[raw] ? raw : (npc.npcType && _NPC_PORTRAIT_FILES[npc.npcType] ? npc.npcType : null);
+    if (!key) return null;
+    let im = _npcPortraitCache[key];
+    if (!im) {
+        im = new Image();
+        im._failed = false;
+        im.onerror = () => { im._failed = true; };
+        im.src = _NPC_PORTRAIT_FILES[key];
+        _npcPortraitCache[key] = im;
+    }
+    return (!im._failed && im.complete && im.naturalWidth > 0) ? im : null;
+}
+
 const NPCInteractionPanel = {
     visible: false,
     npc: null,
@@ -37727,14 +37749,26 @@ const NPCInteractionPanel = {
             fbW = Math.min(ctx.measureText(this.feedback).width, innerW * 0.62);
         }
 
-        // Retrato do falante: sprite do NPC quando disponível (WorldSprites.npc), ou disco com indicador.
+        // Retrato do falante: busto ilustrado quando disponível, sprite (WorldSprites.npc) ou disco com indicador.
         const portraitX = panelX + pad + 9, portraitY = panelY + M.headBase - 4;
         if (this.npc) {
+            const pImg = _getNpcPortrait(this.npc);
             const npcArt = this.npc.art || this.npc.type;
-            const sp = (npcArt && typeof WorldSprites !== 'undefined' && typeof WorldSprites.npc === 'function')
+            const sp = (!pImg && npcArt && typeof WorldSprites !== 'undefined' && typeof WorldSprites.npc === 'function')
                 ? WorldSprites.npc(npcArt, this.npc.color || '#ffcc00', 0)
                 : null;
-            if (sp) {
+            if (pImg) {
+                ctx.save();
+                ctx.fillStyle = 'rgba(14, 10, 24, 0.96)';
+                ctx.beginPath(); ctx.arc(portraitX, portraitY, 10, 0, Math.PI * 2); ctx.fill();
+                ctx.clip();
+                ctx.imageSmoothingEnabled = true;
+                ctx.drawImage(pImg, portraitX - 10, portraitY - 10, 20, 20);
+                ctx.restore();
+                ctx.strokeStyle = this.npc.color || 'rgba(255,255,255,0.65)';
+                ctx.lineWidth = 1.25;
+                ctx.beginPath(); ctx.arc(portraitX, portraitY, 10, 0, Math.PI * 2); ctx.stroke();
+            } else if (sp) {
                 ctx.save();
                 ctx.fillStyle = 'rgba(20, 16, 36, 0.92)';
                 ctx.beginPath(); ctx.arc(portraitX, portraitY, 10, 0, Math.PI * 2); ctx.fill();
@@ -42651,14 +42685,27 @@ renderBestiaryContent() {
     const chip = (on, label, onclick) => `<button onclick="${onclick}"
         style="padding:6px 11px;border-radius:999px;font-size:10px;font-weight:bold;border:1px solid ${on ? COLORS.PRIMARY : 'rgba(255,255,255,0.15)'};background:${on ? 'rgba(224,182,255,0.2)' : 'rgba(255,255,255,0.05)'};color:${on ? COLORS.PRIMARY : COLORS.TEXT_DIM};cursor:pointer">${label}</button>`;
 
-    const bestiaryArtMap = { final_guardian: 'cutscenes/boss-guardian.webp' };
+    const bestiaryArtMap = {
+        shadow_warden: 'art/boss-shadow_warden.webp',
+        boss: 'art/boss-shadow_warden.webp',
+        dark_lord: 'art/boss-dark_lord.webp',
+        death_herald: 'art/boss-death_herald.webp',
+        stone_colossus: 'art/boss-stone_colossus.webp',
+        specter: 'art/boss-specter.webp',
+        soul_devourer: 'art/boss-soul_devourer.webp',
+        bone_lord: 'art/boss-bone_lord.webp',
+        corrupted: 'art/boss-corrupted.webp',
+        magma_titan: 'art/boss-magma_titan.webp',
+        thorn_king: 'art/boss-thorn_king.webp',
+        final_guardian: 'cutscenes/boss-guardian.webp'
+    };
     const rows = filtered.map(type => {
         const m = Bestiary._monsters[type];
         const e = Bestiary._entries[type];
         const seen = !!e;
         const color = catColors[m.category] || COLORS.TEXT_DIM;
         const artSrc = seen ? bestiaryArtMap[type] : null;
-        const artHtml = artSrc ? `<div class="art-banner" style="height:108px;margin-bottom:8px;border-color:${color}44"><img src="${artSrc}" alt="" aria-hidden="true" decoding="async" style="object-position:center 22%" onload="this.classList.add('is-loaded')" onerror="this.parentElement.style.display='none'"></div>` : '';
+        const artHtml = artSrc ? `<img src="${artSrc}" alt="" aria-hidden="true" decoding="async" style="width:56px;height:56px;border-radius:10px;object-fit:cover;object-position:center 20%;flex-shrink:0;border:1px solid ${color}55;background:#0a0612" onerror="this.remove()">` : '';
         const pips = Array.from({ length: 10 }, (_, i) => `<span style="width:5px;height:5px;border-radius:999px;background:${i < m.difficulty ? color : 'rgba(255,255,255,0.12)'};display:inline-block"></span>`).join('');
         const floorLabel = m.floor ? _L('best.floor', 'Piso {n} · B{b}').replace('{n}', m.floor).replace('{b}', 11 - m.floor) : '';
         const ref = m.loreRef && window.CONFIG ? CONFIG.LORE_FRAGMENTS.find(f => f.id === m.loreRef) : null;
@@ -42667,13 +42714,17 @@ renderBestiaryContent() {
             ? `<button onclick="UIManager.openBestiaryLore('${ref.id}')" style="margin-top:8px;padding:6px 10px;border-radius:8px;border:1px solid rgba(224,182,255,0.35);background:rgba(224,182,255,0.1);color:${COLORS.PRIMARY};font-size:10px;font-weight:700;cursor:pointer">📜 ${_L('best.openLore', 'Abrir no Grimório')}</button>`
             : `<div style="margin-top:8px;font-size:10px;color:${COLORS.TEXT_MUTED}">📜 ${_L('best.related', 'Fragmento relacionado')}: <span style="color:#4b5563">???</span>${ref.floor ? ' · ' + _L('best.floorShort', 'Piso') + ' ' + ref.floor : ''}</div>`) : '';
         return `<div style="padding:12px 14px;border-radius:12px;border:1px solid ${seen ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.06)'};background:${seen ? 'rgba(30,20,60,0.5)' : 'rgba(255,255,255,0.02)'};${seen ? '' : 'opacity:0.72'}">
-            ${artHtml}
-            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
-                <span style="font-weight:700;font-size:13px;color:${seen ? '#fff' : COLORS.TEXT_MUTED}">${seen ? _L(m.nameKey, m.name) : '???'}</span>
-                <span style="font-size:calc(10px * var(--font-scale,1));text-transform:uppercase;letter-spacing:0.05em;color:${seen ? color : COLORS.TEXT_MUTED};white-space:nowrap">${seen ? (catLabels[m.category] || m.category) : _L('ui.bestiaryLocked', 'Bloqueado')}</span>
+            <div style="display:flex;gap:10px;align-items:center">
+                ${artHtml}
+                <div style="flex:1;min-width:0">
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+                        <span style="font-weight:700;font-size:13px;color:${seen ? '#fff' : COLORS.TEXT_MUTED}">${seen ? _L(m.nameKey, m.name) : '???'}</span>
+                        <span style="font-size:calc(10px * var(--font-scale,1));text-transform:uppercase;letter-spacing:0.05em;color:${seen ? color : COLORS.TEXT_MUTED};white-space:nowrap">${seen ? (catLabels[m.category] || m.category) : _L('ui.bestiaryLocked', 'Bloqueado')}</span>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:4px;margin-top:4px">${pips}${floorLabel ? `<span style="font-size:calc(10px * var(--font-scale,1));color:${COLORS.TEXT_MUTED};margin-left:6px">${floorLabel}</span>` : ''}</div>
+                    <div style="font-size:11px;color:${COLORS.TEXT_MUTED};margin-top:5px;line-height:1.3">${seen ? _L(m.descKey, m.desc) : _L('ui.bestiaryLockedHint', 'Derrote um para registrar aqui.')}</div>
+                </div>
             </div>
-            <div style="display:flex;align-items:center;gap:4px;margin-top:4px">${pips}${floorLabel ? `<span style="font-size:calc(10px * var(--font-scale,1));color:${COLORS.TEXT_MUTED};margin-left:6px">${floorLabel}</span>` : ''}</div>
-            <div style="font-size:11px;color:${COLORS.TEXT_MUTED};margin-top:5px;line-height:1.3">${seen ? _L(m.descKey, m.desc) : _L('ui.bestiaryLockedHint', 'Derrote um para registrar aqui.')}</div>
             ${seen ? `
                 <div style="margin-top:9px;padding-top:9px;border-top:1px solid rgba(255,255,255,0.08)">
                     <div style="font-size:calc(10px * var(--font-scale,1));font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:${color};margin-bottom:3px">${_L('best.who', 'Quem eram antes')}</div>

@@ -34,7 +34,12 @@ const APP_SHELL = ['./', './index.html', './manifest.webmanifest',
     './art/menu-bg.webp', './art/abyss-opening.webp', './art/camp-banner.webp',
     './art/gameover-veil.webp', './art/win-surface.webp',
     './art/biome-dungeon.webp', './art/biome-crypt.webp', './art/biome-lava.webp', './art/biome-forest.webp',
-    './art/hero-warrior.webp', './art/hero-rogue.webp', './art/hero-mage.webp', './art/hero-elf.webp'];
+    './art/hero-warrior.webp', './art/hero-rogue.webp', './art/hero-mage.webp', './art/hero-elf.webp',
+    './art/npc-guide.webp', './art/npc-merchant.webp', './art/npc-oracle.webp',
+    './art/boss-shadow_warden.webp', './art/boss-dark_lord.webp', './art/boss-death_herald.webp',
+    './art/boss-stone_colossus.webp', './art/boss-specter.webp', './art/boss-soul_devourer.webp',
+    './art/boss-bone_lord.webp', './art/boss-corrupted.webp', './art/boss-magma_titan.webp',
+    './art/boss-thorn_king.webp'];
 
 self.addEventListener('install', (event) => {
     event.waitUntil(
