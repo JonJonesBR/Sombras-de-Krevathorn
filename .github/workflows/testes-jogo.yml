@@ -1,0 +1,26 @@
+# Testes de gameplay: sobe o jogo em Chrome headless por CDP e roda os cenários
+# de tests/cenarios.js (congelamento do mago, status de gelo, imunidade, dano do
+# herói congelado e um smoke de 600 ticks). Sem dependências npm: o runner usa o
+# WebSocket global do Node 22 e o Chrome já instalado no runner.
+name: Testes do jogo
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  gameplay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Cenários de gameplay (Chrome headless por CDP)
+        run: node tests/rodar.js

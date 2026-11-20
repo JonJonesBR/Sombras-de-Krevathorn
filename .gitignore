@@ -1,6 +1,7 @@
-# Só index.html, sw.js, README.md, LICENSE e .gitignore ficam no repositório —
-# é o essencial para o GitHub Pages. Todo o resto é de desenvolvimento e fica
-# apenas na máquina (os arquivos continuam no disco, só não são versionados).
+# Ficam no repositório index.html, sw.js, README.md, LICENSE, .gitignore, tests/
+# (a suíte de gameplay que o CI roda) e os workflows do CI. É o essencial para o
+# GitHub Pages e para o gate de regressão. Todo o resto é de desenvolvimento e
+# fica apenas na máquina (os arquivos continuam no disco, só não são versionados).
 
 # Documentos internos de orquestração
 AGENTS.md
@@ -12,12 +13,11 @@ PLANO_MELHORIAS_PROGRESSO.md
 .omp/
 .freebuff/
 
-# Dependências e artefatos de desenvolvimento/testes
+# Dependências e artefatos de desenvolvimento (tests/ é versionado: roda no CI)
 node_modules/
 test-results/
 playwright-report/
 playwright/.cache/
-tests/
 package.json
 package-lock.json
 playwright.config.js
@@ -28,6 +28,7 @@ playwright.config.js
 !.github/workflows/limpar-deployments.yml
 !.github/workflows/validar-jogo.yml
 !.github/workflows/gitleaks.yml
+!.github/workflows/testes-jogo.yml
 
 # Exportação/pasta do Google Drive e lixo de ferramentas
 graficos_melhores/
