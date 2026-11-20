@@ -25029,6 +25029,7 @@ const ScreenEffects = {
     _slowTicks: 0,
     _hitstopCd: 0,
     _ringCd: 0,
+    _hitShakeCd: 0,
     _hurtTimer: 0,   // vinheta vermelha de dano recebido pelo jogador (12 ticks)
     _hurtAlpha: 0,
 
@@ -25059,7 +25060,7 @@ const ScreenEffects = {
     // received=true: dano que o jogador RECEBE (splatter vermelho de tela, sem mudança).
     // Sem received: acerto do jogador em inimigo. Não há splatter vermelho (lia como dano recebido);
     // o tremor escala com a multidão e a cromática só aparece com tela calma.
-    onHitEnemy(damage, fromX, fromY, targetX, targetY, received) {
+    onHitEnemy(damage, fromX, fromY, targetX, targetY, received, target) {
         if (received) {
             this.triggerShake(Math.min(2 + damage * 0.02, 8));
             // Light chromatic aberration only on heavy hits (rare, keeps the
@@ -25074,7 +25075,12 @@ const ScreenEffects = {
             return;
         }
         const k = _fxCrowdScale();
-        this.triggerShake(Math.min(2 + damage * 0.02, 8) * k);
+        if (this._hitShakeCd <= 0) {
+            const isBoss = !!(target && target.isB);
+            const bossScale = isBoss ? 0.5 : 1;
+            this.triggerShake(Math.min(1.5 + damage * 0.015, 5.5) * k * bossScale);
+            this._hitShakeCd = isBoss ? 16 : 8;
+        }
         if (damage > 30 && k >= 1) this.triggerChromatic(3);
     },
     
@@ -25120,8 +25126,11 @@ const ScreenEffects = {
     
     // Crítico do jogador: flash e cromática só com tela calma; sem splatter vermelho (era dano recebido)
     onCrit() {
-        // Tremor escalonado pela multidão, como os outros tremores de combate
-        this.triggerShake(5 * _fxCrowdScale());
+        // Tremor escalonado pela multidão, respeitando cadência curta para não vibrar contínuo contra chefes
+        if (this._hitShakeCd <= 4) {
+            this.triggerShake(4.5 * _fxCrowdScale());
+            this._hitShakeCd = Math.max(this._hitShakeCd, 10);
+        }
         if (_fxCrowdScale() >= 1) {
             this.triggerFlash(0.2, '#ffee88');
             this.triggerChromatic(6);
@@ -25285,6 +25294,7 @@ const ScreenEffects = {
         if (this._slowTicks > 0) this._slowTicks--;
         if (this._hitstopCd > 0) this._hitstopCd--;
         if (this._ringCd > 0) this._ringCd--;
+        if (this._hitShakeCd > 0) this._hitShakeCd--;
         if (this._hurtTimer > 0) this._hurtTimer--;
 
         // Blood splatter: o alfa decai em tickVisual; o timer segue contando ticks enquanto está visível
@@ -25298,6 +25308,7 @@ const ScreenEffects = {
         this._slowTicks = 0;
         this._hitstopCd = 0;
         this._ringCd = 0;
+        this._hitShakeCd = 0;
         this._hurtTimer = 0;
         this._hurtAlpha = 0;
     },
@@ -31774,10 +31785,10 @@ class Entity {
                 this.knockback(Math.cos(angle), Math.sin(angle), _kbHit);
             }
 
-            // Screen shake for ANY significant hit (dano recebido pelo jogador igual; em inimigo, escala com a multidão)
-            if (finalDmg > 8) {
-                if (this === player) ScreenEffects.triggerShake(Math.min(1 + finalDmg * 0.01, 5));
-                else { const _kf = _fxCrowdScale(); if (_kf >= 0.6) ScreenEffects.triggerShake(Math.min(1 + finalDmg * 0.01, 5) * _kf); }
+            // Screen shake for significant direct hits not already covered by onHitEnemy
+            if (finalDmg > 8 && !dot && this !== player && source !== player && !this.isB) {
+                const _kf = _fxCrowdScale();
+                if (_kf >= 0.6) ScreenEffects.triggerShake(Math.min(1 + finalDmg * 0.01, 4) * _kf);
             }
         }
         
@@ -31791,13 +31802,11 @@ class Entity {
         // splatter/chroma are capped internally by ScreenEffects.onHitEnemy and
         // only scale with damage). Player-body hits are handled above; pets and
         // projectiles never reach this branch as damage targets.
-        // DoT (dot) não é acerto: sem impactHit (que traz o hit-stop) nem o som de acerto
-        if (source === player && this !== player && !this.isP && typeof ScreenEffects !== 'undefined') {
-            ScreenEffects.onHitEnemy(finalDmg, source.x, source.y, this.x, this.y);
-            if (!dot) {
-                ScreenEffects.impactHit(finalDmg, source.x, source.y, this.x, this.y, dmgType === 'crit', this);
-                SND.playEnemyHit();
-            }
+        // DoT (dot) não é acerto: sem shake, sem impactHit (que traz o hit-stop) nem o som de acerto
+        if (source === player && this !== player && !this.isP && typeof ScreenEffects !== 'undefined' && !dot) {
+            ScreenEffects.onHitEnemy(finalDmg, source.x, source.y, this.x, this.y, false, this);
+            ScreenEffects.impactHit(finalDmg, source.x, source.y, this.x, this.y, dmgType === 'crit', this);
+            SND.playEnemyHit();
         }
         
                 // Furto (ladino, v56): chance de ouro extra ao acertar um inimigo
