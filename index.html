@@ -12071,8 +12071,8 @@ var CONFIG = {
     DOUBLE_XP_MULTIPLIER: 2.0,
 
     // Screen Effects - Shake
-    SHAKE_DECAY: 0.9,
-    SHAKE_THRESHOLD: 0.5,
+    SHAKE_DECAY: 0.78,
+    SHAKE_THRESHOLD: 0.8,
     SHAKE_HIT: 5,
     SHAKE_BOSS_SPAWN: 8,
     SHAKE_METEOR: 6,
@@ -15845,7 +15845,7 @@ function _spawnFloorBoss(eSpawn) {
     entities.push(boss);
     bossActive = true;
     if (player) player._hitSinceBoss = false; // início da luta: conta dano desde aqui (conquista 'Intocável')
-    SND.playBoss(); SND.startBossMusic(boss._blueprint ? boss._blueprint.key : null); shake = 20; ScreenEffects.onBossSpawn(); triggerCamZoom(0.10, 40);
+    SND.playBoss(); SND.startBossMusic(boss._blueprint ? boss._blueprint.key : null); shake = CONFIG.SHAKE_BOSS_SPAWN; ScreenEffects.onBossSpawn(); triggerCamZoom(0.05, 28);
     const _bannerKey = boss._blueprint ? boss._blueprint.key : null;
     if (_bannerKey) _getBossPortrait(_bannerKey);
     _bossBanner = { name: _bossNome(boss), nameKey: null, key: _bannerKey, timer: 90, line: (boss._blueprint && window.I18n) ? I18n.t('boss.' + boss._blueprint.key + '.intro') : null };
@@ -17119,7 +17119,7 @@ function draw() {
         // single hit reads as one impact instead of adding the two.
         const _fxShake = (typeof ScreenEffects !== 'undefined' && ScreenEffects._shake) ? ScreenEffects._shake : 0;
         // Acessibilidade: com reducedMotion o tremor cai a 25% (o impacto continua perceptível, sem sacudir a tela)
-        let _shakeTotal = Math.min(24, Math.max(shake, _fxShake)) * ((window.GameSettings && GameSettings.reducedMotion) ? 0.25 : 1);
+        let _shakeTotal = Math.min(10, Math.max(shake, _fxShake)) * ((window.GameSettings && GameSettings.reducedMotion) ? 0.25 : 1);
         // Tremor curto da descida entre pisos: só nos primeiros passos da entrada (sem reducedMotion)
         if (_fadeState && _fadeState.kind === 'descent' && _fadeState.phase === 'in' && _fadeState.t < DESCENT_QUAKE_STEPS
             && !(window.GameSettings && GameSettings.reducedMotion)) _shakeTotal = Math.max(_shakeTotal, 5);
@@ -25030,6 +25030,7 @@ const ScreenEffects = {
     _hitstopCd: 0,
     _ringCd: 0,
     _hitShakeCd: 0,
+    _hurtShakeCd: 0,
     _hurtTimer: 0,   // vinheta vermelha de dano recebido pelo jogador (12 ticks)
     _hurtAlpha: 0,
 
@@ -25062,7 +25063,10 @@ const ScreenEffects = {
     // o tremor escala com a multidão e a cromática só aparece com tela calma.
     onHitEnemy(damage, fromX, fromY, targetX, targetY, received, target) {
         if (received) {
-            this.triggerShake(Math.min(2 + damage * 0.02, 8));
+            if (damage > 4 && this._hurtShakeCd <= 0) {
+                this.triggerShake(Math.min(1.5 + damage * 0.012, 4));
+                this._hurtShakeCd = 22;
+            }
             // Light chromatic aberration only on heavy hits (rare, keeps the
             // sustained-combat path cheap)
             if (damage > 30) this.triggerChromatic(3);
@@ -25075,11 +25079,10 @@ const ScreenEffects = {
             return;
         }
         const k = _fxCrowdScale();
-        if (this._hitShakeCd <= 0) {
-            const isBoss = !!(target && target.isB);
-            const bossScale = isBoss ? 0.5 : 1;
-            this.triggerShake(Math.min(1.5 + damage * 0.015, 5.5) * k * bossScale);
-            this._hitShakeCd = isBoss ? 16 : 8;
+        const isBoss = !!(target && target.isB);
+        if (!isBoss && this._hitShakeCd <= 0) {
+            this.triggerShake(Math.min(1.2 + damage * 0.01, 3.5) * k);
+            this._hitShakeCd = 10;
         }
         if (damage > 30 && k >= 1) this.triggerChromatic(3);
     },
@@ -25089,7 +25092,7 @@ const ScreenEffects = {
     },
 
     onBossDeath() {
-        this.triggerShake(30);
+        this.triggerShake(10);
         this.triggerFlash(0.7, '#ffffff');
         this.triggerChromatic(8);
         // Full-screen vignette gradient + blood surge are expensive on low-end;
@@ -25105,7 +25108,7 @@ const ScreenEffects = {
     },
     
     onEliteDeath() {
-        this.triggerShake(8);
+        this.triggerShake(5);
         this.triggerFlash(0.15, COLORS.ELITE);
         this._bloodSplatterAlpha = Math.min(this._bloodSplatterAlpha + 0.2, 0.4);
         this._bloodSplatterColor = '#ff8800';
@@ -25113,23 +25116,23 @@ const ScreenEffects = {
     },
     
     onChargeHit() {
-        this.triggerShake(10);
+        this.triggerShake(5);
         this.triggerFlash(0.25, COLORS.DMG_CRIT);
         this._bloodSplatterAlpha = Math.min(this._bloodSplatterAlpha + 0.3, 0.6);
         this._splatterSeed = (this._splatterSeed * 1664525 + 1013904223) >>> 0;
     },
     
     onBossPhase3(isFinal) {
-        this.triggerShake(isFinal ? 20 : 12);
+        this.triggerShake(isFinal ? 7 : 5);
         this.triggerFlash(0.4, isFinal ? '#ff3333' : COLORS.ELITE);
     },
     
     // Crítico do jogador: flash e cromática só com tela calma; sem splatter vermelho (era dano recebido)
     onCrit() {
         // Tremor escalonado pela multidão, respeitando cadência curta para não vibrar contínuo contra chefes
-        if (this._hitShakeCd <= 4) {
-            this.triggerShake(4.5 * _fxCrowdScale());
-            this._hitShakeCd = Math.max(this._hitShakeCd, 10);
+        if (this._hitShakeCd <= 2) {
+            this.triggerShake(3 * _fxCrowdScale());
+            this._hitShakeCd = Math.max(this._hitShakeCd, 14);
         }
         if (_fxCrowdScale() >= 1) {
             this.triggerFlash(0.2, '#ffee88');
@@ -25271,7 +25274,7 @@ const ScreenEffects = {
     update() {
          // Shake decay
          if (window.GameSettings && GameSettings.screenShakeEnabled === false) { this._shake = 0; }
-         else if (this._shake > 0.1) this._shake *= 0.88;
+         else if (this._shake > 0.8) this._shake *= 0.78;
          else this._shake = 0;
         
         // Flash, cromática, vinheta e splatter decaem em tickVisual (tempo real)
@@ -25295,6 +25298,7 @@ const ScreenEffects = {
         if (this._hitstopCd > 0) this._hitstopCd--;
         if (this._ringCd > 0) this._ringCd--;
         if (this._hitShakeCd > 0) this._hitShakeCd--;
+        if (this._hurtShakeCd > 0) this._hurtShakeCd--;
         if (this._hurtTimer > 0) this._hurtTimer--;
 
         // Blood splatter: o alfa decai em tickVisual; o timer segue contando ticks enquanto está visível
@@ -25309,6 +25313,7 @@ const ScreenEffects = {
         this._hitstopCd = 0;
         this._ringCd = 0;
         this._hitShakeCd = 0;
+        this._hurtShakeCd = 0;
         this._hurtTimer = 0;
         this._hurtAlpha = 0;
     },
@@ -31571,18 +31576,17 @@ class Map {
         }
 
         const bw = this.buffer.width, bh = this.buffer.height;
-        const rcx = Math.round(cx), rcy = Math.round(cy);
         const vw = (typeof width === 'number' ? width : bw) + 2;
         const vh = (typeof height === 'number' ? height : bh) + 2;
-        const sx = Math.max(0, rcx);
-        const sy = Math.max(0, rcy);
-        const ex = Math.min(bw, rcx + vw);
-        const ey = Math.min(bh, rcy + vh);
+        const sx = Math.max(0, Math.floor(cx));
+        const sy = Math.max(0, Math.floor(cy));
+        const ex = Math.min(bw, Math.ceil(cx + vw));
+        const ey = Math.min(bh, Math.ceil(cy + vh));
         const sw = ex - sx, sh = ey - sy;
         if (sw > 0 && sh > 0) {
             const prevSmooth = ctx.imageSmoothingEnabled;
             ctx.imageSmoothingEnabled = false;
-            ctx.drawImage(this.buffer, sx, sy, sw, sh, sx - rcx, sy - rcy, sw, sh);
+            ctx.drawImage(this.buffer, sx, sy, sw, sh, sx - cx, sy - cy, sw, sh);
             ctx.imageSmoothingEnabled = prevSmooth;
         }
         this._drawFlames(ctx, cx, cy);
@@ -31792,7 +31796,7 @@ class Entity {
             }
         }
         
-        if(this === player) { shake = CONFIG.SHAKE_HIT; SND.playHit(finalDmg >= this.maxHp * 0.2);Statistics.data.totalDamageTaken += finalDmg; if (window.RunStats) RunStats.damageTaken += finalDmg; if (window.RunObjectiveSystem) RunObjectiveSystem.onDamage(finalDmg); ScreenEffects.onHitEnemy(finalDmg, source ? source.x : 0, source ? source.y : 0, this.x, this.y, true); this.combatTimer = 0;
+        if(this === player) { if (finalDmg > 4 && (typeof ScreenEffects === 'undefined' || ScreenEffects._hurtShakeCd <= 0)) shake = Math.min(CONFIG.SHAKE_HIT, 3.5); SND.playHit(finalDmg >= this.maxHp * 0.2);Statistics.data.totalDamageTaken += finalDmg; if (window.RunStats) RunStats.damageTaken += finalDmg; if (window.RunObjectiveSystem) RunObjectiveSystem.onDamage(finalDmg); ScreenEffects.onHitEnemy(finalDmg, source ? source.x : 0, source ? source.y : 0, this.x, this.y, true); this.combatTimer = 0;
             // The number only rendered for damage the player DEALT. Taking a hit
             // showed a flash but no magnitude; a red number closes that gap.
             if(typeof DamageNumbers !== 'undefined' && finalDmg >= 1) DamageNumbers.add(this.x, this.y, Math.round(finalDmg), 'hurt');
@@ -34229,7 +34233,6 @@ class Boss extends Enemy {
         spawnParticles(this.x, this.y, this._bpGlow, 12, 4);
         this.x = nx; this.y = ny;
         spawnParticles(this.x, this.y, this._bpGlow, 16, 5);
-        shake = 8;
         // Cortes em ticks de simulação (60 ticks = 1 s), não em setTimeout: não disparam em pausa, painel ou hit-stop
         for(let i = 0; i < 3; i++) this._shadowQueue.push({ t: 1 + Math.round(i * 120 * 60 / 1000) });
     }
@@ -34250,7 +34253,7 @@ class Boss extends Enemy {
             const a = (i / n) * Math.PI * 2 + SeedSystem.random() * 0.1;
             this._pushBullet(this.x, this.y, Math.cos(a) * sp, Math.sin(a) * sp, '#a45bff', dmg);
         }
-        spawnParticles(this.x, this.y, '#a45bff', 20, 5); shake = 10;
+        spawnParticles(this.x, this.y, '#a45bff', 20, 5);
     }
 
     _ab_deathScythe(p, m) {
@@ -34265,7 +34268,7 @@ class Boss extends Enemy {
         spawnParticles(this.x, this.y, '#ff8a8a', 18, 5);
         const d = Math.hypot(p.x - this.x, p.y - this.y);
         if(d < 120 && hasLineOfSight(m, this.x, this.y, p.x, p.y)) p.takeDamage(CONFIG.ENEMY_MELEE_DAMAGE * 1.4, m);
-        shake = 10;
+        shake = Math.max(shake, 4);
     }
 
     _ab_rockThrow(p, m) {
@@ -34276,7 +34279,7 @@ class Boss extends Enemy {
             const sp = 6 + SeedSystem.random() * 2;
             this._pushBullet(this.x, this.y, Math.cos(a) * sp, Math.sin(a) * sp, '#a9a9a9', dmg);
         }
-        spawnParticles(this.x, this.y, '#8d8d8d', 12, 4); shake = 6;
+        spawnParticles(this.x, this.y, '#8d8d8d', 12, 4);
     }
 
     _ab_chillWave(p, m) {
@@ -34289,7 +34292,7 @@ class Boss extends Enemy {
                 this._pushBullet(this.x, this.y, Math.cos(a) * (sp - wave * 1.6), Math.sin(a) * (sp - wave * 1.6), '#9ff7ff', dmg * 0.9);
             }
         }
-        spawnParticles(this.x, this.y, '#bfefff', 16, 5); shake = 6;
+        spawnParticles(this.x, this.y, '#bfefff', 16, 5);
     }
 
     _ab_soulDrain(p, m) {
@@ -34306,7 +34309,7 @@ class Boss extends Enemy {
             this._pushBullet(this.x, this.y, Math.cos(a) * 7.5, Math.sin(a) * 7.5, '#f2e6d0', dmg);
             this._pushBullet(this.x, this.y, Math.cos(a) * 5.5, Math.sin(a) * 5.5, '#d9c9a8', dmg * 0.8);
         }
-        spawnParticles(this.x, this.y, '#f2e6d0', 10, 4); shake = 4;
+        spawnParticles(this.x, this.y, '#f2e6d0', 10, 4);
     }
 
     _ab_fireWall(p, m) {
@@ -34318,7 +34321,7 @@ class Boss extends Enemy {
             const sp = 7 + Math.abs(i) * 0.6;
             this._pushBullet(this.x + Math.cos(perp) * i * 24, this.y + Math.sin(perp) * i * 24, Math.cos(a) * sp, Math.sin(a) * sp, '#ff7a3c', dmg);
         }
-        spawnParticles(this.x, this.y, '#ff7a3c', 16, 5); shake = 8;
+        spawnParticles(this.x, this.y, '#ff7a3c', 16, 5);
     }
 
     _ab_corruptionPool(p, m) {
@@ -34344,7 +34347,7 @@ class Boss extends Enemy {
         this.trySummonMinions(m);
         if(typeof guidedBullets !== 'undefined') guidedBullets.push(new GuidedBullet(this.x, this.y, CONFIG.BOSS_GUIDED_DAMAGE * (this._abyssalDmgMult || 1)));
         addLog(' ' + this.name + (window.I18n ? I18n.t('log.bossFinalBurst') : ' libera todo o seu poder!'));
-        shake = 14;
+        shake = Math.max(shake, 5);
     }
 
     // Asas: desenhadas atrás do corpo (antes do sprite), só nos dois chefes que as têm
@@ -34577,7 +34580,7 @@ class Boss extends Enemy {
             if (_np === 2) {
                 spawnParticles(this.x, this.y, '#ff8800', 25, 5);
                 addLog(' ' + this.name + (window.I18n ? I18n.t('log.bossPhase2') : ' - FASE 2!'));
-                shake = 15;
+                shake = Math.max(shake, 5);
                 ScreenEffects.onBossPhase3(false);
                 if (window.SND && SND.playBossPhase2) SND.playBossPhase2();
                 if (window.SND && SND.startBossPhase2) SND.startBossPhase2(); // trilha de fase 2 (mesmo limiar: BOSS_PHASE_2_THRESHOLD)
@@ -34586,13 +34589,13 @@ class Boss extends Enemy {
             } else if (_np === 3) {
                 spawnParticles(this.x, this.y, '#ff0000', 30, 6);
                 addLog(' ' + this.name + (window.I18n ? I18n.t('log.bossPhase3') : ' - FASE 3!'));
-                shake = 20;
+                shake = Math.max(shake, 7);
                 ScreenEffects.onBossPhase3(true);
                 this.trySummonMinions(m);
             } else if (_np === 4) {
                 spawnParticles(this.x, this.y, '#ff4400', 35, 7);
                 addLog(' ' + this.name + (window.I18n ? I18n.t('log.bossPhase4') : ' - FASE 4!'));
-                shake = 25;
+                shake = Math.max(shake, 8);
                 ScreenEffects.onBossPhase3(true);
                 this.trySummonMinions(m);
             } else if (_np === 5) {
@@ -34632,7 +34635,7 @@ class Boss extends Enemy {
                         bullets.push(new Bullet(this.x, this.y, Math.cos(a)*sp, Math.sin(a)*sp, '#ff00ff', dmg, false));
                     }
                 }
-                spawnParticles(this.x, this.y, '#ff00ff', 15, 5); shake = 8;
+                spawnParticles(this.x, this.y, '#ff00ff', 15, 5);
             }
         }
 
@@ -34648,7 +34651,7 @@ class Boss extends Enemy {
         // groundPound: aviso de 28 ticks; o dano cai quando zera, no ponto do chefe naquele instante
         if(this._poundTelegraph > 0 && --this._poundTelegraph === 0) {
             const pdx = p.x - this.x, pdy = p.y - this.y;
-            spawnParticles(this.x, this.y, '#ff6600', 30, 5); shake = 18;
+            spawnParticles(this.x, this.y, '#ff6600', 30, 5); shake = Math.max(shake, 7);
             if(pdx * pdx + pdy * pdy < this._poundRange * this._poundRange && hasLineOfSight(m, this.x, this.y, p.x, p.y)) {
                 p.takeDamage(this._poundDmg, m);
                 spawnParticles(p.x, p.y, '#ff3300', 15, 5);
@@ -34668,7 +34671,6 @@ class Boss extends Enemy {
                 }
             }
             spawnParticles(this._teleportX, this._teleportY, '#ff00ff', 20, 6);
-            shake = 10;
         }
 
         // Charge wind-up: boss freezes, telegraphs direction, then lunges
@@ -34705,7 +34707,7 @@ class Boss extends Enemy {
                     if(pdx*pdx + pdy*pdy < contactSq) {
                         p.takeDamage(this._chargeDmg || CONFIG.BOSS_ABILITY_CHARGE_DAMAGE, m);
                         spawnParticles(p.x, p.y, '#ff0000', 10, 4);
-                        this.charging = false; shake = 12; ScreenEffects.onChargeHit();
+                        this.charging = false; shake = Math.max(shake, 5); ScreenEffects.onChargeHit();
                     }
                 }
             } else {
@@ -34729,7 +34731,7 @@ class Boss extends Enemy {
                 if(dpx*dpx + dpy*dpy < dcsq) {
                     p.takeDamage(this._dashDmg || CONFIG.BOSS_DASH_DAMAGE, m);
                     spawnParticles(p.x, p.y, '#ff5555', 8, 4);
-                    shake = 10;
+                    shake = Math.max(shake, 4);
                     this._dashT = 0;
                 }
             } else if(dSq > 0 && dSq < chaseRangeSq) {
@@ -34863,7 +34865,6 @@ class Boss extends Enemy {
             if(!m.isWall(px, py)) this.arenaHazards.push(new BossArenaHazard(px, py));
         }
         addLog(window.I18n ? I18n.t('log.firePillars') : ' Pilares de fogo!');
-        shake = 10;
     }
 
     trySummonMinions(m) {
@@ -35086,7 +35087,7 @@ class Boss extends Enemy {
             if(this._armorHp <= 0) {
                 this._armorHp = 0;
                 spawnParticles(this.x, this.y, '#e0e0e0', 22, 6);
-                shake = 8;
+                shake = Math.max(shake, 4);
                 addLog(' ' + this.name + (window.I18n ? I18n.t('log.bossArmorBroken') : ' perdeu a armadura de pedra!'));
             }
         }
