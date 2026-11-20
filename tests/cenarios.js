@@ -308,6 +308,302 @@ return { erro, heroiPerdeu, alvoPerdeu };
     }
   },
   {
+    // Autosave no meio do fade de troca de andar/câmara: o jogo captura o estado coerente
+    // em beginTransitionSnapshot() e o save grava ESSE estado, nunca "andar novo + câmara antiga".
+    nome: 'save_durante_transicao',
+    codigo: `(async () => {
+${PREPARO}
+const andarAntes = dungeonLevel, mortesAntes = dungeonKills;
+const camaraAntes = _storyRoom ? _storyRoom.i : null;
+const transicaoAntes = (typeof _transitioning !== 'undefined') ? _transitioning : false;
+if (!_storyRoom) _storyRoom = { i: 2, total: Math.max(2, CONFIG.MAP_STORY_ROOMS), cleared: false, budget: 0, spawned: 0, boss: false };
+// Estado anterior: andar 3, câmara 2, 7 abates
+_storyRoom.i = 2;
+dungeonLevel = 3; dungeonKills = 7;
+_transitioning = false;
+const snapshot = SaveSystem.beginTransitionSnapshot();
+
+// Mutação que a transição faz depois do snapshot, já com o fade em curso
+_transitioning = true;
+dungeonLevel = 4; dungeonKills = 0; _storyRoom.i = 3;
+const estadoVivoAndar = dungeonLevel, estadoVivoCamara = _storyRoom.i;
+const salvou = SaveSystem.save();
+let gravado = null;
+try {
+  const bruto = localStorage.getItem(SaveSystem.KEY);
+  gravado = bruto ? JSON.parse(bruto) : null;
+} catch (e) { gravado = null; }
+SaveSystem._transitionSnapshot = null;
+SaveSystem._transitionSavePending = false;
+_transitioning = false;
+// Limpeza: o estado vivo volta ao de antes (o mapa ativo nunca trocou) e o save é regravado coerente
+dungeonLevel = andarAntes; dungeonKills = mortesAntes;
+if (camaraAntes === null) _storyRoom = null;
+else if (_storyRoom) _storyRoom.i = camaraAntes;
+_transitioning = transicaoAntes || false;
+try { SaveSystem.save(); } catch (e) {}
+return {
+  snapshot,
+  salvou,
+  estadoVivoAndar,
+  estadoVivoCamara,
+  andar: gravado ? gravado.dungeonLevel : null,
+  mortes: gravado ? gravado.dungeonKills : null,
+  camara: (gravado && gravado.storyRoom) ? gravado.storyRoom.i : null,
+  incoerente: !!(gravado && gravado.dungeonLevel === 4 && gravado.storyRoom && gravado.storyRoom.i === 2)
+};
+})()`,
+    verificar(r) {
+      const falhas = [];
+      if (r.snapshot !== true) falhas.push('beginTransitionSnapshot não capturou o estado antes da transição');
+      if (r.salvou !== true) falhas.push('SaveSystem.save() no meio da transição não gravou nada');
+      if (r.estadoVivoAndar !== 4 || r.estadoVivoCamara !== 3) {
+        falhas.push('a mutação da transição não chegou ao estado vivo (andar ' + r.estadoVivoAndar + ', câmara ' + r.estadoVivoCamara + ')');
+      }
+      if (r.andar !== 3) falhas.push('save no meio da transição gravou o andar ' + r.andar + ' (esperado o anterior, 3)');
+      if (r.mortes !== 7) falhas.push('save no meio da transição gravou ' + r.mortes + ' abates (esperado o anterior, 7)');
+      if (r.camara !== 2) falhas.push('save no meio da transição gravou a câmara ' + r.camara + ' (esperada a anterior, 2)');
+      if (r.incoerente) falhas.push('save misturou andar novo (4) com câmara antiga (2)');
+      return falhas;
+    }
+  },
+  {
+    // Duplo toque no mesmo item do acampamento: 1 item sai da lista, o ouro cai uma vez só.
+    nome: 'acampamento_duplo_toque',
+    codigo: `(async () => {
+${PREPARO}
+if (window.UIManager && UIManager.closePanel) { try { UIManager.closePanel(); } catch (e) {} }
+const ouroAntes = player.currency;
+CampSystem.reset();
+CampSystem._lastBuyAt = 0;
+CampSystem.build();
+const st = CampSystem.state;
+if (!st || !Array.isArray(st.offers) || !st.offers.length) return { erro: 'CampSystem.build() não montou ofertas' };
+// 'chest' devolve ouro ao comprar e estragaria a conta exata do troco; a compra usa a
+// primeira oferta que só cobra. O duplo toque é sobre o mesmo id, não sobre a posição.
+const idPrimeiro = st.offers[0].id;
+const oferta = st.offers.find(o => o && o.id !== 'chest') || st.offers[0];
+const idComprado = oferta.id;
+const custo = oferta.cost;
+player.currency = Math.max(1000, custo * 10);
+const ouro0 = player.currency;
+const ofertasAntes = st.offers.length;
+
+CampSystem.buy(idComprado);
+const ouro1 = player.currency, ofertas1 = st.offers.length;
+CampSystem.buy(idComprado); // segundo toque, mesmo id, dentro da janela do duplo toque
+const ouro2 = player.currency, ofertas2 = st.offers.length;
+const idAindaNaLista = st.offers.some(o => o && o.id === idComprado);
+
+player.currency = ouroAntes;
+CampSystem.reset();
+if (window.UIManager && UIManager.closePanel) { try { UIManager.closePanel(); } catch (e) {} }
+return { idPrimeiro, idComprado, custo, ouro0, ouro1, ouro2, ofertasAntes, ofertas1, ofertas2, idAindaNaLista };
+})()`,
+    verificar(r) {
+      const falhas = [];
+      if (r.idComprado === undefined || r.idComprado === null) return ['o cenário não chegou a comprar nada'];
+      if (r.ouro0 - r.ouro1 !== r.custo) falhas.push('primeira compra cobrou ' + (r.ouro0 - r.ouro1) + ' (esperado ' + r.custo + ')');
+      if (r.ouro2 !== r.ouro1) falhas.push('segundo toque no mesmo item cobrou de novo (' + r.ouro1 + ' -> ' + r.ouro2 + ')');
+      if (r.ofertas1 !== r.ofertasAntes - 1) falhas.push('a primeira compra deixou ' + r.ofertas1 + ' ofertas (esperado ' + (r.ofertasAntes - 1) + ')');
+      if (r.ofertas2 !== r.ofertas1) falhas.push('o segundo toque tirou outra oferta (' + r.ofertas1 + ' -> ' + r.ofertas2 + ')');
+      if (r.idAindaNaLista) falhas.push('o item comprado continua na lista do acampamento');
+      return falhas;
+    }
+  },
+  {
+    // Esquiva contra a parede: o dash para antes dela (não atravessa) e os i-frames
+    // existem logo depois do dash e somem sozinhos.
+    nome: 'dash_parede_e_iframes',
+    codigo: `(async () => {
+${PREPARO}
+if (window.UIManager && UIManager.closePanel) { try { UIManager.closePanel(); } catch (e) {} }
+const TS = CONFIG.TILE_SIZE;
+const parede = (tx, ty) => {
+  if (tx < 0 || ty < 0 || tx >= map.width || ty >= map.height) return true;
+  const t = map.tiles[tx][ty].t;
+  return t === 1 || t === 2;
+};
+// Chão livre com parede logo à direita e vizinhos livres (sem canto que force o dash a desviar)
+let muroX = null, px = null, py = null;
+for (let ty = 2; ty < map.height - 2 && px === null; ty++) {
+  for (let tx = 3; tx < map.width - 2; tx++) {
+    if (parede(tx, ty) || !parede(tx + 1, ty)) continue;
+    if (parede(tx - 1, ty) || parede(tx, ty - 1) || parede(tx, ty + 1)) continue;
+    px = tx * TS + TS / 2; py = ty * TS + TS / 2; muroX = (tx + 1) * TS; break;
+  }
+}
+if (muroX === null) return { erro: 'nenhuma parede à direita com chão livre no mapa' };
+
+${LIMPAR_MUNDO}
+player.hp = player.maxHp = 1e9;
+player.skills = {};
+player.frozen = 0;
+player.shield = 0; player.aegisTimer = 0; player.invincibleTimer = 0;
+player.dodgeCooldown = 0; player._dodgeBuffer = 0;
+const raio = player.radius;
+// Encostado na parede, mas com o primeiro passo do dash livre: o dash tem que parar nela
+player.x = muroX - raio - 18; player.y = py;
+const xAntes = player.x;
+const primeiroPassoLivre = _entityClear(map, player.x + 6, player.y, raio);
+
+const errosConsole = [];
+const consoleErrorOriginal = console.error;
+console.error = function () {
+  try { errosConsole.push(String(arguments[0])); } catch (e) {}
+  return consoleErrorOriginal.apply(console, arguments);
+};
+let framesDeIFrame = 0, xDepois = xAntes, ticksIFrame = 0;
+try {
+  Input.right.active = false;
+  Input.left.active = true; Input.left.dx = 1; Input.left.dy = 0;
+  player.dodge(); // dash na direção da parede
+  xDepois = player.x;
+  framesDeIFrame = player.invincibleTimer || 0;
+  Input.left.active = false;
+  // Os i-frames do dash expiram sozinhos, com a simulação rodando
+  while (player.invincibleTimer > 0 && ticksIFrame < 400) {
+    player.hp = player.maxHp = 1e9;
+    entities = entities.filter(e => e === player);
+    Input.right.active = false; Input.left.active = false;
+    update();
+    ticksIFrame++;
+  }
+} finally {
+  Input.right.active = false; Input.left.active = false;
+  console.error = consoleErrorOriginal;
+}
+return {
+  raio,
+  muroX,
+  xAntes,
+  xDepois,
+  andou: xDepois - xAntes,
+  distanciaMuro: muroX - player.x,
+  primeiroPassoLivre,
+  atravessou: !!(map.isWall(player.x, player.y) || (player.x + raio > muroX + 0.5)),
+  framesDeIFrame,
+  iframesConfig: CONFIG.DODGE_INVULN_FRAMES,
+  iframesSumiram: !(player.invincibleTimer > 0),
+  ticksIFrame,
+  errosConsole: errosConsole.length,
+  erroConsole: errosConsole.length ? errosConsole[0] : null
+};
+})()`,
+    verificar(r) {
+      const falhas = [];
+      if (r.muroX === undefined || r.muroX === null) return ['o cenário não achou parede para testar o dash'];
+      if (r.primeiroPassoLivre !== true) falhas.push('posição de teste encostada demais: o dash nem começaria');
+      if (!(r.andou > 0)) falhas.push('o dash não saiu do lugar (andou ' + r.andou + ' px)');
+      if (r.atravessou) falhas.push('o herói atravessou a parede (centro a ' + r.distanciaMuro + ' px do muro, raio ' + r.raio + ')');
+      if (!(r.distanciaMuro >= r.raio)) falhas.push('o herói parou dentro da parede (centro a ' + r.distanciaMuro + ' px do muro, raio ' + r.raio + ')');
+      if (!(r.framesDeIFrame > 0)) falhas.push('o dash não deu i-frames (invincibleTimer ' + r.framesDeIFrame + ' logo depois)');
+      if (!(r.framesDeIFrame >= r.iframesConfig)) falhas.push('i-frames do dash ' + r.framesDeIFrame + ' abaixo do configurado (' + r.iframesConfig + ')');
+      if (r.iframesSumiram !== true) falhas.push('os i-frames do dash não expiraram em ' + r.ticksIFrame + ' ticks');
+      if (!(r.ticksIFrame <= r.framesDeIFrame + 5)) falhas.push('i-frames duraram ' + r.ticksIFrame + ' ticks para uma janela de ' + r.framesDeIFrame);
+      if (r.errosConsole) falhas.push('erro no console durante o dash: ' + r.erroConsole);
+      return falhas;
+    }
+  },
+  {
+    // Save + load de ida e volta: o que foi gravado é o que volta para a memória.
+    nome: 'save_ida_e_volta',
+    codigo: `(async () => {
+${PREPARO}
+if (window.UIManager && UIManager.closePanel) { try { UIManager.closePanel(); } catch (e) {} }
+const ouroOriginal = player.currency;
+const nivelOriginal = dungeonLevel;
+const camaraViva = _storyRoom ? _storyRoom.i : null;
+// Estado conhecido, para comparar depois do load
+player.currency = 777; player.lvl = 5; player.xp = 123; player.kills = 42;
+player.maxHp = 200; player.hp = 150; player.weaponLevel = 2;
+dungeonLevel = 3; dungeonKills = 5;
+const tipoVivo = player.type;
+const salvou = SaveSystem.save();
+let gravado = null;
+try {
+  const bruto = localStorage.getItem(SaveSystem.KEY);
+  gravado = bruto ? JSON.parse(bruto) : null;
+} catch (e) { gravado = null; }
+if (!gravado) {
+  player.currency = ouroOriginal; dungeonLevel = nivelOriginal;
+  return { erro: 'SaveSystem.save() não deixou save no localStorage', salvou };
+}
+// Estraga o estado em memória e carrega de volta do disco
+player.currency = 0; player.lvl = 1; player.xp = 0; player.kills = 0;
+player.maxHp = 10; player.hp = 10; player.weaponLevel = 1;
+const carregado = SaveSystem.load();
+if (carregado) SaveSystem.applyTo(player, carregado);
+const lido = carregado || {};
+// Mede a memória ANTES de devolver o estado vivo do cenário
+const memCurrency = player.currency, memLvl = player.lvl, memXp = player.xp, memKills = player.kills;
+const memHp = player.hp, memMaxHp = player.maxHp, memArma = player.weaponLevel;
+player.currency = ouroOriginal;
+dungeonLevel = nivelOriginal;
+try { SaveSystem.save(); } catch (e) {} // regrava o estado vivo de volta, sem apagar o save
+return {
+  salvou,
+  carregou: !!carregado,
+  versao: gravado._version,
+  versaoEsperada: SaveSystem.VERSION,
+  tipo: gravado.type,
+  tipoVivo,
+  andar: gravado.dungeonLevel,
+  mortes: gravado.dungeonKills,
+  camaraSave: (gravado.storyRoom && Number.isInteger(gravado.storyRoom.i)) ? gravado.storyRoom.i : null,
+  camaraViva,
+  ouroSave: gravado.currency,
+  ouroEsperado: 777,
+  lvlSave: gravado.lvl,
+  xpSave: gravado.xp,
+  killsSave: gravado.kills,
+  hpSave: gravado.hp,
+  maxHpSave: gravado.maxHp,
+  armaSave: gravado.weaponLevel,
+  ouroNoLido: lido.currency,
+  lvlNoLido: lido.lvl,
+  xpNoLido: lido.xp,
+  killsNoLido: lido.kills,
+  hpNoLido: lido.hp,
+  maxHpNoLido: lido.maxHp,
+  armaNoLido: lido.weaponLevel,
+  memCurrency,
+  memLvl,
+  memXp,
+  memKills,
+  memHp,
+  memMaxHp,
+  memArma
+};
+})()`,
+    verificar(r) {
+      const falhas = [];
+      if (r.erro) return ['erro no cenário: ' + r.erro];
+      if (r.salvou !== true) falhas.push('SaveSystem.save() devolveu falso');
+      if (r.versao !== r.versaoEsperada) falhas.push('save gravado na versão ' + r.versao + ' (esperado ' + r.versaoEsperada + ')');
+      if (r.tipo !== r.tipoVivo || r.tipo !== 'mage') falhas.push('tipo gravado "' + r.tipo + '" não bate com o herói da run ("' + r.tipoVivo + '")');
+      if (r.andar !== 3) falhas.push('andar gravado ' + r.andar + ' (esperado 3)');
+      if (r.mortes !== 5) falhas.push('abates gravados ' + r.mortes + ' (esperado 5)');
+      if (r.camaraSave !== r.camaraViva) falhas.push('câmara gravada ' + r.camaraSave + ' não bate com a viva ' + r.camaraViva + ' fora de transição');
+      if (r.ouroSave !== r.ouroEsperado) falhas.push('ouro gravado ' + r.ouroSave + ' (esperado ' + r.ouroEsperado + ')');
+      if (r.carregou !== true) falhas.push('SaveSystem.load() não devolveu o save recém-gravado');
+      if (r.lvlNoLido !== r.lvlSave || r.xpNoLido !== r.xpSave || r.killsNoLido !== r.killsSave) {
+        falhas.push('progressão lida (lvl ' + r.lvlNoLido + ', xp ' + r.xpNoLido + ') não bate com a gravada (lvl ' + r.lvlSave + ', xp ' + r.xpSave + ')');
+      }
+      if (r.hpNoLido !== r.hpSave || r.maxHpNoLido !== r.maxHpSave) {
+        falhas.push('vida lida (' + r.hpNoLido + '/' + r.maxHpNoLido + ') não bate com a gravada (' + r.hpSave + '/' + r.maxHpSave + ')');
+      }
+      if (r.armaNoLido !== r.armaSave) falhas.push('nível de arma lido ' + r.armaNoLido + ' não bate com o gravado ' + r.armaSave);
+      if (r.ouroNoLido !== r.ouroSave) falhas.push('ouro no objeto carregado ' + r.ouroNoLido + ' não bate com o gravado ' + r.ouroSave);
+      if (r.memCurrency !== r.ouroSave || r.memLvl !== r.lvlSave || r.memXp !== r.xpSave || r.memKills !== r.killsSave ||
+          r.memHp !== r.hpSave || r.memMaxHp !== r.maxHpSave || r.memArma !== r.armaSave) {
+        falhas.push('estado em memória depois do load não bate com o gravado (ouro ' + r.memCurrency + '/' + r.ouroSave +
+          ', lvl ' + r.memLvl + '/' + r.lvlSave + ', hp ' + r.memHp + '/' + r.hpSave + ')');
+      }
+      return falhas;
+    }
+  },
+  {
     nome: 'smoke_600_ticks',
     codigo: `(async () => {
 ${PREPARO}

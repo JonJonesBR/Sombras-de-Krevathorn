@@ -44,9 +44,19 @@ const APP_SHELL = ['./', './index.html', './manifest.webmanifest',
     './art/relic-regen.webp', './art/relic-trovao.webp', './art/relic-aguia.webp', './art/relic-espinhos.webp',
     './art/relic-mirror.webp', './art/relic-explosao.webp', './art/relic-furia.webp', './art/relic-berserker.webp'];
 
+// Pré-cache em itens independentes: `cache.addAll` é atômico e um único 404 deixava o
+// app inteiro sem pré-cache. Aqui cada item falha sozinho; o restante entra no cache.
+function _precache(cache) {
+    return Promise.allSettled(APP_SHELL.map((url) =>
+        cache.add(url).catch((err) => {
+            console.warn('[sw] pré-cache falhou para', url, err);
+        })
+    ));
+}
+
 self.addEventListener('install', (event) => {
     event.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL))
+        caches.open(CACHE_NAME).then(_precache)
             .catch((err) => { console.warn('[sw] pré-cache falhou na instalação; segue sem pré-cache (navegação é network-first):', err); })
             .then(() => self.skipWaiting())
     );
@@ -65,7 +75,12 @@ self.addEventListener('activate', (event) => {
 const NAVIGATION_TIMEOUT_MS = 3500;
 
 function cachedNavigation(req) {
-    return APP_SHELL.reduce((hit, key) => hit.then((found) => found || caches.match(key)), caches.match(req));
+    // O documento é sempre index.html (ou './'): tenta esses dois direto antes de varrer
+    // todas as chaves do cache, que era um reduce sequencial e atrasava a resposta offline.
+    return caches.match(req)
+        .then((hit) => hit || caches.match('./index.html'))
+        .then((hit) => hit || caches.match('./'))
+        .then((hit) => hit || APP_SHELL.reduce((found, key) => found.then((f) => f || caches.match(key)), Promise.resolve(undefined)));
 }
 
 function navigationResponse(req, network) {

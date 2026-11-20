@@ -25,6 +25,20 @@
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='96' fill='%23130e1f'/%3E%3Ctext x='256' y='300' font-size='260' text-anchor='middle' fill='%23e0b6ff'%3E%E2%9A%94%EF%B8%8F%3C/text%3E%3C/svg%3E">
 
     <title>Krevathorn</title>
+    <!-- Compartilhamento (WhatsApp, Discord, X). og:image é URL absoluta de propósito:
+         o robô de prévia não resolve caminho relativo. Sem dados pessoais. -->
+    <meta name="description" content="Roguelike de ação em pixel art: desça os pisos de Krevathorn, derrube os chefes e escolha as bênçãos que te levam mais fundo. Joga no navegador do celular, sem instalar, e funciona offline.">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Sombras de Krevathorn">
+    <meta property="og:title" content="Sombras de Krevathorn">
+    <meta property="og:description" content="Roguelike de ação em pixel art: desça os pisos de Krevathorn, derrube os chefes e escolha as bênçãos que te levam mais fundo. Joga no navegador do celular, sem instalar, e funciona offline.">
+    <meta property="og:url" content="https://jonjonesbr.github.io/Sombras-de-Krevathorn/">
+    <meta property="og:image" content="https://jonjonesbr.github.io/Sombras-de-Krevathorn/art/menu-bg.webp">
+    <meta property="og:image:alt" content="Arte de abertura de Sombras de Krevathorn">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Sombras de Krevathorn">
+    <meta name="twitter:description" content="Roguelike de ação em pixel art, no navegador do celular. Funciona offline.">
+    <meta name="twitter:image" content="https://jonjonesbr.github.io/Sombras-de-Krevathorn/art/menu-bg.webp">
     <!-- Fonts: system fallback (fully offline) -->
     <!-- Material Icons: replaced with inline SVG sprite -->
 
@@ -196,13 +210,26 @@ body.mm-hidden #top-bar .top-right-chips { margin-right: 0; }
     0%, 100% { opacity: 0.7; }
     50% { opacity: 1; }
 }
+/* Rótulo "SUPERAQUECIDO" logo abaixo da barra: o disparo fica travado até o calor zerar.
+   A trava sempre existiu; sem aviso na tela ela parecia travamento do jogo. */
+.heat-overheated {
+    display: block;
+    margin-top: 2px;
+    font-size: max(11px, calc(11px * var(--font-scale, 1)));
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    line-height: 1.1;
+    color: #ff9a3c;
+    text-shadow: 0 0 6px rgba(255, 68, 0, 0.6);
+    animation: heatPulse 0.6s ease-in-out infinite;
+}
 .hp-label {
     position: absolute;
     inset: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size:calc(10px * var(--font-scale,1));
+    font-size:max(11px,calc(11px * var(--font-scale,1)));
     font-weight: 700;
     color: rgba(255, 255, 255, 0.9);
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
@@ -222,7 +249,7 @@ body.mm-hidden #top-bar .top-right-chips { margin-right: 0; }
 
 /* ── Level Text ── */
 .lv-text {
-    font-size: 9px;
+    font-size: max(11px, calc(11px * var(--font-scale, 1)));
     font-weight: 700;
     color: #e0b6ff;
     letter-spacing: 0.03em;
@@ -273,7 +300,11 @@ body.mm-hidden #top-bar .top-right-chips { margin-right: 0; }
     gap: 12px;
     z-index: 120;
     align-items: center;
+    /* A coluna é só layout: o vão entre os botões deixa o toque chegar ao canvas
+       (o anel do analógico direito passa por trás dela). Os botões seguem clicáveis. */
+    pointer-events: none;
 }
+#actions-right > * { pointer-events: auto; }
 /* Controles invertidos (canhoto): botoes de acao vao para a esquerda.
    Seletor com body.controls-left vence o `right` da regra base e do @supports. */
 body.controls-left #actions-right {
@@ -481,7 +512,7 @@ body.controls-left #actions-right {
     position: absolute;
     bottom: 6px;
     left: 6px;
-    font-size:calc(10px * var(--font-scale,1));
+    font-size:max(11px,calc(11px * var(--font-scale,1)));
     font-family: monospace;
     color: rgba(255, 255, 255, 0.3);
     z-index: 200;
@@ -1406,7 +1437,11 @@ body {
     body.mm-hidden #top-bar { right: max(8px, env(safe-area-inset-right, 8px)); }
     #hud-left { flex: none; width: 100%; max-width: 200px; }
     #top-bar .top-right-chips { margin-right: 0; flex-wrap: wrap; max-width: 100%; }
-    #boss-hp-container { top: var(--hud-clear) !important; }
+    /* Barra do chefe abaixo da coluna da esquerda (vida, piso, dificuldade/nível).
+       O piso próprio não depende só de --hud-clear, que é medido no início do andar
+       e no resize: com fonte grande a coluna fica mais alta e a barra encostava no
+       selo N1 · XP. (#top-bar tem z-index maior, então o HUD nunca fica escondido.) */
+    #boss-hp-container { top: max(var(--hud-clear, 0px), calc(max(8px, env(safe-area-inset-top, 8px)) + 112px)) !important; }
     .notification { top: var(--hud-clear) !important; }
     /* Avisos (toast, conquista, cartão de equipamento) ficam todos no mesmo lugar, abaixo
        de HUD, chefe e faixa de evento. --toast-top é calculado em _updateToastTop(). */
@@ -1432,6 +1467,15 @@ body {
     #quest-panel {
         top: max(calc(env(safe-area-inset-top, 8px) + 148px), calc(var(--hud-clear) + 52px)) !important;
     }
+}
+
+/* Pílula do objetivo com o texto em 11 px (era 9 px): menos padding e gap no
+   celular (!important vence o estilo inline do markup); se título + progresso
+   não couberem em 360 px, o progresso desce para a segunda linha em vez de a
+   pílula estourar ou o título sumir. */
+#ro-icon { flex: none; }
+@media (max-width: 600px) {
+    #run-objective > div:first-child { gap: 0 4px !important; padding: 3px 8px !important; flex-wrap: wrap; line-height: 1.25; }
 }
 
 /* Paisagem em celular (altura curta, ~360px): HUD, minimapa e botoes de acao
@@ -1990,6 +2034,11 @@ body.reduce-motion .end-art .ea-emb { animation: none !important; opacity: 0.35;
     </div>
 
     <div id="ui-layer">
+        <!-- Toque no HUD não vira comando do herói: cada superfície visível (barra de vida,
+             selo/chips, faixa de objetivo, combo, XP, cartões, barra do chefe, moedas,
+             minimapa) usa pointer-events:auto para capturar o toque. Só contêineres
+             transparentes (#top-bar, #bottom-controls, #tutorial-overlay) seguem none e
+             deixam o toque chegar ao canvas — ver Input._startedOnCanvas. -->
         <!-- TOP BAR: Compact HUD -->
         <div id="top-bar" class="hidden">
             <div id="hud-left">
@@ -2008,14 +2057,15 @@ body.reduce-motion .end-art .ea-emb { animation: none !important; opacity: 0.35;
                 <div id="heat-container" class="heat-container hidden">
                     <div id="heat-bar"></div>
                 </div>
+                <span id="heat-overheated" class="heat-overheated hidden" data-i18n="hud.overheatedTag">SUPERAQUECIDO</span>
                 <!-- DUNGEON PROGRESS: piso atual, progresso do andar e tempo da run.
                      Vive dentro de #hud-left (antes ficava absoluto no topo
                      central, onde colidia com a barra do chefe). -->
                 <div id="dungeon-progress" class="hidden" style="display:flex;align-items:center;gap:4px;margin-top:3px;background:rgba(0,0,0,0.55);padding:2px 6px;border-radius:999px;border:1px solid rgba(224,182,255,0.15);width:fit-content;max-width:100%;">
                     <span id="dp-floor" style="font-size:max(11px,calc(11px * var(--font-scale,1)));color:rgba(224,182,255,0.8);font-weight:700;white-space:nowrap;">Piso 1</span>
-                    <span style="font-size:max(11px,calc(11px * var(--font-scale,1)));color:rgba(255,255,255,0.3);">|</span>
+                    <span style="font-size:max(11px,calc(11px * var(--font-scale,1)));color:rgba(255,255,255,0.55);">|</span>
                     <span id="dp-kills" style="font-size:max(11px,calc(11px * var(--font-scale,1)));color:rgba(255,255,255,0.7);font-weight:600;white-space:nowrap;">0/20</span>
-                    <span style="font-size:max(11px,calc(11px * var(--font-scale,1)));color:rgba(255,255,255,0.3);">|</span>
+                    <span style="font-size:max(11px,calc(11px * var(--font-scale,1)));color:rgba(255,255,255,0.55);">|</span>
                     <span id="dp-time" style="font-size:max(11px,calc(11px * var(--font-scale,1)));color:rgba(255,255,255,0.7);font-weight:600;white-space:nowrap;">0:00</span>
                 </div>
             </div>
@@ -2026,12 +2076,12 @@ body.reduce-motion .end-art .ea-emb { animation: none !important; opacity: 0.35;
         </div>
 
         <!-- BOSS HP BAR (top center, appears during boss fights) -->
-        <div id="boss-hp-container" class="hidden" style="position:absolute;top:max(50px,calc(env(safe-area-inset-top,50px) + 8px));left:50%;transform:translateX(-50%);z-index:115;pointer-events:none;text-align:center;width:min(220px,50vw);">
+        <div id="boss-hp-container" class="hidden" style="position:absolute;top:max(50px,calc(env(safe-area-inset-top,50px) + 8px));left:50%;transform:translateX(-50%);z-index:115;pointer-events:auto;text-align:center;width:min(220px,50vw);">
             <div id="boss-name" style="font-size:max(11px,calc(11px * var(--font-scale,1)));font-weight:700;color:#ff4444;text-shadow:0 0 8px rgba(255,68,68,0.4);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">CHEFE</div>
             <div style="width:100%;height:5px;background:rgba(0,0,0,0.7);border-radius:3px;overflow:hidden;border:1px solid rgba(255,68,68,0.2);">
                 <div id="boss-hp-bar" style="height:100%;width:100%;background:linear-gradient(90deg,#cc0000,#ff3333,#ff6666);border-radius:3px;transition:width 0.3s cubic-bezier(0.34,1.56,0.64,1);"></div>
             </div>
-            <div id="boss-hp-text" style="font-size:max(11px,calc(11px * var(--font-scale,1)));color:rgba(255,255,255,0.4);margin-top:1px;">100%</div>
+            <div id="boss-hp-text" style="font-size:max(12px,calc(12px * var(--font-scale,1)));color:rgba(255,255,255,0.78);margin-top:1px;">100%</div>
         </div>
 
         <!-- RIGHT THUMB ZONE: Action buttons (dodge + special) -->
@@ -2040,7 +2090,7 @@ body.reduce-motion .end-art .ea-emb { animation: none !important; opacity: 0.35;
             <button id="bag-btn-bar" class="util-btn" type="button" onclick="BagPanel.toggle()" aria-keyshortcuts="I" style="position:relative;border-radius:10px;background:rgba(30,22,45,0.7);border:1px solid rgba(224,182,255,0.12);display:flex;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation;transition:all 0.2s;">
                 <svg class="icon-inline" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e2cff5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 8h12l1 12H5z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/><path d="M9 13h6"/></svg>
                 <span class="util-label" data-i18n="inv.title">Bolsa</span>
-                <span id="bag-badge" aria-hidden="true" style="position:absolute;top:-6px;right:-6px;min-width:26px;padding:1px 4px;border-radius:999px;background:rgba(20,15,30,0.95);border:1px solid rgba(224,182,255,0.45);font-size:calc(10px * var(--font-scale,1));font-weight:700;color:#e6d0ff;line-height:1.2;text-align:center;pointer-events:none;">0/12</span>
+                <span id="bag-badge" aria-hidden="true" style="position:absolute;top:-6px;right:-6px;min-width:26px;padding:1px 4px;border-radius:999px;background:rgba(20,15,30,0.95);border:1px solid rgba(224,182,255,0.45);font-size:max(11px,calc(11px * var(--font-scale,1)));font-weight:700;color:#e6d0ff;line-height:1.2;text-align:center;pointer-events:none;">0/12</span>
             </button>
             <button id="dodge-btn" class="action-btn dodge" data-i18n-aria-label="a11y.dodge" style="width:min(calc(56px * var(--ui-btn-scale,1)),18vw);height:min(calc(56px * var(--ui-btn-scale,1)),18vw);min-width:48px;min-height:48px;">
                 <svg class="icon-inline" width="22" height="22"><use href="#ic-dodge"/></svg>
@@ -2056,10 +2106,10 @@ body.reduce-motion .end-art .ea-emb { animation: none !important; opacity: 0.35;
         <div id="bottom-controls" class="hidden" style="position:absolute;bottom:max(12px,env(safe-area-inset-bottom,12px));left:max(8px,env(safe-area-inset-left,8px));right:max(8px,env(safe-area-inset-right,8px));display:flex;align-items:flex-end;justify-content:space-between;gap:4px;z-index:119;pointer-events:none;">
             
             <!-- Left: Currency -->
-            <div id="currency-display" style="pointer-events:none;">
+            <div id="currency-display" style="pointer-events:auto;">
                 <div style="display:flex;align-items:center;gap:3px;background:rgba(0,0,0,0.55);padding:4px 8px;border-radius:10px;border:1px solid rgba(255,215,0,0.15);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);">
                     <svg class="icon-inline" width="11" height="11" style="color:#ffcc00;filter:drop-shadow(0 0 3px rgba(255,204,0,0.4));"><use href="#ic-coin"/></svg>
-                    <span id="currency-amount" style="font-size:10px;font-weight:700;color:#ffcc00;">0</span>
+                    <span id="currency-amount" style="font-size:max(11px,calc(11px * var(--font-scale,1)));font-weight:700;color:#ffcc00;">0</span>
                 </div>
             </div>
 
@@ -2091,11 +2141,11 @@ body.reduce-motion .end-art .ea-emb { animation: none !important; opacity: 0.35;
         </div>
 
         <!-- RUN OBJECTIVE (bottom-center, above controls) -->
-        <div id="run-objective" class="hidden" style="position:absolute;bottom:var(--bottom-base);left:50%;transform:translateX(-50%);z-index:110;pointer-events:none;width:min(248px,var(--hud-center-w));">
+        <div id="run-objective" class="hidden" style="position:absolute;bottom:var(--bottom-base);left:50%;transform:translateX(-50%);z-index:110;pointer-events:auto;width:min(248px,var(--hud-center-w));">
             <div style="display:flex;align-items:center;gap:6px;justify-content:center;background:rgba(0,0,0,0.55);padding:3px 12px;border-radius:999px;border:1px solid rgba(224,182,255,0.18);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);">
                 <span id="ro-icon" style="display:inline-flex;align-items:center;font-size:10px;"><svg class="icon-inline" width="11" height="11"><use href="#ic-target"/></svg></span>
-                <span id="ro-title" style="font-size:9px;font-weight:700;color:#e0b6ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Objetivo</span>
-                <span id="ro-progress" style="font-size:9px;font-weight:700;color:#ffd86b;white-space:nowrap;">0</span>
+                <span id="ro-title" style="font-size:max(11px,calc(11px * var(--font-scale,1)));font-weight:700;color:#e0b6ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;">Objetivo</span>
+                <span id="ro-progress" style="font-size:max(11px,calc(11px * var(--font-scale,1)));font-weight:700;color:#ffd86b;white-space:nowrap;flex:none;">0</span>
             </div>
             <div style="height:3px;background:rgba(255,255,255,0.12);border-radius:2px;overflow:hidden;margin:3px 14px 0;">
                 <div id="ro-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#b08cff,#ffd86b);border-radius:2px;transition:width 0.4s ease;"></div>
@@ -2110,33 +2160,33 @@ body.reduce-motion .end-art .ea-emb { animation: none !important; opacity: 0.35;
         <!-- QUESTS PANEL (light, tied to lore) -->
         <div id="quest-panel" class="hidden" style="position:absolute;top:calc(env(safe-area-inset-top,8px) + 148px);right:max(8px,env(safe-area-inset-right,8px));width:min(240px,44vw);z-index:180;pointer-events:auto;background:rgba(18,14,28,0.92);border:1.5px solid rgba(224,182,255,0.22);border-radius:12px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 4px 16px rgba(0,0,0,0.45);padding:8px 10px;">
             <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:6px;">
-                <div data-i18n="ui.questsTitle" style="font-size:calc(10px * var(--font-scale,1));letter-spacing:0.18em;text-transform:uppercase;color:rgba(224,182,255,0.55);">📜 Missões da Profecia</div>
+                <div data-i18n="ui.questsTitle" style="font-size:max(11px,calc(11px * var(--font-scale,1)));letter-spacing:0.08em;line-height:1.2;text-transform:uppercase;color:rgba(224,182,255,0.7);">📜 Missões da Profecia</div>
                 <button id="quest-panel-close" onclick="if(window.QuestSystem) QuestSystem.toggle()" style="flex:none;width:44px;height:44px;border-radius:10px;border:1px solid rgba(224,182,255,0.2);background:rgba(224,182,255,0.08);color:rgba(224,182,255,0.7);display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer;touch-action:manipulation;" data-i18n-aria-label="a11y.closeQuests" aria-label="Fechar missões">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
                 </button>
             </div>
-            <div id="quest-list" style="display:flex;flex-direction:column;gap:8px;font-size:10px;color:#e5d9f5;"></div>
+            <div id="quest-list" style="display:flex;flex-direction:column;gap:8px;font-size:max(11px,calc(11px * var(--font-scale,1)));color:#e5d9f5;"></div>
         </div>
 
         <!-- COMBO COUNTER (left of action buttons) -->
-        <div id="combo-display" class="hidden" style="position:absolute;right:80px;bottom:calc(env(safe-area-inset-bottom,20px) + 80px);z-index:115;text-align:right;pointer-events:none;">
+        <div id="combo-display" class="hidden" style="position:absolute;right:80px;bottom:calc(env(safe-area-inset-bottom,20px) + 80px);z-index:115;text-align:right;pointer-events:auto;">
             <div id="combo-count" style="font-size:28px;font-weight:900;color:#ffcc00;text-shadow:0 0 15px rgba(255,204,0,0.5);transition:transform 0.15s cubic-bezier(0.175,0.885,0.32,1.275),opacity 0.3s;line-height:1;">0x</div>
             <div id="combo-label" style="font-size:max(11px,calc(11px * var(--font-scale,1)));font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:rgba(255,204,0,0.75);">COMBO</div>
         </div>
 
         <!-- ACTIVE STATUS CHIPS (below combo) -->
-        <div id="status-chips" style="position:absolute;right:80px;bottom:calc(env(safe-area-inset-bottom,20px) + 118px);z-index:115;display:flex;flex-direction:column;align-items:flex-end;gap:3px;pointer-events:none;"></div>
+        <div id="status-chips" style="position:absolute;right:80px;bottom:calc(env(safe-area-inset-bottom,20px) + 118px);z-index:115;display:flex;flex-direction:column;align-items:flex-end;gap:3px;pointer-events:auto;max-width:calc(100vw - 16px);"></div>
 
         <!-- XP BAR. Was 2px tall at the screen edge with no number anywhere: the player
              had no way to tell whether levelling was happening. -->
-        <div id="xp-strip" class="hidden" style="position:absolute;bottom:env(safe-area-inset-bottom,0);left:0;right:0;height:6px;z-index:110;pointer-events:none;background:rgba(255,255,255,0.08);border-top:1px solid rgba(0,0,0,0.5);">
+        <div id="xp-strip" class="hidden" style="position:absolute;bottom:env(safe-area-inset-bottom,0);left:0;right:0;height:6px;z-index:110;pointer-events:auto;background:rgba(255,255,255,0.08);border-top:1px solid rgba(0,0,0,0.5);">
             <div id="xp-bar-strip" style="height:100%;width:0%;background:linear-gradient(90deg,#f0a500,#ffcc00,#ffee88);border-radius:0;transition:width 0.4s cubic-bezier(0.22,1,0.36,1);overflow:hidden;position:relative;">
                 <div id="xp-shimmer" style="position:absolute;inset:0;background:linear-gradient(110deg,transparent 20%,rgba(255,255,255,0.45) 50%,transparent 80%);background-size:200% 100%;animation:xpShimmer 1.6s linear infinite;opacity:0.6;"></div>
             </div>
         </div>
 
         <!-- ACHIEVEMENT TOAST -->
-        <div id="achievement-toast" class="hidden" style="position:absolute;top:var(--toast-top,calc(var(--hud-clear) + 52px));left:50%;transform:translateX(-50%);z-index:250;pointer-events:none;text-align:center;transition:all 0.4s cubic-bezier(0.34,1.56,0.64,1);">
+        <div id="achievement-toast" class="hidden" style="position:absolute;top:var(--toast-top,calc(var(--hud-clear) + 52px));left:50%;transform:translateX(-50%);z-index:250;pointer-events:auto;text-align:center;transition:all 0.4s cubic-bezier(0.34,1.56,0.64,1);">
             <div style="background:rgba(30,20,50,0.95);border:1.5px solid rgba(255,215,0,0.4);border-radius:14px;padding:8px 16px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 6px 25px rgba(0,0,0,0.5);">
                 <div data-i18n="ui.achievementToast" style="font-size:calc(7px * var(--font-scale, 1));letter-spacing:0.15em;text-transform:uppercase;color:rgba(255,215,0,0.7);margin-bottom:1px;">🏆 Conquista!</div>
                 <div id="achievement-toast-text" style="font-size:calc(11px * var(--font-scale, 1));font-weight:700;color:#ffcc00;"></div>
@@ -2147,7 +2197,7 @@ body.reduce-motion .end-art .ea-emb { animation: none !important; opacity: 0.35;
              compares to what you are wearing. Auto-equip used to happen with no
              information at all — getStatDescription()/isUpgrade() existed but
              nothing ever called them, so a downgrade cost HP and speed silently. -->
-        <div id="equip-card" class="hidden" style="position:absolute;left:50%;top:var(--toast-top,calc(var(--hud-clear) + 52px));transform:translateX(-50%);z-index:240;pointer-events:none;width:min(280px,86vw);">
+        <div id="equip-card" class="hidden" style="position:absolute;left:50%;top:var(--toast-top,calc(var(--hud-clear) + 52px));transform:translateX(-50%);z-index:240;pointer-events:auto;width:min(280px,86vw);">
             <div id="equip-card-inner" style="background:rgba(20,15,30,0.97);border-radius:14px;padding:10px 12px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 6px 22px rgba(0,0,0,0.55);border:1.5px solid rgba(224,182,255,0.25);transition:opacity 0.3s,transform 0.3s;">
                 <div style="display:flex;align-items:center;justify-content:space-between;gap:6px">
                     <span id="eqc-rarity" style="font-size:calc(10px * var(--font-scale, 1));letter-spacing:0.15em;text-transform:uppercase;color:#9ca3af;">COMUM</span>
@@ -2983,8 +3033,10 @@ window._setResScale = function(s) {
 };
 
 // Auto performance mode - when FPS is low, temporarily disables the heaviest
-// effects (particles, screen shake, hitstop) WITHOUT overwriting the user's
-// saved settings; restores them automatically when framerate recovers.
+// VISUAL effect (particles) WITHOUT overwriting the user's saved settings;
+// restores it automatically when framerate recovers. Hitstop and screen shake
+// are never touched here: they are what gives hits weight, and a 44-54 fps
+// dip used to silently remove all impact.
 let _autoPerfActive = false;
 // Auto-perf OFF->ON notice: fired at most once per session so FPS flapping
 // around the threshold doesn't spam repeated center banners mid-run.
@@ -3043,14 +3095,14 @@ function _setAutoPerf(on) {
                 hitstopEnabled: GameSettings.hitstopEnabled
             };
         }
+        // Só partículas (peso visual). Hitstop e tremor seguem a escolha do jogador:
+        // desligá-los junto deixava o combate "de gelo" sempre que o FPS caía.
         GameSettings.particlesEnabled = false;
-        GameSettings.screenShakeEnabled = false;
-        GameSettings.hitstopEnabled = false;
     } else {
         if (_autoPerfPrefs) {
+            // Restaura a escolha do jogador (atualizada por SettingsUI._setParticles se ele
+            // mudou o ajuste durante o modo automático).
             GameSettings.particlesEnabled = _autoPerfPrefs.particlesEnabled;
-            GameSettings.screenShakeEnabled = _autoPerfPrefs.screenShakeEnabled;
-            GameSettings.hitstopEnabled = _autoPerfPrefs.hitstopEnabled;
             _autoPerfPrefs = null;
         }
     }
@@ -3147,8 +3199,31 @@ function _resizeWorldBuffers() {
 
 // Caixas do HUD em DOM (px CSS), para o que é desenhado no canvas não cair por baixo
 // delas: painel do NPC, faixa de evento, equipamentos e direcionais fixos.
-// Medido no resize e a cada 0,5 s no loop (getBoundingClientRect, barato).
+// Medida cara (getComputedStyle + vários getBoundingClientRect): só quando algo muda
+// (_markHudLayoutDirty), além de uma rede de segurança a cada 3 s fora do combate.
 const _hudLayout = { measured: false, k: 0.75, topBarBottom: 0, clearTop: 0, bossBottom: 0, actionsTop: 0, actionsLeft: 0, actionsRight: 0 };
+let _hudLayoutDirty = true;
+let _hudLayoutNextMs = 0;
+const HUD_LAYOUT_SAFETY_MS = 3000;
+// Abrir/fechar o que muda a altura do HUD, trocar de andar, mudar objetivo, idioma, fonte
+// ou peça de equipamento: a próxima checagem do loop remede.
+function _markHudLayoutDirty() { _hudLayoutDirty = true; }
+window._markHudLayoutDirty = _markHudLayoutDirty;
+
+// Chamado a cada bloco de 0,5 s do loop. Fracão barata: sem sujeira e fora da janela de
+// rede de segurança, não mede nada.
+function _pumpHudLayout() {
+    const now = performance.now();
+    const due = _hudLayoutDirty || now >= _hudLayoutNextMs;
+    if (!due) return;
+    _hudLayoutNextMs = now + HUD_LAYOUT_SAFETY_MS;
+    // No meio da luta (atirou/levou dano nos últimos 4 s) a rede de segurança espera:
+    // medir layout no auge do combate custa um engasgo. Sujeira explícita mede na hora.
+    const fighting = typeof player !== 'undefined' && !!player && (player.combatTimer || 0) < 240;
+    if (!_hudLayoutDirty && fighting) return;
+    _hudLayoutDirty = false;
+    _refreshHudLayout();
+}
 function _refreshHudLayout() {
     try {
         const vis = el => el && !el.classList.contains('hidden') && el.offsetParent !== null;
@@ -3182,6 +3257,7 @@ function _refreshHudLayout() {
             if (clear) document.body.style.setProperty('--hud-clear', clear); else document.body.style.removeProperty('--hud-clear');
         }
         _hudLayout.measured = tbB > 0;
+        _hudLayoutDirty = false;
     } catch (e) {}
 }
 // Topo livre para elementos do canvas, em coordenadas lógicas
@@ -3717,6 +3793,26 @@ const SaveSystem = {
         };
     },
 
+    // Estado coerente capturado ANTES de a transição de andar mexer em dungeonLevel/_storyRoom.
+    // No meio do fade o estado vivo é temporariamente incoerente (andar N+1 com a câmara do N,
+    // até o mapa novo nascer): o continue a partir dele caía na câmara errada.
+    _transitionSnapshot: null,
+    _transitionSavePending: false,
+
+    // Chamado no início de _startFloorTransition/_startChamberTransition, antes de qualquer mudança.
+    beginTransitionSnapshot() {
+        this._transitionSavePending = false;
+        this._transitionSnapshot = null;
+        return Debug.safe(() => { this._transitionSnapshot = this._serialize(); return true; }, 'beginTransitionSnapshot', false);
+    },
+    // Chamado quando o fade termina: o estado vivo já é coerente. Grava o save que ficou pendente.
+    endTransitionSnapshot() {
+        this._transitionSnapshot = null;
+        if (!this._transitionSavePending) return;
+        this._transitionSavePending = false;
+        this.save();
+    },
+
     save() {
         return Debug.safe(() => {
             // Dentro da sala secreta o mapa ativo é o bolso: não grava (o save do andar fica intacto)
@@ -3726,7 +3822,18 @@ const SaveSystem = {
             // para; configurações, estatísticas e meta são gravados por outros caminhos.
             if (window.TutorialSystem && window.TutorialSystem.active) return false;
             if (window.CoopP2P && CoopP2P.isActive()) return false;
-            const data = this._serialize();
+            // Transição de andar/câmara em curso: grava o snapshot de antes do incremento (o
+            // pagehide/app em segundo plano não perde o save) e marca para gravar o estado novo
+            // assim que o fade terminar. Sem snapshot, não grava: melhor manter o save anterior
+            // do que misturar andar novo com câmara antiga.
+            let data;
+            if (typeof _transitioning !== 'undefined' && _transitioning) {
+                this._transitionSavePending = true;
+                if (!this._transitionSnapshot) return false;
+                data = this._transitionSnapshot;
+            } else {
+                data = this._serialize();
+            }
             if (!data) return false;
             if (!this._validate(data)) {
                 // _validate só diz "reprovado" (não aponta o campo): registra e avisa uma vez por sessão
@@ -4135,6 +4242,7 @@ const MetaSystem = {
 
     // Essência conquistada ao fim da run (morte ou vitória).
     // Fórmula: 10 + piso*1.5 + abates*0.5 (cap 50) + nível; Abismo x1.5; vitória x2+25.
+    // Abismo ganha um bônus de profundidade (ver ABYSS_DEPTH_ESSENCE_*): a meta não estagna.
     awardEndOfRun(opts) {
         if (window.CoopP2P && CoopP2P.isActive()) return { essence: 0 };
         this._ensure();
@@ -4148,6 +4256,9 @@ const MetaSystem = {
         var gained = Math.max(1, Math.round(base));
         if (opts.win) gained = Math.max(20, gained * 2 + 25);
         if (typeof RunMutators !== 'undefined') gained = Math.max(1, Math.round(gained * RunMutators.essenceMult()));
+        // Bônus de profundidade do Abismo: +1 essência por profundidade além da 10, com teto de 20
+        // por run (profundidade 30 = +20, ~10% a mais numa run funda). Só o Abismo recebe.
+        if (opts.mode === 'abyss') gained += Math.min(20, Math.max(0, Math.floor(floor) - 10));
         this.addEssence(gained);
         return { essence: gained };
     },
@@ -4310,6 +4421,7 @@ const I18n = {
             'hud.combo': 'COMBO!',
             'hud.dash': 'DASH!',
             'hud.overheated': 'SUPERAQUECIDO!',
+            'hud.overheatedTag': 'SUPERAQUECIDO',
             'hud.spellCombo': 'SPELL COMBO!',
             'hud.dodge': 'ESQUIVA!',
             'hud.orbShield': 'ORB SHIELD!',
@@ -4594,6 +4706,7 @@ const I18n = {
             'skills.failSpeedLimit': 'Limite de velocidade atingido ({n}/{lim}) — esta classe não compra mais velocidade.',
             'skills.failGold': 'Ouro insuficiente — faltam {n} moedas.',
             'skills.failGeneric': 'Não foi possível desbloquear esta habilidade agora.',
+            'skills.inCombatBlocked': 'Termine o combate para desbloquear habilidades.',
             'skill.warrior.quake.name': 'Terremoto', 'skill.warrior.quake.desc': 'Ground Slam dá um segundo pulso de dano',
             'skill.warrior.bloodlust.name': 'Sede de Sangue', 'skill.warrior.bloodlust.desc': 'Abates curam 2 HP e dão velocidade curta',
             'skill.warrior.bulwark.name': 'Muralha', 'skill.warrior.bulwark.desc': 'Sofre 40% menos dano enquanto houver escudo',
@@ -6100,6 +6213,11 @@ const I18n = {
             'weapon.w_crossbow.name': 'Besta de Caça',
             'weapon.w_windrunner.name': 'Ventoboreal',
             'weapon.w_deathwhisper.name': 'Sussurro da Morte',
+            'weapon.w_dagger1.elf.name': 'Arco Curto',
+            'weapon.w_dagger2.elf.name': 'Arco Longo',
+            'weapon.w_crossbow.elf.name': 'Arco Élfico',
+            'weapon.w_windrunner.elf.name': 'Arco do Vento',
+            'weapon.w_deathwhisper.elf.name': 'Arco Sombrio',
             'weapon.w_wand1.name': 'Varinha Arcana',
             'weapon.w_wand2.name': 'Cetro de Cristal',
             'weapon.w_staff1.name': 'Cajado Trovão',
@@ -6236,6 +6354,21 @@ const I18n = {
             'chamber.line.lavaCave': 'O calor sobe do chão como uma lembrança que se recusa a apagar.',
             'chamber.line.crypt': 'Os mortos daqui foram enterrados de pé, para não esquecerem o caminho.',
             'chamber.line.forest': 'As árvores cresceram em volta do silêncio, não do sol.',
+            'hud.chamberLeft': 'faltam {n}',
+            'hud.chamberBoss': 'Chefe',
+            // HUD de partida (piso, portal, XP, chips de status e objetivo): montado em JS, sem data-i18n
+            'hud.floor': 'Piso {n}',
+            'hud.portalOpen': 'PORTAL ABERTO',
+            'hud.xpNext': '{n} XP para o próximo nível',
+            'hud.levelReady': 'Próximo nível pronto',
+            'hud.objective': 'Objetivo',
+            'hud.boss': 'CHEFE',
+            'hud.chip.shield': 'ESCUDO',
+            'hud.chip.crit': 'CRIT',
+            'hud.chip.discount': 'DESCONTO',
+            'hud.chip.regen': 'REGEN',
+            'hud.chip.goldRush': 'GOLD RUSH',
+            'hud.chip.speed': 'VELOCIDADE',
             'boss.waiting': 'Aguardando...',
             'boss.chargeWarn': ' CARGA!',
             'hud.mapExpanded': 'MAPA EXPANDIDO',
@@ -6255,6 +6388,7 @@ const I18n = {
             'log.windGust': ' TEMPESTADE DE VENTO!',
             'log.natureFury': ' FÚRIA DA NATUREZA!',
             'log.warriorShield': ' Escudo erguido!',
+            'log.overheatLock': 'Superaqueceu: o disparo trava até a barra esfriar.',
             'log.arcaneBarrier': ' BARREIRA ARCADA!',
             'log.arcaneShieldReady': ' Escudo Arcano pronto!',
             'log.travelerSpawned': 'Um viajante misterioso apareceu!',
@@ -6573,6 +6707,7 @@ const I18n = {
             'hud.combo': 'COMBO!',
             'hud.dash': 'DASH!',
             'hud.overheated': 'OVERHEATED!',
+            'hud.overheatedTag': 'OVERHEATED',
             'hud.spellCombo': 'SPELL COMBO!',
             'hud.dodge': 'DODGE!',
             'hud.orbShield': 'ORB SHIELD!',
@@ -6857,6 +6992,7 @@ const I18n = {
             'skills.failSpeedLimit': 'Speed limit reached ({n}/{lim}) — this class cannot buy more speed.',
             'skills.failGold': 'Not enough gold — {n} coins short.',
             'skills.failGeneric': 'Could not unlock this skill right now.',
+            'skills.inCombatBlocked': 'End the fight to unlock skills.',
             'skill.warrior.quake.name': 'Earthquake', 'skill.warrior.quake.desc': 'Ground Slam gets a second damage pulse',
             'skill.warrior.bloodlust.name': 'Bloodlust', 'skill.warrior.bloodlust.desc': 'Kills heal 2 HP and grant short speed',
             'skill.warrior.bulwark.name': 'Bulwark', 'skill.warrior.bulwark.desc': 'Takes 40% less damage while a shield is up',
@@ -8363,6 +8499,11 @@ const I18n = {
             'weapon.w_crossbow.name': 'Hunting Crossbow',
             'weapon.w_windrunner.name': 'Northwind',
             'weapon.w_deathwhisper.name': 'Death Whisper',
+            'weapon.w_dagger1.elf.name': 'Short Bow',
+            'weapon.w_dagger2.elf.name': 'Long Bow',
+            'weapon.w_crossbow.elf.name': 'Elven Bow',
+            'weapon.w_windrunner.elf.name': 'Wind Bow',
+            'weapon.w_deathwhisper.elf.name': 'Shadow Bow',
             'weapon.w_wand1.name': 'Arcane Wand',
             'weapon.w_wand2.name': 'Crystal Scepter',
             'weapon.w_staff1.name': 'Thunder Staff',
@@ -8499,6 +8640,21 @@ const I18n = {
             'chamber.line.lavaCave': 'Heat rises from the floor like a memory that refuses to fade.',
             'chamber.line.crypt': 'The dead here were buried standing, so they would not forget the way.',
             'chamber.line.forest': 'The trees grew around the silence, not the sun.',
+            'hud.chamberLeft': '{n} left',
+            'hud.chamberBoss': 'Boss',
+            // Run HUD (floor, portal, XP, status chips and objective): built in JS, no data-i18n
+            'hud.floor': 'Floor {n}',
+            'hud.portalOpen': 'PORTAL OPEN',
+            'hud.xpNext': '{n} XP to the next level',
+            'hud.levelReady': 'Next level ready',
+            'hud.objective': 'Objective',
+            'hud.boss': 'BOSS',
+            'hud.chip.shield': 'SHIELD',
+            'hud.chip.crit': 'CRIT',
+            'hud.chip.discount': 'DISCOUNT',
+            'hud.chip.regen': 'REGEN',
+            'hud.chip.goldRush': 'GOLD RUSH',
+            'hud.chip.speed': 'SPEED',
             'boss.waiting': 'Waiting...',
             'boss.chargeWarn': ' CHARGE!',
             'hud.mapExpanded': 'MAP EXPANDED',
@@ -8518,6 +8674,7 @@ const I18n = {
             'log.windGust': ' WIND GUST!',
             'log.natureFury': ' NATURE\u2019S FURY!',
             'log.warriorShield': ' Shield raised!',
+            'log.overheatLock': 'Overheated: attacks lock until the bar cools down.',
             'log.arcaneBarrier': ' ARCANE BARRIER!',
             'log.arcaneShieldReady': ' Arcane Shield ready!',
             'log.travelerSpawned': 'A mysterious traveler appeared!',
@@ -8836,6 +8993,7 @@ const I18n = {
             'hud.combo': '¡COMBO!',
             'hud.dash': '¡DASH!',
             'hud.overheated': '¡SOBRECALENTADO!',
+            'hud.overheatedTag': 'SOBRECALENTADO',
             'hud.spellCombo': '¡COMBO DE HECHIZOS!',
             'hud.dodge': '¡ESQUIVA!',
             'hud.orbShield': '¡ESCUDO ORBE!',
@@ -9120,6 +9278,7 @@ const I18n = {
             'skills.failSpeedLimit': 'Límite de velocidad alcanzado ({n}/{lim}) — esta clase no compra más velocidad.',
             'skills.failGold': 'Oro insuficiente — faltan {n} monedas.',
             'skills.failGeneric': 'No se pudo desbloquear esta habilidad ahora.',
+            'skills.inCombatBlocked': 'Termina el combate para desbloquear habilidades.',
             'skill.warrior.quake.name': 'Terremoto', 'skill.warrior.quake.desc': 'Ground Slam da un segundo pulso de daño',
             'skill.warrior.bloodlust.name': 'Sed de Sangre', 'skill.warrior.bloodlust.desc': 'Los abates curan 2 HP y dan velocidad breve',
             'skill.warrior.bulwark.name': 'Muralla', 'skill.warrior.bulwark.desc': 'Recibe 40% menos daño mientras haya escudo',
@@ -10625,6 +10784,11 @@ const I18n = {
             'weapon.w_crossbow.name': 'Ballesta de Caza',
             'weapon.w_windrunner.name': 'Viento Boreal',
             'weapon.w_deathwhisper.name': 'Susurro de la Muerte',
+            'weapon.w_dagger1.elf.name': 'Arco Corto',
+            'weapon.w_dagger2.elf.name': 'Arco Largo',
+            'weapon.w_crossbow.elf.name': 'Arco Élfico',
+            'weapon.w_windrunner.elf.name': 'Arco del Viento',
+            'weapon.w_deathwhisper.elf.name': 'Arco Sombrío',
             'weapon.w_wand1.name': 'Varita Arcana',
             'weapon.w_wand2.name': 'Cetro de Cristal',
             'weapon.w_staff1.name': 'Cayado del Trueno',
@@ -10761,6 +10925,21 @@ const I18n = {
             'chamber.line.lavaCave': 'El calor sube del suelo como un recuerdo que se niega a apagarse.',
             'chamber.line.crypt': 'A los muertos de aquí los enterraron de pie, para que no olvidaran el camino.',
             'chamber.line.forest': 'Los árboles crecieron alrededor del silencio, no del sol.',
+            'hud.chamberLeft': 'faltan {n}',
+            'hud.chamberBoss': 'Jefe',
+            // HUD de partida (piso, portal, XP, chips de estado y objetivo): armado en JS, sin data-i18n
+            'hud.floor': 'Piso {n}',
+            'hud.portalOpen': 'PORTAL ABIERTO',
+            'hud.xpNext': '{n} XP para el próximo nivel',
+            'hud.levelReady': 'Próximo nivel listo',
+            'hud.objective': 'Objetivo',
+            'hud.boss': 'JEFE',
+            'hud.chip.shield': 'ESCUDO',
+            'hud.chip.crit': 'CRIT',
+            'hud.chip.discount': 'DESCUENTO',
+            'hud.chip.regen': 'REGEN',
+            'hud.chip.goldRush': 'GOLD RUSH',
+            'hud.chip.speed': 'VELOCIDAD',
             'boss.waiting': 'Esperando...',
             'boss.chargeWarn': ' ¡EMBESTIDA!',
             'hud.mapExpanded': 'MAPA AMPLIADO',
@@ -10780,6 +10959,7 @@ const I18n = {
             'log.windGust': ' ¡RÁFAGA DE VIENTO!',
             'log.natureFury': ' ¡FURIA DE LA NATURALEZA!',
             'log.warriorShield': ' ¡Escudo levantado!',
+            'log.overheatLock': 'Sobrecalentado: el disparo se bloquea hasta que la barra se enfríe.',
             'log.arcaneBarrier': ' ¡BARRERA ARCADA!',
             'log.arcaneShieldReady': ' ¡Escudo Arcano listo!',
             'log.travelerSpawned': '¡Apareció un viajero misterioso!',
@@ -11108,6 +11288,12 @@ const I18n = {
         if (window._refreshDailyBadge) window._refreshDailyBadge();
         // Painel de mutadores tem textos montados em JS (não usa data-i18n)
         if (window.RunMutators) RunMutators.render();
+        // HUD de partida (piso, portal, XP, chips, objetivo) também é montado em JS
+        if (window._refreshRunHud) window._refreshRunHud();
+        // Textos em canvas e o HUD em DOM mudam de tamanho com o idioma: um quadro novo
+        // e remedida do layout (com painel aberto o canvas está congelado).
+        _frameStale = true;
+        _markHudLayoutDirty();
     },
 
     // Re-apply translations to every element carrying a data-i18n key
@@ -11237,7 +11423,8 @@ var CONFIG = {
     WAVE_STALL_SECONDS: 25,        // válvula: grupo vivo há mais que isso libera o próximo mesmo com mais de 2 vivos
 
     // Performance Tuning
-    PARTICLE_CAP: 60,
+    PARTICLE_CAP: 60,               // orçamento de ambiente/tocha (decor) e base das contas antigas
+    COMBAT_PARTICLE_CAP: 120,       // orçamento próprio das partículas de combate (teto efetivo ~110-130)
     // Multidão: com inimigos demais na tela, efeitos de acerto diminuem (fator 1 até START, mínimo MIN_SCALE em FULL)
     FX_CROWD_START: 4,
     FX_CROWD_FULL: 10,
@@ -11837,7 +12024,7 @@ var CONFIG = {
     SHAKE_BOSS_SPAWN: 8,
     SHAKE_METEOR: 6,
     SHAKE_STORM: 10,
-    CAMERA_LERP: 0.1,       // camera smoothing
+    CAMERA_LERP: 0.2,       // camera smoothing (0.1 levava ~0,37 s para assentar: o herói escorregava após o dash)
 
     // Particles
     PARTICLE_SPAWN_LEVELUP: 10,
@@ -11869,11 +12056,12 @@ var CONFIG = {
     HAZARD_SPIKE_DAMAGE: 1,
     HAZARD_POISON_DAMAGE: 3,
 
-    // Joystick
+    // Joystick (raio e curso NÃO seguem "Tamanho da Fonte": é preferência de leitura,
+    // não pode mudar o alcance/sensibilidade do controle)
     JOYSTICK_RADIUS: 50,
     JOYSTICK_KNOB_RADIUS: 20,
     JOYSTICK_MAX_DIST: 50,
-    JOYSTICK_DEADZONE: 0.5,
+    JOYSTICK_DEADZONE: 0.3, // 0,5 (= 25 px de 50) deixava o primeiro toque curto sem atirar
 
     // Lighting
     LIGHT_BG_ALPHA: 0.55,
@@ -12164,13 +12352,14 @@ var CONFIG = {
         { id: 'w_excalibur', name: 'Excalibur', desc: '+120% dmg, lifesteal', flavor: 'A espada do Rei Eterno.', damageMult: 2.2, fireRate: 0.85, range: 1.5, color: '#ff8800', tier: 4, lifesteal: 0.1, element: 'fire', unique: 'holySmite' },
     ],
 
-    // Rogue Weapons (bow/dagger types)
+    // Rogue Weapons (bow/dagger types). A Elfa usa esta MESMA escada (stats idênticos), mas vê
+    // nome de arco: nameElf é o fallback PT; a tradução vem de weapon.<id>.elf.name.
     WEAPONS_ROGUE: [
-        { id: 'w_dagger1', name: 'Adaga Dupla', desc: 'Ataque rápido', damageMult: 1.0, fireRate: 1.0, range: 1.0, color: '#aaaaff', tier: 0 },
-        { id: 'w_dagger2', name: 'Lâmina Sombria', desc: '+25% dano, +10% crit', damageMult: 1.25, fireRate: 1.05, range: 1.0, critBonus: 0.1, color: '#33ff33', tier: 1, element: 'poison' },
-        { id: 'w_crossbow', name: 'Besta de Caça', desc: '+50% dano, -15% speed', damageMult: 1.5, fireRate: 0.85, range: 1.3, speed: 0.85, color: '#33ccff', tier: 2, unique: 'piercingShot' },
-        { id: 'w_windrunner', name: 'Ventoboreal', desc: '+70% dmg, pierce shots', damageMult: 1.7, fireRate: 0.9, range: 1.5, color: '#cc66ff', tier: 3, pierce: true, unique: 'pierce' },
-        { id: 'w_deathwhisper', name: 'Sussurro da Morte', desc: '+100% dmg, poison', damageMult: 2.0, fireRate: 0.95, range: 1.3, color: '#ff8800', tier: 4, poison: true, element: 'poison', unique: 'shadowStep' },
+        { id: 'w_dagger1', name: 'Adaga Dupla', nameElf: 'Arco Curto', desc: 'Ataque rápido', damageMult: 1.0, fireRate: 1.0, range: 1.0, color: '#aaaaff', tier: 0 },
+        { id: 'w_dagger2', name: 'Lâmina Sombria', nameElf: 'Arco Longo', desc: '+25% dano, +10% crit', damageMult: 1.25, fireRate: 1.05, range: 1.0, critBonus: 0.1, color: '#33ff33', tier: 1, element: 'poison' },
+        { id: 'w_crossbow', name: 'Besta de Caça', nameElf: 'Arco Élfico', desc: '+50% dano, -15% speed', damageMult: 1.5, fireRate: 0.85, range: 1.3, speed: 0.85, color: '#33ccff', tier: 2, unique: 'piercingShot' },
+        { id: 'w_windrunner', name: 'Ventoboreal', nameElf: 'Arco do Vento', desc: '+70% dmg, pierce shots', damageMult: 1.7, fireRate: 0.9, range: 1.5, color: '#cc66ff', tier: 3, pierce: true, unique: 'pierce' },
+        { id: 'w_deathwhisper', name: 'Sussurro da Morte', nameElf: 'Arco Sombrio', desc: '+100% dmg, poison', damageMult: 2.0, fireRate: 0.95, range: 1.3, color: '#ff8800', tier: 4, poison: true, element: 'poison', unique: 'shadowStep' },
     ],
 
     // Mage Weapons (staff/wand types)
@@ -12686,6 +12875,9 @@ let _continueCountdown = 0;
 let _transitioning = false;
 let _fadeState = null, _fadeText = '';
 let _bossBanner = null;
+// Chefe do andar morto e ainda sem prêmio (ver Entity.takeDamage e _updateEnemySpawning):
+// sobrevive à morte do jogador no mesmo tick, quando o update para no CONTINUE.
+let _bossDeathPending = null;
 
 function _showContinueScreen() {
     _continueActive = true;
@@ -12694,7 +12886,18 @@ function _showContinueScreen() {
     if (!el) return;
     el.classList.remove('hidden');
     _updateContinueUI();
+    _startContinueTimer();
+}
+
+// Um único interval de countdown por vez: limpa o anterior antes de criar outro.
+function _startContinueTimer() {
+    _stopContinueTimer();
     _continueTimer = setInterval(() => {
+        // Run encerrada por outro caminho: o interval não sobrevive a ela.
+        if (!_continueActive) { _stopContinueTimer(); return; }
+        // Celular bloqueado/notificação: o segundo não corre com o app em segundo plano
+        // (um toque no app abria o game over e apagava o save). Retoma do mesmo segundo.
+        if (document.hidden) return;
         _continueCountdown--;
         _updateContinueUI();
         if (_continueCountdown <= 0) {
@@ -12702,6 +12905,14 @@ function _showContinueScreen() {
         }
     }, 1000);
 }
+function _stopContinueTimer() {
+    if (_continueTimer) clearInterval(_continueTimer);
+    _continueTimer = null;
+}
+// Voltar ao app retoma o countdown de onde parou (sem esperar o próximo tick do interval)
+document.addEventListener('visibilitychange', function() {
+    if (!document.hidden && _continueActive && !_continueTimer) _startContinueTimer();
+});
 
 function _updateContinueUI() {
     const el = document.getElementById('continue-screen');
@@ -12725,8 +12936,7 @@ function _updateContinueUI() {
 function _doContinue() {
     if (!_continueActive) return;
     _continueActive = false;
-    clearInterval(_continueTimer);
-    _continueTimer = null;
+    _stopContinueTimer();
     const el = document.getElementById('continue-screen');
     if (el) el.classList.add('hidden');
     // Revive player
@@ -12777,8 +12987,7 @@ function _doContinue() {
 
 function _cancelContinue() {
     _continueActive = false;
-    clearInterval(_continueTimer);
-    _continueTimer = null;
+    _stopContinueTimer();
     const el = document.getElementById('continue-screen');
     if (el) el.classList.add('hidden');
     // Trigger normal game over
@@ -12817,7 +13026,7 @@ function _startNewRunSameClass() {
     if (window.MetaSystem && !MetaSystem.isClassUnlocked(cls)) cls = 'warrior';
     _unlockEndScreenButtons();
     _continueActive = false;
-    if (_continueTimer) { clearInterval(_continueTimer); _continueTimer = null; }
+    _stopContinueTimer();
     ['game-over-screen', 'win-screen', 'continue-screen'].forEach(function (id) {
         var el = document.getElementById(id);
         if (el) el.classList.add('hidden');
@@ -14002,6 +14211,19 @@ function _drawMinimapDots(c, scaleX, scaleY, dotMult) {
         c.beginPath(); c.arc((ep.x/CONFIG.TILE_SIZE)*scaleX, (ep.y/CONFIG.TILE_SIZE)*scaleY, 2.5 * dotMult, 0, 6.28); c.fill();
         c.globalAlpha = 1;
     }
+    // Baús ainda fechados: losango dourado com contorno escuro (forma e cor diferentes do portal e dos
+    // inimigos). Sem ele a recompensa da câmara se perdia quando a lista `chests` era zerada na troca.
+    for (let i = 0; i < chests.length; i++) {
+        const ch = chests[i];
+        if (!ch || !ch.alive || ch.opened) continue;
+        const cx2 = (ch.x/CONFIG.TILE_SIZE)*scaleX, cy2 = (ch.y/CONFIG.TILE_SIZE)*scaleY;
+        const r = 3 * dotMult;
+        c.fillStyle = '#000'; c.globalAlpha = 0.5;
+        c.beginPath(); c.moveTo(cx2, cy2 - r*1.5); c.lineTo(cx2 + r*1.5, cy2); c.lineTo(cx2, cy2 + r*1.5); c.lineTo(cx2 - r*1.5, cy2); c.closePath(); c.fill();
+        c.fillStyle = '#ffd24a'; c.globalAlpha = 0.95;
+        c.beginPath(); c.moveTo(cx2, cy2 - r); c.lineTo(cx2 + r, cy2); c.lineTo(cx2, cy2 + r); c.lineTo(cx2 - r, cy2); c.closePath(); c.fill();
+        c.globalAlpha = 1;
+    }
 }
 // Marcadores do Oráculo (revelados) e canônicos (F3) nos dois minimapas. Cruz sólida com contorno
 // escuro, para ler bem tanto sobre o chão claro quanto sobre o cinza da saída selada. (sx, sy) é a
@@ -14493,7 +14715,14 @@ function _updateEntitySimulation() {
             bullets.pop();
         }
     }    while (bullets.length > (CONFIG.MAX_BULLETS || 60)) {
-        const b = bullets.pop();
+        // Teto estourado: sai primeiro o projétil INIMIGO mais antigo (o array é cronológico).
+        // O `pop()` antigo matava o mais novo, que costuma ser o tiro do jogador com combo/eco/
+        // multishot — justamente o que precisa aparecer. Sem inimigos, sai o do jogador mais
+        // antigo; o tiro do jogador mais novo nunca é descartado.
+        let _drop = -1;
+        for (let i = 0; i < bullets.length; i++) { if (!bullets[i].isP) { _drop = i; break; } }
+        if (_drop < 0) _drop = 0;
+        const b = bullets.splice(_drop, 1)[0];
         if (window.PoolManager) PoolManager.release('Bullet', b);
     }
     for (let i = particles.length - 1; i >= 0; i--) { 
@@ -14503,7 +14732,7 @@ function _updateEntitySimulation() {
             particles.pop(); 
         }
     }
-    while (particles.length > CONFIG.PARTICLE_CAP) {
+    while (particles.length > (CONFIG.COMBAT_PARTICLE_CAP || CONFIG.PARTICLE_CAP)) {
         const p = particles.pop();
         if (window.PoolManager) PoolManager.release('Particle', p);
     }
@@ -14734,6 +14963,7 @@ class Portal {
 const FLOOR_EXIT = { REVEAL_TILES: 6, MARK: '#7d8590', STONE: '#b0b0c0', STONE_DK: '#8a8a9a', EDGE: '#0b0c10' };
 let _exitRevealed = false;               // saída já vista neste andar (minimapa passa a mostrá-la)
 let _storyRoom = null;                   // câmara atual da História (null no Abismo, no diário e na sala secreta)
+let _storyBossLootPos = null;            // onde o chefe da câmara final caiu (baú + portal do andar nascem juntos)
 
 // Regras da história: a Masmorra fora do desafio diário (tutorial incluso). Liga saída fixa, selo, baús
 // por câmara, câmaras-mapa com passagem selada e portal na saída. Fora dela (Abismo e Desafio Diário)
@@ -15038,6 +15268,9 @@ function _drawDescentIn(ctx, w, h, p) {
 }
 
 function _startFloorTransition() {
+    // Snapshot coerente ANTES do incremento: um save no meio do fade (autosave, app em
+    // segundo plano, pagehide) grava este estado, não o andar novo com a câmara antiga.
+    if (typeof SaveSystem !== 'undefined' && SaveSystem.beginTransitionSnapshot) SaveSystem.beginTransitionSnapshot();
     if (window.SND && SND.playPortal) SND.playPortal(); // entrar no portal / trocar de andar
     if (typeof CampSystem !== 'undefined') CampSystem._descend = false;
     secretPortal = null; _secretRoom = null;
@@ -15049,7 +15282,7 @@ function _startFloorTransition() {
     if (window.RunObjectiveSystem) RunObjectiveSystem.onFloor(dungeonLevel);
     if (typeof Statistics !== 'undefined') Statistics.data.maxFloor = Math.max(Statistics.data.maxFloor || 0, dungeonLevel);
     if (typeof Statistics !== 'undefined' && player && player.type) { const _bf = Statistics.data.bestFloorByClass = Statistics.data.bestFloorByClass || {}; _bf[player.type] = Math.max(_bf[player.type] || 0, dungeonLevel); }
-    dungeonPortal = null; bossActive = false; floorBossDefeated = false;
+    dungeonPortal = null; bossActive = false; floorBossDefeated = false; _bossDeathPending = null;
     if (gameMode === 'dungeon' && dungeonLevel > 10) { _triggerWin(); return; }
 
     if (gameMode === 'abyss') {
@@ -15566,8 +15799,8 @@ function _populateStoryRoom() {
 
 // Solta o próximo lote do orçamento da câmara: até _waveSize() inimigos, sem passar do que falta do
 // orçamento nem do teto de vivos. Depois do lote, o respiro (_waveBreatherSecs) começa a contar.
-// Cada inimigo é um sorteio da tabela normal, longe do jogador (getSafeSpawn), então a câmara nunca
-// "nasce em cima" dele.
+// Cada inimigo é um sorteio da tabela normal, longe do jogador e do lado da SAÍDA (map.getFarSpawn),
+// então a câmara nunca "nasce em cima" dele nem deixa a caminhada morta até o portal no fim.
 function _spawnStoryRoomEnemies() {
     if (!_storyRoom || _storyRoom.boss || !map) return;
     const left = Math.max(0, _storyRoom.budget - _storyRoom.spawned);
@@ -15576,7 +15809,7 @@ function _spawnStoryRoomEnemies() {
     // Conta o que de fato nasceu: um anel de besouros são vários inimigos, não um
     let born = 0;
     while (born < slots) {
-        const n = _spawnSingleLegacy(map.getSafeSpawn(CONFIG.ENEMY_SPAWN_MIN_DIST), slots - born);
+        const n = _spawnSingleLegacy(map.getFarSpawn(CONFIG.ENEMY_SPAWN_MIN_DIST), slots - born);
         born += n;
         _storyRoom.spawned += n;
     }
@@ -15599,7 +15832,39 @@ function _openStoryDoor() {
     SND.playAchievement && SND.playAchievement(); shake = 15;
 }
 
-// Fecha a câmara até o último inimigo cair: sem portal enquanto houver alguém vivo. Quando o
+// Portal do andar na câmara do chefe: nasce junto da recompensa (o corpo do chefe), não na saída do
+// mapa, para o jogador pegar o baú e descer sem atravessar a câmara inteira depois do abate.
+// Desloca ~2,5 tiles (o portal "puxa" o jogador a 55 px e o baú abre a ~46 px: mais perto disso o
+// jogador seria levado ao portal no mesmo instante em que abre o baú), procurando chão livre.
+function _storyBossPortalPos(base) {
+    if (!base) return null;
+    const T = CONFIG.TILE_SIZE;
+    const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+    for (const d of dirs) {
+        for (const k of [2.5, 3, 2]) {
+            const x = base.x + d[0] * T * k, y = base.y + d[1] * T * k;
+            if (map && !map.isWall(x, y)) return { x: x, y: y };
+        }
+    }
+    return base;
+}
+
+// Inimigos que de fato seguram a passagem da câmara. Barreira de gelo (isBarrier, uma por conjuração
+// do Cajado Glacial) e o Goblin do Tesouro (bônus opcional, que foge do jogador) não contam: com eles
+// a câmara nunca "esvaziava" e a passagem ficava fechada à espera de um inimigo que não luta.
+// Comuns, elites, chefes e invocações continuam segurando a porta.
+function _storyRoomBlockingEnemies() {
+    let n = 0;
+    for (let i = 0; i < entities.length; i++) {
+        const e = entities[i];
+        if (e === player || !e.alive) continue;
+        if (e.isBarrier || e.isTreasureGoblin) continue;
+        n++;
+    }
+    return n;
+}
+
+// Fecha a câmara até o último inimigo cair: sem portal enquanto houver quem bloqueie a passagem. Quando o
 // orçamento acabou e a câmara está vazia, a passagem abre. O chefe tem o fluxo próprio (o portal
 // do andar nasce depois de derrotá-lo, no bloco comum de _updateEnemySpawning).
 function _updateStoryRoomSpawning(alive, tutSuppress) {
@@ -15619,7 +15884,9 @@ function _updateStoryRoomSpawning(alive, tutSuppress) {
         _spawnStoryRoomEnemies();
         return;
     }
-    if (alive > 0) return;
+    // `alive` acima espaça os lotes (conta todo mundo, inclusive barreira e goblin); a porta usa a
+    // contagem de quem bloqueia de fato.
+    if (_storyRoomBlockingEnemies() > 0) return;
     _storyRoom.cleared = true;
     _openStoryDoor();
 }
@@ -15632,6 +15899,7 @@ function _startChamberTransition() {
     const next = _storyRoom.i + 1;
     if (next >= _storyRoom.total) { _startFloorTransition(); return; }
     if (window.SND && SND.playPortal) SND.playPortal(); // portal da câmara (o de andar toca em _startFloorTransition)
+    if (typeof SaveSystem !== 'undefined' && SaveSystem.beginTransitionSnapshot) SaveSystem.beginTransitionSnapshot();
     _fadeText = ''; // o número da câmara vai no cartão (ver _drawChamberCard)
     _fadeState = { alpha: 0, phase: 'in', kind: 'chamber', next: next, total: _storyRoom.total, t: 0,
         rm: !!(window.GameSettings && GameSettings.reducedMotion), skip: false };
@@ -15675,8 +15943,10 @@ function _buildStoryRoom(index, opts) {
     if (window.NPCSystem) NPCSystem.reset();
     dungeonPortal = null; bossActive = false;
     _storyRoom = { i: index, total: total, cleared: false, budget: 0, spawned: 0, boss: boss };
+    _storyBossLootPos = null; // recompensa do chefe é por câmara: a nova nasce sem ponto guardado
     if (boss) {
-        // O chefe nasce longe da entrada; o selo da saída só vira portal quando ele cai.
+        // O chefe nasce longe da entrada; o portal do andar só nasce quando ele cai — junto do corpo,
+        // onde também cai o baú (ver _storyBossPortalPos em _updateEnemySpawning).
         if (!opts.bossDefeated) _spawnFloorBoss(map.getSafeSpawn(CONFIG.ENEMY_SPAWN_MIN_DIST));
     } else if (opts.cleared) {
         // Câmara já vencida (continue): sem inimigos, passagem aberta; o pet (se houver) já fica ativo
@@ -15711,10 +15981,13 @@ function _updateEnemySpawning() {
     const aliveEnemies = _cachedAliveEnemies;
     const _tutSuppressSpawn = typeof TutorialSystem !== 'undefined' && TutorialSystem.active && TutorialSystem.suppressEnemySpawns;
     // História: cada câmara é um mapa e a passagem só abre quando ela esvazia (ver _updateStoryRoomSpawning).
-    // O resto do bloco (chefe, portal) é compartilhado e roda depois, igual para os dois modos.
+    // O resto do bloco (chefe, portal) é compartilhado e roda depois, igual para os dois modos — mas numa
+    // câmara comum o chefe/portal do andar NÃO valem: a câmara tem orçamento próprio (_storyRoomBudget) e
+    // a passagem dela abre no _openStoryDoor. Só a última câmara (a do chefe) segue o fluxo normal.
+    const _commonStoryChamber = !!(_storyRules() && _storyRoom && _storyRoom.i < _storyRoom.total - 1);
     if (_storyRules() && _storyRoom) {
         _updateStoryRoomSpawning(aliveEnemies, _tutSuppressSpawn);
-    } else if (dungeonKills >= dungeonKillTarget && !dungeonPortal && !bossActive && !floorBossDefeated && !_tutSuppressSpawn) {
+    } else if (!_commonStoryChamber && dungeonKills >= dungeonKillTarget && !dungeonPortal && !bossActive && !floorBossDefeated && !_tutSuppressSpawn) {
         // Meta de abates atingida sem chefe vivo nem derrotado: o chefe nasce já, sem esperar o tick de
         // 60 frames nem o teto de inimigos. Antes, um salto de abates entre dois ticks deixava o portal abrir sem chefe.
         _spawnFloorBoss(map.getSafeSpawn(CONFIG.ENEMY_SPAWN_MIN_DIST));
@@ -15727,7 +16000,7 @@ function _updateEnemySpawning() {
         const bossForced = bossEligible && dungeonKills >= dungeonKillTarget - 2;
         // Sorteio aleatório só depois de um tempo mínimo no andar (gameTime é em frames a 60 fps)
         const _floorSecs = (gameTime - _floorStartTime) / GAME_TICKS_PER_SECOND;
-        const isBoss = bossForced || (bossEligible && _floorSecs >= CONFIG.BOSS_MIN_FLOOR_SECONDS && SeedSystem.random() < CONFIG.BOSS_SPAWN_CHANCE);
+        const isBoss = !_commonStoryChamber && (bossForced || (bossEligible && _floorSecs >= CONFIG.BOSS_MIN_FLOOR_SECONDS && SeedSystem.random() < CONFIG.BOSS_SPAWN_CHANCE));
         if (isBoss) {
             _spawnFloorBoss(eSpawn);
         } else {
@@ -15738,16 +16011,23 @@ function _updateEnemySpawning() {
     }
     let bossAlive = false;
     if (bossActive) { for (let i = 0; i < entities.length; i++) { if (entities[i].isBoss && entities[i].alive) { bossAlive = true; break; } } }
-    if (bossActive && !bossAlive) {
+    // `_bossDeathPending`: chefe morto num tick em que o update parou antes daqui (jogador morreu
+    // junto e o CONTINUE cortou o resto do frame). A marca vale como chefe abatido e é consumida uma
+    // vez só, então o caminho normal e o atrasado nunca pagam a recompensa em dobro.
+    if ((bossActive && !bossAlive) || _bossDeathPending) {
+        const _deadBoss = _bossDeathPending;
+        _bossDeathPending = null;
         bossActive = false; floorBossDefeated = true; SND.resumeBiomeMusic();
         addLog(window.I18n ? I18n.t('log.bossDefeated') : 'Chefe abatido!', true); player.gainXP(CONFIG.XP_BOSS_REWARD + CONFIG.BOSS_XP_BONUS); ScreenEffects.onBossDeath();
         // Na História o baú (e o powerup) cai onde o chefe morreu, na câmara do chefe; fora dela,
         // no sorteio antigo de um ponto seguro do mapa.
         let bossPos = map.getSafeSpawn(0);
         if (_storyRules()) {
-            const _dead = entities.find(e => e.isBoss);
+            const _dead = _deadBoss || entities.find(e => e.isBoss);
             if (_dead) bossPos = { x: _dead.x, y: _dead.y };
         }
+        // Câmara do chefe da História: guarda o ponto para o portal do andar nascer junto da recompensa.
+        if (_storyRules() && _storyRoom && _storyRoom.boss) _storyBossLootPos = { x: bossPos.x, y: bossPos.y };
         chests.push(new Chest(bossPos.x, bossPos.y, SeedSystem.random() < 0.35 ? 'lendario' : 'epico'));
         // Powerup raro garantido ao abater o chefe: 1 dos 4 igualmente
         // rareRandom: sorteio da v56/v59, não consome o stream principal (SeedSystem)
@@ -15756,10 +16036,14 @@ function _updateEnemySpawning() {
         dungeonKills = Math.max(dungeonKills, dungeonKillTarget);
     }
     // Portal só com o chefe do andar derrotado (floorBossDefeated). Os modos dungeon e abyss sempre têm chefe.
-    if (dungeonKills >= dungeonKillTarget && !dungeonPortal && !bossActive && floorBossDefeated) {
+    // Câmara comum da História fica de fora: a passagem dela é a do _openStoryDoor, não a do andar.
+    if (!_commonStoryChamber && dungeonKills >= dungeonKillTarget && !dungeonPortal && !bossActive && floorBossDefeated) {
         // História: o portal nasce na saída do andar (longe do início); sem saída, no jogador como antes.
-        // Fora da história, o portal nasce no jogador, como na v84.
-        const _exitPos = _storyRules() && map && map.getExitSpawn ? map.getExitSpawn() : null;
+        // Na câmara do chefe ele nasce junto da recompensa (_storyBossPortalPos), para não haver
+        // caminhada obrigatória pelo mapa depois do abate. Fora da história, no jogador, como na v84.
+        const _exitPos = (_storyRules() && _storyRoom && _storyRoom.boss && _storyBossLootPos)
+            ? _storyBossPortalPos(_storyBossLootPos)
+            : (_storyRules() && map && map.getExitSpawn ? map.getExitSpawn() : null);
         dungeonPortal = player ? new Portal(_exitPos ? _exitPos.x : player.x, _exitPos ? _exitPos.y : player.y) : null;
         if (player) triggerCamZoom(0.04, 24);
         if (gameMode === 'dungeon') {
@@ -15777,6 +16061,14 @@ function _updateEnemySpawning() {
 function _updateCameraAndHUD() {
     const tx = player ? player.x - width/2 : 0, ty = player ? player.y - height/2 : 0;
     camX += (tx - camX) * CONFIG.CAMERA_LERP; camY += (ty - camY) * CONFIG.CAMERA_LERP;
+    // Prende a câmera nas bordas do mapa (mapa em px de mundo = tiles * TILE_SIZE): sem isso,
+    // encostar na borda mostrava até ~40% de tela preta. Mapa menor que a tela fica centralizado.
+    if (map && width > 0 && height > 0) {
+        const _worldW = (map.width || CONFIG.MAP_WIDTH) * CONFIG.TILE_SIZE;
+        const _worldH = (map.height || CONFIG.MAP_HEIGHT) * CONFIG.TILE_SIZE;
+        camX = (_worldW > width) ? Math.min(Math.max(camX, 0), _worldW - width) : (_worldW - width) / 2;
+        camY = (_worldH > height) ? Math.min(Math.max(camY, 0), _worldH - height) : (_worldH - height) / 2;
+    }
     // Reduced shake for feedback (50% of original)
     if (shake > 0) shake *= CONFIG.SHAKE_DECAY; if (shake < CONFIG.SHAKE_THRESHOLD) shake = 0;
     // ── HUD and UI updates ───────────────────────────────────────────
@@ -16167,19 +16459,25 @@ function _drawWorldLayer() {
     }
     
     // PERF: Batch particles by color (reduces state changes by ~80%)
-    // Reuse a module-scope container to avoid per-frame object allocation.
+    // Reuse a module-scope container to avoid per-frame object allocation. Sem `delete`:
+    // apagar chaves a cada quadro transforma o objeto em dicionário e aloca arrays novos.
+    // Cada cor guarda o quadro em que foi usada (b._frame); array de cor sem uso fica vazio
+    // e o laço abaixo pula. Object.create(null) evita herdar chaves do protótipo.
     const batchByColor = _particleBatch;
-    for (const _pc in batchByColor) delete batchByColor[_pc];
+    const _pframe = ++_particleBatchFrame;
     for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
         if(p.x > vL && p.x < vR && p.y > vT && p.y < vB) {
             let b = batchByColor[p.color];
-            if (!b) { b = []; batchByColor[p.color] = b; }
+            if (!b) { b = batchByColor[p.color] = []; }
+            else if (b._frame !== _pframe) b.length = 0;
+            b._frame = _pframe;
             b.push(p);
         }
     }
     for (const color in batchByColor) {
         const batch = batchByColor[color];
+        if (batch._frame !== _pframe || batch.length === 0) continue;
         wctx.fillStyle = color;
         wctx.strokeStyle = color;
         for (let j = 0; j < batch.length; j++) {
@@ -16322,11 +16620,12 @@ function _drawAmbientMotes(ctx) {
 
 let _lightingThrottle = 0;
 let _cachedLightCanvas = null;
-let _particleBatch = {};
+let _particleBatch = Object.create(null);
+let _particleBatchFrame = 0;
 let _cachedAliveEnemies = 0;
 function _spawnTorchParticles() {
     if (!player || !player.alive || CONFIG.TORCH_PARTICLE_INTERVAL > 0 && gameTime % CONFIG.TORCH_PARTICLE_INTERVAL !== 0) return;
-    if (particles.length >= Math.floor(CONFIG.PARTICLE_CAP * 0.5)) return; // torch + ambient leave >= half the cap for combat feedback
+    if (particles.length >= Math.floor(CONFIG.PARTICLE_CAP * 0.5)) return; // tocha + ambiente ficam no orçamento de ambiente; o combate tem COMBAT_PARTICLE_CAP próprio
     const fireColors = ['#ff6600', '#ff8800', '#ffaa00', '#ff4400'];
     for (let i = 0; i < 2; i++) {
         const px = player.x + (Math.random() - 0.5) * 16;
@@ -16772,6 +17071,7 @@ function draw() {
                 if (_storyRules()) {
                     if (window.SeedSystem && SeedSystem.isSeeded()) SeedSystem.reseedForFloor(dungeonLevel * 100);
                     _storyRoom = { i: 0, total: Math.max(2, CONFIG.MAP_STORY_ROOMS), cleared: false, budget: 0, spawned: 0, boss: false };
+                    _storyBossLootPos = null;
                 }
                 map = new Map(null, _mapGenOpts(0)); _mmDirty = true; _resetFloorExplore();
                 const sp = _storyRules() ? map.getStartSpawn() : map.getSafeSpawn(); if (player) { player.x = sp.x; player.y = sp.y; }
@@ -16812,6 +17112,8 @@ function draw() {
                 // Descida entre pisos e troca de câmara: o cartão fica antes de clarear
                 _fadeState.phase = 'card';
                 _fadeState.t = 0;
+                // Andar/câmara novos mudam piso, barra do chefe e pílula: remede o HUD.
+                _markHudLayoutDirty();
                 // Tom grave descendente, baixo, quando o cartão do andar aparece (respeita sfxEnabled em SND.play)
                 if (_fadeState.kind === 'descent' && window.SND && SND.play) SND.play(196, 'sine', 0.7, 0.05, 'sfx', null, null, 58);
             } else if (_fadeState.phase === 'card' && !_anyPanelOpen()) {
@@ -16831,6 +17133,8 @@ function draw() {
                 }
                 if (_fadeState.alpha <= 0) {
                     _fadeState = null; _fadeText = ''; _transitioning = false;
+                    // Fade encerrado: o estado vivo voltou a ser coerente, grava o que ficou pendente
+                    if (typeof SaveSystem !== 'undefined' && SaveSystem.endTransitionSnapshot) SaveSystem.endTransitionSnapshot();
                 }
             }
         }
@@ -17073,11 +17377,13 @@ const BossHPBar = {
     },
     show(name) {
         this.container.classList.remove('hidden');
-        this.nameEl.textContent = name || 'CHEFE';
+        this.nameEl.textContent = name || _L('hud.boss', 'CHEFE');
+        _markHudLayoutDirty(); // a barra do chefe empurra o topo livre do HUD
     },
     hide() {
         if (this.container.classList.contains('hidden')) return; // evita escrita de DOM a cada frame
         this.container.classList.add('hidden');
+        _markHudLayoutDirty();
     },
     update() {
         if (!bossActive || !entities) {
@@ -17093,7 +17399,7 @@ const BossHPBar = {
         }
         if (!boss) { this.hide(); return; }
         // Só escreve no DOM quando algo mudou (update roda todo frame).
-        var nm = _bossNome(boss) || 'CHEFE';
+        var nm = _bossNome(boss) || _L('hud.boss', 'CHEFE');
         if (this._shownName !== nm || this.container.classList.contains('hidden')) { this.show(nm); this._shownName = nm; }
         var pct = Math.max(0, (boss.hp / boss.maxHp) * 100);
         var w = pct + '%';
@@ -17725,10 +18031,21 @@ function _advanceSimulation(deltaMs) {
 
 // Telas de 90/120 Hz: a simulação é fixa em 60 Hz e não há interpolação, então um callback
 // sem passo novo redesenharia o mesmo quadro. Só pula o draw no jogo rodando, sem overlay.
-function _canSkipRedraw() {
-    return gameState === 'PLAYING' && !_anyPanelOpen() && !minimapExpanded &&
-        !(typeof TutorialSystem !== 'undefined' && TutorialSystem.active);
+// Com painel aberto a simulação está congelada e o painel é DOM: basta um quadro, e daí só
+// se o quadro ficar sujo (_frameStale: abrir/fechar painel, resize, idioma, tema, zoom).
+// Quem desenha no canvas ou anima por conta própria (painel do NPC, tutorial, minimapa
+// expandido) e as cenas de morte/fim de run (gameState != PLAYING) seguem desenhando.
+function _canSkipRedraw(panelOpen) {
+    if (gameState !== 'PLAYING' || _transitioning) return false;
+    if (minimapExpanded) return false;
+    if (typeof TutorialSystem !== 'undefined' && TutorialSystem.active) return false;
+    if (typeof NPCInteractionPanel !== 'undefined' && NPCInteractionPanel.visible) return false;
+    const open = (typeof panelOpen === 'boolean') ? panelOpen : _anyPanelOpen();
+    if (open) return !_frameStale;
+    return true;
 }
+// Último estado de painel visto pelo loop: abrir/fechar suja o quadro (um draw) e o HUD.
+let _panelOpenPrev = false;
 
 function loop(timestamp) {
     _frameClockMs = timestamp || performance.now();
@@ -17773,7 +18090,8 @@ function loop(timestamp) {
         // Adaptive resolution + auto performance: drop internal resolution and
         // disable heavy effects when FPS is low, recover when stable.
         if (gameState === 'PLAYING') {
-            _refreshHudLayout();
+            // getComputedStyle + getBoundingClientRect: só quando o HUD muda (ver _pumpHudLayout)
+            _pumpHudLayout();
             // Com pausa ou menu aberto o FPS cai por causa do blur e do redesenho do painel, não do jogo:
             // nessa fase não se mede desempenho e os contadores zeram, para não contar como amostra de jogo.
             if (window.isAnyPanelOpen && isAnyPanelOpen()) {
@@ -17817,14 +18135,24 @@ function loop(timestamp) {
     }
 
     Debug.beginFrame();
+    // Abrir/fechar painel muda o que o canvas mostra e a altura do HUD: suja os dois uma vez.
+    const _panelOpen = _anyPanelOpen();
+    if (_panelOpen !== _panelOpenPrev) {
+        _panelOpenPrev = _panelOpen;
+        _frameStale = true;
+        _markHudLayoutDirty();
+    }
     const _steps = _advanceSimulation(dt * ScreenEffects.timeScale());
-    const _skippable = _canSkipRedraw();
+    const _skippable = _canSkipRedraw(_panelOpen);
+    // Com painel aberto update() sai antes de mexer no mundo: o passo de simulação não
+    // justifica redesenhar o quadro parado.
+    const _needDraw = gameState !== 'START' && ((_steps > 0 && !_panelOpen) || _frameStale || !_skippable);
     // Em START a tela inicial é opaca e draw() já sai no primeiro if: não chama. _frameStale
     // continua true enquanto não for pulável, então o primeiro quadro fora do START redesenha.
-    if (gameState !== 'START' && (_steps > 0 || _frameStale || !_skippable)) {
+    if (_needDraw) {
         Debug.safe(draw, 'draw');
     }
-    _frameStale = !_skippable;
+    _frameStale = _needDraw ? false : !_skippable;
     Debug.endFrame();
 
     requestAnimationFrame(loop);
@@ -19831,6 +20159,11 @@ window.SND = {
 const Vibrate = {
     enabled: true,
     _warnedTypes: new Set(),
+    _throttleMs: 120,      // 1 vibração por tipo a cada ~120 ms: toque/golpe repetido não vibra sem parar
+    _lastAt: {},           // performance.now() da última vibração de cada tipo
+    // Dano recebido, morte e nível NÃO entram no throttle: perder esses avisos é pior
+    // do que vibrar duas vezes. Abate (kill/eliteKill/bossKill) e vida baixa também.
+    _priority: new Set(['hitTaken', 'bossHit', 'kill', 'eliteKill', 'bossKill', 'boss', 'levelUp', 'lowHealth']),
 
     patterns: {
         normalHit: 20,
@@ -19867,6 +20200,13 @@ const Vibrate = {
             }
             return;
         }
+        // Throttle por tipo: um golpe normal acerta vários inimigos no mesmo quadro e o
+        // analógico disparava sem parar. Dano recebido/morte/nível seguem livres.
+        const now = performance.now();
+        if (!this._priority.has(type)) {
+            if (now - (this._lastAt[type] || 0) < this._throttleMs) return;
+        }
+        this._lastAt[type] = now;
         try {
             navigator.vibrate(pattern);
         } catch(e) {
@@ -20509,6 +20849,10 @@ const SkillTree = {
 
     unlock(player, skillId, bypassLimit) {
         if (player.unlockedSkills.includes(skillId)) return false; // Já tem
+        // Compra em combate: a loja e a bolsa já travam por Inventory.inCombat; aqui vale para toda
+        // compra de nó (o painel aberto congela a simulação, então pausar na luta do chefe daria
+        // compra de graça). Builds e presets passam com bypassLimit.
+        if (!bypassLimit && typeof Inventory !== 'undefined' && typeof Inventory.inCombat === 'function' && Inventory.inCombat()) return false;
         const cls = player.type;
         const skill = this.getNodes(cls).find(s => s.id === skillId);
         if (!skill) return false;
@@ -20846,9 +21190,17 @@ const CampSystem = {
         if (typeof addLog !== 'undefined') addLog(window.I18n ? I18n.t('log.campEstablished') : ' O mercador monta acampamento: compre, descanse ou escolha uma bênção antes de descer.', true);
     },
 
-    buy(idx) {
+    buy(id) {
         const st = this.state;
         if (!st || !player) return;
+        // Toque + click sintético (ou toque duplo) chegam em sequência: ignora a repetição
+        // dentro de 250 ms, como o botão de esquiva.
+        const now = performance.now();
+        if (now - (this._lastBuyAt || 0) < 250) return;
+        // Compra por ID, não por índice: o índice de um cartão muda quando outro item sai da
+        // lista, e o segundo toque rápido cobrava o item que tinha deslizado para a posição.
+        const idx = st.offers.findIndex(o => o && o.id === id);
+        if (idx < 0) return;
         const item = st.offers[idx];
         if (!item) return;
         if (player.currency < item.cost) {
@@ -20859,6 +21211,7 @@ const CampSystem = {
         // Consumível de cura/bomba vai para a bolsa (Inv3-1); sem espaço, recusa antes de cobrar
         const toBag = Inventory.bagBuys(item.id);
         if (toBag && !Inventory.canStoreBought(1)) { Inventory.warnBagFull(); return; }
+        this._lastBuyAt = now;
         player.currency -= item.cost;
         if (toBag) Inventory.storeBought(item.id, 1);
         else item.effect(player);
@@ -20880,11 +21233,15 @@ const CampSystem = {
         if (window.UIManager) window.UIManager.openPanel('camp');
     },
 
-    shrine(idx) {
+    shrine(id) {
         const st = this.state;
         if (!st || !player || st.shrinePicked) return;
-        const boon = st.boons[idx];
+        // Mesma trava da compra: a bênção é escolhida por ID e um toque duplo não aplica duas.
+        const now = performance.now();
+        if (now - (this._lastShrineAt || 0) < 250) return;
+        const boon = (st.boons || []).find(b => b && b.id === id);
         if (!boon) return;
+        this._lastShrineAt = now;
         if (RunBoons.apply(player, boon.id)) {
             st.shrinePicked = boon.id;
             if (window.UIManager) window.UIManager.openPanel('camp');
@@ -21210,7 +21567,7 @@ const RunObjectiveSystem = {
         if (!o) return '';
         const status = this.completed ? '<span style="color:#4ade80;">' + (window.I18n ? I18n.t('run.obj.done') : 'concluído') + '</span>'
             : (this.failed ? '<span style="color:#f87171;">' + (window.I18n ? I18n.t('run.obj.failed') : 'não alcançado') + '</span>' : '<span style="color:#ffd86b;">' + (window.I18n ? I18n.t('run.obj.inProgress') : 'em andamento') + '</span>');
-        return '<span style="color:#e0b6ff;">🎯 ' + (window.I18n ? I18n.t('run.obj.label') : 'Objetivo:') + '</span> ' + o.icon + ' ' + o.name + ' — ' + status;
+        return '<span style="color:#e0b6ff;">🎯 ' + (window.I18n ? I18n.t('run.obj.label') : 'Objetivo:') + '</span> ' + o.icon + ' ' + (window._L ? _L(o.nameKey, o.name) : o.name) + ' — ' + status;
     },
 
     // Esconde (opacity, sem tirar do layout) em combate; o elemento só recebe estilo quando muda.
@@ -21259,12 +21616,17 @@ const RunObjectiveSystem = {
         this._el.classList.remove('hidden');
         this._iconEl.innerHTML = '<svg class="icon-inline" width="11" height="11"><use href="#' + (_RUN_OBJECTIVE_SYMBOLS[o.id] || 'ic-target') + '"/></svg>';
         this._iconEl.style.color = this.completed ? '#4ade80' : (this.failed ? '#f87171' : '');
-        this._titleEl.textContent = this.completed ? o.name + ' — ' + (window.I18n ? I18n.t('run.obj.done') : 'concluído') : (this.failed ? o.name + ' — ' + (window.I18n ? I18n.t('run.obj.failedShort') : 'falhou') : o.name);
+        this._titleEl.textContent = this.completed ? _L(o.nameKey, o.name) + ' — ' + (window.I18n ? I18n.t('run.obj.done') : 'concluído') : (this.failed ? _L(o.nameKey, o.name) + ' — ' + (window.I18n ? I18n.t('run.obj.failedShort') : 'falhou') : _L(o.nameKey, o.name));
         this._titleEl.style.color = this.completed ? '#4ade80' : (this.failed ? '#f87171' : '#e0b6ff');
         this._progEl.textContent = progText;
         this._progEl.style.color = this.completed ? '#4ade80' : (this.failed ? '#f87171' : '#ffd86b');
         this._barEl.style.width = pct + '%';
         this._barEl.style.background = this.failed ? 'rgba(248,113,113,0.6)' : 'linear-gradient(90deg,#b08cff,#ffd86b)';
+        // A pílula é ancorada embaixo e fica fora das medidas do topo do HUD: só a troca de
+        // objetivo (título) ou ela aparecer/sumir pede uma remedida. O progresso muda a cada
+        // tiro e não justifica getBoundingClientRect no meio da luta.
+        const pillSig = this._titleEl.textContent;
+        if (pillSig !== this._pillSig) { this._pillSig = pillSig; _markHudLayoutDirty(); }
     }
 };
 window.RunObjectiveSystem = RunObjectiveSystem;
@@ -21681,7 +22043,12 @@ class ActiveEvent {
 const WeaponSystem = {
     // Nome exibido da arma: chave i18n por id; cai no nome PT do CONFIG se faltar
     displayName(weapon) {
-        return weapon ? _L('weapon.' + weapon.id + '.name', weapon.name) : '';
+        if (!weapon) return '';
+        // A Elfa compartilha a escada do Ladino, mas vê nome de arco (nameElf no CONFIG)
+        if (weapon.nameElf && typeof player !== 'undefined' && player && player.type === 'elf') {
+            return _L('weapon.' + weapon.id + '.elf.name', weapon.nameElf);
+        }
+        return _L('weapon.' + weapon.id + '.name', weapon.name);
     },
 
     // Get weapon list for a class
@@ -22306,6 +22673,8 @@ _statLabel(key) {
         if(s.cdrMult) player.cdrMult = (player.cdrMult || 0) + s.cdrMult;
 
         Debug.info(`Equipped: ${equipment.name} (${equipment.rarity})`);
+        // Equipamento aparece no HUD e muda a altura reservada no topo: remede.
+        _markHudLayoutDirty();
     },
 
     // Remove equipment stats from player
@@ -23770,9 +24139,9 @@ const QuestSystem = {
             html += '<div style="border:1px solid ' + (done ? 'rgba(60,227,106,0.4)' : 'rgba(224,182,255,0.15)') + ';border-radius:8px;padding:6px 8px;">'
                 + '<div style="display:flex;justify-content:space-between;gap:6px;"><span style="font-weight:700;color:' + (done ? '#3ce36a' : '#e0b6ff') + ';">' + (window._L ? _L(q.titleKey, q.title) : q.title) + '</span>'
                 + '<span style="color:rgba(255,255,255,0.5);white-space:nowrap;">' + (done ? '✓' : cur + '/' + q.target) + '</span></div>'
-                + '<div style="font-size:calc(10px * var(--font-scale,1));color:rgba(255,255,255,0.45);margin-top:1px;">' + (window._L ? _L(q.descKey, q.desc) : q.desc) + '</div>'
+                + '<div style="font-size:max(11px,calc(11px * var(--font-scale,1)));color:rgba(255,255,255,0.6);margin-top:1px;">' + (window._L ? _L(q.descKey, q.desc) : q.desc) + '</div>'
                 + '<div style="height:3px;background:rgba(255,255,255,0.08);border-radius:2px;margin-top:4px;overflow:hidden;"><div style="height:100%;width:' + pct + '%;background:' + (done ? '#3ce36a' : '#b08cff') + ';"></div></div>'
-                + (frag ? '<div style="font-size:calc(10px * var(--font-scale,1));color:rgba(224,182,255,0.55);margin-top:3px;">' + (window.I18n ? I18n.t('ui.questLoreReward') : 'Recompensa: fragmento de lore — ') + frag.title + '</div>' : '')
+                + (frag ? '<div style="font-size:max(11px,calc(11px * var(--font-scale,1)));color:rgba(224,182,255,0.7);margin-top:3px;">' + (window.I18n ? I18n.t('ui.questLoreReward') : 'Recompensa: fragmento de lore — ') + frag.title + '</div>' : '')
                 + '</div>';
         }
         list.innerHTML = html;
@@ -27843,11 +28212,13 @@ const DamageNumbers = {
         if (s) this.slashes.push(s);
     },
     add(x, y, value, type='normal') {
-        // Com multidão, o dano 'normal' (número, em inimigo) some; crit, cura, textos ("SUPERAQUECIDO!") e 'hurt' ficam
-        if (type === 'normal' && typeof value === 'number' && _fxCrowdScale() < 0.6) return;
+        // Multidão NUNCA apaga o número (normal ou crit): no máximo ele fica menor e dura
+        // menos (piso 0.6, aplicado depois de criar). Antes, com muitos inimigos o 'normal'
+        // era descartado e o acerto do jogador ficava sem retorno visual.
+        const _crowd = (typeof _fxCrowdScale === 'function') ? _fxCrowdScale() : 1;
         if (this.numbers.length >= this.MAX_NUMBERS) {
-            // Cheio: número normal/hurt não entra; crit/cura/textos abrem vaga trocando o normal/hurt mais antigo
-            if (type === 'normal' || type === 'hurt') return;
+            // Cheio: o normal/hurt mais antigo abre vaga para qualquer tipo (o golpe mais novo
+            // é o que o jogador quer ver). Sem normal/hurt na lista, só crit/cura/textos passam
             const _old = this.numbers.findIndex(d => d.type === 'normal' || d.type === 'hurt');
             if (_old < 0) return;
             if (window.PoolManager) PoolManager.release('DamageNumber', this.numbers[_old]);
@@ -27859,7 +28230,14 @@ const DamageNumbers = {
         } else {
             n = new DamageNumber().init(x, y, value, type);
         }
-        if (n) this.numbers.push(n);
+        if (n) {
+            if (_crowd < 1) {
+                const f = Math.max(0.6, _crowd);
+                n.baseSize = Math.max(8, Math.round(n.baseSize * f));
+                n.life *= f;
+            }
+            this.numbers.push(n);
+        }
     },
     update() {
         for (let i = this.numbers.length - 1; i >= 0; i--) {
@@ -28833,7 +29211,9 @@ function spawnParticles(x,y,c,n=8,size=3) {
     // n=1 (gotas de sangue) vira chance; o resto escala com mínimo de 1 partícula
     if (n === 1) { if (Math.random() >= k) return; }
     else n = Math.max(1, Math.round(n * k));
-    var pc = Math.floor((CONFIG.PARTICLE_CAP || 100) * Math.max(0.5, k));
+    // Orçamento próprio de combate (~120 no normal, metade com a tela cheia): antes
+    // dividia o teto de 60 com tochas/ambiente e sobrava ~30, matando o impacto do acerto.
+    var pc = Math.floor((CONFIG.COMBAT_PARTICLE_CAP || 110) * Math.max(0.5, k));
     if (particles.length >= pc) return;
     const toSpawn = Math.min(n, pc - particles.length);
     for(let i=0; i<toSpawn; i++) {
@@ -30407,6 +30787,43 @@ class Map {
         }
         return { x: 20*CONFIG.TILE_SIZE+CONFIG.TILE_SIZE/2, y: 20*CONFIG.TILE_SIZE+CONFIG.TILE_SIZE/2 };
     }
+    // Posição para os inimigos de uma câmara da História. Cada câmara é o mapa inteiro e a entrada e a
+    // saída ficam nos pontos mais distantes: sorteando o mapa todo, sobrava caminhada morta até o portal
+    // depois de limpar perto da entrada. Aqui as amostras do lado da ENTRADA são descartadas (menos de
+    // 40% do caminho até a saída), então o combate fica no caminho da saída. Consome as mesmas 2 chamadas
+    // a SeedSystem.random por tentativa do getSafeSpawn: só a aceitação mudou, a sequência da seed não.
+    getFarSpawn(minDistFromPlayer) {
+        const W = this.width, H = this.height;
+        if (!this.startTile || !this.distFromStart || !this.exitTile) return this.getSafeSpawn(minDistFromPlayer);
+        const span = this.distFromStart[this.exitTile.x * H + this.exitTile.y] || 0;
+        const minD = span * 0.4;
+        const floor = (x, y) => x > 0 && y > 0 && x < W - 1 && y < H - 1 && this.tiles[x][y].t === 0 && this.distFromStart[x * H + y] > 0;
+        const farFromPlayer = (x, y) => {
+            if (!minDistFromPlayer || typeof player === 'undefined' || !player) return true;
+            const px = x * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2, py = y * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2;
+            return Math.hypot(px - player.x, py - player.y) >= minDistFromPlayer;
+        };
+        for (let a = 0; a < CONFIG.MAP_SPAWN_MAX_ATTEMPTS; a++) {
+            const x = Math.floor(SeedSystem.random() * W), y = Math.floor(SeedSystem.random() * H);
+            if (!floor(x, y) || this.distFromStart[x * H + y] < minD) continue;
+            if (!farFromPlayer(x, y)) continue;
+            return this._tileCenter({ x: x, y: y });
+        }
+        // Fallback determinístico (sem RNG): o chão alcançável mais longe da entrada. Primeiro ainda
+        // respeitando a distância do jogador; se o mapa for pequeno demais, aceita qualquer ponto longe.
+        for (const ignorePlayer of [false, true]) {
+            let best = null, bd = -1;
+            for (let x = 1; x < W - 1; x++) for (let y = 1; y < H - 1; y++) {
+                if (!floor(x, y)) continue;
+                const d = this.distFromStart[x * H + y];
+                if (d <= bd) continue;
+                if (!ignorePlayer && !farFromPlayer(x, y)) continue;
+                best = { x: x, y: y }; bd = d;
+            }
+            if (best) return this._tileCenter(best);
+        }
+        return this._tileCenter(this.startTile || this.exitTile || { x: 1, y: 1 });
+    }
     addBlood(x,y,a) { let tx=Math.floor(x/CONFIG.TILE_SIZE), ty=Math.floor(y/CONFIG.TILE_SIZE); if(this.tiles[tx] && this.tiles[tx][ty]) { this.tiles[tx][ty].b = Math.min(1, this.tiles[tx][ty].b+a); }}
     // Decay blood stains over time  called once per second from engine
     updateBlood() {
@@ -30961,6 +31378,11 @@ class Entity {
         }
         if(this.hp <= 0) {
             this.alive = false; if (this === player) this.hp = 0; DeathAnimations.createDeathAnimation(this); if(this.onDeath) this.onDeath(source, m);
+            // Chefe do andar: registra a morte no próprio caminho de morte, para o prêmio do andar
+            // (baú, XP, floorBossDefeated e portal) não se perder se o jogador morrer no mesmo tick e o
+            // update parar no CONTINUE antes do bloco comum de _updateEnemySpawning. O bloco consome a
+            // marca uma vez só, então não há recompensa duplicada pelo caminho normal.
+            if (this.isBoss && !this._bossDeathFlagged) { this._bossDeathFlagged = true; _bossDeathPending = this; }
             // Centralized kill rewards (XP, abates, combo, loot): toda morte por
             // dano do jogador (projéteis, melee, habilidades, ticks elementais,
             // pets) premia exatamente uma vez. Antes só projéteis e melee
@@ -32622,7 +33044,7 @@ class GuidedBullet {
 }
 
 class TreasureGoblin extends Enemy {
-    constructor(x,y) { super(x,y,false); this.color='#ffdd00'; this.s=CONFIG.TREASURE_GOBLIN_SPEED; this.hp=CONFIG.TREASURE_GOBLIN_HP; this.maxHp=CONFIG.TREASURE_GOBLIN_HP; this.enemyType='melee'; }
+    constructor(x,y) { super(x,y,false); this.color='#ffdd00'; this.s=CONFIG.TREASURE_GOBLIN_SPEED; this.hp=CONFIG.TREASURE_GOBLIN_HP; this.maxHp=CONFIG.TREASURE_GOBLIN_HP; this.enemyType='melee'; this.isTreasureGoblin = true; }
     onDeath(source) {
         for(let i=0; i<CONFIG.TREASURE_GOBLIN_CURRENCY_DROP; i++) pickups.push(new Pickup(this.x+(Math.random()-0.5)*50, this.y+(Math.random()-0.5)*50, 'currency'));
         SND.playTreasure(); addLog(window.I18n ? I18n.t('log.goblinDefeated') : ' Goblin derrotado!');
@@ -34296,6 +34718,9 @@ class SummonerEnemy extends Enemy {
         this.color = '#ffaa00';
         this.summonTimer = 0;
         this._minions = [];
+        // Marca própria: o enemyType segue 'ranged' (o disparo dele depende disso), então a mira
+        // automática do botão usa este sinal para tratá-lo como prioridade.
+        this.isSummoner = true;
     }
     update(p, m) {
         if(this.frozen > 0) return;
@@ -36375,6 +36800,7 @@ class Player extends Entity {
         this.attackHeat = 0;
         this.overheated = false;
         this._overheatShieldGranted = false;
+        this._overheatHintShown = false; // aviso de superaquecimento no log: uma vez por run
         this._hazardSlowTimer = 0;
         this.invincibleTimer = 0;
         this._dodgeIframeT = 0;   // janela de i-frames do dash (esquiva perfeita, v67)
@@ -36943,6 +37369,9 @@ class Player extends Entity {
         const joystickMagSq = sx*sx + sy*sy;
         const deadzoneSq = CONFIG.JOYSTICK_DEADZONE * CONFIG.JOYSTICK_DEADZONE;
         if(joystickMagSq > deadzoneSq && this.scd <= 0 && !this.overheated) {
+            // Superaquecido trava o disparo até a barra zerar (equilíbrio mantido como sempre foi).
+            // O rótulo "SUPERAQUECIDO" na HUD e o aviso no log existem só para a trava não parecer
+            // travamento do jogo, que era o que ela parecia antes.
             this.combatTimer = 0; this.shootAnim = 12;
             const chainStep = this._chainAdvance(); // 1, 2 ou 3 (finalizador)
             if(chainStep === 3) this.chainSpinT = (this.type === 'warrior') ? 18 : 0;
@@ -36960,6 +37389,12 @@ class Player extends Entity {
                 this.overheated = true;
                 SND.play(180, 'sawtooth', 0.2, 0.15);
                 DamageNumbers.add(this.x, this.y, window.I18n ? I18n.t('hud.overheated') : 'SUPERAQUECIDO!', 'normal');
+                // Aviso uma vez por run: explica a trava enquanto o calor cai. Vai como importante
+                // porque em combate (justo quando acontece) o log comum é descartado.
+                if(!this._overheatHintShown) {
+                    this._overheatHintShown = true;
+                    if(typeof addLog === 'function') addLog(window.I18n ? I18n.t('log.overheatLock') : 'Superaqueceu: o disparo trava até a barra esfriar.', true);
+                }
                 // Guerreiro: ao superaquecer, ergue o escudo (absorve dano até esfriar)
                 if(this.type === 'warrior' && !this._overheatShieldGranted) {
                     this._overheatShieldGranted = true;
@@ -37687,7 +38122,7 @@ const NPCInteractionPanel = {
         const hh = typeof height === 'number' && height > 0 ? height : 600;
         let lim = hh - 8;
         if (typeof Input !== 'undefined' && Input._ctrlType === 'touch' && Input._joyMode === 'fixed') {
-            const R = Math.floor(CONFIG.JOYSTICK_RADIUS * getFontScale());
+            const R = CONFIG.JOYSTICK_RADIUS;
             lim = Math.min(lim, Input._fixedY() - R - 6);
         }
         return lim;
@@ -38636,7 +39071,7 @@ const NPCSystem = {
         if (NPCInteractionPanel.visible) return false;
         // Controles: no analógico fixo o toque no anel continua sendo movimento
         if (typeof Input !== 'undefined' && Input._ctrlType === 'touch' && Input._joyMode === 'fixed') {
-            const R = Math.floor(CONFIG.JOYSTICK_RADIUS * getFontScale()) + 16;
+            const R = CONFIG.JOYSTICK_RADIUS + 16;
             if (Math.hypot(tx - Input._lx, ty - Input._ly) < R) return false;
             if (Math.hypot(tx - Input._rx, ty - Input._ry) < R) return false;
         }
@@ -39361,7 +39796,7 @@ const DeathAnimations = {
         // uses, so a kill during a busy fight doesn't create a bunch of
         // particles that just get immediately popped back off again
         const burstSize = anim.particleSize || CONFIG.DEATH_NORMAL_PARTICLE_SIZE;
-        const _cap = CONFIG.PARTICLE_CAP || 100;
+        const _cap = CONFIG.COMBAT_PARTICLE_CAP || CONFIG.PARTICLE_CAP || 100;
         const burstCount = Math.min(anim.particleCount || CONFIG.DEATH_NORMAL_PARTICLE_COUNT, Math.max(0, _cap - particles.length));
         for (let i = 0; i < burstCount; i++) {
             const angle = Math.random() * Math.PI * 2;
@@ -40187,6 +40622,10 @@ var GameSettings = {
         };
         window.GFX.detected = _detectGraphicsQuality();
         window.GFX.tier = q;
+        // Fonte/UI scale/movimento reduzido/cores mudam texto em canvas e tamanho do HUD:
+        // um quadro novo e remedida do layout (vale também com painel aberto).
+        _frameStale = true;
+        _markHudLayoutDirty();
     },
 
     setFontSize(size) {
@@ -41904,6 +42343,11 @@ window.SkillTreeUI = SkillTreeUI;
                 // ignora a chamada duplicada dentro de 250 ms.
                 let _lastDodgeBtn = 0;
                 const fire = () => {
+                    // Loja/habilidades/pausa/prosa abertos: sem esta trava o herói dava um
+                    // dash de ~120 px por baixo do painel e ainda ganhava os i-frames.
+                    // Durante a luta e no tutorial o estado é PLAYING e não há painel: passa.
+                    if (typeof gameState !== 'undefined' && gameState !== 'PLAYING') return;
+                    if (window.isAnyPanelOpen && window.isAnyPanelOpen()) return;
                     const now = performance.now();
                     if (now - _lastDodgeBtn < 250) return;
                     _lastDodgeBtn = now;
@@ -42142,7 +42586,7 @@ window.SkillTreeUI = SkillTreeUI;
                                 <div style="font-weight:bold;font-size:13px;color:${COLORS.GOLD}">${(window._L ? _L(it.nameKey, it.name) : it.name)}</div>
                                 <div style="font-size:10px;color:${COLORS.TEXT_DIM};line-height:1.3">${(window._L ? _L(it.descKey, it.desc) : it.desc)}</div>
                             </div>
-                            <button aria-label="${(window._L ? _L(it.nameKey, it.name) : it.name)}" onclick="window.UIManager.campBuy(${i})" style="flex-shrink:0;padding:8px 12px;border-radius:10px;font-weight:bold;font-size:12px;border:1.5px solid ${canBuy ? 'rgba(250,204,21,0.6)' : 'rgba(255,255,255,0.15)'};background:${canBuy ? 'rgba(250,204,21,0.18)' : 'rgba(255,255,255,0.05)'};color:${canBuy ? COLORS.GOLD : COLORS.TEXT_MUTED};cursor:pointer;touch-action:manipulation">
+                            <button aria-label="${(window._L ? _L(it.nameKey, it.name) : it.name)}" onclick="window.UIManager.campBuy('${it.id}')" style="flex-shrink:0;padding:8px 12px;border-radius:10px;font-weight:bold;font-size:12px;border:1.5px solid ${canBuy ? 'rgba(250,204,21,0.6)' : 'rgba(255,255,255,0.15)'};background:${canBuy ? 'rgba(250,204,21,0.18)' : 'rgba(255,255,255,0.05)'};color:${canBuy ? COLORS.GOLD : COLORS.TEXT_MUTED};cursor:pointer;touch-action:manipulation">
                                 ${it.cost} 💰
                             </button>
                         </div>`;
@@ -42168,7 +42612,7 @@ window.SkillTreeUI = SkillTreeUI;
                         <div style="font-size:10px;color:${COLORS.TEXT_DIM};line-height:1.3;margin-bottom:6px">${_L(b.descKey, b.desc)}${RunBoons.hint(p, b.id) ? ' · ' + RunBoons.hint(p, b.id) : ''}</div>
                         ${chosen ? '' : (exhausted
                             ? `<div style="width:100%;padding:7px;border-radius:9px;text-align:center;font-weight:bold;font-size:11px;border:1.5px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.03);color:${COLORS.TEXT_MUTED}">${_L('camp.boonExhausted', 'BÊNÇÃO ESGOTADA (máx. 2)')}</div>`
-                            : `<button onclick="window.UIManager.campShrine(${i})" style="width:100%;padding:7px;border-radius:9px;font-weight:bold;font-size:11px;border:1.5px solid rgba(255,216,107,0.5);background:rgba(255,216,107,0.15);color:#ffd86b;cursor:pointer;touch-action:manipulation">${_L('camp.chooseBoon', 'ESCOLHER BÊNÇÃO')}</button>`)}
+                            : `<button onclick="window.UIManager.campShrine('${b.id}')" style="width:100%;padding:7px;border-radius:9px;font-weight:bold;font-size:11px;border:1.5px solid rgba(255,216,107,0.5);background:rgba(255,216,107,0.15);color:#ffd86b;cursor:pointer;touch-action:manipulation">${_L('camp.chooseBoon', 'ESCOLHER BÊNÇÃO')}</button>`)}
                     </div>`;
             }).join('');
 
@@ -42225,14 +42669,15 @@ window.SkillTreeUI = SkillTreeUI;
                 </button>`;
         },
 
-        campBuy(idx) {
-            if (typeof CampSystem !== 'undefined') CampSystem.buy(idx);
+        campBuy(id) {
+            // id do item (não a posição no cartão): a lista muda a cada compra
+            if (typeof CampSystem !== 'undefined') CampSystem.buy(id);
         },
         campRest() {
             if (typeof CampSystem !== 'undefined') CampSystem.rest();
         },
-        campShrine(idx) {
-            if (typeof CampSystem !== 'undefined') CampSystem.shrine(idx);
+        campShrine(id) {
+            if (typeof CampSystem !== 'undefined') CampSystem.shrine(id);
         },
         campEvent(idx) {
             if (typeof CampSystem !== 'undefined') CampSystem.chooseEvent(idx);
@@ -42690,6 +43135,13 @@ window.SkillTreeUI = SkillTreeUI;
         },
 
         unlockSkill(skillId) {
+            // Mesma trava da loja e da bolsa (Inventory.inCombat): com o painel aberto a simulação
+            // congela, então comprar no meio do combate — inclusive na luta do chefe — era de graça.
+            if (typeof Inventory !== 'undefined' && typeof Inventory.inCombat === 'function' && Inventory.inCombat()) {
+                if (window.SND && SND.playError) SND.playError();
+                if (typeof showToast === 'function') showToast(_L('skills.inCombatBlocked', 'Termine o combate para desbloquear habilidades.'), 'error');
+                return;
+            }
             if (SkillTree.unlock(player, skillId)) {
                 const node = SkillTree.getNodes(player.type).find(n => n.id === skillId);
                 player.currency -= node.cost;
@@ -43483,7 +43935,7 @@ renderAchievementsContent() {
             this.openPanel('meta');
         },
 
-        _hudCache: { hp: null, xp: null, lvl: null, heat: null },
+        _hudCache: { hp: null, xp: null, lvl: null, heat: null, heatOver: null },
         updateHUD() {
             if (!player) return;
             const cache = this._hudCache;
@@ -43531,7 +43983,15 @@ renderAchievementsContent() {
                 if (cache.heat !== heatPct) {
                     cache.heat = heatPct;
                     heatBar.style.width = heatPct + '%';
-                    heatBar.classList.toggle('overheated', !!player.overheated);
+                }
+                // Superaquecido: barra pulsando + rótulo abaixo dela. O ataque fica travado até o
+                // calor zerar; sem esse aviso a pausa parecia travamento do jogo.
+                const over = !!player.overheated;
+                if (cache.heatOver !== over) {
+                    cache.heatOver = over;
+                    heatBar.classList.toggle('overheated', over);
+                    const heatTag = this._heatTagEl || (this._heatTagEl = document.getElementById('heat-overheated'));
+                    if (heatTag) heatTag.classList.toggle('hidden', !over);
                 }
             }
             if (xpBar) {
@@ -43559,7 +44019,9 @@ renderAchievementsContent() {
                     cache.lvl = lvlText;
                     lvlInfo.textContent = lvlText;
                 }
-                const lvlTitle = xpLeft > 0 ? (xpLeft + ' XP para o proximo nivel') : 'Proximo nivel pronto';
+                const lvlTitle = xpLeft > 0
+                    ? _L('hud.xpNext', '{n} XP para o próximo nível').replace('{n}', xpLeft)
+                    : _L('hud.levelReady', 'Próximo nível pronto');
                 if (cache.lvlTitle !== lvlTitle) { cache.lvlTitle = lvlTitle; lvlInfo.title = lvlTitle; }
             }
             // Floor pill: which floor, how far through it, and how long the run
@@ -43572,13 +44034,28 @@ renderAchievementsContent() {
                 const dpTime = this._dpTime || (this._dpTime = document.getElementById('dp-time'));
                 const secs = Math.floor(gameTime / GAME_TICKS_PER_SECOND);
                 const mm = Math.floor(secs / 60), ss = secs % 60;
-                const floorTxt = 'Piso ' + (window.dungeonLevel || 1);
+                const floorTxt = _L('hud.floor', 'Piso {n}').replace('{n}', window.dungeonLevel || 1);
                 if (dpFloor && cache.dpFloor !== floorTxt) { cache.dpFloor = floorTxt; dpFloor.textContent = floorTxt; }
-                const killTxt = window.dungeonPortal ? 'PORTAL ABERTO' : ((window.dungeonKills || 0) + '/' + (window.dungeonKillTarget || 0));
+                // História: quem abre a passagem é o orçamento da CÂMARA, não os abates do andar — o
+                // "12/28" do andar não dizia nada sobre o que faltava ali. Mostra a câmara e quanto
+                // falta nela; Abismo e diário seguem com os abates do andar (_storyRules() é falso).
+                let killTxt = window.dungeonPortal ? _L('hud.portalOpen', 'PORTAL ABERTO') : ((window.dungeonKills || 0) + '/' + (window.dungeonKillTarget || 0));
+                const _storyHud = (typeof _storyRules === 'function' && _storyRules() && typeof _storyRoom !== 'undefined' && _storyRoom && !_secretRoom);
+                if (_storyHud) {
+                    killTxt = _L('chamber.label', 'Câmara') + ' ' + (_storyRoom.i + 1) + '/' + _storyRoom.total;
+                    if (!window.dungeonPortal) {
+                        if (_storyRoom.boss) killTxt += ' · ' + _L('hud.chamberBoss', 'Chefe');
+                        else {
+                            const _left = Math.max(0, _storyRoom.budget - _storyRoom.spawned) + _storyRoomBlockingEnemies();
+                            if (_left > 0) killTxt += ' · ' + _L('hud.chamberLeft', 'faltam {n}').replace('{n}', _left);
+                        }
+                    }
+                }
+                const _killDone = window.dungeonPortal || (_storyHud && _storyRoom.cleared);
                 if (dpKills && cache.dpKills !== killTxt) {
                     cache.dpKills = killTxt;
                     dpKills.textContent = killTxt;
-                    dpKills.style.color = window.dungeonPortal ? '#7fd08a' : 'rgba(255,255,255,0.7)';
+                    dpKills.style.color = _killDone ? '#7fd08a' : 'rgba(255,255,255,0.7)';
                 }
                 const timeTxt = mm + ':' + (ss < 10 ? '0' : '') + ss;
                 if (dpTime && cache.dpTime !== timeTxt) { cache.dpTime = timeTxt; dpTime.textContent = timeTxt; }
@@ -43593,12 +44070,12 @@ renderAchievementsContent() {
             if (this._statusEl || (this._statusEl = document.getElementById('status-chips'))) {
                 const chips = [];
                 // Rótulo leva o valor/tempo atual (segundos); o cache abaixo só reescreve o DOM quando o texto muda
-                if (player.shield > 0) chips.push({ icon: '🛡', label: 'ESCUDO ' + Math.ceil(player.shield), color: '#33ccff', pct: Math.min(1, player.shield / 50) });
-                if (player.critBoost > 0) chips.push({ icon: '💥', label: 'CRIT ' + Math.ceil(player.critBoost / GAME_TICKS_PER_SECOND) + 's', color: '#ffcc00', pct: Math.min(1, player.critBoost / 10) });
-                if (player.shopDiscountTimer > 0) chips.push({ icon: '🏷', label: 'DESCONTO ' + Math.ceil(player.shopDiscountTimer / GAME_TICKS_PER_SECOND) + 's', color: '#ff8844', pct: Math.min(1, player.shopDiscountTimer / 300) });
-                if (player.regenerating > 0) chips.push({ icon: '💚', label: 'REGEN', color: '#44ff88', pct: Math.min(1, player.regenerating / 300) });
-                if (player.goldRushTimer > 0) chips.push({ icon: '💰', label: 'GOLD RUSH ' + Math.ceil(player.goldRushTimer / GAME_TICKS_PER_SECOND) + 's', color: '#ffdd44', pct: Math.min(1, player.goldRushTimer / 600) });
-                if (player.speedBoost > 0) chips.push({ icon: '💨', label: 'VELOCIDADE ' + Math.ceil(player.speedBoost / GAME_TICKS_PER_SECOND) + 's', color: '#88ccff', pct: Math.min(1, player.speedBoost / 8) });
+                if (player.shield > 0) chips.push({ icon: '🛡', label: _L('hud.chip.shield', 'ESCUDO') + ' ' + Math.ceil(player.shield), color: '#33ccff', pct: Math.min(1, player.shield / 50) });
+                if (player.critBoost > 0) chips.push({ icon: '💥', label: _L('hud.chip.crit', 'CRIT') + ' ' + Math.ceil(player.critBoost / GAME_TICKS_PER_SECOND) + 's', color: '#ffcc00', pct: Math.min(1, player.critBoost / 10) });
+                if (player.shopDiscountTimer > 0) chips.push({ icon: '🏷', label: _L('hud.chip.discount', 'DESCONTO') + ' ' + Math.ceil(player.shopDiscountTimer / GAME_TICKS_PER_SECOND) + 's', color: '#ff8844', pct: Math.min(1, player.shopDiscountTimer / 300) });
+                if (player.regenerating > 0) chips.push({ icon: '💚', label: _L('hud.chip.regen', 'REGEN'), color: '#44ff88', pct: Math.min(1, player.regenerating / 300) });
+                if (player.goldRushTimer > 0) chips.push({ icon: '💰', label: _L('hud.chip.goldRush', 'GOLD RUSH') + ' ' + Math.ceil(player.goldRushTimer / GAME_TICKS_PER_SECOND) + 's', color: '#ffdd44', pct: Math.min(1, player.goldRushTimer / 600) });
+                if (player.speedBoost > 0) chips.push({ icon: '💨', label: _L('hud.chip.speed', 'VELOCIDADE') + ' ' + Math.ceil(player.speedBoost / GAME_TICKS_PER_SECOND) + 's', color: '#88ccff', pct: Math.min(1, player.speedBoost / 8) });
                 // Powerups raros (Fúria, Frenesi, Égide); o Ímã é instantâneo e não tem chip
                 if (player.furyTimer > 0) chips.push({ icon: '🔥', label: (window.I18n ? I18n.t('chip.fury') : 'FÚRIA') + ' ' + Math.ceil(player.furyTimer / GAME_TICKS_PER_SECOND) + 's', color: '#ff2d3d', pct: Math.min(1, player.furyTimer / CONFIG.POWERUP_FURY_FRAMES) });
                 if (player.frenzyTimer > 0) chips.push({ icon: '⚡', label: (window.I18n ? I18n.t('chip.frenzy') : 'FRENESI') + ' ' + Math.ceil(player.frenzyTimer / GAME_TICKS_PER_SECOND) + 's', color: '#ffee00', pct: Math.min(1, player.frenzyTimer / CONFIG.POWERUP_FRENZY_FRAMES) });
@@ -43606,11 +44083,14 @@ renderAchievementsContent() {
                 const cacheKey = chips.map(c => c.label + ':' + Math.floor(c.pct * 20)).join('|');
                 if (cache.chips !== cacheKey) {
                     cache.chips = cacheKey;
+                    // Buff entrou/saiu: o topo do HUD muda de altura. O texto dos chips muda
+                    // a cada segundo e não justifica remedir o layout no meio da luta.
+                    if (chips.length !== cache.chipCount) { cache.chipCount = chips.length; _markHudLayoutDirty(); }
                     this._statusEl.innerHTML = '';
                     for (let ci = 0; ci < chips.length; ci++) {
                         const chip = chips[ci];
                         const row = document.createElement('div');
-                        row.style.cssText = 'display:flex;align-items:center;gap:4px;background:rgba(0,0,0,0.55);border:1px solid ' + chip.color + '55;border-radius:8px;padding:2px 8px;font-size:calc(10px * var(--font-scale,1));font-weight:700;color:' + chip.color + ';backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);';
+                        row.style.cssText = 'display:flex;align-items:center;gap:4px;max-width:100%;box-sizing:border-box;background:rgba(0,0,0,0.55);border:1px solid ' + chip.color + '55;border-radius:8px;padding:2px 8px;font-size:max(11px,calc(11px * var(--font-scale,1)));font-weight:700;line-height:1.25;color:' + chip.color + ';backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);';
                         const pctWrap = document.createElement('div');
                         pctWrap.style.cssText = 'width:26px;height:3px;background:rgba(255,255,255,0.15);border-radius:2px;overflow:hidden;';
                         const pctFill = document.createElement('div');
@@ -43618,6 +44098,7 @@ renderAchievementsContent() {
                         pctWrap.appendChild(pctFill);
                         row.appendChild(document.createTextNode(chip.icon));
                         const labelSpan = document.createElement('span');
+                        labelSpan.style.cssText = 'min-width:0;overflow-wrap:anywhere;';
                         labelSpan.textContent = chip.label;
                         row.appendChild(labelSpan);
                         row.appendChild(pctWrap);
@@ -43629,11 +44110,37 @@ renderAchievementsContent() {
     };
 
     window.UIManager = UIManager;
-    
+
+    // Troca de idioma no meio da partida: o HUD de run (piso, portal, XP, chips,
+    // objetivo) é escrito em JS e fica em cache, então precisa ser refeito à mão.
+    // Também acerta os textos iniciais do markup (#dp-floor, #dp-kills, #ro-title).
+    window._refreshRunHud = function () {
+        if (typeof document === 'undefined') return;
+        const T = (k, f) => (window.I18n ? I18n.t(k) : f);
+        const playing = typeof gameState !== 'undefined' && (gameState === 'PLAYING' || gameState === 'CONTINUE')
+            && typeof player !== 'undefined' && player;
+        const floor = (typeof dungeonLevel !== 'undefined' && dungeonLevel) || 1;
+        const dpFloor = document.getElementById('dp-floor');
+        if (dpFloor) dpFloor.textContent = T('hud.floor', 'Piso {n}').replace('{n}', floor);
+        const dpKills = document.getElementById('dp-kills');
+        const hasPlayer = typeof player !== 'undefined' && player;
+        if (dpKills && !playing && !hasPlayer) dpKills.textContent = '0/' + ((typeof dungeonKillTarget !== 'undefined' && dungeonKillTarget) || 20);
+        const roTitle = document.getElementById('ro-title');
+        const roActive = window.RunObjectiveSystem && RunObjectiveSystem.current;
+        if (roTitle && !roActive) roTitle.textContent = T('hud.objective', 'Objetivo');
+        // Os caches do HUD só reescrevem o DOM quando o texto muda: zera antes de redesenhar.
+        const cache = UIManager._hudCache;
+        if (cache) { cache.lvl = null; cache.lvlTitle = null; cache.dpFloor = null; cache.dpKills = null; cache.chips = null; }
+        if (window.RunObjectiveSystem) { RunObjectiveSystem._lastRender = ''; RunObjectiveSystem.syncHUD(); }
+        if (playing && typeof UIManager.updateHUD === 'function') UIManager.updateHUD();
+        if (window.QuestSystem && QuestSystem.uiOpen) QuestSystem.render();
+    };
+
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => UIManager.init());
+        document.addEventListener('DOMContentLoaded', () => { UIManager.init(); window._refreshRunHud(); });
     } else {
         UIManager.init();
+        window._refreshRunHud();
     }
 })();
 
@@ -44688,6 +45195,7 @@ window.GameBootstrap = {
         _mmDirty = true;
         // História: a run começa na primeira câmara (o estado da câmara vive em _storyRoom)
         _storyRoom = _storyRules() ? { i: 0, total: Math.max(2, CONFIG.MAP_STORY_ROOMS), cleared: false, budget: 0, spawned: 0, boss: false } : null;
+        _storyBossLootPos = null;
         // História: início na sala de início. Fora dela, ponto seguro sorteado, como na v84 (mesma ordem de sorteios)
         var pSpawn = _storyRules() ? map.getStartSpawn() : map.getSafeSpawn();
         player = new Player(pSpawn.x, pSpawn.y, cls);
@@ -44700,11 +45208,11 @@ window.GameBootstrap = {
         if (window.CampSystem) CampSystem.reset();
         if (window.RunEventSystem) RunEventSystem.reset();
         if (window.BossRewardSystem) BossRewardSystem.reset();
-        gameTime = 0; bossActive = false; floorBossDefeated = false; currentEvent = null;
+        gameTime = 0; bossActive = false; floorBossDefeated = false; currentEvent = null; _bossDeathPending = null;
         dungeonKills = 0; dungeonKillTarget = 18; dungeonPortal = null; _floorStartTime = gameTime;
         _resetFloorExplore();
         secretPortal = null; _secretRoom = null; _secretFloorUsed = -1;
-        continuesLeft = 3; _continueActive = false; minimapExpanded = false;
+        continuesLeft = 3; _continueActive = false; _stopContinueTimer(); minimapExpanded = false;
         weather = null; weatherTimer = 0;
 
         if (window.NPCSystem) NPCSystem.reset();
@@ -46291,7 +46799,7 @@ const Input = {
         const at = _hudLayout.actionsTop;
         if (!at) return base;
         const k = _hudLayout.k || 0.75;
-        const R = Math.floor(CONFIG.JOYSTICK_RADIUS * getFontScale());
+        const R = CONFIG.JOYSTICK_RADIUS;
         // Só quando algum anel cruza a coluna dos botões na horizontal (paisagem não muda)
         const aL = _hudLayout.actionsLeft * k, aR = _hudLayout.actionsRight * k;
         const crosses = x => x + R > aL && x - R < aR;
@@ -46305,6 +46813,9 @@ const Input = {
 
     // Botão de ataque (toque): o lado direito vira botão e a mira vai para o inimigo mais próximo
     autoAimRange: 480, // px, do centro do herói
+    // Curador/convocador valem como se estivessem a 67% da distância no desempate do botão
+    // (penalidade no dSq): a mira só deixa de priorizá-los se outro alvo estiver ~1,5x mais perto.
+    aimPriorityPenalty: 0.45,
     _uiTapTs: -1,      // timeStamp do último toque consumido pela interface (canvas)
     _aimTarget: null,  // inimigo escolhido pelo botão (histerese)
     _aimTimer: 0,      // frames até refazer a escolha
@@ -46384,8 +46895,14 @@ const Input = {
             if (dSq < 1 || dSq > rangeSq) continue;
             // Tier: 2 = armadilha ainda não ativada; +1 = fora da tela
             const tier = (e.enemyType === 'trap' && !e.triggered ? 2 : 0) + (e.x < L || e.x > R || e.y < T || e.y > B ? 1 : 0);
-            if (tier < bestTier || (tier === bestTier && dSq < bestD)) {
-                if (hasLineOfSight(m, px, py, e.x, e.y)) { best = e; bestTier = tier; bestD = dSq; }
+            // Curador e convocador existem para atrapalhar de longe (curam e invocam): contam como se
+            // estivessem mais perto do que estão, para o botão mirar neles antes de um melee na frente.
+            // O convocador mantém enemyType 'ranged' (é o que faz o disparo dele funcionar), por isso
+            // a marca própria. O alcance real e a checagem de linha de visão continuam iguais; a
+            // prioridade só vale até ~1,5x a distância de outro alvo (com o melee bem colado, ele ganha).
+            const cmpD = (e.enemyType === 'healer' || e.isSummoner) ? dSq * this.aimPriorityPenalty : dSq;
+            if (tier < bestTier || (tier === bestTier && cmpD < bestD)) {
+                if (hasLineOfSight(m, px, py, e.x, e.y)) { best = e; bestTier = tier; bestD = cmpD; }
             }
         }
         return best;
@@ -46484,6 +47001,14 @@ const Input = {
                 WorldMap.handleInput(t.clientX - rect.left, t.clientY - rect.top);
             }
             if (gameState !== 'PLAYING' || e.target.closest('button')) return;
+            // Só o canvas inicia analógico/ataque. Toda superfície visível do HUD (#ui-layer)
+            // captura o toque por pointer-events:auto — barra de vida, selo/chips, faixa de
+            // objetivo, combo, XP, moedas, cartões, barra do chefe, minimapa e os botões de
+            // ação — e o alvo do toque chega aqui como o elemento dela (antes, tocar num
+            // chip atacava). Ficam em none só os contêineres transparentes (#top-bar,
+            // #bottom-controls, #tutorial-overlay) e os avisos fora do HUD (#logs, toast):
+            // mensagem transitória não pode engolir o toque no meio da luta.
+            if (!this._startedOnCanvas(e.target)) return;
             // Toque consumido pela interface (minimapa, painel de NPC) não ataca no modo botão
             if (e.timeStamp === this._uiTapTs || (typeof minimapExpanded !== 'undefined' && minimapExpanded) || (e.target.closest && e.target.closest('#minimap-container'))) return;
             if (this._ctrlType !== 'touch') return;
@@ -46509,14 +47034,16 @@ const Input = {
                     const orig = this._originFor('left');
                     this.left.ox = orig ? orig.ox : canvasX;
                     this.left.oy = orig ? orig.oy : canvasY;
-                    if (window.Vibrate) Vibrate.trigger('ui');
                 } else if (!isLeft && !this.right.active) {
                     this.right.active = true;
                     this.right.id = t.identifier;
                     const orig = this._originFor('right');
                     this.right.ox = orig ? orig.ox : canvasX;
                     this.right.oy = orig ? orig.oy : canvasY;
-                    if (window.Vibrate) Vibrate.trigger('ui');
+                    // Primeiro toque já mira/atira: publica o vetor do dedo desde já (antes
+                    // dx/dy ficavam em 0 até deslizar, e o toque curto não disparava nada).
+                    // Soltar o dedo zera no touchend/touchcancel.
+                    this._applyMove(t);
                 }
             }
         }, { passive: false });
@@ -46565,6 +47092,13 @@ const Input = {
         window.addEventListener('pagehide', () => this._releaseSticks());
     },
 
+    // O toque começou no canvas do jogo? HUD e painéis ficam por cima com pointer-events
+    // próprios: se o alvo é outro elemento, o toque não pode virar comando do herói.
+    _startedOnCanvas(target) {
+        if (!target || !canvas) return false;
+        return target === canvas || (!!target.closest && target.closest('#gameCanvas') === canvas);
+    },
+
     _releaseSticks() {
         for (const side of ['left', 'right']) {
             const j = this[side];
@@ -46588,9 +47122,10 @@ const Input = {
             let dx = canvasX - j.ox;
             let dy = canvasY - j.oy;
             const d = Math.hypot(dx, dy);
-            // Mesmo fator do raio visual (drawJoystick usa Math.floor(JOYSTICK_RADIUS * getFontScale())),
-            // para o knob chegar na borda da base exatamente quando o dedo chega no limite.
-            const maxDist = Math.floor(CONFIG.JOYSTICK_MAX_DIST * getFontScale());
+            // Mesmo raio do desenho (drawJoystick usa CONFIG.JOYSTICK_RADIUS), para o knob
+            // chegar na borda da base exatamente quando o dedo chega no limite. Fixo: o
+            // "Tamanho da Fonte" é leitura e não pode mudar o alcance do controle.
+            const maxDist = CONFIG.JOYSTICK_MAX_DIST;
             if (d > maxDist) {
                 dx *= maxDist / d;
                 dy *= maxDist / d;
@@ -46712,7 +47247,7 @@ const Input = {
     // ---- DRAW ----
     // Botão de ataque (modo 'button'): disco na posição fixa do anel direito, com uma espada em pixels
     _drawAttackButton(ctx) {
-        const R = Math.floor(CONFIG.JOYSTICK_RADIUS * getFontScale());
+        const R = CONFIG.JOYSTICK_RADIUS;
         const x = this._rx, y = this._ry;
         const on = this.right.active;
         // Disco e contorno (mais claros quando o dedo está nele)
@@ -46752,13 +47287,13 @@ const Input = {
             ctx.globalAlpha = alpha;
             ctx.fillStyle = j.active ? 'rgba(80,60,120,0.8)' : 'rgba(60,60,80,0.6)';
             ctx.beginPath();
-            ctx.arc(baseX, baseY, Math.floor(CONFIG.JOYSTICK_RADIUS * getFontScale()) + glow, 0, Math.PI * 2);
+            ctx.arc(baseX, baseY, CONFIG.JOYSTICK_RADIUS + glow, 0, Math.PI * 2);
             ctx.fill();
             // Outer stroke ring
             ctx.strokeStyle = j.active ? '#cc88ff' : 'rgba(180,180,220,1)';
             ctx.lineWidth = j.active ? 3 : 2;
             ctx.beginPath();
-            ctx.arc(baseX, baseY, Math.floor(CONFIG.JOYSTICK_RADIUS * getFontScale()), 0, Math.PI * 2);
+            ctx.arc(baseX, baseY, CONFIG.JOYSTICK_RADIUS, 0, Math.PI * 2);
             ctx.stroke();
             // Center dot hint
             ctx.globalAlpha = alpha * 0.6;
@@ -46772,9 +47307,9 @@ const Input = {
                 ctx.fillStyle = '#fff';
                 ctx.beginPath();
                 ctx.arc(
-                    baseX + j.dx * Math.floor(CONFIG.JOYSTICK_RADIUS * getFontScale()),
-                    baseY + j.dy * Math.floor(CONFIG.JOYSTICK_RADIUS * getFontScale()),
-                    Math.floor(CONFIG.JOYSTICK_KNOB_RADIUS * getFontScale()), 0, Math.PI * 2
+                    baseX + j.dx * CONFIG.JOYSTICK_RADIUS,
+                    baseY + j.dy * CONFIG.JOYSTICK_RADIUS,
+                    CONFIG.JOYSTICK_KNOB_RADIUS, 0, Math.PI * 2
                 );
                 ctx.fill();
             }
@@ -46784,15 +47319,15 @@ const Input = {
             ctx.globalAlpha = 0.30;
             ctx.fillStyle = '#888';
             ctx.beginPath();
-            ctx.arc(j.ox, j.oy, Math.floor(CONFIG.JOYSTICK_RADIUS * getFontScale()), 0, Math.PI * 2);
+            ctx.arc(j.ox, j.oy, CONFIG.JOYSTICK_RADIUS, 0, Math.PI * 2);
             ctx.fill();
             ctx.globalAlpha = 0.65;
             ctx.fillStyle = '#fff';
             ctx.beginPath();
             ctx.arc(
-                j.ox + j.dx * Math.floor(CONFIG.JOYSTICK_RADIUS * getFontScale()),
-                j.oy + j.dy * Math.floor(CONFIG.JOYSTICK_RADIUS * getFontScale()),
-                Math.floor(CONFIG.JOYSTICK_KNOB_RADIUS * getFontScale()), 0, Math.PI * 2
+                j.ox + j.dx * CONFIG.JOYSTICK_RADIUS,
+                j.oy + j.dy * CONFIG.JOYSTICK_RADIUS,
+                CONFIG.JOYSTICK_KNOB_RADIUS, 0, Math.PI * 2
             );
             ctx.fill();
         }
