@@ -3958,6 +3958,8 @@ const SaveSystem = {
         p.kills = data.kills || 0; p.currency = data.currency || 0;
         p.unlockedSkills = data.unlockedSkills || [];
         p.skills = data.skills || {};
+        // Save antigo pode ter a Armadura de Gelo comprada sem o campo derivado (só o unlock escrevia)
+        if (p.unlockedSkills && p.unlockedSkills.indexOf('freeze') >= 0) p.skills.slow = CONFIG.FROST_ARMOR_SLOW;
         p.equipment = data.equipment || {};
         // Bolsa da run: volta no continue (save antigo sem o campo esvazia a bolsa)
         if (typeof Inventory !== 'undefined') Inventory.restore(data.inventory);
@@ -5224,6 +5226,12 @@ const I18n = {
         'update.entry.v102.l3': 'A cena de NPC espera o combate terminar, e o NPC da história nasce em um beco fora do caminho.',
         'update.entry.v102.l4': 'A recompensa do chefe pede um segundo toque para confirmar e não se perde mais quando há um painel aberto.',
         'update.entry.v102.l5': 'A tela de habilidade mostra quanto ouro falta e deixa claro que não há requisito de nível. Seus saves continuam funcionando.',
+        'update.entry.v106.title': 'v106 - Gelo justo de novo',
+        'update.entry.v106.l1': 'O mago não congela mais a si mesmo com o Cajado Glacial.',
+        'update.entry.v106.l2': 'O congelamento ficou curto e com descanso: inimigo comum, elite e chefe têm limites diferentes, e nenhum deles fica parado por muito tempo.',
+        'update.entry.v106.l3': 'O gelo das armas e do Toque de Gelo agora deixa o alvo mais lento em vez de travá-lo a cada meio segundo; a paralisia ficou com o cristal e a Onda Gélida.',
+        'update.entry.v106.l4': 'A Armadura de Gelo passou a fazer a lentidão que a descrição promete, e você vê o status de gelo no seu personagem.',
+        'update.entry.v106.l5': 'Seus saves continuam funcionando.',
         'update.entry.v105.title': 'v105 - A história aparece, e o progresso não se perde',
         'update.entry.v105.l1': 'Uma cena abre antes do chefe final e as trocas de câmara ganharam cartão próprio: a história aparece nos momentos em que o ritmo pede.',
         'update.entry.v105.l2': 'No primeiro acesso, a abertura conta a história uma vez só. O prólogo que repetia as mesmas cenas não aparece mais.',
@@ -7485,6 +7493,12 @@ const I18n = {
         'update.entry.v102.l3': 'NPC scenes wait for combat to end, and the story NPC spawns in a dead end off the path.',
         'update.entry.v102.l4': 'The boss reward now asks for a second tap to confirm and is no longer lost while a panel is open.',
         'update.entry.v102.l5': 'The skill screen shows how much gold is missing and makes clear there is no level requirement. Your saves keep working.',
+        'update.entry.v106.title': 'v106 - Fair frost again',
+        'update.entry.v106.l1': 'The mage no longer freezes itself with the Glacial Staff.',
+        'update.entry.v106.l2': 'Freezing is now short and has a rest: common enemies, elites and bosses have different limits, and none of them stays still for long.',
+        'update.entry.v106.l3': 'Ice from weapons and Touch of Ice now slows the target instead of locking it every half second; paralysis stays with the crystal and Frost Wave.',
+        'update.entry.v106.l4': 'Frost Armor now does the slow its description promises, and you can see the ice status on your character.',
+        'update.entry.v106.l5': 'Your saves keep working.',
         'update.entry.v105.title': 'v105 - The story shows up, and progress is not lost',
         'update.entry.v105.l1': 'A scene opens before the final boss and chamber transitions now have their own card: the story appears where the pacing asks for it.',
         'update.entry.v105.l2': 'On first launch the opening tells the story once. The prologue that repeated the same scenes no longer appears.',
@@ -9756,6 +9770,12 @@ const I18n = {
         'update.entry.v102.l3': 'La escena de PNJ espera a que termine el combate, y el PNJ de la historia nace en un callejón sin salida fuera del camino.',
         'update.entry.v102.l4': 'La recompensa del jefe pide un segundo toque para confirmar y ya no se pierde cuando hay un panel abierto.',
         'update.entry.v102.l5': 'La pantalla de habilidad muestra cuánto oro falta y deja claro que no hay requisito de nivel. Tus partidas guardadas siguen funcionando.',
+        'update.entry.v106.title': 'v106 - Hielo justo otra vez',
+        'update.entry.v106.l1': 'El mago ya no se congela a sí mismo con el Cayado Glacial.',
+        'update.entry.v106.l2': 'La congelación ahora es corta y tiene descanso: enemigo común, élite y jefe tienen límites distintos, y ninguno queda quieto por mucho tiempo.',
+        'update.entry.v106.l3': 'El hielo de las armas y del Toque de Hielo ahora ralentiza al objetivo en vez de trabarlo cada medio segundo; la parálisis queda con el cristal y la Ola Gélida.',
+        'update.entry.v106.l4': 'La Armadura de Escarcha ahora hace la ralentización que promete su descripción, y ves el estado de hielo en tu personaje.',
+        'update.entry.v106.l5': 'Tus partidas guardadas siguen funcionando.',
         'update.entry.v105.title': 'v105 - La historia aparece y el progreso no se pierde',
         'update.entry.v105.l1': 'Una escena se abre antes del jefe final y los cambios de cámara ahora tienen su propia tarjeta: la historia aparece donde el ritmo lo pide.',
         'update.entry.v105.l2': 'En el primer acceso la apertura cuenta la historia una sola vez. El prólogo que repetía las mismas escenas ya no aparece.',
@@ -11269,6 +11289,13 @@ var CONFIG = {
     LIGHTNING_DAMAGE_MULT: 1.5,
     FREEZE_CHANCE: 0.15,
     FREEZE_DURATION: 120,             // frames (~2s)
+    // Gelo justo: janela de imunidade por alvo, escala por categoria e cristal curto.
+    // Sem isso o mago mantinha 78% de uptime e o Cajado Glacial congelava o próprio dono.
+    FREEZE_IMMUNITY_TICKS: 120,       // 2 s sem novo congelamento por alvo depois do atual
+    FREEZE_ELITE_MULT: 0.5,           // elite congela pela metade do tempo
+    FREEZE_BOSS_MULT: 0.25,           // chefe congela por um quarto
+    FREEZE_CRYSTAL_TICKS: 120,        // cristal em alvo comum: 2 s (antes 180 fixo)
+    FROST_ARMOR_SLOW: 0.15,           // Armadura de Gelo: 15% de lentidão nos inimigos
     BERSERK_DAMAGE_MULT: 2.0,
     EXPLOSIVE_RADIUS: 70,
     EXPLOSIVE_DAMAGE_MULT: 1.4,
@@ -12709,6 +12736,9 @@ function _doContinue() {
     player.alive = true;
     player.stealth = 0;
     player.frozen = 0;
+    player.elementalStatuses = [];
+    player._freezeImmuneT = 0;
+    player._hazardSlowTimer = 0;
     player.poisonStacks = 0;
     player.poisonTimer = 0;
     
@@ -14615,6 +14645,7 @@ function _updateEntitySimulation() {
         const e = entities[i];
         if (e === player) continue;
         if (e.frozen > 0) e.frozen--;
+        if (e._freezeImmuneT > 0) e._freezeImmuneT--; // janela de imunidade ao gelo (ver ElementalSystem.applyFreeze)
         if (e._deathMarkT > 0) e._deathMarkT--;
         if (e._huntMarkT > 0) e._huntMarkT--;
         if (e._slowT > 0) e._slowT--; // lentidão temporária (IceBarrier / aura), ver Enemy.move
@@ -15632,7 +15663,7 @@ function _buildStoryRoom(index, opts) {
     if (window.SeedSystem && SeedSystem.isSeeded()) SeedSystem.reseedForFloor(dungeonLevel * 100 + index);
     map = new Map(null, _mapGenOpts(index)); _mmDirty = true; _resetFloorExplore();
     const sp = map.getStartSpawn();
-    if (player) { player.x = sp.x; player.y = sp.y; }
+    if (player) { player.x = sp.x; player.y = sp.y; player.frozen = 0; player.elementalStatuses = []; player._freezeImmuneT = 0; player._hazardSlowTimer = 0; }
     entities = [player]; bullets = []; particles = []; pickups = [];
     hazards = []; chests = []; weaponPickups = []; equipmentPickups = [];
     guidedBullets = []; rogueClones = []; hitstopFrames = 0; ScreenEffects.resetImpact();
@@ -20526,6 +20557,8 @@ const SkillTree = {
             if (skill.bleed) player.skills.bleed = true;
             if (skill.frostTouch) player.skills.frostTouch = true;
             if (skill.rootTouch) player.skills.rootTouch = true;
+            // Armadura de Gelo: lentidão permanente nos inimigos (Enemy.move lê player.skills.slow)
+            if (skill.frost) player.skills.slow = CONFIG.FROST_ARMOR_SLOW;
             // Ability nodes unlock the advanced ultimate variants in useSkill()
             if (skill.ability === 'slam') { player.skills.aoe1 = true; player.skills.ult1 = true; }
             if (skill.ability === 'shadow' || skill.ability === 'meteor') player.skills.ult1 = true;
@@ -28438,11 +28471,16 @@ const ElementalSystem = {
             fireStatus.type = 'inferno';
         }
         
-        // ICE + ICE (3+ stacks) = CRYSTAL (fully frozen, takes extra damage)
+    },
+    
+    // Cristal só no caminho do acerto (applyStatus): a checagem por quadro não pode
+    // disparar congelamento sem golpe, e com a imunidade ativa os stacks esperam o próximo.
+    _checkCrystal(entity, source) {
+        if (!source || !entity.elementalStatuses || entity.elementalStatuses.length < 1) return;
         const iceStatus = entity.elementalStatuses.find(s => s.type === 'ice');
-        if (iceStatus && iceStatus.stacks >= 3) {
+        if (!iceStatus || iceStatus.stacks < 3) return;
+        if (this.applyFreeze(entity, CONFIG.FREEZE_CRYSTAL_TICKS, source)) {
             this._triggerInteraction(entity, 'crystal', source);
-            entity.frozen = Math.max(entity.frozen, entity === player ? CONFIG.PLAYER_CRYSTAL_FREEZE_TICKS : 180);
             entity.elementalStatuses = entity.elementalStatuses.filter(s => s.type !== 'ice');
         }
     },
@@ -28568,7 +28606,14 @@ const ElementalSystem = {
                         }
                         break;
                     case 'ice':
-                        entity.frozen = Math.max(entity.frozen, 15);
+                        // O gelo não reaplica mais congelamento (era o que deixava 78% de uptime):
+                        // agora vira lentidão, no mesmo _slowT/_slowF que Enemy.move já aplica.
+                        if (entity === player) {
+                            entity._hazardSlowTimer = Math.max(entity._hazardSlowTimer || 0, 20);
+                        } else {
+                            if (!(entity._slowT > 0) || !(entity._slowF > 0) || entity._slowF > 0.6) entity._slowF = 0.6;
+                            entity._slowT = Math.max(entity._slowT || 0, 30);
+                        }
                         if (typeof spawnParticles !== 'undefined') {
                             spawnParticles(entity.x + (Math.random()-0.5)*15, entity.y + (Math.random()-0.5)*15, '#88ccff', 1, 2);
                         }
@@ -28640,6 +28685,24 @@ const ElementalSystem = {
         return types[idx];
     },
     
+    // Congelamento com escala e imunidade. Fonte única do gelo do mago/mutação:
+    // nunca autocongela, respeita a janela de imunidade do alvo e encurta em elite/chefe.
+    // Retorna true só quando o congelamento pegou (o visual não repete à toa).
+    applyFreeze(entity, frames, source) {
+        if (!entity || entity.alive === false || !(frames > 0)) return false;
+        if (entity === player && source === player) return false; // o próprio gelo nunca congela quem lançou
+        if (entity._freezeImmuneT > 0) return false;              // janela de imunidade por alvo
+        let mult = 1;
+        if (entity.isB) mult = CONFIG.FREEZE_BOSS_MULT;
+        else if (entity.elite) mult = CONFIG.FREEZE_ELITE_MULT;
+        let f = Math.floor(frames * mult);
+        if (entity === player) f = Math.min(f || frames, CONFIG.PLAYER_CRYSTAL_FREEZE_TICKS); // v69: herói ≤ 45
+        f = Math.max(6, f); // mínimo simbólico, senão o congelamento não aparece
+        entity.frozen = Math.max(entity.frozen || 0, f);
+        entity._freezeImmuneT = f + CONFIG.FREEZE_IMMUNITY_TICKS;
+        return true;
+    },
+    
     // Apply a status effect to an entity
     applyStatus(entity, type, stacks, duration, source) {
         if (!entity || entity.alive === false) return;
@@ -28659,6 +28722,7 @@ const ElementalSystem = {
                 source
             });
         }
+        if (type === 'ice') this._checkCrystal(entity, source);
     }
 };
 
@@ -30718,12 +30782,12 @@ class Entity {
         if (this !== player && !this.isB && window._dailyMods && window._dailyMods.enemyOneHit) {
             a = this.hp + (this.shield || 0); finalDmg = a;
         }
-        if(source && source.mutations) { if(source.mutations.vampiric) { const heal = finalDmg * CONFIG.VAMPIRIC_LIFESTEAL; source.hp = Math.min(source.maxHp, source.hp + heal); DamageNumbers.add(source.x, source.y, heal, 'heal'); } if(source.mutations.lightning && !_chainLightningActive && SeedSystem.random() < CONFIG.LIGHTNING_CHAIN_CHANCE) { dmgType = 'lightning'; finalDmg *= CONFIG.LIGHTNING_DAMAGE_MULT; const chainHeal = finalDmg * 0.03; if(source.hp != null) source.hp = Math.min(source.maxHp, source.hp + chainHeal); const chainRangeSq = CONFIG.LIGHTNING_CHAIN_RANGE * CONFIG.LIGHTNING_CHAIN_RANGE; _chainLightningActive = true; try { for(let i = 0; i < entities.length; i++) { const e = entities[i]; if(e !== this && e !== player && e.alive && (e.isEnemy || e instanceof Enemy || e.isB)) { const dx = e.x-this.x, dy = e.y-this.y; if(dx*dx + dy*dy < chainRangeSq && hasLineOfSight(m, this.x, this.y, e.x, e.y)) { e.takeDamage(finalDmg * 0.5, m, source, true); spawnParticles(e.x, e.y, '#ffff33', 3, 2); } } } } finally { _chainLightningActive = false; } } if(source.mutations.freeze && SeedSystem.random() < CONFIG.FREEZE_CHANCE) { this.frozen = CONFIG.FREEZE_DURATION; spawnParticles(this.x, this.y, '#33ccff', 10, 4); } }
+        if(source && source.mutations) { if(source.mutations.vampiric) { const heal = finalDmg * CONFIG.VAMPIRIC_LIFESTEAL; source.hp = Math.min(source.maxHp, source.hp + heal); DamageNumbers.add(source.x, source.y, heal, 'heal'); } if(source.mutations.lightning && !_chainLightningActive && SeedSystem.random() < CONFIG.LIGHTNING_CHAIN_CHANCE) { dmgType = 'lightning'; finalDmg *= CONFIG.LIGHTNING_DAMAGE_MULT; const chainHeal = finalDmg * 0.03; if(source.hp != null) source.hp = Math.min(source.maxHp, source.hp + chainHeal); const chainRangeSq = CONFIG.LIGHTNING_CHAIN_RANGE * CONFIG.LIGHTNING_CHAIN_RANGE; _chainLightningActive = true; try { for(let i = 0; i < entities.length; i++) { const e = entities[i]; if(e !== this && e !== player && e.alive && (e.isEnemy || e instanceof Enemy || e.isB)) { const dx = e.x-this.x, dy = e.y-this.y; if(dx*dx + dy*dy < chainRangeSq && hasLineOfSight(m, this.x, this.y, e.x, e.y)) { e.takeDamage(finalDmg * 0.5, m, source, true); spawnParticles(e.x, e.y, '#ffff33', 3, 2); } } } } finally { _chainLightningActive = false; } } if(source.mutations.freeze && SeedSystem.random() < CONFIG.FREEZE_CHANCE && !dot && typeof ElementalSystem !== 'undefined' && ElementalSystem.applyFreeze(this, CONFIG.FREEZE_DURATION, source)) { spawnParticles(this.x, this.y, '#33ccff', 10, 4); } }
         if(source && source.skills && source.skills.execute && this.hp < this.maxHp * CONFIG.ROGUE_ASSASSINATE_THRESHOLD) { finalDmg = this.isB ? Math.min(this.maxHp * 0.10, Math.max(10, this.maxHp * CONFIG.ROGUE_ASSASSINATE_DAMAGE_PCT)) : Math.max(10, this.maxHp * CONFIG.ROGUE_ASSASSINATE_DAMAGE_PCT); dmgType = 'crit'; if(typeof DamageNumbers !== 'undefined') DamageNumbers.add(this.x, this.y, 'EXEC!', 'execute'); }
         if(source && source.skills && source.skills.deathmark && this._deathMarkT > 0) { finalDmg = Math.floor(finalDmg * 1.5); dmgType = 'crit'; }
         if(source && source.skills && source.skills.stun && SeedSystem.random() < 0.10) { this.frozen = Math.max(this.frozen || 0, Math.floor(40 * (this.elite ? 0.5 : this.isB ? 0.25 : 1))); spawnParticles(this.x, this.y, '#ffcc00', 6, 3); if(typeof DamageNumbers !== 'undefined') DamageNumbers.add(this.x, this.y, 'STUN!', 'stun'); if(typeof Statistics !== 'undefined' && source === player) { Statistics.data.stunsApplied = (Statistics.data.stunsApplied || 0) + 1; const _sb = Statistics._stunWin || (Statistics._stunWin = { t: -9999, n: 0 }); if (gameTime - _sb.t > GAME_TICKS_PER_SECOND) { _sb.t = gameTime; _sb.n = 0; } _sb.n++; if (_sb.n > (Statistics.data.maxStunBurst || 0)) Statistics.data.maxStunBurst = _sb.n; } }
         if(source && source.skills && source.skills.bleed && SeedSystem.random() < 0.12) { this.poisonStacks = (this.poisonStacks || 0) + 2; this.poisonTimer = Math.max(this.poisonTimer || 0, CONFIG.ROGUE_POISON_DURATION); spawnParticles(this.x, this.y, '#ff2222', 6, 3); if(typeof DamageNumbers !== 'undefined') DamageNumbers.add(this.x, this.y, window.I18n ? I18n.t('hud.bleed') : 'SANGRIA!', 'bleed'); if(typeof Statistics !== 'undefined' && source === player) Statistics.data.bleedsApplied = (Statistics.data.bleedsApplied || 0) + 1; }
-        if(source && source.skills && source.skills.frostTouch && SeedSystem.random() < 0.15) { this.frozen = Math.max(this.frozen || 0, Math.floor(60 * (this.elite ? 0.5 : this.isB ? 0.25 : 1))); spawnParticles(this.x, this.y, '#66ccff', 8, 4); if(typeof DamageNumbers !== 'undefined') DamageNumbers.add(this.x, this.y, window.I18n ? I18n.t('hud.frost') : 'GEADA!', 'frost'); if(typeof Statistics !== 'undefined' && source === player) Statistics.data.frostsApplied = (Statistics.data.frostsApplied || 0) + 1; }
+        if(source && source.skills && source.skills.frostTouch && SeedSystem.random() < 0.15 && typeof ElementalSystem !== 'undefined' && ElementalSystem.applyFreeze(this, 60, source)) { spawnParticles(this.x, this.y, '#66ccff', 8, 4); if(typeof DamageNumbers !== 'undefined') DamageNumbers.add(this.x, this.y, window.I18n ? I18n.t('hud.frost') : 'GEADA!', 'frost'); if(typeof Statistics !== 'undefined' && source === player) Statistics.data.frostsApplied = (Statistics.data.frostsApplied || 0) + 1; }
         // Elfa: raízes da natureza enraízam inimigos no golpe (mesma mecânica do gelo, visual verde)
         if(source && source.skills && source.skills.rootTouch && SeedSystem.random() < 0.15) { this.frozen = Math.max(this.frozen || 0, Math.floor(60 * (this.elite ? 0.5 : this.isB ? 0.25 : 1))); spawnParticles(this.x, this.y, '#58e08a', 8, 4); if(typeof DamageNumbers !== 'undefined') DamageNumbers.add(this.x, this.y, 'RAÍZES!', 'frost'); if(source.skills.thorns) { this.poisonStacks = Math.min(CONFIG.ROGUE_POISON_MAX_STACKS, (this.poisonStacks || 0) + 1); this.poisonTimer = Math.max(this.poisonTimer || 0, CONFIG.ROGUE_POISON_DURATION); spawnParticles(this.x, this.y, '#58e08a', 5, 3); DamageNumbers.add(this.x, this.y, window.I18n ? I18n.t('combat.thorns') : 'ESPINHOS!', 'bleed'); }if(typeof Statistics !== 'undefined' && source === player) Statistics.data.frostsApplied = (Statistics.data.frostsApplied || 0) + 1; }
         if(this !== player && this.frozen > 0) {
@@ -36109,20 +36173,26 @@ class Bullet {
                             }
                         }
                         if(this.weapon.unique === 'frostNova' && this.hitCount <= 1) {
+                            let _frozeAny = false;
                             if(typeof entities !== 'undefined') {
                                 for(let _fi = 0; _fi < entities.length; _fi++) {
                                     const _fe = entities[_fi];
-                                    if(_fe.alive && _fe !== e) {
+                                    if(_fe.alive && _fe !== e && _fe !== player) {
                                         const fdx = _fe.x - e.x, fdy = _fe.y - e.y;
                                         if(fdx*fdx + fdy*fdy < 120*120 && hasLineOfSight(m, e.x, e.y, _fe.x, _fe.y)) {
-                                            _fe.frozen = Math.max(_fe.frozen || 0, 60);
-                                            if(typeof ElementalSystem !== 'undefined') ElementalSystem.applyStatus(_fe, 'ice', 2, 180, source);
+                                            // applyFreeze bloqueia o próprio jogador (autocongelamento do Cajado Glacial)
+                                            if(typeof ElementalSystem !== 'undefined' && ElementalSystem.applyFreeze(_fe, 60, source)) {
+                                                _frozeAny = true;
+                                                ElementalSystem.applyStatus(_fe, 'ice', 1, 180, source);
+                                            }
                                         }
                                     }
                                 }
                             }
-                            if(typeof spawnParticles !== 'undefined') spawnParticles(e.x, e.y, '#88ccff', 20, 50);
-                            if(typeof SND !== 'undefined') SND.play(200, 'sine', 0.15, 0.3);
+                            if(_frozeAny) {
+                                if(typeof spawnParticles !== 'undefined') spawnParticles(e.x, e.y, '#88ccff', 20, 50);
+                                if(typeof SND !== 'undefined') SND.play(200, 'sine', 0.15, 0.3);
+                            }
                         }
                         if(this.weapon.unique === 'cleave' && this.hitCount <= 1) {
                             if(typeof entities !== 'undefined') {
@@ -36795,6 +36865,7 @@ class Player extends Entity {
         if(this._perfectDodgeCd > 0) this._perfectDodgeCd--;
         if(this._perfectCritT > 0) this._perfectCritT--;
         if(this.frozen > 0) this.frozen--; // on the simulation tick (was in draw: ran during pause and 2x on 120 Hz)
+        if(this._freezeImmuneT > 0) this._freezeImmuneT--; // o laço central de entidades pula o jogador
 
         let dx = Input.left.active ? Input.left.dx : ((Input.keys['d'] || Input.keys['arrowright'])?1:(Input.keys['a'] || Input.keys['arrowleft'])?-1:0);
         let dy = Input.left.active ? Input.left.dy : ((Input.keys['s'] || Input.keys['arrowdown'])?1:(Input.keys['w'] || Input.keys['arrowup'])?-1:0);
@@ -37062,7 +37133,9 @@ class Player extends Entity {
                             const _fe = entities[_fi];
                             if(_fe !== this && _fe.alive && typeof Enemy !== 'undefined' && (_fe instanceof Enemy || _fe.isEnemy)) {
                                 const _fdx = _fe.x - this.x, _fdy = _fe.y - this.y;
-                                if(_fdx * _fdx + _fdy * _fdy < _fwSq) { _fe.frozen = Math.max(_fe.frozen || 0, CONFIG.FROST_WAVE_FRAMES); spawnParticles(_fe.x, _fe.y, '#66ccff', 6, 3); }
+                                if(_fdx * _fdx + _fdy * _fdy < _fwSq && hasLineOfSight(m, this.x, this.y, _fe.x, _fe.y)) {
+                                    if(typeof ElementalSystem !== 'undefined' && ElementalSystem.applyFreeze(_fe, CONFIG.FROST_WAVE_FRAMES, this)) spawnParticles(_fe.x, _fe.y, '#66ccff', 6, 3);
+                                }
                             }
                         }
                     }
@@ -37289,6 +37362,9 @@ class Player extends Entity {
             }
             ctx.restore();
         }
+        
+        // Ícones de status elemental do jogador (veneno, gelo, fogo...)
+        if (typeof ElementalSystem !== 'undefined') ElementalSystem.drawStatuses(ctx, this, cx, cy);
         
         // Class-specific indicators
         if(this.type === 'warrior' && this.furyStacks > 0) {
@@ -47114,8 +47190,15 @@ Input.init();
        current MUST stay in sync with the SW CACHE_VERSION suffix (sw.js).
     */
     window.UPDATE_LOG = {
-        current: 'v105',
+        current: 'v106',
         entries: [
+            { v: 'v106', date: '2026-11-20', titleKey: 'update.entry.v106.title', title: 'v106 — Gelo justo de novo',
+              linesKeys: ['update.entry.v106.l1', 'update.entry.v106.l2', 'update.entry.v106.l3', 'update.entry.v106.l4', 'update.entry.v106.l5'],
+              lines: ['O mago não congela mais a si mesmo com o Cajado Glacial.',
+                      'O congelamento ficou curto e com descanso: inimigo comum, elite e chefe têm limites diferentes, e nenhum deles fica parado por muito tempo.',
+                      'O gelo das armas e do Toque de Gelo agora deixa o alvo mais lento em vez de travá-lo a cada meio segundo; a paralisia ficou com o cristal e a Onda Gélida.',
+                      'A Armadura de Gelo passou a fazer a lentidão que a descrição promete, e você vê o status de gelo no seu personagem.',
+                      'Seus saves continuam funcionando.'] },
             { v: 'v105', date: '2026-11-18', titleKey: 'update.entry.v105.title', title: 'v105 — A história aparece, e o progresso não se perde',
               linesKeys: ['update.entry.v105.l1', 'update.entry.v105.l2', 'update.entry.v105.l3', 'update.entry.v105.l4', 'update.entry.v105.l5'],
               lines: ['Uma cena abre antes do chefe final e as trocas de câmara ganharam cartão próprio: a história aparece nos momentos em que o ritmo pede.',
