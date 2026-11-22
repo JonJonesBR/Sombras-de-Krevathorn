@@ -16703,7 +16703,7 @@ function _drawWorldLayer() {
             if (e.spawnTimer > 0) {
                 e.spawnTimer = Math.max(0, e.spawnTimer - _drawSteps);
                 const p = Math.min(1, 1 - e.spawnTimer / 20);
-                if (!_isHiddenLurker(e)) drawGroundShadow(wctx, e.x, e.y, e.radius, camX, camY);
+                if (!_isHiddenEnemy(e) && !(e.enemyType === 'trap' && !e.triggered)) drawGroundShadow(wctx, e.x, e.y, e.radius, camX, camY);
                 wctx.save();
                 wctx.globalAlpha = Math.min(1, p * 3);
                 wctx.translate(e.x - camX, e.y - camY);
@@ -16712,7 +16712,7 @@ function _drawWorldLayer() {
                 e.draw(wctx, camX, camY);
                 wctx.restore();
             } else {
-                if (!_isHiddenLurker(e)) drawGroundShadow(wctx, e.x, e.y, e.radius, camX, camY);
+                if (!_isHiddenEnemy(e) && !(e.enemyType === 'trap' && !e.triggered)) drawGroundShadow(wctx, e.x, e.y, e.radius, camX, camY);
                 e.draw(wctx, camX, camY);
             }
         }
@@ -16764,7 +16764,9 @@ function _drawWorldLayer() {
                 const _pet = pets[_pi];
                 if (!_pet || !_pet.alive) continue;
                 if (!_pet.mounted && _pet.x > vL && _pet.x < vR && _pet.y > vT && _pet.y < vB) {
-                    drawGroundShadow(wctx, _pet.x, _pet.y, _pet.radius * 1.1, camX, camY);
+                    if (!(typeof PET_FLY_ALT !== 'undefined' && PET_FLY_ALT[_pet.type] > 0)) {
+                        drawGroundShadow(wctx, _pet.x, _pet.y, _pet.radius * 1.1, camX, camY);
+                    }
                     _pet.draw(wctx, camX, camY);
                 }
                 if (typeof _pet.drawMountIndicator === 'function') {
@@ -28378,8 +28380,10 @@ const SpriteManager = {
         const fxOn = (window.GFX === undefined || window.GFX.particles !== false);
         const A = this.ANIM;
 
-        // Coluna do quadro: a animação é toda desenhada (nada de bob procedural por cima)
-        const phase = (((x * 7 + y * 13) | 0) & 63);      // fase individual: inimigos não respiram em coro
+        // Coluna do quadro: fase ancorada no mundo (não oscila ao mover a câmera)
+        const _wx = (typeof camX === 'number' && Number.isFinite(camX)) ? Math.round((x + camX) / 16) : 0;
+        const _wy = (typeof camY === 'number' && Number.isFinite(camY)) ? Math.round((y + camY) / 16) : 0;
+        const phase = isHero ? 0 : (((_wx * 7 + _wy * 13) | 0) & 63);
         let col;
         if (state === 'death') {
             col = A.death[0] + Math.min(A.death[1] - 1, Math.floor(Math.max(0, ft) / 4));   // 4 ticks por quadro
@@ -28420,10 +28424,7 @@ const SpriteManager = {
             dodgeT = Math.min(1, Math.max(0, ft / 10));
         }
 
-        // Sombra no chão
-        ctx.save();
-        PixelFX.drawEllipse(ctx, ix, feetY - 2, halfD * 0.8, halfD * 0.3, 'rgba(0,0,0,0.3)');
-        ctx.restore();
+        // Sombra no chão já é desenhada uma única vez por drawGroundShadow em _drawWorldLayer (respeita GFX.shadows e não gira no combo)
 
         // Poeira de passo (heróis): 2 puffs atrás, alternando o pé que tocou
         if (walkDust) {
@@ -35709,7 +35710,10 @@ class Boss extends Enemy {
         const bossState = (this.charging || this._dashT > 0) ? 'attack'
             : (this._chargeWindupTimer > 0 || this._burstTelegraph > 0 || this._drainT > 0 || this._spiralTimer > 0) ? 'cast'
             : (this.walkTimer > 0) ? 'walk' : 'idle';
-        SpriteRenderer.drawEnemy.call(this, ctx, this.x-cx, this.y-cy, this._sprite || 'boss', this.walkTimer, this.angle, this._spriteScale || 2.3, this.ft > 0, bossState);
+        if (bossState !== this._bossAnimState) { this._bossAnimState = bossState; this._bossAnimT = 0; }
+        else if (bossState === 'attack' || bossState === 'cast') { this._bossAnimT = ((this._bossAnimT || 0) + 0.55) % 12; }
+        const bossFrameT = (bossState === 'attack' || bossState === 'cast') ? (this._bossAnimT || 0) : this.walkTimer;
+        SpriteRenderer.drawEnemy.call(this, ctx, this.x-cx, this.y-cy, this._sprite || 'boss', bossFrameT, this.angle, this._spriteScale || 2.3, this.ft > 0, bossState);
 
         // Per-boss decoration (horns, crowns, wisps, ...)
         this._drawBossDecor(ctx, this.x-cx, this.y-cy);
@@ -37079,9 +37083,9 @@ class Pet {
         const spr = PET_SPR_CACHE[sIdx] || (PET_SPR_CACHE[sIdx] = _petMakeSprite(this.type, pose, this._face, flash));
         const rmV = !!(window.GameSettings && GameSettings.reducedMotion);
 
-        // Sombra projetada deslocada (voadores): sensação de altura
+        // Sombra projetada deslocada (voadores): sensação de altura (única sombra, respeita GFX.shadows)
         ctx.globalAlpha = 1;
-        if(flyAlt > 0) {
+        if(flyAlt > 0 && (window.GFX === undefined || window.GFX.shadows !== false)) {
             ctx.globalAlpha = 0.22;
             PixelFX.drawEllipse(ctx, sx + 5, sy + 9, this.radius * 0.9, this.radius * 0.4, '#000000');
             ctx.globalAlpha = 1;
@@ -39011,10 +39015,11 @@ class Player extends Entity {
         
         const sx = this.x - cx, sy = this.y - cy;
         
+        const rmAura = !!(window.GameSettings && GameSettings.reducedMotion);
         // Prestige Aura (expanding ring behind player): anel de pixels
         if (typeof prestigeLevel !== 'undefined' && prestigeLevel > 0) {
-            const pa = 0.08 + Math.sin(gameTime * 0.03) * 0.04;
-            const pr = this.radius * (1.5 + Math.sin(gameTime * 0.05) * 0.2);
+            const pa = rmAura ? 0.09 : (0.08 + Math.sin(gameTime * 0.03) * 0.04);
+            const pr = this.radius * (rmAura ? 1.55 : (1.5 + Math.sin(gameTime * 0.05) * 0.2));
             ctx.save();
             ctx.globalAlpha = pa;
             PixelFX.ring(ctx, sx, sy, pr, this.color, 3);
@@ -39022,8 +39027,8 @@ class Player extends Entity {
         }
 
         // Class-specific Hero Aura VFX: disco de pixels em 2 tons (no lugar do gradiente radial)
-        const auraAlpha = 0.15 + Math.sin(gameTime * 0.05) * 0.05;
-        const auraRadius = this.radius * (1.3 + Math.sin(gameTime * 0.08) * 0.15);
+        const auraAlpha = rmAura ? 0.15 : (0.15 + Math.sin(gameTime * 0.05) * 0.05);
+        const auraRadius = this.radius * (rmAura ? 1.3 : (1.3 + Math.sin(gameTime * 0.08) * 0.15));
         ctx.save();
         ctx.globalAlpha = auraAlpha;
         PixelFX.drawDisc(ctx, sx, sy, auraRadius, this.color, PixelFX.shade(this.color, 0.4));
@@ -39113,6 +39118,35 @@ class Player extends Entity {
                 ctx.restore();
             }
         }
+        // Weapon level glow (atrás do herói para não lavar a paleta do sprite)
+        const wlColors = { 2: '#4ade80', 3: '#60a5fa', 4: '#c084fc', 5: '#ffcc00' };
+        const wc = this.weaponLevel > 1 ? (wlColors[this.weaponLevel] || '#ffcc00') : null;
+        if (wc && (window.GFX === undefined || window.GFX.glows)) {
+            const wpr = this.radius + 8 + (rmPw ? 0 : Math.sin(gameTime * 0.15) * 2);
+            ctx.save();
+            ctx.globalCompositeOperation = 'lighter';
+            ctx.globalAlpha = rmPw ? 0.18 : (0.16 + Math.sin(gameTime * 0.15) * 0.06);
+            PixelFX.drawDisc(ctx, sx, sy, wpr, wc, null, true);
+            ctx.restore();
+        }
+        // Escudo orbital do Mago (atrás + anel na borda, sem tapar o sprite)
+        if (this.type === 'mage' && this.orbShieldReady) {
+            ctx.save();
+            const orbA = rmPw ? 0.35 : (0.28 + Math.sin(gameTime * 0.15) * 0.1);
+            ctx.globalAlpha = orbA * 0.55;
+            PixelFX.drawDisc(ctx, sx, sy, this.radius + 7, COLORS.CLASS_MAGE, null, true);
+            ctx.globalAlpha = orbA + 0.3;
+            PixelFX.ring(ctx, sx, sy, this.radius + 9, COLORS.CLASS_MAGE, 3, { dash: 2 });
+            ctx.restore();
+        }
+        // Furtividade (Ladino): anel sombrio atrás do personagem
+        if (this.stealth > 0) {
+            ctx.save();
+            ctx.globalAlpha = rmPw ? 0.45 : (0.35 + Math.sin(gameTime * 0.2) * 0.12);
+            PixelFX.ring(ctx, sx, sy + 6, this.radius + 6, '#55ddaa', 3, { dash: 3 });
+            ctx.restore();
+        }
+
         ctx.save();
         const shooting = this.shootAnim > 0;
         const dodging = this.dodgeAnim > 0;
@@ -39120,7 +39154,7 @@ class Player extends Entity {
         let spriteTime = this.walkTimer > 0 ? this.walkTimer : (typeof gameTime !== 'undefined' ? gameTime : 0);
         if (dodging) {
             spriteState = 'dodge';
-            spriteTime = 10 - this.dodgeAnim;
+            spriteTime = Math.max(0, (15 - this.dodgeAnim) * (10 / 15));
         }
         if (shooting) {
             spriteState = this.type === 'mage' ? 'cast' : 'attack';
@@ -39130,30 +39164,20 @@ class Player extends Entity {
             spriteState = 'hit';
             spriteTime = 5 - this.ft;
         }
-        if (shooting) { this.shootAnim--; ctx.translate(Math.random()*4 - 2, Math.random()*4 - 2); }
+        if (shooting) { this.shootAnim--; if (!rmPw) ctx.translate(Math.round(Math.random()*2 - 1), Math.round(Math.random()*2 - 1)); }
         if (dodging) this.dodgeAnim--;
         // Combo finalizador do guerreiro: giro de 360° durante o golpe (desligado com reducedMotion; contador andado em update)
-        if (this.chainSpinT > 0 && !(window.GameSettings && GameSettings.reducedMotion)) { ctx.translate(sx, sy); ctx.rotate((1 - this.chainSpinT / 18) * Math.PI * 2); ctx.translate(-sx, -sy); }
-        if (this.levelUpAnim > 0) { this.levelUpAnim--; const sc = 1 + Math.sin(this.levelUpAnim * 0.5) * 0.5; ctx.translate(sx, sy); ctx.scale(sc, sc); ctx.translate(-sx, -sy); }
-        if (this.invincibleTimer > 0) { ctx.globalAlpha = (this.invincibleTimer % 4 < 2) ? 0.4 : 1; }
+        if (this.chainSpinT > 0 && !rmPw) { ctx.translate(sx, sy); ctx.rotate((1 - this.chainSpinT / 18) * Math.PI * 2); ctx.translate(-sx, -sy); }
+        if (this.levelUpAnim > 0) { this.levelUpAnim--; if (!rmPw) { const sc = 1 + Math.sin(this.levelUpAnim * 0.5) * 0.5; ctx.translate(sx, sy); ctx.scale(sc, sc); ctx.translate(-sx, -sy); } }
+        let heroAlpha = this.stealth > 0 ? 0.45 : 1;
+        if (this.invincibleTimer > 0 && (this.invincibleTimer % 4 < 2)) heroAlpha *= 0.4;
+        ctx.globalAlpha = heroAlpha;
         SpriteRenderer.drawCharacter.call(this, ctx, sx, sy, this.type, {
             state: spriteState,
             time: spriteTime,
             angle: this.spriteAngle || this.angle,
             isHit: this.ft > 0
         });
-        
-        // Weapon level glow (disco pixelado em cache)
-        const wlColors = { 2: '#4ade80', 3: '#60a5fa', 4: '#c084fc', 5: '#ffcc00' };
-        const wc = this.weaponLevel > 1 ? (wlColors[this.weaponLevel] || '#ffcc00') : null;
-        if (wc && (window.GFX === undefined || window.GFX.glows)) {
-            const wpr = this.radius + 8 + Math.sin(gameTime * 0.15) * 2;
-            ctx.globalCompositeOperation = 'lighter';
-            ctx.globalAlpha = 0.18 + Math.sin(gameTime * 0.15) * 0.08;
-            PixelFX.drawDisc(ctx, sx, sy, wpr, wc, null, true);
-            ctx.globalCompositeOperation = 'source-over';
-            ctx.globalAlpha = 1;
-        }
         // Indicador do combo: 3 pontinhos que acendem conforme o passo (somem após a janela sem atacar)
         if (this.chainStep > 0 && this.chainTimer < CONFIG.COMBO_CHAIN_WINDOW) {
             const cdy = sy + this.radius + 8;
@@ -39231,13 +39255,6 @@ class Player extends Entity {
             ctx.save();
             ctx.globalAlpha = 0.5;
             PixelFX.ring(ctx, sx, sy, this.radius * 1.5, '#ff4444', 3, { dash: 3 });
-            ctx.restore();
-        }
-        if(this.type === 'mage' && this.orbShieldReady) {
-            ctx.save();
-            const orbGlow = 0.6 + Math.sin(gameTime * 0.15) * 0.3;
-            ctx.globalAlpha = orbGlow;
-            PixelFX.drawDisc(ctx, sx, sy, this.radius + 8, COLORS.CLASS_MAGE, null, true);
             ctx.restore();
         }
         
@@ -40238,29 +40255,40 @@ class NPC {
         const screenH = height || 600;
         if (sx < -60 || sx > screenW + 60 || sy < -60 || sy > screenH + 60) return;
 
-        // F3: NPC canônico ganha anel dourado pulsante (diferença visual para o
-        // aleatório) e não some por tempo.
+        const npcReduced = !!(window.GameSettings && GameSettings.reducedMotion);
+        const fade = (!this.canon && this.lifetime < 120) ? Math.max(0.05, this.lifetime / 120) : 1;
+
+        ctx.save();
+        ctx.globalAlpha = fade;
+
+        // F3: NPC canônico ganha anel dourado pulsante em pixel art (diferença visual para o aleatório)
         if (this.canon) {
-            const rm0 = !!(window.GameSettings && GameSettings.reducedMotion);
-            const pulse = rm0 ? 0.55 : 0.4 + 0.25 * Math.sin(this.indicatorAnim * 2);
+            const pulse = npcReduced ? 0.55 : 0.4 + 0.25 * Math.sin(this.indicatorAnim * 2);
             ctx.save();
-            ctx.globalAlpha = pulse;
-            ctx.strokeStyle = '#ffd86b'; ctx.lineWidth = 2;
-            ctx.beginPath(); ctx.arc(sx, sy, 22 + (rm0 ? 0 : Math.sin(this.indicatorAnim * 2) * 2), 0, Math.PI * 2); ctx.stroke();
+            ctx.globalAlpha = fade * pulse;
+            PixelFX.ring(ctx, sx, sy, 22 + (npcReduced ? 0 : Math.sin(this.indicatorAnim * 2) * 2), '#ffd86b', 3);
             ctx.restore();
         }
 
-        ctx.save();
+        // Proximity glow atrás do sprite do NPC
+        if (this.nearPlayer) {
+            const pulse = npcReduced ? 0.28 : (0.24 + Math.sin(this.indicatorAnim * 2) * 0.12);
+            ctx.save();
+            ctx.globalAlpha = fade * pulse;
+            PixelFX.drawDisc(ctx, sx, sy, 22, this.color, null, true);
+            ctx.restore();
+        }
 
         // Corpo em pixel art (48 px, como os heróis): 4 quadros de idle; com reducedMotion, quadro 0 fixo
-        const npcReduced = !!(window.GameSettings && GameSettings.reducedMotion);
         const npcFrame = npcReduced ? 0 : Math.floor(this.indicatorAnim * 4 / (Math.PI * 2)) % 4;
-        // Sombra no chão, igual à do herói (pés na linha sy + 24)
-        PixelFX.drawEllipse(ctx, sx, sy + 22, 19, 7, 'rgba(0,0,0,0.3)');
+        // Sombra no chão (respeita GFX.shadows)
+        if (window.GFX === undefined || window.GFX.shadows !== false) {
+            PixelFX.drawEllipse(ctx, sx, sy + 22, 19, 7, 'rgba(0,0,0,0.3)');
+        }
         PixelFX.draw(ctx, WorldSprites.npc(this.art || this.type, this.color, npcFrame), sx, sy);
 
         // Floating indicator above head (acima da cabeça: metade da altura do sprite + 10 px)
-        const bobY = sy - 37 + Math.sin(this.indicatorAnim) * 4;
+        const bobY = sy - 37 + (npcReduced ? 0 : Math.sin(this.indicatorAnim) * 4);
         PixelFX.ring(ctx, sx, bobY, 10, this.color, 3);
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 12px ' + COLORS.CANVAS_FONT;
@@ -40272,24 +40300,12 @@ class NPC {
         // Viajante aleatório: o painel só abre tocando nele — a dica aparece ao chegar perto
         if (!this.canon && this.nearPlayer && !(window.NPCInteractionPanel && NPCInteractionPanel.visible)) {
             ctx.save();
-            ctx.globalAlpha = 0.85;
+            ctx.globalAlpha = fade * 0.85;
             ctx.fillStyle = '#fff';
             ctx.font = 'bold 10px ' + COLORS.CANVAS_FONT;
             ctx.textAlign = 'center';
             ctx.fillText(window.I18n ? I18n.t('npc.tapToTalk') : 'Toque para falar', sx, bobY - 20);
             ctx.restore();
-        }
-
-        // Lifetime warning fade
-        if (this.lifetime < 120) {
-            ctx.globalAlpha = this.lifetime / 120;
-        }
-
-        // Proximity glow
-        if (this.nearPlayer) {
-            const pulse = 0.3 + Math.sin(this.indicatorAnim * 2) * 0.15;
-            ctx.globalAlpha = pulse;
-            PixelFX.drawDisc(ctx, sx, sy, 20, this.color);
         }
 
         ctx.restore();
