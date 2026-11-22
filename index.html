@@ -16982,6 +16982,8 @@ let _particleBatch = Object.create(null);
 let _particleBatchFrame = 0;
 let _cachedAliveEnemies = 0;
 function _spawnTorchParticles() {
+    // Sem máscara de escuridão (VISION_MASK = false) o herói não carrega tocha; evita quadradinhos laranjas saindo do personagem
+    if (!CONFIG.VISION_MASK) return;
     if (!player || !player.alive || CONFIG.TORCH_PARTICLE_INTERVAL > 0 && gameTime % CONFIG.TORCH_PARTICLE_INTERVAL !== 0) return;
     if (particles.length >= Math.floor(CONFIG.PARTICLE_CAP * 0.5)) return; // tocha + ambiente ficam no orçamento de ambiente; o combate tem COMBAT_PARTICLE_CAP próprio
     const fireColors = ['#ff6600', '#ff8800', '#ffaa00', '#ff4400'];
@@ -17519,7 +17521,7 @@ function draw() {
                     w.t = Math.min(1, w.t + 0.06 * _drawSteps * _descentRate());
                     player.x = w.x0 + (w.x1 - w.x0) * w.t;
                     player.y = w.y0 + (w.y1 - w.y0) * w.t;
-                    player.walkTimer += 3 * _drawSteps * _descentRate();
+                    player.walkTimer += 1.2 * _drawSteps * _descentRate();
                     if (w.t >= 1) _fadeState.walk = null;
                 }
                 if (_fadeState.alpha <= 0) {
@@ -28531,7 +28533,8 @@ const SpriteManager = {
         } else if (state === 'hit') {
             col = A.hurt[0] + (ft >= 2.5 ? 1 : 0);
         } else {
-            col = A.idle[0] + (Math.floor((gt + phase) / 10) % A.idle[1]);
+            // Respiração calma nos heróis (~1,2 s por ciclo de 4 quadros); inimigos mantêm ritmo próprio
+            col = A.idle[0] + (Math.floor((gt + phase) / (isHero ? 18 : 10)) % A.idle[1]);
         }
         const row = this.getDirIndex(ang);
         const sheet = this.sheetRow(type, row, isHit);
@@ -28540,51 +28543,109 @@ const SpriteManager = {
         const d = (24 * sc) | 0;
         const halfD = (d / 2) | 0;
         const feetY = iy + halfD;
+        const rm = !!(window.GameSettings && GameSettings.reducedMotion);
 
         let pushX = 0, pushY = 0, dodgeT = -1, castT = -1, sn = 1;
-        const walkDust = (state === 'walk' && !isHit && fxOn && isHero);
+        let bobY = 0, sxScale = 1, syScale = 1, tilt = 0;
+        const walkDust = (state === 'walk' && !isHit && fxOn && isHero && !rm);
         if (isHit) {
             const dec = isHero ? Math.max(0, 1 - ft / 5) : 1;
-            pushX = -fx * 2 * sc * k * dec;
-            pushY = -fy * 2 * sc * k * dec;
+            pushX = -fx * 2.5 * sc * k * dec;
+            pushY = -fy * 2.5 * sc * k * dec;
+            if (isHero && !rm) { sxScale = 1 + 0.08 * dec; syScale = 1 - 0.08 * dec; }
         } else if (state === 'walk') {
-            sn = Math.abs(Math.sin(ft * Math.PI / 18));
-        } else if (state === 'cast' && isHero) {
+            const stride = Math.sin(ft * Math.PI / 18);
+            sn = Math.abs(stride);
+            if (isHero && !rm) {
+                // Passada orgânica ancorada nos pés: leve elevação no meio do passo, compressão no apoio e inclinação suave
+                bobY = -sn * 2.2;
+                const sq = (1 - sn) * 0.045;
+                sxScale = 1 + sq;
+                syScale = 1 - sq;
+                tilt = fx * 0.055;
+            }
+        } else if (state === 'attack' && isHero) {
+            const atkT = Math.min(1, Math.max(0, ft / 12));
+            if (!rm) {
+                if (type === 'warrior') {
+                    // Preparação rápida (-2 px) seguida de avanço firme no corte (+5 px) e retorno suave
+                    const lunge = atkT < 0.25 ? -(atkT / 0.25) * 2.0 : Math.sin(((atkT - 0.25) / 0.75) * Math.PI) * 5.0;
+                    pushX = fx * lunge;
+                    pushY = fy * lunge;
+                    const stretch = Math.max(0, lunge / 5.0) * 0.06;
+                    sxScale = 1 + stretch;
+                    syScale = 1 - stretch * 0.7;
+                    tilt = fx * Math.max(0, lunge / 5.0) * 0.08;
+                } else {
+                    // Arqueiro/Ladino: leve recuo elástico ao disparar/arremessar
+                    const recoil = Math.sin(atkT * Math.PI) * 3.0;
+                    pushX = -fx * recoil;
+                    pushY = -fy * recoil;
+                    sxScale = 1 + (recoil / 3.0) * 0.04;
+                    syScale = 1 - (recoil / 3.0) * 0.03;
+                }
+            }
+        } else if ((state === 'cast' || state === 'skill') && isHero) {
             castT = Math.min(1, Math.max(0, ft / 12));
+            if (!rm) {
+                const lift = Math.sin(castT * Math.PI);
+                bobY = -lift * 2.5;
+                sxScale = 1 - lift * 0.03;
+                syScale = 1 + lift * 0.05;
+            }
         } else if (state === 'dodge' && isHero) {
             dodgeT = Math.min(1, Math.max(0, ft / 10));
+            if (!rm) {
+                const arc = Math.sin(dodgeT * Math.PI);
+                bobY = -arc * 3.5;
+                if (dodgeT < 0.8) {
+                    sxScale = 1 + arc * 0.12;
+                    syScale = 1 - arc * 0.10;
+                    tilt = fx * arc * 0.12;
+                } else {
+                    const land = Math.sin(((dodgeT - 0.8) / 0.2) * Math.PI);
+                    sxScale = 1 + land * 0.09;
+                    syScale = 1 - land * 0.08;
+                }
+            }
+        } else if (isHero && !rm) {
+            // Respiração sutil em repouso (ancorada nos pés, sem borrar)
+            const breath = Math.sin(gt * 0.085);
+            syScale = 1 + breath * 0.028;
+            sxScale = 1 - breath * 0.018;
         }
 
         // Sombra no chão já é desenhada uma única vez por drawGroundShadow em _drawWorldLayer (respeita GFX.shadows e não gira no combo)
 
-        // Poeira de passo (heróis): 2 puffs atrás, alternando o pé que tocou
-        if (walkDust) {
-            const bx = ix - fx * 5 * sc, by = feetY - fy * 5 * sc;
-            const px = -fy * 2 * sc, py = fx * 2 * sc;
-            const aA = 0.35 * (1 - sn), aB = 0.35 * sn;
-            ctx.save();
-            if (aA > 0.03) {
-                PixelFX.drawEllipse(ctx, bx + px, by + py, sc * (1.5 + 1.5 * (1 - sn)), sc * 0.7, 'rgba(200,190,170,' + aA.toFixed(2) + ')');
+        // Poeira de passo (heróis): surge sutilmente no momento de apoio do pé (sem piscar contínuo)
+        if (walkDust && sn < 0.35) {
+            const stepStr = 1 - sn / 0.35;
+            const footSide = Math.sin(ft * Math.PI / 18) >= 0 ? 1 : -1;
+            const bx = ix - fx * 4 * sc, by = feetY - fy * 3 * sc;
+            const px = -fy * 2.2 * sc * footSide, py = fx * 2.2 * sc * footSide;
+            const aDust = 0.26 * stepStr;
+            if (aDust > 0.03) {
+                ctx.save();
+                PixelFX.drawEllipse(ctx, bx + px, by + py, sc * (1.1 + 1.1 * stepStr), sc * 0.55, 'rgba(205,195,175,' + aDust.toFixed(2) + ')');
+                ctx.restore();
             }
-            if (aB > 0.03) {
-                PixelFX.drawEllipse(ctx, bx - px, by - py, sc * (1.5 + 1.5 * sn), sc * 0.7, 'rgba(200,190,170,' + aB.toFixed(2) + ')');
-            }
-            ctx.restore();
         }
 
         // Sprite; na rolagem desenha 3 imagens residuais (versão branca) antes
         const ghostSheet = (dodgeT >= 0) ? this.sheetRow(type, row, true) : sheet;
         const passes = (dodgeT >= 0) ? 4 : 1;
         ctx.save();
-        ctx.translate(ix + pushX, feetY + pushY);
+        ctx.translate(Math.round(ix + pushX), Math.round(feetY + pushY + bobY));
         for (let pass = 0; pass < passes; pass++) {
             const ghost = pass < passes - 1;
             ctx.save();
             if (ghost) {
                 const off = 6 * (pass + 1) * sc * 0.5;
-                ctx.globalAlpha *= (pass === 0 ? 0.30 : (pass === 1 ? 0.18 : 0.09)) * (1 - dodgeT);
-                ctx.translate(-fx * off, -fy * off);
+                ctx.globalAlpha *= (pass === 0 ? 0.28 : (pass === 1 ? 0.16 : 0.08)) * (1 - dodgeT);
+                ctx.translate(Math.round(-fx * off), Math.round(-fy * off));
             }
+            if (tilt) ctx.rotate(tilt);
+            if (sxScale !== 1 || syScale !== 1) ctx.scale(sxScale, syScale);
             ctx.imageSmoothingEnabled = false;
             const ts = this.tileSize;
             ctx.drawImage(ghost ? ghostSheet : sheet, col * ts, row * ts, ts, ts, -halfD, -d, d, d);
@@ -38583,6 +38644,8 @@ class Player extends Entity {
         this.dodgeAnim = 0;
         this.levelUpAnim = 0;
         this.shootAnim = 0;
+        this._skillPose = false;
+        this._moveBlend = 0;
         this.walkTimer = 0;
         this.angle = Math.PI / 2; // Default South
         this._lastMoveAngle = this.angle; // último ângulo de movimento real (dash sem direção usa este, não a mira automática)
@@ -38792,6 +38855,8 @@ class Player extends Entity {
         // A press during cooldown is buffered instead of dropped: touch and
         // gamepad triggers are edge-based, so the press would otherwise be lost.
         if(this.skillCooldown > 0) { this._skillBuffer = CONFIG.INPUT_BUFFER_FRAMES; return; }
+        this.shootAnim = 14;
+        this._skillPose = true;
         if(this.type === 'warrior') {
             this.skillCooldown = Math.floor(CONFIG.WARRIOR_SLAM_COOLDOWN * Math.max(0.5, 1 - (this.cdrMult || 0)));
             // Ground slam visual indicators
@@ -39074,15 +39139,25 @@ class Player extends Entity {
             this._pvx = dx * currentSpeed;
             this._pvy = dy * currentSpeed;
             this.move(dx * currentSpeed, dy * currentSpeed, m);
-            this.walkTimer += currentSpeed;
+            // Cadência proporcional à velocidade real sem acelerar o ciclo de 6 quadros acima do natural
+            const _moveMag = Math.min(1, Math.hypot(dx, dy));
+            this.walkTimer += _moveMag * (0.75 + currentSpeed * 0.14);
+            this._moveBlend = Math.min(1, (this._moveBlend || 0) + 0.2);
             this.angle = Math.atan2(dy, dx);
             this._lastMoveAngle = this.angle;
-            if (window.SpriteManager && SpriteManager.lerpAngle) this.spriteAngle = SpriteManager.lerpAngle(this.spriteAngle, this.angle, 0.35);
+            if (window.SpriteManager && SpriteManager.lerpAngle) this.spriteAngle = SpriteManager.lerpAngle(this.spriteAngle, this.angle, 0.26);
             else this.spriteAngle = this.angle;
             this._footstepTimer = (this._footstepTimer || 0) + 1;
             if(this._footstepTimer >= 15) { this._footstepTimer = 0; if(typeof SND !== 'undefined' && SND.playFootstep) SND.playFootstep(); }
-        } else { this.walkTimer = 0; this._footstepTimer = 0; this._pvx = 0; this._pvy = 0; }
+        } else {
+            this._moveBlend = Math.max(0, (this._moveBlend || 0) - 0.25);
+            if (this._moveBlend <= 0.01) this.walkTimer = 0;
+            this._footstepTimer = 0; this._pvx = 0; this._pvy = 0;
+        }
 
+        if(this.shootAnim > 0) { this.shootAnim--; if (this.shootAnim <= 0) this._skillPose = false; }
+        if(this.dodgeAnim > 0) this.dodgeAnim--;
+        if(this.levelUpAnim > 0) this.levelUpAnim--;
         if(this.scd > 0) this.scd--; if(this.skillCooldown > 0) this.skillCooldown--; if(this.speedBoost > 0) this.speedBoost--;
         if(this.furyTimer > 0) this.furyTimer--;
         if(this.frenzyTimer > 0) this.frenzyTimer--;
@@ -39142,7 +39217,7 @@ class Player extends Entity {
             // Superaquecido trava o disparo até a barra zerar (equilíbrio mantido como sempre foi).
             // O rótulo "SUPERAQUECIDO" na HUD e o aviso no log existem só para a trava não parecer
             // travamento do jogo, que era o que ela parecia antes.
-            this.combatTimer = 0; this.shootAnim = 12;
+            this.combatTimer = 0; this.shootAnim = 14; this._skillPose = false;
             const chainStep = this._chainAdvance(); // 1, 2 ou 3 (finalizador)
             if(chainStep === 3) this.chainSpinT = (this.type === 'warrior') ? 18 : 0;
             if(chainStep === 3 && this === player && typeof Statistics !== 'undefined') Statistics.data.comboFinishers = (Statistics.data.comboFinishers || 0) + 1;
@@ -39202,7 +39277,6 @@ class Player extends Entity {
             }
 
             if(this.type === 'warrior') {
-                this.walkTimer = 48; // Attack frame
                 const attackAngle = Math.atan2(sy, sx);
                 // Combo: passo 1 = corte da direita p/ esquerda (120°); passo 2 = volta, esquerda p/ direita, mais largo (150°);
                 // passo 3 = giro de 360° com alcance e knockback maiores
@@ -39270,7 +39344,6 @@ class Player extends Entity {
                 if(chainStep === 3 && this.skills.thunderEcho) this._schedulePulse(this.x, this.y, Math.max(1, Math.floor(dmg * CONFIG.SKILL_PULSE_MULT)), '#ffcc00');
                 this.scd = effectiveFireRate; if(hitAny) SND.play(150, 'sawtooth', 0.15, 0.3); else SND.play(80, 'triangle', 0.04, 0.08);
             } else {
-                this.walkTimer = 60;
                 let dmg = Math.floor(cls.baseDmg * this.weaponLevel * this.weaponDamageMult);
                 if(this.mutations.berserk) dmg *= CONFIG.BERSERK_DAMAGE_MULT;
                 if(this.damageBoost > 0 && _fxCrowdScale() >= 1) { ScreenEffects.triggerChromatic(2); } // cromática por tiro só com tela calma
@@ -39517,18 +39590,19 @@ class Player extends Entity {
             spriteTime = Math.max(0, (15 - this.dodgeAnim) * (10 / 15));
         }
         if (shooting) {
-            spriteState = this.type === 'mage' ? 'cast' : 'attack';
-            spriteTime = 12 - this.shootAnim;
+            spriteState = (this.type === 'mage' || this._skillPose) ? 'cast' : 'attack';
+            spriteTime = Math.max(0, (14 - this.shootAnim) * (12 / 14));
         }
         if (this.ft > 0) {
             spriteState = 'hit';
             spriteTime = 5 - this.ft;
         }
-        if (shooting) { this.shootAnim--; if (!rmPw) ctx.translate(Math.round(Math.random()*2 - 1), Math.round(Math.random()*2 - 1)); }
-        if (dodging) this.dodgeAnim--;
         // Combo finalizador do guerreiro: giro de 360° durante o golpe (desligado com reducedMotion; contador andado em update)
         if (this.chainSpinT > 0 && !rmPw) { ctx.translate(sx, sy); ctx.rotate((1 - this.chainSpinT / 18) * Math.PI * 2); ctx.translate(-sx, -sy); }
-        if (this.levelUpAnim > 0) { this.levelUpAnim--; if (!rmPw) { const sc = 1 + Math.sin(this.levelUpAnim * 0.5) * 0.5; ctx.translate(sx, sy); ctx.scale(sc, sc); ctx.translate(-sx, -sy); } }
+        if (this.levelUpAnim > 0 && !rmPw) {
+            const sc = 1 + Math.sin((this.levelUpAnim / 30) * Math.PI) * 0.22;
+            ctx.translate(sx, sy); ctx.scale(sc, sc); ctx.translate(-sx, -sy);
+        }
         let heroAlpha = this.stealth > 0 ? 0.45 : 1;
         if (this.invincibleTimer > 0 && (this.invincibleTimer % 4 < 2)) heroAlpha *= 0.4;
         ctx.globalAlpha = heroAlpha;
