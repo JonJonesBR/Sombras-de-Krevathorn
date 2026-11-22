@@ -16536,6 +16536,7 @@ const LightPixelizer = (() => {
 function drawGlow(ctx2, px, py, r, color, intensity = 0.35) {
     if (window.GFX !== undefined && window.GFX.glows === false) return;
     const prev = ctx2.globalCompositeOperation;
+    const prevAlpha = ctx2.globalAlpha;
     ctx2.globalCompositeOperation = 'lighter';
     ctx2.globalAlpha = intensity * 0.35;
     const rc = Math.max(1, Math.min(20, Math.round((r * 1.2) / 3)));
@@ -16585,12 +16586,12 @@ function drawGlow(ctx2, px, py, r, color, intensity = 0.35) {
         }
     }
     if (spr) {
-        PixelFX.draw(ctx2, spr, Math.round(px - spr.width * 0.5), Math.round(py - spr.height * 0.5));
+        PixelFX.draw(ctx2, spr, Math.round(px), Math.round(py));
     } else {
         PixelFX.drawDisc(ctx2, px, py, r * 1.2, color, null, true);
     }
     ctx2.globalCompositeOperation = prev;
-    ctx2.globalAlpha = 1;
+    ctx2.globalAlpha = prevAlpha;
 }
 
 // NOTE on static-layer caching (README claim): tiles are cached in Map.buffer,
@@ -16645,6 +16646,43 @@ function _drawWorldLayer() {
     hazards.forEach(h => { if(h.x > vL && h.x < vR && h.y > vT && h.y < vB) drawGroundShadow(wctx, h.x, h.y, h.size * 0.6, camX, camY); });
     // Armadilhas/fogo em pixel art: depois das sombras, antes de baús, pickups e entidades
     hazards.forEach(h => { if(h.x > vL && h.x < vR && h.y > vT && h.y < vB) h.draw(wctx, camX, camY); });
+    // Poças/pilares de arena dos chefes na camada de chão (nunca por cima das entidades)
+    for (let _bi = 0; _bi < entities.length; _bi++) {
+        const _be = entities[_bi];
+        if (!_be.isBoss || !_be.alive || !_be.arenaHazards || !_be.arenaHazards.length) continue;
+        for (let _hi = 0; _hi < _be.arenaHazards.length; _hi++) {
+            const _ah = _be.arenaHazards[_hi];
+            if (_ah && _ah.alive && _ah.x > vL - _ah.radius && _ah.x < vR + _ah.radius && _ah.y > vT - _ah.radius && _ah.y < vB + _ah.radius) {
+                _ah.draw(wctx, camX, camY);
+            }
+        }
+    }
+    // Poças do Rastro Venenoso (Ladino) na camada de chão com raio real visível
+    if (player && player._venomPools && player._venomPools.length) {
+        const _vr = CONFIG.VENOM_POOL_RADIUS || 60;
+        const _rm = !!(window.GameSettings && GameSettings.reducedMotion);
+        const _pa = wctx.globalAlpha;
+        for (let _vi = 0; _vi < player._venomPools.length; _vi++) {
+            const _vp = player._venomPools[_vi];
+            if (_vp.x < vL - _vr || _vp.x > vR + _vr || _vp.y < vT - _vr || _vp.y > vB + _vr) continue;
+            const _vx = _vp.x - camX, _vy = _vp.y - camY;
+            const _va = Math.min(1, _vp.t / 30);
+            wctx.globalAlpha = _va * 0.28;
+            PixelFX.drawDisc(wctx, _vx, _vy, _vr, '#2d7a22');
+            wctx.globalAlpha = _va * 0.55;
+            PixelFX.ring(wctx, _vx, _vy, _vr, '#66dd44', 3, { dash: 4 });
+            wctx.globalAlpha = _va * 0.7;
+            wctx.fillStyle = '#99ff66';
+            for (let _bk = 0; _bk < 3; _bk++) {
+                const _ang = _bk * 2.094 + (_rm ? 0 : (gameTime * 0.03 + _vi));
+                const _br = _vr * (0.35 + ((_bk * 19 + _vi * 7) % 10) * 0.045);
+                const _bx = PixelFX.snap(_vx + Math.cos(_ang) * _br, 3);
+                const _by = PixelFX.snap(_vy + Math.sin(_ang) * _br, 3);
+                wctx.fillRect(_bx, _by, 3, 3);
+            }
+        }
+        wctx.globalAlpha = _pa;
+    }
     chests.forEach(c => { if(c.x > vL && c.x < vR && c.y > vT && c.y < vB) { drawGroundShadow(wctx, c.x, c.y, 16, camX, camY); c.draw(wctx, camX, camY); } });
     PetRescue.draw(wctx, camX, camY); // pets à espera (selados ou ativos), na mesma camada dos baús
     pickups.forEach(p => { if(p.x > vL && p.x < vR && p.y > vT && p.y < vB) { drawGroundShadow(wctx, p.x, p.y, 7, camX, camY); p.draw(wctx, camX, camY); } });
@@ -16656,57 +16694,9 @@ function _drawWorldLayer() {
             if (_n.alive && _n.x > vL && _n.x < vR && _n.y > vT && _n.y < vB) _n.draw(wctx, camX, camY);
         }
     }
-    
-    // PERF: Batch particles by color (reduces state changes by ~80%)
-    // Reuse a module-scope container to avoid per-frame object allocation. Sem `delete`:
-    // apagar chaves a cada quadro transforma o objeto em dicionário e aloca arrays novos.
-    // Cada cor guarda o quadro em que foi usada (b._frame); array de cor sem uso fica vazio
-    // e o laço abaixo pula. Object.create(null) evita herdar chaves do protótipo.
-    const batchByColor = _particleBatch;
-    const _pframe = ++_particleBatchFrame;
-    for (let i = 0; i < particles.length; i++) {
-        const p = particles[i];
-        if(p.x > vL && p.x < vR && p.y > vT && p.y < vB) {
-            let b = batchByColor[p.color];
-            if (!b) { b = batchByColor[p.color] = []; }
-            else if (b._frame !== _pframe) b.length = 0;
-            b._frame = _pframe;
-            b.push(p);
-        }
-    }
-    for (const color in batchByColor) {
-        const batch = batchByColor[color];
-        if (batch._frame !== _pframe || batch.length === 0) continue;
-        wctx.fillStyle = color;
-        for (let j = 0; j < batch.length; j++) {
-            const p = batch[j];
-            const alpha = Math.max(0, p.life);
-            const s = p.s * (p.life / p.maxLife);
-            const px = p.x - camX;
-            const py = p.y - camY;
-            const sz = Math.max(2, Math.round(s * 2));
-            const gx = Math.round((px - sz * 0.5) * 0.5) * 2;
-            const gy = Math.round((py - sz * 0.5) * 0.5) * 2;
 
-            // Pixel-art trail behind fast particles (squared-magnitude compare avoids Math.sqrt)
-            if (p.vx * p.vx + p.vy * p.vy > 4) {
-                const ts = Math.max(2, Math.round(sz * 0.5));
-                const tx = Math.round((px - p.vx * 1.5 - ts * 0.5) * 0.5) * 2;
-                const ty = Math.round((py - p.vy * 1.5 - ts * 0.5) * 0.5) * 2;
-                wctx.globalAlpha = alpha * 0.5;
-                wctx.fillRect(tx, ty, ts, ts);
-            }
-
-            wctx.globalAlpha = alpha;
-            wctx.fillRect(gx, gy, sz, sz);
-        }
-    }
-    wctx.globalAlpha = 1;
-    
     DeathAnimations.drawAnimations(wctx, camX, camY);
-    DamageNumbers.draw(wctx, camX, camY);
-    ScreenEffects.drawRings(wctx, camX, camY);
-    
+
     entities.forEach(e => {
         if(e === player) return;
         if(e.x > vL && e.x < vR && e.y > vT && e.y < vB) {
@@ -16727,11 +16717,33 @@ function _drawWorldLayer() {
             }
         }
     });
+
+    // Clones sombrios do Ladino (especial): silhueta translúcida com anel no chão
+    if (typeof rogueClones !== 'undefined' && rogueClones.length) {
+        const _rmC = !!(window.GameSettings && GameSettings.reducedMotion);
+        for (let _ci = 0; _ci < rogueClones.length; _ci++) {
+            const _rc = rogueClones[_ci];
+            if (!_rc || !_rc.alive || _rc.x < vL || _rc.x > vR || _rc.y < vT || _rc.y > vB) continue;
+            drawGroundShadow(wctx, _rc.x, _rc.y, 13, camX, camY);
+            wctx.save();
+            const _fade = _rc.timer < 30 ? (_rc.timer / 30) * (_rmC ? 0.85 : (0.55 + Math.sin(gameTime * 0.5) * 0.35)) : 1;
+            wctx.globalAlpha = Math.max(0.1, 0.5 * _fade);
+            PixelFX.ring(wctx, _rc.x - camX, _rc.y - camY + 10, 14, _rc.color || '#66ff99', 3);
+            SpriteManager.draw(wctx, _rc.x - camX, _rc.y - camY, _rc.type || 'rogue', gameTime * 0.12, false, 0, 2.0, 'idle');
+            wctx.restore();
+        }
+    }
     
     // Draw visual trails behind projectiles
     trails.forEach(t => t.draw(wctx, camX, camY));
 
     bullets.forEach(b => { if(b.x > vL && b.x < vR && b.y > vT && b.y < vB) b.draw(wctx, camX, camY); });
+    if (typeof guidedBullets !== 'undefined' && guidedBullets.length) {
+        for (let _gi = 0; _gi < guidedBullets.length; _gi++) {
+            const _gb = guidedBullets[_gi];
+            if (_gb && _gb.alive && _gb.x > vL && _gb.x < vR && _gb.y > vT && _gb.y < vB) _gb.draw(wctx, camX, camY);
+        }
+    }
     
     if (player) {
         // (v57) Pet montado é desenhado ANTES do jogador: o corcel/dragão/águia fica sob o cavaleiro
@@ -16764,6 +16776,49 @@ function _drawWorldLayer() {
         if (window.GhostReplay) GhostReplay.draw(wctx, camX, camY);
         if (window.CoopP2P) CoopP2P.draw(wctx, camX, camY);
     }
+
+    // Efeitos de combate ACIMA de entidades e jogador (cortes, anéis, faíscas e números de dano)
+    const batchByColor = _particleBatch;
+    const _pframe = ++_particleBatchFrame;
+    for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        if(p.x > vL && p.x < vR && p.y > vT && p.y < vB) {
+            let b = batchByColor[p.color];
+            if (!b) { b = batchByColor[p.color] = []; }
+            else if (b._frame !== _pframe) b.length = 0;
+            b._frame = _pframe;
+            b.push(p);
+        }
+    }
+    for (const color in batchByColor) {
+        const batch = batchByColor[color];
+        if (batch._frame !== _pframe || batch.length === 0) continue;
+        wctx.fillStyle = color;
+        for (let j = 0; j < batch.length; j++) {
+            const p = batch[j];
+            const alpha = Math.max(0, p.life);
+            const s = p.s * (p.life / p.maxLife);
+            const px = p.x - camX;
+            const py = p.y - camY;
+            const sz = Math.max(2, Math.round(s * 2));
+            const gx = Math.round((px - sz * 0.5) * 0.5) * 2;
+            const gy = Math.round((py - sz * 0.5) * 0.5) * 2;
+
+            if (p.vx * p.vx + p.vy * p.vy > 4) {
+                const ts = Math.max(2, Math.round(sz * 0.5));
+                const tx = Math.round((px - p.vx * 1.5 - ts * 0.5) * 0.5) * 2;
+                const ty = Math.round((py - p.vy * 1.5 - ts * 0.5) * 0.5) * 2;
+                wctx.globalAlpha = alpha * 0.5;
+                wctx.fillRect(tx, ty, ts, ts);
+            }
+
+            wctx.globalAlpha = alpha;
+            wctx.fillRect(gx, gy, sz, sz);
+        }
+    }
+    wctx.globalAlpha = 1;
+    ScreenEffects.drawRings(wctx, camX, camY);
+    DamageNumbers.draw(wctx, camX, camY);
     
 }
 
@@ -33983,12 +34038,15 @@ class GuidedBullet {
     draw(ctx, cx, cy) {
         if(!this.alive) return;
         const gx = this.x - cx, gy = this.y - cy;
-        const f = Math.floor(gameTime / 6) % 2;
-        const pulse = (window.GameSettings && GameSettings.reducedMotion) ? 0.45 : (0.35 + Math.sin(gameTime * 0.25) * 0.2);
-        ctx.globalAlpha = pulse;
-        PixelFX.ring(ctx, gx, gy, 11 + f * 2, '#ff66cc', 3);
-        ctx.globalAlpha = 1;
-        PixelFX.draw(ctx, PixelFX.tonal('guided' + f, PICKUP_ART.orb, f ? '#ff66cc' : '#ff00aa', 2), gx, gy);
+        const rm = !!(window.GameSettings && GameSettings.reducedMotion);
+        const f = rm ? 0 : (Math.floor(gameTime / 6) % 2);
+        const prevA = ctx.globalAlpha;
+        ctx.globalAlpha = rm ? 0.55 : (0.45 + Math.sin(gameTime * 0.25) * 0.2);
+        PixelFX.ring(ctx, gx, gy, 11 + f * 2, '#ff44cc', 3);
+        ctx.globalAlpha = prevA;
+        PixelFX.draw(ctx, PixelFX.tonal('guided' + f, PICKUP_ART.orb, f ? '#ff66cc' : '#ff1a99', 2), gx, gy);
+        ctx.fillStyle = '#fff5cc';
+        ctx.fillRect(Math.round(gx) - 2, Math.round(gy) - 2, 4, 4);
     }
 }
 
@@ -35779,9 +35837,7 @@ class Boss extends Enemy {
         // Estados de status, como no Enemy.draw: elementos e nuvem de veneno
         if (typeof ElementalSystem !== 'undefined') ElementalSystem.drawStatuses(ctx, this, cx, cy);
         this._drawPoisonCloud(ctx, this.x-cx, this.y-cy);
-
-        // Draw arena hazards
-        for(let i = 0; i < this.arenaHazards.length; i++) this.arenaHazards[i].draw(ctx, cx, cy);
+        // arenaHazards são desenhados na camada de chão em _drawWorldLayer
     }
     takeDamage(a, m, source=null, noKb=false, dot=false) {
         if (source && source.type !== 'rogue') {
@@ -35865,20 +35921,40 @@ class BossArenaHazard {
         }
     }
     draw(ctx, cx, cy) {
+        const col = this.color || '#ff4400';
+        const px = this.x - cx, py = this.y - cy;
+        const rm = !!(window.GameSettings && GameSettings.reducedMotion);
+        const prevA = ctx.globalAlpha;
         if(this.warningTimer > 0) {
-            // Telegrafia: anel tracejado em pixels (só o desenho; raio e tempo continuam iguais)
-            ctx.globalAlpha = 0.3 + Math.sin(gameTime * 0.3) * 0.2;
-            PixelFX.ring(ctx, this.x-cx, this.y-cy, this.radius, '#ff4400', 3, { dash: 3 });
-            ctx.globalAlpha = 1;
+            // Telegrafia: anel tracejado em pixels na cor do perigo + preenchimento progressivo
+            const prog = 1 - Math.max(0, this.warningTimer) / 30;
+            ctx.globalAlpha = (rm ? 0.14 : 0.12 + prog * 0.14);
+            PixelFX.drawDisc(ctx, px, py, Math.max(6, this.radius * prog), col);
+            ctx.globalAlpha = rm ? 0.65 : (0.45 + Math.sin(gameTime * 0.35) * 0.25);
+            PixelFX.ring(ctx, px, py, this.radius, col, 3, { dash: 3 });
+            ctx.globalAlpha = prevA;
             return;
         }
-        // Active hazard: disco de pixels e miolo mais claro
+        // Perigo ativo: poça/zona pixel art respeitando this.color, borda escura e bolhas
         const alpha = Math.min(1, this.timer / 60);
-        ctx.globalAlpha = alpha * 0.5;
-        PixelFX.drawDisc(ctx, this.x-cx, this.y-cy, this.radius, this.color || '#ff4400');
-        ctx.globalAlpha = alpha;
-        PixelFX.drawDisc(ctx, this.x-cx, this.y-cy, this.radius * 0.6, '#ff8800');
-        ctx.globalAlpha = 1;
+        const edgeCol = PixelFX.shade(col, -0.45);
+        const coreCol = PixelFX.shade(col, 0.38);
+        ctx.globalAlpha = alpha * 0.45;
+        PixelFX.drawDisc(ctx, px, py, this.radius, col);
+        ctx.globalAlpha = alpha * 0.8;
+        PixelFX.ring(ctx, px, py, this.radius, edgeCol, 3);
+        ctx.globalAlpha = alpha * 0.85;
+        PixelFX.drawDisc(ctx, px, py, this.radius * 0.55, coreCol);
+        ctx.fillStyle = PixelFX.shade(col, 0.7);
+        const seed = Math.abs((this.x * 7 + this.y * 13) | 0);
+        for (let k = 0; k < 3; k++) {
+            const ang = k * 2.094 + (seed % 7) * 0.5 + (rm ? 0 : gameTime * 0.04);
+            const br = this.radius * (0.28 + ((seed + k * 5) % 9) * 0.055);
+            const bx = PixelFX.snap(px + Math.cos(ang) * br, 3);
+            const by = PixelFX.snap(py + Math.sin(ang) * br, 3);
+            ctx.fillRect(bx, by, 3, 3);
+        }
+        ctx.globalAlpha = prevA;
     }
 }
 
