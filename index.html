@@ -29332,9 +29332,9 @@ const BiomeSystem = {
                 A.pxLine(ctx, px, py, 6, ym, 11, 13, '#000000', 0.45);
             }
         } else if (this.currentBiome === 'lavaCave') {
-            // Fendas brilhantes só em ~28% das paredes: 3 fissuras de células com halo
+            // Fendas brilhantes só em ~28% das paredes: intensidade determinística por tile (bake estático sem gameTime)
             if (h % 100 >= 28) { ctx.restore(); return; }
-            const glow = 0.25 + Math.sin(gameTime * 0.04 + px * 0.08 + py * 0.05) * 0.15;
+            const glow = 0.28 + ((h & 15) / 15) * 0.14;
             const fis = [[4, 3, 6], [10, 5, 4], [7, 2, 3]]; // [coluna, linha inicial, altura]
             for (const [fx, fy, fl] of fis) {
                 for (let k = 0; k < fl; k++) {
@@ -29352,7 +29352,7 @@ const BiomeSystem = {
             // Runas (glifo 3x5 em células) só em ~20% das paredes; teias em ~12%
             if (h % 100 >= 20 && ((h >> 5) % 100) >= 12) { ctx.restore(); return; }
             if (h % 100 < 20) {
-                const runeAlpha = 0.15 + Math.sin(gameTime * 0.03 + px * 0.1) * 0.1;
+                const runeAlpha = 0.18 + ((h & 15) / 15) * 0.12;
                 const GLY = [['.#.', '#.#', '###', '#.#', '#.#'], ['##.', '#.#', '##.', '#.#', '##.'],
                     ['###', '#..', '#..', '#..', '###'], ['#.#', '#.#', '.#.', '.#.', '.#.']][(tx + ty * 3) & 3];
                 for (let gy = 0; gy < 5; gy++) for (let gx = 0; gx < 3; gx++) {
@@ -29420,9 +29420,9 @@ const BiomeSystem = {
                 }
             }
         } else if (this.currentBiome === 'lavaCave') {
-            // Brilho/veias de magma só em ~12% dos pisos
+            // Brilho/veias de magma só em ~12% dos pisos (determinístico no bake estático)
             if (h % 100 >= 12) { ctx.restore(); return; }
-            const glow = 0.2 + Math.sin(gameTime * 0.06 + px * 0.05 + py * 0.04) * 0.12;
+            const glow = 0.24 + ((h & 15) / 15) * 0.12;
             // Poça de magma (2x2 células)
             const sx = 4 + ((tx * 13 + ty * 7) % 5) * 2, sy = 6 + ((tx * 17 + ty * 11) % 4) * 2;
             A.px3(ctx, px, py, sx, sy, '#ff6600', glow);
@@ -29908,24 +29908,24 @@ function spawnParticles(x,y,c,n=8,size=3,spread=0) {
     }
 }
 
-// Arte dos pickups (1 char = 1 pixel, escala 2): o=contorno, s=sombra, b=base, l=brilho, w=branco, .=transparente
+// Arte dos pickups (10x10 células em escala 2 = 20x20 px, compatível com a nitidez 48x48): o=contorno, s=sombra, b=base, l=brilho, w=branco
 const PICKUP_ART = {
-    coin: [ // 4 frames de giro: larguras 12→8→4→8 px
-        ['.oooo.', 'owbbso', 'oblbso', 'obbsso', 'osssso', '.oooo.'],
-        ['.oo.', 'owbo', 'obso', 'obso', 'osso', '.oo.'],
-        ['oo', 'ol', 'ob', 'ob', 'os', 'oo'],
-        ['.oo.', 'obwo', 'obso', 'obso', 'osso', '.oo.']
+    coin: [ // 4 frames de giro: larguras 18→14→6→14 px
+        ['..ooooo..', '.owlllbo.', 'owblblbso', 'oblwblbso', 'oblbbbbso', 'obbbbsbso', '.ossssso.', '..ooooo..'],
+        ['..ooo..', '.owlbo.', 'owblbso', 'obbbbso', 'obbbbso', 'ossssso', '.ossso.', '..ooo..'],
+        ['.oo.', 'owlo', 'obbo', 'obbo', 'obso', 'osso', 'osso', '.oo.'],
+        ['..ooo..', '.obwlo.', 'obllwso', 'obbbbso', 'obbbbso', 'ossssso', '.ossso.', '..ooo..']
     ],
-    orb: ['..ooo..', '.owbbo.', 'obbbbso', 'oblbbso', 'obbbbso', '.ossso.', '..ooo..'],
-    essence: ['...o...', '..obo..', '.obwbo.', 'obllbso', '.osbso.', '..oso..', '...o...'],
-    health: ['.oo.oo.', 'owbbbso', 'oblbbso', 'obbbbso', '.obbbso', '..obso.', '...o...'],
-    xp: ['.ooooo.', 'owbbbso', 'obllbso', '.obbbso', '..osso.', '...o...'],
-    shield: ['ooooooo', 'owbbbso', 'oblbbso', 'obbbbso', '.obbbso', '..obso.', '...o...'],
-    speed: ['.oo....', '.owo...', '.obo...', '.obbbbo', 'oobbbso', 'ossssso', 'ooooooo'],
-    fury: ['...o...', '..obo..', 'ooobboo', 'obwbbso', '.osbso.', 'oo...oo'],
-    frenzy: ['....ooo', '...oblo', '..owlo.', '.oobbbo', '..obbo.', '.oblo..', 'oo.....'],
-    magnet: ['ooooooo', 'oblllso', 'obbbbso', 'obs.sbo', 'owb.bwo', 'owg.gwo', '.oo.oo.'],
-    aegis: ['ooooooo', 'owbllso', 'ollllso', 'obblbso', '.obbbso', '..obso.', '...o...']
+    orb: ['..ooooo..', '.owlllbo.', 'owllbbbso', 'olwbbbbso', 'obbbbbbso', 'obbbbssso', '.ossssso.', '..ooooo..'],
+    essence: ['....o....', '...olo...', '..owllo..', '.owlllbo.', 'obwllbbso', '.obbbbso.', '..ossso..', '...oso...', '....o....'],
+    health: ['.ooo.ooo.', 'owllowllo', 'owbbbbblo', 'obbbbbbso', 'obbbbbbso', '.obbbbso.', '..obbso..', '...oso...', '....o....'],
+    xp: ['..ooooo..', '.owllllo.', 'owbbbbblo', 'obwllllso', '.obbbbso.', '..obbso..', '...oso...', '....o....'],
+    shield: ['ooooooooo', 'owlllllso', 'owlbbbbso', 'obbbbbbso', 'obbbbbbso', '.obbbbso.', '..obbso..', '...oso...', '....o....'],
+    speed: ['..ooo....', '.owlo....', '.obbo....', '.obbbbboo', 'oobbbbbso', 'obbbbbbso', 'ossssssso', 'ooooooooo'],
+    fury: ['....o....', '...olo...', '..owblo..', 'ooobbbboo', 'owbbbbbso', '.osbbbso.', '..os.so..', '.oo...oo.'],
+    frenzy: ['.....oooo', '....owllo', '...owllo.', '..oobbbbo', '.owbbbbso', '...obbo..', '..owbo...', '.oo......'],
+    magnet: ['ooooooooo', 'oblllllso', 'obbbbbbso', 'obs...sbo', 'ows...swo', 'owg...gwo', 'owg...gwo', '.oo...oo.'],
+    aegis: ['ooooooooo', 'owbllllso', 'owllllbso', 'obwlllbso', 'obbbbbbso', '.obbbbso.', '..obbso..', '...oso...', '....o....']
 };
 
 class Pickup {
@@ -29963,7 +29963,7 @@ class Pickup {
         const pulse = reduced ? 0 : Math.sin(gameTime * 0.12 + this.bobOffset) * 0.12;
         // Halo suave: raio 60% e intensidade no máximo 0.25 (sem disco chapado)
         const halo = (r, a) => drawGlow(ctx, px, py, r * 0.6, this.color, Math.min(0.25, a));
-        const SPR = 3; // escala 3 (≈18–21 px)
+        const SPR = 2; // escala 2 sobre grade 9-10 células (≈18–20 px nítidos)
         ctx.save();
         if(this.type === 'currency') {
             halo(10, 0.5);
@@ -30111,10 +30111,22 @@ const WorldSprites = (() => {
             { k: t.o, s: t.s, b: t.b, l: t.l, d: PixelFX.shade(color, -0.55) }, 3, color);
     };
 
-    // Medalhão de item: anel na cor da raridade, miolo escuro e letra em pixel (W ou E)
-    const GLYPH = { W: ['#...#', '#...#', '#.#.#', '#.#.#', '.#.#.'], E: ['###', '#..', '###', '#..', '###'] };
-    const medal = (letter, color) => {
-        const R = 6.4, Ri = 4.4, C = 7, gl = GLYPH[letter], gw = gl[0].length, gh = gl.length;
+    // Medalhão de item: anel na cor da raridade, miolo escuro e ícone pixel art 7x7 por categoria/slot
+    const GLYPH = {
+        W: ['#...#', '#...#', '#.#.#', '#.#.#', '.#.#.'],
+        E: ['###', '#..', '###', '#..', '###'],
+        sword:  ['.....##', '....##.', '...##..', '..##...', '.###...', '#.#....', '.#.....'],
+        dagger: ['....##.', '...##..', '..##...', '.###...', '.#.#...', '#......', '.......'],
+        staff:  ['....###', '....#.#', '...####', '..##...', '.##....', '##.....', '#......'],
+        bow:    ['..###..', '.#..#..', '#...#..', '#...#..', '#...#..', '.#..#..', '..###..'],
+        helm:   ['..###..', '.#####.', '#######', '##.#.##', '#######', '.##.##.', '.......'],
+        armor:  ['##...##', '#######', '.#####.', '.#####.', '.#####.', '..###..', '.......'],
+        boots:  ['.##....', '.##....', '.##....', '.###...', '.#####.', '.#####.', '.......'],
+        amulet: ['..###..', '.#...#.', '..#.#..', '...#...', '..###..', '..###..', '...#...'],
+        ring:   ['..###..', '.#...#.', '#.....#', '#.....#', '#.....#', '.#...#.', '..###..']
+    };
+    const medal = (iconKey, color) => {
+        const R = 7.2, Ri = 5.2, C = 7, gl = GLYPH[iconKey] || GLYPH.W, gw = gl[0].length, gh = gl.length;
         const gx0 = C - Math.floor(gw / 2), gy0 = C - Math.floor(gh / 2), g = [];
         for (let y = 0; y <= 2 * C; y++) {
             const r = [];
@@ -30123,12 +30135,12 @@ const WorldSprites = (() => {
                 let ch = '.';
                 if (d <= R) ch = d <= Ri ? 'd' : 'c';
                 const gxx = x - gx0, gyy = y - gy0;
-                if (ch === 'd' && gxx >= 0 && gxx < gw && gyy >= 0 && gyy < gh && gl[gyy][gxx] === '#') ch = 'c';
+                if (ch === 'd' && gxx >= 0 && gxx < gw && gyy >= 0 && gyy < gh && gl[gyy][gxx] === '#') ch = 'l';
                 r.push(ch);
             }
             g.push(r.join(''));
         }
-        return build('pk|' + letter + '|' + color, g, { k: PixelFX.shade(color, -0.6), c: color, d: '#14141c' }, 2, color);
+        return build('pk2|' + iconKey + '|' + color, g, { k: PixelFX.shade(color, -0.65), c: color, l: PixelFX.shade(color, 0.4), d: '#14141c' }, 2, color);
     };
 
     // Baú fechado: tampa, faixa metálica na cor da raridade e fecho; faísca piscando em 4 quadros
@@ -30637,13 +30649,14 @@ class WeaponPickup {
         if(this.timer > 0) { this.timer--; if(this.timer <= 0) this.alive = false; }
     }
     draw(ctx, cx, cy) {
-        const px = this.x - cx, py = this.y - cy + Math.sin(gameTime * 0.05 + this.bobOffset) * 4;
-        const rarityColors = { common: '#9ca3af', uncommon: '#4ade80', rare: '#60a5fa', epic: '#c084fc', legendary: '#ffcc00' };
-        const rarity = this.weapon.rarity || 'common';
-        const borderCol = rarityColors[rarity] || '#9ca3af';
-        // Medalhão em pixel art (anel na cor da raridade, letra W); halo de 1 célula no lugar do glow
-        const sp = WorldSprites.medal('W', borderCol);
-        if (window.GFX === undefined || window.GFX.glows) { ctx.globalAlpha = 0.35; PixelFX.draw(ctx, sp.halo, px, py); }
+        const px = Math.round(this.x - cx), py = Math.round(this.y - cy + Math.sin(gameTime * 0.05 + this.bobOffset) * 4);
+        const rarityColors = { common: '#9ca3af', uncommon: '#4ade80', rare: '#60a5fa', epic: '#c084fc', legendary: '#ffcc00', Comum: '#cccccc', Incomum: '#33ff33', Raro: '#33ccff', Epico: '#cc66ff', Lendario: '#ff8800', Mitico: '#ff3333' };
+        const w = this.weapon || {};
+        const borderCol = w.color || rarityColors[w.rarity] || '#9ca3af';
+        const wid = String(w.id || '');
+        const icon = /wand|staff/.test(wid) ? 'staff' : (/dagger|crossbow|windrunner|deathwhisper/.test(wid) ? ((typeof player !== 'undefined' && player && player.type === 'elf') ? 'bow' : 'dagger') : 'sword');
+        const sp = WorldSprites.medal(icon, borderCol);
+        if (window.GFX === undefined || window.GFX.glows) { ctx.globalAlpha = 0.42; PixelFX.draw(ctx, sp.halo, px, py); }
         ctx.globalAlpha = 1;
         PixelFX.draw(ctx, sp.body, px, py);
     }
@@ -30658,11 +30671,14 @@ class EquipmentPickup {
         if(this.timer > 0) { this.timer--; if(this.timer <= 0) this.alive = false; }
     }
     draw(ctx, cx, cy) {
-        const px = this.x - cx, py = this.y - cy + Math.sin(gameTime * 0.05 + this.bobOffset) * 4;
-        const rarityColors = { common: '#9ca3af', uncommon: '#4ade80', rare: '#60a5fa', epic: '#c084fc', legendary: '#ffcc00' };
-        const rarity = this.equip.rarity || 'common';
-        // Medalhão em pixel art (anel na cor da raridade, letra E)
-        PixelFX.draw(ctx, WorldSprites.medal('E', rarityColors[rarity] || '#9ca3af').body, px, py);
+        const px = Math.round(this.x - cx), py = Math.round(this.y - cy + Math.sin(gameTime * 0.05 + this.bobOffset) * 4);
+        const rarityColors = { common: '#9ca3af', uncommon: '#4ade80', rare: '#60a5fa', epic: '#c084fc', legendary: '#ffcc00', Comum: '#cccccc', Incomum: '#33ff33', Raro: '#33ccff', Epico: '#cc66ff', Lendario: '#ff8800', Mitico: '#ff3333' };
+        const eq = this.equip || {};
+        const borderCol = eq.color || rarityColors[eq.rarity] || '#9ca3af';
+        const sp = WorldSprites.medal(eq.slot || 'E', borderCol);
+        if (window.GFX === undefined || window.GFX.glows) { ctx.globalAlpha = 0.42; PixelFX.draw(ctx, sp.halo, px, py); }
+        ctx.globalAlpha = 1;
+        PixelFX.draw(ctx, sp.body, px, py);
     }
 }
 
@@ -31799,8 +31815,10 @@ class Map {
             for (let k = 5; k <= 10; k++) A.px3(bctx, px, py, k, 8, '#883300');
             this._flames.push({ x: px + 15, y: py + 12, kind: 'brazier', seed: h3, p3: p3 });
         } else {
-            // Tocha de parede: poste de madeira e colar de metal; a chama é animada em _drawFlames
-            for (let r = 9; r <= 13; r++) A.px3(bctx, px, py, 8, r, pal.body);
+            // Tocheiro de pé: pedestal de pedra/ferro, haste e colar metálico; chama animada em _drawFlames
+            for (let k = 6; k <= 10; k++) A.px3(bctx, px, py, k, 13, '#4c4654');
+            for (let k = 7; k <= 9; k++) A.px3(bctx, px, py, k, 12, '#696272');
+            for (let r = 9; r <= 11; r++) A.px3(bctx, px, py, 8, r, pal.body);
             for (let k = 7; k <= 9; k++) A.px3(bctx, px, py, k, 8, '#9a8a70');
             this._flames.push({ x: px + 21, y: py + 12, kind: 'torch', seed: h3, p3: p3 });
         }
@@ -32006,6 +32024,7 @@ class Map {
             const floorColor = BiomeSystem.getFloorColor();
             const bctx = this.bufferCtx;
             
+            const litTiles = [];
             for(let x=0; x<this.width; x++) for(let y=0; y<this.height; y++) {
                 let px=x*ts, py=y*ts;
                 const h1 = (x * 374761393 + y * 668265263) & 0xFFFF;
@@ -32055,22 +32074,28 @@ class Map {
                     try { BiomeSystem.drawFloorDetail(bctx, px, py, ts, x, y, this); } catch(e) {}
 
                     if (this.tiles[x][y].t === 2) {
-                        // Rocha em pixel art (sprite cacheado por cor de parede e de chão)
-                        PixelFX.draw(bctx, MapTileArt.rock(wallColor, floorColor), px + ts/2, py + ts/2);
-                        // Obstáculo temático por cima da rocha (E4b-1): desenho do subtipo, tingido pelo tema
                         const ob = this.tiles[x][y].ob, thOb = ob && BiomeSystem.getFloorTheme();
-                        if (thOb) PixelFX.draw(bctx, MapTileArt.obstacle(ob, thOb), px + ts/2, py + ts/2);
+                        if (thOb) {
+                            // Obstáculo temático com sombra de base limpa (sem rocha vazando atrás)
+                            PixelFX.drawEllipse(bctx, px + ts / 2, py + ts - 6, 17, 6, 'rgba(0,0,0,0.32)');
+                            PixelFX.draw(bctx, MapTileArt.obstacle(ob, thOb), px + ts/2, py + ts/2);
+                        } else {
+                            PixelFX.draw(bctx, MapTileArt.rock(wallColor, floorColor), px + ts/2, py + ts/2);
+                        }
                     }
 
                     if (this.tiles[x][y].lit) {
-                        this._drawLightProp(bctx, px, py, ts, x, y);
+                        litTiles.push([px, py, x, y]);
                     } else if (this.tiles[x][y].t === 0) {
-                        // Ambient biome decor on open floor — baked once into
-                        // the tile buffer, zero per-frame cost.
                         this._drawFloorDecor(bctx, px, py, ts, x, y, h1);
                         this._drawThemeDecor(bctx, px, py, ts, x, y);
                     }
                 }
+            }
+            // 2º passe: props luminosos e seus halos desenhados após todos os tiles base (sem corte quadrado nas bordas)
+            for (let li = 0; li < litTiles.length; li++) {
+                const lt = litTiles[li];
+                this._drawLightProp(bctx, lt[0], lt[1], ts, lt[2], lt[3]);
             }
             this.needsRedraw = false;
         }
@@ -32086,7 +32111,7 @@ class Map {
         if (sw > 0 && sh > 0) {
             const prevSmooth = ctx.imageSmoothingEnabled;
             ctx.imageSmoothingEnabled = false;
-            ctx.drawImage(this.buffer, sx, sy, sw, sh, sx - cx, sy - cy, sw, sh);
+            ctx.drawImage(this.buffer, sx, sy, sw, sh, Math.round(sx - cx), Math.round(sy - cy), sw, sh);
             ctx.imageSmoothingEnabled = prevSmooth;
         }
         this._drawFlames(ctx, cx, cy);
@@ -33782,7 +33807,7 @@ class MimicEnemy extends Entity {
             ctx.save();
             drawGlow(ctx, px, py, 6, COLORS.PICKUP_CURRENCY, 0.25);
             const f = Math.floor(gameTime * 0.11 + this.bobOffset) % 4;
-            PixelFX.draw(ctx, PixelFX.tonal('coin' + f, PICKUP_ART.coin[f], COLORS.PICKUP_CURRENCY, 3), px, py);
+            PixelFX.draw(ctx, PixelFX.tonal('coin' + f, PICKUP_ART.coin[f], COLORS.PICKUP_CURRENCY, 2), px, py);
             if ((gameTime + this._blinkOff) % CONFIG.MIMIC_BLINK_PERIOD < CONFIG.MIMIC_BLINK_FRAMES) {
                 ctx.fillStyle = '#ff2a2a';
                 ctx.fillRect(px - 1, py - 1, 3, 3);
@@ -36381,32 +36406,50 @@ const PetRescue = {
             const smOld = ctx.imageSmoothingEnabled;
             ctx.imageSmoothingEnabled = false;
             const spr = _petRescueSprite(o.pet);
+            const rx = Math.round(sx), ry = Math.round(sy);
             if (o.kind === 'wounded') {
-                ctx.save(); ctx.translate(sx, sy); ctx.rotate(Math.PI / 2);
-                ctx.drawImage(spr, -20, -20, 40, 40);
+                // Sprite 48×48 nativo (sem encolher p/ 40×40) + espinhos e atadura em pixel art
+                ctx.save(); ctx.translate(rx, ry); ctx.rotate(Math.PI / 2);
+                ctx.drawImage(spr, -24, -24, 48, 48);
                 ctx.restore();
-                // Espinhos em volta do corpo e ataduras cruzadas
-                ctx.fillStyle = '#4d6b2e';
                 for (const tx of [-16, -6, 6, 16]) {
-                    ctx.beginPath(); ctx.moveTo(sx + tx - 3, sy + 16); ctx.lineTo(sx + tx, sy + 9); ctx.lineTo(sx + tx + 3, sy + 16); ctx.closePath(); ctx.fill();
+                    const bx = rx + tx;
+                    ctx.fillStyle = '#182410';
+                    ctx.fillRect(bx - 4, ry + 14, 8, 4);
+                    ctx.fillRect(bx - 2, ry + 10, 4, 4);
+                    ctx.fillStyle = '#4d6b2e';
+                    ctx.fillRect(bx - 2, ry + 12, 4, 4);
+                    ctx.fillStyle = '#7ea64b';
+                    ctx.fillRect(bx - 1, ry + 10, 2, 3);
                 }
+                // Atadura cruzada pixel art com contorno escuro
+                ctx.fillStyle = '#2a2218';
+                ctx.fillRect(rx - 10, ry - 4, 20, 6);
+                ctx.fillRect(rx - 3, ry - 10, 6, 20);
                 ctx.fillStyle = '#efe6cf';
-                ctx.fillRect(sx - 10, sy - 4, 20, 3);
-                ctx.fillRect(sx - 3, sy - 10, 3, 20);
+                ctx.fillRect(rx - 8, ry - 2, 16, 2);
+                ctx.fillRect(rx - 1, ry - 8, 2, 16);
             } else {
-                ctx.drawImage(spr, Math.round(sx - 20), Math.round(sy - 30), 40, 40);
-                // Gaiola: base, barras verticais e teto
+                // Sprite 48×48 nativo dentro de gaiola em pixel art (barras sombreadas + contorno)
+                ctx.drawImage(spr, rx - 24, ry - 34, 48, 48);
+                ctx.fillStyle = '#141822';
+                ctx.fillRect(rx - 25, ry + 10, 50, 6);
+                ctx.fillRect(rx - 25, ry - 35, 50, 5);
+                for (let bx = -20; bx <= 20; bx += 8) {
+                    ctx.fillStyle = '#141822'; ctx.fillRect(rx + bx - 2, ry - 32, 4, 44);
+                    ctx.fillStyle = '#6f7a90'; ctx.fillRect(rx + bx - 1, ry - 31, 2, 42);
+                    ctx.fillStyle = '#b8c3d8'; ctx.fillRect(rx + bx - 1, ry - 31, 1, 42);
+                }
                 ctx.fillStyle = '#4a5263';
-                ctx.fillRect(sx - 22, sy + 10, 44, 4);
+                ctx.fillRect(rx - 24, ry + 11, 48, 4);
+                ctx.fillRect(rx - 24, ry - 34, 48, 3);
                 ctx.fillStyle = '#9aa3b5';
-                for (let bx = -18; bx <= 18; bx += 6) ctx.fillRect(sx + bx - 1, sy - 28, 2, 40);
-                ctx.fillRect(sx - 22, sy - 30, 44, 3);
+                ctx.fillRect(rx - 24, ry - 34, 48, 1);
             }
             ctx.imageSmoothingEnabled = smOld;
             if (!on) {
-                ctx.strokeStyle = 'rgba(160,140,200,0.7)'; ctx.lineWidth = 1.5;
-                ctx.setLineDash([3, 3]);
-                ctx.beginPath(); ctx.arc(sx, sy, 26, 0, Math.PI * 2); ctx.stroke();
+                ctx.globalAlpha = 0.7;
+                PixelFX.ring(ctx, rx, ry, 28, '#a08cc8', 3, { dash: 3 });
             }
             ctx.restore();
         }
