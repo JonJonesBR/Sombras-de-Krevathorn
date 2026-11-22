@@ -12126,7 +12126,7 @@ var CONFIG = {
     LORE_DROP_CHANCE_BOSS: 1.0,          // 100% from bosses
     LORE_DROP_CHANCE_ELITE: 0.15,         // 15% from elites
     LORE_DROP_CHANCE_SECRET: 0.05,        // 5% from regular kills (secret discovery)
-    LORE_CATEGORY_NAMES: { history: 'História', monsters: 'Monstros', artifacts: 'Artefatos', npcs: 'Personagens' },
+    LORE_CATEGORY_NAMES: { all: 'Todas', history: 'História', monsters: 'Monstros', artifacts: 'Artefatos', npcs: 'Personagens' },
     LORE_MAX_ENTRIES: 66,                 // total canônico: 55 existentes + lore_048b + lore_056–065 (F1)
 
     // Mapa canônico dos andares (F0). O jogo numera 1 → 10; a lore numera B10 → B1.
@@ -44957,18 +44957,20 @@ renderAchievementsContent() {
                 return this.renderLoreDetail(ns.viewingEntry);
             }
 
-            const categoryLabels = (loreLocale && loreLocale.categories) || CONFIG.LORE_CATEGORY_NAMES || {
-                all: 'Todas', history: 'História', monsters: 'Monstros', artifacts: 'Artefatos', npcs: 'Personagens'
-            };
+            const categoryLabels = Object.assign(
+                { all: 'Todas', history: 'História', monsters: 'Monstros', artifacts: 'Artefatos', npcs: 'Personagens' },
+                CONFIG.LORE_CATEGORY_NAMES || {},
+                (loreLocale && loreLocale.categories) || {}
+            );
             const categoryKeys = ['all', 'history', 'monsters', 'artifacts', 'npcs'];
             const rarityColors = { common: COLORS.TEXT_DIM, uncommon: COLORS.RARITY_UNCOMMON, rare: '#60a5fa', epic: '#fbbf24', legendary: '#ff9f43' };
             const activeSection = ns._activeSection || 'fragments';
             const unreadCount = ns.getUnreadCount ? ns.getUnreadCount() : 0;
             const secBtn = (id, label) => {
                 const on = activeSection === id;
-                return `<button onclick="UIManager.setLoreSection('${id}')" style="flex:1;min-width:68px;padding:7px 6px;border-radius:10px;font-size:10px;font-weight:800;border:1px solid ${on ? 'rgba(224,182,255,0.65)' : 'rgba(255,255,255,0.12)'};background:${on ? 'rgba(157,78,221,0.26)' : 'rgba(255,255,255,0.04)'};color:${on ? '#f3e8ff' : COLORS.TEXT_DIM};cursor:pointer;touch-action:manipulation">${label}</button>`;
+                return `<button onclick="UIManager.setLoreSection('${id}')" style="width:100%;padding:8px 8px;border-radius:10px;font-size:11px;font-weight:800;border:1px solid ${on ? 'rgba(224,182,255,0.65)' : 'rgba(255,255,255,0.12)'};background:${on ? 'rgba(157,78,221,0.26)' : 'rgba(255,255,255,0.04)'};color:${on ? '#f3e8ff' : COLORS.TEXT_DIM};cursor:pointer;touch-action:manipulation;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${label}</button>`;
             };
-            const sectionNav = `<div style="display:flex;gap:5px;margin-bottom:10px;flex-wrap:wrap">
+            const sectionNav = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px">
                 ${secBtn('fragments', _L('lore.tab.fragments', 'Mistérios') + (unreadCount > 0 ? ' (' + unreadCount + ')' : ''))}
                 ${secBtn('pets', _L('lore.tab.pets', 'Companheiros'))}
                 ${secBtn('relics', _L('lore.tab.relics', 'Relíquias'))}
