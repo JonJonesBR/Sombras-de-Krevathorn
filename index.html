@@ -25343,7 +25343,11 @@ const ScreenEffects = {
             ice: '#77ffff',
             lightning: '#ffff00',
             poison: '#33ff88',
-            steam: '#ccddff'
+            steam: '#ccddff',
+            toxic: '#66ff33',
+            neurotoxin: '#ff00ff',
+            inferno: '#ff6600',
+            crystal: '#88ffff'
         };
         const color = colors[type] || '#ffffff';
         this.triggerShake(4);
@@ -28694,8 +28698,8 @@ const SpriteRenderer = {
         if (this && this !== SpriteRenderer) { this._dsT = type; this._dsS = scale; this._dsA = angle; }   // para a animação de morte
         SpriteManager.draw(ctx, x, y, type, f.time, isHit, angle, scale, f.state);
     },
-    drawMerchant(ctx, x, y, frame, angle=0) {
-        SpriteManager.draw(ctx, x, y, 'merchant', frame, false, angle, 1.5);
+    drawMerchant(ctx, x, y, frame, angle=0, isHit=false) {
+        SpriteManager.draw(ctx, x, y, 'merchant', frame, isHit, angle, 1.5, frame > 0 ? 'walk' : 'idle');
     }
 };
 
@@ -29692,31 +29696,35 @@ const ElementalSystem = {
             crystal: '#88ffff'
         };
         
-        const yOff = -entity.radius - 16;
-        let xOff = -((entity.elementalStatuses.length - 1) * 14) / 2;
+        const yOff = -entity.radius - (entity.isB ? 36 : 24);
+        let xOff = -((entity.elementalStatuses.length - 1) * 16) / 2;
+        const rm = !!(window.GameSettings && GameSettings.reducedMotion);
         
         ctx.save();
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.font = '12px ' + COLORS.CANVAS_FONT;
+        ctx.font = 'bold 9px ' + COLORS.CANVAS_FONT;
         
         for (const status of entity.elementalStatuses) {
             const color = colors[status.type] || '#ffffff';
-            ctx.fillStyle = color;
-            ctx.globalAlpha = 0.7 + Math.sin((_frameClockMs || Date.now()) * 0.005) * 0.3;
-            // Ícone em pixel (7x7 células) no lugar do emoji; fonte e i18n dos números não mudam
+            ctx.globalAlpha = rm ? 0.92 : (0.78 + Math.sin((_frameClockMs || Date.now()) * 0.005) * 0.22);
+            // Ícone em pixel com contorno escuro 1px (9x9 células em escala 2)
             PixelFX.draw(ctx, WorldSprites.status(status.type, color), entity.x - cx + xOff, entity.y - cy + yOff);
             
-            // Stack count
+            // Stack count com contorno escuro legível em 360px
             if (status.stacks > 1) {
-                ctx.font = '8px ' + COLORS.CANVAS_FONT;
+                const tx = Math.round(entity.x - cx + xOff + 7), ty = Math.round(entity.y - cy + yOff + 5);
+                ctx.globalAlpha = 0.95;
+                ctx.fillStyle = '#090612';
+                ctx.fillText(status.stacks, tx - 1, ty);
+                ctx.fillText(status.stacks, tx + 1, ty);
+                ctx.fillText(status.stacks, tx, ty - 1);
+                ctx.fillText(status.stacks, tx, ty + 1);
                 ctx.fillStyle = '#fff';
-                ctx.globalAlpha = 0.6;
-                ctx.fillText(status.stacks, entity.x - cx + xOff + 6, entity.y - cy + yOff + 4);
-                ctx.font = '12px ' + COLORS.CANVAS_FONT;
+                ctx.fillText(status.stacks, tx, ty);
             }
             
-            xOff += 16;
+            xOff += 18;
         }
         
         ctx.restore();
@@ -30446,21 +30454,38 @@ const WorldSprites = (() => {
     };
     const npc = (type, color, frame) => npcGrid(type, NPC_ART[type] || NPC_ART.guide, color, frame & 3);
 
-    // Ícones de status em 7x7 células ('#' = cor do status, 'l' = brilho), bakeados por tipo e cor
+    // Ícones de status em 7x7 células ('#' = cor do status, 'l' = brilho), contornados em #090612 (9x9)
     const STATUS_ICON = {
         fire: ['...#...', '..###..', '.#####.', '#######', '##lll##', '#######', '.#####.'],
         ice: ['...#...', '.#.#.#.', '..###..', '#######', '..###..', '.#.#.#.', '...#...'],
-        poison: ['...#...', '...#...', '..###..', '.#####.', '.#####.', '.#####.', '..###..'],
-        lightning: ['....##.', '...##..', '..##...', '.#####.', '....##.', '...##..', '..##...'],
-        steam: ['..##...', '.####.#', '#######', '#######', '.#####.', '.......', '.......'],
-        toxic: ['.#####.', '#.....#', '#..#..#', '#.....#', '#.....#', '#.....#', '.#####.'],
-        inferno: ['#..#..#', '.#.#.#.', '..###..', '#######', '..###..', '.#.#.#.', '#..#..#'],
-        neurotoxin: ['..###..', '.#####.', '##.#.##', '#######', '##.#.##', '.#####.', '..###..'],
-        crystal: ['...#...', '..###..', '.#####.', '#######', '.#####.', '..###..', '...#...']
+        poison: ['...#...', '...#...', '..###..', '.##l##.', '.#####.', '.#####.', '..###..'],
+        lightning: ['....##.', '...##..', '..##...', '.#lll#.', '....##.', '...##..', '..##...'],
+        steam: ['..##...', '.####.#', '#l###l#', '#######', '.#####.', '.......', '.......'],
+        toxic: ['..###..', '.#####.', '.#.#.#.', '.#####.', '..###..', '.#.#.#.', '.......'],
+        inferno: ['.#...#.', '.##.##.', '#######', '##l#l##', '.#####.', '..###..', '...#...'],
+        neurotoxin: ['..###..', '.#####.', '##l#l##', '#######', '##.#.##', '.#####.', '..###..'],
+        crystal: ['...#...', '..#l#..', '.##l##.', '###l###', '.#####.', '..###..', '...#...']
+    };
+    const _outlineStatus = g => {
+        const H = g.length, W = g[0].length, out = [];
+        for (let y = -1; y <= H; y++) {
+            let row = '';
+            for (let x = -1; x <= W; x++) {
+                const ch = (y >= 0 && y < H && x >= 0 && x < W) ? g[y][x] : '.';
+                if (ch !== '.') { row += ch; continue; }
+                const adj = (y > 0 && x >= 0 && x < W && g[y - 1][x] !== '.')
+                    || (y < H - 1 && x >= 0 && x < W && g[y + 1][x] !== '.')
+                    || (x > 0 && y >= 0 && y < H && g[y][x - 1] !== '.')
+                    || (x < W - 1 && y >= 0 && y < H && g[y][x + 1] !== '.');
+                row += adj ? 'o' : '.';
+            }
+            out.push(row);
+        }
+        return out;
     };
     const status = (type, color) => {
-        const g = STATUS_ICON[type] || STATUS_ICON.crystal, key = 'st|' + type + '|' + color;
-        if (!PixelFX.get(key)) PixelFX.bake(key, g, { '#': color, l: PixelFX.shade(color, 0.5) }, 2);
+        const g = STATUS_ICON[type] || STATUS_ICON.crystal, key = 'st2|' + type + '|' + color;
+        if (!PixelFX.get(key)) PixelFX.bake(key, _outlineStatus(g), { o: '#090612', '#': color, l: PixelFX.shade(color, 0.55) }, 2);
         return PixelFX.get(key);
     };
 
@@ -32580,6 +32605,64 @@ function _drawStatusMarks(ctx, e, px, py) {
     }
 }
 
+// Camada unificada de estados visuais (congelado, elementos, nuvem de veneno e marcas) para todas as subclasses
+function _drawEntityOverlays(ctx, e, px, py, cx, cy) {
+    if (e.frozen > 0) _drawFrozenVeil(ctx, px, py, e.radius);
+    if (typeof ElementalSystem !== 'undefined') ElementalSystem.drawStatuses(ctx, e, cx, cy);
+    if (typeof e._drawPoisonCloud === 'function') e._drawPoisonCloud(ctx, px, py);
+    else if (e.poisonStacks > 0 && typeof Enemy !== 'undefined' && Enemy.prototype._drawPoisonCloud) Enemy.prototype._drawPoisonCloud.call(e, ctx, px, py);
+    _drawStatusMarks(ctx, e, px, py);
+}
+
+// Silhueta branca pura em cache (WeakMap por canvas) para hit-flash nítido em sprites customizados HD
+const _hitFlashCache = typeof WeakMap !== 'undefined' ? new WeakMap() : null;
+function _drawWhiteFlash(ctx, spr, px, py) {
+    if (!spr) return;
+    let wf = _hitFlashCache ? _hitFlashCache.get(spr) : null;
+    if (!wf && typeof document !== 'undefined') {
+        wf = document.createElement('canvas');
+        wf.width = spr.width; wf.height = spr.height;
+        const g = wf.getContext('2d');
+        g.imageSmoothingEnabled = false;
+        g.drawImage(spr, 0, 0);
+        g.globalCompositeOperation = 'source-in';
+        g.fillStyle = '#ffffff';
+        g.fillRect(0, 0, wf.width, wf.height);
+        if (_hitFlashCache) _hitFlashCache.set(spr, wf);
+    }
+    if (wf) {
+        const prev = ctx.globalAlpha;
+        ctx.globalAlpha = 0.85;
+        PixelFX.draw(ctx, wf, px, py);
+        ctx.globalAlpha = prev;
+    }
+}
+
+// Faixa de investida/bote em pixel art (substitui fillRect/triângulos rotacionados vetoriais)
+function _drawPixelLane(ctx, px, py, dx, dy, len, halfW, prog, col) {
+    const t = Math.max(0, Math.min(1, prog));
+    const nx = -dy, ny = dx;
+    const ex = px + dx * len, ey = py + dy * len;
+    const fx = px + dx * (len * t), fy = py + dy * (len * t);
+    const prev = ctx.globalAlpha;
+    // Bordas laterais da faixa total
+    PixelFX.line(ctx, px + nx * halfW, py + ny * halfW, ex + nx * halfW, ey + ny * halfW, col, 0.35);
+    PixelFX.line(ctx, px - nx * halfW, py - ny * halfW, ex - nx * halfW, ey - ny * halfW, col, 0.35);
+    // Preenchimento progressivo em barras transversais alinhadas à grade
+    const bars = Math.max(2, Math.floor((len * t) / 10));
+    for (let i = 1; i <= bars; i++) {
+        const d = (len * t) * (i / bars);
+        const bx = px + dx * d, by = py + dy * d;
+        PixelFX.line(ctx, bx + nx * (halfW - 1), by + ny * (halfW - 1), bx - nx * (halfW - 1), by - ny * (halfW - 1), col, 0.25 + 0.4 * (i / bars));
+    }
+    // Linha central brilhante + ponta de seta pixelada
+    PixelFX.line(ctx, px, py, fx, fy, PixelFX.shade(col, 0.55), 0.75);
+    const tip = Math.min(8, Math.max(4, halfW));
+    PixelFX.line(ctx, ex, ey, ex - dx * tip + nx * tip * 0.7, ey - dy * tip + ny * tip * 0.7, col, 0.85);
+    PixelFX.line(ctx, ex, ey, ex - dx * tip - nx * tip * 0.7, ey - dy * tip - ny * tip * 0.7, col, 0.85);
+    ctx.globalAlpha = prev;
+}
+
 class Enemy extends Entity {
     constructor(x,y,isB=false, type=null) {
         const baseHp = isB ? DifficultySystem.getScaledHp(CONFIG.BOSS_HP, true) : DifficultySystem.getScaledHp(CONFIG.ENEMY_HP, false);
@@ -32807,10 +32890,9 @@ class Enemy extends Entity {
             ctx.globalAlpha = 1;
             // Crown indicator for elite, ring for boss
             if(this.isB) {
-                ctx.strokeStyle = '#ff4444';
-                ctx.lineWidth = 2;
-                ctx.globalAlpha = 0.6 + pulse;
-                PixelFX.ring(ctx, px, py, this.radius + 12 + Math.sin(gameTime * 0.2) * 2, '#ff4444', 3);
+                const rmB = !!(window.GameSettings && GameSettings.reducedMotion);
+                ctx.globalAlpha = 0.6 + (rmB ? 0 : pulse);
+                PixelFX.ring(ctx, px, py, this.radius + 12 + (rmB ? 0 : Math.sin(gameTime * 0.2) * 2), '#ff4444', 3);
                 ctx.globalAlpha = 1;
             } else if(this.elite) {
                 const crown = PixelFX.get('elite|crown') || PixelFX.bake('elite|crown', _ELITE_CROWN_ART, _ELITE_CROWN_PAL, 2);
@@ -32818,36 +32900,24 @@ class Enemy extends Entity {
             }
         }
         
-        // Ranged enemy indicator (crosshair/dot)
+        // Ranged enemy indicator (crosshair em pixel art via PixelFX)
         if(this.enemyType === 'ranged' && isNear && this.isB !== true) {
-            const alpha = this._telegraph ? 0.6 + Math.sin(gameTime * 0.3) * 0.3 : 0.3 + Math.sin(gameTime * 0.08) * 0.15;
-            ctx.globalAlpha = alpha;
-            ctx.strokeStyle = this._telegraph ? '#ff0000' : '#ff6666';
-            ctx.lineWidth = this._telegraph ? 2 : 1;
+            const rmR = !!(window.GameSettings && GameSettings.reducedMotion);
+            const alpha = this._telegraph ? (rmR ? 0.75 : 0.6 + Math.sin(gameTime * 0.3) * 0.3) : (rmR ? 0.35 : 0.3 + Math.sin(gameTime * 0.08) * 0.15);
+            const rCol = this._telegraph ? '#ff2233' : '#ff6666';
             const ri = this.radius + (this._telegraph ? 15 : 10);
-            PixelFX.ring(ctx, px, py, ri, ctx.strokeStyle, 3);
-            ctx.beginPath();
-            ctx.moveTo(px - ri - 3, py);
-            ctx.lineTo(px + ri + 3, py);
-            ctx.moveTo(px, py - ri - 3);
-            ctx.lineTo(px, py + ri + 3);
-            ctx.stroke();
+            ctx.globalAlpha = alpha;
+            PixelFX.ring(ctx, px, py, ri, rCol, 3);
+            PixelFX.line(ctx, px - ri - 3, py, px - ri + 2, py, rCol, alpha);
+            PixelFX.line(ctx, px + ri - 2, py, px + ri + 3, py, rCol, alpha);
+            PixelFX.line(ctx, px, py - ri - 3, px, py - ri + 2, rCol, alpha);
+            PixelFX.line(ctx, px, py + ri - 2, px, py + ri + 3, rCol, alpha);
             ctx.globalAlpha = 1;
         }
         
-        // Atirador no último 1/4 do aviso (8 frames): linha fina até onde o jogador está agora.
-        // Só desenho: o disparo continua mirando em _aimAt na hora do tiro.
+        // Atirador no último 1/4 do aviso (8 frames): linha de mira em pixels até o jogador
         if(this.enemyType === 'ranged' && this._telegraph && this.shootTimer > CONFIG.ENEMY_RANGED_SHOOT_INTERVAL - 8 && isNear && typeof player !== 'undefined' && player) {
-            ctx.save();
-            ctx.globalAlpha = 0.6;
-            ctx.strokeStyle = '#ff0000';
-            ctx.lineWidth = 1;
-            ctx.setLineDash([3, 3]);
-            ctx.beginPath();
-            ctx.moveTo(px, py);
-            ctx.lineTo(player.x - cx, player.y - cy);
-            ctx.stroke();
-            ctx.restore();
+            PixelFX.seg3(ctx, px, py, player.x - cx, player.y - cy, '#ff2233');
         }
 
         // Melee enemy indicator (4 células 3x3 alinhadas à grade)
@@ -33069,25 +33139,24 @@ class EliteEnemy extends Enemy {
     }
     draw(ctx, cx, cy) {
         if(!this.alive) return;
-        // Telegraph for elite attack (warning zone)
+        // Telegraph for elite attack (warning zone — divisor respeita 30 ranged / 35 melee, sem raio negativo)
         if(this._attackTelegraph && this._attackTelegraph > 0) {
             const maxRadius = this.enemyType === 'ranged' ? this.radius + 15 : this.radius + 25;
-            const progress = 1 - (this._attackTelegraph / 30);
+            const maxTicks = this.enemyType === 'ranged' ? 30 : 35;
+            const progress = Math.max(0.05, Math.min(1, 1 - (this._attackTelegraph / maxTicks)));
 
-            // Background danger area
             ctx.globalAlpha = 0.2;
-            ctx.fillStyle = '#ff0000';
-            PixelFX.drawDisc(ctx, this.x-cx, this.y-cy, maxRadius, '#ff0000');
-
-            // Expanding fill indicator
+            PixelFX.drawDisc(ctx, this.x-cx, this.y-cy, maxRadius, '#ff2244');
             ctx.globalAlpha = 0.6;
-            PixelFX.drawDisc(ctx, this.x-cx, this.y-cy, maxRadius * progress, '#ff0000');
+            PixelFX.drawDisc(ctx, this.x-cx, this.y-cy, maxRadius * progress, '#ff2244');
+            ctx.globalAlpha = 0.85;
+            PixelFX.ring(ctx, this.x-cx, this.y-cy, maxRadius, '#ff4466', 3, { dash: 3 });
             ctx.globalAlpha = 1;
         }
         this._drawMeleeWindup(ctx, cx, cy);
-        // Pulsing elite glow
-        ctx.globalAlpha = CONFIG.ELITE_GLOW_ALPHA + Math.sin(gameTime * 0.15) * 0.15;
-        ctx.fillStyle = CONFIG.ELITE_COLOR;
+        // Pulsing elite glow (respeita reducedMotion)
+        const rmEl = !!(window.GameSettings && GameSettings.reducedMotion);
+        ctx.globalAlpha = CONFIG.ELITE_GLOW_ALPHA + (rmEl ? 0 : Math.sin(gameTime * 0.15) * 0.15);
         PixelFX.drawDisc(ctx, this.x-cx, this.y-cy, this.radius + 6, CONFIG.ELITE_COLOR);
         ctx.globalAlpha = 1;
         // Draw bigger version (squash & stretch ao levar golpe, igual ao Enemy.draw)
@@ -33251,51 +33320,35 @@ class SwarmEnemy extends Entity {
         }
         return n;
     }
-    // Trajeto do bote telegrafado: traço curto no chão, na direção travada, que enche durante o windup
+    // Trajeto do bote telegrafado em pixel art (sem rotação vetorial)
     _drawLungeTelegraph(ctx, px, py) {
         const t = 1 - this._stateT / CONFIG.SWARM_WINDUP_FRAMES;
-        // Comprimento real do bote (velocidade base x 3 x frames); com lentidão o bote sai mais curto
         const L = CONFIG.SWARM_SPEED * CONFIG.SWARM_LUNGE_SPEED_MULT * CONFIG.SWARM_LUNGE_FRAMES;
-        const x0 = this.radius + 4;
-        ctx.save();
-        ctx.translate(px, py);
-        ctx.rotate(Math.atan2(this._lungeDy, this._lungeDx));
-        ctx.fillStyle = CONFIG.SWARM_COLOR;
-        // trilha inteira apagada, com enchimento que cresce até o fim do bote
-        ctx.globalAlpha = 0.18;
-        ctx.fillRect(x0, -1.5, L, 3);
-        ctx.globalAlpha = 0.3 + t * 0.5;
-        ctx.fillRect(x0, -1.5, L * t, 3);
-        ctx.beginPath();
-        ctx.moveTo(x0 + L + 4, 0); ctx.lineTo(x0 + L, -4); ctx.lineTo(x0 + L, 4);
-        ctx.closePath();
-        ctx.fill();
-        ctx.restore();
+        const sx = px + this._lungeDx * (this.radius + 4), sy = py + this._lungeDy * (this.radius + 4);
+        _drawPixelLane(ctx, sx, sy, this._lungeDx, this._lungeDy, L, 3, t, CONFIG.SWARM_COLOR);
     }
     draw(ctx, cx, cy) {
         if (!this.alive) return;
         const st = this._state;
-        // Tremor no aviso (Math.sin: desenhar não pode consumir o RNG da simulação)
-        const shake = st === 'windup' ? Math.sin(gameTime * 1.7 + this.x) * 1.2 : 0;
+        const rm = !!(window.GameSettings && GameSettings.reducedMotion);
+        // Tremor no aviso (respeita reducedMotion)
+        const shake = (st === 'windup' && !rm) ? Math.round(Math.sin(gameTime * 1.7 + this.x) * 1.2) : 0;
         const px = this.x - cx + shake, py = this.y - cy;
         if (st === 'windup') {
             this._drawLungeTelegraph(ctx, px, py);
-            // Olhos mais brilhantes: halo aditivo na cabeça, do lado da direção do bote
             const t = 1 - this._stateT / CONFIG.SWARM_WINDUP_FRAMES;
             drawGlow(ctx, px + this._lungeDx * 9, py + this._lungeDy * 9, 7 + 5 * t, CONFIG.SWARM_COLOR, 0.35 + 0.4 * t);
         }
-        // Aura magenta pulsante (mesma cor do minimapa e das partículas)
-        ctx.globalAlpha = 0.15 + Math.sin(gameTime * 0.15) * 0.1;
+        ctx.globalAlpha = rm ? 0.18 : (0.15 + Math.sin(gameTime * 0.15) * 0.1);
         PixelFX.drawDisc(ctx, px, py, this.radius + 4, CONFIG.SWARM_COLOR);
         ctx.globalAlpha = 1;
-        // Pose: ataque no aviso e no bote, andando quando se move, parado no resto
         let pose, ft;
         if (st === 'windup') { pose = 'attack'; ft = 0; }
         else if (st === 'lunge') { pose = 'attack'; ft = 5; }
         else if (this._moved) { pose = 'walk'; ft = this.walkTimer; }
         else { pose = 'idle'; ft = 0; }
         SpriteRenderer.drawEnemy.call(this, ctx, px, py, 'swarm', ft, this.angle, 1.5, this.ft > 0, pose);
-        _drawStatusMarks(ctx, this, px, py);
+        _drawEntityOverlays(ctx, this, px, py, cx, cy);
         if (this.ft > 0) this.ft--;
     }
 }
@@ -33414,6 +33467,7 @@ class TrapEnemy extends Entity {
         super(x, y, CONFIG.TRAP_RADIUS, DifficultySystem.getScaledHp(CONFIG.TRAP_HP, false), CONFIG.TRAP_COLOR);
         this.isEnemy = true;
         this.enemyType = 'trap';
+        this._dsT = 'trap'; this._dsS = 1.6;
         this.isB = false;
         this.lr = 0;
         this.s = 0; // Stationary
@@ -33529,12 +33583,11 @@ class TrapEnemy extends Entity {
         const sp = TrapArt.sprite(frame, eyes, veins);
         if (eyes > 0) drawGlow(ctx, px, py, 16, '#ff6a1a', eyes === 2 ? 0.7 : 0.35);
         PixelFX.draw(ctx, sp, px, py);
-        if (this.ft > 0) { // flash de dano
-            ctx.globalCompositeOperation = 'lighter';
-            ctx.globalAlpha = 0.35;
-            PixelFX.draw(ctx, sp, px, py);
-        }
+        if (this.ft > 0) _drawWhiteFlash(ctx, sp, px, py);
         ctx.restore();
+        if (st !== 'rest' || this.frozen > 0 || this.poisonStacks > 0 || (this.elementalStatuses && this.elementalStatuses.length)) {
+            _drawEntityOverlays(ctx, this, px, py, cx, cy);
+        }
         if (this.ft > 0) this.ft--;
     }
 }
@@ -33619,6 +33672,7 @@ class MimicEnemy extends Entity {
         super(x, y, CONFIG.MIMIC_RADIUS, DifficultySystem.getScaledHp(CONFIG.MIMIC_HP, false), CONFIG.MIMIC_COLOR);
         this.isEnemy = true;
         this.enemyType = 'mimic';
+        this._dsT = 'mimic'; this._dsS = 1.6;
         this.isB = false;
         this.lr = 0;
         this.revealed = false;
@@ -33759,12 +33813,9 @@ class MimicEnemy extends Entity {
             ctx.translate(Math.round(gx), Math.round(gy - lift));
             ctx.scale(sx, sy);
             PixelFX.draw(ctx, sp, 0, -sp.height / 2);
-            if (this.ft > 0) { // flash de dano
-                ctx.globalCompositeOperation = 'lighter';
-                ctx.globalAlpha = 0.35;
-                PixelFX.draw(ctx, sp, 0, -sp.height / 2);
-            }
+            if (this.ft > 0) _drawWhiteFlash(ctx, sp, 0, -sp.height / 2);
             ctx.restore();
+            _drawEntityOverlays(ctx, this, Math.round(gx), Math.round(gy - lift - sp.height / 2), cx, cy);
         }
         if (this.ft > 0) this.ft--;
     }
@@ -33833,6 +33884,7 @@ class HealerEnemy extends Enemy {
         // Brilho sutil esmeralda da aura de cura (cruz agora integrada diretamente no sprite do clérigo)
         drawGlow(ctx, px, py - 4, 14, '#7aff9e', 0.16);
         SpriteRenderer.drawEnemy.call(this, ctx, px, py, this.enemyType, (this.attackAnim > 0 ? 12 - this.attackAnim : this.walkTimer), this.angle, 1.3, this.ft > 0, this.attackAnim > 0 ? 'attack' : (this.walkTimer > 0 ? 'walk' : 'idle'));
+        _drawEntityOverlays(ctx, this, px, py, cx, cy);
         // HP bar
         const hp = this.hp / this.maxHp;
         ctx.fillStyle = '#333'; ctx.fillRect(px-12, py-this.radius-8, 24, 3);
@@ -33884,6 +33936,7 @@ class ShieldEnemy extends Enemy {
             ctx.restore();
         }
         // HP bar
+        _drawEntityOverlays(ctx, this, this.x-cx, this.y-cy, cx, cy);
         const hp = this.hp / this.maxHp;
         ctx.fillStyle = '#333'; ctx.fillRect(this.x-cx-12, this.y-cy-this.radius-8, 24, 3);
         ctx.fillStyle = '#5555ff'; ctx.fillRect(this.x-cx-12, this.y-cy-this.radius-8, 24*hp, 3);
@@ -34021,24 +34074,11 @@ class ChargerEnemy extends Enemy {
             if(--this._chargeT <= 0) { this._chargeState = 'idle'; this._chargeCd = CONFIG.CHARGER_COOLDOWN_FRAMES; }
         }
     }
-    // Trajeto telegrafado: faixa com enchimento crescente e ponta de seta, na direção travada
+    // Trajeto telegrafado em pixel art (sem fillRect/triângulo rotacionado)
     _drawChargeWindup(ctx, px, py) {
         const t = 1 - this._chargeT / CONFIG.CHARGER_WINDUP_FRAMES;
         const len = CONFIG.CHARGER_DASH_SPEED * CONFIG.CHARGER_DASH_FRAMES;
-        const h = this.radius * 0.6;
-        ctx.save();
-        ctx.translate(px, py);
-        ctx.rotate(Math.atan2(this._chargeDy, this._chargeDx));
-        ctx.globalAlpha = 0.25 + t * 0.4;
-        ctx.fillStyle = 'rgba(255,176,32,0.25)';
-        ctx.fillRect(0, -h, len, h * 2);
-        ctx.fillStyle = CONFIG.CHARGER_COLOR;
-        ctx.fillRect(0, -h, len * t, h * 2);
-        ctx.beginPath();
-        ctx.moveTo(len + 6, 0); ctx.lineTo(len - 4, -8); ctx.lineTo(len - 4, 8);
-        ctx.closePath();
-        ctx.fill();
-        ctx.restore();
+        _drawPixelLane(ctx, px, py, this._chargeDx, this._chargeDy, len, Math.round(this.radius * 0.6), t, CONFIG.CHARGER_COLOR);
     }
     draw(ctx, cx, cy) {
         if(!this.alive) return;
@@ -34077,7 +34117,7 @@ class ChargerEnemy extends Enemy {
             }
             ctx.restore();
         }
-        _drawStatusMarks(ctx, this, px, py);
+        _drawEntityOverlays(ctx, this, px, py, cx, cy);
         if(this.hp < this.maxHp) {
             const barW = 26, barH = 4;
             const barX = px - barW / 2, barY = py - 37;
@@ -34124,7 +34164,7 @@ class GuidedBullet {
 }
 
 class TreasureGoblin extends Enemy {
-    constructor(x,y) { super(x,y,false); this.color='#ffdd00'; this.s=CONFIG.TREASURE_GOBLIN_SPEED; this.hp=CONFIG.TREASURE_GOBLIN_HP; this.maxHp=CONFIG.TREASURE_GOBLIN_HP; this.enemyType='melee'; this.isTreasureGoblin = true; }
+    constructor(x,y) { super(x,y,false); this.color='#ffdd00'; this.s=CONFIG.TREASURE_GOBLIN_SPEED; this.hp=CONFIG.TREASURE_GOBLIN_HP; this.maxHp=CONFIG.TREASURE_GOBLIN_HP; this.enemyType='melee'; this.isTreasureGoblin = true; this._dsT = 'merchant'; this._dsS = 1.5; }
     onDeath(source) {
         for(let i=0; i<CONFIG.TREASURE_GOBLIN_CURRENCY_DROP; i++) pickups.push(new Pickup(this.x+(Math.random()-0.5)*50, this.y+(Math.random()-0.5)*50, 'currency'));
         SND.playTreasure(); addLog(window.I18n ? I18n.t('log.goblinDefeated') : ' Goblin derrotado!');
@@ -34137,7 +34177,14 @@ class TreasureGoblin extends Enemy {
     }
     draw(ctx, cx, cy) {
         if(!this.alive) return;
-        SpriteRenderer.drawMerchant(ctx, this.x-cx, this.y-cy, this.walkTimer, this.angle);
+        const px = this.x - cx, py = this.y - cy;
+        drawGlow(ctx, px, py, this.radius + 6, '#ffdd33', 0.25);
+        SpriteRenderer.drawMerchant(ctx, px, py, this.walkTimer, this.angle, this.ft > 0);
+        _drawEntityOverlays(ctx, this, px, py, cx, cy);
+        if (this.hp < this.maxHp) {
+            ctx.fillStyle = '#333'; ctx.fillRect(px - 12, py - this.radius - 10, 24, 3);
+            ctx.fillStyle = '#ffdd33'; ctx.fillRect(px - 12, py - this.radius - 10, 24 * Math.max(0, this.hp / this.maxHp), 3);
+        }
         if(this.ft > 0) this.ft--;
     }
 }
@@ -34171,7 +34218,9 @@ class SkeletonEnemy extends Enemy {
     }
     draw(ctx, cx, cy) {
         if(!this.alive) return;
-        SpriteRenderer.drawEnemy.call(this, ctx, this.x-cx, this.y-cy, this.enemyType, (this.attackAnim > 0 ? 12 - this.attackAnim : this.walkTimer), this.angle, 1.3, this.ft > 0, this.attackAnim > 0 ? 'attack' : (this.walkTimer > 0 ? 'walk' : 'idle'));
+        const px = this.x-cx, py = this.y-cy;
+        SpriteRenderer.drawEnemy.call(this, ctx, px, py, this.enemyType, (this.attackAnim > 0 ? 12 - this.attackAnim : this.walkTimer), this.angle, 1.3, this.ft > 0, this.attackAnim > 0 ? 'attack' : (this.walkTimer > 0 ? 'walk' : 'idle'));
+        _drawEntityOverlays(ctx, this, px, py, cx, cy);
         if(this.ft > 0) this.ft--;
     }
 }
@@ -34446,22 +34495,9 @@ class SalamanderEnemy extends Enemy {
             ctx.save(); ctx.translate(px, py); ctx.scale(1 + 0.12 * sq, 1 - 0.18 * sq); ctx.translate(-px, -py);
         }
         PixelFX.draw(ctx, spr, px, py);
-        if (this.ft > 0) { // flash de dano
-            ctx.globalCompositeOperation = 'lighter';
-            ctx.globalAlpha = 0.35;
-            PixelFX.draw(ctx, spr, px, py);
-            ctx.globalCompositeOperation = 'source-over';
-            ctx.globalAlpha = 1;
-        }
+        if (this.ft > 0) _drawWhiteFlash(ctx, spr, px, py);
         if (fl) ctx.restore();
-        if (typeof ElementalSystem !== 'undefined') ElementalSystem.drawStatuses(ctx, this, cx, cy);
-        this._drawPoisonCloud(ctx, px, py);
-        if (this.frozen > 0) {
-            ctx.globalAlpha = 0.35;
-            ctx.fillStyle = '#33ccff';
-            ctx.fillRect(px - 30, py - 14, 60, 28);
-            ctx.globalAlpha = 1;
-        }
+        _drawEntityOverlays(ctx, this, px, py, cx, cy);
         if (this.hp < this.maxHp) {
             const barW = 26, barH = 4, barX = px - barW / 2, barY = py - 24;
             ctx.fillStyle = 'rgba(0,0,0,0.7)';
@@ -34571,21 +34607,13 @@ class LurkerEnemy extends Enemy {
             this._state = 'chase';   // recover: parado (janela para acertar), depois volta a perseguir
         }
     }
-    // Aviso do bote: faixa perigosa de verdade (comprimento do bote + raio de contato, largura 2 x contato),
-    // em alpha baixo, e a linha central que enche durante o aviso
+    // Aviso do bote em pixel art (sem fillRect rotacionado)
     _drawLungeTelegraph(ctx, px, py) {
         const t = 1 - this._stateT / CONFIG.LURKER_WINDUP_FRAMES;
         const L = CONFIG.LURKER_LUNGE_SPEED * CONFIG.LURKER_LUNGE_FRAMES;
         const pr = (typeof player !== 'undefined' && player) ? player.radius : 12;
         const hitR = pr + this.radius;
-        ctx.save();
-        ctx.translate(px, py);
-        ctx.rotate(Math.atan2(this._lungeDy, this._lungeDx));
-        ctx.globalAlpha = 0.1 + 0.06 * t;
-        ctx.fillStyle = CONFIG.LURKER_COLOR;
-        ctx.fillRect(0, -hitR, L + hitR, hitR * 2);
-        ctx.restore();
-        PixelFX.line(ctx, px, py, px + this._lungeDx * L * t, py + this._lungeDy * L * t, '#9dff5a', 0.3 + 0.4 * t);
+        _drawPixelLane(ctx, px, py, this._lungeDx, this._lungeDy, L + hitR * 0.5, Math.min(20, hitR * 0.7), t, '#9dff5a');
     }
     draw(ctx, cx, cy) {
         if (!this.alive) return;
@@ -34617,22 +34645,9 @@ class LurkerEnemy extends Enemy {
         }
         const spr = LurkerArt.sprite(true, frame);
         PixelFX.draw(ctx, spr, px + shake, py);
-        if (this.ft > 0) { // flash de dano
-            ctx.globalCompositeOperation = 'lighter';
-            ctx.globalAlpha = 0.35;
-            PixelFX.draw(ctx, spr, px + shake, py);
-            ctx.globalCompositeOperation = 'source-over';
-            ctx.globalAlpha = 1;
-        }
+        if (this.ft > 0) _drawWhiteFlash(ctx, spr, px + shake, py);
         if (fl) ctx.restore();
-        if (typeof ElementalSystem !== 'undefined') ElementalSystem.drawStatuses(ctx, this, cx, cy);
-        this._drawPoisonCloud(ctx, px, py);
-        if (this.frozen > 0) {
-            ctx.globalAlpha = 0.35;
-            ctx.fillStyle = '#33ccff';
-            ctx.fillRect(px - 24, py - 20, 48, 40);
-            ctx.globalAlpha = 1;
-        }
+        _drawEntityOverlays(ctx, this, px, py, cx, cy);
         if (this.hp < this.maxHp) {
             const barW = 26, barH = 4, barX = px - barW / 2, barY = py - 28;
             ctx.fillStyle = 'rgba(0,0,0,0.7)';
@@ -35818,12 +35833,15 @@ class Boss extends Enemy {
             ctx.globalAlpha = 1;
         }
 
-        // Telegraph: groundPound impact radius (real 220 px area, shown before the hit)
+        // Telegraph: groundPound impact radius (preenchimento progressivo + borda de alto contraste na lava)
+        const rmBoss = !!(window.GameSettings && GameSettings.reducedMotion);
         if(this._poundTelegraph > 0) {
-            const pp = 1 - this._poundTelegraph / 25;
+            const pp = Math.max(0.05, Math.min(1, 1 - this._poundTelegraph / 28));
             ctx.save();
-            ctx.globalAlpha = 0.35 + pp * 0.55;
-            PixelFX.ring(ctx, this.x-cx, this.y-cy, this._poundRange, '#ff6600', 3);
+            ctx.globalAlpha = 0.18 + pp * 0.22;
+            PixelFX.drawDisc(ctx, this.x-cx, this.y-cy, this._poundRange * pp, '#ff2a6d');
+            ctx.globalAlpha = 0.45 + pp * 0.5;
+            PixelFX.ring(ctx, this.x-cx, this.y-cy, this._poundRange, '#ffdd33', 3, { dash: 3 });
             ctx.restore();
         }
 
@@ -35836,51 +35854,33 @@ class Boss extends Enemy {
             ctx.restore();
         }
 
-        // Charge wind-up warning: pulsing red ring + charge path
+        // Charge wind-up warning: faixa pixel art + anel pulsante + rótulo sem colidir com o nome
         if(this._chargeWindupTimer > 0 && this._chargeWindupTarget) {
             const t = this._chargeWindupTimer / CONFIG.BOSS_CHARGE_WINDUP_FRAMES;
-            const pulse = Math.sin((1 - t) * Math.PI * 6) * 8;
-            ctx.save();
-            ctx.globalAlpha = 0.5 + (1 - t) * 0.45;
-            
+            const pulse = rmBoss ? 0 : Math.sin((1 - t) * Math.PI * 6) * 8;
             const tdx = this._chargeWindupTarget.x - this.x;
             const tdy = this._chargeWindupTarget.y - this.y;
-            const tdSq = tdx * tdx + tdy * tdy;
-            const td = Math.sqrt(tdSq) || 1;
-            const angle = Math.atan2(tdy, tdx);
-            
-            ctx.translate(this.x-cx, this.y-cy);
-            ctx.rotate(angle);
-            ctx.fillStyle = 'rgba(255, 0, 0, 0.2)';
+            const td = Math.hypot(tdx, tdy) || 1;
             const chargeRange = CONFIG.BOSS_CHARGE_RANGE || 400;
-            ctx.fillRect(0, -this.radius, chargeRange, this.radius * 2);
-            ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
-            ctx.fillRect(0, -this.radius, chargeRange * (1-t), this.radius * 2);
-
-            ctx.strokeStyle = '#ff0000';
-            ctx.lineWidth = 3;
-            
-            ctx.restore();
-            // Anel de aviso em pixel, fora do translate/rotate (fillRect rotacionado ficaria torto)
-            ctx.globalAlpha = 0.5 + (1 - t) * 0.45;
-            PixelFX.ring(ctx, this.x-cx, this.y-cy, this.radius + 14 + pulse, '#ff0000', 3);
+            _drawPixelLane(ctx, this.x - cx, this.y - cy, tdx / td, tdy / td, chargeRange, this.radius, 1 - t, '#ff2244');
+            ctx.globalAlpha = 0.55 + (1 - t) * 0.4;
+            PixelFX.ring(ctx, this.x-cx, this.y-cy, this.radius + 14 + pulse, '#ff2244', 3);
             ctx.globalAlpha = 1;
-            ctx.fillStyle = '#ff0000';
-            ctx.font = `bold ${Math.floor(11 + (1-t)*5)}px ${COLORS.CANVAS_FONT}`;
+            ctx.fillStyle = '#ff3344';
+            ctx.font = `bold ${Math.floor(11 + (1-t)*4)}px ${COLORS.CANVAS_FONT}`;
             ctx.textAlign = 'center';
             ctx.strokeStyle = 'rgba(0,0,0,0.9)';
             ctx.lineWidth = 3;
-            ctx.strokeText(I18n.t('boss.chargeWarn'), this.x-cx, this.y-cy-this.radius-34);
-            ctx.fillText(I18n.t('boss.chargeWarn'), this.x-cx, this.y-cy-this.radius-34);
+            ctx.strokeText(I18n.t('boss.chargeWarn'), this.x-cx, this.y-cy-this.radius-42);
+            ctx.fillText(I18n.t('boss.chargeWarn'), this.x-cx, this.y-cy-this.radius-42);
             ctx.lineWidth = 1;
         }
 
-        // Telegraph: soul drain danger radius (the channel is otherwise invisible)
+        // Telegraph: soul drain danger radius (respeita reducedMotion)
         if(this._drainT > 0) {
-            const pulse = 0.5 + Math.sin(gameTime * 0.25) * 0.25;
+            const pulse = rmBoss ? 0.6 : (0.5 + Math.sin(gameTime * 0.25) * 0.25);
             ctx.save();
-            ctx.globalAlpha = 0.10 * pulse;
-            ctx.fillStyle = '#ff3b5c';
+            ctx.globalAlpha = 0.12 * pulse;
             PixelFX.drawDisc(ctx, this.x-cx, this.y-cy, CONFIG.BOSS_DRAIN_RADIUS, '#ff3b5c');
             ctx.globalAlpha = 0.55;
             PixelFX.ring(ctx, this.x-cx, this.y-cy, CONFIG.BOSS_DRAIN_RADIUS, '#ff3b5c', 3);
@@ -35910,9 +35910,10 @@ class Boss extends Enemy {
             ctx.restore();
         }
 
-        // Estados de status, como no Enemy.draw: elementos e nuvem de veneno
+        // Estados de status unificados no chefe: congelado, elementos, veneno e marcas
         if (typeof ElementalSystem !== 'undefined') ElementalSystem.drawStatuses(ctx, this, cx, cy);
         this._drawPoisonCloud(ctx, this.x-cx, this.y-cy);
+        _drawStatusMarks(ctx, this, this.x-cx, this.y-cy);
         // arenaHazards são desenhados na camada de chão em _drawWorldLayer
     }
     takeDamage(a, m, source=null, noKb=false, dot=false) {
@@ -39350,17 +39351,10 @@ class Player extends Entity {
             if (mi > 0) ctx.restore();
         }
         
-        // Freeze indicator
+        // Freeze indicator (mesmo véu + cristal pixel art dos inimigos)
         if(this.frozen > 0) {
             ctx.save();
-            ctx.globalAlpha = 0.4;
-            PixelFX.drawDisc(ctx, sx, sy, this.radius + 4, '#33ccff', null, true);
-            for (let i = 0; i < 3; i++) {
-                const a = gameTime * 0.1 + i * 2.1;
-                const d = this.radius + 8 + Math.sin(gameTime * 0.15 + i) * 3;
-                ctx.globalAlpha = 0.3 + Math.sin(gameTime * 0.2 + i) * 0.2;
-                PixelFX.drawDisc(ctx, sx + Math.cos(a) * d, sy + Math.sin(a) * d, 2, '#88eeff');
-            }
+            _drawFrozenVeil(ctx, sx, sy, this.radius);
             ctx.restore();
         }
         
