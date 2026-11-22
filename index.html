@@ -1767,6 +1767,13 @@ body.reduce-motion .end-art .ea-emb { animation: none !important; opacity: 0.35;
       <symbol id="ic-daggers" viewBox="0 0 24 24"><g transform="rotate(38 12 12)"><path d="M12 3.2l2.3 5.6H9.7z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.5 9.9h7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M10.9 9.9v3.5M13.1 9.9v3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="14.5" r="1.15" fill="none" stroke="currentColor" stroke-width="1.6"/></g><g transform="rotate(-38 12 12)"><path d="M12 3.2l2.3 5.6H9.7z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.5 9.9h7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M10.9 9.9v3.5M13.1 9.9v3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="14.5" r="1.15" fill="none" stroke="currentColor" stroke-width="1.6"/></g></symbol>
       <symbol id="ic-staff-orb" viewBox="0 0 24 24"><path d="M7.6 20.6 18.2 9.4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="18.2" cy="9.4" r="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="18.2" cy="9.4" r="0.9" fill="currentColor" stroke="none"/><path d="M18.2 4.5v1.9M17.3 5.4h1.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
       <symbol id="ic-bow" viewBox="0 0 24 24"><path d="M6.2 4.4C14.6 5.4 14.6 18.6 6.2 19.6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M6.2 4.4v15.2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.2 12h12.4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M17.6 12l2.3-1.3M17.6 12l2.3 1.3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="ic-helm" viewBox="0 0 24 24"><path d="M5 13a7 7 0 0 1 14 0v5.5H5zM12 6v5M8 14.5h3M13 14.5h3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="ic-armor" viewBox="0 0 24 24"><path d="M7 4l5 2 5-2 3 4-2.5 2.5V20h-11v-9.5L4 8zM12 6v14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="ic-boots" viewBox="0 0 24 24"><path d="M8 4h5v9l5 2v4H7V4zM8 9h5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="ic-amulet" viewBox="0 0 24 24"><path d="M7 4c1.5 3.5 3 5.5 5 5.5s3.5-2 5-5.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M12 10.5l4.2 4.5-4.2 5-4.2-5z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+      <symbol id="ic-ring" viewBox="0 0 24 24"><circle cx="12" cy="14" r="6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M9.5 8.5L12 5l2.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="ic-heart" viewBox="0 0 24 24"><path d="M12 20.5C7 16.8 4 13.4 4 9.3A4.5 4.5 0 0 1 12 6.5a4.5 4.5 0 0 1 8 2.8c0 4.1-3 7.5-8 11.2z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+      <symbol id="ic-tag" viewBox="0 0 24 24"><path d="M4 11V4h7l9 9-7 7z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="8.5" cy="8.5" r="1.2" fill="currentColor" stroke="none"/></symbol>
     </svg>
 
     <div id="start-screen">
@@ -18229,8 +18236,10 @@ const EquipmentCard = {
         const verdictEl = document.getElementById('eqc-verdict');
         const inner = document.getElementById('equip-card-inner');
 
-        rarityEl.textContent = this._rarityText(equip.rarity);
-        rarityEl.style.color = equip.color || '#9ca3af';
+        const slotIc = { helm: 'ic-helm', armor: 'ic-armor', boots: 'ic-boots', amulet: 'ic-amulet', ring: 'ic-ring' }[equip.slot] || 'ic-shield-sword';
+        const eqCol = equip.color || '#9ca3af';
+        rarityEl.innerHTML = '<svg class="icon-inline" width="12" height="12" style="color:' + eqCol + ';vertical-align:-2px;margin-right:4px" aria-hidden="true"><use href="#' + slotIc + '"/></svg>' + this._rarityText(equip.rarity);
+        rarityEl.style.color = eqCol;
         nameEl.textContent = equip.name || '';
         inner.style.borderColor = (equip.color || '#e0b6ff') + '88';
 
@@ -23045,38 +23054,32 @@ _statLabel(key) {
         if(s.cdrMult) player.cdrMult = Math.max(0, (player.cdrMult || 0) - s.cdrMult);
     },
 
-    // Draw equipment HUD
+    // Draw equipment HUD (ícones pixel art de slot via WorldSprites.medal, legíveis em 360px)
     drawEquipmentHUD(ctx, player) {
         if(!player.equipment) return;
-        // Fileira compacta no canto superior esquerdo, logo abaixo da coluna de vida/piso.
-        // Antes ficava em height - 30, escondida atrás da barra de botões, e o rótulo saía
-        // vazio (os nomes começam com espaço, então split(' ')[0] era '').
         if (!_hudLayout.measured) return;
         const k = _hudLayout.k || 0.75;
         const y = Math.round((_hudLayout.topBarBottom + 4) * k);
         const x0 = Math.round(8 * k);
         const slots = CONFIG.EQUIPMENT_SLOTS;
         ctx.save();
-        ctx.font = 'bold 8px ' + COLORS.CANVAS_FONT;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
+        ctx.imageSmoothingEnabled = false;
         let col = 0;
         slots.forEach((slot) => {
             const equip = player.equipment[slot];
             if(equip) {
-                const x = x0 + col * 25;
+                const x = x0 + col * 24;
                 col++;
-                ctx.fillStyle = 'rgba(0,0,0,0.6)';
-                ctx.fillRect(x, y, 22, 16);
-                ctx.fillStyle = equip.color;
-                ctx.globalAlpha = 0.45;
-                ctx.fillRect(x, y, 22, 16);
-                ctx.globalAlpha = 1;
-                ctx.strokeStyle = equip.color;
+                const ec = equip.color || '#cccccc';
+                ctx.fillStyle = 'rgba(10,6,20,0.72)';
+                ctx.fillRect(x, y, 21, 21);
+                ctx.strokeStyle = ec;
                 ctx.lineWidth = 1;
-                ctx.strokeRect(x + 0.5, y + 0.5, 21, 15);
-                ctx.fillStyle = '#fff';
-                ctx.fillText(String(CONFIG.EQUIPMENT_SLOT_NAMES[slot]).trim().slice(0, 3), x + 11, y + 8.5);
+                ctx.strokeRect(x + 0.5, y + 0.5, 20, 20);
+                if (typeof WorldSprites !== 'undefined' && WorldSprites.medal) {
+                    const sp = WorldSprites.medal(slot, ec).body;
+                    ctx.drawImage(sp, x + 1, y + 1, 19, 19);
+                }
             }
         });
         ctx.restore();
@@ -43410,10 +43413,19 @@ window.SkillTreeUI = SkillTreeUI;
             return _L('inv.slot.' + key, String(CONFIG.EQUIPMENT_SLOT_NAMES[key] || key).trim());
         },
 
-        // Ícone do card: espada para arma; duas letras do slot para peça
+        // Ícone SVG dedicado por classe de arma e por slot de equipamento
+        _weaponIconId(w) {
+            const wid = String((w && w.id) || '');
+            if (/wand|staff/.test(wid)) return 'ic-staff-orb';
+            if (/dagger|crossbow|windrunner|deathwhisper/.test(wid)) return (typeof player !== 'undefined' && player && player.type === 'elf') ? 'ic-bow' : 'ic-daggers';
+            return 'ic-swords';
+        },
+        _slotIconId(slot) {
+            return { helm: 'ic-helm', armor: 'ic-armor', boots: 'ic-boots', amulet: 'ic-amulet', ring: 'ic-ring' }[slot] || 'ic-shield-sword';
+        },
         _icon(it, color) {
-            if (it.kind === 'weapon') return '<svg class="icon-inline" width="16" height="16" style="color:' + color + ';"><use href="#ic-swords"/></svg>';
-            return '<span style="font-size:11px;font-weight:800;color:' + color + ';">' + this._esc(this._slotLabel(it.slot).slice(0, 2).toUpperCase()) + '</span>';
+            const ic = it.kind === 'weapon' ? this._weaponIconId(it.payload) : this._slotIconId(it.slot);
+            return '<svg class="icon-inline" width="16" height="16" style="color:' + color + ';flex-shrink:0;" aria-hidden="true"><use href="#' + ic + '"/></svg>';
         },
 
         // Linhas de atributo de uma peça (ex.: "Crítico +5%"); afixo recebe ★
@@ -43494,15 +43506,20 @@ window.SkillTreeUI = SkillTreeUI;
         _slotCardHtml(key, equip) {
             const label = this._slotLabel(key);
             const sel = this.sel === 'eq:' + key;
+            const icId = this._slotIconId(key);
             if (!equip) {
-                return '<div class="bag-card" style="opacity:0.7;cursor:default;"><span style="font-size:calc(10px * var(--font-scale,1));color:rgba(255,255,255,0.6);">' + this._esc(label) + '</span>'
+                return '<div class="bag-card" style="opacity:0.7;cursor:default;"><span style="display:flex;align-items:center;gap:6px;"><svg class="icon-inline" width="14" height="14" style="color:rgba(255,255,255,0.4);flex-shrink:0;" aria-hidden="true"><use href="#' + icId + '"/></svg><span style="font-size:calc(10px * var(--font-scale,1));color:rgba(255,255,255,0.6);">' + this._esc(label) + '</span></span>'
                     + '<span style="display:block;font-size:calc(12px * var(--font-scale,1));color:rgba(255,255,255,0.5);font-weight:700;">—</span>'
                     + '<span style="display:block;font-size:calc(10px * var(--font-scale,1));color:rgba(255,255,255,0.5);">' + this._esc(_L('inv.emptySlot', 'Vazio')) + '</span></div>';
             }
             const color = equip.color || CONFIG.EQUIPMENT_RARITY_COLORS[0];
             return '<button type="button" class="bag-card" aria-pressed="' + (sel ? 'true' : 'false') + '" onclick="BagPanel.select(\'eq:' + key + '\')" style="border-color:' + color + '66;">'
+                + '<span style="display:flex;align-items:center;gap:6px;">'
+                + '<span style="flex:none;width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;background:' + color + '22;border:1px solid ' + color + '77;"><svg class="icon-inline" width="14" height="14" style="color:' + color + ';" aria-hidden="true"><use href="#' + icId + '"/></svg></span>'
+                + '<span style="min-width:0;flex:1;">'
                 + '<span style="display:block;font-size:calc(10px * var(--font-scale,1));color:rgba(255,255,255,0.6);">' + this._esc(label) + ' · ' + this._esc(EquipmentCard._rarityText(equip.rarity)) + '</span>'
                 + '<span style="display:block;font-size:calc(12px * var(--font-scale,1));font-weight:700;color:' + color + ';overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + this._esc(equip.name || '') + '</span>'
+                + '</span></span>'
                 + '<span style="display:block;font-size:calc(11px * var(--font-scale,1));color:#fff;margin-top:4px;line-height:1.3;">' + this._esc(this._equipStatTexts(equip).join(' · ')) + '</span>'
                 + '</button>';
         },
@@ -43529,9 +43546,14 @@ window.SkillTreeUI = SkillTreeUI;
             } else {
                 const wColor = this._color({ kind: 'weapon', rarity: CONFIG.WEAPON_TIERS[w.tier | 0] });
                 const sel = this.sel === 'eq:weapon';
+                const wIc = this._weaponIconId(w);
                 weaponHtml = '<button type="button" class="bag-card" aria-pressed="' + (sel ? 'true' : 'false') + '" onclick="BagPanel.select(\'eq:weapon\')" style="border-color:' + wColor + '66;">'
+                    + '<span style="display:flex;align-items:center;gap:8px;">'
+                    + '<span style="flex:none;width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:' + wColor + '22;border:1px solid ' + wColor + '77;"><svg class="icon-inline" width="16" height="16" style="color:' + wColor + ';" aria-hidden="true"><use href="#' + wIc + '"/></svg></span>'
+                    + '<span style="min-width:0;flex:1;">'
                     + '<span style="display:block;font-size:calc(10px * var(--font-scale,1));color:rgba(255,255,255,0.6);">' + this._esc(_L('inv.weapon', 'Arma')) + ' · ' + this._esc(EquipmentCard._rarityText(CONFIG.WEAPON_TIERS[w.tier | 0])) + '</span>'
                     + '<span style="display:block;font-size:calc(12px * var(--font-scale,1));font-weight:700;color:' + wColor + ';">' + this._esc(WeaponSystem.displayName(w) || w.name || '') + '</span>'
+                    + '</span></span>'
                     + '<span style="display:block;font-size:calc(11px * var(--font-scale,1));color:#fff;margin-top:4px;">' + this._esc(this._weaponStatText(w)) + '</span></button>';
             }
             return this._head(_L('inv.weapon', 'Arma')) + weaponHtml
@@ -44918,20 +44940,58 @@ renderBestiaryContent() {
     const chip = (on, label, onclick) => `<button onclick="${onclick}"
         style="padding:6px 11px;border-radius:999px;font-size:10px;font-weight:bold;border:1px solid ${on ? COLORS.PRIMARY : 'rgba(255,255,255,0.15)'};background:${on ? 'rgba(224,182,255,0.2)' : 'rgba(255,255,255,0.05)'};color:${on ? COLORS.PRIMARY : COLORS.TEXT_DIM};cursor:pointer">${label}</button>`;
 
+    const _bestiaryThumb = type => {
+        if (!this._bestThumbCache) this._bestThumbCache = {};
+        if (this._bestThumbCache[type] !== undefined) return this._bestThumbCache[type];
+        let url = '';
+        try {
+            const cv = document.createElement('canvas'); cv.width = 48; cv.height = 48;
+            const g = cv.getContext('2d'); g.imageSmoothingEnabled = false;
+            let src = null;
+            if (type === 'trap' && typeof TrapArt !== 'undefined') src = TrapArt.sprite('aberta', 2, 2);
+            else if (type === 'mimic' && typeof MimicArt !== 'undefined') src = MimicArt.sprite(true);
+            else if (type === 'salamander' && typeof SalamanderArt !== 'undefined') src = SalamanderArt.sprite(0, 0, 2);
+            else if (type === 'lurker' && typeof LurkerArt !== 'undefined') src = LurkerArt.sprite(true, 0);
+            if (src) {
+                const sc = Math.min(44 / src.width, 44 / src.height, 1);
+                const dw = Math.round(src.width * sc), dh = Math.round(src.height * sc);
+                g.drawImage(src, Math.round((48 - dw) / 2), Math.round((48 - dh) / 2), dw, dh);
+                url = cv.toDataURL();
+            } else if (typeof SpriteManager !== 'undefined') {
+                const mapT = { elite_melee: 'melee', elite_ranged: 'ranged', charger: 'melee', treasure_goblin: 'goblin', crypt_skeleton: 'skeleton', lava_golem: 'melee', forest_wisp: 'ranged' }[type] || type;
+                if (SpriteManager.palettes && SpriteManager.palettes[mapT]) {
+                    const sh = SpriteManager.sheetRow(mapT, 2, false);
+                    g.drawImage(sh, 0, 2 * 48, 48, 48, 0, 0, 48, 48);
+                    if (type === 'charger' && typeof ChargerHornArt !== 'undefined') {
+                        const hn = ChargerHornArt.sprite('f');
+                        if (hn) g.drawImage(hn, Math.round(24 - hn.width / 2), 2);
+                    }
+                    url = cv.toDataURL();
+                }
+            }
+        } catch (e) {}
+        this._bestThumbCache[type] = url;
+        return url;
+    };
+
     const rows = filtered.map(type => {
         const m = Bestiary._monsters[type];
         const e = Bestiary._entries[type];
         const seen = !!e;
         const color = catColors[m.category] || COLORS.TEXT_DIM;
         const artSrc = seen ? BOSS_PORTRAIT_FILES[type] : null;
-        const artHtml = artSrc ? `<img src="${artSrc}" alt="" aria-hidden="true" decoding="async" style="width:56px;height:56px;border-radius:10px;object-fit:cover;object-position:center 20%;flex-shrink:0;border:1px solid ${color}55;background:#0a0612" onerror="this.remove()">` : '';
+        const sprUrl = (seen && !artSrc) ? _bestiaryThumb(type) : '';
+        const artHtml = artSrc
+            ? `<img src="${artSrc}" alt="" aria-hidden="true" decoding="async" style="width:56px;height:56px;border-radius:10px;object-fit:cover;object-position:center 20%;flex-shrink:0;border:1px solid ${color}55;background:#0a0612" onerror="this.remove()">`
+            : (sprUrl ? `<div style="width:56px;height:56px;border-radius:10px;flex-shrink:0;border:1px solid ${color}55;background:radial-gradient(circle at 50% 60%,${color}22,#0a0612 75%);display:flex;align-items:center;justify-content:center;"><img src="${sprUrl}" alt="" aria-hidden="true" style="width:48px;height:48px;image-rendering:pixelated;"></div>` : '');
         const pips = Array.from({ length: 10 }, (_, i) => `<span style="width:5px;height:5px;border-radius:999px;background:${i < m.difficulty ? color : 'rgba(255,255,255,0.12)'};display:inline-block"></span>`).join('');
         const floorLabel = m.floor ? _L('best.floor', 'Piso {n} · B{b}').replace('{n}', m.floor).replace('{b}', 11 - m.floor) : '';
         const ref = m.loreRef && window.CONFIG ? CONFIG.LORE_FRAGMENTS.find(f => f.id === m.loreRef) : null;
         const refKnown = ref && typeof NarrativeSystem !== 'undefined' && NarrativeSystem.isDiscovered(ref.id);
+        const scrollIc = '<svg class="icon-inline" width="12" height="12" style="vertical-align:-2px;margin-right:4px" aria-hidden="true"><use href="#ic-scroll"/></svg>';
         const refHtml = ref ? (refKnown
-            ? `<button onclick="UIManager.openBestiaryLore('${ref.id}')" style="margin-top:8px;padding:6px 10px;border-radius:8px;border:1px solid rgba(224,182,255,0.35);background:rgba(224,182,255,0.1);color:${COLORS.PRIMARY};font-size:10px;font-weight:700;cursor:pointer">📜 ${_L('best.openLore', 'Abrir no Grimório')}</button>`
-            : `<div style="margin-top:8px;font-size:10px;color:${COLORS.TEXT_MUTED}">📜 ${_L('best.related', 'Fragmento relacionado')}: <span style="color:#4b5563">???</span>${ref.floor ? ' · ' + _L('best.floorShort', 'Piso') + ' ' + ref.floor : ''}</div>`) : '';
+            ? `<button onclick="UIManager.openBestiaryLore('${ref.id}')" style="margin-top:8px;padding:6px 10px;border-radius:8px;border:1px solid rgba(224,182,255,0.35);background:rgba(224,182,255,0.1);color:${COLORS.PRIMARY};font-size:10px;font-weight:700;cursor:pointer">${scrollIc}${_L('best.openLore', 'Abrir no Grimório')}</button>`
+            : `<div style="margin-top:8px;font-size:10px;color:${COLORS.TEXT_MUTED}">${scrollIc}${_L('best.related', 'Fragmento relacionado')}: <span style="color:#4b5563">???</span>${ref.floor ? ' · ' + _L('best.floorShort', 'Piso') + ' ' + ref.floor : ''}</div>`) : '';
         return `<div style="padding:12px 14px;border-radius:12px;border:1px solid ${seen ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.06)'};background:${seen ? 'rgba(30,20,60,0.5)' : 'rgba(255,255,255,0.02)'};${seen ? '' : 'opacity:0.72'}">
             <div style="display:flex;gap:10px;align-items:center">
                 ${artHtml}
@@ -44958,7 +45018,7 @@ renderBestiaryContent() {
 
     return `
         <div style="text-align:center;margin-bottom:12px;padding:10px;border-radius:12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1)">
-            <div style="font-size:18px;font-weight:700;color:#fff">${progress.discovered} / ${progress.total} 🐾</div>
+            <div style="font-size:18px;font-weight:700;color:#fff;display:flex;align-items:center;justify-content:center;gap:6px"><svg class="icon-inline" width="18" height="18" style="color:${COLORS.PRIMARY}" aria-hidden="true"><use href="#ic-book"/></svg>${progress.discovered} / ${progress.total}</div>
             <div style="font-size:10px;color:${COLORS.TEXT_MUTED};margin-top:2px">${progress.percent}% ${_L('ui.bestiaryProgress', 'registrados')}</div>
             <div style="height:6px;border-radius:999px;background:rgba(255,255,255,0.08);margin-top:8px;overflow:hidden">
                 <div style="height:100%;width:${progress.percent}%;background:linear-gradient(90deg,#4ade80,#fbbf24);border-radius:999px"></div>
@@ -45169,10 +45229,18 @@ renderPetCollectionHtml() {
     const got = (Statistics.data && Array.isArray(Statistics.data.petsRescued)) ? Statistics.data.petsRescued : [];
     const types = Object.keys(PET_TYPES);
     const have = types.filter(t => got.indexOf(t) !== -1).length;
+    if (!this._petThumbCache) this._petThumbCache = {};
     const cells = types.map(t => {
         const has = got.indexOf(t) !== -1;
         const label = has ? _L(PET_TYPES[t].nameKey, PET_TYPES[t].name) : '???';
-        return `<div style="padding:8px 10px;border-radius:10px;border:1px solid ${has ? 'rgba(142,255,196,0.35)' : 'rgba(255,255,255,0.06)'};background:rgba(20,15,30,0.5);font-size:11px;color:${has ? '#fff' : COLORS.TEXT_MUTED}">${label}</div>`;
+        let imgHtml = '';
+        if (has && typeof _petMakeSprite === 'function') {
+            try {
+                if (!this._petThumbCache[t]) this._petThumbCache[t] = _petMakeSprite(t, 0, 1, 0).toDataURL();
+                imgHtml = `<img src="${this._petThumbCache[t]}" alt="" aria-hidden="true" style="width:36px;height:36px;image-rendering:pixelated;flex-shrink:0">`;
+            } catch (e) {}
+        }
+        return `<div style="padding:8px 10px;border-radius:10px;border:1px solid ${has ? 'rgba(142,255,196,0.35)' : 'rgba(255,255,255,0.06)'};background:rgba(20,15,30,0.5);font-size:11px;color:${has ? '#fff' : COLORS.TEXT_MUTED};display:flex;align-items:center;gap:8px">${imgHtml}<span>${label}</span></div>`;
     }).join('');
     return `<div style="margin-top:12px;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,0.08);background:rgba(20,15,30,0.5)">
         <div style="font-size:10px;color:${COLORS.TEXT_MUTED};font-weight:bold;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;text-align:center">${_L('pet.collection.title', 'Companheiros')} · ${have}/${types.length}</div>
@@ -45520,6 +45588,7 @@ renderAchievementsContent() {
 
             // Desbloqueios de conteúdo
             const biomeArt = { dungeon: 'art/biome-dungeon.webp', crypt: 'art/biome-crypt.webp', lavaCave: 'art/biome-lava.webp', forest: 'art/biome-forest.webp' };
+            const heroArt = { warrior: 'art/hero-warrior.webp', rogue: 'art/hero-rogue.webp', mage: 'art/hero-mage.webp', elf: 'art/hero-elf.webp' };
             let unlockCards = '';
             Object.keys(M.UNLOCKS).forEach(id => {
                 const u = M.UNLOCKS[id];
@@ -45528,15 +45597,23 @@ renderAchievementsContent() {
                 const canBuy = !owned && ess >= u.cost;
                 const bImg = (u.kind === 'biome' && u.biome && biomeArt[u.biome])
                     ? `<div class="art-banner" style="height:64px;margin-bottom:8px;border-color:${owned ? 'rgba(74,222,128,0.35)' : 'rgba(224,182,255,0.22)'}"><img src="${biomeArt[u.biome]}" alt="" aria-hidden="true" decoding="async" onload="this.classList.add('is-loaded')" onerror="this.parentElement.style.display='none'"></div>` : '';
+                const hImg = (u.kind === 'class' && u.cls && heroArt[u.cls])
+                    ? `<img src="${heroArt[u.cls]}" alt="" aria-hidden="true" decoding="async" style="width:44px;height:44px;border-radius:10px;object-fit:cover;object-position:center 20%;flex-shrink:0;border:1px solid ${owned ? 'rgba(74,222,128,0.45)' : 'rgba(224,182,255,0.35)'};background:#0a0612" onerror="this.remove()">` : '';
+                const titlePrefix = (bImg || hImg) ? '' : (u.icon + ' ');
                 unlockCards += `
                     <div style="padding:12px;border-radius:12px;border:1.5px solid ${owned ? 'rgba(74,222,128,0.4)' : (canBuy ? COLORS.PRIMARY : 'rgba(255,255,255,0.1)')};background:${owned ? 'rgba(74,222,128,0.08)' : (canBuy ? 'rgba(224,182,255,0.1)' : 'rgba(35,28,48,0.5)')};${owned ? '' : (canBuy ? 'cursor:pointer' : 'opacity:0.65')};transition:all 0.2s"
                           ${owned ? '' : 'role="button" tabindex="0" '}onclick="${owned ? '' : `UIManager.metaUnlock('${id}')`}">
                         ${bImg}
-                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-                            <div style="font-weight:bold;font-size:14px;color:${owned ? '#4ade80' : (canBuy ? COLORS.PRIMARY : COLORS.TEXT_DIM)}">${u.icon} ${_L(u.nameKey, u.name)}</div>
-                            <div style="font-size:11px;font-weight:800;color:${owned ? '#4ade80' : (canBuy ? COLORS.GOLD : COLORS.TEXT_MUTED)}">${owned ? '✓' : u.cost + ' ✨'}</div>
+                        <div style="display:flex;align-items:center;gap:10px">
+                            ${hImg}
+                            <div style="flex:1;min-width:0">
+                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+                                    <div style="font-weight:bold;font-size:14px;color:${owned ? '#4ade80' : (canBuy ? COLORS.PRIMARY : COLORS.TEXT_DIM)}">${titlePrefix}${_L(u.nameKey, u.name)}</div>
+                                    <div style="font-size:11px;font-weight:800;color:${owned ? '#4ade80' : (canBuy ? COLORS.GOLD : COLORS.TEXT_MUTED)}">${owned ? '✓' : u.cost + ' ✨'}</div>
+                                </div>
+                                <div style="font-size:11px;color:${COLORS.TEXT_DIM};line-height:1.3">${_L(u.descKey, u.desc)}</div>
+                            </div>
                         </div>
-                        <div style="font-size:11px;color:${COLORS.TEXT_DIM};line-height:1.3">${_L(u.descKey, u.desc)}</div>
                     </div>`;
             });
 
@@ -45730,27 +45807,24 @@ renderAchievementsContent() {
             // boss fights (it hides itself when no boss is alive).
             if (typeof BossHPBar !== 'undefined') BossHPBar.update();
             
-            // Active status chips (buffs with timers)
+            // Active status chips (buffs with timers — ícones SVG #ic-* unificados com a HUD)
             if (this._statusEl || (this._statusEl = document.getElementById('status-chips'))) {
                 const chips = [];
-                // Rótulo leva o valor/tempo atual (segundos); o cache abaixo só reescreve o DOM quando o texto muda
-                if (player.shield > 0) chips.push({ icon: '🛡', label: _L('hud.chip.shield', 'ESCUDO') + ' ' + Math.ceil(player.shield), color: '#33ccff', pct: Math.min(1, player.shield / 50) });
-                if (player.critBoost > 0) chips.push({ icon: '💥', label: _L('hud.chip.crit', 'CRIT') + ' ' + Math.ceil(player.critBoost / GAME_TICKS_PER_SECOND) + 's', color: '#ffcc00', pct: Math.min(1, player.critBoost / 10) });
-                if (player.shopDiscountTimer > 0) chips.push({ icon: '🏷', label: _L('hud.chip.discount', 'DESCONTO') + ' ' + Math.ceil(player.shopDiscountTimer / GAME_TICKS_PER_SECOND) + 's', color: '#ff8844', pct: Math.min(1, player.shopDiscountTimer / 300) });
-                if (player.regenerating > 0) chips.push({ icon: '💚', label: _L('hud.chip.regen', 'REGEN'), color: '#44ff88', pct: Math.min(1, player.regenerating / 300) });
-                if (player.goldRushTimer > 0) chips.push({ icon: '💰', label: _L('hud.chip.goldRush', 'GOLD RUSH') + ' ' + Math.ceil(player.goldRushTimer / GAME_TICKS_PER_SECOND) + 's', color: '#ffdd44', pct: Math.min(1, player.goldRushTimer / 600) });
-                if (player.speedBoost > 0) chips.push({ icon: '💨', label: _L('hud.chip.speed', 'VELOCIDADE') + ' ' + Math.ceil(player.speedBoost / GAME_TICKS_PER_SECOND) + 's', color: '#88ccff', pct: Math.min(1, player.speedBoost / 8) });
-                // Powerups raros (Fúria, Frenesi, Égide); o Ímã é instantâneo e não tem chip
-                if (player.furyTimer > 0) chips.push({ icon: '🔥', label: (window.I18n ? I18n.t('chip.fury') : 'FÚRIA') + ' ' + Math.ceil(player.furyTimer / GAME_TICKS_PER_SECOND) + 's', color: '#ff2d3d', pct: Math.min(1, player.furyTimer / CONFIG.POWERUP_FURY_FRAMES) });
-                if (player.frenzyTimer > 0) chips.push({ icon: '⚡', label: (window.I18n ? I18n.t('chip.frenzy') : 'FRENESI') + ' ' + Math.ceil(player.frenzyTimer / GAME_TICKS_PER_SECOND) + 's', color: '#ffee00', pct: Math.min(1, player.frenzyTimer / CONFIG.POWERUP_FRENZY_FRAMES) });
-                if (player.aegisTimer > 0) chips.push({ icon: '🛡', label: (window.I18n ? I18n.t('chip.aegis') : 'ÉGIDE') + ' ' + Math.ceil(player.aegisTimer / GAME_TICKS_PER_SECOND) + 's', color: '#ffc21a', pct: Math.min(1, player.aegisTimer / CONFIG.POWERUP_AEGIS_FRAMES) });
+                if (player.shield > 0) chips.push({ icon: 'ic-shield-sword', label: _L('hud.chip.shield', 'ESCUDO') + ' ' + Math.ceil(player.shield), color: '#33ccff', pct: Math.min(1, player.shield / 50) });
+                if (player.critBoost > 0) chips.push({ icon: 'ic-star', label: _L('hud.chip.crit', 'CRIT') + ' ' + Math.ceil(player.critBoost / GAME_TICKS_PER_SECOND) + 's', color: '#ffcc00', pct: Math.min(1, player.critBoost / 10) });
+                if (player.shopDiscountTimer > 0) chips.push({ icon: 'ic-tag', label: _L('hud.chip.discount', 'DESCONTO') + ' ' + Math.ceil(player.shopDiscountTimer / GAME_TICKS_PER_SECOND) + 's', color: '#ff8844', pct: Math.min(1, player.shopDiscountTimer / 300) });
+                if (player.regenerating > 0) chips.push({ icon: 'ic-heart', label: _L('hud.chip.regen', 'REGEN'), color: '#44ff88', pct: Math.min(1, player.regenerating / 300) });
+                if (player.goldRushTimer > 0) chips.push({ icon: 'ic-coin', label: _L('hud.chip.goldRush', 'GOLD RUSH') + ' ' + Math.ceil(player.goldRushTimer / GAME_TICKS_PER_SECOND) + 's', color: '#ffdd44', pct: Math.min(1, player.goldRushTimer / 600) });
+                if (player.speedBoost > 0) chips.push({ icon: 'ic-wind', label: _L('hud.chip.speed', 'VELOCIDADE') + ' ' + Math.ceil(player.speedBoost / GAME_TICKS_PER_SECOND) + 's', color: '#88ccff', pct: Math.min(1, player.speedBoost / 8) });
+                if (player.furyTimer > 0) chips.push({ icon: 'ic-fire', label: (window.I18n ? I18n.t('chip.fury') : 'FÚRIA') + ' ' + Math.ceil(player.furyTimer / GAME_TICKS_PER_SECOND) + 's', color: '#ff2d3d', pct: Math.min(1, player.furyTimer / CONFIG.POWERUP_FURY_FRAMES) });
+                if (player.frenzyTimer > 0) chips.push({ icon: 'ic-bolt', label: (window.I18n ? I18n.t('chip.frenzy') : 'FRENESI') + ' ' + Math.ceil(player.frenzyTimer / GAME_TICKS_PER_SECOND) + 's', color: '#ffee00', pct: Math.min(1, player.frenzyTimer / CONFIG.POWERUP_FRENZY_FRAMES) });
+                if (player.aegisTimer > 0) chips.push({ icon: 'ic-crown', label: (window.I18n ? I18n.t('chip.aegis') : 'ÉGIDE') + ' ' + Math.ceil(player.aegisTimer / GAME_TICKS_PER_SECOND) + 's', color: '#ffc21a', pct: Math.min(1, player.aegisTimer / CONFIG.POWERUP_AEGIS_FRAMES) });
                 const cacheKey = chips.map(c => c.label + ':' + Math.floor(c.pct * 20)).join('|');
                 if (cache.chips !== cacheKey) {
                     cache.chips = cacheKey;
-                    // Buff entrou/saiu: o topo do HUD muda de altura. O texto dos chips muda
-                    // a cada segundo e não justifica remedir o layout no meio da luta.
                     if (chips.length !== cache.chipCount) { cache.chipCount = chips.length; _markHudLayoutDirty(); }
                     this._statusEl.innerHTML = '';
+                    const svgNS = 'http://www.w3.org/2000/svg';
                     for (let ci = 0; ci < chips.length; ci++) {
                         const chip = chips[ci];
                         const row = document.createElement('div');
@@ -45760,7 +45834,13 @@ renderAchievementsContent() {
                         const pctFill = document.createElement('div');
                         pctFill.style.cssText = 'height:100%;width:' + (chip.pct * 100) + '%;background:' + chip.color + ';border-radius:2px;';
                         pctWrap.appendChild(pctFill);
-                        row.appendChild(document.createTextNode(chip.icon));
+                        const icSvg = document.createElementNS(svgNS, 'svg');
+                        icSvg.setAttribute('class', 'icon-inline'); icSvg.setAttribute('width', '13'); icSvg.setAttribute('height', '13'); icSvg.setAttribute('aria-hidden', 'true');
+                        icSvg.style.flexShrink = '0';
+                        const useEl = document.createElementNS(svgNS, 'use');
+                        useEl.setAttribute('href', '#' + chip.icon);
+                        icSvg.appendChild(useEl);
+                        row.appendChild(icSvg);
                         const labelSpan = document.createElement('span');
                         labelSpan.style.cssText = 'min-width:0;overflow-wrap:anywhere;';
                         labelSpan.textContent = chip.label;
