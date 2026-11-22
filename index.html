@@ -14553,7 +14553,7 @@ function _updateWeather() {
             }
             if (nearest) {
                 nearest.takeDamage(CONFIG.WEATHER_STORM_DAMAGE, map, player, true);
-                spawnParticles(nearest.x, nearest.y, '#ffffaa', 20, 8);
+                spawnParticles(nearest.x, nearest.y, '#ffffaa', 20, 5, 14);
                 shake = 12;
                 if (typeof ScreenEffects !== 'undefined') ScreenEffects.triggerFlash(0.3, '#ffffff', 8);
                 SND.play(200, 'square', 0.15, 0.3);
@@ -20869,7 +20869,7 @@ const SHOP_ITEMS = [
                     if (edx*edx + edy*edy < bombSq) e.takeDamage(60, map, p);
                 }
             }
-            if (typeof spawnParticles !== 'undefined') spawnParticles(p.x, p.y, '#ff6600', 40, 8);
+            if (typeof spawnParticles !== 'undefined') spawnParticles(p.x, p.y, '#ff6600', 40, 5, 28);
             if (typeof ScreenEffects !== 'undefined') { ScreenEffects.triggerFlash(0.3, '#ff6600', 14); ScreenEffects.triggerShake(12); }
         }
     } },
@@ -29494,9 +29494,10 @@ const ElementalSystem = {
                 }
                 entity.takeDamage(toxicDmg * 1.5, null, source, true);
                 if (typeof spawnParticles !== 'undefined') {
-                    spawnParticles(entity.x, entity.y, '#66ff33', 20, toxicRange/2);
-                    spawnParticles(entity.x, entity.y, '#88ff00', 15, 5);
+                    spawnParticles(entity.x, entity.y, '#66ff33', 20, 4, toxicRange * 0.45);
+                    spawnParticles(entity.x, entity.y, '#88ff00', 15, 3, 12);
                 }
+                if (typeof ScreenEffects !== 'undefined' && ScreenEffects._addRing) ScreenEffects._addRing(entity.x, entity.y, '#66ff33', toxicRange, 14, 3, 0);
                 if (typeof SND !== 'undefined') SND.play(200, 'sawtooth', 0.15, 0.3);
                 break;
                 
@@ -29506,7 +29507,7 @@ const ElementalSystem = {
                     entity.stealth = Math.max(entity.stealth || 0, 60);
                 }
                 if (typeof spawnParticles !== 'undefined') {
-                    spawnParticles(entity.x, entity.y, '#ccddff', 15, 40);
+                    spawnParticles(entity.x, entity.y, '#ccddff', 15, 4, 36);
                 }
                 if (typeof SND !== 'undefined') SND.playNoise(0.2, 0.05, 3000, 'highpass');
                 break;
@@ -29517,7 +29518,7 @@ const ElementalSystem = {
                 entity.poisonTimer = Math.max(entity.poisonTimer || 0, CONFIG.ROGUE_POISON_DURATION);
                 entity.frozen = Math.max(entity.frozen, 30);
                 if (typeof spawnParticles !== 'undefined') {
-                    spawnParticles(entity.x, entity.y, '#ff00ff', 12, 6);
+                    spawnParticles(entity.x, entity.y, '#ff00ff', 12, 4, 14);
                 }
                 if (typeof SND !== 'undefined') SND.play(150, 'square', 0.1, 0.3);
                 break;
@@ -29528,15 +29529,16 @@ const ElementalSystem = {
                 entity.takeDamage(infernoDmg, null, source, true, true);
                 // Extra visual
                 if (typeof spawnParticles !== 'undefined') {
-                    spawnParticles(entity.x, entity.y, '#ff6600', 8, 15);
+                    spawnParticles(entity.x, entity.y, '#ff6600', 8, 4, 16);
                     spawnParticles(entity.x + (Math.random()-0.5)*20, entity.y + (Math.random()-0.5)*20, '#ffaa00', 5, 3);
                 }
                 break;
                 
             case 'crystal':
                 if (typeof spawnParticles !== 'undefined') {
-                    spawnParticles(entity.x, entity.y, '#88ffff', 25, 30);
+                    spawnParticles(entity.x, entity.y, '#88ffff', 25, 4, 28);
                 }
+                if (typeof ScreenEffects !== 'undefined' && ScreenEffects._addRing) ScreenEffects._addRing(entity.x, entity.y, '#88ffff', 52, 12, 3, 0);
                 if (typeof SND !== 'undefined') SND.play(800, 'sine', 0.1, 0.3);
                 break;
         }
@@ -29810,10 +29812,11 @@ function _fxWarnSfx(x, y, big = false) { _fxEnemySfx(x, y, big ? 262 : 392, 'tri
 // Tiro inimigo: chirp curto e baixo, em queda de tom (diferente do acerto do jogador)
 function _fxShotSfx(x, y) { _fxEnemySfx(x, y, 980, 'sine', 0.05, 0.025, 620); }
 
-function spawnParticles(x,y,c,n=8,size=3) {
+function spawnParticles(x,y,c,n=8,size=3,spread=0) {
     if (window.GameSettings && GameSettings.particlesEnabled === false) return;
     // Pedido sem partículas: sai antes do escalonamento, que usaria no mínimo 1
     if (n <= 0) return;
+    const pSize = Math.max(1, Math.min(6, size || 3));
     const k = _fxCrowdScale();
     // n=1 (gotas de sangue) vira chance; o resto escala com mínimo de 1 partícula
     if (n === 1) { if (Math.random() >= k) return; }
@@ -29824,10 +29827,17 @@ function spawnParticles(x,y,c,n=8,size=3) {
     if (particles.length >= pc) return;
     const toSpawn = Math.min(n, pc - particles.length);
     for(let i=0; i<toSpawn; i++) {
+        let sx = x, sy = y;
+        if (spread > 0) {
+            const ang = Math.random() * Math.PI * 2;
+            const rad = Math.sqrt(Math.random()) * spread;
+            sx = x + Math.cos(ang) * rad;
+            sy = y + Math.sin(ang) * rad;
+        }
         if (window.PoolManager) {
-            particles.push(PoolManager.acquire('Particle', x, y, c, size));
+            particles.push(PoolManager.acquire('Particle', sx, sy, c, pSize));
         } else {
-            particles.push(new Particle(x,y,c,size));
+            particles.push(new Particle(sx, sy, c, pSize));
         }
     }
 }
@@ -32262,7 +32272,8 @@ class Entity {
                 if(Math.hypot(player.x - this.x, player.y - this.y) < 60) {
                     player.takeDamage(Math.max(5, this.maxHp * 0.1), m, this);
                 }
-                if(typeof spawnParticles !== 'undefined') spawnParticles(this.x, this.y, '#ff4400', 15, 30);
+                if(typeof spawnParticles !== 'undefined') spawnParticles(this.x, this.y, '#ff4400', 15, 4, 30);
+                if(typeof ScreenEffects !== 'undefined' && ScreenEffects._addRing) ScreenEffects._addRing(this.x, this.y, '#ff4400', 60, 14, 3, 0);
             }
 
             // Rogue Poison Explosion
@@ -32282,7 +32293,8 @@ class Entity {
                         }
                     }
                 }
-                if(typeof spawnParticles !== 'undefined') spawnParticles(this.x, this.y, '#33ff88', 25, cloudRadius/2);
+                if(typeof spawnParticles !== 'undefined') spawnParticles(this.x, this.y, '#33ff88', 25, 4, cloudRadius * 0.5);
+                if(typeof ScreenEffects !== 'undefined' && ScreenEffects._addRing) ScreenEffects._addRing(this.x, this.y, '#33ff88', cloudRadius, 14, 3, 0);
             }
             
             // Rogue Poison Explosion / EXPLOSIVE MUTATION: Explode on kill
@@ -32300,7 +32312,8 @@ class Entity {
                         }
                     }
                 }
-                if(typeof spawnParticles !== 'undefined') spawnParticles(this.x, this.y, '#ff6600', 20, 18);
+                if(typeof spawnParticles !== 'undefined') spawnParticles(this.x, this.y, '#ff6600', 20, 4, 22);
+                if(typeof ScreenEffects !== 'undefined' && ScreenEffects._addRing) ScreenEffects._addRing(this.x, this.y, '#ff6600', explR, 14, 3, 0);
                 if(typeof ScreenEffects !== 'undefined') ScreenEffects.onEliteDeath && ScreenEffects.onEliteDeath();
             }
             
@@ -32314,12 +32327,13 @@ class Entity {
                             const dx = e.x - this.x, dy = e.y - this.y;
                             if(dx * dx + dy * dy < incSq && hasLineOfSight(m, this.x, this.y, e.x, e.y)) {
                                 e.takeDamage(incDmg, m, source, true);
-                                spawnParticles(e.x, e.y, '#ff8800', 6, 5);
+                                spawnParticles(e.x, e.y, '#ff8800', 6, 4);
                             }
                         }
                     }
                 }
-                if(typeof spawnParticles !== 'undefined') spawnParticles(this.x, this.y, '#ff8800', 30, 24);
+                if(typeof spawnParticles !== 'undefined') spawnParticles(this.x, this.y, '#ff8800', 30, 5, 28);
+                if(typeof ScreenEffects !== 'undefined' && ScreenEffects._addRing) ScreenEffects._addRing(this.x, this.y, '#ff8800', incR, 16, 4, 0);
                 if(typeof ScreenEffects !== 'undefined' && ScreenEffects.onEliteDeath) ScreenEffects.onEliteDeath();
             }
             
@@ -37961,7 +37975,7 @@ class Bullet {
                         }
                         // Unique weapon abilities
                         if(this.weapon.unique === 'holySmite' && this.hitCount <= 1) {
-                            if(typeof spawnParticles !== 'undefined') spawnParticles(e.x, e.y, '#ffee00', 15, 25);
+                            if(typeof spawnParticles !== 'undefined') spawnParticles(e.x, e.y, '#ffee00', 15, 4, 22);
                             e.takeDamage(Math.floor(this.dmg * 0.5), m, source, true);
                             if(typeof ScreenEffects !== 'undefined') ScreenEffects.triggerFlash(0.15, '#ffee00');
                             if(typeof SND !== 'undefined') SND.play(600, 'sine', 0.1, 0.15);
@@ -37982,7 +37996,7 @@ class Bullet {
                                     const _ang = Math.atan2(closest.y - source.y, closest.x - source.x);
                                     source.x = closest.x - Math.cos(_ang) * 40;
                                     source.y = closest.y - Math.sin(_ang) * 40;
-                                    if(typeof spawnParticles !== 'undefined') spawnParticles(source.x, source.y, '#8800ff', 10, 15);
+                                    if(typeof spawnParticles !== 'undefined') spawnParticles(source.x, source.y, '#8800ff', 10, 4, 14);
                                 }
                             }
                         }
@@ -38004,7 +38018,8 @@ class Bullet {
                                 }
                             }
                             if(_frozeAny) {
-                                if(typeof spawnParticles !== 'undefined') spawnParticles(e.x, e.y, '#88ccff', 20, 50);
+                                if(typeof spawnParticles !== 'undefined') spawnParticles(e.x, e.y, '#88ccff', 20, 4, 45);
+                                if(typeof ScreenEffects !== 'undefined' && ScreenEffects._addRing) ScreenEffects._addRing(e.x, e.y, '#88ccff', 110, 14, 3, 0);
                                 if(typeof SND !== 'undefined') SND.play(200, 'sine', 0.15, 0.3);
                             }
                         }
@@ -38021,7 +38036,7 @@ class Bullet {
                                     }
                                 }
                             }
-                            if(typeof spawnParticles !== 'undefined') spawnParticles(e.x, e.y, '#ffcc00', 8, 20);
+                            if(typeof spawnParticles !== 'undefined') spawnParticles(e.x, e.y, '#ffcc00', 8, 4, 20);
                         }
                         if(this.weapon.unique === 'piercingShot') {
                             if(!this.weapon.pierce) this.weapon.pierce = true;
@@ -38427,9 +38442,9 @@ class Player extends Entity {
                 }
             }
             // Ground burst particles at center
-            spawnParticles(this.x, this.y, '#ff8800', 40, 10);
-            spawnParticles(this.x, this.y, '#ffcc00', 30, 14);
-            spawnParticles(this.x, this.y, '#ff4400', 20, 6);
+            spawnParticles(this.x, this.y, '#ff8800', 40, 5, 22);
+            spawnParticles(this.x, this.y, '#ffcc00', 30, 4, 28);
+            spawnParticles(this.x, this.y, '#ff4400', 20, 5, 14);
             ScreenEffects.triggerShake(18);
             ScreenEffects.triggerFlash(0.4, '#ff8800', 15);
             ScreenEffects.triggerChromatic(4);
@@ -38443,7 +38458,7 @@ class Player extends Entity {
                     if(dx*dx + dy*dy < slamRangeSq && hasLineOfSight(map, this.x, this.y, e.x, e.y)) {
                         e.takeDamage(CONFIG.WARRIOR_SLAM_DAMAGE, map, this, true); // o impulso vem do specialHit abaixo
                         spawnParticles(e.x, e.y, '#ff6600', 12, 5);
-                        spawnParticles(e.x, e.y, '#ffcc00', 6, 8);
+                        spawnParticles(e.x, e.y, '#ffcc00', 6, 4, 10);
                         ScreenEffects.triggerShake(8);
                         ScreenEffects.specialHit(e, dx, dy);
                         // Knockback from slam center
@@ -38460,8 +38475,8 @@ class Player extends Entity {
             if(this.skills.berserk) {
                 this.damageBoost = Math.max(this.damageBoost || 0, 900);
                 this.speedBoost = Math.max(this.speedBoost || 0, 900);
-                spawnParticles(this.x, this.y, '#ff0000', 40, 8);
-                spawnParticles(this.x, this.y, '#ff8800', 30, 10);
+                spawnParticles(this.x, this.y, '#ff0000', 40, 5, 18);
+                spawnParticles(this.x, this.y, '#ff8800', 30, 4, 24);
                 ScreenEffects.triggerFlash(0.3, '#ff0000', 14);
                 ScreenEffects.triggerChromatic(6);
                 SND.play(80, 'sawtooth', 0.4, 0.4);
@@ -38526,8 +38541,8 @@ class Player extends Entity {
         } else if(this.type === 'mage') {
             this.skillCooldown = Math.floor(CONFIG.MAGE_ARCANE_STORM_COOLDOWN * Math.max(0.5, 1 - (this.cdrMult || 0)));
             if(this.skills.ult1) {
-                spawnParticles(this.x, this.y, '#ff6600', CONFIG.PARTICLE_SPAWN_ACHIEVEMENT, 8);
-                spawnParticles(this.x, this.y, '#ff4400', 20, 10);
+                spawnParticles(this.x, this.y, '#ff6600', CONFIG.PARTICLE_SPAWN_ACHIEVEMENT, 5, 16);
+                spawnParticles(this.x, this.y, '#ff4400', 20, 5, 28);
                 ScreenEffects.triggerFlash(0.3, '#ff4400', 15);
                 ScreenEffects.triggerShake(12);
                 shake = CONFIG.SHAKE_METEOR;
@@ -38556,7 +38571,7 @@ class Player extends Entity {
                 addLog(I18n.t('log.meteor'));
             } else {
                 SND.play(500, 'sine', 0.5, 0.2);
-                spawnParticles(this.x, this.y, '#9966ff', 25, 8);
+                spawnParticles(this.x, this.y, '#9966ff', 25, 5, 18);
                 spawnParticles(this.x, this.y, '#ffffff', 15, 5);
                 ScreenEffects.triggerFlash(0.2, '#9966ff', 10);
                 ScreenEffects.triggerShake(8);
@@ -38604,7 +38619,7 @@ class Player extends Entity {
                 // Fúria da Natureza: flechas de vento que enraízam e envenenam
                 SND.play(700, 'sine', 0.2, 0.2);
                 ScreenEffects.triggerFlash(0.25, '#58e08a', 12);
-                spawnParticles(this.x, this.y, '#58e08a', 25, 8);
+                spawnParticles(this.x, this.y, '#58e08a', 25, 5, 18);
                 spawnParticles(this.x, this.y, '#ffffff', 15, 5);
                 ScreenEffects.triggerShake(8);
                 const n = CONFIG.ELF_NATURE_STORM_ARROWS;
@@ -38639,7 +38654,7 @@ class Player extends Entity {
                 SND.play(300, 'sine', 0.3, 0.25);
                 ScreenEffects.triggerFlash(0.2, '#7fffd4', 10);
                 ScreenEffects.triggerShake(10);
-                spawnParticles(this.x, this.y, '#7fffd4', 20, 8);
+                spawnParticles(this.x, this.y, '#7fffd4', 20, 5, 20);
                 const gustRangeSq = CONFIG.ELF_WIND_RANGE * CONFIG.ELF_WIND_RANGE;
                 for(let i = 0; i < entities.length; i++) {
                     const e = entities[i];
@@ -38897,7 +38912,7 @@ class Player extends Entity {
                         this.mageComboCount = 0;
                         ScreenEffects.triggerFlash(0.25, '#aa66ff', 12);
                         ScreenEffects.triggerShake(8);
-                        spawnParticles(this.x, this.y, '#cc66ff', 30, 8);
+                        spawnParticles(this.x, this.y, '#cc66ff', 30, 5, 20);
                         spawnParticles(this.x, this.y, '#ffffff', 15, 5);
                         const aoeD = Math.floor(cls.baseDmg * this.weaponLevel * CONFIG.MAGE_SPELL_COMBO_DMG_MULT);
                         const aoeSq = CONFIG.MAGE_SPELL_COMBO_AOE_RADIUS * CONFIG.MAGE_SPELL_COMBO_AOE_RADIUS;
