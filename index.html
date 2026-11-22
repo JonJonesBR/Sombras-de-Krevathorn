@@ -28306,7 +28306,10 @@ const SpriteManager = {
         healer: ['#0b1f12', '#5e4e4d', '#a38886', '#e6c3a0', '#eed2b0', '#18362c', '#2c5e4c', '#3b9658', '#75b27e', '#10211f', '#1c3b37', '#1e5231', '#618264', '#38564b', '#619684', '#82d89c', '#a8e0ad', '#615945', '#aa9b78', '#f0e08a', '#f5e6a1', '#635f65', '#ada7b0', '#f4f1e0', '#f7f2dd', '#3b2c2a', '#674d49', '#8a6a44', '#ad9370', '#9bffb2', '#dcffe4'],
         shielder: ['#0b1219', '#535464', '#9093ae', '#c9d3dc', '#d9ddda', '#23283e', '#3e466d', '#4d5f7a', '#828c96', '#17182b', '#282a4b', '#2b3547', '#6b6e72', '#383e56', '#626c96', '#899fc0', '#adb9c6', '#4f1920', '#8a2d39', '#c9382b', '#d9715e', '#4b4c5e', '#8286a4', '#bcc7d5', '#d1d5d7', '#192445', '#2d3f79', '#33548c', '#7186a6', '#4fd6ff', '#c1f1ff'],
         skeleton: ['#1d1610', '#5e595e', '#a59ba3', '#e8e0cc', '#efe6cf', '#554f52', '#948a8f', '#cfc6ad', '#ddd4b9', '#383236', '#63595f', '#847a65', '#ac9f88', '#625d63', '#aba3ac', '#f4eedc', '#f7f0dc', '#4b2a1b', '#834a30', '#bd6c24', '#cf955a', '#555565', '#9595b0', '#d2dae4', '#dfe1de', '#2f262b', '#53434b', '#685240', '#96846d', '#64ffe0', '#c9fff4'],
+        summoner: ['#180b1f', '#52444d', '#8c7484', '#c8a8bc', '#dcc2d2', '#2f143c', '#54246c', '#742d92', '#9c62b8', '#1b0c28', '#301548', '#3e1856', '#724d8a', '#4c2662', '#8242a6', '#b868e0', '#d096ea', '#624016', '#ad7226', '#f5a623', '#f9c666', '#5e5062', '#a28aa8', '#eadcf2', '#f2e8f6', '#3c2016', '#693824', '#945228', '#ba7e52', '#ffd23a', '#fff2b0'],
+        goblin: ['#0c1c0b', '#2b5426', '#4a9442', '#70d058', '#9ee284', '#5c4616', '#a07a24', '#e6b22e', '#f2cf66', '#332210', '#583b1c', '#7c5420', '#a67f48', '#665222', '#b08e38', '#f8d24a', '#fae282', '#642416', '#b03e26', '#f26030', '#f69066', '#615d4e', '#aba288', '#f4ecc8', '#f8f2d8', '#3e2c14', '#6c4d22', '#986c2c', '#be9654', '#ffe455', '#fff8c0'],
     },
+    _artBase: { summoner: 'mage', goblin: 'rogue' },
 
     // Folha de cada tipo: 29 colunas x 8 direções de 24px. Colunas: idle 0-3, walk 4-9,
     // attack 10-14, cast 15-18, dodge 19-21 (só heróis), hurt 22-23, death 24-28.
@@ -28331,10 +28334,11 @@ const SpriteManager = {
 
     // quadro desenhado (grade de papéis); cai para idle0 da mesma vista se faltar
     _frame(type, view, name) {
-        const key = type + '_' + view + '_' + name;
+        const base = (this._artBase && this._artBase[type]) || type;
+        const key = base + '_' + view + '_' + name;
         let g = this._auth[key];
         if (g) return g;
-        const packed = ART_PACKED[key] || ART_PACKED[type + '_' + view + '_idle0'];
+        const packed = ART_PACKED[key] || ART_PACKED[base + '_' + view + '_idle0'];
         if (!packed) return null;
         return (this._auth[key] = SpriteCore.decode(packed));
     },
@@ -28342,7 +28346,8 @@ const SpriteManager = {
     // Folha do tipo (29 colunas x 8 direções de 48px) com a direção `row` garantidamente pronta.
     // A versão branca (flash de dano) é preenchida junto, direção por direção.
     sheetRow(type, row, white) {
-        if (!this.palettes[type] || !ART_PACKED[type + '_f_idle0']) type = 'warrior';
+        const base = (this._artBase && this._artBase[type]) || type;
+        if (!this.palettes[type] || !ART_PACKED[base + '_f_idle0']) type = 'warrior';
         let e = this._sheets[type];
         if (!e) {
             const ts = this.tileSize;
@@ -28364,7 +28369,7 @@ const SpriteManager = {
         const ctx = e.color.getContext('2d');
         const img = ctx.createImageData(ts, ts), px = new Uint32Array(img.data.buffer);
         const ref = SpriteCore.bbox(this._frame(type, 'f', 'idle0'));
-        const det = this._details[type];
+        const det = this._details[type] || (this._artBase && this._artBase[type] ? this._details[this._artBase[type]] : null);
         for (let col = 0; col < this.COLS; col++) {
             const name = this.COL_NAMES[col];
             const auth = { f: this._frame(type, 'f', name) };
@@ -32992,7 +32997,7 @@ class Enemy extends Entity {
             ctx.scale(1 + 0.12 * sq, 1 - 0.18 * sq);
             ctx.translate(-px, -py);
         }
-        SpriteRenderer.drawEnemy.call(this, ctx, px, py, this.enemyType === 'melee' ? 'melee' : this.enemyType, (this.attackAnim > 0 ? 12 - this.attackAnim : this.walkTimer), this.angle, this.isB ? 2.0 : 1.5, this.ft > 0, this.attackAnim > 0 ? 'attack' : (this.walkTimer > 0 ? 'walk' : 'idle'));
+        SpriteRenderer.drawEnemy.call(this, ctx, px, py, this.enemyType === 'melee' ? 'melee' : this.enemyType, (this.attackAnim > 0 ? 12 - this.attackAnim : this.walkTimer), this.angle, 2.0, this.ft > 0, this.attackAnim > 0 ? 'attack' : (this.walkTimer > 0 ? 'walk' : 'idle'));
         if (_flinch) ctx.restore();
         
         // Biome variant aura (brasa/espectro/espinho)
@@ -33194,7 +33199,7 @@ class EliteEnemy extends Enemy {
             ctx.scale(1 + 0.12 * sq, 1 - 0.18 * sq);
             ctx.translate(-ex, -ey);
         }
-        SpriteRenderer.drawEnemy.call(this, ctx, ex, ey, this.enemyType, (this.attackAnim > 0 ? 12 - this.attackAnim : this.walkTimer), this.angle, 1.9, this.ft > 0, this.attackAnim > 0 ? 'attack' : (this.walkTimer > 0 ? 'walk' : 'idle'));
+        SpriteRenderer.drawEnemy.call(this, ctx, ex, ey, this.enemyType, (this.attackAnim > 0 ? 12 - this.attackAnim : this.walkTimer), this.angle, 2.0, this.ft > 0, this.attackAnim > 0 ? 'attack' : (this.walkTimer > 0 ? 'walk' : 'idle'));
         if (_flinch) ctx.restore();
         if(this.ft > 0) this.ft--;
         // Variante de bioma (anel e halo) + coroa pixelada de elite
@@ -33372,7 +33377,7 @@ class SwarmEnemy extends Entity {
         else if (st === 'lunge') { pose = 'attack'; ft = 5; }
         else if (this._moved) { pose = 'walk'; ft = this.walkTimer; }
         else { pose = 'idle'; ft = 0; }
-        SpriteRenderer.drawEnemy.call(this, ctx, px, py, 'swarm', ft, this.angle, 1.5, this.ft > 0, pose);
+        SpriteRenderer.drawEnemy.call(this, ctx, px, py, 'swarm', ft, this.angle, 2.0, this.ft > 0, pose);
         _drawEntityOverlays(ctx, this, px, py, cx, cy);
         if (this.ft > 0) this.ft--;
     }
@@ -33908,7 +33913,7 @@ class HealerEnemy extends Enemy {
         const px = this.x - cx, py = this.y - cy;
         // Brilho sutil esmeralda da aura de cura (cruz agora integrada diretamente no sprite do clérigo)
         drawGlow(ctx, px, py - 4, 14, '#7aff9e', 0.16);
-        SpriteRenderer.drawEnemy.call(this, ctx, px, py, this.enemyType, (this.attackAnim > 0 ? 12 - this.attackAnim : this.walkTimer), this.angle, 1.3, this.ft > 0, this.attackAnim > 0 ? 'attack' : (this.walkTimer > 0 ? 'walk' : 'idle'));
+        SpriteRenderer.drawEnemy.call(this, ctx, px, py, this.enemyType, (this.attackAnim > 0 ? 12 - this.attackAnim : this.walkTimer), this.angle, 2.0, this.ft > 0, this.attackAnim > 0 ? 'attack' : (this.walkTimer > 0 ? 'walk' : 'idle'));
         _drawEntityOverlays(ctx, this, px, py, cx, cy);
         // HP bar
         const hp = this.hp / this.maxHp;
@@ -33948,7 +33953,7 @@ class ShieldEnemy extends Enemy {
     }
     draw(ctx, cx, cy) {
         if(!this.alive) return;
-        SpriteRenderer.drawEnemy.call(this, ctx, this.x-cx, this.y-cy, this.enemyType, (this.attackAnim > 0 ? 12 - this.attackAnim : this.walkTimer), this.angle, 1.3, this.ft > 0, this.attackAnim > 0 ? 'attack' : (this.walkTimer > 0 ? 'walk' : 'idle'));
+        SpriteRenderer.drawEnemy.call(this, ctx, this.x-cx, this.y-cy, this.enemyType, (this.attackAnim > 0 ? 12 - this.attackAnim : this.walkTimer), this.angle, 2.0, this.ft > 0, this.attackAnim > 0 ? 'attack' : (this.walkTimer > 0 ? 'walk' : 'idle'));
         // Shield arc on front (suave para não cobrir o escudo de torre do sprite)
         if(this.shieldActive) {
             const sx = this.x-cx + Math.cos(this.facingAngle) * (this.radius + 7);
@@ -34125,13 +34130,15 @@ class ChargerEnemy extends Enemy {
         }
         ctx.restore();
         const pose = this.attackAnim > 0 || st === 'dash' ? 'attack' : (this.walkTimer > 0 ? 'walk' : 'idle');
-        SpriteRenderer.drawEnemy.call(this, ctx, px, py, 'melee', (this.attackAnim > 0 ? 12 - this.attackAnim : this.walkTimer), this.angle, 1.4, this.ft > 0, pose);
-        // Chifres de touro em pixel art sobre o elmo (orientados pela direção)
+        SpriteRenderer.drawEnemy.call(this, ctx, px, py, 'melee', (this.attackAnim > 0 ? 12 - this.attackAnim : this.walkTimer), this.angle, 2.0, this.ft > 0, pose);
+        // Chifres de touro em pixel art sobre o elmo (orientados pela direção + flash branco no hit)
         const dirIdx = SpriteManager.getDirIndex(this.angle);
         const hDir = (dirIdx === 0 || dirIdx === 1 || dirIdx === 7) ? 'r' : ((dirIdx === 3 || dirIdx === 4 || dirIdx === 5) ? 'l' : (dirIdx === 6 ? 'b' : 'f'));
-        const hOffX = hDir === 'r' ? 4 : (hDir === 'l' ? -4 : 0);
-        const hOffY = st === 'dash' ? -15 : -17;
-        PixelFX.draw(ctx, ChargerHornArt.sprite(hDir), Math.round(px + hOffX), Math.round(py + hOffY));
+        const hOffX = hDir === 'r' ? 5 : (hDir === 'l' ? -5 : 0);
+        const hOffY = st === 'dash' ? -20 : -22;
+        const hornSpr = ChargerHornArt.sprite(hDir);
+        PixelFX.draw(ctx, hornSpr, Math.round(px + hOffX), Math.round(py + hOffY));
+        if (this.ft > 0) _drawWhiteFlash(ctx, hornSpr, Math.round(px + hOffX), Math.round(py + hOffY));
         // Estrelas de tontura em pixel art quando atordoado na parede
         if (st === 'stun') {
             ctx.save();
@@ -34189,7 +34196,7 @@ class GuidedBullet {
 }
 
 class TreasureGoblin extends Enemy {
-    constructor(x,y) { super(x,y,false); this.color='#ffdd00'; this.s=CONFIG.TREASURE_GOBLIN_SPEED; this.hp=CONFIG.TREASURE_GOBLIN_HP; this.maxHp=CONFIG.TREASURE_GOBLIN_HP; this.enemyType='melee'; this.isTreasureGoblin = true; this._dsT = 'merchant'; this._dsS = 1.5; }
+    constructor(x,y) { super(x,y,false); this.color='#ffdd00'; this.s=CONFIG.TREASURE_GOBLIN_SPEED; this.hp=CONFIG.TREASURE_GOBLIN_HP; this.maxHp=CONFIG.TREASURE_GOBLIN_HP; this.enemyType='melee'; this.isTreasureGoblin = true; this._dsT = 'goblin'; this._dsS = 2.0; }
     onDeath(source) {
         for(let i=0; i<CONFIG.TREASURE_GOBLIN_CURRENCY_DROP; i++) pickups.push(new Pickup(this.x+(Math.random()-0.5)*50, this.y+(Math.random()-0.5)*50, 'currency'));
         SND.playTreasure(); addLog(window.I18n ? I18n.t('log.goblinDefeated') : ' Goblin derrotado!');
@@ -34204,11 +34211,16 @@ class TreasureGoblin extends Enemy {
         if(!this.alive) return;
         const px = this.x - cx, py = this.y - cy;
         drawGlow(ctx, px, py, this.radius + 6, '#ffdd33', 0.25);
-        SpriteRenderer.drawMerchant(ctx, px, py, this.walkTimer, this.angle, this.ft > 0);
+        // Sprite próprio de goblin dourado 48x48 1:1 + saco de moedas nas costas
+        const bx = Math.round(px - Math.cos(this.angle) * 8), by = Math.round(py - 4);
+        ctx.fillStyle = '#5a3b14'; ctx.fillRect(bx - 6, by - 5, 12, 11);
+        ctx.fillStyle = '#c8922e'; ctx.fillRect(bx - 5, by - 4, 10, 9);
+        ctx.fillStyle = '#ffe455'; ctx.fillRect(bx - 3, by - 3, 4, 3);
+        SpriteRenderer.drawEnemy.call(this, ctx, px, py, 'goblin', this.walkTimer, this.angle, 2.0, this.ft > 0, this.walkTimer > 0 ? 'walk' : 'idle');
         _drawEntityOverlays(ctx, this, px, py, cx, cy);
         if (this.hp < this.maxHp) {
-            ctx.fillStyle = '#333'; ctx.fillRect(px - 12, py - this.radius - 10, 24, 3);
-            ctx.fillStyle = '#ffdd33'; ctx.fillRect(px - 12, py - this.radius - 10, 24 * Math.max(0, this.hp / this.maxHp), 3);
+            ctx.fillStyle = '#333'; ctx.fillRect(px - 12, py - this.radius - 12, 24, 3);
+            ctx.fillStyle = '#ffdd33'; ctx.fillRect(px - 12, py - this.radius - 12, 24 * Math.max(0, this.hp / this.maxHp), 3);
         }
         if(this.ft > 0) this.ft--;
     }
@@ -34244,7 +34256,7 @@ class SkeletonEnemy extends Enemy {
     draw(ctx, cx, cy) {
         if(!this.alive) return;
         const px = this.x-cx, py = this.y-cy;
-        SpriteRenderer.drawEnemy.call(this, ctx, px, py, this.enemyType, (this.attackAnim > 0 ? 12 - this.attackAnim : this.walkTimer), this.angle, 1.3, this.ft > 0, this.attackAnim > 0 ? 'attack' : (this.walkTimer > 0 ? 'walk' : 'idle'));
+        SpriteRenderer.drawEnemy.call(this, ctx, px, py, this.enemyType, (this.attackAnim > 0 ? 12 - this.attackAnim : this.walkTimer), this.angle, 2.0, this.ft > 0, this.attackAnim > 0 ? 'attack' : (this.walkTimer > 0 ? 'walk' : 'idle'));
         _drawEntityOverlays(ctx, this, px, py, cx, cy);
         if(this.ft > 0) this.ft--;
     }
@@ -34791,18 +34803,23 @@ const BossWings = (() => {
         if (!cache[key]) cache[key] = PixelFX.bake('asas48|' + key, rows(kind, lift), PAL[kind], 1);
         return cache[key];
     };
-    const draw = (ctx, px, py, kind) => {
-        const lift = ((gameTime / 45) | 0) & 1;
+    const draw = (ctx, px, py, kind, isHit, bossScale) => {
+        const rm = !!(window.GameSettings && GameSettings.reducedMotion);
+        const lift = rm ? 0 : (((gameTime / 45) | 0) & 1);
         const w = sprite(kind, lift);
-        const x = Math.round(px), y = Math.round(py - 12 - TOP[0]);
+        const scK = (bossScale && bossScale >= 3.5) ? 1.25 : 1;
+        const x = Math.round(px), y = Math.round(py - 12 * scK - TOP[0]);
+        const span = Math.round(8 * scK);
         const smOld = ctx.imageSmoothingEnabled;
         ctx.imageSmoothingEnabled = false;
         ctx.save();
-        ctx.translate(x - 8, y);
+        ctx.translate(x - span, y);
         ctx.scale(-1, 1);
         ctx.drawImage(w, 0, 0);
+        if (isHit) _drawWhiteFlash(ctx, w, w.width / 2, w.height / 2);
         ctx.restore();
-        ctx.drawImage(w, x + 8, y);
+        ctx.drawImage(w, x + span, y);
+        if (isHit) _drawWhiteFlash(ctx, w, x + span + w.width / 2, y + w.height / 2);
         ctx.imageSmoothingEnabled = smOld;
     };
     return { draw };
@@ -34934,7 +34951,7 @@ class Boss extends Enemy {
         this._archDamageMult = 1.0;
         this._blueprint = null;
         this._sprite = 'boss';
-        this._spriteScale = 2.3; // base sprite draw scale; applyFloorBlueprint grows it with identity radius
+        this._spriteScale = 3.0; // escala harmônica (72px ou 96px=2x em chefes colossais, sem faixas 1.08x)
         this._bpGlow = '#ff00ff';
         this._drainT = 0;
         this._armorHp = 0;
@@ -34982,7 +34999,7 @@ class Boss extends Enemy {
         this.radius = Math.max(20, Math.floor(CONFIG.BOSS_RADIUS * (bp.radiusMult || 1)));
         // Identity-based sprite scale: big-radius bosses (magma_titan,
         // stone_colossus) read BIG on screen; base bosses keep ~2.2-2.3.
-        this._spriteScale = Math.min(4.0, 2.2 + Math.max(0, this.radius - CONFIG.BOSS_RADIUS) * 0.11);
+        this._spriteScale = (this.radius >= CONFIG.BOSS_RADIUS + 2) ? 4.0 : 3.0;
         this._archDamageMult = bp.dmgMult || 1.0;
         this._armorHp = bp.armor ? Math.floor(this.maxHp * bp.armor) : 0;
         this._regen = bp.regen || 0;
@@ -35190,8 +35207,8 @@ class Boss extends Enemy {
     // Asas: desenhadas atrás do corpo (antes do sprite), só nos dois chefes que as têm
     _drawBossWings(ctx, px, py) {
         if (!this._blueprint) return;
-        if (this._blueprint.key === 'deep_demon') BossWings.draw(ctx, px, py, 'demon');
-        else if (this._blueprint.key === 'final_guardian') BossWings.draw(ctx, px, py, 'final');
+        if (this._blueprint.key === 'deep_demon') BossWings.draw(ctx, px, py, 'demon', this.ft > 0, this._spriteScale);
+        else if (this._blueprint.key === 'final_guardian') BossWings.draw(ctx, px, py, 'final', this.ft > 0, this._spriteScale);
     }
 
     // Extra per-boss pixel-snapped decoration drawn on top of the 48x48 sprite
@@ -36100,6 +36117,34 @@ class SummonerEnemy extends Enemy {
                 SND.play(400, 'triangle', 0.2, 0.15);
             }
         }
+    }
+    draw(ctx, cx, cy) {
+        if (!this.alive) return;
+        const px = this.x - cx, py = this.y - cy;
+        const rm = !!(window.GameSettings && GameSettings.reducedMotion);
+        const casting = this.summonTimer > 205;
+        // Identidade visual própria do Invocador: anel rúnico âmbar + sprite encapuzado 'summoner' 48x48
+        ctx.save();
+        ctx.globalAlpha = casting ? 0.65 : 0.35;
+        PixelFX.ring(ctx, px, py + 8, this.radius + (casting ? 9 : 6), '#ffaa22', 3, { dash: 3 });
+        if (!rm) {
+            const ang = gameTime * (casting ? 0.14 : 0.05);
+            ctx.fillStyle = '#ffe066';
+            for (let k = 0; k < 3; k++) {
+                const a = ang + k * 2.094;
+                ctx.fillRect(PixelFX.snap(px + Math.cos(a) * (this.radius + 6), 2), PixelFX.snap(py + 6 + Math.sin(a) * 6, 2), 2, 2);
+            }
+        }
+        ctx.restore();
+        drawGlow(ctx, px, py - 4, 15, '#ffaa00', casting ? 0.45 : 0.2);
+        const pose = casting ? 'cast' : (this.walkTimer > 0 ? 'walk' : 'idle');
+        SpriteRenderer.drawEnemy.call(this, ctx, px, py, 'summoner', casting ? ((this.summonTimer - 205) % 12) : this.walkTimer, this.angle, 2.0, this.ft > 0, pose);
+        _drawEntityOverlays(ctx, this, px, py, cx, cy);
+        if (this.hp < this.maxHp) {
+            ctx.fillStyle = '#333'; ctx.fillRect(px - 14, py - this.radius - 12, 28, 3);
+            ctx.fillStyle = '#ffaa22'; ctx.fillRect(px - 14, py - this.radius - 12, 28 * Math.max(0, this.hp / this.maxHp), 3);
+        }
+        if (this.ft > 0) this.ft--;
     }
 }
 
@@ -37242,11 +37287,13 @@ class Pet {
             }
             ctx.globalAlpha = 1;
         }
-        // Rótulo curto: pet.<tipo>.short (até 8 letras, ASCII em maiúsculas). Sem a chave, usa o rótulo fixo abaixo
-        ctx.fillStyle = '#fff'; ctx.font = 'bold 8px ' + COLORS.CANVAS_FONT; ctx.textAlign = 'center';
-        const labels = { horse: 'CORCEL', dragon: 'DRAGAO', eagle: 'AGUIA', wolf: 'LOBO', owl: 'CORUJA', spirit: 'ESPIRITO', faro: 'FARO', mimic: 'BAU', salamander: 'BRASA' };
-        const rotulo = (window._L && _L('pet.' + this.type + '.short', '')) || labels[this.type] || '?';
-        ctx.fillText(rotulo, sx, sy + bob + this.radius + 10);
+        // Rótulo curto só quando montado ou recém-invocado (evita poluir tela de 360px em combate)
+        if (this.mounted || this.timer < 180) {
+            ctx.fillStyle = '#fff'; ctx.font = 'bold 8px ' + COLORS.CANVAS_FONT; ctx.textAlign = 'center';
+            const labels = { horse: 'CORCEL', dragon: 'DRAGAO', eagle: 'AGUIA', wolf: 'LOBO', owl: 'CORUJA', spirit: 'ESPIRITO', faro: 'FARO', mimic: 'BAU', salamander: 'BRASA' };
+            const rotulo = (window._L && _L('pet.' + this.type + '.short', '')) || labels[this.type] || '?';
+            ctx.fillText(rotulo, sx, sy + bob + this.radius + 10);
+        }
 
         // Mounted indicator
         if(this.mounted) {
@@ -37255,11 +37302,13 @@ class Pet {
             ctx.globalAlpha = 1;
         }
 
-        // HP bar
-        const hpPct = this.hp / this.maxHp;
-        ctx.fillStyle = '#333'; ctx.fillRect(sx - 14, ptop - 6, 28, 4);
-        ctx.fillStyle = hpPct > 0.5 ? '#33ff33' : (hpPct > 0.25 ? '#ffaa00' : '#ff3333');
-        ctx.fillRect(sx - 14, ptop - 6, 28 * hpPct, 4);
+        // HP bar: só quando ferido (limpeza visual em 360px)
+        if (this.hp < this.maxHp) {
+            const hpPct = Math.max(0, this.hp / this.maxHp);
+            ctx.fillStyle = '#333'; ctx.fillRect(sx - 14, ptop - 6, 28, 4);
+            ctx.fillStyle = hpPct > 0.5 ? '#33ff33' : (hpPct > 0.25 ? '#ffaa00' : '#ff3333');
+            ctx.fillRect(sx - 14, ptop - 6, 28 * hpPct, 4);
+        }
     }
 
     // Called on player takeDamage  pet absorbs some when mounted
@@ -37413,7 +37462,7 @@ window.AllySpecter = {
         ctx.beginPath(); ctx.arc(sx, sy + 6, 15, 0, Math.PI * 2); ctx.fill();
         ctx.globalAlpha = 0.58;
         if (typeof SpriteManager !== 'undefined' && typeof SpriteManager.draw === 'function') {
-            SpriteManager.draw(ctx, sx, sy, this.cls, this.timer, false, this.angle, 1.35, this.state);
+            SpriteManager.draw(ctx, sx, sy, this.cls, this.timer, false, this.angle, 2.0, this.state);
         } else {
             ctx.fillStyle = '#7dd3fc';
             ctx.beginPath(); ctx.arc(sx, sy, 12, 0, Math.PI * 2); ctx.fill();
@@ -37516,7 +37565,7 @@ window.GhostReplay = {
         ctx.save();
         ctx.globalAlpha = 0.36;
         if (typeof SpriteManager !== 'undefined' && typeof SpriteManager.draw === 'function') {
-            SpriteManager.draw(ctx, sx, sy, this._cls, this._floorTick, false, this._cur.a, 1.35, 'walk');
+            SpriteManager.draw(ctx, sx, sy, this._cls, this._floorTick, false, this._cur.a, 2.0, 'walk');
         } else {
             ctx.fillStyle = '#c084fc';
             ctx.beginPath(); ctx.arc(sx, sy, 11, 0, Math.PI * 2); ctx.fill();
@@ -37751,7 +37800,7 @@ window.CoopP2P = {
         ctx.beginPath(); ctx.arc(sx, sy + 6, 15, 0, Math.PI * 2); ctx.fill();
         ctx.globalAlpha = 0.92;
         if (typeof SpriteManager !== 'undefined' && typeof SpriteManager.draw === 'function') {
-            SpriteManager.draw(ctx, sx, sy, this.remote.cls || 'warrior', this._tick, false, this.remote.a || 0, 1.35, this.remote.st || 'idle');
+            SpriteManager.draw(ctx, sx, sy, this.remote.cls || 'warrior', this._tick, false, this.remote.a || 0, 2.0, this.remote.st || 'idle');
         } else {
             ctx.fillStyle = '#4ade80';
             ctx.beginPath(); ctx.arc(sx, sy, 12, 0, Math.PI * 2); ctx.fill();
