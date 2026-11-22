@@ -28740,38 +28740,49 @@ class DamageNumber {
 
 class SlashEffect {
     constructor() { this.init(0, 0, 0, 0, '#fff'); }
-    init(x, y, angle, radius, color='#fff') {
+    init(x, y, angle, radius, color='#fff', arcHalf=Math.PI/2.5, dir=1, thick=1) {
         this.x = x; this.y = y; this.angle = angle; this.radius = radius; this.color = color;
+        this.arcHalf = arcHalf || (Math.PI / 2.5);
+        this.dir = dir < 0 ? -1 : 1;
+        this.thick = thick || 1;
         this.life = 1.4; this.alive = true;
         return this;
     }
     update() {
-        this.life -= 0.06;
+        this.life -= 0.08;
         if (this.life <= 0) this.alive = false;
     }
     draw(ctx, cx, cy) {
-        // Arco em pixels (sem stroke): 3 camadas (externa translúcida, principal, núcleo branco),
-        // afinando nas pontas (estilo crescente) e com fade por life
+        // Arco em pixels com varredura real ao longo de life (suporta 120°/150°/360° e espessura Pesada/Ágil)
         const a = Math.min(1, this.life);
-        const A = Math.PI / 2.5;
+        const prog = 1 - Math.max(0, Math.min(1, this.life / 1.4));
+        const A = this.arcHalf;
+        const full = A >= Math.PI - 0.05;
+        const head = Math.min(1, prog * 2.4);
+        const tail = Math.max(0, (prog - 0.25) / 0.75);
         const ox = this.x - cx, oy = this.y - cy;
-        const steps = Math.max(8, Math.ceil(this.radius * 2 * A / 2));
+        const steps = Math.max(10, Math.min(44, Math.ceil(this.radius * 2 * A / 3)));
+        const k = this.thick;
         const layers = [
-            { col: this.color, alpha: a * 0.3, rad: 5 },
-            { col: this.color, alpha: a * 0.8, rad: 2 },
-            { col: '#ffffff', alpha: a * 0.6, rad: 0 }
+            { col: this.color, alpha: a * 0.32, rad: Math.max(2, Math.round(5 * k)) },
+            { col: this.color, alpha: a * 0.85, rad: Math.max(1, Math.round(2 * k)) },
+            { col: '#ffffff', alpha: a * 0.7, rad: 0 }
         ];
         ctx.save();
         for (let s = 0; s <= steps; s++) {
-            const t = -A + (2 * A * s) / steps;
-            const taper = 1 - Math.pow(Math.abs(t) / A, 2); // 1 no meio, 0 nas pontas
+            const u = s / steps; // 0..1 no sentido do golpe
+            if (u > head || u < tail) continue;
+            const span = Math.max(0.05, head - tail);
+            const loc = (u - tail) / span; // 0 na cauda, 1 na ponta dianteira
+            const taper = full ? (0.35 + 0.65 * Math.sin(loc * Math.PI)) : Math.sin(loc * Math.PI);
+            const t = (this.dir > 0 ? (-A + 2 * A * u) : (A - 2 * A * u));
             const th = this.angle + t;
             const cs = Math.cos(th), sn = Math.sin(th);
             for (let l = 0; l < layers.length; l++) {
                 const L = layers[l];
                 if (L.rad === 0 && taper < 0.3) continue;
                 const m = Math.round(L.rad * taper);
-                ctx.globalAlpha = L.alpha;
+                ctx.globalAlpha = L.alpha * (0.45 + 0.55 * loc);
                 ctx.fillStyle = L.col;
                 for (let d = -m; d <= m; d++) {
                     const rr = this.radius + d * 2;
@@ -28849,13 +28860,13 @@ const DamageNumbers = {
     numbers: [],
     slashes: [],
     MAX_NUMBERS: 14,
-    addSlash(x, y, angle, radius, color) {
+    addSlash(x, y, angle, radius, color, arcHalf, dir, thick) {
         if (this.slashes.length > 5) return;
         let s;
         if (window.PoolManager) {
-            s = PoolManager.acquire('SlashEffect', x, y, angle, radius, color);
+            s = PoolManager.acquire('SlashEffect', x, y, angle, radius, color, arcHalf, dir, thick);
         } else {
-            s = new SlashEffect().init(x, y, angle, radius, color);
+            s = new SlashEffect().init(x, y, angle, radius, color, arcHalf, dir, thick);
         }
         if (s) this.slashes.push(s);
     },
@@ -32684,12 +32695,13 @@ class Enemy extends Entity {
                 const aim = this._aimAt(p, CONFIG.ENEMY_RANGED_BULLET_SPEED, CONFIG.ENEMY_RANGED_SPREAD);
                 const bvx = aim.x * CONFIG.ENEMY_RANGED_BULLET_SPEED;
                 const bvy = aim.y * CONFIG.ENEMY_RANGED_BULLET_SPEED;
+                const _ec = this.element === 'fire' ? '#ff5522' : this.element === 'ice' ? '#44ddff' : this.element === 'poison' ? '#44ee55' : this.element === 'lightning' ? '#ffee33' : '#ff2a55';
                 if (window.PoolManager) {
-                    const _eb = PoolManager.acquire('Bullet', this.x, this.y, bvx, bvy, '#ff6666', DifficultySystem.getScaledDamage(CONFIG.ENEMY_RANGED_BULLET_DAMAGE), false);
+                    const _eb = PoolManager.acquire('Bullet', this.x, this.y, bvx, bvy, _ec, DifficultySystem.getScaledDamage(CONFIG.ENEMY_RANGED_BULLET_DAMAGE), false);
                     if(this.element) _eb.element = this.element;
                     bullets.push(_eb);
                 } else {
-                    const _eb2 = new Bullet(this.x, this.y, bvx, bvy, '#ff6666', DifficultySystem.getScaledDamage(CONFIG.ENEMY_RANGED_BULLET_DAMAGE), false);
+                    const _eb2 = new Bullet(this.x, this.y, bvx, bvy, _ec, DifficultySystem.getScaledDamage(CONFIG.ENEMY_RANGED_BULLET_DAMAGE), false);
                     if(this.element) _eb2.element = this.element;
                     bullets.push(_eb2);
                 }
@@ -37869,8 +37881,16 @@ function awardKillRewards(player, target, source) {
 const BulletArt = (() => {
     const SZ = 16;
     const SHOT = ['.ooo.', 'owbbo', 'obbbo', 'obbso', '.ooo.'];
-    const PAL_ARROW = { h: '#a06a3a', t: '#e8e8e8', T: '#9aa3ad', f: '#58e08a', F: '#2e8f55' };
-    const PAL_KNIFE = { b: '#e6ecf2', s: '#9aa6b2', o: '#4a5563', g: '#5cff82', G: '#2e8f4a' };
+    // Assinatura visual de perigo para projéteis inimigos (contorno preto + aro vibrante + núcleo branco-amarelo)
+    const ENEMY_ORB = [
+        ['..ooo..', '.obwbo.', 'obwywbo', 'owywywo', 'obwywbo', '.obwbo.', '..ooo..'],
+        ['...o...', '.ooboo.', '.obwbo.', 'obwywbo', '.obwbo.', '.ooboo.', '...o...']
+    ];
+    // Orbe arcano próprio do Mago (desacoplado de PICKUP_ART.orb): estrela rúnica pulsante 7×7
+    const MAGIC_ORB = [
+        ['...o...', '..olo..', '.olwlo.', 'olwwwlo', '.olwlo.', '..olo..', '...o...'],
+        ['..ooo..', '.osbso.', 'osblbso', 'oblwlbo', 'osblbso', '.osbso.', '..ooo..']
+    ];
     const rasterDir = (ang, fn) => {
         const c = Math.cos(ang), s = Math.sin(ang);
         const rows = [];
@@ -37885,15 +37905,15 @@ const BulletArt = (() => {
         }
         return rows;
     };
-    // Flecha: haste marrom, ponta cinza clara, penas verdes
+    // Flecha: haste contínua inclusive a 45° (av <= 0.65), ponta metálica, penas na cor da arma
     const arrowCell = (u, v) => {
         const av = Math.abs(v);
         if (u >= 2 && u <= 6.5 && av <= 2.2 - (u - 2) * 0.5) return v > 0 ? 'T' : 't';
-        if (u >= -5 && u < 2 && av < 0.5) return 'h';
-        if (u >= -7 && u < -5 && av <= 2) return av <= 1 ? 'f' : 'F';
+        if (u >= -5 && u < 2 && av <= 0.65) return 'h';
+        if (u >= -7 && u < -5 && av <= 2.1) return av <= 1 ? 'f' : 'F';
         return null;
     };
-    // Faca: lâmina prata com contorno, cabo verde
+    // Faca: lâmina prata com contorno, cabo/brilho na cor da arma
     const knifeCell = (u, v) => {
         const av = Math.abs(v);
         if (u >= -7 && u < -3 && av <= 1) return v > 0 ? 'G' : 'g';
@@ -37905,8 +37925,14 @@ const BulletArt = (() => {
         return null;
     };
     const rows = (type, k) => rasterDir(k * Math.PI / 4, type === 'arrow' ? arrowCell : knifeCell);
-    const pal = type => (type === 'arrow' ? PAL_ARROW : PAL_KNIFE);
-    return { SHOT, rows, pal };
+    const pal = (type, color) => {
+        const c = color || (type === 'arrow' ? '#58e08a' : '#5cff82');
+        const dk = PixelFX.shade(c, -0.4);
+        return type === 'arrow'
+            ? { h: '#a06a3a', t: '#f0f4f8', T: '#9aa3ad', f: c, F: dk }
+            : { b: '#eef3f8', s: '#9aa6b2', o: '#252c36', g: c, G: dk };
+    };
+    return { SHOT, ENEMY_ORB, MAGIC_ORB, rows, pal };
 })();
 
 class Bullet {
@@ -37935,9 +37961,12 @@ class Bullet {
         this.applyPoison = weapon && weapon.poison;
         
         if (this.isP) {
+            const v = this.weapon && this.weapon.variant;
+            const tw = v === 'heavy' ? 6 : (v === 'swift' ? 2 : 4);
+            const tc = (this.weapon && this.weapon.color) || this.color;
             this.trail = window.PoolManager
-                ? PoolManager.acquire('Trail', x, y, this.color, 4)
-                : new Trail(x, y, this.color, 4);
+                ? PoolManager.acquire('Trail', x, y, tc, tw)
+                : new Trail(x, y, tc, tw);
             if (typeof trails !== 'undefined' && this.trail) trails.push(this.trail);
         }
         return this;
@@ -38149,27 +38178,71 @@ class Bullet {
     draw(ctx, cx, cy) {
         const drawColor = this.weapon ? (this.weapon.color || this.color) : this.color;
         const tier = (this.weapon && this.weapon.tier != null) ? this.weapon.tier : 0;
-        const r = this.isP ? (5 + tier) : 4;
+        const variant = this.weapon ? this.weapon.variant : null;
+        const r = this.isP ? (5 + tier + (variant === 'heavy' ? 1 : 0)) : 5;
         const sx = this.x-cx, sy = this.y-cy;
         const vAng = Math.atan2(this.vy, this.vx);
+        const ca = Math.cos(vAng), sa = Math.sin(vAng);
+        const rm = !!(window.GameSettings && GameSettings.reducedMotion);
 
         ctx.save();
-        if (this.projType === 'arrow' || this.projType === 'knife') {
-            // Flecha/faca: sprite pré-renderizado na direção mais próxima do voo (8 direções, sem rotate)
+        if (!this.isP) {
+            // Projétil inimigo: mini-rastro + assinatura de perigo de alto contraste (contorno preto + núcleo claro pulsante)
+            const eCol = (drawColor === '#a9a9a9' || drawColor === '#a45bff' || drawColor === '#cc00ff') ? '#ff2a7a' : (drawColor || '#ff2a55');
+            const f = rm ? 0 : (Math.floor(gameTime / 5) % 2);
+            ctx.fillStyle = eCol;
+            ctx.globalAlpha = 0.45;
+            ctx.fillRect(PixelFX.snap(sx - this.vx * 1.1 - 2, 2), PixelFX.snap(sy - this.vy * 1.1 - 2, 2), 4, 4);
+            ctx.globalAlpha = 0.25;
+            ctx.fillRect(PixelFX.snap(sx - this.vx * 2.2 - 1, 2), PixelFX.snap(sy - this.vy * 2.2 - 1, 2), 2, 2);
+            ctx.globalAlpha = 1;
+            const eKey = 'ebul|' + f + '|' + eCol;
+            const eSpr = PixelFX.get(eKey) || PixelFX.bake(eKey, BulletArt.ENEMY_ORB[f], {
+                o: '#09040c', b: eCol, w: '#fff9cc', y: '#ffdd55'
+            }, 2);
+            PixelFX.draw(ctx, eSpr, sx, sy);
+        } else if (this.projType === 'arrow' || this.projType === 'knife') {
+            // Flecha/faca: sprite 8 direções tingido pela arma (cache por tipo+dir+cor)
             const k = ((Math.round(vAng / (Math.PI / 4)) % 8) + 8) % 8;
-            const key = this.projType + k;
-            const spr = PixelFX.get(key) || PixelFX.bake(key, BulletArt.rows(this.projType, k), BulletArt.pal(this.projType), 2);
+            const key = this.projType + k + '|' + drawColor;
+            const spr = PixelFX.get(key) || PixelFX.bake(key, BulletArt.rows(this.projType, k), BulletArt.pal(this.projType, drawColor), 2);
             PixelFX.draw(ctx, spr, sx, sy);
         } else if (this.projType === 'magic') {
-            // Magia: orbe pixel redondo (3 tons, núcleo branco) com 2 frames pulsando
-            const f = Math.floor(gameTime / 6) % 2;
-            PixelFX.draw(ctx, PixelFX.tonal('magic' + f, PICKUP_ART.orb, f ? PixelFX.shade(drawColor, 0.25) : drawColor, 2), sx, sy);
+            // Magia: estrela rúnica própria do Mago (2 frames pulsando)
+            const f = rm ? 0 : (Math.floor(gameTime / 6) % 2);
+            const mKey = 'morb|' + f + '|' + drawColor;
+            const mSpr = PixelFX.get(mKey) || PixelFX.bake(mKey, BulletArt.MAGIC_ORB[f], PixelFX.tones(f ? PixelFX.shade(drawColor, 0.25) : drawColor), 2);
+            PixelFX.draw(ctx, mSpr, sx, sy);
         } else {
-            // Projétil comum: estilhaço pixel com contorno escuro (inimigos: contorno vermelho-escuro)
-            const key = (this.isP ? 'shotP|' : 'shotE|') + drawColor;
-            const spr = PixelFX.get(key) || PixelFX.bake(key, BulletArt.SHOT,
-                this.isP ? PixelFX.tones(drawColor) : Object.assign(PixelFX.tones(drawColor), { o: '#4a0812' }), 2);
+            const key = 'shotP|' + drawColor;
+            const spr = PixelFX.get(key) || PixelFX.bake(key, BulletArt.SHOT, PixelFX.tones(drawColor), 2);
             PixelFX.draw(ctx, spr, sx, sy);
+        }
+
+        // Diferenciação visual de caminho da arma (Pesada vs Ágil) e efeitos de combo/habilidade
+        if (this.isP) {
+            if (variant === 'heavy') {
+                ctx.globalAlpha = 0.45;
+                PixelFX.ring(ctx, sx, sy, r + 2, drawColor, 3);
+                ctx.globalAlpha = 1;
+            } else if (variant === 'swift') {
+                PixelFX.line(ctx, sx - ca * 14, sy - sa * 14, sx - ca * 5, sy - sa * 5, '#ffffff', 0.45);
+            }
+            if (this.chainBlast) {
+                ctx.globalAlpha = rm ? 0.55 : (0.4 + Math.sin(gameTime * 0.35) * 0.2);
+                PixelFX.ring(ctx, sx, sy, r + 4, '#ffaa44', 3);
+                ctx.globalAlpha = 1;
+            }
+            if (this.homing) {
+                ctx.globalAlpha = 0.55;
+                PixelFX.ring(ctx, sx - ca * 4, sy - sa * 4, 5, '#58e08a', 2);
+                ctx.globalAlpha = 1;
+            }
+            if (this.galeKb) {
+                const nx = -sa, ny = ca;
+                PixelFX.line(ctx, sx + nx * 4 - ca * 8, sy + ny * 4 - sa * 8, sx + nx * 4, sy + ny * 4, '#7fffd4', 0.65);
+                PixelFX.line(ctx, sx - nx * 4 - ca * 8, sy - ny * 4 - sa * 8, sx - nx * 4, sy - ny * 4, '#7fffd4', 0.65);
+            }
         }
 
         // Special weapon effects (em pixel: quadrados alinhados à grade)
@@ -38179,17 +38252,19 @@ class Bullet {
             ctx.globalAlpha = 1;
         }
         if(this.weapon && this.weapon.chainLightning) {
-            PixelFX.line(ctx, sx + r, sy, sx + r + 4, sy - 3, '#ffff00', 0.7);
-            PixelFX.line(ctx, sx + r + 4, sy - 3, sx + r + 7, sy + 3, '#ffff00', 0.7);
+            const nx = -sa, ny = ca;
+            const lx0 = sx + ca * r, ly0 = sy + sa * r;
+            const lx1 = sx + ca * (r + 4) + nx * 3, ly1 = sy + sa * (r + 4) + ny * 3;
+            const lx2 = sx + ca * (r + 8) - nx * 3, ly2 = sy + sa * (r + 8) - ny * 3;
+            PixelFX.line(ctx, lx0, ly0, lx1, ly1, '#ffff44', 0.75);
+            PixelFX.line(ctx, lx1, ly1, lx2, ly2, '#ffff44', 0.75);
         }
         if((this.weapon && this.weapon.pierce) || this.chainPierce) {
             ctx.globalAlpha = 0.55;
             PixelFX.ring(ctx, sx, sy, r + 3, '#00ffff', 3, { dash: 2 });
             ctx.globalAlpha = 1;
-            // Rastro do golpe perfurante do finalizador (elfa): faixa atrás da flecha
             if(this.chainPierce && this.projType === 'arrow') {
-                const ca = Math.cos(vAng), sa = Math.sin(vAng);
-                PixelFX.line(ctx, sx - ca * 34, sy - sa * 34, sx - ca * 12, sy - sa * 12, drawColor, 0.3);
+                PixelFX.line(ctx, sx - ca * 34, sy - sa * 34, sx - ca * 12, sy - sa * 12, drawColor, 0.35);
             }
         }
         if(this.weapon && this.weapon.lifesteal) {
@@ -38552,9 +38627,10 @@ class Player extends Entity {
             }
             const arrowCount = this.skills.ult1 ? 20 : 12;
             const cls = CONFIG.PLAYER[this.type], arrowDmg = Math.floor(cls.baseDmg * this.weaponLevel * this.weaponDamageMult * 2), spd = CONFIG.PLAYER.rogue.bulletSpeed || 12;
+            const kCol = (this.currentWeapon && this.currentWeapon.color) || '#33ff33';
             for(let i = 0; i < arrowCount; i++) {
                 const angle = (i / arrowCount) * Math.PI * 2;
-                bullets.push(window.PoolManager ? PoolManager.acquire('Bullet', this.x, this.y, Math.cos(angle)*spd, Math.sin(angle)*spd, '#33ff33', arrowDmg, true, null, 380) : new Bullet(this.x, this.y, Math.cos(angle)*spd, Math.sin(angle)*spd, '#33ff33', arrowDmg, true, null, 380));
+                bullets.push(window.PoolManager ? PoolManager.acquire('Bullet', this.x, this.y, Math.cos(angle)*spd, Math.sin(angle)*spd, kCol, arrowDmg, true, null, 380, 'knife') : new Bullet(this.x, this.y, Math.cos(angle)*spd, Math.sin(angle)*spd, kCol, arrowDmg, true, null, 380, 'knife'));
             }
             if(this.skills.ult1) {
                 const assassRangeSq = 220 * 220;
@@ -38630,7 +38706,7 @@ class Player extends Entity {
                     const sa = (i/n) * Math.PI * 2 + i * 0.25, sp = 7 + (i % 3) * 0.5;
                     var colors = ['#9966ff', '#bb88ff', '#cc66ff'];
                     var col = colors[i % 3];
-                    bullets.push(window.PoolManager ? PoolManager.acquire('Bullet', this.x, this.y, Math.cos(sa)*sp, Math.sin(sa)*sp, col, CONFIG.MAGE_ARCANE_STORM_DAMAGE, true) : new Bullet(this.x, this.y, Math.cos(sa)*sp, Math.sin(sa)*sp, col, CONFIG.MAGE_ARCANE_STORM_DAMAGE, true));
+                    bullets.push(window.PoolManager ? PoolManager.acquire('Bullet', this.x, this.y, Math.cos(sa)*sp, Math.sin(sa)*sp, col, CONFIG.MAGE_ARCANE_STORM_DAMAGE, true, null, 400, 'magic') : new Bullet(this.x, this.y, Math.cos(sa)*sp, Math.sin(sa)*sp, col, CONFIG.MAGE_ARCANE_STORM_DAMAGE, true, null, 400, 'magic'));
                 }
                 spawnParticles(this.x, this.y, '#cc66ff', 15, 5);
                 ScreenEffects.specialFX(this.x, this.y, '#9966ff', 110, 'double', 3, 6);
@@ -38891,14 +38967,17 @@ class Player extends Entity {
                 // passo 3 = giro de 360° com alcance e knockback maiores
                 const arcHalf = (CONFIG.COMBO_CHAIN_WARRIOR_ARC[chainStep - 1] / 2) * Math.PI / 180;
                 const reach = CONFIG.WARRIOR_MELEE_RANGE * CONFIG.COMBO_CHAIN_WARRIOR_REACH[chainStep - 1];
-                DamageNumbers.addSlash(this.x, this.y, attackAngle, reach * 0.9, '#ffcc00');
-                // Spawn swing trail particles along the arc (no sentido do passo)
+                const wCol = (this.currentWeapon && this.currentWeapon.color) || '#ffcc00';
+                const wVar = this.currentWeapon && this.currentWeapon.variant;
+                const wThick = wVar === 'heavy' ? 1.35 : (wVar === 'swift' ? 0.78 : 1.0);
+                DamageNumbers.addSlash(this.x, this.y, attackAngle, reach * 0.9, wCol, arcHalf, chainStep === 1 ? -1 : 1, wThick);
+                // Spawn swing trail particles along the arc (no sentido do passo, na cor da arma)
                 const arcStart = attackAngle - arcHalf, arcEnd = attackAngle + arcHalf;
                 for (let _a = 0; _a < 12; _a++) {
                     const t = _a / 11, ang = arcStart + (arcEnd - arcStart) * (chainStep === 1 ? 1 - t : t);
                     const px = this.x + Math.cos(ang) * reach * 0.7;
                     const py = this.y + Math.sin(ang) * reach * 0.7;
-                    spawnParticles(px, py, '#ffaa00', 2, 3 + Math.random() * 2);
+                    spawnParticles(px, py, wCol, 2, 3 + Math.random() * 2);
                 }
                 ScreenEffects.triggerShake(CONFIG.SHAKE_HIT * 0.5, sx, sy);
                 // Sem flash a cada golpe: só o finalizador (chainStep 3) pisca, mais abaixo
@@ -38908,8 +38987,8 @@ class Player extends Entity {
                 if(window.RelicSystem) dmg = Math.floor(dmg * RelicSystem.berserkerMult(this));
                 dmg = Math.max(1, Math.floor(dmg * CONFIG.COMBO_CHAIN_MULT.warrior[chainStep - 1]));
                 if(chainStep === 3) { // finalizador: anel, flash, shake, hit-stop e som mais grave (anel/shake/flash já respeitam reducedMotion)
-                    ScreenEffects._addRing(this.x, this.y, '#ffcc00', reach * 1.2, 18, 6, 0);
-                    ScreenEffects.triggerFlash(0.2, '#ffcc00');
+                    ScreenEffects._addRing(this.x, this.y, wCol, reach * 1.2, 18, 6, 0);
+                    ScreenEffects.triggerFlash(0.2, wCol);
                     ScreenEffects.triggerShake(16);
                     ScreenEffects._hitstop(3);
                     SND.play(70, 'sawtooth', 0.18, 0.25);
