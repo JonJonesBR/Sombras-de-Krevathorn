@@ -3678,7 +3678,7 @@ const SaveSystem = {
         // `floorPurchasesLevel` diz a que andar a contagem pertence; andar diferente = 0.
         floorPurchasesCount: 0, floorPurchasesLevel: 1,
         // Bolsa (Inventory): [] em saves antigos. Não rejeita o save por item ruim: Inventory.restore descarta o item
-        inventory: []
+        inventory: [], perfectChambers: 0, overdrivesTriggered: 0, _surgeMult: 1, _staggerMult: 1, _dashCdMult: 1
     },
 
     // Migrations: version -> version+1 (mirrors StorageManager.MIGRATIONS)
@@ -3754,6 +3754,7 @@ const SaveSystem = {
             regenerating: !!player.regenerating,
             greedBonus: !!player.greedBonus,
             heatMaxBonus: player.heatMaxBonus || 0,
+            perfectChambers:player.perfectChambers||0,overdrivesTriggered:player.overdrivesTriggered||0,_surgeMult:player._surgeMult||1,_staggerMult:player._staggerMult||1,_dashCdMult:player._dashCdMult||1,
             objective: (typeof RunObjectiveSystem !== 'undefined' && RunObjectiveSystem.exportSave) ? RunObjectiveSystem.exportSave() : null,
             campState: (typeof CampSystem !== 'undefined' && CampSystem.state) ? CampSystem.state : null,
             dungeonLevel: (typeof dungeonLevel !== 'undefined') ? dungeonLevel : 1,
@@ -4095,6 +4096,7 @@ const SaveSystem = {
         p.regenerating = !!data.regenerating;
         p.greedBonus = !!data.greedBonus;
         p.heatMaxBonus = data.heatMaxBonus || 0;
+        p.perfectChambers=data.perfectChambers||0;p.overdrivesTriggered=data.overdrivesTriggered||0;p._surgeMult=data._surgeMult>0?data._surgeMult:1;p._staggerMult=data._staggerMult>0?data._staggerMult:1;p._dashCdMult=data._dashCdMult>0?data._dashCdMult:1;
         p.currentWeapon = data.currentWeapon || null;
         p.weaponLevel = data.weaponLevel || 1;
         p.weaponDamageMult = data.weaponDamageMult || 1;
@@ -6727,6 +6729,48 @@ const I18n = {
             'whisper.a10': '…vocês estão perto demais do que eu sinto…',
             'whisper.a20': '…o Véu também tem medo de esquecer…',
             'whisper.a30': '…obrigado por ouvir até aqui…',
+'hd.od':'CHAMA DO VÉU!',
+'hd.st':'QUEBRA!',
+'hd.rp':'INTACTO!',
+'hd.rs':'RELÂMPAGO!',
+'b.df.n':'Rastro Flamejante',
+'b.df.d':'Esquiva deixa brasas ardentes',
+'b.ok.n':'Eco do Abate',
+'b.ok.d':'40% do dano excedente explode',
+'b.ca.n':'Arco Crítico',
+'b.ca.d':'Críticos lançam raios em 2 alvos',
+'b.ff.n':'Selo Gélido',
+'b.ff.d':'3º golpe desacelera inimigos',
+'b.sv.n':'Vórtice do Vazio',
+'b.sv.d':'Habilidade puxa inimigos antes',
+'b.fp.n':'Pacto da Fortuna',
+'b.fp.d':'+65% ouro, elites curam; +20% dano sofrido',
+'s.cz.n':'Cinzas Ardentes',
+'s.cz.d':'Explosões de abate queimam',
+'s.tp.n':'Tempestade Crítica',
+'s.tp.d':'Raios críticos +1 alvo e +30% dano',
+'s.nv.n':'Vórtice Glacial',
+'s.nv.d':'Vórtice aplica gelo nos alvos',
+'s.cc.n':'Caça Dourada',
+'s.cc.d':'+25% ganho de Chama do Véu',
+'af.bastion':'BASTIÃO',
+'af.pyro':'ÍGNEO',
+'af.blink':'SOMBRIO',
+'af.haste':'FRENÉTICO',
+'af.sniper':'CAÇADOR',
+'al.lb':'ALTAR DE SANGUE',
+'al.wk':'Altar de Sangue desperto!',
+'al.rw':'Prova vencida! Baú Épico.',
+'cr.bk':'CRISTAL QUEBRADO!',
+'cp.fd':'TEMPERAR ARMA (GRÁTIS) · +12% DANO',
+'cp.fc':'AFIAR FOCO (GRÁTIS) · +10% CRÍT., +15% CDR',
+'cp.fg':'Você temperou seu equipamento.',
+'cp.rr':'TROCAR ({n})',
+'cp.rd':'Renovado',
+'go.gr':'RANK',
+'go.bd':'BUILD',
+'go.nu':'PRÓXIMO',
+'go.nm':'Melhorias de Essência completas!',
         },
 
         en: {
@@ -9035,6 +9079,48 @@ const I18n = {
             'whisper.a10': '…you are too close to what I feel…',
             'whisper.a20': '…the Veil is also afraid of forgetting…',
             'whisper.a30': '…thank you for listening this far…',
+'hd.od':'VEIL OVERDRIVE!',
+'hd.st':'STAGGER!',
+'hd.rp':'FLAWLESS!',
+'hd.rs':'BLITZ!',
+'b.df.n':'Ember Trail',
+'b.df.d':'Dash leaves burning embers',
+'b.ok.n':'Kill Echo',
+'b.ok.d':'40% overkill explodes in area',
+'b.ca.n':'Crit Arc',
+'b.ca.d':'Crits arc lightning to 2 foes',
+'b.ff.n':'Frost Seal',
+'b.ff.d':'3rd hit chills nearby foes',
+'b.sv.n':'Void Vortex',
+'b.sv.d':'Skill pulls foes before impact',
+'b.fp.n':'Fortune Pact',
+'b.fp.d':'+65% gold, elites heal; +20% dmg taken',
+'s.cz.n':'Burning Ashes',
+'s.cz.d':'Overkill blasts ignite foes',
+'s.tp.n':'Crit Tempest',
+'s.tp.d':'Crit arcs +1 target & +30% dmg',
+'s.nv.n':'Glacial Vortex',
+'s.nv.d':'Vortex chills pulled foes',
+'s.cc.n':'Golden Hunt',
+'s.cc.d':'+25% Veil Surge gain',
+'af.bastion':'BASTION',
+'af.pyro':'PYRO',
+'af.blink':'BLINK',
+'af.haste':'HASTE',
+'af.sniper':'SNIPER',
+'al.lb':'BLOOD ALTAR',
+'al.wk':'Blood Altar awakened!',
+'al.rw':'Trial cleared! Epic Chest.',
+'cr.bk':'CRYSTAL SHATTERED!',
+'cp.fd':'TEMPER WEAPON (FREE) · +12% DMG',
+'cp.fc':'SHARPEN FOCUS (FREE) · +10% CRIT, +15% CDR',
+'cp.fg':'You tempered your gear.',
+'cp.rr':'REROLL ({n})',
+'cp.rd':'Refreshed',
+'go.gr':'GRADE',
+'go.bd':'BUILD',
+'go.nu':'NEXT',
+'go.nm':'All Essence upgrades complete!',
         },
 
         es: {
@@ -11340,6 +11426,48 @@ const I18n = {
             'whisper.a10': '…están demasiado cerca de lo que siento…',
             'whisper.a20': '…el Velo también teme olvidar…',
             'whisper.a30': '…gracias por escuchar hasta aquí…',
+'hd.od':'¡LLAMA DEL VELO!',
+'hd.st':'¡QUIEBRE!',
+'hd.rp':'¡INTACTO!',
+'hd.rs':'¡RELÁMPAGO!',
+'b.df.n':'Rastro Ardiente',
+'b.df.d':'Esquivar deja brasas ardientes',
+'b.ok.n':'Eco de Muerte',
+'b.ok.d':'40% del exceso explota en área',
+'b.ca.n':'Arco Crítico',
+'b.ca.d':'Críticos lanzan rayos a 2 enemigos',
+'b.ff.n':'Sello Gélido',
+'b.ff.d':'3.er golpe ralentiza enemigos',
+'b.sv.n':'Vórtice del Vacío',
+'b.sv.d':'Habilidad atrae enemigos antes',
+'b.fp.n':'Pacto de Fortuna',
+'b.fp.d':'+65% oro, élites curan; +20% daño sufrido',
+'s.cz.n':'Cenizas Ardientes',
+'s.cz.d':'Explosiones de muerte queman',
+'s.tp.n':'Tempestad Crítica',
+'s.tp.d':'Rayos críticos +1 objetivo y +30% daño',
+'s.nv.n':'Vórtice Glacial',
+'s.nv.d':'Vórtice aplica hielo a objetivos',
+'s.cc.n':'Caza Dorada',
+'s.cc.d':'+25% ganancia de Llama del Velo',
+'af.bastion':'BASTIÓN',
+'af.pyro':'ÍGNEO',
+'af.blink':'SOMBRÍO',
+'af.haste':'FRENÉTICO',
+'af.sniper':'CAZADOR',
+'al.lb':'ALTAR DE SANGRE',
+'al.wk':'¡Altar de Sangre despierto!',
+'al.rw':'¡Prueba superada! Cofre Épico.',
+'cr.bk':'¡CRISTAL ROTO!',
+'cp.fd':'TEMPLAR ARMA (GRATIS) · +12% DAÑO',
+'cp.fc':'AFILAR FOCO (GRATIS) · +10% CRÍT., +15% CDR',
+'cp.fg':'Templaste tu equipo.',
+'cp.rr':'CAMBIAR ({n})',
+'cp.rd':'Renovado',
+'go.gr':'RANGO',
+'go.bd':'BUILD',
+'go.nu':'PRÓXIMO',
+'go.nm':'¡Mejoras de Esencia completas!',
         }
     },
 
@@ -11547,8 +11675,11 @@ var CONFIG = {
     CRIT_CHANCE_BASE: 0.05, // reduced base, crit bonus from class/equipment/skills
     CRIT_MULTIPLIER: 2.0,
     CRIT_BONUS_POISONED: 0.15, // +crit chance vs poisoned enemies (poison->crit synergy)
-    COMBO_DECAY_TIME: 120,            // frames (~2s)
+    COMBO_DECAY_TIME: 270,            // frames (4.5s; pauses during wave breathers)
     COMBO_DISPLAY_MIN: 3,
+    OVERDRIVE_FRAMES: 480,            // 8s Veil Overdrive
+    STAGGER_FRAMES: 150,              // 2.5s Boss Stagger
+    STAGGER_DMG_MULT: 1.5,            // +50% damage to staggered boss
     VAMPIRIC_LIFESTEAL: 0.15,
     LIGHTNING_CHAIN_CHANCE: 0.2,
     LIGHTNING_CHAIN_RANGE: 100,
@@ -13146,6 +13277,11 @@ function _startNewRunSameClass() {
 // Game over enriched UI builder
 // ============================================================
 var _essenceRunAwarded = false;
+function computeRunGrade(){var rs=window.RunStats||{},p=window.player,sc=(dungeonLevel||1)*14+Math.min(30,(rs.maxCombo||0)*1.2)+((p&&p.perfectChambers)||0)*12+((p&&p.overdrivesTriggered)||0)*8+(p&&window.RunBoons?RunBoons.activeSynergies(p).length:0)*15,g=sc>=165?'S+':sc>=125?'S':sc>=90?'A':sc>=55?'B':sc>=30?'C':'D';return{grade:g,color:{'S+':'#ffd86b',S:'#ff9944',A:'#c084fc',B:'#60a5fa',C:'#86efac',D:'#9ca3af'}[g],score:Math.round(sc)};}
+function getRunBuildSummary(){var p=window.player;if(!p)return{weapon:'',relics:[],synergies:[],boonsCount:0};return{weapon:p.currentWeapon?WeaponSystem.displayName(p.currentWeapon):'',relics:p.relics?[...p.relics].map(i=>RELICS[i]?_L(RELICS[i].nameKey,RELICS[i].name):i):[],synergies:RunBoons.activeSynergies(p).map(s=>_L(s.nameKey,s.name)),boonsCount:(p.runBoons||[]).length};}
+function getNextMetaUnlock(){if(!window.MetaSystem)return null;var e=MetaSystem.getEssence(),b=null,ac=CONFIG.ALL_CLASSES_UNLOCKED,k,u,t,c;for(k in MetaSystem.UNLOCKS){u=MetaSystem.UNLOCKS[k];if(u&&!(ac&&u.kind==='class')&&!MetaSystem.isUnlocked(k)&&(!b||u.cost<b.cost))b={name:_L(u.nameKey,u.name),cost:u.cost};}for(k in MetaSystem.PURCHASES){u=MetaSystem.PURCHASES[k];t=MetaSystem.purchases(k);if(u&&t<u.max&&(c=u.cost(t))&&(!b||c<b.cost))b={name:_L(u.nameKey,u.name)+' '+(t+1)+'/'+u.max,cost:c};}return b?{name:b.name,cost:b.cost,essence:e,pct:Math.min(100,Math.round(e/Math.max(1,b.cost)*100)),remaining:Math.max(0,b.cost-e)}:null;}
+window.computeRunGrade=computeRunGrade;window.getRunBuildSummary=getRunBuildSummary;window.getNextMetaUnlock=getNextMetaUnlock;
+
 function _populateGameOverUI() {
     // Premiação de Essência (meta-progressão) — única por run
     if (window.MetaSystem && !_essenceRunAwarded && !(window._dailyMods && window._dailyMods.noProgress)) {
@@ -13193,7 +13329,10 @@ function _populateGameOverUI() {
     var _tile = function(label, value, color) {
         return '<div style="background:rgba(255,255,255,0.03);border-radius:10px;padding:8px;text-align:center;"><div style="font-size:calc(10px * var(--font-scale,1));color:rgba(255,255,255,0.35);margin-bottom:2px;">' + label + '</div><div style="font-size:18px;font-weight:800;color:' + color + ';">' + value + '</div></div>';
     };
+    var _rg=computeRunGrade(),_bs=getRunBuildSummary(),_nm=getNextMetaUnlock(),_bp=[_bs.weapon,_bs.synergies.join(', '),_bs.relics.slice(0,4).join(', ')].filter(Boolean);
+    var _mb=_nm?'<div style="grid-column:1/-1;background:rgba(192,132,252,.08);border:1px solid rgba(192,132,252,.28);border-radius:10px;padding:7px"><div style="display:flex;justify-content:space-between;font-size:10px;color:#e0b6ff;font-weight:700"><span>'+T('go.nu')+': '+_nm.name+'</span><span>'+_nm.essence+'/'+_nm.cost+'</span></div><div style="height:5px;border-radius:3px;background:#ffffff14;margin-top:4px;overflow:hidden"><div style="height:100%;width:'+_nm.pct+'%;background:linear-gradient(90deg,#a855f7,#ffd86b)"></div></div></div>':'<div style="grid-column:1/-1;text-align:center;font-size:10px;color:#86efac">'+T('go.nm')+'</div>';
     var statsHtml = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">'
+        + '<div style="grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;background:#ffd86b12;border:1px solid #ffd86b4d;border-radius:10px;padding:7px 12px"><span style="font-size:11px;font-weight:700;color:#ffffffb3">'+T('go.gr')+'</span><span style="font-size:22px;font-weight:900;color:'+_rg.color+'">'+_rg.grade+'</span></div>'
         + _tile(T('gameover.level').toUpperCase(), player.lvl, '#e0b6ff')
         + _tile(T('gameover.kills').toUpperCase(), thisKills, '#ff8888')
         + _tile(T('gameover.runDamage').toUpperCase(), runDamage, '#ff9955')
@@ -13202,6 +13341,8 @@ function _populateGameOverUI() {
         + _tile(T('gameover.runGold').toUpperCase(), runGold, '#ffd86b')
         + _tile(T('gameover.runBosses').toUpperCase(), runBosses, '#c084fc')
         + _tile(T('gameover.points'), runScore, '#9ad0ff')
+        + (_bp.length?'<div style="grid-column:1/-1;background:#ffffff08;border-radius:10px;padding:6px 10px;font-size:10px;color:#ffffffb8"><b style="color:#ffd86b">'+T('go.bd')+':</b> '+_bp.join(' · ')+'</div>':'')
+        + _mb
         + ((window.RunObjectiveSystem && window.RunObjectiveSystem.summaryLine) ? '<div style="grid-column:1 / -1;background:rgba(224,182,255,0.05);border-radius:10px;padding:8px;text-align:center;font-size:11px;font-weight:700;">' + window.RunObjectiveSystem.summaryLine() + '</div>' : '')
         + (_abyssRecLine ? '<div style="grid-column:1 / -1;text-align:center;font-size:11px;font-weight:800;color:#ffcf7a;">' + _abyssRecLine + '</div>' : '')
         + (_rs && _rs.resumed ? '<div style="grid-column:1 / -1;text-align:center;font-size:calc(10px * var(--font-scale,1));color:rgba(255,255,255,0.4);">' + String(T('gameover.resumedNote')).replace('{floor}', _rs.resumedFromFloor) + '</div>' : '')
@@ -14935,7 +15076,8 @@ function _updateEntitySimulation() {
             p.alive = false;
             if (p.type === 'currency') {
                 SND.playCoinPickup ? SND.playCoinPickup() : SND.playPickup();
-                const gained = p.noMult ? p.value : Math.round(p.value * (player.goldRushTimer > 0 ? 2 : 1) * (player.greedBonus ? 1.15 : 1) * (player.goldMult || 1) * ((window._dailyMods && window._dailyMods.goldMult) || 1) * (typeof RunMutators !== 'undefined' ? RunMutators.goldMult() : 1));
+                const _tierGold = [1, 1.15, 1.30, 1.50][player._comboTier || 0];
+                const gained = p.noMult ? p.value : Math.round(p.value * _tierGold * (player.goldRushTimer > 0 ? 2 : 1) * (player.greedBonus ? 1.15 : 1) * (player.goldMult || 1) * ((window._dailyMods && window._dailyMods.goldMult) || 1) * (typeof RunMutators !== 'undefined' ? RunMutators.goldMult() : 1));
                 player.currency += gained; if (!p.noMult) Statistics.data.totalCurrencyEarned += gained; DamageNumbers.add(player.x, player.y, `+${gained} `, 'normal');
                 if (window.RunObjectiveSystem && !p.noMult) RunObjectiveSystem.onGold(gained);
                 if (player.goldRushTimer > 0 && !p.noMult) DamageNumbers.add(player.x, player.y, window.I18n ? I18n.t('hud.x2') : 'x2!', 'crit');
@@ -15057,6 +15199,7 @@ function _updateEntitySimulation() {
     }
     for (let i = 0; i < chests.length; i++) chests[i].update();
     for (let i = chests.length - 1; i >= 0; i--) { if (!chests[i].alive) chests.splice(i, 1); }
+    if (typeof _updateBloodAltar === 'function') _updateBloodAltar();
     PetRescue.update(); // pet à espera: abre o painel ao se aproximar (câmara limpa)
     if (window.RelicSystem) RelicSystem.update(player);
     if (gameTime % CONFIG.HAZARD_SPAWN_INTERVAL === 0 && _ambientHazardCount() < CONFIG.HAZARD_MAX_COUNT) map.spawnHazard();
@@ -15287,6 +15430,7 @@ function _updateFloorExitReveal() {
 // Estado por andar, zerado em todo andar novo (floor transition, início de run e continue)
 function _resetFloorExplore() {
     _exitRevealed = false;
+    _bloodAltar = null;
     _resetWaveState();
 }
 
@@ -16037,6 +16181,11 @@ function _storyRoomBudget() {
     return Math.max(1, Math.ceil(dungeonKillTarget / combat));
 }
 
+let _bloodAltar=null;
+function _findAltarPos(m){if(!m||!m.tiles)return null;const T=CONFIG.TILE_SIZE,cx=m.width>>1,cy=m.height>>1;for(let r=0;r<Math.max(m.width,m.height);r++)for(let dx=-r;dx<=r;dx++)for(let dy=-r;dy<=r;dy++){if(Math.abs(dx)!==r&&Math.abs(dy)!==r)continue;const tx=cx+dx,ty=cy+dy;if(tx<2||ty<2||tx>=m.width-2||ty>=m.height-2)continue;const wx=tx*T+T/2,wy=ty*T+T/2;if(_entityClear(m,wx,wy,20)&&(!player||Math.hypot(wx-player.x,wy-player.y)>=130))return{x:wx,y:wy};}return null;}
+function _updateBloodAltar(){if(!_bloodAltar||!player||!player.alive||_secretRoom)return;const a=_bloodAltar;if(a.state==='idle'){if(Math.hypot(player.x-a.x,player.y-a.y)<38){if(++a.charge>=48){a.state='active';const c=dungeonLevel>=4?2:1,d=[[1,0],[-1,0],[0,1],[0,-1]];for(let i=0;i<c;i++){let ex=a.x,ey=a.y;for(let k=0;k<4;k++){const tx=a.x+d[(k+i)%4][0]*76,ty=a.y+d[(k+i)%4][1]*76;if(map&&_entityClear(map,tx,ty,20)){ex=tx;ey=ty;break;}}const el=new EliteEnemy(ex,ey,i%2?'ranged':'melee',true);entities.push(el);a.elites.push(el);}addLog(_L('al.wk'),true);ScreenEffects._addRing(a.x,a.y,'#ff2244',120,18,4,0);shake=Math.max(shake,8);if(SND.playBoss)SND.playBoss();}}else if(a.charge>0)a.charge=Math.max(0,a.charge-2);}else if(a.state==='active'&&a.elites.every(e=>!e||!e.alive)){a.state='done';chests.push(new Chest(a.x,a.y,'epico'));addLog(_L('al.rw'),true);ScreenEffects._addRing(a.x,a.y,'#ffd86b',90,16,4,0);if(SND.playAchievement)SND.playAchievement();}}
+function _drawBloodAltar(ctx){const a=_bloodAltar;if(!a||a.state==='done'||_secretRoom)return;const ax=a.x-camX,ay=a.y-camY;if(ax<-50||ax>width+50||ay<-50||ay>height+50)return;ctx.save();const col=a.state==='active'?'#ff6622':'#ff2244';ctx.globalAlpha=0.28+Math.sin(gameTime*0.1)*0.12;PixelFX.drawDisc(ctx,ax,ay,24,col);ctx.globalAlpha=0.9;PixelFX.ring(ctx,ax,ay,20,col,3);if(a.charge>0&&a.state==='idle')PixelFX.ring(ctx,ax,ay,28,'#ffd86b',3,{a0:-1.57,a1:-1.57+(a.charge/48)*6.283});ctx.font='bold 9px '+COLORS.CANVAS_FONT;ctx.textAlign='center';ctx.fillStyle='#ff99aa';ctx.fillText(_L('al.lb'),ax,ay-26);ctx.restore();}
+
 // Preenche a câmara atual: um baú e os inimigos do orçamento. O tutorial suprime os nascimentos;
 // nesse caso o spawner solta o resto quando ele termina.
 function _populateStoryRoom() {
@@ -16044,6 +16193,10 @@ function _populateStoryRoom() {
     _storyRoom.cleared = false;
     _storyRoom.spawned = 0;
     _storyRoom.budget = _storyRoomBudget();
+    _storyRoom.t0 = gameTime;
+    _storyRoom.hits = 0;
+    _storyRoom.rank = null;
+    _storyRoom._ranked = false;
     _cachedAliveEnemies = 0;
     _waveBreatherFrames = 0; // o primeiro lote sai já, sem respiro inicial
     if (typeof Chest !== 'undefined' && map) {
@@ -16053,6 +16206,10 @@ function _populateStoryRoom() {
         chests.push(new Chest(pos.x, pos.y, rarities[Math.floor(SeedSystem.random() * rarities.length)]));
     }
     PetRescue.place(); // pet à espera nesta câmara (depois do baú, para não sobrepor)
+    if (_storyRoom.i === 1 && map) {
+        const ap = _findAltarPos(map);
+        if (ap) _bloodAltar = { x: ap.x, y: ap.y, charge: 0, state: 'idle', elites: [] };
+    }
     if (typeof TutorialSystem !== 'undefined' && TutorialSystem.active && TutorialSystem.suppressEnemySpawns) return;
     _spawnStoryRoomEnemies();
 }
@@ -16087,6 +16244,7 @@ function _openStoryDoor() {
     if (!ep) return;
     dungeonPortal = new Portal(ep.x, ep.y, 'chamber');
     addLog(_L('log.chamberDoorOpen', 'A passagem para a próxima câmara se abriu.'), true);
+    if(!_storyRoom.boss&&!_storyRoom._ranked&&player&&player.alive){_storyRoom._ranked=true;const r=!_storyRoom.hits?'perfect':(gameTime-(_storyRoom.t0||gameTime)<=1680?'speed':null);_storyRoom.rank=r;if(r){if(r==='perfect')player.perfectChambers=(player.perfectChambers||0)+1;player.addSurge(30);for(let i=0;i<4;i++)pickups.push(new Pickup(player.x+(i-1.5)*18,player.y-16,'currency'));pickups.push(new Pickup(player.x,player.y+18,'health'));DamageNumbers.add(player.x,player.y-22,_L(r==='perfect'?'hd.rp':'hd.rs'),'crit');if(ScreenEffects.onChamberRank)ScreenEffects.onChamberRank(r);}}
     triggerCamZoom(0.04, 24);
     if (player) spawnParticles(player.x, player.y, COLORS.CLASS_MAGE, 20, 4);
     SND.playAchievement && SND.playAchievement(); shake = 15;
@@ -16201,7 +16359,7 @@ function _buildStoryRoom(index, opts) {
     if (window.GhostReplay) GhostReplay.onFloorChange();
     PetRescue.reset(); // objetos de resgate são da câmara: a nova é montada logo abaixo
     if (window.NPCSystem) NPCSystem.reset();
-    dungeonPortal = null; bossActive = false;
+    dungeonPortal = null; bossActive = false; _bloodAltar = null;
     _storyRoom = { i: index, total: total, cleared: false, budget: 0, spawned: 0, boss: boss };
     _storyBossLootPos = null; // recompensa do chefe é por câmara: a nova nasce sem ponto guardado
     if (boss) {
@@ -16211,6 +16369,7 @@ function _buildStoryRoom(index, opts) {
     } else if (opts.cleared) {
         // Câmara já vencida (continue): sem inimigos, passagem aberta; o pet (se houver) já fica ativo
         _storyRoom.cleared = true;
+        _storyRoom._ranked = true;
         _openStoryDoor();
         PetRescue.place();
     } else {
@@ -16795,6 +16954,7 @@ function _drawWorldLayer() {
         wctx.globalAlpha = _pa;
     }
     chests.forEach(c => { if(c.x > vL && c.x < vR && c.y > vT && c.y < vB) { drawGroundShadow(wctx, c.x, c.y, 16, camX, camY); c.draw(wctx, camX, camY); } });
+    if (typeof _drawBloodAltar === 'function') _drawBloodAltar(wctx);
     PetRescue.draw(wctx, camX, camY); // pets à espera (selados ou ativos), na mesma camada dos baús
     pickups.forEach(p => { if(p.x > vL && p.x < vR && p.y > vT && p.y < vB) { drawGroundShadow(wctx, p.x, p.y, 7, camX, camY); p.draw(wctx, camX, camY); } });
     weaponPickups.forEach(wp => { if(wp.x > vL && wp.x < vR && wp.y > vT && wp.y < vB) { drawGroundShadow(wctx, wp.x, wp.y, 8, camX, camY); wp.draw(wctx, camX, camY); } });
@@ -21433,29 +21593,36 @@ window.ShopSystem = ShopSystem;
 // === js/systems/runboons.js ===
 // RUN BOONS - buffs permanentes escolhidos durante a run (resetam entre runs)
 const RUN_BOONS = [
-    { id:'fury_of_war',   max:1, nameKey:'boon.fury_of_war.name',   name:'Fúria de Guerra',   icon:'⚔️', descKey:'boon.fury_of_war.desc',   desc:'+20% de dano até o fim da run',        apply:(p)=>{ p.damageMult = (p.damageMult||1) + 0.20; } },
-    { id:'iron_heart',    nameKey:'boon.iron_heart.name',    name:'Coração de Ferro',  icon:'❤️', descKey:'boon.iron_heart.desc',    desc:'+60 de HP máximo até o fim da run',    apply:(p)=>{ p.maxHp += 60; p.hp += 60; } },
-    { id:'swift_wind',    nameKey:'boon.swift_wind.name',    name:'Vento Veloz',       icon:'💨', descKey:'boon.swift_wind.desc',    desc:'+12% de velocidade até o fim da run',  apply:(p)=>{ p.speed *= 1.12; } },
-    { id:'assassin_eye',  nameKey:'boon.assassin_eye.name',  name:'Olho do Assassino', icon:'🎯', descKey:'boon.assassin_eye.desc',  desc:'+12% de chance de crítico',             apply:(p)=>{ p.critChance = (p.critChance||0) + 0.12; } },
-    { id:'vampiric_bite', nameKey:'boon.vampiric_bite.name', name:'Mordida Vampírica', icon:'🦇', descKey:'boon.vampiric_bite.desc', desc:'+8% de roubo de vida',                  apply:(p)=>{ p.lifestealBonus = (p.lifestealBonus||0) + 0.08; p.weaponLifesteal = p.lifestealBonus + ((p.currentWeapon && p.currentWeapon.lifesteal) || 0); } },
-    { id:'guardian_stone',nameKey:'boon.guardian_stone.name',name:'Pedra Guardiã',     icon:'🛡️', descKey:'boon.guardian_stone.desc',desc:'−18% de dano recebido',                apply:(p)=>{ p.damageTakenMult = (p.damageTakenMult||1) * 0.82; } },
-    { id:'regen_rune',    nameKey:'boon.regen_rune.name',    name:'Runa de Regeneração',icon:'💚', descKey:'boon.regen_rune.desc',    desc:'Regenera 2 HP por segundo',            apply:(p)=>{ p.runRegen = (p.runRegen||0) + 2; } },
-    { id:'twin_shot',     nameKey:'boon.twin_shot.name',     name:'Disparo Duplo',     icon:'🔵', descKey:'boon.twin_shot.desc',     desc:'+1 projétil por ataque',                apply:(p)=>{ p.multiShot = (p.multiShot||0) + 1; } },
-    { id:'thorn_aura',    nameKey:'boon.thorn_aura.name',    name:'Aura de Espinhos',  icon:'🌵', descKey:'boon.thorn_aura.desc',    desc:'Reflete 15% do dano recebido',          apply:(p)=>{ p.thornPct = (p.thornPct||0) + 0.15; } },
-    { id:'storm_heart',   max:1, nameKey:'boon.storm_heart.name',   name:'Coração de Tempestade', icon:'⚡', descKey:'boon.storm_heart.desc', desc:'+18% de dano e +8% de velocidade',  apply:(p)=>{ p.damageMult = (p.damageMult||1) + 0.18; p.speed *= 1.08; } },
-    // MALDIÇÕES (curse:true): trade-off com risco explícito; aplicam pelos mesmos campos de stat.
-    // berserk_rage (+25% cadência) é derivada em getEffectiveFireRate; greed_curse (inimigos +10%) em Enemy update.
-    { id:'blood_pact',    nameKey:'boon.blood_pact.name',    name:'Pacto de Sangue',   icon:'🩸', curse:true, descKey:'boon.blood_pact.desc',    desc:'+30% de dano, −20% de HP máximo',      apply:(p)=>{ p.damageMult = (p.damageMult||1) + 0.30; p.maxHp = Math.max(1, Math.round(p.maxHp * 0.8)); p.hp = Math.min(p.hp, p.maxHp); } },
-    { id:'berserk_rage',  nameKey:'boon.berserk_rage.name',  name:'Fúria Descontrolada', icon:'😡', curse:true, descKey:'boon.berserk_rage.desc', desc:'+25% de velocidade de ataque, +15% de dano recebido', apply:(p)=>{ p.damageTakenMult = (p.damageTakenMult||1) * 1.15; } },
-    { id:'greed_curse',   nameKey:'boon.greed_curse.name',   name:'Ganância Maldita',  icon:'💸', curse:true, descKey:'boon.greed_curse.desc',   desc:'+40% de ouro coletado, inimigos 10% mais rápidos', apply:(p)=>{ p.goldMult = (p.goldMult||1) + 0.40; } },
-    { id:'vitality_pact', nameKey:'boon.vitality_pact.name', name:'Vitalidade Sombria', icon:'🧟', curse:true, descKey:'boon.vitality_pact.desc', desc:'+80 de HP máximo, −10% de velocidade', apply:(p)=>{ p.maxHp += 80; p.hp += 80; p.speed *= 0.9; } }
+    {id:'fury_of_war',max:1,nameKey:'boon.fury_of_war.name',icon:'⚔️',descKey:'boon.fury_of_war.desc',apply:p=>{p.damageMult=(p.damageMult||1)+0.2;}},
+    {id:'iron_heart',nameKey:'boon.iron_heart.name',icon:'❤️',descKey:'boon.iron_heart.desc',apply:p=>{p.maxHp+=60;p.hp+=60;}},
+    {id:'swift_wind',nameKey:'boon.swift_wind.name',icon:'💨',descKey:'boon.swift_wind.desc',apply:p=>{p.speed*=1.12;}},
+    {id:'assassin_eye',nameKey:'boon.assassin_eye.name',icon:'🎯',descKey:'boon.assassin_eye.desc',apply:p=>{p.critChance=(p.critChance||0)+0.12;}},
+    {id:'vampiric_bite',nameKey:'boon.vampiric_bite.name',icon:'🦇',descKey:'boon.vampiric_bite.desc',apply:p=>{p.lifestealBonus=(p.lifestealBonus||0)+0.08;p.weaponLifesteal=p.lifestealBonus+((p.currentWeapon&&p.currentWeapon.lifesteal)||0);}},
+    {id:'guardian_stone',nameKey:'boon.guardian_stone.name',icon:'🛡️',descKey:'boon.guardian_stone.desc',apply:p=>{p.damageTakenMult=(p.damageTakenMult||1)*0.82;}},
+    {id:'regen_rune',nameKey:'boon.regen_rune.name',icon:'💚',descKey:'boon.regen_rune.desc',apply:p=>{p.runRegen=(p.runRegen||0)+2;}},
+    {id:'twin_shot',nameKey:'boon.twin_shot.name',icon:'🔵',descKey:'boon.twin_shot.desc',apply:p=>{p.multiShot=(p.multiShot||0)+1;}},
+    {id:'thorn_aura',nameKey:'boon.thorn_aura.name',icon:'🌵',descKey:'boon.thorn_aura.desc',apply:p=>{p.thornPct=(p.thornPct||0)+0.15;}},
+    {id:'storm_heart',max:1,nameKey:'boon.storm_heart.name',icon:'⚡',descKey:'boon.storm_heart.desc',apply:p=>{p.damageMult=(p.damageMult||1)+0.18;p.speed*=1.08;}},
+    {id:'blood_pact',nameKey:'boon.blood_pact.name',icon:'🩸',curse:true,descKey:'boon.blood_pact.desc',apply:p=>{p.damageMult=(p.damageMult||1)+0.3;p.maxHp=Math.max(1,Math.round(p.maxHp*0.8));p.hp=Math.min(p.hp,p.maxHp);}},
+    {id:'berserk_rage',nameKey:'boon.berserk_rage.name',icon:'😡',curse:true,descKey:'boon.berserk_rage.desc',apply:p=>{p.damageTakenMult=(p.damageTakenMult||1)*1.15;}},
+    {id:'greed_curse',nameKey:'boon.greed_curse.name',icon:'💸',curse:true,descKey:'boon.greed_curse.desc',apply:p=>{p.goldMult=(p.goldMult||1)+0.4;}},
+    {id:'vitality_pact',nameKey:'boon.vitality_pact.name',icon:'🧟',curse:true,descKey:'boon.vitality_pact.desc',apply:p=>{p.maxHp+=80;p.hp+=80;p.speed*=0.9;}},
+    {id:'dash_fire',nameKey:'b.df.n',icon:'',descKey:'b.df.d',apply:()=>{}},
+    {id:'overkill_blast',nameKey:'b.ok.n',icon:'',descKey:'b.ok.d',apply:()=>{}},
+    {id:'crit_arc',nameKey:'b.ca.n',icon:'',descKey:'b.ca.d',apply:()=>{}},
+    {id:'frost_finisher',nameKey:'b.ff.n',icon:'',descKey:'b.ff.d',apply:()=>{}},
+    {id:'skill_vortex',max:1,nameKey:'b.sv.n',icon:'',descKey:'b.sv.d',apply:()=>{}},
+    {id:'fortune_pact',max:1,curse:true,nameKey:'b.fp.n',icon:'',descKey:'b.fp.d',apply:p=>{p.goldMult=(p.goldMult||1)+0.65;p.damageTakenMult=(p.damageTakenMult||1)*1.2;}}
 ];
-// SINERGIAS: ativam uma vez, quando o jogador possui as DUAS bênçãos do par (aplicam o bônus por campos existentes, então persistem no save).
 const RUN_SYNERGIES = [
-    { id:'carapaca',       a:'guardian_stone', b:'thorn_aura',   nameKey:'syn.carapaca.name',  name:'Carapaça de Espinhos', descKey:'syn.carapaca.desc',  desc:'+5% de reflexo de dano',          apply:(p)=>{ p.thornPct = (p.thornPct||0) + 0.05; } },
-    { id:'fortaleza',      a:'iron_heart',     b:'regen_rune',   nameKey:'syn.fortaleza.name', name:'Fortaleza Vital',      descKey:'syn.fortaleza.desc', desc:'+1 HP por segundo de regeneração', apply:(p)=>{ p.runRegen = (p.runRegen||0) + 1; } },
-    { id:'mira_certeira',  a:'twin_shot',      b:'assassin_eye', nameKey:'syn.mira.name',      name:'Mira Certeira',        descKey:'syn.mira.desc',      desc:'+5% de chance de crítico',        apply:(p)=>{ p.critChance = (p.critChance||0) + 0.05; } },
-    { id:'furia_sanguinea',a:'vampiric_bite',  b:'fury_of_war',  nameKey:'syn.furia.name',     name:'Fúria Sanguínea',      descKey:'syn.furia.desc',     desc:'+5% de roubo de vida',            apply:(p)=>{ p.lifestealBonus = (p.lifestealBonus||0) + 0.05; p.weaponLifesteal = p.lifestealBonus + ((p.currentWeapon && p.currentWeapon.lifesteal) || 0); } }
+    {id:'carapaca',a:'guardian_stone',b:'thorn_aura',nameKey:'syn.carapaca.name',descKey:'syn.carapaca.desc',apply:p=>{p.thornPct=(p.thornPct||0)+0.05;}},
+    {id:'fortaleza',a:'iron_heart',b:'regen_rune',nameKey:'syn.fortaleza.name',descKey:'syn.fortaleza.desc',apply:p=>{p.runRegen=(p.runRegen||0)+1;}},
+    {id:'mira_certeira',a:'twin_shot',b:'assassin_eye',nameKey:'syn.mira.name',descKey:'syn.mira.desc',apply:p=>{p.critChance=(p.critChance||0)+0.05;}},
+    {id:'furia_sanguinea',a:'vampiric_bite',b:'fury_of_war',nameKey:'syn.furia.name',descKey:'syn.furia.desc',apply:p=>{p.lifestealBonus=(p.lifestealBonus||0)+0.05;p.weaponLifesteal=p.lifestealBonus+((p.currentWeapon&&p.currentWeapon.lifesteal)||0);}},
+    {id:'cinzas',a:'dash_fire',b:'overkill_blast',nameKey:'s.cz.n',descKey:'s.cz.d',apply:()=>{}},
+    {id:'tempestade',a:'crit_arc',b:'storm_heart',nameKey:'s.tp.n',descKey:'s.tp.d',apply:()=>{}},
+    {id:'nevasca',a:'frost_finisher',b:'skill_vortex',nameKey:'s.nv.n',descKey:'s.nv.d',apply:()=>{}},
+    {id:'cacador',a:'fortune_pact',b:'swift_wind',nameKey:'s.cc.n',descKey:'s.cc.d',apply:()=>{}}
 ];
 const RunBoons = {
     LIST: RUN_BOONS,
@@ -21487,6 +21654,10 @@ const RunBoons = {
     activeSynergies(p) {
         return RUN_SYNERGIES.filter(s => this.count(p, s.a) > 0 && this.count(p, s.b) > 0);
     },
+    hasSynergy(p, synId) {
+        const s = RUN_SYNERGIES.find(x => x.id === synId);
+        return !!(s && this.count(p, s.a) > 0 && this.count(p, s.b) > 0);
+    },
     // Ativa a sinergia uma única vez: quando a PRIMEIRA cópia de uma bênção do par entra e o parceiro já existe
     _activateSynergies(player, id) {
         for (const s of RUN_SYNERGIES) {
@@ -21495,6 +21666,8 @@ const RunBoons = {
             if (this.count(player, other) === 0) continue;
             s.apply(player);
             if (typeof Statistics !== 'undefined') Statistics.data.synergiesActivated = (Statistics.data.synergiesActivated || 0) + 1;
+            if (typeof ScreenEffects !== 'undefined' && ScreenEffects.onSynergyAwaken) ScreenEffects.onSynergyAwaken(s);
+            if (typeof SND !== 'undefined' && SND.playSynergyAwaken) SND.playSynergyAwaken();
             if (typeof showToast === 'function') showToast((window.I18n ? I18n.t('syn.active') : 'Sinergia ativa!') + ' ' + (window._L ? _L(s.nameKey, s.name) : s.name), 'success');
         }
     },
@@ -21612,7 +21785,9 @@ const CampSystem = {
             offers: this._rollOffers(dungeonLevel),
             boons: RunBoons.roll(3, player),
             restUsed: false,
+            forgeUsed: null,
             shrinePicked: null,
+            shrineRerolled: false,
             eventId: (typeof RunEventSystem !== 'undefined' && RunEventSystem.roll) ? RunEventSystem.roll(dungeonLevel, gameMode) : null,
             eventResolved: false,
             eventChoice: -1,
@@ -21663,6 +21838,9 @@ const CampSystem = {
         if (typeof SND !== 'undefined' && SND.playLevelUp) SND.playLevelUp();
         if (window.UIManager) window.UIManager.openPanel('camp');
     },
+
+    forge(k){const st=this.state;if(!st||!player||st.restUsed||st.forgeUsed)return;const now=performance.now();if(now-(this._lastShrineAt||0)<250)return;this._lastShrineAt=now;if(k==='dmg')player.weaponDamageMult=+((player.weaponDamageMult||1)*1.12).toFixed(3);else{player.critChance=(player.critChance||0)+0.1;player.cdrMult=Math.min(0.45,(player.cdrMult||0)+0.15);}st.restUsed=true;st.forgeUsed=k;if(SND.playLevelUp)SND.playLevelUp();if(window.UIManager)UIManager.openPanel('camp');},
+    rerollShrine(){const st=this.state;if(!st||!player||st.shrinePicked||st.shrineRerolled)return;const now=performance.now();if(now-(this._lastShrineAt||0)<250)return;if((player.currency||0)<25){DamageNumbers.add(player.x,player.y,_L('hud.nocoins','Moedas insuficientes!'),'normal');if(SND.playError)SND.playError();return;}this._lastShrineAt=now;player.currency-=25;const prev=new Set((st.boons||[]).map(b=>b&&b.id)),el=RunBoons.LIST.filter(b=>RunBoons.count(player,b.id)<(b.max||2)),fr=el.filter(b=>!prev.has(b.id)),src=(fr.length>=3?fr:el).slice(),out=[];while(out.length<3&&src.length)out.push(src.splice(Math.floor(rareRandom()*src.length),1)[0]);st.boons=out;st.shrineRerolled=true;if(SND.playBuy)SND.playBuy();if(window.UIManager)UIManager.openPanel('camp');},
 
     shrine(id) {
         const st = this.state;
@@ -21722,55 +21900,55 @@ window.CampSystem = CampSystem;
 // === js/systems/events.js ===
 // EVENTOS ENTRE PISOS - encontros narrativos com escolhas no acampamento (Fase D)
 const RUN_EVENTS = [
-    { id:'traveler_chest', icon:'🧰', titleKey:'event.traveler_chest.title', title:'Baú do Viajante', textKey:'event.traveler_chest.text', text:'Um baú enferrujado emite um brilho fraco no canto da parada.', weight:1,
+    { id:'traveler_chest', icon:'🧰', titleKey:'event.traveler_chest.title', textKey:'event.traveler_chest.text', weight:1,
       choices:[
-        { labelKey:'event.traveler_chest.c1.label', label:'Abrir com cautela', descKey:'event.traveler_chest.c1.desc', desc:'50% de ouro, 50% de armadilha.', outcome:{ type:'gamble', chance:0.5, success:{ goldRange:[60,120] }, fail:{ damageRange:[20,30] } } },
-        { labelKey:'event.traveler_chest.c2.label', label:'Deixar para trás', descKey:'event.traveler_chest.c2.desc', desc:'Nada arriscado, nada ganho.', outcome:{ type:'none' } }
+        { labelKey:'event.traveler_chest.c1.label', descKey:'event.traveler_chest.c1.desc', outcome:{ type:'gamble', chance:0.5, success:{ goldRange:[60,120] }, fail:{ damageRange:[20,30] } } },
+        { labelKey:'event.traveler_chest.c2.label', descKey:'event.traveler_chest.c2.desc', outcome:{ type:'none' } }
       ]},
-    { id:'dark_altar', icon:'🗿', titleKey:'event.dark_altar.title', title:'Altar Sombrio', textKey:'event.dark_altar.text', text:'Um altar de pedra-negra pulsa com energia proibida.', weight:1,
+    { id:'dark_altar', icon:'🗿', titleKey:'event.dark_altar.title', textKey:'event.dark_altar.text', weight:1,
       choices:[
-        { labelKey:'event.dark_altar.c1.label', label:'Sacrificar 20% do HP', descKey:'event.dark_altar.c1.desc', desc:'+12% de dano permanente.', outcome:{ combo:[ { damagePct:0.20 }, { dmgBuff:0.12 } ] } },
-        { labelKey:'event.dark_altar.c2.label', label:'Rezar em silêncio', descKey:'event.dark_altar.c2.desc', desc:'60% de cura leve, 40% de maldição.', outcome:{ type:'gamble', chance:0.6, success:{ healPct:0.15 }, fail:{ curseDmg:0.10 } } }
+        { labelKey:'event.dark_altar.c1.label', descKey:'event.dark_altar.c1.desc', outcome:{ combo:[ { damagePct:0.20 }, { dmgBuff:0.12 } ] } },
+        { labelKey:'event.dark_altar.c2.label', descKey:'event.dark_altar.c2.desc', outcome:{ type:'gamble', chance:0.6, success:{ healPct:0.15 }, fail:{ curseDmg:0.10 } } }
       ]},
-    { id:'lost_merchant', icon:'👤', titleKey:'event.lost_merchant.title', title:'Mercador Perdido', textKey:'event.lost_merchant.text', text:'Um mercador ferido pede ajuda à beira do caminho.', weight:1,
+    { id:'lost_merchant', icon:'👤', titleKey:'event.lost_merchant.title', textKey:'event.lost_merchant.text', weight:1,
       choices:[
-        { labelKey:'event.lost_merchant.c1.label', label:'Ajudar (30 moedas)', descKey:'event.lost_merchant.c1.desc', desc:'Cura 25 HP e +5% de dano.', requireGold:30, outcome:{ combo:[ { gold:-30 }, { healFlat:25 }, { dmgBuff:0.05 } ] } },
-        { labelKey:'event.lost_merchant.c2.label', label:'Roubar seus pertences', descKey:'event.lost_merchant.c2.desc', desc:'50% de 90 moedas, 50% de maldição.', outcome:{ type:'gamble', chance:0.5, success:{ gold:90 }, fail:{ curseDmg:0.15 } } }
+        { labelKey:'event.lost_merchant.c1.label', descKey:'event.lost_merchant.c1.desc', requireGold:30, outcome:{ combo:[ { gold:-30 }, { healFlat:25 }, { dmgBuff:0.05 } ] } },
+        { labelKey:'event.lost_merchant.c2.label', descKey:'event.lost_merchant.c2.desc', outcome:{ type:'gamble', chance:0.5, success:{ gold:90 }, fail:{ curseDmg:0.15 } } }
       ]},
-    { id:'time_tear', icon:'⏳', titleKey:'event.time_tear.title', title:'Fenda Temporal', textKey:'event.time_tear.text', text:'O ar se distorce: uma fenda mostra cenas de batalhas futuras.', weight:1, minFloor:5,
+    { id:'time_tear', icon:'⏳', titleKey:'event.time_tear.title', textKey:'event.time_tear.text', weight:1, minFloor:5,
       choices:[
-        { labelKey:'event.time_tear.c1.label', label:'Mergulhar na fenda', descKey:'event.time_tear.c1.desc', desc:'+40 moedas, +10 HP máx., mas -15 HP.', outcome:{ combo:[ { gold:40 }, { maxHpFlat:10 }, { damageFlat:15 } ] } },
-        { labelKey:'event.time_tear.c2.label', label:'Recuar', descKey:'event.time_tear.c2.desc', desc:'Algumas visões não devem ser vistas.', outcome:{ type:'none' } }
+        { labelKey:'event.time_tear.c1.label', descKey:'event.time_tear.c1.desc', outcome:{ combo:[ { gold:40 }, { maxHpFlat:10 }, { damageFlat:15 } ] } },
+        { labelKey:'event.time_tear.c2.label', descKey:'event.time_tear.c2.desc', outcome:{ type:'none' } }
       ]},
-    { id:'blue_fire', icon:'🔥', titleKey:'event.blue_fire.title', title:'Fogueira Azul', textKey:'event.blue_fire.text', text:'Uma chama azul arde sem lenha, reconfortante e estranha.', weight:1,
+    { id:'blue_fire', icon:'🔥', titleKey:'event.blue_fire.title', textKey:'event.blue_fire.text', weight:1,
       choices:[
-        { labelKey:'event.blue_fire.c1.label', label:'Aquecer-se', descKey:'event.blue_fire.c1.desc', desc:'Recupera 30% do HP máximo.', outcome:{ healPct:0.30 } },
-        { labelKey:'event.blue_fire.c2.label', label:'Alimentar com 25 moedas', descKey:'event.blue_fire.c2.desc', desc:'+10 de HP máximo permanente.', requireGold:25, outcome:{ combo:[ { gold:-25 }, { maxHpFlat:10 } ] } }
+        { labelKey:'event.blue_fire.c1.label', descKey:'event.blue_fire.c1.desc', outcome:{ healPct:0.30 } },
+        { labelKey:'event.blue_fire.c2.label', descKey:'event.blue_fire.c2.desc', requireGold:25, outcome:{ combo:[ { gold:-25 }, { maxHpFlat:10 } ] } }
       ]},
-    { id:'undying_spring', icon:'💧', titleKey:'event.undying_spring.title', title:'Fonte da Vida', textKey:'event.undying_spring.text', text:'Água cristalina borbulha de uma fonte esquecida.', weight:1,
+    { id:'undying_spring', icon:'💧', titleKey:'event.undying_spring.title', textKey:'event.undying_spring.text', weight:1,
       choices:[
-        { labelKey:'event.undying_spring.c1.label', label:'Beber da fonte', descKey:'event.undying_spring.c1.desc', desc:'Recupera 45% do HP máximo.', outcome:{ healPct:0.45 } },
-        { labelKey:'event.undying_spring.c2.label', label:'Encher o cantil', descKey:'event.undying_spring.c2.desc', desc:'Vende por 30 moedas.', outcome:{ gold:30 } }
+        { labelKey:'event.undying_spring.c1.label', descKey:'event.undying_spring.c1.desc', outcome:{ healPct:0.45 } },
+        { labelKey:'event.undying_spring.c2.label', descKey:'event.undying_spring.c2.desc', outcome:{ gold:30 } }
       ]},
-    { id:'ancient_runes', icon:'📜', titleKey:'event.ancient_runes.title', title:'Runas Antigas', textKey:'event.ancient_runes.text', text:'Runas de poder cobrem uma parede. Decifrá-las exige foco.', weight:1, minFloor:3,
+    { id:'ancient_runes', icon:'📜', titleKey:'event.ancient_runes.title', textKey:'event.ancient_runes.text', weight:1, minFloor:3,
       choices:[
-        { labelKey:'event.ancient_runes.c1.label', label:'Decifrar as runas', descKey:'event.ancient_runes.c1.desc', desc:'60% de +15% dano, 40% de maldição.', outcome:{ type:'gamble', chance:0.6, success:{ dmgBuff:0.15 }, fail:{ curseDmg:0.12 } } },
-        { labelKey:'event.ancient_runes.c2.label', label:'Não arriscar', descKey:'event.ancient_runes.c2.desc', desc:'O conhecimento tem preço.', outcome:{ type:'none' } }
+        { labelKey:'event.ancient_runes.c1.label', descKey:'event.ancient_runes.c1.desc', outcome:{ type:'gamble', chance:0.6, success:{ dmgBuff:0.15 }, fail:{ curseDmg:0.12 } } },
+        { labelKey:'event.ancient_runes.c2.label', descKey:'event.ancient_runes.c2.desc', outcome:{ type:'none' } }
       ]},
-    { id:'grateful_spirit', icon:'👻', titleKey:'event.grateful_spirit.title', title:'Espírito Agradecido', textKey:'event.grateful_spirit.text', text:'Uma alma translúcida flutua até você, murmurando uma promessa.', weight:1,
+    { id:'grateful_spirit', icon:'👻', titleKey:'event.grateful_spirit.title', textKey:'event.grateful_spirit.text', weight:1,
       choices:[
-        { labelKey:'event.grateful_spirit.c1.label', label:'Fazer a promessa', descKey:'event.grateful_spirit.c1.desc', desc:'+50 moedas e +6% de dano.', outcome:{ combo:[ { gold:50 }, { dmgBuff:0.06 } ] } },
-        { labelKey:'event.grateful_spirit.c2.label', label:'Ignorar o espírito', descKey:'event.grateful_spirit.c2.desc', desc:'A promessa pode ser um fardo.', outcome:{ type:'none' } }
+        { labelKey:'event.grateful_spirit.c1.label', descKey:'event.grateful_spirit.c1.desc', outcome:{ combo:[ { gold:50 }, { dmgBuff:0.06 } ] } },
+        { labelKey:'event.grateful_spirit.c2.label', descKey:'event.grateful_spirit.c2.desc', outcome:{ type:'none' } }
       ]},
-    { id:'wishing_well', icon:'🪙', titleKey:'event.wishing_well.title', title:'Poço dos Desejos', textKey:'event.wishing_well.text', text:'Moedas brilham no fundo de um poço antigo.', weight:1,
+    { id:'wishing_well', icon:'🪙', titleKey:'event.wishing_well.title', textKey:'event.wishing_well.text', weight:1,
       choices:[
-        { labelKey:'event.wishing_well.c1.label', label:'Jogar 20 moedas', descKey:'event.wishing_well.c1.desc', desc:'40% de 100 moedas, 60% de nada.', requireGold:20, outcome:{ type:'gamble', chance:0.4, success:{ gold:100 }, fail:{ none:true } } },
-        { labelKey:'event.wishing_well.c2.label', label:'Pular dentro', descKey:'event.wishing_well.c2.desc', desc:'50% de 80 moedas, 50% de 25 de dano.', outcome:{ type:'gamble', chance:0.5, success:{ gold:80 }, fail:{ damageFlat:25 } } }
+        { labelKey:'event.wishing_well.c1.label', descKey:'event.wishing_well.c1.desc', requireGold:20, outcome:{ type:'gamble', chance:0.4, success:{ gold:100 }, fail:{ none:true } } },
+        { labelKey:'event.wishing_well.c2.label', descKey:'event.wishing_well.c2.desc', outcome:{ type:'gamble', chance:0.5, success:{ gold:80 }, fail:{ damageFlat:25 } } }
       ]},
-    { id:'cursed_shrine', icon:'🩸', titleKey:'event.cursed_shrine.title', title:'Santuário Proibido', textKey:'event.cursed_shrine.text', text:'Uma estátua de um deus esquecido exige um tributo de sangue.', weight:1, minFloor:4,
+    { id:'cursed_shrine', icon:'🩸', titleKey:'event.cursed_shrine.title', textKey:'event.cursed_shrine.text', weight:1, minFloor:4,
       choices:[
-        { labelKey:'event.cursed_shrine.c1.label', label:'Oferecer sangue', descKey:'event.cursed_shrine.c1.desc', desc:'-15% HP, +50 de escudo e +10% de dano.', outcome:{ combo:[ { damagePct:0.15 }, { shield:50 }, { dmgBuff:0.10 } ] } },
-        { labelKey:'event.cursed_shrine.c2.label', label:'Sair de perto', descKey:'event.cursed_shrine.c2.desc', desc:'Alguns deuses preferem o esquecimento.', outcome:{ type:'none' } }
+        { labelKey:'event.cursed_shrine.c1.label', descKey:'event.cursed_shrine.c1.desc', outcome:{ combo:[ { damagePct:0.15 }, { shield:50 }, { dmgBuff:0.10 } ] } },
+        { labelKey:'event.cursed_shrine.c2.label', descKey:'event.cursed_shrine.c2.desc', outcome:{ type:'none' } }
       ]}
 ];
 
@@ -22083,45 +22261,46 @@ const BOSS_LAST_WORDS = {
     thorn_king: { pt: '“Florescer… florescer…”', en: '“To bloom… to bloom…”', es: '“Florecer… florecer…”' }
 };
 // name, desc e lore são {pt,en,es}; _trT escolhe o idioma atual (fallback pt).
-function _trophy(boss, n, name, desc, lore, effect) { return { id: boss + '_t' + n, boss, name, desc, lore, effect }; }
+const _TROPHY_DESCS={hp:{pt:'+50 HP, +10% Quebra',en:'+50 HP, +10% Stagger',es:'+50 HP, +10% Quiebre'},dmg:{pt:'+8% dano',en:'+8% damage',es:'+8% daño'},shield:{pt:'+55 escudo, +12% Quebra',en:'+55 shield, +12% Stagger',es:'+55 escudo, +12% Quiebre'},speed:{pt:'+8% vel., -15% CD esquiva',en:'+8% spd, -15% dash CD',es:'+8% vel., -15% CD esquiva'},crit:{pt:'+6% crítico',en:'+6% crit',es:'+6% crítico'},xp:{pt:'+10% XP, +15% Chama',en:'+10% XP, +15% Surge',es:'+10% XP, +15% Llama'},coins:{pt:'+100 moedas, +20% Chama',en:'+100 coins, +20% Surge',es:'+100 monedas, +20% Llama'},memory:{pt:'Memória — sem efeito',en:'Memory — no effect',es:'Recuerdo — sin efecto'}};
+function _trophy(boss, n, name, lore, effect) { return { id: boss + '_t' + n, boss, name, desc: _TROPHY_DESCS[effect], lore, effect }; }
 function _trT(o) { if (!o || typeof o !== 'object') return o || ''; const l = (typeof I18n !== 'undefined' && I18n.lang) || 'pt'; return o[l] || o.pt || ''; }
 const BOSS_TROPHIES = [
-    _trophy('shadow_warden', 1, { pt: 'Selo do Capitão', en: 'Captain\'s Seal', es: 'Sello del Capitán' }, { pt: '+30 HP máximo na run', en: '+30 max HP this run', es: '+30 HP máximo en la run' }, { pt: 'O selo da porta leste. Ainda barra o que não deve passar.', en: 'The seal of the east gate. It still bars what must not pass.', es: 'El sello de la puerta este. Todavía cierra el paso a lo que no debe pasar.' }, 'hp'),
-    _trophy('shadow_warden', 2, { pt: 'Lança da Guarda', en: 'Guard\'s Spear', es: 'Lanza de la Guardia' }, { pt: '+3% dano na run', en: '+3% damage this run', es: '+3% de daño en la run' }, { pt: 'Uma lança longa demais para o frio. A ponta ainda lembra o juramento.', en: 'A spear too long for the cold. The tip still remembers the oath.', es: 'Una lanza demasiado larga para el frío. La punta aún recuerda el juramento.' }, 'dmg'),
-    _trophy('shadow_warden', 3, { pt: 'Manto Cinzento', en: 'Grey Cloak', es: 'Manto Gris' }, { pt: '+5% velocidade na run', en: '+5% speed this run', es: '+5% de velocidad en la run' }, { pt: 'O manto de quem guardou a entrada até o fim.', en: 'The cloak of one who guarded the entrance to the end.', es: 'El manto de quien guardó la entrada hasta el final.' }, 'speed'),
-    _trophy('dark_lord', 1, { pt: 'Taça do Banquete', en: 'Banquet Goblet', es: 'Copa del Banquete' }, { pt: '+50 moedas na run', en: '+50 coins this run', es: '+50 monedas en la run' }, { pt: 'Cálice do mestre de cerimônias, para mesa vazia.', en: 'Goblet of the master of ceremonies, for an empty table.', es: 'Cáliz del maestro de ceremonias, para una mesa vacía.' }, 'coins'),
-    _trophy('dark_lord', 2, { pt: 'Convite Rasgado', en: 'Torn Invitation', es: 'Invitación Rasgada' }, { pt: '+30 HP máximo na run', en: '+30 max HP this run', es: '+30 HP máximo en la run' }, { pt: 'Convite para três dias de festa que nunca aconteceram.', en: 'An invitation to three days of a party that never happened.', es: 'Invitación a tres días de fiesta que nunca ocurrieron.' }, 'hp'),
-    _trophy('dark_lord', 3, { pt: 'Anel do Corte', en: 'Court Ring', es: 'Anillo de la Corte' }, { pt: '+3% dano na run', en: '+3% damage this run', es: '+3% de daño en la run' }, { pt: 'Anel de cerimônia: brilha quando o Véu finge festa.', en: 'A ceremony ring: it shines when the Veil pretends to party.', es: 'Anillo de ceremonia: brilla cuando el Velo finge una fiesta.' }, 'dmg'),
-    _trophy('death_herald', 1, { pt: 'Foice do Arauto', en: 'Herald\'s Scythe', es: 'Guadaña del Heraldo' }, { pt: '+3% dano na run', en: '+3% damage this run', es: '+3% de daño en la run' }, { pt: 'A foice que anunciou a doença de Eiran.', en: 'The scythe that announced Eiran\'s illness.', es: 'La guadaña que anunció la enfermedad de Eiran.' }, 'dmg'),
-    _trophy('death_herald', 2, { pt: 'Sino de Toca', en: 'Tolling Bell', es: 'Campana Tañedora' }, { pt: '+5% velocidade na run', en: '+5% speed this run', es: '+5% de velocidad en la run' }, { pt: 'Sino que toca sem boca. Anuncia o que já aconteceu.', en: 'A bell that rings without a mouth. It announces what has already happened.', es: 'Campana que suena sin boca. Anuncia lo que ya ocurrió.' }, 'speed'),
-    _trophy('death_herald', 3, { pt: 'Sudário', en: 'Shroud', es: 'Sudario' }, { pt: '+30 escudo na run', en: '+30 shield this run', es: '+30 de escudo en la run' }, { pt: 'Pano que cobre o que o Véu deixou para trás.', en: 'Cloth that covers what the Veil left behind.', es: 'Tela que cubre lo que el Velo dejó atrás.' }, 'shield'),
-    _trophy('stone_colossus', 1, { pt: 'Fragmento do Fundador', en: 'Founder\'s Fragment', es: 'Fragmento del Fundador' }, { pt: '+30 HP máximo na run', en: '+30 max HP this run', es: '+30 HP máximo en la run' }, { pt: 'Pedra do pátio da biblioteca. Pesa como um reino.', en: 'Stone from the library courtyard. It weighs like a kingdom.', es: 'Piedra del patio de la biblioteca. Pesa como un reino.' }, 'hp'),
-    _trophy('stone_colossus', 2, { pt: 'Estatueta Rachada', en: 'Cracked Statuette', es: 'Estatuilla Agrietada' }, { pt: '+30 escudo na run', en: '+30 shield this run', es: '+30 de escudo en la run' }, { pt: 'Uma estátua que esqueceu que era estátua.', en: 'A statue that forgot it was a statue.', es: 'Una estatua que olvidó que era estatua.' }, 'shield'),
-    _trophy('stone_colossus', 3, { pt: 'Coração de Pedra', en: 'Heart of Stone', es: 'Corazón de Piedra' }, { pt: '+5% velocidade na run', en: '+5% speed this run', es: '+5% de velocidad en la run' }, { pt: 'O coração que o Véu esqueceu que era pedra.', en: 'The heart the Veil forgot was stone.', es: 'El corazón que el Velo olvidó que era piedra.' }, 'speed'),
-    _trophy('specter', 1, { pt: 'Página do Arquivo', en: 'Archive Page', es: 'Página del Archivo' }, { pt: '+2% crítico na run', en: '+2% crit this run', es: '+2% de crítico en la run' }, { pt: 'Catálogo sem livros. A última página ainda cabe.', en: 'A catalogue without books. The last page still fits.', es: 'Catálogo sin libros. La última página todavía cabe.' }, 'crit'),
-    _trophy('specter', 2, { pt: 'Índice do Vazio', en: 'Index of the Void', es: 'Índice del Vacío' }, { pt: '+5% XP na run', en: '+5% XP this run', es: '+5% de XP en la run' }, { pt: 'Índice que aponta para nomes que ninguém ousa dizer.', en: 'An index pointing to names no one dares to say.', es: 'Índice que señala nombres que nadie se atreve a decir.' }, 'xp'),
-    _trophy('specter', 3, { pt: 'Lente Fria', en: 'Cold Lens', es: 'Lente Fría' }, { pt: '+3% dano na run', en: '+3% damage this run', es: '+3% de daño en la run' }, { pt: 'Lente que vê o catálogo do que sumiu.', en: 'A lens that sees the catalogue of what vanished.', es: 'Lente que ve el catálogo de lo que desapareció.' }, 'dmg'),
-    _trophy('soul_devourer', 1, { pt: 'Cálice do Templo', en: 'Temple Chalice', es: 'Cáliz del Templo' }, { pt: '+30 escudo na run', en: '+30 shield this run', es: '+30 de escudo en la run' }, { pt: 'Cálice do sacerdote que quis provar a alma.', en: 'The chalice of the priest who wanted to prove the soul.', es: 'Cáliz del sacerdote que quiso probar el alma.' }, 'shield'),
-    _trophy('soul_devourer', 2, { pt: 'Vela Apagada', en: 'Snuffed Candle', es: 'Vela Apagada' }, { pt: '+5% velocidade na run', en: '+5% speed this run', es: '+5% de velocidad en la run' }, { pt: 'Vela que consome o que não devia.', en: 'A candle that consumes what it should not.', es: 'Vela que consume lo que no debía.' }, 'speed'),
-    _trophy('soul_devourer', 3, { pt: 'Sino Faminto', en: 'Hungry Bell', es: 'Campana Hambrienta' }, { pt: '+3% dano na run', en: '+3% damage this run', es: '+3% de daño en la run' }, { pt: 'Som que devora silêncios pequenos.', en: 'A sound that devours small silences.', es: 'Sonido que devora pequeños silencios.' }, 'dmg'),
-    _trophy('bone_lord', 1, { pt: 'Placa do Jardim', en: 'Garden Plaque', es: 'Placa del Jardín' }, { pt: '+30 HP máximo na run', en: '+30 max HP this run', es: '+30 HP máximo en la run' }, { pt: 'Placa com os nomes enterrados pelo general.', en: 'A plaque with the names the general buried.', es: 'Placa con los nombres que enterró el general.' }, 'hp'),
-    _trophy('bone_lord', 2, { pt: 'Osso do Capitão', en: 'Captain\'s Bone', es: 'Hueso del Capitán' }, { pt: '+3% dano na run', en: '+3% damage this run', es: '+3% de daño en la run' }, { pt: 'Osso de quem prometeu não esquecer ninguém.', en: 'The bone of one who promised to forget no one.', es: 'Hueso de quien prometió no olvidar a nadie.' }, 'dmg'),
-    _trophy('bone_lord', 3, { pt: 'Floreira', en: 'Flower Planter', es: 'Jardinera' }, { pt: '+50 moedas na run', en: '+50 coins this run', es: '+50 monedas en la run' }, { pt: 'Ferro de jardim. Flores de um luto sem corpo.', en: 'Garden iron. Flowers for a grief with no body.', es: 'Hierro de jardín. Flores de un duelo sin cuerpo.' }, 'coins'),
-    _trophy('deep_demon', 1, { pt: 'Brassão do Quarto', en: 'Chamber Crest', es: 'Blasón de la Alcoba' }, { pt: '+5% velocidade na run', en: '+5% speed this run', es: '+5% de velocidad en la run' }, { pt: 'Brasão do guarda dos aposentos reais.', en: 'Crest of the guard of the royal chambers.', es: 'Blasón del guardia de los aposentos reales.' }, 'speed'),
-    _trophy('deep_demon', 2, { pt: 'Chave do Corredor', en: 'Corridor Key', es: 'Llave del Pasillo' }, { pt: '+3% dano na run', en: '+3% damage this run', es: '+3% de daño en la run' }, { pt: 'Chave que ainda abre a porta do quarto de Eiran.', en: 'A key that still opens Eiran\'s room door.', es: 'Llave que todavía abre la puerta de la alcoba de Eiran.' }, 'dmg'),
-    _trophy('deep_demon', 3, { pt: 'Lume Apagado', en: 'Dimmed Ember', es: 'Brasa Apagada' }, { pt: '+30 escudo na run', en: '+30 shield this run', es: '+30 de escudo en la run' }, { pt: 'Fogueira que protege um rei que não lembra dele.', en: 'A hearth that guards a king who does not remember it.', es: 'Hoguera que protege a un rey que no la recuerda.' }, 'shield'),
-    _trophy('corrupted', 1, { pt: 'Selo do Conselheiro', en: 'Councillor\'s Seal', es: 'Sello del Consejero' }, { pt: '+30 HP máximo na run', en: '+30 max HP this run', es: '+30 HP máximo en la run' }, { pt: 'Selo de quem carregou o Véu no peito para não esquecer.', en: 'The seal of one who carried the Veil in their chest so as not to forget.', es: 'Sello de quien llevó el Velo en el pecho para no olvidar.' }, 'hp'),
-    _trophy('corrupted', 2, { pt: 'Tinta do Pacto', en: 'Pact Ink', es: 'Tinta del Pacto' }, { pt: '+3% dano na run', en: '+3% damage this run', es: '+3% de daño en la run' }, { pt: 'Tinta com dois nomes: Aldric e mais um.', en: 'Ink with two names: Aldric and one more.', es: 'Tinta con dos nombres: Aldric y uno más.' }, 'dmg'),
-    _trophy('corrupted', 3, { pt: 'Corda Podre', en: 'Rotten Rope', es: 'Cuerda Podrida' }, { pt: '+5% velocidade na run', en: '+5% speed this run', es: '+5% de velocidad en la run' }, { pt: 'Corda que amarrou o último estudioso ao pacto.', en: 'A rope that bound the last scholar to the pact.', es: 'Cuerda que ató al último erudito al pacto.' }, 'speed'),
-    _trophy('final_guardian', 1, { pt: 'Memória do Rei', en: 'King\'s Memory', es: 'Recuerdo del Rey' }, { pt: 'Memória — sem efeito', en: 'Memory — no effect', es: 'Recuerdo — sin efecto' }, { pt: 'O Guardião não deixa troféu: deixa lembrança.', en: 'The Guardian leaves no trophy: it leaves a memory.', es: 'El Guardián no deja trofeo: deja un recuerdo.' }, 'memory'),
-    _trophy('final_guardian', 2, { pt: 'Coroa Quebrada', en: 'Broken Crown', es: 'Corona Rota' }, { pt: 'Memória — sem efeito', en: 'Memory — no effect', es: 'Recuerdo — sin efecto' }, { pt: 'A coroa que caiu no chão quando Eiran acordou.', en: 'The crown that fell to the floor when Eiran woke.', es: 'La corona que cayó al suelo cuando Eiran despertó.' }, 'memory'),
-    _trophy('final_guardian', 3, { pt: 'Suspiro do Pai', en: 'Father\'s Sigh', es: 'Suspiro del Padre' }, { pt: 'Memória — sem efeito', en: 'Memory — no effect', es: 'Recuerdo — sin efecto' }, { pt: 'Um “obrigado” que o Véu não conseguiu engolir.', en: 'A "thank you" the Veil could not swallow.', es: 'Un “gracias” que el Velo no logró tragar.' }, 'memory'),
-    _trophy('magma_titan', 1, { pt: 'Brasa do Forno', en: 'Furnace Ember', es: 'Brasa del Horno' }, { pt: '+3% dano na run', en: '+3% damage this run', es: '+3% de daño en la run' }, { pt: 'Brasa da forja de Halvard, agora sem ferreiro.', en: 'An ember from Halvard\'s forge, now without a smith.', es: 'Brasa de la forja de Halvard, ahora sin herrero.' }, 'dmg'),
-    _trophy('magma_titan', 2, { pt: 'Martelo Apagado', en: 'Dull Hammer', es: 'Martillo Apagado' }, { pt: '+30 HP máximo na run', en: '+30 max HP this run', es: '+30 HP máximo en la run' }, { pt: 'Martelo que ainda bate por hábito.', en: 'A hammer that still strikes out of habit.', es: 'Martillo que aún golpea por costumbre.' }, 'hp'),
-    _trophy('magma_titan', 3, { pt: 'Escória', en: 'Slag', es: 'Escoria' }, { pt: '+30 escudo na run', en: '+30 shield this run', es: '+30 de escudo en la run' }, { pt: 'Lama que lembra fogo de casa.', en: 'Sludge that remembers home fire.', es: 'Lodo que recuerda el fuego de casa.' }, 'shield'),
-    _trophy('thorn_king', 1, { pt: 'Semente do Espinho', en: 'Thorn Seed', es: 'Semilla de Espina' }, { pt: '+30 escudo na run', en: '+30 shield this run', es: '+30 de escudo en la run' }, { pt: 'Semente do jardineiro real. Vira armadura.', en: 'A seed from the royal gardener. It becomes armor.', es: 'Semilla del jardinero real. Se vuelve armadura.' }, 'shield'),
-    _trophy('thorn_king', 2, { pt: 'Pétala de Luto', en: 'Petal of Mourning', es: 'Pétalo de Luto' }, { pt: '+5% velocidade na run', en: '+5% speed this run', es: '+5% de velocidad en la run' }, { pt: 'Pétala que aprendeu a morder.', en: 'A petal that learned to bite.', es: 'Pétalo que aprendió a morder.' }, 'speed'),
-    _trophy('thorn_king', 3, { pt: 'Espinho do Rei', en: 'King\'s Thorn', es: 'Espina del Rey' }, { pt: '+3% dano na run', en: '+3% damage this run', es: '+3% de daño en la run' }, { pt: 'Espinho do amor transformado.', en: 'A thorn of love transformed.', es: 'Espina de amor transformada.' }, 'dmg')
+    _trophy('shadow_warden', 1, { pt: 'Selo do Capitão', en: 'Captain\'s Seal', es: 'Sello del Capitán' }, { pt: 'O selo da porta leste. Ainda barra o que não deve passar.', en: 'The seal of the east gate. It still bars what must not pass.', es: 'El sello de la puerta este. Todavía cierra el paso a lo que no debe pasar.' }, 'hp'),
+    _trophy('shadow_warden', 2, { pt: 'Lança da Guarda', en: 'Guard\'s Spear', es: 'Lanza de la Guardia' }, { pt: 'Uma lança longa demais para o frio. A ponta ainda lembra o juramento.', en: 'A spear too long for the cold. The tip still remembers the oath.', es: 'Una lanza demasiado larga para el frío. La punta aún recuerda el juramento.' }, 'dmg'),
+    _trophy('shadow_warden', 3, { pt: 'Manto Cinzento', en: 'Grey Cloak', es: 'Manto Gris' }, { pt: 'O manto de quem guardou a entrada até o fim.', en: 'The cloak of one who guarded the entrance to the end.', es: 'El manto de quien guardó la entrada hasta el final.' }, 'speed'),
+    _trophy('dark_lord', 1, { pt: 'Taça do Banquete', en: 'Banquet Goblet', es: 'Copa del Banquete' }, { pt: 'Cálice do mestre de cerimônias, para mesa vazia.', en: 'Goblet of the master of ceremonies, for an empty table.', es: 'Cáliz del maestro de ceremonias, para una mesa vacía.' }, 'coins'),
+    _trophy('dark_lord', 2, { pt: 'Convite Rasgado', en: 'Torn Invitation', es: 'Invitación Rasgada' }, { pt: 'Convite para três dias de festa que nunca aconteceram.', en: 'An invitation to three days of a party that never happened.', es: 'Invitación a tres días de fiesta que nunca ocurrieron.' }, 'hp'),
+    _trophy('dark_lord', 3, { pt: 'Anel do Corte', en: 'Court Ring', es: 'Anillo de la Corte' }, { pt: 'Anel de cerimônia: brilha quando o Véu finge festa.', en: 'A ceremony ring: it shines when the Veil pretends to party.', es: 'Anillo de ceremonia: brilla cuando el Velo finge una fiesta.' }, 'dmg'),
+    _trophy('death_herald', 1, { pt: 'Foice do Arauto', en: 'Herald\'s Scythe', es: 'Guadaña del Heraldo' }, { pt: 'A foice que anunciou a doença de Eiran.', en: 'The scythe that announced Eiran\'s illness.', es: 'La guadaña que anunció la enfermedad de Eiran.' }, 'dmg'),
+    _trophy('death_herald', 2, { pt: 'Sino de Toca', en: 'Tolling Bell', es: 'Campana Tañedora' }, { pt: 'Sino que toca sem boca. Anuncia o que já aconteceu.', en: 'A bell that rings without a mouth. It announces what has already happened.', es: 'Campana que suena sin boca. Anuncia lo que ya ocurrió.' }, 'speed'),
+    _trophy('death_herald', 3, { pt: 'Sudário', en: 'Shroud', es: 'Sudario' }, { pt: 'Pano que cobre o que o Véu deixou para trás.', en: 'Cloth that covers what the Veil left behind.', es: 'Tela que cubre lo que el Velo dejó atrás.' }, 'shield'),
+    _trophy('stone_colossus', 1, { pt: 'Fragmento do Fundador', en: 'Founder\'s Fragment', es: 'Fragmento del Fundador' }, { pt: 'Pedra do pátio da biblioteca. Pesa como um reino.', en: 'Stone from the library courtyard. It weighs like a kingdom.', es: 'Piedra del patio de la biblioteca. Pesa como un reino.' }, 'hp'),
+    _trophy('stone_colossus', 2, { pt: 'Estatueta Rachada', en: 'Cracked Statuette', es: 'Estatuilla Agrietada' }, { pt: 'Uma estátua que esqueceu que era estátua.', en: 'A statue that forgot it was a statue.', es: 'Una estatua que olvidó que era estatua.' }, 'shield'),
+    _trophy('stone_colossus', 3, { pt: 'Coração de Pedra', en: 'Heart of Stone', es: 'Corazón de Piedra' }, { pt: 'O coração que o Véu esqueceu que era pedra.', en: 'The heart the Veil forgot was stone.', es: 'El corazón que el Velo olvidó que era piedra.' }, 'speed'),
+    _trophy('specter', 1, { pt: 'Página do Arquivo', en: 'Archive Page', es: 'Página del Archivo' }, { pt: 'Catálogo sem livros. A última página ainda cabe.', en: 'A catalogue without books. The last page still fits.', es: 'Catálogo sin libros. La última página todavía cabe.' }, 'crit'),
+    _trophy('specter', 2, { pt: 'Índice do Vazio', en: 'Index of the Void', es: 'Índice del Vacío' }, { pt: 'Índice que aponta para nomes que ninguém ousa dizer.', en: 'An index pointing to names no one dares to say.', es: 'Índice que señala nombres que nadie se atreve a decir.' }, 'xp'),
+    _trophy('specter', 3, { pt: 'Lente Fria', en: 'Cold Lens', es: 'Lente Fría' }, { pt: 'Lente que vê o catálogo do que sumiu.', en: 'A lens that sees the catalogue of what vanished.', es: 'Lente que ve el catálogo de lo que desapareció.' }, 'dmg'),
+    _trophy('soul_devourer', 1, { pt: 'Cálice do Templo', en: 'Temple Chalice', es: 'Cáliz del Templo' }, { pt: 'Cálice do sacerdote que quis provar a alma.', en: 'The chalice of the priest who wanted to prove the soul.', es: 'Cáliz del sacerdote que quiso probar el alma.' }, 'shield'),
+    _trophy('soul_devourer', 2, { pt: 'Vela Apagada', en: 'Snuffed Candle', es: 'Vela Apagada' }, { pt: 'Vela que consome o que não devia.', en: 'A candle that consumes what it should not.', es: 'Vela que consume lo que no debía.' }, 'speed'),
+    _trophy('soul_devourer', 3, { pt: 'Sino Faminto', en: 'Hungry Bell', es: 'Campana Hambrienta' }, { pt: 'Som que devora silêncios pequenos.', en: 'A sound that devours small silences.', es: 'Sonido que devora pequeños silencios.' }, 'dmg'),
+    _trophy('bone_lord', 1, { pt: 'Placa do Jardim', en: 'Garden Plaque', es: 'Placa del Jardín' }, { pt: 'Placa com os nomes enterrados pelo general.', en: 'A plaque with the names the general buried.', es: 'Placa con los nombres que enterró el general.' }, 'hp'),
+    _trophy('bone_lord', 2, { pt: 'Osso do Capitão', en: 'Captain\'s Bone', es: 'Hueso del Capitán' }, { pt: 'Osso de quem prometeu não esquecer ninguém.', en: 'The bone of one who promised to forget no one.', es: 'Hueso de quien prometió no olvidar a nadie.' }, 'dmg'),
+    _trophy('bone_lord', 3, { pt: 'Floreira', en: 'Flower Planter', es: 'Jardinera' }, { pt: 'Ferro de jardim. Flores de um luto sem corpo.', en: 'Garden iron. Flowers for a grief with no body.', es: 'Hierro de jardín. Flores de un duelo sin cuerpo.' }, 'coins'),
+    _trophy('deep_demon', 1, { pt: 'Brassão do Quarto', en: 'Chamber Crest', es: 'Blasón de la Alcoba' }, { pt: 'Brasão do guarda dos aposentos reais.', en: 'Crest of the guard of the royal chambers.', es: 'Blasón del guardia de los aposentos reales.' }, 'speed'),
+    _trophy('deep_demon', 2, { pt: 'Chave do Corredor', en: 'Corridor Key', es: 'Llave del Pasillo' }, { pt: 'Chave que ainda abre a porta do quarto de Eiran.', en: 'A key that still opens Eiran\'s room door.', es: 'Llave que todavía abre la puerta de la alcoba de Eiran.' }, 'dmg'),
+    _trophy('deep_demon', 3, { pt: 'Lume Apagado', en: 'Dimmed Ember', es: 'Brasa Apagada' }, { pt: 'Fogueira que protege um rei que não lembra dele.', en: 'A hearth that guards a king who does not remember it.', es: 'Hoguera que protege a un rey que no la recuerda.' }, 'shield'),
+    _trophy('corrupted', 1, { pt: 'Selo do Conselheiro', en: 'Councillor\'s Seal', es: 'Sello del Consejero' }, { pt: 'Selo de quem carregou o Véu no peito para não esquecer.', en: 'The seal of one who carried the Veil in their chest so as not to forget.', es: 'Sello de quien llevó el Velo en el pecho para no olvidar.' }, 'hp'),
+    _trophy('corrupted', 2, { pt: 'Tinta do Pacto', en: 'Pact Ink', es: 'Tinta del Pacto' }, { pt: 'Tinta com dois nomes: Aldric e mais um.', en: 'Ink with two names: Aldric and one more.', es: 'Tinta con dos nombres: Aldric y uno más.' }, 'dmg'),
+    _trophy('corrupted', 3, { pt: 'Corda Podre', en: 'Rotten Rope', es: 'Cuerda Podrida' }, { pt: 'Corda que amarrou o último estudioso ao pacto.', en: 'A rope that bound the last scholar to the pact.', es: 'Cuerda que ató al último erudito al pacto.' }, 'speed'),
+    _trophy('final_guardian', 1, { pt: 'Memória do Rei', en: 'King\'s Memory', es: 'Recuerdo del Rey' }, { pt: 'O Guardião não deixa troféu: deixa lembrança.', en: 'The Guardian leaves no trophy: it leaves a memory.', es: 'El Guardián no deja trofeo: deja un recuerdo.' }, 'memory'),
+    _trophy('final_guardian', 2, { pt: 'Coroa Quebrada', en: 'Broken Crown', es: 'Corona Rota' }, { pt: 'A coroa que caiu no chão quando Eiran acordou.', en: 'The crown that fell to the floor when Eiran woke.', es: 'La corona que cayó al suelo cuando Eiran despertó.' }, 'memory'),
+    _trophy('final_guardian', 3, { pt: 'Suspiro do Pai', en: 'Father\'s Sigh', es: 'Suspiro del Padre' }, { pt: 'Um “obrigado” que o Véu não conseguiu engolir.', en: 'A "thank you" the Veil could not swallow.', es: 'Un “gracias” que el Velo no logró tragar.' }, 'memory'),
+    _trophy('magma_titan', 1, { pt: 'Brasa do Forno', en: 'Furnace Ember', es: 'Brasa del Horno' }, { pt: 'Brasa da forja de Halvard, agora sem ferreiro.', en: 'An ember from Halvard\'s forge, now without a smith.', es: 'Brasa de la forja de Halvard, ahora sin herrero.' }, 'dmg'),
+    _trophy('magma_titan', 2, { pt: 'Martelo Apagado', en: 'Dull Hammer', es: 'Martillo Apagado' }, { pt: 'Martelo que ainda bate por hábito.', en: 'A hammer that still strikes out of habit.', es: 'Martillo que aún golpea por costumbre.' }, 'hp'),
+    _trophy('magma_titan', 3, { pt: 'Escória', en: 'Slag', es: 'Escoria' }, { pt: 'Lama que lembra fogo de casa.', en: 'Sludge that remembers home fire.', es: 'Lodo que recuerda el fuego de casa.' }, 'shield'),
+    _trophy('thorn_king', 1, { pt: 'Semente do Espinho', en: 'Thorn Seed', es: 'Semilla de Espina' }, { pt: 'Semente do jardineiro real. Vira armadura.', en: 'A seed from the royal gardener. It becomes armor.', es: 'Semilla del jardinero real. Se vuelve armadura.' }, 'shield'),
+    _trophy('thorn_king', 2, { pt: 'Pétala de Luto', en: 'Petal of Mourning', es: 'Pétalo de Luto' }, { pt: 'Pétala que aprendeu a morder.', en: 'A petal that learned to bite.', es: 'Pétalo que aprendió a morder.' }, 'speed'),
+    _trophy('thorn_king', 3, { pt: 'Espinho do Rei', en: 'King\'s Thorn', es: 'Espina del Rey' }, { pt: 'Espinho do amor transformado.', en: 'A thorn of love transformed.', es: 'Espina de amor transformada.' }, 'dmg')
 ];
 window.BOSS_LAST_WORDS = BOSS_LAST_WORDS;
 window.BOSS_TROPHIES = BOSS_TROPHIES;
@@ -22238,32 +22417,8 @@ const BossRewardSystem = {
         return fresh.length ? fresh : null;
     },
 
-    // Retorna true se o troféu teve efeito; false se o efeito já estava no teto (hp, dmg, crit).
-    _applyTrophy(p, t) {
-        if (!p) return false;
-        if (t.effect === 'memory') return true; // Guardião: memória, sem efeito (não é teto).
-        let aplicou = true;
-        if (t.effect === 'hp') { const add = Math.min(30, 60 - (p._trophyHpBonus || 0)); if (add > 0) { p.maxHp += add; p.hp = Math.min(p.maxHp, p.hp + add); p._trophyHpBonus = (p._trophyHpBonus || 0) + add; } else aplicou = false; }
-        else if (t.effect === 'dmg') { const add = Math.min(0.03, Math.max(0, 0.10 - (p._trophyDmgBonus || 0))); if (add > 0) { p.damageMult = (p.damageMult || 1) + add; p._trophyDmgBonus = (p._trophyDmgBonus || 0) + add; } else aplicou = false; }
-        else if (t.effect === 'shield') { const add = Math.min(30, 90 - (p._trophyShieldBonus || 0)); if (add > 0) { p.shield = (p.shield || 0) + add; p._trophyShieldBonus = (p._trophyShieldBonus || 0) + add; } else aplicou = false; }
-        // Velocidade e XP: teto total de +15% (×1,15) por fator, em vez de ×1,05 sem limite
-        else if (t.effect === 'speed') { const antes = p._trophySpeedMult || 1; const novo = Math.min(1.15, antes * 1.05); if (novo > antes) { p.speed *= novo / antes; p._trophySpeedMult = novo; } else aplicou = false; }
-        else if (t.effect === 'crit') { const antes = p.critChance || 0; p.critChance = Math.min(0.45, antes + 0.02); aplicou = p.critChance > antes; }
-        else if (t.effect === 'xp') { const antes = p._trophyXpMult || 1; const novo = Math.min(1.15, antes * 1.05); if (novo > antes) { p.xpMult = (p.xpMult || 1) * novo / antes; p._trophyXpMult = novo; } else aplicou = false; }
-        else if (t.effect === 'coins') { p.currency = (p.currency || 0) + 50; }
-        return aplicou;
-    },
-    // Mesma conta de _applyTrophy, sem aplicar: o efeito já está no teto? (usado na carta de escolha)
-    _trophyCapped(p, t) {
-        if (!p) return false;
-        if (t.effect === 'hp') return Math.min(30, 60 - (p._trophyHpBonus || 0)) <= 0;
-        if (t.effect === 'dmg') return Math.min(0.03, Math.max(0, 0.10 - (p._trophyDmgBonus || 0))) <= 0;
-        if (t.effect === 'crit') return (p.critChance || 0) >= 0.45;
-        if (t.effect === 'shield') return Math.min(30, 90 - (p._trophyShieldBonus || 0)) <= 0;
-        if (t.effect === 'speed') return (p._trophySpeedMult || 1) >= 1.15;
-        if (t.effect === 'xp') return (p._trophyXpMult || 1) >= 1.15;
-        return false;
-    },
+    _applyTrophy(p,t){if(!p)return false;const e=t.effect;if(e==='memory')return true;let ok=true;if(e==='hp'){const a=Math.min(50,150-(p._trophyHpBonus||0));if(a>0){p.maxHp+=a;p.hp=Math.min(p.maxHp,p.hp+a);p._trophyHpBonus=(p._trophyHpBonus||0)+a;p._staggerMult=Math.min(1.5,(p._staggerMult||1)+0.1);}else ok=false;}else if(e==='dmg'){const a=Math.min(0.08,Math.max(0,0.24-(p._trophyDmgBonus||0)));if(a>0){p.damageMult=(p.damageMult||1)+a;p._trophyDmgBonus=(p._trophyDmgBonus||0)+a;}else ok=false;}else if(e==='shield'){const a=Math.min(55,165-(p._trophyShieldBonus||0));if(a>0){p.shield=(p.shield||0)+a;p._trophyShieldBonus=(p._trophyShieldBonus||0)+a;p._staggerMult=Math.min(1.5,(p._staggerMult||1)+0.12);}else ok=false;}else if(e==='speed'){const a=p._trophySpeedMult||1,n=Math.min(1.25,a*1.08);if(n>a){p.speed*=n/a;p._trophySpeedMult=n;p._dashCdMult=Math.max(0.65,(p._dashCdMult||1)*0.85);}else ok=false;}else if(e==='crit'){const a=p.critChance||0;p.critChance=Math.min(0.55,a+0.06);ok=p.critChance>a;}else if(e==='xp'){const a=p._trophyXpMult||1,n=Math.min(1.3,a*1.1);if(n>a){p.xpMult=(p.xpMult||1)*n/a;p._trophyXpMult=n;p._surgeMult=Math.min(1.6,(p._surgeMult||1)+0.15);}else ok=false;}else if(e==='coins'){p.currency=(p.currency||0)+100;if(p.addSurge)p.addSurge(20);}return ok;},
+    _trophyCapped(p,t){if(!p)return false;const e=t.effect;return e==='hp'?(p._trophyHpBonus||0)>=150:e==='dmg'?(p._trophyDmgBonus||0)>=0.24:e==='crit'?(p.critChance||0)>=0.55:e==='shield'?(p._trophyShieldBonus||0)>=165:e==='speed'?(p._trophySpeedMult||1)>=1.25:e==='xp'?(p._trophyXpMult||1)>=1.3:false;},
 
     trigger(boss) {
         if (this.active) return;
@@ -22314,8 +22469,8 @@ const BossRewardSystem = {
                     '<span style="display:block;font-size:10px;font-weight:400;color:rgba(255,255,255,0.55);line-height:1.3;">' + _trT(b.desc) + ' · ' + _trT(b.lore) + (this._trophyCapped(window.player, b) ? ' · ' + (window.I18n ? I18n.t('trophy.capped') : '(teto atingido)') : '') + '</span>' +
                 '</button>'
                 : '<button onclick="window.BossRewardSystem.choose(' + i + ')" style="flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;padding:10px 12px;border-radius:12px;font-weight:700;font-size:13px;text-align:left;border:1.5px solid ' + (b.curse ? 'rgba(255,96,96,0.55)' : 'rgba(255,216,107,0.4)') + ';background:' + (b.curse ? 'rgba(255,64,64,0.08)' : 'rgba(255,216,107,0.08)') + ';color:' + (b.curse ? '#ff9a9a' : '#ffd86b') + ';cursor:pointer;touch-action:manipulation;transition:transform 0.15s;">' +
-                    b.icon + ' ' + b.name + RunBoons.tagHtml(b) +
-                    '<span style="display:block;font-size:10px;font-weight:400;color:rgba(255,255,255,0.55);line-height:1.3;">' + b.desc + (RunBoons.hint(window.player, b.id) ? ' · ' + RunBoons.hint(window.player, b.id) : '') + '</span>' +
+                    (b.icon ? b.icon + ' ' : '') + (window._L ? _L(b.nameKey, b.name) : b.name) + RunBoons.tagHtml(b) +
+                    '<span style="display:block;font-size:10px;font-weight:400;color:rgba(255,255,255,0.55);line-height:1.3;">' + (window._L ? _L(b.descKey, b.desc) : b.desc) + (RunBoons.hint(window.player, b.id) ? ' · ' + RunBoons.hint(window.player, b.id) : '') + '</span>' +
                 '</button>'
             ).join('');
         }
@@ -22572,6 +22727,8 @@ const WeaponSystem = {
         if (player.overheated) rate = Math.floor(rate * CONFIG.OVERHEAT_FIRERATE_MULT);
         // Powerup Frenesi (raro): cadência +40% = cooldown dividido por 1.4
         if (player.frenzyTimer > 0) rate = Math.max(3, Math.floor(rate / CONFIG.POWERUP_FRENZY_FIRERATE_MULT));
+        // Chama do Véu (Overdrive): cadência mais rápida para Guerreiro/Elfa (sem alterar trava de superaquecimento)
+        if (player.overdriveTimer > 0 && (player.type === 'warrior' || player.type === 'elf')) rate = Math.max(3, Math.floor(rate * (player.type === 'warrior' ? 0.80 : 0.82)));
         return rate;
     },
 
@@ -30688,7 +30845,10 @@ class Hazard {
                     const e = entities[i];
                     if(e === p || !e.alive || e.isBarrier || e.isP) continue;
                     const edx = e.x-this.x, edy = e.y-this.y;
-                    if(edx*edx + edy*edy < this.size * this.size && hasLineOfSight(m, this.x, this.y, e.x, e.y)) e.takeDamage(this.damage, m, p, true);
+                    if(edx*edx + edy*edy < this.size * this.size && hasLineOfSight(m, this.x, this.y, e.x, e.y)) {
+                        e.takeDamage(this.damage, m, p, true, true);
+                        if(this.type === 'fire' && typeof ElementalSystem !== 'undefined') ElementalSystem.applyStatus(e, 'fire', 1, 150, p);
+                    }
                 }
             }
             return;
@@ -32431,7 +32591,8 @@ class Entity {
         // declared in CONFIG.PLAYER; it was never read, so every class rolled
         // the flat 5% base. Kept separate from critChance so mid-run saves with
         // critChance:0 still get their class crit on continue.
-        const _critChance = Math.min(1.0, CONFIG.CRIT_CHANCE_BASE + (source ? ((source.critChance || 0) + (source.classCritChance || 0)) : 0) + (source && source.critBoost > 0 ? 0.10 : 0) + (this.poisonStacks > 0 && source === player ? CONFIG.CRIT_BONUS_POISONED : 0));
+        const _comboCrit = (source === player && source._comboTier >= 2) ? (source._comboTier >= 3 ? 0.15 : 0.10) : 0;
+        const _critChance = Math.min(1.0, CONFIG.CRIT_CHANCE_BASE + (source ? ((source.critChance || 0) + (source.classCritChance || 0)) : 0) + _comboCrit + (source && source.critBoost > 0 ? 0.10 : 0) + (this.poisonStacks > 0 && source === player ? CONFIG.CRIT_BONUS_POISONED : 0));
         // Esquiva perfeita (v67, classes não-guerreiras): o próximo golpe do jogador vira crítico garantido.
         // Decidido aqui, no mesmo ponto do crítico normal, para não duplicar multiplicadores. Consumido só por golpe do jogador.
         const _perfectArmed = !!(source && source === player && source._perfectCritT > 0);
@@ -32457,7 +32618,14 @@ class Entity {
                 source.hp = Math.min(source.maxHp, source.hp + critHeal);
                 if (typeof DamageNumbers !== 'undefined') DamageNumbers.add(source.x, source.y, critHeal, 'heal');
             }
+if(source===player&&this!==player&&!dot&&!_chainLightningActive){
+const ca=RunBoons.count(player,'crit_arc');
+if(ca>0){_chainLightningActive=true;try{const tmp=RunBoons.hasSynergy(player,'tempestade');let left=tmp?3:2;const ad=Math.max(1,Math.floor(finalDmg*(ca>=2?0.65:0.45)*(tmp?1.3:1)));_losFoes(this.x,this.y,130,this,e=>{e.takeDamage(ad,m,player,true,true);ElementalSystem.applyStatus(e,'lightning',1,150,player);spawnParticles(e.x,e.y,'#ffee44',5,3);return --left>0;},m);}finally{_chainLightningActive=false;}}
+if(RunBoons.hasSynergy(player,'mira_certeira')&&!this._fromSplinter){const sd=Math.max(2,Math.floor(finalDmg*0.35)),ba=Math.atan2(this.y-source.y,this.x-source.x);for(let si=-1;si<=1;si++){const sa=ba+si*0.45;_mkShot(this.x,this.y,Math.cos(sa)*10,Math.sin(sa)*10,'#ffd86b',sd,200,'arrow',b=>{b.chainPierce=true;b._splinter=true;});}}
+}
         }
+        if(this.isB&&this._staggerT>0&&source===player)finalDmg*=CONFIG.STAGGER_DMG_MULT;
+        if(source===player&&!dot&&this!==player&&player.comboCount>0)player.comboTimer=Math.max(player.comboTimer,Math.floor(CONFIG.COMBO_DECAY_TIME*0.4));
         if(source && source.damageBoost > 0) finalDmg *= CONFIG.DAMAGE_BOOST_MULTIPLIER;
         // Powerup Fúria (raro): mesmo ponto do damageBoost, aplicado uma única vez aqui
         if(source && source.furyTimer > 0) finalDmg *= CONFIG.POWERUP_FURY_DAMAGE_MULT;
@@ -32481,7 +32649,7 @@ class Entity {
         }
         // Track lifetime damage dealt by the player (used by achievements + stats)
         if (source === player && typeof Statistics !== 'undefined') { Statistics.data.totalDamageDealt = (Statistics.data.totalDamageDealt || 0) + finalDmg; if (window.RunStats) RunStats.damageDealt += finalDmg; }
-        if(this.shield > 0) { this.shield -= finalDmg; if(this.shield < 0) { this.hp += this.shield; this.shield = 0; } } else { this.hp -= finalDmg; if(source === player || (source && source.owner === player)) DamageNumbers.add(this.x, this.y, finalDmg, dmgType); }
+if(this.shield>0){this.shield-=finalDmg;if(this.shield<=0){if(this.shield<0){this.hp+=this.shield;this.shield=0;}if(this.elite&&this._affix==='bastion'&&!this._affixBroken){this._affixBroken=true;this._staggerT=72;DamageNumbers.add(this.x,this.y,_L('hd.st'),'crit');spawnParticles(this.x,this.y,'#44ccff',16,5);for(let bc=-1;bc<=1;bc++)pickups.push(new Pickup(this.x+bc*14,this.y,'currency'));}}}else{this.hp-=finalDmg;if(source===player||(source&&source.owner===player))DamageNumbers.add(this.x,this.y,finalDmg,dmgType);}
 
         // Chain lightning (Cajado Trovão weapon unique / relic "trovao"): a
         // player hit has a chance to arc half its damage to a nearby enemy.
@@ -32586,6 +32754,7 @@ class Entity {
             if (EndingSystem.interceptDeath(this)) return;
         }
         if(this.hp <= 0) {
+            const _overkill = this.hp < 0 ? -this.hp : 0;
             this.alive = false; if (this === player) this.hp = 0; DeathAnimations.createDeathAnimation(this); if(this.onDeath) this.onDeath(source, m);
             // Chefe do andar: registra a morte no próprio caminho de morte, para o prêmio do andar
             // (baú, XP, floorBossDefeated e portal) não se perder se o jogador morrer no mesmo tick e o
@@ -32597,9 +32766,7 @@ class Entity {
             // pets) premia exatamente uma vez. Antes só projéteis e melee
             // premiavam; kills de habilidade (slam/meteor/vento/etc.) davam
             // zero XP/abates/loot e deixavam "Abates" zerado nas telas finais.
-            if (this !== player && !this.isB && source === player) {
-                awardKillRewards(player, this, source);
-            }
+            if(this!==player&&!this.isB&&!this.isCrystal&&source===player){awardKillRewards(player,this,source);const okN=!window._overkillActive?RunBoons.count(player,'overkill_blast'):0;if(okN>0){const okD=Math.max(8,Math.floor(_overkill*(okN>=2?0.6:0.4))),bn=RunBoons.hasSynergy(player,'cinzas'),cl=bn?'#ff5500':'#ffaa33';window._overkillActive=true;try{_losFoes(this.x,this.y,95,this,e=>{e.takeDamage(okD,m,player,true,true);if(bn)ElementalSystem.applyStatus(e,'fire',2,180,player);},m);}finally{window._overkillActive=false;}if(ScreenEffects.onOverkillBlast)ScreenEffects.onOverkillBlast(this.x,this.y,95);else ScreenEffects._addRing(this.x,this.y,cl,95,14,3,0);spawnParticles(this.x,this.y,cl,14,5);}}
             // Hitstop on kill
             // Por máximo e com cooldown comum: abate normal só para se não houve hit-stop nos últimos ~10 frames.
             // Chefe, elite e a morte do herói passam sempre.
@@ -33008,6 +33175,7 @@ class Enemy extends Entity {
             this.phase = 2; this.s = CONFIG.BOSS_ENRAGE_SPEED; SND.playBoss(); addLog(window.I18n ? I18n.t('log.bossEnraged') : ' BOSS ENRAGED!');
         }
         let speedMult = 1;
+        if(this._hasteT > 0) { this._hasteT--; speedMult *= 1.25; }
         if(player && player.skills.slow) speedMult *= (1 - player.skills.slow);
         if(player && typeof RunBoons !== 'undefined') speedMult *= RunBoons.enemySpeedMult(player);
         if(this.enemyType === 'ranged' && !this.isB) {
@@ -33272,22 +33440,24 @@ class Enemy extends Entity {
     }
 }
 
-// ELITE ENEMY - Buffed variant with orange glow
 class EliteEnemy extends Enemy {
-    constructor(x, y, baseType) {
+    constructor(x, y, baseType, forceAffix) {
         super(x, y, false, baseType || 'melee');
         this.elite = true;
         this.hp = Math.floor(DifficultySystem.getScaledHp(CONFIG.ENEMY_HP, false) * CONFIG.ELITE_HP_MULT);
-        this.maxHp = this.hp;
-        this.s *= CONFIG.ELITE_SPEED_MULT;
+        this.maxHp = this.hp; this.s *= CONFIG.ELITE_SPEED_MULT;
         this.radius = Math.floor(CONFIG.ENEMY_RADIUS * CONFIG.ELITE_RADIUS_MULT);
-        this.color = CONFIG.ELITE_COLOR;
-        this.xpReward = Math.floor(20 * CONFIG.ELITE_XP_MULT);
-        this.lootMult = CONFIG.ELITE_LOOT_MULT;
+        this.color = CONFIG.ELITE_COLOR; this.xpReward = Math.floor(20 * CONFIG.ELITE_XP_MULT); this.lootMult = CONFIG.ELITE_LOOT_MULT;
+        this._affix=null; this._staggerT=0; this._affixCd=160; this._blinkT=0; this._sniperT=0;
+        if(forceAffix||(typeof dungeonLevel!=='undefined'&&dungeonLevel>=2)){const l=['bastion','pyro','blink','haste','sniper'];this._affix=typeof forceAffix==='string'?forceAffix:l[Math.floor(rareRandom()*l.length)];if(this._affix==='bastion'){this.shield=Math.floor(this.maxHp*0.45);this._maxShield=this.shield;}}
     }
+    onDeath(s,m){if(this._affix==='pyro'){for(let i=0;i<4;i++){const a=i*1.5708,hx=this.x+Math.cos(a)*34,hy=this.y+Math.sin(a)*34;if(!m||!m.isWall(hx,hy)){const hz=new Hazard(hx,hy,'fire',false);hz.timer=75;hazards.push(hz);}}ScreenEffects._addRing(this.x,this.y,'#ff5522',75,16,3,0);}}
     update(p, m) {
-        // Congelado não conta telegraph nem ataque especial
         if(this.frozen > 0) return;
+        if(this._staggerT > 0){this._staggerT--;return;}
+        if(this._affix==='haste'&&gameTime%30===0){for(let i=0;i<entities.length;i++){const o=entities[i];if(o!==this&&o!==p&&o.alive&&o.isEnemy&&(o.x-this.x)**2+(o.y-this.y)**2<19600)o._hasteT=40;}}
+        else if(this._affix==='blink'){if(this._blinkT>0){if(--this._blinkT===0&&p){const a=Math.atan2(this.y-p.y,this.x-p.x)+Math.PI,nx=p.x+Math.cos(a)*85,ny=p.y+Math.sin(a)*85;if(_entityClear(m,nx,ny,this.radius)){spawnParticles(this.x,this.y,'#cc66ff',10,4);this.x=nx;this.y=ny;spawnParticles(nx,ny,'#cc66ff',12,4);}}}else if(--this._affixCd<=0){this._affixCd=270;this._blinkT=24;_fxWarnSfx(this.x,this.y);}}
+        else if(this._affix==='sniper'&&p){if(this._sniperT>0){if(this._sniperT>10)this._sniperA=Math.atan2(p.y-this.y,p.x-this.x);if(--this._sniperT===0){const sa=this._sniperA||0,d=Math.max(8,DifficultySystem.getScaledDamage(CONFIG.ENEMY_RANGED_BULLET_DAMAGE)*1.35);bullets.push(window.PoolManager?PoolManager.acquire('Bullet',this.x,this.y,Math.cos(sa)*13,Math.sin(sa)*13,'#ff2244',d,false):new Bullet(this.x,this.y,Math.cos(sa)*13,Math.sin(sa)*13,'#ff2244',d,false));_fxShotSfx(this.x,this.y);}}else if(--this._affixCd<=0&&(p.x-this.x)**2+(p.y-this.y)**2<122500&&hasLineOfSight(m,this.x,this.y,p.x,p.y)){this._affixCd=220;this._sniperT=38;this._sniperA=Math.atan2(p.y-this.y,p.x-this.x);_fxWarnSfx(this.x,this.y);}}
         // Attack telegraph countdown
         if(this._attackTelegraph > 0) {
             this._attackTelegraph--;
@@ -33299,6 +33469,7 @@ class EliteEnemy extends Enemy {
         const dSq = dx * dx + dy * dy;
         const d = Math.sqrt(dSq);
         let speedMult = 1;
+        if(this._hasteT > 0) { this._hasteT--; speedMult *= 1.25; }
         if(player && player.skills.slow) speedMult *= (1 - player.skills.slow);
         if(player && typeof RunBoons !== 'undefined') speedMult *= RunBoons.enemySpeedMult(player);
         if(this.enemyType === 'ranged') {
@@ -33446,11 +33617,12 @@ class EliteEnemy extends Enemy {
         if (typeof ElementalSystem !== 'undefined') ElementalSystem.drawStatuses(ctx, this, cx, cy);
         this._drawPoisonCloud(ctx, ex, ey);
         _drawStatusMarks(ctx, this, ex, ey);
-        // HP bar for elite
         const hpPercent = this.hp / this.maxHp;
-        ctx.fillStyle = '#333'; ctx.fillRect(this.x-cx-15, this.y-cy-this.radius-10, 30, 4);
+        ctx.fillStyle = '#333'; ctx.fillRect(ex-15, ey-this.radius-10, 30, 4);
         ctx.fillStyle = hpPercent > 0.5 ? '#33ff33' : (hpPercent > 0.25 ? '#ffaa00' : '#ff3333');
-        ctx.fillRect(this.x-cx-15, this.y-cy-this.radius-10, 30*hpPercent, 4);
+        ctx.fillRect(ex-15, ey-this.radius-10, 30*hpPercent, 4);
+        if(this.shield>0&&this._maxShield>0){ctx.fillStyle='#44ccff';ctx.fillRect(ex-15,ey-this.radius-14,30*Math.min(1,this.shield/this._maxShield),3);}
+        if(this._affix){const ac={bastion:'#44ccff',pyro:'#ff6622',blink:'#cc66ff',haste:'#55ffcc',sniper:'#ff3355'}[this._affix]||'#ffd86b';ctx.save();if(this._affix==='haste'){ctx.globalAlpha=0.22;PixelFX.ring(ctx,ex,ey,62,ac,2);}if(this._blinkT>0){ctx.globalAlpha=0.7;PixelFX.ring(ctx,ex,ey,this.radius+8,ac,3);}if(this._sniperT>0){const sa=this._sniperA||0;ctx.strokeStyle=this._sniperT<=10?'#fff':'#ff2244';ctx.lineWidth=this._sniperT<=10?2:1;ctx.globalAlpha=0.75;ctx.beginPath();ctx.moveTo(ex,ey);ctx.lineTo(ex+Math.cos(sa)*240,ey+Math.sin(sa)*240);ctx.stroke();}if(this._staggerT>0){ctx.globalAlpha=0.85;PixelFX.ring(ctx,ex,ey,this.radius+6,'#ffd86b',3);}ctx.globalAlpha=1;ctx.font='bold 8px '+COLORS.CANVAS_FONT;ctx.textAlign='center';ctx.fillStyle=ac;ctx.fillText(_L('af.'+this._affix),ex,ey-this.radius-23);ctx.restore();}
     }
 }
 
@@ -35146,6 +35318,13 @@ if (typeof SpriteManager !== 'undefined' && SpriteManager.registerDetail) {
     }
 }
 
+class VeilCrystal extends Entity {
+    constructor(x,y,boss){super(x,y,16,Math.max(30,Math.floor((boss?boss.maxHp:400)*0.08)),'#e066ff');this.boss=boss;this.isCrystal=true;this.isBarrier=true;this.isEnemy=true;this.timer=360;this.maxTimer=360;}
+    update(){if(!this.alive)return;if(!this.boss||!this.boss.alive){this.alive=false;return;}if(--this.timer<=0){this.alive=false;this.boss.shield=(this.boss.shield||0)+Math.max(25,Math.floor(this.boss.maxHp*0.08));spawnParticles(this.boss.x,this.boss.y,'#cc66ff',14,4);}}
+    onDeath(s){if(s===player&&player){if(player.addSurge)player.addSurge(40);pickups.push(new Pickup(this.x,this.y,'health'));DamageNumbers.add(this.x,this.y,_L('cr.bk'),'crit');spawnParticles(this.x,this.y,'#ffd86b',20,5);if(SND.playAchievement)SND.playAchievement();}}
+    draw(ctx,cx,cy){if(!this.alive)return;const sx=this.x-cx,sy=this.y-cy,p=Math.max(0,this.timer/this.maxTimer);ctx.save();PixelFX.ring(ctx,sx,sy,18+(1-p)*8,'#e066ff',2);const sp=WorldSprites.crystal(9,9,'#e066ff',(gameTime/8)|0,'#ffd86b');PixelFX.draw(ctx,sp.halo,sx,sy);PixelFX.draw(ctx,sp.body,sx,sy);ctx.fillStyle='#222';ctx.fillRect(sx-14,sy-22,28,3);ctx.fillStyle='#e066ff';ctx.fillRect(sx-14,sy-22,28*Math.max(0,this.hp/this.maxHp),3);ctx.restore();}
+}
+
 class Boss extends Enemy {
     constructor(x, y) {
         super(x, y, true);
@@ -35153,6 +35332,9 @@ class Boss extends Enemy {
         this.hp = DifficultySystem.getScaledHp(CONFIG.BOSS_HP, true);
         this.maxHp = this.hp;
         this.phase = 1;
+        this._stagger = 0;
+        this._staggerT = 0;
+        this._veilCrystal = null;
         this.abilityCooldown = CONFIG.BOSS_ABILITY_COOLDOWN;
         this.charging = false;
         this.chargeTarget = null;
@@ -35648,9 +35830,13 @@ class Boss extends Enemy {
         return path;
     }
 
+    addStagger(amt){if(!this.alive||this._staggerT>0||this._kneeling||!(amt>0))return;this._stagger=Math.min(100,(this._stagger||0)+amt*((player&&player._staggerMult)||1));if(this._stagger>=100){this._stagger=0;this._staggerT=CONFIG.STAGGER_FRAMES;this.charging=false;this._chargeWindupTimer=0;this._dashT=0;this._spiralTimer=0;this._drainT=0;DamageNumbers.add(this.x,this.y-20,_L('hd.st'),'crit');spawnParticles(this.x,this.y,'#ffd86b',28,6);pickups.push(new Pickup(this.x-16,this.y,'currency'),new Pickup(this.x+16,this.y,'xp'));ScreenEffects._hitstopShared(CONFIG.HITSTOP_BOSS,true);if(ScreenEffects.onBossStagger)ScreenEffects.onBossStagger(this);else{ScreenEffects._addRing(this.x,this.y,'#ffd86b',this.radius+55,18,4,0);ScreenEffects.triggerFlash(0.2,'#ffd86b',10);}if(SND.playStagger)SND.playStagger();else SND.playCrit();}}
+    _spawnVeilCrystal(m){if(this._veilCrystal&&this._veilCrystal.alive)return;const d=[[1,0],[-1,0],[0,1],[0,-1],[0.7,0.7],[-0.7,0.7],[0.7,-0.7],[-0.7,-0.7]];for(let i=0;i<d.length;i++){const cx=this.x+d[i][0]*110,cy=this.y+d[i][1]*110;if(!m||_entityClear(m,cx,cy,18)){const vc=new VeilCrystal(cx,cy,this);this._veilCrystal=vc;entities.push(vc);spawnParticles(cx,cy,'#e066ff',14,4);return;}}}
+
     update(p, m) {
         // F4.2: ajoelhado — sem andar, sem atacar, sem fases.
         if (this._kneeling) return;
+        if (this._staggerT > 0) { this._staggerT--; return; }
         if(this.frozen > 0) return;
 
         const dx = p.x - this.x, dy = p.y - this.y;
@@ -35743,6 +35929,7 @@ class Boss extends Enemy {
             }
             this.hp = Math.min(this.maxHp, this.hp + Math.floor(this.maxHp * CONFIG.BOSS_PHASE_HEAL * (this._abyssalPhaseHeal || 1)));
             this._phaseGuardFrames = 45;
+            if(_np===2||_np===3){for(let i=0;i<bullets.length;i++){const b=bullets[i];if(b&&b.alive&&!b.isP&&(b.x-this.x)**2+(b.y-this.y)**2<28900)b.alive=false;}if(p&&p.alive){const pdx=p.x-this.x,pdy=p.y-this.y,pd=Math.hypot(pdx,pdy)||1;if(pd<85){const px=p.x+(pdx/pd)*(85-pd),py=p.y+(pdy/pd)*(85-pd);if(_entityClear(m,px,py,p.radius)){p.x=px;p.y=py;}}}ScreenEffects._addRing(this.x,this.y,'#e066ff',170,18,4,0);this._spawnVeilCrystal(m);}
             spawnParticles(this.x, this.y, '#55ffaa', 12, 4);
         }
 
@@ -36170,6 +36357,7 @@ class Boss extends Enemy {
 
         if(this.ft > 0) this.ft--;
         if(this.frozen > 0) _drawFrozenVeil(ctx, this.x - cx, this.y - cy, this.radius);
+        if(this._staggerT>0){ctx.save();ctx.globalAlpha=0.85;PixelFX.ring(ctx,this.x-cx,this.y-cy,this.radius+12,'#ffd86b',3);ctx.restore();}else if(this._stagger>0){ctx.fillStyle='#000a';ctx.fillRect(this.x-cx-22,this.y-cy+this.radius+7,44,3);ctx.fillStyle='#ffd86b';ctx.fillRect(this.x-cx-22,this.y-cy+this.radius+7,0.44*this._stagger,3);}
 
         // Guarda de fase (dano do jogador reduzido logo após a transição): anel ciano; sem pulsar com reducedMotion
         if (this._phaseGuardFrames > 0) {
@@ -36208,6 +36396,7 @@ class Boss extends Enemy {
                 spawnParticles(this.x, this.y, '#e0e0e0', 22, 6);
                 shake = Math.max(shake, 4);
                 addLog(' ' + this.name + (window.I18n ? I18n.t('log.bossArmorBroken') : ' perdeu a armadura de pedra!'));
+                this.addStagger(100);
             }
         }
         // Armadura abissal: guardiões evoluídos absorvem parte do dano
@@ -36226,6 +36415,7 @@ class Boss extends Enemy {
             spawnParticles(this.x, this.y, '#ff4400', 3, 2);
         }
         if(!this.alive) {
+            if (this._veilCrystal && this._veilCrystal.alive) this._veilCrystal.alive = false;
             // Death animation and screen effects handled by DeathAnimations + ScreenEffects
             addLog(' ' + this.name + (window.I18n ? I18n.t('log.bossSlain') : ' derrotado!'));
             if (this._blueprint && window.I18n) addLog('“' + I18n.t('boss.' + this._blueprint.key + '.death') + '”');
@@ -38054,14 +38244,22 @@ function hasLineOfSight(m, x1, y1, x2, y2) {
     return true;
 }
 
+// Shared LOS enemy loop & bullet spawner (keeps bundle compact)
+function _losFoes(x,y,r,skip,fn,m){const r2=r*r;m=m||map;for(let i=0;i<entities.length;i++){const e=entities[i];if(e===skip||e===player||!e.alive||e.isBarrier||!(e.isEnemy||e instanceof Enemy||e.isB))continue;const dx=e.x-x,dy=e.y-y,d2=dx*dx+dy*dy;if(d2<r2&&hasLineOfSight(m,x,y,e.x,e.y)&&fn(e,dx,dy,d2)===false)break;}}
+function _mkShot(x,y,vx,vy,c,dmg,rng,pt,fn){const b=window.PoolManager?PoolManager.acquire('Bullet',x,y,vx,vy,c,dmg,true,null,rng,pt):new Bullet(x,y,vx,vy,c,dmg,true,null,rng,pt);if(fn)fn(b);bullets.push(b);return b;}
 // Roubo de vida (arma + equipamento): uma conta só, usada pelo projétil e pelo golpe corpo a corpo.
 function applyLifesteal(source, dealtDamage) {
     if(!source || !(dealtDamage > 0)) return 0;
     const rate = (source.weaponLifesteal || 0) + (source.equipLifesteal || 0);
     if(rate <= 0) return 0;
-    const heal = Math.floor(dealtDamage * rate);
+    const heal = Math.floor(dealtDamage * rate), over = Math.max(0, source.hp + heal - source.maxHp);
     source.hp = Math.min(source.maxHp, source.hp + heal);
-    DamageNumbers.add(source.x, source.y, `+${heal}`, 'heal');
+    if (heal > 0) DamageNumbers.add(source.x, source.y, `+${heal}`, 'heal');
+    if (over > 0 && source === player && !(source._bloodBoltCd > 0) && RunBoons.hasSynergy(source, 'furia_sanguinea')) {
+        source._bloodBoltCd = 15; let tgt = null, best = 90000;
+        _losFoes(source.x, source.y, 300, source, (e,dx,dy,d2) => { if (d2 < best) { best = d2; tgt = e; } });
+        if (tgt) { const a = Math.atan2(tgt.y - source.y, tgt.x - source.x); _mkShot(source.x, source.y, Math.cos(a)*11, Math.sin(a)*11, '#ff2255', Math.max(8, Math.floor(over * 2.5)), 340, 'magic', b => { b.homing = true; }); }
+    }
     return heal;
 }
 
@@ -38137,6 +38335,8 @@ window.FlowField = FlowField;
 function awardKillRewards(player, target, source) {
     const xpReward = target.xpReward || (target.isB ? CONFIG.XP_BOSS_REWARD : CONFIG.XP_ENEMY_REWARD);
     player.gainXP(xpReward); player.kills++; player.comboCount++; player.comboTimer = CONFIG.COMBO_DECAY_TIME;
+    if (player.addSurge) player.addSurge(target.elite ? 16 : 6);
+    if (target.elite && typeof RunBoons !== 'undefined' && RunBoons.count(player, 'fortune_pact') > 0 && typeof pickups !== 'undefined') pickups.push(new Pickup(target.x, target.y, 'health'));
     // Desafio diário 'Jejum': sem cura exceto por abates (cura pequena por abate)
     if (window._dailyMods && window._dailyMods.healOnlyFromKills && player.hp > 0) player.hp = Math.min(player.maxHp, player.hp + 5);
     // Nós de abate (v56): Sede de Sangue (cura + velocidade curta) e Fonte de Mana (reduz superaquecimento)
@@ -38272,6 +38472,9 @@ class Bullet {
         // Nós v56 (elfa): flecha teleguiada e empurrão da rajada; pooled, zerar sempre
         this.homing = false;
         this.galeKb = false;
+        this._splinter = false;
+        this.blastMult = 1;
+        this.isFinisher = false;
         this.spd = Math.sqrt(vx * vx + vy * vy);
         this.poisonDmg = weapon && weapon.poison ? Math.floor(dmg * 0.3) : 0;
         this.hitCount = 0;
@@ -38357,7 +38560,13 @@ class Bullet {
                     // Main damage: projéteis do jogador danificam inimigos; projéteis
                     // inimigos danificam o jogador. (source=null no lado inimigo para
                     // não inflar dano recebido com damageMult/damageBoost do jogador.)
+                    if (this._splinter) e._fromSplinter = true;
                     const _landed = e.takeDamage(this.dmg, m, this.isP ? source : null) !== false; this.hitCount++;
+                    if (this._splinter) e._fromSplinter = false;
+                    if (this.isP && this.isFinisher && this.hitCount === 1 && source === player) {
+                        if (e.isB && e.addStagger) e.addStagger(10);
+                        if (source.addSurge && (source.comboCount > 0 || (typeof Boss !== 'undefined' && e instanceof Boss))) source.addSurge(4);
+                    }
                     // Rajada do Vento (v56): empurrão forte na direção do disparo (só se o caminho não for parede)
                     if(this.galeKb && e.alive && !m.isWall(e.x + this.vx * 4, e.y + this.vy * 4)) { e.x += this.vx * 4; e.y += this.vy * 4; }
                     if(this.chainPierce) this.chainLastHit = e;
@@ -38468,7 +38677,8 @@ class Bullet {
                     }
                     // Combo (mago, passo 2): a bola explode e fere os outros inimigos da área (dano via takeDamage)
                     if(this.chainBlast && this.isP && typeof entities !== 'undefined') {
-                        const _bR2 = CONFIG.COMBO_CHAIN_BLAST_RADIUS * CONFIG.COMBO_CHAIN_BLAST_RADIUS;
+                        const _bR = CONFIG.COMBO_CHAIN_BLAST_RADIUS * (this.blastMult || 1);
+                        const _bR2 = _bR * _bR;
                         const _bDmg = Math.max(1, Math.floor(this.dmg * CONFIG.COMBO_CHAIN_BLAST_MULT));
                         for(let _bi = 0; _bi < entities.length; _bi++) {
                             const _be = entities[_bi];
@@ -38477,7 +38687,7 @@ class Bullet {
                                 if(_bdx * _bdx + _bdy * _bdy < _bR2 && hasLineOfSight(m, e.x, e.y, _be.x, _be.y)) _be.takeDamage(_bDmg, m, source, true);
                             }
                         }
-                        ScreenEffects._addRing(e.x, e.y, this.color, CONFIG.COMBO_CHAIN_BLAST_RADIUS, 12, 3, 0);
+                        ScreenEffects._addRing(e.x, e.y, this.color, _bR, 12, 3, 0);
                         spawnParticles(e.x, e.y, this.color, 10, 4);
                     }
                     // Bullet alive state  pierce continues up to 3 hits (weapon.pierce ou perfuração do finalizador)
@@ -38609,6 +38819,10 @@ class Player extends Entity {
         if (typeof prestigeLevel !== 'undefined' && prestigeLevel >= 3) baseLr *= 1.5;
         this.type=t; this.speed=stats.speed; this.scd=0; this.lr=baseLr; this.lvl=1; this.xp=0; this.kills=0;
         this.skillCooldown = 0; this.weaponLevel = 1; this.comboCount = 0; this.comboTimer = 0;
+        this.veilSurge = 0; this.overdriveTimer = 0; this._comboTier = 0;
+        this._surgeMult = 1; this._staggerMult = 1; this._dashCdMult = 1;
+        this._fortressT = 0; this._bloodBoltCd = 0;
+        this.perfectChambers = 0; this.overdrivesTriggered = 0;
         this.mutations = {}; this.skills = {}; this.unlockedSkills = []; this.currency = 0;
         this.damageBoost = 0; this.critChance = 0; this.classCritChance = stats.critChance || 0; this.damageMult = 1;
         this.permanentDiscount = 0;
@@ -38696,6 +38910,10 @@ class Player extends Entity {
     // was only right by coincidence and hid the field from every writer.
     get xpNeeded() { return this.lvl * CONFIG.XP_LEVEL_MULTIPLIER; }
 
+addSurge(n){if(!(n>0)||this.overdriveTimer>0)return;this.veilSurge=Math.min(100,(this.veilSurge||0)+n*(this._surgeMult||1)*(RunBoons.hasSynergy(this,'cacador')?1.25:1));if(this.veilSurge>=100){this.veilSurge=0;this.overdriveTimer=CONFIG.OVERDRIVE_FRAMES;this.overdrivesTriggered=(this.overdrivesTriggered||0)+1;DamageNumbers.add(this.x,this.y-16,_L('hd.od'),'crit');spawnParticles(this.x,this.y,this.color,26,6);if(ScreenEffects.onOverdriveStart)ScreenEffects.onOverdriveStart(this.type);else{ScreenEffects._addRing(this.x,this.y,this.color,110,18,4,0);ScreenEffects.triggerFlash(0.22,this.color,12);}if(SND.playOverdrive)SND.playOverdrive();else if(SND.playAchievement)SND.playAchievement();}}
+_staggerNearbyBoss(a){for(let i=0;i<entities.length;i++){const e=entities[i];if(e&&e.alive&&e.isB&&e.addStagger&&(e.x-this.x)**2+(e.y-this.y)**2<48400)e.addStagger(a);}}
+_thornNova(m){if(!RunBoons.hasSynergy(this,'carapaca'))return;const d=18+this.lvl*3;_losFoes(this.x,this.y,110,this,e=>e.takeDamage(d,m,this,true,true),m);ScreenEffects._addRing(this.x,this.y,'#ff8844',110,14,3,0);spawnParticles(this.x,this.y,'#ff8844',14,4);}
+
     gainXP(a) {
         let xpMult = (currentEvent && currentEvent.type === 'doubleXP') ? CONFIG.DOUBLE_XP_MULTIPLIER : 1;
         if(typeof DifficultySystem !== 'undefined') xpMult *= DifficultySystem.getXpMult();
@@ -38723,6 +38941,9 @@ class Player extends Entity {
             addLog((window.I18n ? I18n.t('log.levelUp') : ' Nível UP! ') + this.lvl + (levelsGained > 1 ? ' (+' + (levelsGained - 1) + ')' : ''), true);
             spawnParticles(this.x, this.y, '#ffdd00', Math.min(CONFIG.PARTICLE_SPAWN_LEVELUP * levelsGained, CONFIG.PARTICLE_CAP - 10), 5);
             DamageNumbers.add(this.x, this.y, window.I18n ? I18n.t('hud.levelUp') : 'LEVEL UP!', 'heal');
+            ScreenEffects._addRing(this.x,this.y,'#ffdd00',100,16,4,0);
+            _losFoes(this.x,this.y,100,this,(e,dx,dy,d2)=>{if(!e.isB&&d2>1){const d=Math.sqrt(d2);e.knockback(dx/d,dy/d,6);}});
+            for(let i=0;i<bullets.length;i++){const b=bullets[i];if(b&&b.alive&&!b.isP&&(b.x-this.x)**2+(b.y-this.y)**2<10000)b.alive=false;}
             if (window.uiLv) {
                 window.uiLv.classList.remove('level-up');
                 requestAnimationFrame(() => window.uiLv.classList.add('level-up'));
@@ -38832,6 +39053,7 @@ class Player extends Entity {
                 if(!altFound) { nx = 0; ny = 0; }
             }
 
+            const _origX = this.x, _origY = this.y;
             if(nx !== 0 || ny !== 0) {
                 let destX = this.x, destY = this.y;
                 for(let d = dashStep; d <= dashDist; d += dashStep) {
@@ -38843,8 +39065,10 @@ class Player extends Entity {
                 this.x = destX;
                 this.y = destY;
             }
+            const dfN=RunBoons.count(this,'dash_fire');
+            if(dfN>0)for(let i=0;i<3;i++){const t=i/2,fx=_origX+(this.x-_origX)*t,fy=_origY+(this.y-_origY)*t;if(!map.isWall(fx,fy)){const hz=new Hazard(fx,fy,'fire',true);hz.timer=110;hz.damage=Math.max(4,Math.floor(CONFIG.HAZARD_FIRE_DAMAGE*(dfN>=2?1.5:1)));hazards.push(hz);}}
             if (typeof SND !== 'undefined') SND.play(400, 'square', 0.1, 0.1);
-            this.dodgeCooldown = 60;
+            this.dodgeCooldown = Math.max(24, Math.floor(60 * (this._dashCdMult || 1)));
             this.dodgeAnim = 15;
             // I-frames: a dash must beat an attack it visibly passes through,
             // otherwise dodging feels like it "didn't work". Short window so the
@@ -38872,6 +39096,8 @@ class Player extends Entity {
         if(this.skillCooldown > 0) { this._skillBuffer = CONFIG.INPUT_BUFFER_FRAMES; return; }
         this.shootAnim = 14;
         this._skillPose = true;
+        if(RunBoons.count(this,'skill_vortex')>0){const ch=RunBoons.hasSynergy(this,'nevasca');_losFoes(this.x,this.y,190,this,(e,dx,dy,d2)=>{if(!e.isB&&d2>900){const d=Math.sqrt(d2),p=Math.min(42,d-30),nx=e.x-(dx/d)*p,ny=e.y-(dy/d)*p;if(_entityClear(map,nx,ny,e.radius)){e.x=nx;e.y=ny;}if(ch)ElementalSystem.applyStatus(e,'ice',1,150,this);}});ScreenEffects._addRing(this.x,this.y,ch?'#77ddff':'#aa66ff',170,12,3,0);}
+        this._staggerNearbyBoss(18);
         if(this.type === 'warrior') {
             this.skillCooldown = Math.floor(CONFIG.WARRIOR_SLAM_COOLDOWN * Math.max(0.5, 1 - (this.cdrMult || 0)));
             // Ground slam visual indicators
@@ -39147,6 +39373,7 @@ class Player extends Entity {
         let dy = Input.left.active ? Input.left.dy : ((Input.keys['s'] || Input.keys['arrowdown'])?1:(Input.keys['w'] || Input.keys['arrowup'])?-1:0);
         let currentSpeed = this.speed;
         if(this.speedBoost > 0) currentSpeed *= 1.5;
+        if(this._comboTier > 0) currentSpeed *= (1 + [0, 0.08, 0.12, 0.15][this._comboTier]);
         if(typeof WeaponSystem !== 'undefined' && WeaponSystem.getSpeedMult) currentSpeed *= WeaponSystem.getSpeedMult(this);
         if(this._hazardSlowTimer > 0) { currentSpeed *= 0.6; this._hazardSlowTimer--; }
 
@@ -39197,7 +39424,15 @@ class Player extends Entity {
         const _noRegen = (window._dailyMods && window._dailyMods.healthRegen === 0) || (typeof RunMutators !== 'undefined' && RunMutators.noRegen());
         if(!_noRegen && this.regenerating && this.hp < this.maxHp) this.hp = Math.min(this.maxHp, this.hp + 1 / 60);
         if(!_noRegen && this.runRegen > 0 && this.hp < this.maxHp) this.hp = Math.min(this.maxHp, this.hp + this.runRegen / 60);
-        if(this.comboTimer > 0) { this.comboTimer--; if(this.comboTimer <= 0) this.comboCount = 0; }
+        if(this._bloodBoltCd>0)this._bloodBoltCd--;
+        if(this.overdriveTimer>0){this.overdriveTimer--;if(this.type==='mage'&&this.skillCooldown>0&&gameTime%5===0)this.skillCooldown=Math.max(0,this.skillCooldown-2);}
+        const _pC=(typeof _waveBreatherFrames!=='undefined'&&_waveBreatherFrames>0)||(typeof _transitioning!=='undefined'&&_transitioning);
+        if(this.comboTimer>0&&!_pC){this.comboTimer--;if(this.comboTimer<=0)this.comboCount=0;}
+        const _nT=this.comboCount>=20?3:(this.comboCount>=10?2:(this.comboCount>=5?1:0));
+        if(_nT>(this._comboTier||0)&&SND.playComboTier)SND.playComboTier(_nT);
+        this._comboTier=_nT;
+        if(_nT>=3&&this.skillCooldown>0&&gameTime%5===0)this.skillCooldown--;
+        if(RunBoons.hasSynergy(this,'fortaleza')&&++this._fortressT>=300){this._fortressT=0;if(!_noRegen&&this.hp<this.maxHp){this.hp=Math.min(this.maxHp,this.hp+6);DamageNumbers.add(this.x,this.y,'+6','heal');}const fd=10+this.lvl*2;_losFoes(this.x,this.y,110,this,e=>e.takeDamage(fd,m,this,true,true),m);ScreenEffects._addRing(this.x,this.y,'#55ee99',110,14,3,0);}
         // Combo de golpes: contadores andam só no update (com o jogo pausado a cadeia congela)
         if(this.chainTimer < CONFIG.COMBO_CHAIN_WINDOW) this.chainTimer++;
         if(this.chainSpinT > 0) this.chainSpinT--;
@@ -39337,6 +39572,10 @@ class Player extends Entity {
                             if(diff > Math.PI) diff = Math.PI * 2 - diff;
                             if(diff <= arcHalf) {
                                 e.takeDamage(dmg, m, this); hitAny = true;
+                                if(chainStep === 3) {
+                                    if(e.isB && e.addStagger) e.addStagger(10);
+                                    if(this.comboCount > 0 || (typeof Boss !== 'undefined' && e instanceof Boss)) this.addSurge(4);
+                                }
                                 applyLifesteal(this, dmg); // Vampirismo, Excalibur, Pacto Vampírico etc.
                                 // Brutalidade (v56): o finalizador abre sangramento nos inimigos atingidos
                                 if(chainStep === 3 && this.skills.brutal) { e.poisonStacks = Math.min(CONFIG.ROGUE_POISON_MAX_STACKS, (e.poisonStacks || 0) + CONFIG.BRUTAL_BLEED_STACKS); e.poisonTimer = Math.max(e.poisonTimer || 0, CONFIG.ROGUE_POISON_DURATION); spawnParticles(e.x, e.y, '#ff2222', 5, 3); }
@@ -39357,6 +39596,7 @@ class Player extends Entity {
                 }
                 // Eco do Trovão (v56): o finalizador deixa uma onda de choque extra com atraso
                 if(chainStep === 3 && this.skills.thunderEcho) this._schedulePulse(this.x, this.y, Math.max(1, Math.floor(dmg * CONFIG.SKILL_PULSE_MULT)), '#ffcc00');
+                if(this.overdriveTimer>0)_mkShot(this.x,this.y,Math.cos(attackAngle)*11,Math.sin(attackAngle)*11,'#ffd86b',Math.max(1,Math.floor(dmg*0.55)),220,'magic',b=>{b.chainPierce=true;});
                 this.scd = effectiveFireRate; if(hitAny) SND.play(150, 'sawtooth', 0.15, 0.3); else SND.play(80, 'triangle', 0.04, 0.08);
             } else {
                 let dmg = Math.floor(cls.baseDmg * this.weaponLevel * this.weaponDamageMult);
@@ -39407,18 +39647,26 @@ class Player extends Entity {
                     if(this._galeN >= CONFIG.GALE_BURST_EVERY) { this._galeN = 0; _gale = true; chainDmg = Math.floor(chainDmg * CONFIG.GALE_BURST_MULT); DamageNumbers.add(this.x, this.y, window.I18n ? I18n.t('combat.gale') : 'RAJADA!', 'crit'); }
                 }
                 let mainBullet = null;
+                const _od = this.overdriveTimer > 0;
                 for (let ci = 0; ci < chainOffs.length + _twin; ci++) {
                     const _off = ci < chainOffs.length ? chainOffs[ci] : 0;
                     const cco = Math.cos(_off), cso = Math.sin(_off);
                     const cvx = (sx*cco - sy*cso)*bulletSpeed, cvy = (sx*cso + sy*cco)*bulletSpeed;
                     const shot = window.PoolManager ? PoolManager.acquire('Bullet', this.x, this.y, cvx, cvy, this.color, chainDmg, true, this.currentWeapon, range, projType) : new Bullet(this.x, this.y, cvx, cvy, this.color, chainDmg, true, this.currentWeapon, range, projType);
-                    if(chainStep === 3 && this.type !== 'mage') shot.chainPierce = true;   // finalizador ladino/elfa: perfurante
-                    if(chainStep === 2 && this.type === 'mage') shot.chainBlast = true;
-                    if(_gale) shot.galeKb = true; // Rajada do Vento (v56): empurrão no acerto
-                    if(ci === 0 && chainStep === 1 && this.type === 'elf' && this.skills.homingArrow) shot.homing = true; // Flecha Teleguiada (v56)    // mago passo 2: bola explode
+                    if(chainStep === 3) shot.isFinisher = true;
+                    if((chainStep === 3 && this.type !== 'mage') || (_od && this.type === 'elf')) shot.chainPierce = true;
+                    if(chainStep === 2 && this.type === 'mage') { shot.chainBlast = true; if(_od) shot.blastMult = 1.35; }
+                    if(_gale) shot.galeKb = true;
+                    if((ci === 0 && chainStep === 1 && this.type === 'elf' && this.skills.homingArrow) || (_od && this.type === 'elf')) shot.homing = true;
                     if(this.type === 'rogue' || (this.type === 'elf' && this.skills.poison)) shot.applyPoison = true;
                     bullets.push(shot);
                     if(!mainBullet) mainBullet = shot;
+                }
+                if(_od){
+                    const ba=Math.atan2(sy,sx),odD=Math.max(1,Math.floor(chainDmg*0.55));
+                    if(this.type==='rogue'){const px=-Math.sin(ba)*14,py=Math.cos(ba)*14;for(let s=-1;s<=1;s+=2)_mkShot(this.x+px*s,this.y+py*s,Math.cos(ba)*bulletSpeed,Math.sin(ba)*bulletSpeed,'#5cff82',odD,range,'knife',b=>{b.applyPoison=true;});}
+                    else if(this.type==='mage'){for(let s=-1;s<=1;s+=2){const a=ba+s*0.14;_mkShot(this.x,this.y,Math.cos(a)*bulletSpeed,Math.sin(a)*bulletSpeed,'#cc88ff',odD,range,'magic',b=>{b.chainBlast=true;b.blastMult=1.35;});}}
+                    else if(this.type==='elf'){const a=ba+(chainStep===2?0.16:-0.16);_mkShot(this.x,this.y,Math.cos(a)*bulletSpeed,Math.sin(a)*bulletSpeed,'#7fffd4',Math.max(1,Math.floor(chainDmg*0.7)),range,'arrow',b=>{b.homing=true;b.chainPierce=true;});}
                 }
                 if(chainStep === 3) { // finalizador: anel, flash, shake, hit-stop e som mais grave
                     // Onda Gélida (v56, mago): o finalizador congela inimigos ao redor
@@ -39460,6 +39708,7 @@ class Player extends Entity {
                 }
                 this.scd = effectiveFireRate; SND.playShoot(this.type);
             }
+            if(chainStep===3){const ff=RunBoons.count(this,'frost_finisher');if(ff>0){_losFoes(this.x,this.y,115,this,e=>{e.takeDamage(10*ff,m,this,true,true);ElementalSystem.applyStatus(e,'ice',1,150,this);},m);ScreenEffects._addRing(this.x,this.y,'#88ddff',115,14,3,0);}}
         }
         if(Input.keys[' ']) this.useSkill();
     }
@@ -39700,6 +39949,7 @@ class Player extends Entity {
             ctx.restore();
         }
         
+        if(this.overdriveTimer>0){ctx.save();ctx.globalAlpha=0.7;PixelFX.ring(ctx,sx,sy,this.radius+7+Math.sin(gameTime*0.25)*2,'#ffd86b',3);ctx.restore();}
         if(this.ft > 0) this.ft--;
     }
 
@@ -39711,6 +39961,9 @@ class Player extends Entity {
         if (this._perfectDodgeCd > 0) return;
         this._perfectDodgeCd = CONFIG.PERFECT_DODGE_COOLDOWN;
         if (typeof Statistics !== 'undefined') Statistics.data.perfectDodges = (Statistics.data.perfectDodges || 0) + 1;
+        this.addSurge(22);
+        this._staggerNearbyBoss(25);
+        if (typeof map !== 'undefined') this._thornNova(map);
         if (this.dodgeCooldown > 0) this.dodgeCooldown = Math.max(0, this.dodgeCooldown - CONFIG.PERFECT_DODGE_CDR_FRAMES);
         if (this.skillCooldown > 0) {
             const _maxCd = this.type === 'warrior' ? CONFIG.WARRIOR_SLAM_COOLDOWN :
@@ -39740,6 +39993,9 @@ class Player extends Entity {
             this.invincibleTimer = 15;
             this.furyStacks = Math.min(CONFIG.WARRIOR_FURY_MAX_STACKS, this.furyStacks + CONFIG.WARRIOR_PARRY_FURY);
             this.furyDecayTimer = CONFIG.WARRIOR_FURY_DECAY_FRAMES;
+            this.addSurge(28);
+            this._staggerNearbyBoss(25);
+            this._thornNova(m);
             const riposte = Math.max(1, Math.floor(a * CONFIG.WARRIOR_PARRY_REFLECT));
             const parryRangeSq = CONFIG.WARRIOR_MELEE_RANGE * CONFIG.WARRIOR_MELEE_RANGE;
             for(let i = 0; i < entities.length; i++) {
@@ -39794,7 +40050,11 @@ class Player extends Entity {
         // Vibração só com dano efetivo (dano 0 não vibra)
         if(window.Vibrate && dmg > 0) Vibrate.trigger('hitTaken');
         this.invincibleTimer = 15;
-        if (dmg > 0) this._hitSinceBoss = true; // conquista 'Intocável': zera em cada chefe (ver bossNoHitKills)
+        if (dmg > 0) {
+            this._hitSinceBoss = true; // conquista 'Intocável': zera em cada chefe (ver bossNoHitKills)
+            if (typeof _storyRoom !== 'undefined' && _storyRoom && !_storyRoom.cleared) _storyRoom.hits = (_storyRoom.hits || 0) + 1;
+            this._thornNova(m);
+        }
         super.takeDamage(dmg, m, source);
         ScreenEffects.onPlayerHurt(dmg); // feedback visual apenas (vinheta vermelha)
         this.stealth = 0;
@@ -41929,20 +42189,20 @@ const DeathAnimations = {
 // RELIC SYSTEM - Unique power-ups found in chests
 // (window.RELICS and window.RelicSystem set at bottom  const doesn't auto-expose to window)
 const RELICS = {
-    vampiro:       { id:'vampiro',       nameKey:'relic.vampiro.name',       name:'Pacto Vampírico',   descKey:'relic.vampiro.desc',       desc:'+25% lifesteal em todos os ataques', lore:'Um cortesão ofereceu o próprio sangue para salvar Eiran. O pacto recusou o sangue e aceitou a memória. O pingente guarda o que sobrou da oferta.', icon:'', color:'#cc0033', rarity:'epico'    },
-    ventos:        { id:'ventos',        nameKey:'relic.ventos.name',        name:'Pés de Vento',       descKey:'relic.ventos.desc',        desc:'+40% velocidade permanente', lore:'As botas de Solveig, a rainha. Ela rezava no templo do B5 pedindo um filho saudável. A deusa concedeu — e cobrou o preço. As botas ainda correm como se pudessem chegar antes da doença.',         icon:'', color:'#33ccff', rarity:'raro'     },
-    pedra:         { id:'pedra',         nameKey:'relic.pedra.name',         name:'Coração de Pedra',   descKey:'relic.pedra.desc',         desc:'+80 HP máx, -15% vel', lore:'O coração da estátua do fundador, que o Véu esqueceu que era pedra. Quem o carrega fica mais pesado e mais difícil de esquecer.',               icon:'', color:'#888888', rarity:'raro'     },
-    alma:          { id:'alma',          nameKey:'relic.alma.name',          name:'Alma Antiga',        descKey:'relic.alma.desc',          desc:'XP dobrado de todas as fontes', lore:'Uma moeda de Serath-Kai, o quarto reino esquecido. O único reino que escolheu o perdão antes de Krevathorn. A moeda ainda rende juros em memória.',      icon:'', color:'#ffdd00', rarity:'epico'    },
-    regen:         { id:'regen',         nameKey:'relic.regen.name',         name:'Regeneração',        descKey:'relic.regen.desc',         desc:'Recupera 2 HP por segundo', lore:'A bênção que a deusa sem nome deixou no altar do B5. Ela não cura o corpo: lembra o corpo de como era inteiro.',          icon:'', color:'#33ff33', rarity:'raro'     },
-    trovao:        { id:'trovao',        nameKey:'relic.trovao.name',        name:'Mãos do Trovão',     descKey:'relic.trovao.desc',        desc:'Todos os tiros encadeiam raios', lore:'As mãos de Halvard, o ferreiro real, que forjou a espada de Aldric. O trovão é o som da forja batendo no ferro que ainda se lembra do fogo.',     icon:'', color:'#ffff33', rarity:'epico'    },
-    aguia:         { id:'aguia',         nameKey:'relic.aguia.name',         name:'Olho de Águia',      descKey:'relic.aguia.desc',         desc:'Projéteis viajam 2x mais longe', lore:'O olho do arqueiro-chefe de Aldric, que mirou o vazio por cem anos. Quem o usa vê longe — mas não vê o que deixou para trás.',     icon:'', color:'#33aaff', rarity:'raro'     },
-    espinhos:      { id:'espinhos',      nameKey:'relic.espinhos.name',      name:'Escudo de Espinhos', descKey:'relic.espinhos.desc',      desc:'Reflete 30% do dano recebido', lore:'Uma roseira dos jardins de Eiran, endurecida pelo Véu. O jardineiro cuidava dela antes de virar o Rei dos Espinhos. Ainda protege o que machuca.',       icon:'', color:'#ff6633', rarity:'epico'    },
-    mirror:        { id:'mirror',        nameKey:'relic.mirror.name',        name:'Espelho do Vazio',   descKey:'relic.mirror.desc',        desc:'Reflete 100% do dano recebido', lore:'Um espelho do palácio de Aldric. O Véu não conseguiu apagar os rostos: só conseguiu impedir que alguém os reconhecesse. Quem olha vê a própria memória devolvida.',     icon:'', color:'#cc88ff', rarity:'epico'    },
-    explosao:      { id:'explosao',      nameKey:'relic.explosao.name',      name:'Alma Explosiva',     descKey:'relic.explosao.desc',      desc:'Inimigos mortos explodem em AoE', lore:'O feitiço que o Mago tentou usar para salvar Eiran. Falhou. A explosão é o que sobra de uma cura que não chegou a tempo.',    icon:'', color:'#ff4400', rarity:'lendario' },
-    furia:         { id:'furia',         nameKey:'relic.furia.name',         name:'Fúria Arcana',       descKey:'relic.furia.desc',         desc:'A cada 10 tiros: 5x dano', lore:'A brasa central da forja de Halvard. Cada décimo golpe devolve o calor que o reino esqueceu. O fogo não pede licença.',           icon:'', color:'#ff8800', rarity:'lendario' },
-    berserker:     { id:'berserker',     nameKey:'relic.berserker.name',     name:'Modo Berserk',       descKey:'relic.berserker.desc',     desc:'+60% dano abaixo de 30% de HP', lore:'A última ordem dos berserkers de Aldric, gravada no metal: “Não recuar.” O Véu transformou a ordem em fúria. O metal ainda obedece.',     icon:'', color:'#ff0000', rarity:'epico'    },
-    escudo_arcano: { id:'escudo_arcano', nameKey:'relic.escudo_arcano.name', name:'Escudo Arcano',      descKey:'relic.escudo_arcano.desc', desc:'Começa cada dungeon com +100 escudo',icon:'', color:COLORS.CLASS_MAGE, rarity:'raro'     },
-    oraculo:       { id:'oraculo',       nameKey:'relic.oraculo.name',        name:'Olho do Oráculo',     descKey:'relic.oraculo.desc',        desc:'Dano +15% e fraqueza do chefe revelada', lore:'Vael o fez com a própria visão, antes de ser cego. Não mostra o caminho: mostra onde o Guardião não pode se defender. A fraqueza só aparece no primeiro golpe.', icon:'', color:'#cc88ff', rarity:'epico'    },
+ vampiro: { id:'vampiro', nameKey:'relic.vampiro.name', descKey:'relic.vampiro.desc',lore:1, icon:'', color:'#cc0033', rarity:'epico' },
+ ventos: { id:'ventos', nameKey:'relic.ventos.name', descKey:'relic.ventos.desc',lore:1, icon:'', color:'#33ccff', rarity:'raro' },
+ pedra: { id:'pedra', nameKey:'relic.pedra.name', descKey:'relic.pedra.desc',lore:1, icon:'', color:'#888888', rarity:'raro' },
+ alma: { id:'alma', nameKey:'relic.alma.name', descKey:'relic.alma.desc',lore:1, icon:'', color:'#ffdd00', rarity:'epico' },
+ regen: { id:'regen', nameKey:'relic.regen.name', descKey:'relic.regen.desc',lore:1, icon:'', color:'#33ff33', rarity:'raro' },
+ trovao: { id:'trovao', nameKey:'relic.trovao.name', descKey:'relic.trovao.desc',lore:1, icon:'', color:'#ffff33', rarity:'epico' },
+ aguia: { id:'aguia', nameKey:'relic.aguia.name', descKey:'relic.aguia.desc',lore:1, icon:'', color:'#33aaff', rarity:'raro' },
+ espinhos: { id:'espinhos', nameKey:'relic.espinhos.name', descKey:'relic.espinhos.desc',lore:1, icon:'', color:'#ff6633', rarity:'epico' },
+ mirror: { id:'mirror', nameKey:'relic.mirror.name', descKey:'relic.mirror.desc',lore:1, icon:'', color:'#cc88ff', rarity:'epico' },
+ explosao: { id:'explosao', nameKey:'relic.explosao.name', descKey:'relic.explosao.desc',lore:1, icon:'', color:'#ff4400', rarity:'lendario' },
+ furia: { id:'furia', nameKey:'relic.furia.name', descKey:'relic.furia.desc',lore:1, icon:'', color:'#ff8800', rarity:'lendario' },
+ berserker: { id:'berserker', nameKey:'relic.berserker.name', descKey:'relic.berserker.desc',lore:1, icon:'', color:'#ff0000', rarity:'epico' },
+ escudo_arcano: { id:'escudo_arcano', nameKey:'relic.escudo_arcano.name', descKey:'relic.escudo_arcano.desc',icon:'', color:COLORS.CLASS_MAGE, rarity:'raro' },
+ oraculo: { id:'oraculo', nameKey:'relic.oraculo.name', descKey:'relic.oraculo.desc',lore:1, icon:'', color:'#cc88ff', rarity:'epico' },
 };
 
 const _RELIC_ART_FILES = {
@@ -42199,7 +42459,7 @@ const RelicSystem = {
                 if (eq) { equipmentPickups.push(new EquipmentPickup(chest.x, chest.y, eq)); msg = ` ${eq.name}`; }
             } else {
                 const rel = this._randomRelic('raro');
-                if (rel) { this.apply(player, rel.id); msg = `${rel.icon} ${rel.name}`; }
+                if (rel) { this.apply(player, rel.id); msg = _L(rel.nameKey); }
             }
 
         } else if (r === 'raro') {
@@ -42211,13 +42471,13 @@ const RelicSystem = {
                 if (eq) { equipmentPickups.push(new EquipmentPickup(chest.x, chest.y, eq)); msg = ` ${eq.name}`; }
             } else {
                 const rel = this._randomRelic('raro');
-                if (rel) { this.apply(player, rel.id); msg = `${rel.icon} ${rel.name}`; }
+                if (rel) { this.apply(player, rel.id); msg = _L(rel.nameKey); }
             }
 
         } else if (r === 'epico') {
             if (roll < 0.50) {
                 const rel = this._randomRelic('epico');
-                if (rel) { this.apply(player, rel.id); msg = `${rel.icon} ${rel.name}`; }
+                if (rel) { this.apply(player, rel.id); msg = _L(rel.nameKey); }
             } else if (roll < 0.75) {
                 const w = this._weaponByTier(player.type, 2, 3);
                 if (w) { weaponPickups.push(new WeaponPickup(chest.x, chest.y, w)); msg = ` ${WeaponSystem.displayName(w)}`; }
@@ -42228,7 +42488,7 @@ const RelicSystem = {
 
         } else if (r === 'lendario') {
             const rel = this._randomRelic('lendario') || this._randomRelic('epico');
-            if (rel) { this.apply(player, rel.id); msg = `${rel.icon} ${rel.name}`; }
+            if (rel) { this.apply(player, rel.id); msg = _L(rel.nameKey); }
             const w = this._weaponByTier(player.type, 3, 4);
             if (w) setTimeout(() => weaponPickups.push(new WeaponPickup(chest.x + 40, chest.y, w)), 300);
         }
@@ -44586,10 +44846,9 @@ window.SkillTreeUI = SkillTreeUI;
                 ${this._bagSellBlock()}
                 <div style="font-size:12px;font-weight:bold;color:#8ef0a8;margin:14px 0 8px;letter-spacing:0.05em">${_L('camp.campfire', '🏕️ FOGUEIRA')}</div>
                 ${st.restUsed
-                    ? '<div style="font-size:11px;color:' + COLORS.TEXT_MUTED + ';padding:8px 0;text-align:center">' + _L('camp.rested', 'Você descansou e recuperou 40% do HP máximo.') + '</div>'
-                    : `<button onclick="window.UIManager.campRest()" style="width:100%;padding:11px;border-radius:12px;font-weight:bold;font-size:12px;border:1.5px solid rgba(142,240,168,0.5);background:rgba(142,240,168,0.12);color:#8ef0a8;cursor:pointer;touch-action:manipulation">${_L('camp.restBtn', 'DESCANSAR (GRÁTIS) — RECUPERA 40% DO HP')}</button>`}
-
-                <div style="font-size:12px;font-weight:bold;color:#d8b4fe;margin:14px 0 8px;letter-spacing:0.05em">${_L('camp.shrineTitle', '🗿 SANTUÁRIO ANCESTRAL')} <span style="color:${COLORS.TEXT_MUTED};font-weight:normal">${_L('camp.oneBoon', '(1 bênção por parada)')}</span></div>
+                    ? '<div style="font-size:11px;color:'+COLORS.TEXT_MUTED+';padding:8px 0;text-align:center">'+(st.forgeUsed?_L('cp.fg'):_L('camp.rested','Você descansou e recuperou 40% do HP máximo.'))+'</div>'
+                    : (()=>{const c='width:100%;padding:9px;border-radius:12px;font-weight:700;font-size:11px;cursor:pointer;touch-action:manipulation;border:1.5px solid ';return `<div style="display:flex;flex-direction:column;gap:6px"><button onclick="UIManager.campRest()" style="${c}#8ef0a880;background:#8ef0a81f;color:#8ef0a8">${_L('camp.restBtn','DESCANSAR (GRÁTIS) — RECUPERA 40% DO HP')}</button><button onclick="UIManager.campForge('dmg')" style="${c}#ffb86680;background:#ffb8661f;color:#ffcf87">${_L('cp.fd')}</button><button onclick="UIManager.campForge('crit')" style="${c}#c084fc80;background:#c084fc1f;color:#e0b6ff">${_L('cp.fc')}</button></div>`;})()}
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin:14px 0 8px"><div style="font-size:12px;font-weight:bold;color:#d8b4fe;letter-spacing:0.05em">${_L('camp.shrineTitle','🗿 SANTUÁRIO ANCESTRAL')} <span style="color:${COLORS.TEXT_MUTED};font-weight:normal">${_L('camp.oneBoon','(1 bênção por parada)')}</span></div>${(!st.shrinePicked&&!st.shrineRerolled)?`<button onclick="UIManager.campRerollShrine()" style="flex-shrink:0;padding:5px 9px;border-radius:8px;font-weight:700;font-size:10px;border:1px solid ${(p&&p.currency>=25)?'#facc158c':'#ffffff26'};background:${(p&&p.currency>=25)?'#facc1524':'#ffffff0a'};color:${(p&&p.currency>=25)?COLORS.GOLD:COLORS.TEXT_MUTED};cursor:pointer;touch-action:manipulation">${_L('cp.rr').replace('{n}','25')}</button>`:(st.shrineRerolled?'<span style="font-size:10px;color:'+COLORS.TEXT_MUTED+'">'+_L('cp.rd')+'</span>':'')}</div>
                 ${window.RunBoons ? RunBoons.panelHtml(p) : ''}
                 ${boonCards}
 
@@ -44604,6 +44863,12 @@ window.SkillTreeUI = SkillTreeUI;
         },
         campRest() {
             if (typeof CampSystem !== 'undefined') CampSystem.rest();
+        },
+        campForge(kind) {
+            if (typeof CampSystem !== 'undefined') CampSystem.forge(kind);
+        },
+        campRerollShrine() {
+            if (typeof CampSystem !== 'undefined') CampSystem.rerollShrine();
         },
         campShrine(id) {
             if (typeof CampSystem !== 'undefined') CampSystem.shrine(id);
