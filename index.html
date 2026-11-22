@@ -22,7 +22,7 @@
     <!-- PWA: manifest e ícones em arquivos próprios (em data: URI o start_url relativo quebra a instalação) -->
     <link rel="manifest" href="./manifest.webmanifest">
     <link rel="apple-touch-icon" href="./apple-touch-icon.png">
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='96' fill='%23130e1f'/%3E%3Ctext x='256' y='300' font-size='260' text-anchor='middle' fill='%23e0b6ff'%3E%E2%9A%94%EF%B8%8F%3C/text%3E%3C/svg%3E">
+    <link rel="icon" type="image/png" href="./icon-192.png">
 
     <title>Krevathorn</title>
     <!-- Compartilhamento (WhatsApp, Discord, X). og:image é URL absoluta de propósito:
@@ -862,7 +862,7 @@ body.cb-tritan  { filter: url("#cb-tritan"); }
 }
 #start-screen > .start-bg-art.is-loaded { opacity: 0.34; }
 .hero-portrait {
-    width: 54px; height: 54px; border-radius: 12px; object-fit: cover; flex-shrink: 0;
+    width: 54px; height: 54px; border-radius: 12px; object-fit: cover; object-position: center 20%; flex-shrink: 0;
     border: 1.5px solid rgba(224,182,255,0.28); box-shadow: 0 4px 12px rgba(0,0,0,0.48);
     background: rgba(12,8,20,0.75);
 }
@@ -2076,12 +2076,15 @@ body.reduce-motion .end-art .ea-emb { animation: none !important; opacity: 0.35;
         </div>
 
         <!-- BOSS HP BAR (top center, appears during boss fights) -->
-        <div id="boss-hp-container" class="hidden" style="position:absolute;top:max(50px,calc(env(safe-area-inset-top,50px) + 8px));left:50%;transform:translateX(-50%);z-index:115;pointer-events:auto;text-align:center;width:min(220px,50vw);">
-            <div id="boss-name" style="font-size:max(11px,calc(11px * var(--font-scale,1)));font-weight:700;color:#ff4444;text-shadow:0 0 8px rgba(255,68,68,0.4);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">CHEFE</div>
-            <div style="width:100%;height:5px;background:rgba(0,0,0,0.7);border-radius:3px;overflow:hidden;border:1px solid rgba(255,68,68,0.2);">
-                <div id="boss-hp-bar" style="height:100%;width:100%;background:linear-gradient(90deg,#cc0000,#ff3333,#ff6666);border-radius:3px;transition:width 0.3s cubic-bezier(0.34,1.56,0.64,1);"></div>
+        <div id="boss-hp-container" class="hidden" style="position:absolute;top:max(50px,calc(env(safe-area-inset-top,50px) + 8px));left:50%;transform:translateX(-50%);z-index:115;pointer-events:auto;width:min(248px,58vw);display:flex;align-items:center;gap:6px;">
+            <img id="boss-hp-portrait" alt="" aria-hidden="true" decoding="async" style="display:none;width:28px;height:28px;border-radius:50%;object-fit:cover;object-position:center 20%;border:1.5px solid rgba(255,80,80,0.7);background:#0a0612;flex-shrink:0;" onerror="this.style.display='none'">
+            <div style="flex:1;min-width:0;text-align:center;">
+                <div id="boss-name" style="font-size:max(11px,calc(11px * var(--font-scale,1)));font-weight:700;color:#ff4444;text-shadow:0 0 8px rgba(255,68,68,0.4);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">CHEFE</div>
+                <div style="width:100%;height:5px;background:rgba(0,0,0,0.7);border-radius:3px;overflow:hidden;border:1px solid rgba(255,68,68,0.2);">
+                    <div id="boss-hp-bar" style="height:100%;width:100%;background:linear-gradient(90deg,#cc0000,#ff3333,#ff6666);border-radius:3px;transition:width 0.3s cubic-bezier(0.34,1.56,0.64,1);"></div>
+                </div>
+                <div id="boss-hp-text" style="font-size:max(12px,calc(12px * var(--font-scale,1)));color:rgba(255,255,255,0.78);margin-top:1px;">100%</div>
             </div>
-            <div id="boss-hp-text" style="font-size:max(12px,calc(12px * var(--font-scale,1)));color:rgba(255,255,255,0.78);margin-top:1px;">100%</div>
         </div>
 
         <!-- RIGHT THUMB ZONE: Action buttons (dodge + special) -->
@@ -2270,6 +2273,7 @@ body.reduce-motion .end-art .ea-emb { animation: none !important; opacity: 0.35;
     <!-- BOSS REWARD (post-guardian boon choice) -->
     <div id="boss-reward-overlay" class="hidden" role="dialog" aria-modal="true" aria-labelledby="boss-reward-title" style="position:fixed;inset:0;z-index:1950;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;pointer-events:auto;background:rgba(6,2,8,0.82);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);animation:overlayIn 0.3s ease;">
         <div class="glass-panel" style="width:100%;max-width:22rem;max-height:85vh;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:24px;display:flex;flex-direction:column;align-items:center;gap:14px;background:rgba(24,16,34,0.98);border:1.5px solid rgba(224,182,255,0.4);border-radius:24px;box-shadow:0 6px 30px rgba(0,0,0,0.6);">
+            <img id="boss-reward-portrait" alt="" aria-hidden="true" decoding="async" style="display:none;width:54px;height:54px;border-radius:14px;object-fit:cover;object-position:center 20%;border:1.5px solid rgba(255,216,107,0.55);box-shadow:0 4px 16px rgba(0,0,0,0.6);background:#0a0612;" onerror="this.style.display='none'">
             <h2 id="boss-reward-title" data-i18n="bossReward.title" style="font-size:18px;font-weight:800;color:#e0b6ff;text-transform:uppercase;letter-spacing:0.1em;text-shadow:0 0 18px rgba(224,182,255,0.5);">🏆 Troféu do Guardião</h2>
             <p id="boss-last-words" style="font-size:12px;color:#cbb8e8;font-style:italic;text-align:center;line-height:1.4;min-height:1.2em;"></p>
             <p id="boss-reward-sub" data-i18n="bossReward.sub" style="font-size:11px;color:rgba(255,255,255,0.55);text-align:center;line-height:1.4;">O chefe caiu — escolha uma recompensa para a run.</p>
@@ -14342,6 +14346,7 @@ function drawMinimap() {
         mctx.roundRect(0, 0, mCanvas.width, mCanvas.height, 6);
         mctx.clip();
     }
+    mctx.imageSmoothingEnabled = false;
     mctx.drawImage(_mmBuffer, 0, 0, mCanvas.width, mCanvas.height);
     mctx.restore();
     _drawMinimapDots(mctx, sx, sy, 1);
@@ -14393,7 +14398,8 @@ function _drawExpandedMinimap() {
     ctx.fillRect(mmX, mmY, mmSize, mmSize);
     ctx.strokeRect(mmX, mmY, mmSize, mmSize);
 
-    // Tile map
+    // Tile map (pixel-perfect, sem borramento no zoom)
+    ctx.imageSmoothingEnabled = false;
     ctx.drawImage(_mmBuffer, mmX, mmY, mmSize, mmSize);
 
     // Grid overlay for expanded view
@@ -14427,28 +14433,30 @@ function _drawExpandedMinimap() {
     ctx.textAlign = 'center';
     ctx.fillText(I18n.t('hud.mapExpanded'), width / 2, mmY - 10);
 
-    // Legend row
+    // Legend row (com marcadores coloridos e dica em linha separada para não colidir em 360px)
     const legendY = mmY + mmSize + 14;
-    // Plaquinha escura atras da legenda: garante contraste do texto sobre o cenario
-    ctx.fillStyle = 'rgba(0,0,0,0.55)';
-    ctx.fillRect(mmX, legendY - 12, mmSize, 18);
+    ctx.fillStyle = 'rgba(0,0,0,0.62)';
+    ctx.fillRect(mmX, legendY - 12, mmSize, 32);
     ctx.font = '10px ' + COLORS.CANVAS_FONT;
     ctx.textAlign = 'left';
     const legItems = [
-        {color: COLORS.MAP_PLAYER, label: ' ' + I18n.t('hud.legend.player')},
-        {color: COLORS.MAP_ENEMY, label: ' ' + I18n.t('hud.legend.enemy')},
-        {color: COLORS.MAP_BOSS, label: ' ' + I18n.t('hud.legend.boss')},
-        {color: COLORS.MAP_GOBLIN, label: ' ' + I18n.t('hud.legend.gold')}
+        {color: COLORS.MAP_PLAYER, label: I18n.t('hud.legend.player')},
+        {color: COLORS.MAP_ENEMY, label: I18n.t('hud.legend.enemy')},
+        {color: COLORS.MAP_BOSS, label: I18n.t('hud.legend.boss')},
+        {color: COLORS.MAP_GOBLIN, label: I18n.t('hud.legend.gold')}
     ];
-    let legX = mmX + 20;
+    let totalLegW = 0;
+    legItems.forEach((item, idx) => { totalLegW += 8 + ctx.measureText(item.label).width + (idx < legItems.length - 1 ? 10 : 0); });
+    let legX = mmX + Math.max(8, Math.floor((mmSize - totalLegW) / 2));
     legItems.forEach(item => {
         ctx.fillStyle = item.color;
-        ctx.fillText(item.label, legX, legendY);
-        // Espaçamento pela largura real do rótulo (tradução pode ser mais longa que o português).
-        legX += ctx.measureText(item.label).width + 14;
+        ctx.fillRect(Math.round(legX), Math.round(legendY - 6), 5, 5);
+        ctx.fillText(item.label, legX + 8, legendY);
+        legX += 8 + ctx.measureText(item.label).width + 10;
     });
-    ctx.fillStyle = 'rgba(255,255,255,0.7)';
-    ctx.fillText(I18n.t('hud.tapOutside'), mmX + mmSize - 120, legendY);
+    ctx.fillStyle = 'rgba(255,255,255,0.72)';
+    ctx.textAlign = 'center';
+    ctx.fillText(I18n.t('hud.tapOutside'), mmX + mmSize / 2, legendY + 14);
 
     // Close button "X"
     const closeX = mmX + mmSize - 18;
@@ -15807,6 +15815,16 @@ function _getBossPortrait(key) {
         _bossPortraitCache[key] = im;
     }
     return (!im._failed && im.complete && im.naturalWidth > 0) ? im : null;
+}
+// Desenha imagem em modo cover (mantém proporção natural sem achatar ilustrações 4:3/widescreen)
+function _drawCoverImg(ctx2, img, dx, dy, dw, dh, focalY) {
+    const iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height;
+    if (!iw || !ih) return;
+    const scale = Math.max(dw / iw, dh / ih);
+    const sw = dw / scale, sh = dh / scale;
+    const sx = (iw - sw) * 0.5;
+    const sy = Math.max(0, Math.min(ih - sh, (ih - sh) * (focalY != null ? focalY : 0.2)));
+    ctx2.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
 }
 
 // Chefe do andar: marca a luta, cria o Boss, anuncia no log e no banner. Usada pelo sorteio normal
@@ -17252,24 +17270,27 @@ function draw() {
             ctx.globalAlpha = ba;
             ctx.fillStyle = 'rgba(0,0,0,0.6)';
             const bLine = _bossBanner.line;
-            const bImg = _bossBanner.key ? _getBossPortrait(_bossBanner.key) : null;
+            const hasPortraitSlot = !!(_bossBanner.key && BOSS_PORTRAIT_FILES[_bossBanner.key]);
+            const bImg = hasPortraitSlot ? _getBossPortrait(_bossBanner.key) : null;
             const bH = bLine ? 104 : 80;
-            // Largura da moldura acompanha a tela (celular de 360 px CSS = ~270 lógicos)
-            const bw = Math.min(bImg ? 330 : 300, width - 16);
+            // Reserva largura fixa quando há retrato mapeado para evitar salto de layout durante o decode
+            const bw = Math.min(hasPortraitSlot ? 330 : 300, width - 16);
             const bx = width / 2 - bw / 2, by = height / 2 - 50;
             ctx.fillRect(bx, by, bw, bH);
             ctx.strokeStyle = '#ff4444';
             ctx.lineWidth = 2;
             ctx.strokeRect(bx, by, bw, bH);
             let textCX = width / 2, textMaxW = bw - 24;
-            if (bImg) {
+            if (hasPortraitSlot) {
                 const ps = 48;
                 const px = bx + 12, py = by + Math.round((bH - ps) / 2);
                 ctx.save();
                 ctx.fillStyle = '#0a0612';
                 ctx.fillRect(px, py, ps, ps);
-                ctx.imageSmoothingEnabled = true;
-                ctx.drawImage(bImg, px, py, ps, ps);
+                if (bImg) {
+                    ctx.imageSmoothingEnabled = true;
+                    _drawCoverImg(ctx, bImg, px, py, ps, ps, 0.2);
+                }
                 ctx.restore();
                 ctx.strokeStyle = 'rgba(255,68,68,0.85)';
                 ctx.lineWidth = 1.5;
@@ -17668,10 +17689,21 @@ const BossHPBar = {
         this.nameEl = document.getElementById('boss-name');
         this.barEl = document.getElementById('boss-hp-bar');
         this.textEl = document.getElementById('boss-hp-text');
+        this.portraitEl = document.getElementById('boss-hp-portrait');
     },
-    show(name) {
+    show(name, portraitKey) {
         this.container.classList.remove('hidden');
         this.nameEl.textContent = name || _L('hud.boss', 'CHEFE');
+        if (this.portraitEl) {
+            const pSrc = (portraitKey && typeof BOSS_PORTRAIT_FILES !== 'undefined') ? BOSS_PORTRAIT_FILES[portraitKey] : null;
+            if (pSrc) {
+                if (this._shownPortrait !== pSrc) { this.portraitEl.src = pSrc; this._shownPortrait = pSrc; }
+                this.portraitEl.style.display = 'block';
+            } else {
+                this.portraitEl.style.display = 'none';
+                this._shownPortrait = null;
+            }
+        }
         _markHudLayoutDirty(); // a barra do chefe empurra o topo livre do HUD
     },
     hide() {
@@ -17694,7 +17726,12 @@ const BossHPBar = {
         if (!boss) { this.hide(); return; }
         // Só escreve no DOM quando algo mudou (update roda todo frame).
         var nm = _bossNome(boss) || _L('hud.boss', 'CHEFE');
-        if (this._shownName !== nm || this.container.classList.contains('hidden')) { this.show(nm); this._shownName = nm; }
+        var bKey = (boss._blueprint && boss._blueprint.key) || boss.enemyType || 'boss';
+        if (this._shownName !== nm || this._shownBossKey !== bKey || this.container.classList.contains('hidden')) {
+            this.show(nm, bKey);
+            this._shownName = nm;
+            this._shownBossKey = bKey;
+        }
         var pct = Math.max(0, (boss.hp / boss.maxHp) * 100);
         var w = pct + '%';
         if (w !== this._lastWidth) {
@@ -21396,11 +21433,14 @@ const RunBoons = {
             return b.icon + ' ' + (window._L ? _L(b.nameKey, b.name) : b.name) + ' ' + (window.I18n ? I18n.t('boon.stack') : '({n}/{max})').replace('{n}', this.count(p, id)).replace('{max}', b.max || 2);
         }).filter(Boolean);
         const syn = this.activeSynergies(p).map(s => '✨ ' + (window._L ? _L(s.nameKey, s.name) : s.name)).join(' · ');
-        // Relíquias com nível atual (Nv.2 = duplicata já convertida em upgrade)
+        // Relíquias com miniatura .webp e nível atual (Nv.2 = duplicata já convertida em upgrade)
         const rel = p.relics ? Array.from(p.relics).map(id => {
             const r = RELICS[id];
-            return r ? r.icon + ' ' + (window._L ? _L(r.nameKey, r.name) : r.name) + ' Nv.' + RelicSystem.level(p, id) : '';
-        }).filter(Boolean).join(' · ') : '';
+            if (!r) return '';
+            const art = (typeof _relicArtHtml === 'function') ? _relicArtHtml(id, r.color, 18) : '';
+            const nm = window._L ? _L(r.nameKey, r.name) : r.name;
+            return '<span style="display:inline-flex;align-items:center;gap:4px;margin-right:8px;margin-bottom:3px;vertical-align:middle;">' + art + '<span>' + nm + ' Nv.' + RelicSystem.level(p, id) + '</span></span>';
+        }).filter(Boolean).join('') : '';
         const stats = [
             L('eqStat.damageMult', 'Dano') + ' ×' + (p.damageMult || 1).toFixed(2),
             L('eqStat.critChance', 'Crítico') + ' ' + Math.round((p.critChance || 0) * 100) + '%',
@@ -22163,6 +22203,12 @@ const BossRewardSystem = {
         this._resetDismiss();
         this._resetChoice();
         this._el.classList.remove('hidden');
+        const brImg = document.getElementById('boss-reward-portrait');
+        if (brImg) {
+            const bKey = (boss && boss._blueprint && boss._blueprint.key) || (boss && boss.enemyType) || null;
+            const bSrc = (bKey && typeof BOSS_PORTRAIT_FILES !== 'undefined') ? BOSS_PORTRAIT_FILES[bKey] : null;
+            if (bSrc) { brImg.src = bSrc; brImg.style.display = 'block'; } else { brImg.style.display = 'none'; }
+        }
         if (this._subEl) this._subEl.textContent = (window.I18n ? I18n.t('bossReward.subNamed') : 'O {n} caiu — escolha uma recompensa para o resto da run:').replace('{n}', _bossNome(boss) || 'Guardião');
         if (this._optionsEl) {
             this._optionsEl.innerHTML = options.map((b, i) => isTrophy
@@ -39415,11 +39461,11 @@ function _tipKeyForAttackMode(key) {
 // ============================================================
 // Medidas do painel do NPC em unidades lógicas (compacto, para caber no celular em retrato)
 const NPC_PANEL_METRICS = {
-    maxW: 240,      // largura máxima (antes 320)
+    maxW: 248,      // largura máxima compacta para celular retrato
     pad: 12,        // margem lateral
-    headBase: 17,   // linha de base do nome
-    divider: 23,    // divisor abaixo do nome
-    msgTop: 31,     // topo da fala
+    headBase: 26,   // linha de base do nome (alinhada ao retrato 34px)
+    divider: 42,    // divisor abaixo do cabeçalho
+    msgTop: 50,     // topo da fala
     msgSize: 13,    // fala: nunca abaixo de 13
     msgLH: 15,      // altura de linha da fala
     noteSize: 11,   // dica
@@ -39464,6 +39510,8 @@ const _NPC_PORTRAIT_FILES = {
 const _npcPortraitCache = {};
 function _getNpcPortrait(npc) {
     if (!npc) return null;
+    // Cena "Os três" (art: 'trio'): nunca cai no retrato solo da Seraphina
+    if (npc.art === 'trio') return null;
     const raw = npc.art || npc.npcType || npc.type;
     const key = _NPC_PORTRAIT_FILES[raw] ? raw : (npc.npcType && _NPC_PORTRAIT_FILES[npc.npcType] ? npc.npcType : null);
     if (!key) return null;
@@ -39695,8 +39743,9 @@ const NPCInteractionPanel = {
             fbW = Math.min(ctx.measureText(this.feedback).width, innerW * 0.62);
         }
 
-        // Retrato do falante: busto ilustrado quando disponível, sprite (WorldSprites.npc) ou disco com indicador.
-        const portraitX = panelX + pad + 9, portraitY = panelY + M.headBase - 4;
+        // Retrato do falante: busto ilustrado 34×34 com cover-crop ou sprite pixel art 24×24 (exato 0.5x de 48×48)
+        const pR = 16;
+        const portraitX = panelX + pad + pR, portraitY = panelY + 22;
         if (this.npc) {
             const pImg = _getNpcPortrait(this.npc);
             const npcArt = this.npc.art || this.npc.type;
@@ -39706,30 +39755,30 @@ const NPCInteractionPanel = {
             if (pImg) {
                 ctx.save();
                 ctx.fillStyle = 'rgba(14, 10, 24, 0.96)';
-                ctx.beginPath(); ctx.arc(portraitX, portraitY, 10, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.arc(portraitX, portraitY, pR, 0, Math.PI * 2); ctx.fill();
                 ctx.clip();
                 ctx.imageSmoothingEnabled = true;
-                ctx.drawImage(pImg, portraitX - 10, portraitY - 10, 20, 20);
+                _drawCoverImg(ctx, pImg, portraitX - pR, portraitY - pR, pR * 2, pR * 2, 0.18);
                 ctx.restore();
                 ctx.strokeStyle = this.npc.color || 'rgba(255,255,255,0.65)';
-                ctx.lineWidth = 1.25;
-                ctx.beginPath(); ctx.arc(portraitX, portraitY, 10, 0, Math.PI * 2); ctx.stroke();
+                ctx.lineWidth = 1.5;
+                ctx.beginPath(); ctx.arc(portraitX, portraitY, pR, 0, Math.PI * 2); ctx.stroke();
             } else if (sp) {
                 ctx.save();
                 ctx.fillStyle = 'rgba(20, 16, 36, 0.92)';
-                ctx.beginPath(); ctx.arc(portraitX, portraitY, 10, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.arc(portraitX, portraitY, pR, 0, Math.PI * 2); ctx.fill();
                 ctx.clip();
                 ctx.imageSmoothingEnabled = false;
-                ctx.drawImage(sp, portraitX - 11, portraitY - 9, 22, 22);
+                ctx.drawImage(sp, Math.round(portraitX - 12), Math.round(portraitY - 12), 24, 24);
                 ctx.restore();
                 ctx.strokeStyle = this.npc.color || 'rgba(255,255,255,0.65)';
-                ctx.lineWidth = 1.25;
-                ctx.beginPath(); ctx.arc(portraitX, portraitY, 10, 0, Math.PI * 2); ctx.stroke();
+                ctx.lineWidth = 1.5;
+                ctx.beginPath(); ctx.arc(portraitX, portraitY, pR, 0, Math.PI * 2); ctx.stroke();
             } else {
                 ctx.fillStyle = this.npc.color || '#ffcc00';
-                ctx.beginPath(); ctx.arc(portraitX, portraitY, 9, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.arc(portraitX, portraitY, pR - 1, 0, Math.PI * 2); ctx.fill();
                 ctx.strokeStyle = 'rgba(255,255,255,0.65)'; ctx.lineWidth = 1; ctx.stroke();
-                ctx.fillStyle = '#14101f'; ctx.font = 'bold 10px ' + COLORS.CANVAS_FONT;
+                ctx.fillStyle = '#14101f'; ctx.font = 'bold 12px ' + COLORS.CANVAS_FONT;
                 ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
                 ctx.fillText(this.npc.indicator || '?', portraitX, portraitY + 1);
                 ctx.textBaseline = 'alphabetic';
@@ -39738,8 +39787,8 @@ const NPCInteractionPanel = {
 
         // Nome do NPC no cabeçalho
         const npcName = '[' + (this.npc ? this.npc.displayName : 'NPC') + ']';
-        const nameX = this.npc ? panelX + pad + 24 : panelX + pad;
-        const nameW = Math.max(20, innerW - (this.npc ? 24 : 0));
+        const nameX = this.npc ? panelX + pad + pR * 2 + 8 : panelX + pad;
+        const nameW = Math.max(20, innerW - (this.npc ? pR * 2 + 8 : 0));
         ctx.fillStyle = this.npc ? this.npc.nameColor : '#ffcc00';
         ctx.textAlign = 'left';
         const nameShown = _npcFitText(ctx, npcName, hasFb ? nameW - fbW - 8 : nameW, 13, true);
@@ -41543,7 +41592,7 @@ const RelicSystem = {
                 player.relicLevels = player.relicLevels || {};
                 player.relicLevels[relicId] = 2;
                 this._upgradeRelic(player, relicId);
-                addLog(r.icon + ' ' + (window._L ? _L(r.nameKey, r.name) : r.name) + (window.I18n ? I18n.t('log.relicUpgrade') : ' — nível 2! Efeito +50%.'));
+                addLog((r.icon ? r.icon + ' ' : '') + (window._L ? _L(r.nameKey, r.name) : r.name) + (window.I18n ? I18n.t('log.relicUpgrade') : ' — nível 2! Efeito +50%.'));
                 DamageNumbers.add(player.x, player.y, 'Nv.2', 'crit');
                 spawnParticles(player.x, player.y, r.color, 16, 4);
                 SND.playPickup();
@@ -41551,7 +41600,7 @@ const RelicSystem = {
             }
             const gold = 60 + 10 * dungeonLevel;
             player.currency += gold;
-            addLog(r.icon + (window.I18n ? I18n.t('log.relicDuplicate').replace('{n}', gold) : ' Duplicata! +' + gold + ' moedas'), true);
+            addLog((r.icon ? r.icon + ' ' : '') + (window.I18n ? I18n.t('log.relicDuplicate').replace('{n}', gold) : 'Duplicata! +' + gold + ' moedas').trim(), true);
             SND.playPickup();
             return;
         }
@@ -41596,11 +41645,8 @@ const RelicSystem = {
 
         const relicName = window._L ? _L(r.nameKey, r.name) : r.name;
         const relicDesc = window._L ? _L(r.descKey, r.desc) : r.desc;
-        addLog(r.icon + ' ' + relicName + '!');
-        // The description was never shown: the relic.*.desc keys exist in all
-        // three languages and nothing read them, so the player got a name and
-        // had no idea what it did.
-        addLog(r.color + ' ' + relicDesc + (window.I18n ? I18n.t('log.relicActive') : ' (ativa nesta run)'));
+        addLog((r.icon ? r.icon + ' ' : '') + relicName + '!');
+        addLog(relicName + ': ' + relicDesc + (window.I18n ? I18n.t('log.relicActive') : ' (ativa nesta run)'));
         if (typeof showToast === 'function') showToast(relicName + ' — ' + relicDesc, 'success');
         DamageNumbers.add(player.x, player.y, relicName, 'crit');
         spawnParticles(player.x, player.y, r.color, 30, 6);
@@ -49868,24 +49914,30 @@ Input.init();
         for (var k = 0; k < heroes.length; k++) paintHero(heroes[k]);
 
         var rafId = null, running = false, tick = 0;
+        function anyCanvasVisible() {
+            for (var v = 0; v < heroes.length; v++) {
+                if (heroes[v].cv.style.display !== 'none') return true;
+            }
+            return false;
+        }
         function anim() {
-            // Zero-cost when hidden: stop while gameplay/menus cover the start
-            // screen; the MutationObserver restarts the loop when shown.
-            if (startScreen.classList.contains('hidden') || prefersReduced()) {
+            // Zero-cost when hidden or when all .webp portraits already replaced the fallback canvases
+            if (startScreen.classList.contains('hidden') || prefersReduced() || !anyCanvasVisible()) {
                 running = false; rafId = null;
                 return; // static frame already painted
             }
             tick++;
-            // Repinta só quando o quadro do ciclo muda (a cada 3 rAF, ~20 fps): nos outros
-            // ticks o canvas ficaria com o mesmo desenho, então não há o que pintar.
             if (tick % 3 === 0) {
-                for (var a = 0; a < heroes.length; a++) heroes[a].time += 1;
-                for (var b = 0; b < heroes.length; b++) paintHero(heroes[b]);
+                for (var a = 0; a < heroes.length; a++) {
+                    if (heroes[a].cv.style.display === 'none') continue;
+                    heroes[a].time += 1;
+                    paintHero(heroes[a]);
+                }
             }
             rafId = requestAnimationFrame(anim);
         }
         function ensureRunning() {
-            if (!running && !startScreen.classList.contains('hidden') && !prefersReduced()) {
+            if (!running && !startScreen.classList.contains('hidden') && !prefersReduced() && anyCanvasVisible()) {
                 running = true;
                 rafId = requestAnimationFrame(anim);
             }
