@@ -4484,6 +4484,9 @@ const I18n = {
         'update.entry.v111.l2': 'Narrativa cinematográfica: novo motor de cutscenes com ritmo controlado por você, trilha dedicada nos 3 finais, sussurros de Eiran com distorção viva, últimas palavras nos chefes, Ecos de Memória nos andares e Grimório de Mistérios.',
         'update.entry.v111.l3': 'Herói e combate evoluídos: sprite vivo (Paper-Doll) refletindo armas e equipamentos reais, combos progressivos por nível (até 4 golpes), nova Técnica de Classe, Especial Desperto no Overdrive e NPCs em pixel art 48×48.',
         'update.entry.v111.l4': 'Telas e mobile refinados: nova ficha interativa do Personagem com slots clicáveis (equipar, substituir e retirar), Bolsa/Loja/Skills melhoradas, diálogos sem sobreposição de HUD, joystick ergonômico e curandeiro ativo no minimapa. Seus saves continuam funcionando.',
+        'update.entry.v112.title': 'v112 - Bolsa mais clara',
+        'update.entry.v112.l1': 'Bolsa sem cortes: cartões e abas cabem na tela, com nomes longos em até 2 linhas.',
+        'update.entry.v112.l2': 'Comparação rápida: etiqueta curta (NOVO, ▲, ▼) em cada peça e ações Equipar, Vender e Descartar numa linha só.',
         'update.entry.v110.title': 'v110 - Chama do Véu, dons mecânicos e chefes épicos',
         'update.entry.v110.l1': 'Chama do Véu: combo dura 4,5 s com patamares em 5x, 10x e 20x, Overdrive automático de 8 s único por classe e pulso defensivo ao subir de nível.',
         'update.entry.v110.l2': 'Buildcraft renovado: 6 novos Dons mecânicos, 8 Sinergias ativas, Troféus de Chefe turbinados, Fogueira com opção de Temperar e 1× troca de bênçãos no Santuário Ancestral.',
@@ -7218,6 +7221,9 @@ const I18n = {
         'update.entry.v111.l2': 'Cinematic storytelling: unified player-paced cutscene engine, dedicated music for all 3 endings, live-glitching Eiran whispers, boss last words, Memory Echoes across floors, and a Mystery Board Grimoire.',
         'update.entry.v111.l3': 'Evolved hero & combat: live Paper-Doll sprite reflecting your equipped gear and weapons, progressive level-up combos (up to 4-hit finishers), a new Class Technique, Awakened Overdrive Specials, and 48×48 pixel-art NPCs.',
         'update.entry.v111.l4': 'Refined RPG screens & mobile feel: interactive Character sheet with clickable slots (equip, swap, unequip), upgraded Bag/Shop/Skills screens, overlap-free NPC dialogues, ergonomic thumb joystick, and active Healer minimap tracking. Your saves keep working.',
+        'update.entry.v112.title': 'v112 - Clearer Bag',
+        'update.entry.v112.l1': 'Bag without clipping: cards and tabs fit the screen, with long names wrapping to 2 lines.',
+        'update.entry.v112.l2': 'Quick comparison: a short badge (NEW, ▲, ▼) on every piece, and Equip, Sell and Discard on a single row.',
         'update.entry.v110.title': 'v110 - Veil Overdrive, mechanical boons and epic bosses',
         'update.entry.v110.l1': 'Veil Surge: 4.5s combo window with 5x/10x/20x tiers, automatic 8s class-signature Overdrive and a defensive shockwave pulse on level-up.',
         'update.entry.v110.l2': 'Upgraded buildcraft: 6 new mechanical Boons, 8 active Duo-Synergies, stronger Boss Trophies, Campfire tempering choices and 1× Ancestral Shrine reroll.',
@@ -9962,6 +9968,9 @@ const I18n = {
         'update.entry.v111.l2': 'Narrativa cinematográfica: nuevo motor de escenas a tu ritmo, música dedicada en los 3 finales, susurros de Eiran con distorsión viva, últimas palabras de jefes, Ecos de Memoria y Grimorio de Misterios.',
         'update.entry.v111.l3': 'Héroe y combate evolucionados: sprite vivo (Paper-Doll) que muestra armas y equipo reales, combos progresivos por nivel (hasta 4 golpes), nueva Técnica de Clase, Especial Despierto en Overdrive y PNJ en pixel art 48×48.',
         'update.entry.v111.l4': 'Pantallas y móvil refinados: nueva ficha interactiva del Personaje con ranuras clicables (equipar, cambiar y retirar), Bolsa/Tienda/Habilidades mejoradas, diálogos sin solapamiento de HUD, joystick ergonómico y curandero activo en el minimapa. Tus partidas guardadas siguen funcionando.',
+        'update.entry.v112.title': 'v112 - Bolsa más clara',
+        'update.entry.v112.l1': 'Bolsa sin recortes: las tarjetas y pestañas caben en la pantalla, con nombres largos en hasta 2 líneas.',
+        'update.entry.v112.l2': 'Comparación rápida: etiqueta corta (NUEVO, ▲, ▼) en cada pieza y acciones Equipar, Vender y Descartar en una sola fila.',
         'update.entry.v110.title': 'v110 - Llama del Velo, dones mecánicos y jefes épicos',
         'update.entry.v110.l1': 'Llama del Velo: combo de 4,5 s con niveles en 5x, 10x y 20x, Overdrive automático de 8 s único por clase y pulso defensivo al subir de nivel.',
         'update.entry.v110.l2': 'Buildcraft renovado: 6 nuevos Dones mecánicos, 8 Sinergias activas, Trofeos de Jefe mejorados, Fogata con opción de Templar y 1× cambio de bendiciones en el Santuario Ancestral.',
@@ -50601,8 +50610,12 @@ Input.init();
        current MUST stay in sync with the SW CACHE_VERSION suffix (sw.js).
     */
     window.UPDATE_LOG = {
-        current: 'v111',
+        current: 'v112',
         entries: [
+            { v: 'v112', date: '2026-11-23', titleKey: 'update.entry.v112.title', title: 'v112 — Bolsa mais clara',
+              linesKeys: ['update.entry.v112.l1', 'update.entry.v112.l2'],
+              lines: ['Bolsa sem cortes: cartões e abas cabem na tela, com nomes longos em até 2 linhas.',
+                      'Comparação rápida: etiqueta curta (NOVO, ▲, ▼) em cada peça e ações Equipar, Vender e Descartar numa linha só.'] },
             { v: 'v111', date: '2026-11-23', titleKey: 'update.entry.v111.title', title: 'v111 — Pets com vínculo e montaria, cutscenes cinematográficas, Paper-Doll e combos épicos',
               linesKeys: ['update.entry.v111.l1', 'update.entry.v111.l2', 'update.entry.v111.l3', 'update.entry.v111.l4'],
               lines: ['Companheiros renovados: 10 pets em pixel art 48×48 (incluindo o Corvo das Sombras do Ladino), encontros exclusivos por classe, vínculo com cenas na Fogueira, evolução em 3 estágios, montaria real e botões claros de Sintonia e Montar.',
