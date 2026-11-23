@@ -702,8 +702,8 @@ body.pause-open #boss-echo-ribbon{display:none !important}
 .pet-pill.is-safe { border-color: rgba(255,170,210,0.78); box-shadow: 0 0 8px rgba(255,130,190,0.25); }
 .pet-pill.is-od { border-color: #ffd86b; box-shadow: 0 0 10px rgba(255,216,107,0.45); }
 body.reduce-motion .card-pop, body.reduce-motion .camp-fire-glow, body.reduce-motion .go-cta-pulse, body.reduce-motion .win-star, body.reduce-motion .cd-ready, body.gfx-low .camp-fire-glow, body.gfx-low .go-cta-pulse { animation: none !important; opacity: 1 !important; transform: none !important; }
-body.npc-dialog-open #top-bar, body.npc-dialog-open #minimap-container, body.npc-dialog-open #actions-right, body.npc-dialog-open #bottom-controls, body.npc-dialog-open #run-objective, body.npc-dialog-open #boss-hp-container, body.npc-dialog-open #combo-display, body.npc-dialog-open #status-chips, body.npc-dialog-open #xp-strip, body.npc-dialog-open #floor-intro, body.npc-dialog-open #whisper-overlay, body.npc-dialog-open #boss-echo-ribbon, body.npc-dialog-open #logs, body.npc-dialog-open .toast-stack, body.npc-dialog-open #equip-card, body.npc-dialog-open #achievement-toast, body.npc-dialog-open #quest-panel { opacity: 0 !important; pointer-events: none !important; transition: opacity 0.16s ease; }
-body.reduce-motion.npc-dialog-open #top-bar, body.reduce-motion.npc-dialog-open #minimap-container, body.reduce-motion.npc-dialog-open #actions-right, body.reduce-motion.npc-dialog-open #bottom-controls, body.reduce-motion.npc-dialog-open #run-objective, body.reduce-motion.npc-dialog-open #boss-hp-container, body.reduce-motion.npc-dialog-open #combo-display, body.reduce-motion.npc-dialog-open #status-chips, body.reduce-motion.npc-dialog-open #xp-strip, body.reduce-motion.npc-dialog-open #floor-intro, body.reduce-motion.npc-dialog-open #whisper-overlay, body.reduce-motion.npc-dialog-open #boss-echo-ribbon, body.reduce-motion.npc-dialog-open #logs, body.reduce-motion.npc-dialog-open .toast-stack, body.reduce-motion.npc-dialog-open #equip-card, body.reduce-motion.npc-dialog-open #achievement-toast, body.reduce-motion.npc-dialog-open #quest-panel { transition: none !important; }
+body.npc-dialog-open #top-bar, body.npc-dialog-open #pet-hud, body.npc-dialog-open #minimap-container, body.npc-dialog-open #actions-right, body.npc-dialog-open #bottom-controls, body.npc-dialog-open #run-objective, body.npc-dialog-open #boss-hp-container, body.npc-dialog-open #combo-display, body.npc-dialog-open #status-chips, body.npc-dialog-open #xp-strip, body.npc-dialog-open #floor-intro, body.npc-dialog-open #whisper-overlay, body.npc-dialog-open #boss-echo-ribbon, body.npc-dialog-open #logs, body.npc-dialog-open .toast-stack, body.npc-dialog-open #equip-card, body.npc-dialog-open #achievement-toast, body.npc-dialog-open #quest-panel { opacity: 0 !important; pointer-events: none !important; transition: opacity 0.16s ease; }
+body.reduce-motion.npc-dialog-open #top-bar, body.reduce-motion.npc-dialog-open #pet-hud, body.reduce-motion.npc-dialog-open #minimap-container, body.reduce-motion.npc-dialog-open #actions-right, body.reduce-motion.npc-dialog-open #bottom-controls, body.reduce-motion.npc-dialog-open #run-objective, body.reduce-motion.npc-dialog-open #boss-hp-container, body.reduce-motion.npc-dialog-open #combo-display, body.reduce-motion.npc-dialog-open #status-chips, body.reduce-motion.npc-dialog-open #xp-strip, body.reduce-motion.npc-dialog-open #floor-intro, body.reduce-motion.npc-dialog-open #whisper-overlay, body.reduce-motion.npc-dialog-open #boss-echo-ribbon, body.reduce-motion.npc-dialog-open #logs, body.reduce-motion.npc-dialog-open .toast-stack, body.reduce-motion.npc-dialog-open #equip-card, body.reduce-motion.npc-dialog-open #achievement-toast, body.reduce-motion.npc-dialog-open #quest-panel { transition: none !important; }
 </style>
 
 </head>
@@ -38619,6 +38619,7 @@ class Player extends Entity {
         this._ironAegisT = 0;
         this._arcaneSigil = null;
         this._briarVortex = null;
+        this._venomPools = [];
         this.parryWindow = 0;
         this.dodgeAnim = 0;
         this.levelUpAnim = 0;
@@ -39196,6 +39197,7 @@ _thornNova(m){if(!RunBoons.hasSynergy(this,'carapaca'))return;const d=18+this.lv
         } else if (this.type === 'rogue') {
             // Fio das Sombras: leque de kunais + passo-relâmpago seguro até alvo em LoS + poça de fumaça venenosa
             const ox = this.x, oy = this.y;
+            if (!this._venomPools) this._venomPools = [];
             this._venomPools.push({ x: ox, y: oy, t: 130, tick: 12 });
             const kSpd = (CONFIG.PLAYER.rogue.bulletSpeed || 13) * 1.15;
             const kDmg = Math.floor((22 + this.lvl * 5) * this.weaponLevel * this.weaponDamageMult);
@@ -46390,7 +46392,7 @@ renderStatsContent() {
                     <div style="min-width:0;flex:1">
                         <div style="display:flex;align-items:center;gap:5px">
                             <span style="font-size:11px;font-weight:800;color:#a7f3d0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${BagPanel._esc(pName)}</span>
-                            <span class="pet-stage-tag">${_L('pet.evo.stage', 'Estágio')} ${stgRoman}</span>
+                            <span class="pet-stage-tag">${_L('pet.evo.stage', 'Estágio {s}').replace('{s}', stgRoman)}</span>
                         </div>
                         <div style="font-size:9.5px;color:${COLORS.TEXT_DIM};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${BagPanel._esc(pRole)}</div>
                     </div>
