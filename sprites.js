@@ -3979,7 +3979,7 @@ const PetSprites = (() => {
                     '........................',
                     '........................'
                 ],
-                // 4: Idle 1 (postura firme de guarda)
+                // 4: Idle 1 (postura firme de guarda — 4 cascos plantados)
                 [
                     '.....DDDD........DDDD...',
                     '.....DD.DD......DD.DD...',
@@ -3990,14 +3990,14 @@ const PetSprites = (() => {
                     '........................',
                     '........................'
                 ],
-                // 5: Idle 2 (bate o casco dianteiro de leve)
+                // 5: Idle 2 (respiração/piscada/cauda — 4 cascos 100% plantados nos mesmos pixels)
                 [
                     '.....DDDD........DDDD...',
                     '.....DD.DD......DD.DD...',
-                    '.....DD.DD......DD..DD..',
-                    '.....DD.DD......DD...DD.',
-                    '.....DD.DD......DD...WW.',
-                    '.....WW.WW......WW......',
+                    '.....DD.DD......DD.DD...',
+                    '.....DD.DD......DD.DD...',
+                    '.....DD.DD......DD.DD...',
+                    '.....WW.WW......WW.WW...',
                     '........................',
                     '........................'
                 ],
@@ -4126,10 +4126,10 @@ const PetSprites = (() => {
                 [
                     '......DDDD......DDDD....',
                     '......DD.DD....DD.DD....',
-                    '......DD.DD....DD..DD...',
-                    '......DD.DD....DD..SS...',
-                    '......SS.SS....SS..WW...',
-                    '......WW.WW....WW.......',
+                    '......DD.DD....DD.DD....',
+                    '......DD.DD....DD.DD....',
+                    '......SS.SS....SS.SS....',
+                    '......WW.WW....WW.WW....',
                     '........................',
                     '........................'
                 ],
@@ -4706,9 +4706,9 @@ const PetSprites = (() => {
                 [
                     '.....DDDD......DDDD.....',
                     '.....DD.DD....DD.DD.....',
-                    '.....DD.DD....DD..DD....',
-                    '.....DD.DD....DD..SS....',
-                    '.....SS.SS....SS........',
+                    '.....DD.DD....DD.DD.....',
+                    '.....DD.DD....DD.DD.....',
+                    '.....SS.SS....SS.SS.....',
                     '........................',
                     '........................',
                     '........................'
@@ -5497,8 +5497,8 @@ const PetSprites = (() => {
                 [
                     '......DDDD......DDDD....',
                     '......DD.DD....DD.DD....',
-                    '......DD.DD....DD..DD...',
-                    '......WW.WW....WW..WW...',
+                    '......DD.DD....DD.DD....',
+                    '......WW.WW....WW.WW....',
                     '........................',
                     '........................',
                     '........................',
@@ -5764,6 +5764,12 @@ const PetSprites = (() => {
         const dy = [0, -2, 0, -2, 0, 0, -2, 0][pose & 7] || 0;
 
         // Detalhes finos 48x48 por espécie + Evolução Estágio II (Armadura/Runas) e Estágio III (Ascensão do Véu)
+        if (pose === 5 && (type === 'horse' || type === 'wolf' || type === 'faro' || type === 'salamander')) {
+            // Respiração sutil de 1px no peito/tronco (y 27..30), mantendo as 4 patas/cascos (y >= 32) 100% imóveis
+            for (let x = 14; x <= 38; x++) {
+                if (g48[30][x] === '.' && g48[29][x] !== '.' && g48[29][x] !== 'O') g48[30][x] = g48[29][x];
+            }
+        }
         if (type === 'horse') {
             // Olho nobre com brilho especular + rédea dourada
             if (pose !== 5) { put(37, 8 + dy, 'W'); put(38, 8 + dy, 'O'); put(37, 9 + dy, 'O'); put(38, 9 + dy, 'O'); }

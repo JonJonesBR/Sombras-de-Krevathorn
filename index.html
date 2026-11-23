@@ -451,7 +451,7 @@ body.mm-hidden #top-bar { right: max(8px, env(safe-area-inset-right, 8px)); }
 .surge-wrap { margin-top: 2px !important; }
 #dungeon-progress { margin-top: 2px !important; padding: 1px 6px !important; gap: 3px !important; }
 #dungeon-progress span { font-size: 9.5px !important; }
-#pet-hud { margin-top: 2px !important; gap: 3px !important; flex-wrap: wrap; }
+@media (orientation: landscape) and (max-height: 500px) { #pet-hud { gap: 3px; } .pet-pill, .pet-mount-btn { min-height: 32px; padding: 2px 7px; } }
 .pet-pill { min-width: 30px !important; min-height: 28px !important; padding: 1px 4px 1px 2px !important; border-radius: 8px !important; }
 .pet-pill img { width: 20px !important; height: 20px !important; }
 .pet-pill-cd { font-size: 8.5px !important; }
@@ -635,10 +635,11 @@ body.pause-open #boss-echo-ribbon{display:none !important}
 .class-mini-card { position: relative; overflow: hidden; }
 .class-pet-badge { display: inline-flex; align-items: center; justify-content: center; gap: 3px; margin-top: 4px; padding: 1px 5px 1px 2px; border-radius: 999px; background: rgba(12,8,22,0.65); border: 1px solid rgba(142,255,196,0.32); font-size: 8.5px; font-weight: 800; color: #bfead8; letter-spacing: 0.03em; max-width: 100%; overflow: hidden; white-space: nowrap; }
 .class-pet-canvas { width: 18px; height: 18px; image-rendering: pixelated; flex-shrink: 0; pointer-events: none; }
-.pet-pill-wrap { display: inline-flex; align-items: stretch; gap: 2px; }
-.pet-mount-btn { min-width: 28px; min-height: 34px; padding: 2px 5px; border-radius: 9px; background: rgba(24,18,38,0.82); border: 1.5px solid rgba(250,204,21,0.45); color: #fde68a; font-size: 11px; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; touch-action: manipulation; transition: transform 0.14s ease, border-color 0.2s ease, background 0.2s ease; }
-.pet-mount-btn:active { transform: scale(0.92); }
-.pet-mount-btn.is-mounted { border-color: #ffd86b; background: rgba(250,204,21,0.24); box-shadow: 0 0 8px rgba(250,204,21,0.38); color: #fff; }
+.pet-pill-wrap { display: inline-flex; align-items: stretch; gap: 5px; pointer-events: auto; }
+.pet-mount-btn { min-height: 38px; padding: 3px 9px; border-radius: 11px; background: rgba(24,17,40,0.88); border: 1.5px solid rgba(250,204,21,0.58); color: #fde68a; font-size: 11px; font-weight: 800; letter-spacing: 0.01em; display: inline-flex; align-items: center; justify-content: center; gap: 4px; cursor: pointer; touch-action: manipulation; white-space: nowrap; box-shadow: 0 3px 10px rgba(0,0,0,0.42); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); transition: transform 0.14s ease, border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease; }
+.pet-mount-btn:active { transform: scale(0.93); }
+.pet-mount-btn .pet-m-ic { font-size: 12px; line-height: 1; pointer-events: none; }
+.pet-mount-btn.is-mounted { border-color: #ffd86b; background: linear-gradient(135deg, rgba(168,85,247,0.56), rgba(245,158,11,0.42)); box-shadow: 0 0 12px rgba(255,216,107,0.48), 0 3px 10px rgba(0,0,0,0.45); color: #ffffff; }
 .pet-stage-tag { font-size: 7.5px; font-weight: 900; padding: 0 3px; border-radius: 4px; background: rgba(255,216,107,0.18); color: #ffd86b; border: 1px solid rgba(255,216,107,0.4); }
 .class-mini-card.warrior .hero-portrait { box-shadow: 0 0 12px rgba(250,204,21,0.32), 0 4px 12px rgba(0,0,0,0.5); }
 .class-mini-card.rogue .hero-portrait { box-shadow: 0 0 12px rgba(232,129,106,0.34), 0 4px 12px rgba(0,0,0,0.5); }
@@ -691,16 +692,24 @@ body.pause-open #boss-echo-ribbon{display:none !important}
 @keyframes starSlam { 0% { opacity: 0; transform: scale(2.2) translateY(-10px); } 65% { opacity: 1; transform: scale(0.9); } 100% { opacity: 1; transform: scale(1); } }
 .win-star { display: inline-block; margin: 0 3px; animation: starSlam 0.36s cubic-bezier(0.22,1,0.36,1) both; animation-delay: calc(var(--si, 0) * 140ms); }
 .grade-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 40px; padding: 2px 10px; border-radius: 10px; font-size: 22px; font-weight: 900; border: 1.5px solid currentColor; background: rgba(0,0,0,0.35); }
-#pet-hud { display: flex; align-items: center; gap: 5px; margin-top: 4px; pointer-events: auto; }
-.pet-pill { position: relative; min-width: 34px; min-height: 34px; padding: 2px 5px 2px 3px; border-radius: 10px; background: rgba(14,10,24,0.72); border: 1.5px solid rgba(142,255,196,0.45); display: inline-flex; align-items: center; gap: 3px; cursor: pointer; touch-action: manipulation; transition: transform 0.14s ease, border-color 0.2s ease, box-shadow 0.2s ease; }
-.pet-pill:active { transform: scale(0.92); }
-.pet-pill img { width: 24px; height: 24px; image-rendering: pixelated; display: block; pointer-events: none; }
-.pet-pill-meta { display: flex; flex-direction: column; align-items: flex-start; line-height: 1; gap: 2px; pointer-events: none; }
-.pet-pill-cd { font-size: 9px; font-weight: 800; color: #e2cff5; letter-spacing: 0.02em; }
-.pet-pill-bond { font-size: 8px; color: #ffd86b; }
-.pet-pill.is-ready { border-color: rgba(142,255,196,0.85); box-shadow: 0 0 8px rgba(142,255,196,0.28); }
-.pet-pill.is-safe { border-color: rgba(255,170,210,0.78); box-shadow: 0 0 8px rgba(255,130,190,0.25); }
-.pet-pill.is-od { border-color: #ffd86b; box-shadow: 0 0 10px rgba(255,216,107,0.45); }
+#pet-hud { position: absolute; left: max(10px, env(safe-area-inset-left, 10px)); bottom: var(--pet-hud-bottom, clamp(232px, 30vh, 274px)); display: flex; flex-direction: column; align-items: flex-start; gap: 5px; z-index: 120; pointer-events: none; max-width: min(236px, 64vw); }
+body.controls-left #pet-hud { left: auto; right: max(10px, env(safe-area-inset-right, 10px)); align-items: flex-end; }
+.pet-pill { position: relative; min-height: 38px; padding: 3px 9px 3px 5px; border-radius: 11px; background: rgba(16,11,28,0.88); border: 1.5px solid rgba(142,255,196,0.48); display: inline-flex; align-items: center; gap: 5px; cursor: pointer; touch-action: manipulation; box-shadow: 0 3px 10px rgba(0,0,0,0.42); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); transition: transform 0.14s ease, border-color 0.2s ease, box-shadow 0.2s ease; }
+.pet-pill:active { transform: scale(0.93); }
+.pet-pill img { width: 24px; height: 24px; image-rendering: pixelated; display: block; pointer-events: none; flex-shrink: 0; }
+.pet-pill-meta { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.08; gap: 2px; pointer-events: none; }
+.pet-pill-lbl { font-size: 11px; font-weight: 800; color: #f3ecff; letter-spacing: 0.01em; white-space: nowrap; }
+.pet-pill-cd { font-size: 9px; font-weight: 800; color: #8effc4; letter-spacing: 0.02em; white-space: nowrap; }
+.pet-pill-bond { font-size: 8.5px; color: #ffd86b; font-weight: 700; white-space: nowrap; }
+.pet-pill.is-cd { border-color: rgba(180,165,210,0.36); }
+.pet-pill.is-cd .pet-pill-lbl { color: #bfb2d6; }
+.pet-pill.is-cd .pet-pill-cd { color: #d5c7eb; }
+.pet-pill.is-ready { border-color: rgba(142,255,196,0.92); box-shadow: 0 0 11px rgba(142,255,196,0.34), 0 3px 10px rgba(0,0,0,0.45); }
+.pet-pill.is-safe { border-color: rgba(255,170,210,0.85); box-shadow: 0 0 10px rgba(255,130,190,0.30), 0 3px 10px rgba(0,0,0,0.45); }
+.pet-pill.is-safe .pet-pill-lbl { color: #ffe4f2; }
+.pet-pill.is-safe .pet-pill-cd { color: #ffaad4; }
+.pet-pill.is-od { border-color: #ffd86b; box-shadow: 0 0 12px rgba(255,216,107,0.48), 0 3px 10px rgba(0,0,0,0.45); }
+.pet-pill.is-od .pet-pill-cd { color: #ffd86b; }
 body.reduce-motion .card-pop, body.reduce-motion .camp-fire-glow, body.reduce-motion .go-cta-pulse, body.reduce-motion .win-star, body.reduce-motion .cd-ready, body.gfx-low .camp-fire-glow, body.gfx-low .go-cta-pulse { animation: none !important; opacity: 1 !important; transform: none !important; }
 body.npc-dialog-open #top-bar, body.npc-dialog-open #pet-hud, body.npc-dialog-open #minimap-container, body.npc-dialog-open #actions-right, body.npc-dialog-open #bottom-controls, body.npc-dialog-open #run-objective, body.npc-dialog-open #boss-hp-container, body.npc-dialog-open #combo-display, body.npc-dialog-open #status-chips, body.npc-dialog-open #xp-strip, body.npc-dialog-open #floor-intro, body.npc-dialog-open #whisper-overlay, body.npc-dialog-open #boss-echo-ribbon, body.npc-dialog-open #logs, body.npc-dialog-open .toast-stack, body.npc-dialog-open #equip-card, body.npc-dialog-open #achievement-toast, body.npc-dialog-open #quest-panel { opacity: 0 !important; pointer-events: none !important; transition: opacity 0.16s ease; }
 body.reduce-motion.npc-dialog-open #top-bar, body.reduce-motion.npc-dialog-open #pet-hud, body.reduce-motion.npc-dialog-open #minimap-container, body.reduce-motion.npc-dialog-open #actions-right, body.reduce-motion.npc-dialog-open #bottom-controls, body.reduce-motion.npc-dialog-open #run-objective, body.reduce-motion.npc-dialog-open #boss-hp-container, body.reduce-motion.npc-dialog-open #combo-display, body.reduce-motion.npc-dialog-open #status-chips, body.reduce-motion.npc-dialog-open #xp-strip, body.reduce-motion.npc-dialog-open #floor-intro, body.reduce-motion.npc-dialog-open #whisper-overlay, body.reduce-motion.npc-dialog-open #boss-echo-ribbon, body.reduce-motion.npc-dialog-open #logs, body.reduce-motion.npc-dialog-open .toast-stack, body.reduce-motion.npc-dialog-open #equip-card, body.reduce-motion.npc-dialog-open #achievement-toast, body.reduce-motion.npc-dialog-open #quest-panel { transition: none !important; }
@@ -1128,7 +1137,6 @@ body.reduce-motion.npc-dialog-open #top-bar, body.reduce-motion.npc-dialog-open 
                     <span style="font-size:max(11px,calc(11px * var(--font-scale,1)));color:rgba(255,255,255,0.55);">|</span>
                     <span id="dp-time" style="font-size:max(11px,calc(11px * var(--font-scale,1)));color:rgba(255,255,255,0.7);font-weight:600;white-space:nowrap;">0:00</span>
                 </div>
-                <div id="pet-hud" class="hidden"></div>
             </div>
             <div class="top-right-chips" style="display:flex;gap:4px;align-items:center;">
                 <span id="difficulty-badge" class="lv-text" style="font-size:max(11px,calc(11px * var(--font-scale,1)));padding:2px 8px;background:rgba(224,182,255,0.08);border-radius:999px;border:1px solid rgba(224,182,255,0.25);display:inline-flex;align-items:center;gap:3px;"><svg class="icon-inline" width="11" height="11"><use href="#ic-swords"/></svg>Normal</span>
@@ -1153,6 +1161,9 @@ body.reduce-motion.npc-dialog-open #top-bar, body.reduce-motion.npc-dialog-open 
                 <div id="boss-hp-text" style="font-size:max(11px,calc(11px * var(--font-scale,1)));color:rgba(255,255,255,0.82);margin-top:1px;">100%</div>
             </div>
         </div>
+
+        <!-- PET THUMB ZONE: Sintonia / Carinho + Montar / Desmontar logo acima do analógico -->
+        <div id="pet-hud" class="hidden"></div>
 
         <!-- RIGHT THUMB ZONE: Action buttons (dodge + special) -->
         <div id="actions-right" class="hidden">
@@ -2278,7 +2289,7 @@ function _resizeWorldBuffers() {
 // delas: painel do NPC, faixa de evento, equipamentos e direcionais fixos.
 // Medida cara (getComputedStyle + vários getBoundingClientRect): só quando algo muda
 // (_markHudLayoutDirty), além de uma rede de segurança a cada 3 s fora do combate.
-const _hudLayout = { measured: false, k: 0.75, topBarBottom: 0, clearTop: 0, bossBottom: 0, actionsTop: 0, actionsLeft: 0, actionsRight: 0 };
+const _hudLayout = { measured: false, k: 0.75, topBarBottom: 0, clearTop: 0, bossBottom: 0, actionsTop: 0, actionsLeft: 0, actionsRight: 0, bottomTop: 0, objTop: 0 };
 let _hudLayoutDirty = true;
 let _hudLayoutNextMs = 0;
 const HUD_LAYOUT_SAFETY_MS = 3000;
@@ -2325,6 +2336,19 @@ function _refreshHudLayout() {
         _hudLayout.actionsTop = actR ? actR.top : 0;
         _hudLayout.actionsLeft = actR ? actR.left : 0;
         _hudLayout.actionsRight = actR ? actR.right : 0;
+        const bc = document.getElementById('bottom-controls');
+        const ro = document.getElementById('run-objective');
+        const bcR = vis(bc) ? bc.getBoundingClientRect() : null;
+        const roR = vis(ro) ? ro.getBoundingClientRect() : null;
+        _hudLayout.bottomTop = bcR ? bcR.top : 0;
+        _hudLayout.objTop = roR ? roR.top : 0;
+        if (typeof Input !== 'undefined' && typeof Input._fixedY === 'function' && typeof height === 'number' && height > 0 && _hudLayout.k > 0) {
+            const ch = (canvas && canvas.clientHeight) || window.innerHeight || 800;
+            const joyTopCss = (Input._fixedY('left') - CONFIG.JOYSTICK_RADIUS) / _hudLayout.k;
+            const petBottom = Math.max(144, Math.min(Math.round(ch * 0.46), Math.round(ch - joyTopCss + 12)));
+            const pb = petBottom + 'px';
+            if (_hudLayout._petBottom !== pb) { _hudLayout._petBottom = pb; document.body.style.setProperty('--pet-hud-bottom', pb); }
+        }
         const stack = Math.round(tbB + (hasEquip ? 30 : 0) + 6) + 'px';
         if (_hudLayout._stack !== stack) { _hudLayout._stack = stack; document.body.style.setProperty('--hud-left-stack', stack); }
         // Topo livre real (inclui equipamentos e buffs) para chefe/avisos em CSS
@@ -5353,6 +5377,12 @@ const I18n = {
             'pet.cmd.used': '{name}: {skill}!',
             'pet.cmd.wait': '{name} ainda recupera o fôlego.',
             'pet.hud.hint': 'Toque para Sintonia (combate) ou Carinho (sala limpa)',
+            'pet.hud.synergy': 'Sintonia',
+            'pet.hud.pet': 'Carinho',
+            'pet.hud.mountShort': 'Montar',
+            'pet.hud.dismountShort': 'Desmontar',
+            'pet.hud.tipMount': 'Use os botões acima do analógico para Montar ou ativar a Sintonia do companheiro.',
+            'pet.hud.tipBasic': 'Use o botão acima do analógico para ativar a Sintonia em luta ou fazer Carinho na sala limpa.',
             'pet.horse.role': 'Vanguarda · Quebra-Postura',
             'pet.horse.passive': '+10% vel. fora de combate, impulso após esquiva e absorve 1 golpe pesado a cada 25s.',
             'pet.horse.active': 'Investida Blindada: empurra inimigos e aplica +14 Postura em chefes.',
@@ -8072,6 +8102,12 @@ const I18n = {
             'pet.cmd.used': '{name}: {skill}!',
             'pet.cmd.wait': '{name} is catching its breath.',
             'pet.hud.hint': 'Tap to Attune (combat) or Pet (cleared room)',
+            'pet.hud.synergy': 'Attune',
+            'pet.hud.pet': 'Pet',
+            'pet.hud.mountShort': 'Mount',
+            'pet.hud.dismountShort': 'Dismount',
+            'pet.hud.tipMount': 'Use the buttons above the stick to Mount or trigger your companion\'s Attunement.',
+            'pet.hud.tipBasic': 'Use the button above the stick to trigger Attunement in combat or Pet in a clear room.',
             'pet.horse.role': 'Vanguard · Posture Breaker',
             'pet.horse.passive': '+10% speed out of combat, burst after dodge, and absorbs 1 heavy hit every 25s.',
             'pet.horse.active': 'Armored Charge: knocks foes back and deals +14 Boss Stagger.',
@@ -10790,6 +10826,12 @@ const I18n = {
             'pet.cmd.used': '{name}: ¡{skill}!',
             'pet.cmd.wait': '{name} aún recupera el aliento.',
             'pet.hud.hint': 'Toca para Sintonía (combate) o Caricia (sala limpia)',
+            'pet.hud.synergy': 'Sintonía',
+            'pet.hud.pet': 'Caricia',
+            'pet.hud.mountShort': 'Montar',
+            'pet.hud.dismountShort': 'Bajar',
+            'pet.hud.tipMount': 'Usa los botones sobre el analógico para Montar o activar la Sintonía de tu compañero.',
+            'pet.hud.tipBasic': 'Usa el botón sobre el analógico para activar la Sintonía en combate o Acariciar en sala limpia.',
             'pet.horse.role': 'Vanguardia · Rompepostura',
             'pet.horse.passive': '+10% vel. fuera de combate, impulso al esquivar y absorbe 1 golpe fuerte cada 25s.',
             'pet.horse.active': 'Carga Blindada: empuja enemigos y aplica +14 Postura a jefes.',
@@ -12850,6 +12892,7 @@ function _statisticsDefaults() {
         mutationsUsed: 0, skillsUnlocked: 0, achievementsUnlocked: 0,
         petsSpawned: 0, bestKills: 0,
         petsRescued: [],                                    // tipos de pet já libertados no mundo (coleção; único, sem repetir)
+        petHudTipSeen: false,                               // dica 1x sobre botões do pet acima do analógico
         petBonds: {},                                       // vínculo permanente por pet: { xp, level, runs }
         petEvolutions: {},                                  // estágio de evolução permanente por pet: 1 | 2 | 3
         favoritePet: null,                                  // companheiro inicial escolhido (requer vínculo >= 2)
@@ -12951,6 +12994,7 @@ const Statistics = {
         });
         data.petEvolutions = _cleanEvos;
         if (typeof data.favoritePet !== 'string' || data.petsRescued.indexOf(data.favoritePet) === -1 || !data.petBonds[data.favoritePet] || data.petBonds[data.favoritePet].level < 2) data.favoritePet = null;
+        if (typeof data.petHudTipSeen !== 'boolean') data.petHudTipSeen = false;
         // Booleanos: aceita 0/1 de save antigo, grava sempre true/false.
         ['creditsSeen', 'prophecyHeard', 'eiranWhisperHeard', 'openingSeen', 'openingFinished',
          'abyssOpeningSeen', 'prologueSeen', 'seraphinaGift', 'oracleGift', 'goddessBlessing'].forEach(key => {
@@ -15045,41 +15089,49 @@ function _drawMinimapDots(c, scaleX, scaleY, dotMult) {
         c.beginPath(); c.arc(px, py, pSize, 0, 6.28); c.fill();
     }
     
-    // Entities
-    let normalEnemyCount = 0;
-    const MAX_MINIMAP_ENEMIES = 15;
+    // Entities: todo inimigo vivo (incluindo curandeiros nos cantos) aparece claramente no minimapa
     const faroSight = (typeof PetSystem !== 'undefined' && PetSystem.hasFaroSight) ? PetSystem.hasFaroSight() : false;
-    const revealAll = (player && player.mapReveal === true) || faroSight;
+    let aliveEnemyList = [];
     for (let i = 0; i < entities.length; i++) {
         const e = entities[i];
-        if (e === player || !e.alive) continue;
+        if (!e || e === player || !e.alive || e.isBarrier || e.isP) continue;
+        if (!e.isEnemy && !e.isBoss && !e.isTreasureGoblin && !(typeof Enemy !== 'undefined' && e instanceof Enemy)) continue;
         if (e.enemyType === 'lurker' && !e.revealed && !faroSight) continue; // escondido no mato: fora do minimapa (Faro fareja)
-        if (!e.isBoss && !e.elite) {
-            normalEnemyCount++;
-            if (!revealAll && normalEnemyCount > MAX_MINIMAP_ENEMIES) continue;
-        }
-        let dotColor = e.isBoss ? CONFIG.MINIMAP_BOSS_COLOR : 
-                      (e.elite ? CONFIG.ELITE_COLOR : CONFIG.MINIMAP_ENEMY_COLOR);
-        const dotSize = e.isBoss ? CONFIG.MINIMAP_BOSS_DOT_SIZE * dotMult * 1.2 : CONFIG.MINIMAP_DOT_SIZE * dotMult;
-        const ex = (e.x/CONFIG.TILE_SIZE)*scaleX;
-        const ey = (e.y/CONFIG.TILE_SIZE)*scaleY;
-        
-        // Boss/elite glow (alpha halo, no shadowBlur)
-        if (e.isBoss || e.elite) {
-            c.globalAlpha = 0.25;
+        aliveEnemyList.push(e);
+    }
+    const fewLeft = aliveEnemyList.length > 0 && aliveEnemyList.length <= 3;
+    const cap = Math.min(aliveEnemyList.length, 80);
+    for (let i = 0; i < cap; i++) {
+        const e = aliveEnemyList[i];
+        const isSupport = !!(e.isHealer || e.enemyType === 'healer' || e.isSummoner);
+        const dotColor = e.isBoss ? CONFIG.MINIMAP_BOSS_COLOR
+            : (e.elite ? CONFIG.ELITE_COLOR
+            : (e.isTreasureGoblin ? CONFIG.MINIMAP_GOBLIN_COLOR
+            : (isSupport ? '#ff7a29' : '#ff3838')));
+        const baseR = e.isBoss ? CONFIG.MINIMAP_BOSS_DOT_SIZE * 1.25
+            : (e.elite || isSupport ? Math.max(2.6, CONFIG.MINIMAP_DOT_SIZE * 1.3)
+            : Math.max(2.3, CONFIG.MINIMAP_DOT_SIZE * 1.15));
+        const dotSize = baseR * dotMult;
+        const ex = (e.x / CONFIG.TILE_SIZE) * scaleX;
+        const ey = (e.y / CONFIG.TILE_SIZE) * scaleY;
+
+        // Halo pulsante para chefe, elite, ou quando restam <= 3 inimigos (evita inimigo escondido no canto)
+        if (e.isBoss || e.elite || fewLeft) {
+            const pulse = fewLeft ? (0.32 + Math.sin(gameTime * 0.16) * 0.16) : 0.28;
+            c.globalAlpha = pulse;
             c.fillStyle = dotColor;
-            c.beginPath(); c.arc(ex, ey, dotSize * 2, 0, 6.28); c.fill();
+            c.beginPath(); c.arc(ex, ey, dotSize * (fewLeft ? 2.1 : 1.9), 0, 6.28); c.fill();
             c.globalAlpha = 1;
         }
-        
+
+        // Anel escuro de contraste para o ponto nunca sumir encostado em paredes escuras
+        c.globalAlpha = 0.78;
+        c.fillStyle = '#000';
+        c.beginPath(); c.arc(ex, ey, dotSize + 1.0 * dotMult, 0, 6.28); c.fill();
+
+        c.globalAlpha = 1;
         c.fillStyle = dotColor;
         c.beginPath(); c.arc(ex, ey, dotSize, 0, 6.28); c.fill();
-        
-        // Pickups on minimap (currency nearby)
-        if (e.isTreasureGoblin) {
-            c.fillStyle = CONFIG.MINIMAP_GOBLIN_COLOR;
-            c.beginPath(); c.arc(ex, ey, dotSize * 1.5, 0, 6.28); c.fill();
-        }
     }
     
     // Sala secreta: entrada (roxo) no andar e saída (laranja) dentro do bolso
@@ -32651,59 +32703,161 @@ class HealerEnemy extends Enemy {
         this.color = CONFIG.HEALER_COLOR;
         this.xpReward = CONFIG.HEALER_XP;
         this.healTimer = 0;
+        this.shootTimer = 30;
+        this._telegraph = 0;
+        this._strafeDir = ((Math.floor(x + y) & 1) ? 1 : -1);
+        this._stuckT = 0;
         this.isHealer = true;
         this.enemyType = 'healer';
     }
     update(p, m) {
-        if(this.frozen > 0) return;
+        if (this.frozen > 0) return;
+        if (this.attackAnim > 0) this.attackAnim--;
         const dx = p.x - this.x, dy = p.y - this.y;
         const dSq = dx * dx + dy * dy;
+        const d = Math.sqrt(dSq) || 1;
+        this.angle = Math.atan2(dy, dx);
         let speedMult = player && player.skills.slow ? (1 - player.skills.slow) : 1;
-        
-        let targetShielder = null;
-        let minDistSq = Infinity;
-        if (typeof ShieldEnemy !== 'undefined') {
-            for (let i=0; i<entities.length; i++) {
-                const e = entities[i];
-                if (e instanceof ShieldEnemy && e.alive) {
-                    const edx = e.x - this.x, edy = e.y - this.y;
-                    const edSq = edx * edx + edy * edy;
-                    if (edSq < minDistSq) { minDistSq = edSq; targetShielder = e; }
+        if (player && typeof RunBoons !== 'undefined') speedMult *= RunBoons.enemySpeedMult(player);
+
+        // Procura aliados curáveis (prioriza escudeiro; senão qualquer inimigo não-curandeiro vivo)
+        let targetAlly = null, minShieldSq = Infinity, minAnySq = Infinity, anyAlly = null;
+        let hasAlly = false;
+        for (let i = 0; i < entities.length; i++) {
+            const e = entities[i];
+            if (!e || e === this || !e.alive || e === player || e.isB || e.isBarrier || !(e.maxHp > 0) || (e instanceof HealerEnemy)) continue;
+            hasAlly = true;
+            const edx = e.x - this.x, edy = e.y - this.y;
+            const edSq = edx * edx + edy * edy;
+            if (typeof ShieldEnemy !== 'undefined' && e instanceof ShieldEnemy) {
+                if (edSq < minShieldSq) { minShieldSq = edSq; targetAlly = e; }
+            } else if (edSq < minAnySq) {
+                minAnySq = edSq; anyAlly = e;
+            }
+        }
+        const ally = targetAlly || anyAlly;
+        const allyDistSq = targetAlly ? minShieldSq : minAnySq;
+        const los = !m || typeof hasLineOfSight !== 'function' || hasLineOfSight(m, this.x, this.y, p.x, p.y);
+        const prevX = this.x, prevY = this.y;
+        const spd = this.s * speedMult;
+
+        // Movimento inteligente: acompanha aliado ou mantém distância de combate SEM se prender em cantos
+        let vx = 0, vy = 0;
+        if (ally && allyDistSq > 3600) {
+            const ad = Math.sqrt(allyDistSq) || 1;
+            vx = ((ally.x - this.x) / ad) * spd;
+            vy = ((ally.y - this.y) / ad) * spd;
+        } else if (!los || d > 255) {
+            // Sem LoS ou muito longe: avança para engajar usando FlowField quando há parede
+            if (d > 60 && !los && typeof FlowField !== 'undefined' && m) {
+                FlowField.ensure(m, Math.floor(p.x / CONFIG.TILE_SIZE), Math.floor(p.y / CONFIG.TILE_SIZE));
+                if (FlowField.direction(m, this.x, this.y)) {
+                    vx = FlowField.outX * spd;
+                    vy = FlowField.outY * spd;
                 }
+            }
+            if (!vx && !vy) {
+                vx = (dx / d) * spd * 0.9;
+                vy = (dy / d) * spd * 0.9;
+            }
+        } else if (d < 145) {
+            // Perto demais: recua se houver espaço aberto; se acuado contra parede/canto, contorna lateralmente!
+            const rx = -dx / d, ry = -dy / d;
+            const tx = -ry * this._strafeDir, ty = rx * this._strafeDir;
+            const blockedBack = m && m.isWall && m.isWall(this.x + rx * 26, this.y + ry * 26);
+            const blockedSide = m && m.isWall && m.isWall(this.x + tx * 24, this.y + ty * 24);
+            if (blockedSide) this._strafeDir = -this._strafeDir;
+            const stx = -ry * this._strafeDir, sty = rx * this._strafeDir;
+            if (blockedBack) {
+                // Acuado na parede: desliza em direção aberta / tangente em vez de empurrar o canto
+                vx = (stx * 0.85 + (dx / d) * 0.25) * spd;
+                vy = (sty * 0.85 + (dy / d) * 0.25) * spd;
+            } else {
+                vx = (rx * 0.65 + stx * 0.55) * spd;
+                vy = (ry * 0.65 + sty * 0.55) * spd;
+            }
+        } else {
+            // Faixa ideal (145..255px): orbita lateralmente mantendo visão do herói
+            const stx = (-dy / d) * this._strafeDir, sty = (dx / d) * this._strafeDir;
+            if (m && m.isWall && m.isWall(this.x + stx * 24, this.y + sty * 24)) {
+                this._strafeDir = -this._strafeDir;
+            }
+            vx = (-dy / d) * this._strafeDir * spd * 0.62;
+            vy = (dx / d) * this._strafeDir * spd * 0.62;
+        }
+
+        if (vx || vy) {
+            this.move(vx, vy, m);
+            if (Math.hypot(this.x - prevX, this.y - prevY) < 0.2) {
+                this._stuckT++;
+                if (this._stuckT >= 10) {
+                    this._strafeDir = -this._strafeDir;
+                    this._stuckT = 0;
+                }
+            } else {
+                this._stuckT = 0;
             }
         }
 
-        if (targetShielder && minDistSq > 2500) {
-            const sdx = targetShielder.x - this.x;
-            const sdy = targetShielder.y - this.y;
-            const invD = minDistSq > 0 ? 1.0 / Math.sqrt(minDistSq) : 1;
-            this.move((sdx*invD)*this.s*speedMult, (sdy*invD)*this.s*speedMult, m);
-        } else if(dSq > 0 && dSq < CONFIG.ENEMY_CHASE_RANGE * CONFIG.ENEMY_CHASE_RANGE) {
-            const invD = 1.0 / Math.sqrt(dSq);
-            this.move(-(dx*invD)*this.s*speedMult, -(dy*invD)*this.s*speedMult, m);
-        }
-
-        // Heal nearby allies each interval (throttled to every 30 frames)
+        // Cura aliados próximos a cada 30 frames
         this.healTimer++;
-        if(this.healTimer >= 30) {
+        if (this.healTimer >= 30) {
             this.healTimer = 0;
             for (let i = 0; i < entities.length; i++) {
                 const e = entities[i];
-                // Barreira de gelo (isBarrier) não tem maxHp: curar daria NaN
-                if(e !== this && e.alive && e !== player && !e.isB && !e.isBarrier && e.maxHp > 0 && !(e instanceof HealerEnemy)) {
+                if (e !== this && e.alive && e !== player && !e.isB && !e.isBarrier && e.maxHp > 0 && !(e instanceof HealerEnemy)) {
                     const edx = e.x - this.x, edy = e.y - this.y;
-                    if(edx * edx + edy * edy < CONFIG.HEALER_REGEN_RADIUS * CONFIG.HEALER_REGEN_RADIUS) {
+                    if (edx * edx + edy * edy < CONFIG.HEALER_REGEN_RADIUS * CONFIG.HEALER_REGEN_RADIUS) {
                         e.hp = Math.min(e.maxHp, e.hp + CONFIG.HEALER_REGEN_RATE);
                     }
                 }
             }
+        }
+
+        // Ataque mágico esmeralda: sempre reage com LoS (mais frequente quando está sozinho ou acuado!)
+        const shootRange = CONFIG.ENEMY_RANGED_SHOOT_RANGE + 40;
+        const shootInterval = hasAlly ? 145 : 95;
+        if (los && d < shootRange) {
+            this.shootTimer++;
+            if (this.shootTimer > shootInterval - 20 && this.shootTimer <= shootInterval) {
+                if (!this._telegraph) _fxWarnSfx(this.x, this.y);
+                this._telegraph = 1;
+            } else {
+                this._telegraph = 0;
+            }
+            if (this.shootTimer > shootInterval) {
+                this.shootTimer = 0;
+                this._telegraph = 0;
+                this.attackAnim = 12;
+                _fxShotSfx(this.x, this.y);
+                const bSpd = CONFIG.ENEMY_RANGED_BULLET_SPEED * 0.9;
+                const weave = Math.sin(gameTime * 0.13 + this.x * 0.01) * 0.04;
+                const ang = Math.atan2(dy, dx) + weave;
+                const bvx = Math.cos(ang) * bSpd;
+                const bvy = Math.sin(ang) * bSpd;
+                const dmg = Math.max(4, Math.round(DifficultySystem.getScaledDamage(CONFIG.ENEMY_RANGED_BULLET_DAMAGE) * 0.85));
+                if (window.PoolManager) {
+                    const _eb = PoolManager.acquire('Bullet', this.x, this.y, bvx, bvy, '#55ee88', dmg, false);
+                    bullets.push(_eb);
+                } else {
+                    bullets.push(new Bullet(this.x, this.y, bvx, bvy, '#55ee88', dmg, false));
+                }
+            }
+        } else {
+            this._telegraph = 0;
         }
     }
     draw(ctx, cx, cy) {
         if(!this.alive) return;
         const px = this.x - cx, py = this.y - cy;
         // Brilho sutil esmeralda da aura de cura (cruz agora integrada diretamente no sprite do clérigo)
-        drawGlow(ctx, px, py - 4, 14, '#7aff9e', 0.16);
+        drawGlow(ctx, px, py - 4, this._telegraph ? 18 : 14, this._telegraph ? '#aaff66' : '#7aff9e', this._telegraph ? 0.34 : 0.16);
+        if (this._telegraph) {
+            ctx.save();
+            ctx.globalAlpha = 0.55;
+            PixelFX.ring(ctx, px, py, this.radius + 7, '#7aff9e', 2);
+            ctx.restore();
+        }
         SpriteRenderer.drawEnemy.call(this, ctx, px, py, this.enemyType, (this.attackAnim > 0 ? 12 - this.attackAnim : this.walkTimer), this.angle, 2.0, this.ft > 0, this.attackAnim > 0 ? 'attack' : (this.walkTimer > 0 ? 'walk' : 'idle'));
         _drawEntityOverlays(ctx, this, px, py, cx, cy);
         // HP bar
@@ -35526,6 +35680,16 @@ const PetRescue = {
         PetBondSystem.addXp(o.pet, 12);
         if (pt.fragment && typeof NarrativeSystem !== 'undefined') NarrativeSystem.discover(pt.fragment);
         spawnParticles(o.x, o.y, PET_RESCUE_COLOR, 16, 3);
+        if (typeof Statistics !== 'undefined' && Statistics.data && !Statistics.data.petHudTipSeen) {
+            Statistics.data.petHudTipSeen = true;
+            if (typeof Statistics.save === 'function') Statistics.save();
+            if (typeof showToast === 'function') {
+                const tip = pt.mountable
+                    ? _L('pet.hud.tipMount', 'Use os botões acima do analógico para Montar ou ativar a Sintonia do companheiro.')
+                    : _L('pet.hud.tipBasic', 'Use o botão acima do analógico para ativar a Sintonia em luta ou fazer Carinho na sala limpa.');
+                showToast(tip, 'info', 4800);
+            }
+        }
     },
 
     free(o) {
@@ -36070,10 +36234,17 @@ const PetSystem = {
         const safeRoom = (typeof _cachedAliveEnemies === 'number' && _cachedAliveEnemies === 0) && !(player.combatTimer > 0);
         const od = (player.overdriveTimer || 0) > 0;
         const mnt = this.getMountedPet();
-        const sig = this.petActive.map(id => id + ':' + Math.ceil((this._cmdCd[id] || 0) / 60) + ':' + PetBondSystem.getLevel(id) + ':' + this.getStage(id) + ':' + (mnt && mnt.type === id ? 'M' : 'U')).join('|') + (safeRoom ? ':S' : ':C') + (od ? ':O' : '');
+        const lang = (window.I18n && I18n.lang) ? I18n.lang : 'pt';
+        const sig = lang + '|' + this.petActive.map(id => id + ':' + Math.ceil((this._cmdCd[id] || 0) / 60) + ':' + PetBondSystem.getLevel(id) + ':' + this.getStage(id) + ':' + (mnt && mnt.type === id ? 'M' : 'U')).join('|') + (safeRoom ? ':S' : ':C') + (od ? ':O' : '');
         if (sig === this._hudSig) return;
+        const wasHidden = el.classList.contains('hidden');
         this._hudSig = sig;
         el.classList.remove('hidden');
+        if (wasHidden && typeof _markHudLayoutDirty === 'function') _markHudLayoutDirty();
+        const lblSyn = _L('pet.hud.synergy', 'Sintonia');
+        const lblPet = _L('pet.hud.pet', 'Carinho');
+        const lblMount = _L('pet.hud.mountShort', 'Montar');
+        const lblDismount = _L('pet.hud.dismountShort', 'Desmontar');
         el.innerHTML = this.petActive.map((id, idx) => {
             const pt = PET_TYPES[id];
             if (!pt) return '';
@@ -36085,15 +36256,17 @@ const PetSystem = {
             const cdSec = Math.ceil((this._cmdCd[id] || 0) / 60);
             const lv = PetBondSystem.getLevel(id);
             const isMnt = !!(mnt && mnt.type === id);
-            const cls = od ? 'is-od' : (safeRoom ? 'is-safe' : (cdSec === 0 ? 'is-ready' : ''));
-            const status = safeRoom ? '♥' : (cdSec > 0 ? cdSec + 's' : '⚡');
+            const cls = od ? 'is-od' : (safeRoom ? 'is-safe' : (cdSec === 0 ? 'is-ready' : 'is-cd'));
+            const mainLbl = safeRoom ? ('♥ ' + lblPet) : (cdSec > 0 ? (lblSyn + ' ' + cdSec + 's') : ('⚡ ' + lblSyn));
             const stgRoman = stg === 3 ? 'III' : (stg === 2 ? 'II' : 'I');
-            const stars = (lv > 0 ? '★'.repeat(lv) : '·') + ' ' + stgRoman;
+            const subTxt = (lv > 0 ? '★'.repeat(lv) : '·') + ' ' + stgRoman;
             const nm = _L('pet.' + id + '.stage' + stg, _L(pt.nameKey, pt.name));
             const img = this._hudThumbs[tKey] ? '<img src="' + this._hudThumbs[tKey] + '" alt="">' : '';
-            const pill = '<button type="button" class="pet-pill ' + cls + '" onclick="PetSystem.triggerCommand(' + idx + ')" aria-label="' + nm + ' (' + status + ')" title="' + _L('pet.hud.hint', 'Toque para Sintonia ou Carinho') + '">' + img + '<span class="pet-pill-meta"><span class="pet-pill-cd">' + status + '</span><span class="pet-pill-bond">' + stars + '</span></span></button>';
+            const pill = '<button type="button" class="pet-pill ' + cls + '" onclick="PetSystem.triggerCommand(' + idx + ')" aria-label="' + nm + ' — ' + mainLbl + '" title="' + _L('pet.hud.hint', 'Toque para Sintonia ou Carinho') + '">' + img + '<span class="pet-pill-meta"><span class="pet-pill-lbl">' + mainLbl + '</span><span class="pet-pill-bond">' + subTxt + '</span></span></button>';
+            const mText = isMnt ? lblDismount : lblMount;
+            const mIcon = isMnt ? '⬇' : '♞';
             const mBtn = pt.mountable
-                ? '<button type="button" class="pet-mount-btn ' + (isMnt ? 'is-mounted' : '') + '" onclick="PetSystem.toggleMount(\'' + id + '\')" aria-label="' + _L(isMnt ? 'pet.mount.dismountBtn' : 'pet.mount.btn', 'Montar') + '" title="' + _L(isMnt ? 'pet.mount.dismountBtn' : 'pet.mount.btn', 'Montar') + ' (M)">' + (isMnt ? '⬇' : '🏇') + '</button>'
+                ? '<button type="button" class="pet-mount-btn ' + (isMnt ? 'is-mounted' : '') + '" onclick="PetSystem.toggleMount(\'' + id + '\')" aria-label="' + mText + ' ' + nm + '" title="' + mText + ' (M)"><span class="pet-m-ic">' + mIcon + '</span><span>' + mText + '</span></button>'
                 : '';
             return '<span class="pet-pill-wrap">' + pill + mBtn + '</span>';
         }).join('');
@@ -36663,6 +36836,7 @@ class Pet {
     update(m) {
         if (!this.alive || !player) return;
         if (typeof PetSystem !== 'undefined' && Array.isArray(pets) && pets[0] === this) PetSystem.tick();
+        const prevX = this.x, prevY = this.y;
         this.timer++;
         this._abilityTimer++;
         if (this._atkT > 0) this._atkT--;
@@ -36678,9 +36852,10 @@ class Pet {
         if (this.mounted) {
             this.x = player.x;
             this.y = player.y;
-            const pMoving = Math.hypot(player._pvx || 0, player._pvy || 0) > 0.25;
-            if (pMoving) {
-                this._face = (player._pvx || 0) >= 0 ? 1 : -1;
+            const rdx = this.x - prevX, rdy = this.y - prevY;
+            const pMoved = (rdx * rdx + rdy * rdy) > 0.20;
+            if (pMoved) {
+                if (Math.abs(rdx) > 0.25) this._face = rdx >= 0 ? 1 : -1;
                 this._mountBob = Math.sin(this.timer * 0.35) * 2.2;
                 if (this.timer % 14 === 0 && !(window.GameSettings && GameSettings.reducedMotion)) {
                     const dustCol = this.type === 'dragon' ? '#ff8822' : (this._stage() >= 3 ? '#c084fc' : '#c8b89a');
@@ -36688,7 +36863,7 @@ class Pet {
                 }
                 if (this.timer % 24 === 0) this._trampleAround(m, 1);
             } else {
-                this._mountBob = Math.sin(this.timer * 0.08) * 0.8;
+                this._mountBob = 0;
             }
         } else {
             this._mountBob = 0;
@@ -36762,6 +36937,17 @@ class Pet {
         if (this.ability === 'mimic' && this.timer % (this.data.furtoInterval || 640) === 0) {
             this._furtar(1);
         }
+
+        // Detecção real de deslocamento com histerese (evita galope/tremor parado, montado ou solto)
+        const realDx = this.x - prevX, realDy = this.y - prevY;
+        if (realDx > 0.25) this._face = 1;
+        else if (realDx < -0.25) this._face = -1;
+        if (realDx * realDx + realDy * realDy > 0.20) {
+            this._movingT = 6;
+        } else if ((this._movingT || 0) > 0) {
+            this._movingT--;
+        }
+        this._isMoving = (this._movingT || 0) > 0;
     }
 
     takeDamage(a) {
@@ -36795,8 +36981,10 @@ class Pet {
         const sy = (this.mounted && player ? player.y : this.y) - cy + mntOffsetY;
         const rmV = !!(window.GameSettings && GameSettings.reducedMotion);
         const celebHop = (!this.mounted && (this._celebT > 0 || this._pettedT > 0) && !rmV) ? -Math.abs(Math.sin(this.timer * 0.35)) * 7 : 0;
-        const bob = (this.mounted ? (this._mountBob || 0) : (rmV ? 0 : Math.sin(this.timer * 0.08) * 1.6)) + celebHop;
         const flyAlt = this.mounted ? (this.type === 'dragon' ? 4 : 0) : (PET_FLY_ALT[this.type] || 0);
+        const moving = !!this._isMoving;
+        const idleBob = (!this.mounted && !rmV && (flyAlt > 0 || moving)) ? Math.sin(this.timer * 0.08) * 1.6 : 0;
+        const bob = (this.mounted ? (this._mountBob || 0) : idleBob) + celebHop;
         const mScale = this.mounted ? (this.type === 'wolf' ? 1.18 : 1.24) : 1.0;
         const drawSz = Math.round(48 * mScale);
         const ptop = sy + bob - flyAlt - Math.round(drawSz * 0.5);
@@ -36820,20 +37008,14 @@ class Pet {
             ctx.restore();
         }
 
-        // Seleção fluida de 8 quadros: 0..3 movimento, 4..5 idle vivo (respiração/piscada), 6..7 ataque
-        const dpx = this._dpx != null ? this._dpx : this.x, dpy = this._dpy != null ? this._dpy : this.y;
-        const mvx = this.mounted && player ? (player._pvx || 0) : (this.x - dpx);
-        const mvy = this.mounted && player ? (player._pvy || 0) : (this.y - dpy);
-        this._dpx = this.x; this._dpy = this.y;
-        if (mvx > 0.25) this._face = 1; else if (mvx < -0.25) this._face = -1;
-        const moving = mvx * mvx + mvy * mvy > 0.09;
+        // Seleção fluida de 8 quadros: 0..3 movimento/voo, 4..5 idle calmo (respiração/piscada, patas 100% plantadas), 6..7 ataque
         let pose;
         if (this._atkT > 0 && !this.mounted) {
             pose = this._atkT > 7 ? 6 : 7;
         } else if (moving || flyAlt > 0) {
-            pose = Math.floor(this.timer / (moving ? 5 : 7)) & 3;
+            pose = Math.floor(this.timer / (moving ? 5 : 8)) & 3;
         } else {
-            pose = (this.timer % 180 >= 166) ? 5 : ((Math.floor(this.timer / 30) & 1) ? 4 : 0);
+            pose = (Math.floor(this.timer / 50) & 1) ? 5 : 4;
         }
 
         const stg = this._stage();
@@ -49425,23 +49607,39 @@ const Input = {
 
     // Fixed joystick base positions (computed from canvas size each frame)
     // Controles invertidos (canhoto): o stick de movimento (this.left) fica a direita.
-    get _lx() { return width  * (window.GameSettings && GameSettings.leftHanded ? 0.80 : 0.20); },
-    get _ly() { return this._fixedY(); },
-    get _rx() { return width  * (window.GameSettings && GameSettings.leftHanded ? 0.20 : 0.80); },
-    get _ry() { return this._fixedY(); },
-    // 68% da altura, mas o anel nunca desce sobre os botões de esquiva/especial
-    // (em telas de celular o anel direito cobria o topo do botão de esquiva).
-    _fixedY() {
-        const base = height * 0.68;
-        const at = _hudLayout.actionsTop;
-        if (!at) return base;
-        const k = _hudLayout.k || 0.75;
+    get _lx() {
         const R = CONFIG.JOYSTICK_RADIUS;
-        // Só quando algum anel cruza a coluna dos botões na horizontal (paisagem não muda)
-        const aL = _hudLayout.actionsLeft * k, aR = _hudLayout.actionsRight * k;
-        const crosses = x => x + R > aL && x - R < aR;
-        if (!crosses(this._lx) && !crosses(this._rx)) return base;
-        return Math.max(height * 0.5, Math.min(base, (at - 10) * k - R));
+        const m = Math.max(R + 12, width * 0.21);
+        return (window.GameSettings && GameSettings.leftHanded) ? (width - m) : m;
+    },
+    get _ly() { return this._fixedY('left'); },
+    get _rx() {
+        const R = CONFIG.JOYSTICK_RADIUS;
+        const m = Math.max(R + 12, width * 0.21);
+        return (window.GameSettings && GameSettings.leftHanded) ? m : (width - m);
+    },
+    get _ry() { return this._fixedY('right'); },
+    // Quadrante inferior ergonômico para o dedão (~78% da altura, alinhado ao botão de ataque),
+    // sempre acima de #bottom-controls e #run-objective. O stick de movimento ('left') nunca é
+    // arrastado para o meio da tela pela coluna #actions-right do lado oposto.
+    _fixedY(side) {
+        const k = (_hudLayout && _hudLayout.k) || 0.75;
+        const R = CONFIG.JOYSTICK_RADIUS;
+        let y = Math.min(height - R - 56, height * 0.78);
+        if (_hudLayout && _hudLayout.bottomTop > 0) {
+            y = Math.min(y, _hudLayout.bottomTop * k - R - 10);
+        }
+        if (_hudLayout && _hudLayout.objTop > 0) {
+            y = Math.min(y, _hudLayout.objTop * k - R - 8);
+        }
+        if (side === 'right' && !this._isButtonAttack() && _hudLayout && _hudLayout.actionsTop > 0) {
+            const aL = _hudLayout.actionsLeft * k, aR = _hudLayout.actionsRight * k;
+            const x = this._rx;
+            if (x + R > aL && x - R < aR) {
+                y = Math.min(y, (_hudLayout.actionsTop - 10) * k - R);
+            }
+        }
+        return Math.max(height * 0.50, y);
     },
 
     // Returns current control settings  reads live from GameSettings each frame
