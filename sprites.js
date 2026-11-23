@@ -5767,282 +5767,1635 @@ const PetSprites = (() => {
     };
 
     // Sub-detalhes 48x48 e Insígnias de Evolução Estágio II e III (aplicados ANTES de shadeTones48 + outlineGrid!)
-    // ---------- montaria em 8 direções (corcel) ----------
-    // Frente (S) e costas (N), grades 24x24: topo (16 linhas, sobe/desce com PET_POSE_DY) + base com patas (8 linhas).
-    // Poses 0..3 caminhada (patas alternando, cauda balançando), 4..5 idle (5 com piscada). A sela fica sob o cavaleiro.
-    const MOUNT_HORSE = {
-        front: {
-            top: [
-                '........................', '........................', '........................', '........................',
-                '........LLMMMMMMLL......', '.......LLMMMMMMMMLL.....', '......LLLMMMMMMMMLLL....', '......LLLMMMMMMMMMMLLL..',
-                '.....LLLMMMMMMMMMMMMLLL.', '.....LLMMMMMMMMMMMMMMLL.', '....LLMMMMVVVVVVVVMMMMLL', '....LLMMMMMMMMMMMMMMMMLL',
-                '........MD....DM........', '........MMMMMMMM........', '........MMLMMLMM........', '........MOMMMMOM........'
-            ],
-            low: [
-                '........MMMMMMMM........', '........MMSSSSMM........', '........DSSSSSSD........', '........DDOSSOOD........',
-                '.......DDDDDDDDDD.......', '.....DDDDDDDDDDDDDD.....', '.....DDDDDDDDDDDDDD.....', '.....DDDDDDDDDDDDDD.....'
-            ]
-        },
-        back: {
-            top: [
-                '........................', '........................', '........................', '........................',
-                '........LLMMMMMMLL......', '.......LLMMMMMMMMLL.....', '......LLLMMMMMMMMLLL....', '......LLLMMMMMMMMMMLLL..',
-                '.....LLLMMMMMMMMMMMMLLL.', '.....LLMMMMMMMMMMMMMMLL.', '....LLMMMMMMMMMMMMMMMMLL', '....LMMMMMMMMMMMMMMMMMML',
-                '........DD....DD........', '........MMMMMMMM........', '........LLLLLLLL........', '.......LMMMMMMMMML......'
-            ],
-            low: [
-                '.......MMMMMMMMMM.......', '.....MMMMMMMMDVVVVDMMM..', '....MMMMMMMDDMMMMMMDDMMM', '....MMMMMMMMMMMMMMMMMMMM',
-                '.....MMMDDMMMMMMMMMMDD..', '......DDDDDDDDDDDDDD....', '.......DDDDDDDDDDDD.....', '........DDDDDDDDDD......'
-            ]
-        }
+    // ---------- montaria do corcel: pixel art desenhada à mão (72x72), 5 vistas + espelho ----------
+    // Cada vista é um texto de comandos: B/F = camada de trás/frente; BLK <B|F> x y ... END = grade de texto ('.' = transparente);
+    // RECT <B|F> y1 y2 x1 x2 c; CB/CF y1 y2 x1 x2 apaga. Seções [w0..w3] (passo) e [i1] (parado) valem sobre [base] (parado).
+    // Contorno de 1 px é gerado sobre as células vazias encostadas no corpo. Espelho (oeste) = inverte a grade.
+    const MOUNT_N = 72, MOUNT_OX = 36, MOUNT_SAD = 34, MOUNT_WAIST = 26;   // linha 34 = cintura do cavaleiro sobre as costas
+    const MOUNT_PAL = { O: '#1d120a', L: '#9a6234', M: '#6e4424', D: '#3f2514', K: '#22150c', N: '#4a2e1a', W: '#d6cdb6', X: '#0d0805',
+        E: '#f2ead8', A: '#e0b04a', V: '#9e2e24', R: '#c94a3a', U: '#66181a', B: '#2b2228', S: '#8a96a8', T: '#c3ccd8', Q: '#4b5870',
+        P: '#5b2c8a', G: '#c084fc', Y: '#2e1545' };
+    // Estágio II: barda de aço (vermelho vira aço); Estágio III: manta do Véu (vermelho vira violeta)
+    const MOUNT_STAGE = { 2: { V: 'Q', R: 'T', U: 'Q' }, 3: { V: 'P', R: 'G', U: 'Y' } };
+    const MOUNT_SPEC = {
+        E: `
+[base]
+RECT B 67 67 14 50 x
+RECT B 68 68 20 44 x
+BLK B 12 33
+KKK
+END
+BLK B 11 34
+KKKK
+KKKK
+KKKK
+KKKK
+KKKK
+KKKK
+END
+BLK B 9 41
+KKKKK
+KKKKK
+KKKKK
+KKKKK
+KKKKK
+KKKKK
+END
+BLK B 8 47
+KKKKK
+KKKKK
+KKKKK
+KKKKK
+KKKKK
+KKKKK
+END
+BLK B 7 53
+KKKKKK
+KKKKKK
+KKKKKK
+KKKKKK
+KKKKKK
+KKKKKK
+KKKKK
+KKKK
+END
+B 33 14 LLLLLLLLLLLLLLLLLLLLLLL
+B 33 37 LLLLLMMMMMM
+B 34 14 LLLLLLLLLLLLLLLLLLLLL
+B 34 35 MMMMMMMMMMMM
+B 35 13 LLLLLLLLLLLLLLLLLLL
+B 35 32 MMMMMMMMMMMMMMM
+B 35 47 D
+B 36 13 LLLLLLLLLLLLLLLLLL
+B 36 31 MMMMMMMMMMMMMM
+B 36 45 DDD
+B 37 15 LLLLLLLLLLLLLL
+B 37 29 MMMMMMMMMMMMMMMM
+B 37 45 DDDD
+B 38 16 LLLLLLLLLLL
+B 38 27 MMMMMMMMMMMMMMMM
+B 38 43 DDDDDDD
+B 39 17 LLLLLLLLL
+B 39 26 MMMMMMMMMMMMMMMM
+B 39 42 DDDDDDDD
+B 40 18 LLLLLLL
+B 40 25 MMMMMMMMMMMMMMMM
+B 40 41 DDDDDDDDD
+B 41 18 LLLLLL
+B 41 24 MMMMMMMMMMMMMMMM
+B 41 40 DDDDDDDDD
+B 42 19 LLLL
+B 42 23 MMMMMMMMMMMMMMM
+B 42 38 DDDDDDDDDD
+B 43 20 LL
+B 43 22 MMMMMMMMMMMMMM
+B 43 36 DDDDDDDDDDD
+B 44 22 MMMMMMMMMMMM
+B 44 34 DDDDDDDDDDDD
+B 45 24 DDDDDDDDDDDDDDDDDDDDD
+B 46 27 DDDDDDDDDDDDDDDD
+B 32 38 LLLLMMMMMMM
+B 31 39 LLLLLMMMMMM
+B 30 40 LLLLLMMMMMM
+B 29 41 LLLLLMMMMM
+B 28 41 LLLLLMMMMMM
+B 27 42 LLLLLMMMMMM
+B 26 43 LLLLLMMMMMM
+B 25 43 LLLLLMMMMMM
+B 24 44 LLLLLMMMMMM
+B 23 45 LLLLLMMMMMM
+B 22 46 LLLLLMMMMMM
+B 21 46 LLLLLMMMMMMM
+B 20 47 LLLLLMMMMMMM
+B 19 48 LLLLLMMMMMM
+B 18 49 LLLLLLMMMMMMMMMMMM
+B 17 49 LLLLLLMMMMMMMMMMM
+B 16 50 LLLLLLMMMMMMMMM
+B 15 50 LLLLMMMMMMMMMM
+B 14 52 LLLMMMMMMMM
+B 13 53 LLLLMMMMM
+B 12 54 LLLLLLM
+B 11 53 LLLLLLM
+B 10 53 LLLLLL
+B 8 52 MD
+B 7 53 M
+B 9 52 KMM
+B 19 60 LLLMMMMM
+B 20 61 LLLMMMMM
+B 21 62 LLMMMMM
+B 22 62 LLLMMMMM
+B 23 63 LLMMMMM
+B 24 64 LLMMMMM
+B 25 65 LMMMMM
+B 26 65 MMMMDD
+B 27 65 MMMMD
+B 14 52 KK
+B 15 50 KK
+B 16 50 KK
+B 17 49 KK
+B 18 49 KK
+B 19 48 KK
+B 20 47 KK
+B 21 46 KK
+B 22 46 KK
+B 23 45 KK
+B 24 44 KK
+B 25 43 KK
+B 26 43 KK
+B 27 42 KK
+B 28 41 KK
+B 29 41 KK
+B 30 40 KK
+B 31 39 KK
+B 32 38 KK
+B 15 59 E
+B 16 60 X
+B 23 68 D
+B 8 53 D
+RECT B 46 55 25 28 D
+RECT B 47 55 19 23 M
+RECT B 47 55 19 19 L
+RECT B 46 55 37 40 D
+RECT B 46 50 42 46 M
+RECT B 51 55 43 46 M
+RECT B 46 55 42 42 L
+RECT B 34 34 27 41 V
+RECT B 35 35 25 42 V
+RECT B 35 35 27 40 R
+RECT B 36 38 25 42 V
+RECT B 39 39 25 42 U
+RECT B 40 40 26 41 U
+B 37 25 A
+B 37 42 A
+BLK B 42 56
+LLLLL
+LLLLL
+.LMM.
+.LMM.
+.LMM.
+.LMM.
+.LMM.
+.MMMM
+.WWWW
+.WWWW
+.WWWW
+END
+BLK B 37 56
+DDDD
+DDDD
+.DDD.
+.DDD.
+.DDD.
+.DDD.
+.DDD.
+DDDD
+WWWW
+WWWW
+WWWW
+END
+BLK B 19 56
+LMMM.
+.MMM.
+.MMM.
+.MMM.
+.MMM.
+.MMM.
+.MMM.
+DDDDD
+WWWWW
+WWWWW
+WWWWW
+END
+BLK B 24 56
+DDDD
+.DD.
+.DD.
+.DD.
+.DD.
+.DD.
+.DDD
+.WWW
+.WWW
+.WWW
+END
+RECT F 34 42 33 35 B
+RECT F 43 46 33 35 B
+RECT F 47 49 33 35 B
+RECT F 50 51 33 37 B
+RECT F 49 52 38 38 A
+[w0]
+CB 56 66 14 50
+BLK B 44 56
+LLLLL
+LLLLL
+.LMM.
+.LMM.
+.LMM.
+.LMM.
+.LMM.
+.MMMM
+.WWWW
+.WWWW
+.WWWW
+END
+BLK B 35 56
+DDDD
+DDDD
+.DDD.
+.DDD.
+.DDD.
+.DDD.
+.DDD.
+DDDD
+WWWW
+WWWW
+WWWW
+END
+BLK B 17 56
+LMMM.
+.MMM.
+.MMM.
+.MMM.
+.MMM.
+.MMM.
+.MMM.
+DDDDD
+WWWWW
+WWWWW
+WWWWW
+END
+BLK B 26 56
+DDDD
+.DD.
+.DD.
+.DD.
+.DD.
+.DD.
+.DDD
+.WWW
+.WWW
+.WWW
+END
+[w1]
+CB 56 66 14 50
+BLK B 42 56
+LLLLL
+LLLLL
+.LMM.
+.LMM.
+.LMM.
+.MMMM
+.WWWW
+.WWWW
+.WWWW
+END
+BLK B 37 56
+DDDD
+DDDD
+.DDD.
+.DDD.
+.DDD.
+.DDD.
+.DDD.
+DDDD
+WWWW
+WWWW
+WWWW
+END
+BLK B 19 56
+LMMM.
+.MMM.
+.MMM.
+.MMM.
+.MMM.
+.MMM.
+.MMM.
+DDDDD
+WWWWW
+WWWWW
+WWWWW
+END
+BLK B 24 56
+DDDD
+.DD.
+.DD.
+.DD.
+.DD.
+.DD.
+.DDD
+.WWW
+.WWW
+.WWW
+END
+[w2]
+CB 56 66 14 50
+BLK B 40 56
+LLLLL
+LLLLL
+.LMM.
+.LMM.
+.LMM.
+.LMM.
+.LMM.
+.MMMM
+.WWWW
+.WWWW
+.WWWW
+END
+BLK B 39 56
+DDDD
+DDDD
+.DDD.
+.DDD.
+.DDD.
+.DDD.
+.DDD.
+DDDD
+WWWW
+WWWW
+WWWW
+END
+BLK B 21 56
+LMMM.
+.MMM.
+.MMM.
+.MMM.
+.MMM.
+.MMM.
+.MMM.
+DDDDD
+WWWWW
+WWWWW
+WWWWW
+END
+BLK B 22 56
+DDDD
+.DD.
+.DD.
+.DD.
+.DD.
+.DD.
+.DDD
+.WWW
+.WWW
+.WWW
+END
+[w3]
+CB 56 66 14 50
+BLK B 42 56
+LLLLL
+LLLLL
+.LMM.
+.LMM.
+.LMM.
+.LMM.
+.LMM.
+.MMMM
+.WWWW
+.WWWW
+.WWWW
+END
+BLK B 37 56
+DDDD
+DDDD
+.DDD.
+.DDD.
+.DDD.
+.DDD.
+DDDD
+.WWWW
+.WWWW
+.WWWW
+END
+BLK B 19 56
+LMMM.
+.MMM.
+.MMM.
+.MMM.
+.MMM.
+DDDDD
+WWWWW
+WWWWW
+WWWWW
+END
+BLK B 24 56
+DDDD
+.DD.
+.DD.
+.DD.
+.DD.
+.DD.
+.DDD
+.WWW
+.WWW
+.WWW
+END
+[i0]
+[i1]
+CB 53 60 6 12
+BLK B 6 53
+KKKKKK
+KKKKKK
+KKKKKK
+KKKKKK
+KKKKKK
+KKKKKK
+KKKKK
+KKKK
+END
+`,
+        SE: `
+[base]
+RECT B 67 67 14 50 x
+RECT B 68 68 20 44 x
+BLK B 12 33
+KKK
+END
+BLK B 11 34
+KKKK
+KKKK
+KKKK
+KKKK
+KKKK
+KKKK
+END
+BLK B 9 41
+KKKKK
+KKKKK
+KKKKK
+KKKKK
+KKKKK
+KKKKK
+END
+BLK B 8 47
+KKKKK
+KKKKK
+KKKKK
+KKKKK
+KKKKK
+KKKKK
+END
+BLK B 7 53
+KKKKKK
+KKKKKK
+KKKKKK
+KKKKKK
+KKKKKK
+KKKKKK
+KKKKK
+KKKK
+END
+B 33 14 LLLLLLLLLLLLLLLLLLLLLLL
+B 33 37 LLLLLMMMMMM
+B 34 14 LLLLLLLLLLLLLLLLLLLLL
+B 34 35 MMMMMMMMMMMM
+B 35 13 LLLLLLLLLLLLLLLLLLL
+B 35 32 MMMMMMMMMMMMMMM
+B 35 47 D
+B 36 13 LLLLLLLLLLLLLLLLLL
+B 36 31 MMMMMMMMMMMMMM
+B 36 45 DDD
+B 37 15 LLLLLLLLLLLLLL
+B 37 29 MMMMMMMMMMMMMMMM
+B 37 45 DDDD
+B 38 16 LLLLLLLLLLL
+B 38 27 MMMMMMMMMMMMMMMM
+B 38 43 DDDDDDD
+B 39 17 LLLLLLLLL
+B 39 26 MMMMMMMMMMMMMMMM
+B 39 42 DDDDDDDD
+B 40 18 LLLLLLL
+B 40 25 MMMMMMMMMMMMMMMM
+B 40 41 DDDDDDDDD
+B 41 18 LLLLLL
+B 41 24 MMMMMMMMMMMMMMMM
+B 41 40 DDDDDDDDD
+B 42 19 LLLL
+B 42 23 MMMMMMMMMMMMMMM
+B 42 38 DDDDDDDDDD
+B 43 20 LL
+B 43 22 MMMMMMMMMMMMMM
+B 43 36 DDDDDDDDDDD
+B 44 22 MMMMMMMMMMMM
+B 44 34 DDDDDDDDDDDD
+B 45 24 DDDDDDDDDDDDDDDDDDDDD
+B 46 27 DDDDDDDDDDDDDDDD
+F 32 38 LLLLMMMMMMM
+F 31 39 LLLLLMMMMMM
+F 30 40 LLLLLMMMMMM
+F 29 41 LLLLLMMMMM
+F 28 41 LLLLLMMMMMM
+F 27 42 LLLLLMMMMMM
+F 26 43 LLLLLMMMMMM
+F 25 43 LLLLLMMMMMM
+F 24 44 LLLLLMMMMMM
+F 23 45 LLLLLMMMMMM
+F 22 46 LLLLLMMMMMM
+F 21 46 LLLLLMMMMMMM
+F 20 47 LLLLLMMMMMMM
+F 19 48 LLLLLMMMMMM
+F 18 49 LLLLLLMMMMMMMMMMMM
+F 17 49 LLLLLLMMMMMMMMMMM
+F 16 50 LLLLLLMMMMMMMMM
+F 15 50 LLLLMMMMMMMMMM
+F 14 52 LLLMMMMMMMM
+F 13 53 LLLLMMMMM
+F 12 54 LLLLLLM
+F 11 53 LLLLLLM
+F 10 53 LLLLLL
+F 8 52 MD
+F 7 53 M
+F 9 52 KMM
+F 19 60 LLLMMMMM
+F 20 61 LLLMMMMM
+F 21 62 LLMMMMM
+F 22 62 LLLMMMMM
+F 23 63 LLMMMMM
+F 24 64 LLMMMMM
+F 25 65 LMMMMM
+F 26 65 MMMMDD
+F 27 65 MMMMD
+F 14 52 KK
+F 15 50 KK
+F 16 50 KK
+F 17 49 KK
+F 18 49 KK
+F 19 48 KK
+F 20 47 KK
+F 21 46 KK
+F 22 46 KK
+F 23 45 KK
+F 24 44 KK
+F 25 43 KK
+F 26 43 KK
+F 27 42 KK
+F 28 41 KK
+F 29 41 KK
+F 30 40 KK
+F 31 39 KK
+F 32 38 KK
+F 15 59 E
+F 16 60 X
+F 23 68 D
+F 8 53 D
+RECT B 46 55 25 28 D
+RECT B 47 55 19 23 M
+RECT B 47 55 19 19 L
+RECT B 46 55 37 40 D
+RECT B 46 50 42 46 M
+RECT B 51 55 43 46 M
+RECT B 46 55 42 42 L
+RECT B 34 34 27 41 V
+RECT B 35 35 25 42 V
+RECT B 35 35 27 40 R
+RECT B 36 38 25 42 V
+RECT B 39 39 25 42 U
+RECT B 40 40 26 41 U
+B 37 25 A
+B 37 42 A
+BLK B 42 56
+LLLLL
+LLLLL
+.LMM.
+.LMM.
+.LMM.
+.LMM.
+.LMM.
+.MMMM
+.WWWW
+.WWWW
+.WWWW
+END
+BLK B 37 56
+DDDD
+DDDD
+.DDD.
+.DDD.
+.DDD.
+.DDD.
+.DDD.
+DDDD
+WWWW
+WWWW
+WWWW
+END
+BLK B 19 56
+LMMM.
+.MMM.
+.MMM.
+.MMM.
+.MMM.
+.MMM.
+.MMM.
+DDDDD
+WWWWW
+WWWWW
+WWWWW
+END
+BLK B 24 56
+DDDD
+.DD.
+.DD.
+.DD.
+.DD.
+.DD.
+.DDD
+.WWW
+.WWW
+.WWW
+END
+RECT F 34 42 33 35 B
+RECT F 43 46 33 35 B
+RECT F 47 49 33 35 B
+RECT F 50 51 33 37 B
+RECT F 49 52 38 38 A
+[w0]
+CB 56 66 14 50
+BLK B 44 56
+LLLLL
+LLLLL
+.LMM.
+.LMM.
+.LMM.
+.LMM.
+.LMM.
+.MMMM
+.WWWW
+.WWWW
+.WWWW
+END
+BLK B 35 56
+DDDD
+DDDD
+.DDD.
+.DDD.
+.DDD.
+.DDD.
+.DDD.
+DDDD
+WWWW
+WWWW
+WWWW
+END
+BLK B 17 56
+LMMM.
+.MMM.
+.MMM.
+.MMM.
+.MMM.
+.MMM.
+.MMM.
+DDDDD
+WWWWW
+WWWWW
+WWWWW
+END
+BLK B 26 56
+DDDD
+.DD.
+.DD.
+.DD.
+.DD.
+.DD.
+.DDD
+.WWW
+.WWW
+.WWW
+END
+[w1]
+CB 56 66 14 50
+BLK B 42 56
+LLLLL
+LLLLL
+.LMM.
+.LMM.
+.LMM.
+.MMMM
+.WWWW
+.WWWW
+.WWWW
+END
+BLK B 37 56
+DDDD
+DDDD
+.DDD.
+.DDD.
+.DDD.
+.DDD.
+.DDD.
+DDDD
+WWWW
+WWWW
+WWWW
+END
+BLK B 19 56
+LMMM.
+.MMM.
+.MMM.
+.MMM.
+.MMM.
+.MMM.
+.MMM.
+DDDDD
+WWWWW
+WWWWW
+WWWWW
+END
+BLK B 24 56
+DDDD
+.DD.
+.DD.
+.DD.
+.DD.
+.DD.
+.DDD
+.WWW
+.WWW
+.WWW
+END
+[w2]
+CB 56 66 14 50
+BLK B 40 56
+LLLLL
+LLLLL
+.LMM.
+.LMM.
+.LMM.
+.LMM.
+.LMM.
+.MMMM
+.WWWW
+.WWWW
+.WWWW
+END
+BLK B 39 56
+DDDD
+DDDD
+.DDD.
+.DDD.
+.DDD.
+.DDD.
+.DDD.
+DDDD
+WWWW
+WWWW
+WWWW
+END
+BLK B 21 56
+LMMM.
+.MMM.
+.MMM.
+.MMM.
+.MMM.
+.MMM.
+.MMM.
+DDDDD
+WWWWW
+WWWWW
+WWWWW
+END
+BLK B 22 56
+DDDD
+.DD.
+.DD.
+.DD.
+.DD.
+.DD.
+.DDD
+.WWW
+.WWW
+.WWW
+END
+[w3]
+CB 56 66 14 50
+BLK B 42 56
+LLLLL
+LLLLL
+.LMM.
+.LMM.
+.LMM.
+.LMM.
+.LMM.
+.MMMM
+.WWWW
+.WWWW
+.WWWW
+END
+BLK B 37 56
+DDDD
+DDDD
+.DDD.
+.DDD.
+.DDD.
+.DDD.
+DDDD
+.WWWW
+.WWWW
+.WWWW
+END
+BLK B 19 56
+LMMM.
+.MMM.
+.MMM.
+.MMM.
+.MMM.
+DDDDD
+WWWWW
+WWWWW
+WWWWW
+END
+BLK B 24 56
+DDDD
+.DD.
+.DD.
+.DD.
+.DD.
+.DD.
+.DDD
+.WWW
+.WWW
+.WWW
+END
+[i0]
+[i1]
+CB 53 60 6 12
+BLK B 6 53
+KKKKKK
+KKKKKK
+KKKKKK
+KKKKKK
+KKKKKK
+KKKKKK
+KKKKK
+KKKK
+END
+`,
+        S: `
+[base]
+RECT B 67 67 17 55 x
+RECT B 68 68 23 49 x
+RECT B 36 48 21 51 M
+RECT B 36 37 21 51 L
+RECT B 46 48 21 51 D
+RECT B 38 46 20 22 L
+RECT B 38 46 50 52 D
+RECT B 45 56 21 25 M
+RECT B 45 56 21 21 L
+RECT B 57 62 22 24 M
+RECT B 63 66 21 25 W
+RECT B 45 56 47 51 D
+RECT B 57 62 47 49 D
+RECT B 63 66 47 51 W
+RECT B 34 34 24 48 R
+RECT B 35 37 23 49 V
+RECT B 38 38 23 49 U
+B 36 24 A
+B 36 47 A
+RECT B 40 46 19 20 K
+RECT B 40 46 52 53 K
+BLK F 31 13
+..MM....MM..
+..MM....MM..
+..LMMMMMMM..
+.LLMMMMMMMM.
+.LMXMMMMXMM.
+.LMMMMMMMMM.
+.LMMMMMMMMM.
+.LMMMMMMMMM.
+..MMMMMMMM..
+..MMMMMMMM..
+..MMMMMMMM..
+.LLLLLLLLLL.
+.LLDLLLLDLL.
+.LLLLLLLLLL.
+..LLLLLLLL..
+..DDDDDDDD..
+END
+RECT F 28 36 27 32 M
+RECT F 28 36 27 27 K
+RECT F 28 36 41 46 M
+RECT F 28 36 46 46 D
+RECT F 37 46 28 44 M
+RECT F 37 37 28 44 L
+RECT F 44 46 28 44 D
+RECT F 47 56 28 32 M
+RECT F 47 56 28 28 L
+RECT F 47 56 40 44 M
+RECT F 47 56 44 44 D
+[w0]
+CB 56 66 27 33
+BLK F 29 54
+LMM
+LMM
+LMM
+LMM
+LMM
+.MM
+WWWW
+WWWW
+WWWW
+WWWW
+END
+CB 56 66 39 45
+BLK F 41 57
+MMD
+MMD
+MMD
+MMD
+MMD
+MMD
+WWWW
+WWWW
+WWWW
+WWWW
+END
+[w1]
+CB 56 66 27 33
+BLK F 29 57
+LMM
+LMM
+LMM
+LMM
+LMM
+.MM
+WWWW
+WWWW
+WWWW
+WWWW
+END
+CB 56 66 39 45
+BLK F 41 57
+MMD
+MMD
+MMD
+MMD
+MMD
+MMD
+WWWW
+WWWW
+WWWW
+WWWW
+END
+CB 62 66 21 25
+RECT B 62 66 21 25 W
+[w2]
+CB 56 66 27 33
+BLK F 29 57
+LMM
+LMM
+LMM
+LMM
+LMM
+.MM
+WWWW
+WWWW
+WWWW
+WWWW
+END
+CB 56 66 39 45
+BLK F 41 54
+MMD
+MMD
+MMD
+MMD
+MMD
+MMD
+WWWW
+WWWW
+WWWW
+WWWW
+END
+[w3]
+CB 56 66 27 33
+BLK F 29 57
+LMM
+LMM
+LMM
+LMM
+LMM
+.MM
+WWWW
+WWWW
+WWWW
+WWWW
+END
+CB 56 66 39 45
+BLK F 41 57
+MMD
+MMD
+MMD
+MMD
+MMD
+MMD
+WWWW
+WWWW
+WWWW
+WWWW
+END
+CB 62 66 21 25
+RECT B 62 66 21 25 W
+[i0]
+[i1]
+RECT B 40 46 19 19 K
+`,
+        NE: `
+[base]
+RECT B 67 67 14 50 x
+RECT B 68 68 20 44 x
+BLK B 12 33
+KKK
+END
+BLK B 11 34
+KKKK
+KKKK
+KKKK
+KKKK
+KKKK
+KKKK
+END
+BLK B 9 41
+KKKKK
+KKKKK
+KKKKK
+KKKKK
+KKKKK
+KKKKK
+END
+BLK B 8 47
+KKKKK
+KKKKK
+KKKKK
+KKKKK
+KKKKK
+KKKKK
+END
+BLK B 7 53
+KKKKKK
+KKKKKK
+KKKKKK
+KKKKKK
+KKKKKK
+KKKKKK
+KKKKK
+KKKK
+END
+B 33 14 LLLLLLLLLLLLLLLLLLLLLLL
+B 33 37 LLLLLMMMMMM
+B 34 14 LLLLLLLLLLLLLLLLLLLLL
+B 34 35 MMMMMMMMMMMM
+B 35 13 LLLLLLLLLLLLLLLLLLL
+B 35 32 MMMMMMMMMMMMMMM
+B 35 47 D
+B 36 13 LLLLLLLLLLLLLLLLLL
+B 36 31 MMMMMMMMMMMMMM
+B 36 45 DDD
+B 37 15 LLLLLLLLLLLLLL
+B 37 29 MMMMMMMMMMMMMMMM
+B 37 45 DDDD
+B 38 16 LLLLLLLLLLL
+B 38 27 MMMMMMMMMMMMMMMM
+B 38 43 DDDDDDD
+B 39 17 LLLLLLLLL
+B 39 26 MMMMMMMMMMMMMMMM
+B 39 42 DDDDDDDD
+B 40 18 LLLLLLL
+B 40 25 MMMMMMMMMMMMMMMM
+B 40 41 DDDDDDDDD
+B 41 18 LLLLLL
+B 41 24 MMMMMMMMMMMMMMMM
+B 41 40 DDDDDDDDD
+B 42 19 LLLL
+B 42 23 MMMMMMMMMMMMMMM
+B 42 38 DDDDDDDDDD
+B 43 20 LL
+B 43 22 MMMMMMMMMMMMMM
+B 43 36 DDDDDDDDDDD
+B 44 22 MMMMMMMMMMMM
+B 44 34 DDDDDDDDDDDD
+B 45 24 DDDDDDDDDDDDDDDDDDDDD
+B 46 27 DDDDDDDDDDDDDDDD
+B 30 38 LLLLMMMMMMM
+B 29 39 LLLLLMMMMMM
+B 28 40 LLLLLMMMMMM
+B 27 41 LLLLLMMMMM
+B 26 41 LLLLLMMMMMM
+B 25 42 LLLLLMMMMMM
+B 24 43 LLLLLMMMMMM
+B 23 43 LLLLLMMMMMM
+B 22 44 LLLLLMMMMMM
+B 21 45 LLLLLMMMMMM
+B 20 46 LLLLLMMMMMM
+B 19 46 LLLLLMMMMMMM
+B 18 47 LLLLLMMMMMMM
+B 17 48 LLLLLMMMMMM
+B 16 49 LLLLLLMMMMMMMMMMMM
+B 15 49 LLLLLLMMMMMMMMMMM
+B 14 50 LLLLLLMMMMMMMMM
+B 13 50 LLLLMMMMMMMMMM
+B 12 52 LLLMMMMMMMM
+B 11 53 LLLLMMMMM
+B 10 54 LLLLLLM
+B 9 53 LLLLLLM
+B 8 53 LLLLLL
+B 6 52 MD
+B 5 53 M
+B 7 52 KMM
+B 17 60 LLLMMMMM
+B 18 61 LLLMMMMM
+B 19 62 LLMMMMM
+B 20 62 LLLMMMMM
+B 21 63 LLMMMMM
+B 22 64 LLMMMMM
+B 23 65 LMMMMM
+B 24 65 MMMMDD
+B 25 65 MMMMD
+B 12 52 KK
+B 13 50 KK
+B 14 50 KK
+B 15 49 KK
+B 16 49 KK
+B 17 48 KK
+B 18 47 KK
+B 19 46 KK
+B 20 46 KK
+B 21 45 KK
+B 22 44 KK
+B 23 43 KK
+B 24 43 KK
+B 25 42 KK
+B 26 41 KK
+B 27 41 KK
+B 28 40 KK
+B 29 39 KK
+B 30 38 KK
+B 13 59 E
+B 14 60 X
+B 21 68 D
+B 6 53 D
+RECT B 46 55 25 28 D
+RECT B 47 55 19 23 M
+RECT B 47 55 19 19 L
+RECT B 46 55 37 40 D
+RECT B 46 50 42 46 M
+RECT B 51 55 43 46 M
+RECT B 46 55 42 42 L
+RECT B 34 34 27 41 V
+RECT B 35 35 25 42 V
+RECT B 35 35 27 40 R
+RECT B 36 38 25 42 V
+RECT B 39 39 25 42 U
+RECT B 40 40 26 41 U
+B 37 25 A
+B 37 42 A
+BLK B 42 56
+LLLLL
+LLLLL
+.LMM.
+.LMM.
+.LMM.
+.LMM.
+.LMM.
+.MMMM
+.WWWW
+.WWWW
+.WWWW
+END
+BLK B 37 56
+DDDD
+DDDD
+.DDD.
+.DDD.
+.DDD.
+.DDD.
+.DDD.
+DDDD
+WWWW
+WWWW
+WWWW
+END
+BLK B 19 56
+LMMM.
+.MMM.
+.MMM.
+.MMM.
+.MMM.
+.MMM.
+.MMM.
+DDDDD
+WWWWW
+WWWWW
+WWWWW
+END
+BLK B 24 56
+DDDD
+.DD.
+.DD.
+.DD.
+.DD.
+.DD.
+.DDD
+.WWW
+.WWW
+.WWW
+END
+RECT F 34 42 33 35 B
+RECT F 43 46 33 35 B
+RECT F 47 49 33 35 B
+RECT F 50 51 33 37 B
+RECT F 49 52 38 38 A
+[w0]
+CB 56 66 14 50
+BLK B 44 56
+LLLLL
+LLLLL
+.LMM.
+.LMM.
+.LMM.
+.LMM.
+.LMM.
+.MMMM
+.WWWW
+.WWWW
+.WWWW
+END
+BLK B 35 56
+DDDD
+DDDD
+.DDD.
+.DDD.
+.DDD.
+.DDD.
+.DDD.
+DDDD
+WWWW
+WWWW
+WWWW
+END
+BLK B 17 56
+LMMM.
+.MMM.
+.MMM.
+.MMM.
+.MMM.
+.MMM.
+.MMM.
+DDDDD
+WWWWW
+WWWWW
+WWWWW
+END
+BLK B 26 56
+DDDD
+.DD.
+.DD.
+.DD.
+.DD.
+.DD.
+.DDD
+.WWW
+.WWW
+.WWW
+END
+[w1]
+CB 56 66 14 50
+BLK B 42 56
+LLLLL
+LLLLL
+.LMM.
+.LMM.
+.LMM.
+.MMMM
+.WWWW
+.WWWW
+.WWWW
+END
+BLK B 37 56
+DDDD
+DDDD
+.DDD.
+.DDD.
+.DDD.
+.DDD.
+.DDD.
+DDDD
+WWWW
+WWWW
+WWWW
+END
+BLK B 19 56
+LMMM.
+.MMM.
+.MMM.
+.MMM.
+.MMM.
+.MMM.
+.MMM.
+DDDDD
+WWWWW
+WWWWW
+WWWWW
+END
+BLK B 24 56
+DDDD
+.DD.
+.DD.
+.DD.
+.DD.
+.DD.
+.DDD
+.WWW
+.WWW
+.WWW
+END
+[w2]
+CB 56 66 14 50
+BLK B 40 56
+LLLLL
+LLLLL
+.LMM.
+.LMM.
+.LMM.
+.LMM.
+.LMM.
+.MMMM
+.WWWW
+.WWWW
+.WWWW
+END
+BLK B 39 56
+DDDD
+DDDD
+.DDD.
+.DDD.
+.DDD.
+.DDD.
+.DDD.
+DDDD
+WWWW
+WWWW
+WWWW
+END
+BLK B 21 56
+LMMM.
+.MMM.
+.MMM.
+.MMM.
+.MMM.
+.MMM.
+.MMM.
+DDDDD
+WWWWW
+WWWWW
+WWWWW
+END
+BLK B 22 56
+DDDD
+.DD.
+.DD.
+.DD.
+.DD.
+.DD.
+.DDD
+.WWW
+.WWW
+.WWW
+END
+[w3]
+CB 56 66 14 50
+BLK B 42 56
+LLLLL
+LLLLL
+.LMM.
+.LMM.
+.LMM.
+.LMM.
+.LMM.
+.MMMM
+.WWWW
+.WWWW
+.WWWW
+END
+BLK B 37 56
+DDDD
+DDDD
+.DDD.
+.DDD.
+.DDD.
+.DDD.
+DDDD
+.WWWW
+.WWWW
+.WWWW
+END
+BLK B 19 56
+LMMM.
+.MMM.
+.MMM.
+.MMM.
+.MMM.
+DDDDD
+WWWWW
+WWWWW
+WWWWW
+END
+BLK B 24 56
+DDDD
+.DD.
+.DD.
+.DD.
+.DD.
+.DD.
+.DDD
+.WWW
+.WWW
+.WWW
+END
+[i0]
+[i1]
+CB 53 60 6 12
+BLK B 6 53
+KKKKKK
+KKKKKK
+KKKKKK
+KKKKKK
+KKKKKK
+KKKKKK
+KKKKK
+KKKK
+END
+`,
+        N: `
+[base]
+RECT B 67 67 17 55 x
+RECT B 68 68 23 49 x
+RECT B 46 52 34 38 K
+RECT B 53 60 34 37 K
+RECT B 54 62 35 36 N
+RECT B 36 46 24 48 M
+RECT B 36 38 24 48 L
+RECT B 47 50 26 46 M
+RECT B 40 48 24 25 D
+RECT B 40 48 47 48 D
+RECT B 49 50 26 46 D
+RECT B 34 34 25 47 R
+RECT B 35 37 24 48 V
+RECT B 38 38 24 48 U
+B 36 24 A
+B 36 48 A
+RECT B 3 5 33 34 M
+RECT B 3 5 38 39 M
+RECT B 4 4 33 34 D
+RECT B 6 9 33 39 M
+RECT B 6 6 33 33 L
+RECT B 10 12 34 38 K
+RECT B 50 56 27 31 M
+RECT B 50 56 40 44 M
+RECT B 50 56 27 27 L
+RECT B 57 62 28 30 M
+RECT B 57 62 41 43 M
+RECT B 63 66 27 31 W
+RECT B 63 66 40 44 W
+[w0]
+CB 57 66 26 46
+RECT B 57 62 28 30 M
+RECT B 57 62 41 43 M
+RECT B 60 66 27 31 W
+RECT B 63 66 40 44 W
+[w1]
+CB 57 66 26 46
+RECT B 57 62 28 30 M
+RECT B 57 62 41 43 M
+RECT B 63 66 27 31 W
+RECT B 63 66 40 44 W
+[w2]
+CB 57 66 26 46
+RECT B 57 62 28 30 M
+RECT B 57 62 41 43 M
+RECT B 63 66 27 31 W
+RECT B 60 66 40 44 W
+[w3]
+CB 57 66 26 46
+RECT B 57 62 28 30 M
+RECT B 57 62 41 43 M
+RECT B 63 66 27 31 W
+RECT B 63 66 40 44 W
+[i0]
+[i1]
+RECT B 46 52 34 38 K
+RECT B 53 60 33 36 K
+`
     };
-    const MOUNT_LIFT = [[0, 2, 0], [0, 0, 1], [2, 0, 0], [0, 0, -1], [0, 0, 0], [0, 0, 0]];   // [casco esq., casco dir. (elevação), cauda]
-    const MOUNT_BASE = [0, 1, 2, 1, 0, 7, 6, 7];   // direção 0..7 -> vista-base (0 = lateral já existente)
-    const MOUNT_MIRROR = [0, 0, 0, 1, 1, 1, 0, 0];  // 1 = espelhado (oeste/sudoeste/noroeste)
-    const MOUNT_DY = [0, 4, 8, 4, 0, -4, -8, -4];  // deslocamento vertical em px: o que está virado para a câmera fica mais abaixo
-    const MOUNT_REF = { top: 4, bot: 23 };         // faixa de referência para SpriteCore.turn (¾)
+    // direção 0..7 (E, SE, S, SW, W, NW, N, NE) -> vista e espelho
+    const MOUNT_DIR = [['E', 0], ['SE', 0], ['S', 0], ['SE', 1], ['E', 1], ['NE', 1], ['N', 0], ['NE', 0]];
+    const _mountSections = {};
     const _mountCache = new Map();
-
-    // Patas (linhas 16..23): duas colunas por perna; elevação encurta a perna e levanta o casco.
-    function mountLegs(liftL, liftR, tailSway, back) {
-        const rows = Array.from({ length: 8 }, () => Array(24).fill('.'));
-        const leg = (c, lift) => {
-            for (let y = 0; y + lift <= 7; y++) for (let dx = 0; dx < 2; dx++) {
-                rows[y][c + dx] = y >= 6 - lift ? 'W' : (back && y < 2 ? 'M' : 'D');
-            }
-        };
-        leg(5, liftL); leg(17, liftR);
-        if (back) { const tx = 11 + (tailSway || 0); for (let y = 0; y < 6; y++) { rows[y][tx] = 'L'; rows[y][tx + 1] = 'L'; } }
-        return rows.map(r => r.join(''));
+    function mountSections(view) {
+        if (_mountSections[view]) return _mountSections[view];
+        const out = { base: [] };
+        let cur = 'base';
+        for (const l of MOUNT_SPEC[view].split('\n')) {
+            const m = l.match(/^\[(\w+)\]\s*$/);
+            if (m) { cur = m[1]; out[cur] = out[cur] || []; continue; }
+            out[cur].push(l);
+        }
+        return (_mountSections[view] = out);
     }
-    // 24 linhas de texto para a vista (front/back) e a pose
-    function mountRows(view, p) {
-        const v = MOUNT_HORSE[view];
-        const L = MOUNT_LIFT[p];
-        const lg = mountLegs(L[0], L[1], L[2], view === 'back');
-        const low = v.low.map((r, y) => r.split('').map((c, x) => (lg[y][x] !== '.' ? lg[y][x] : c)).join(''));
-        const top = (p === 5 && view === 'front') ? v.top.map((r, y) => (y === 15 ? r.replace(/O/g, 'D') : r)) : v.top;
-        // Sem bob vertical aqui: o deslocamento de PET_POSE_DY abriria uma linha vazia entre cabeça e corpo
-        return composeQuad(top, low, 0, 0);
-    }
-    // Remove peças soltas (componentes de até 3 células) deixadas pelo giro da grade
-    function mountClean(g) {
-        const H = g.length, W = g[0].length, seen = g.map(r => r.map(() => false));
-        for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-            if (g[y][x] === '.' || seen[y][x]) continue;
-            const cells = [[x, y]]; seen[y][x] = true;
-            for (let i = 0; i < cells.length; i++) {
-                const [cx, cy] = cells[i];
-                for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
-                    const nx = cx + dx, ny = cy + dy;
-                    if (nx >= 0 && ny >= 0 && nx < W && ny < H && !seen[ny][nx] && g[ny][nx] !== '.') { seen[ny][nx] = true; cells.push([nx, ny]); }
+    function mountApply(layers, lines) {
+        let blk = null;
+        for (const raw of lines) {
+            const line = raw.trim();
+            if (blk) {
+                if (line === 'END') { blk = null; continue; }
+                if (!line) continue;
+                const L = blk.layer === 'B' ? layers.B : layers.F;
+                const y = blk.y + blk.row++;
+                for (let i = 0; i < line.length; i++) {
+                    const x = blk.x + i, c = line[i];
+                    if (c !== '.' && x >= 0 && x < MOUNT_N && y >= 0 && y < MOUNT_N) L[y][x] = c;
                 }
+                continue;
             }
-            if (cells.length <= 3) for (const [cx, cy] of cells) g[cy][cx] = '.';
-        }
-        return g;
-    }
-    // grade 24x24 de papéis para a vista-base (2 = frente, 6 = costas, 1 = ¾ frente, 7 = ¾ costas)
-    function mountGrid24(base, pose) {
-        const p = pose & 7;
-        if (base === 1) return mountClean(SpriteCore.turn(mountRows('front', p).map(r => r.split('')), 0.5, MOUNT_REF));
-        if (base === 7) return mountClean(SpriteCore.turn(mountRows('back', p).map(r => r.split('')), 0.5, MOUNT_REF));
-        return mountRows(base === 6 ? 'back' : 'front', p).map(r => r.split(''));
-    }
-
-    // Montaria em 8 direções com escala inteira: 24x24 de papéis -> finish48 -> 48x48 (1 px por célula da arte 48).
-    // dir: 0=E 1=SE 2=S 3=SW 4=W 5=NW 6=N 7=NE. Lateral (E/W) usa get(); o restante é montado aqui e cacheado.
-    function getMount(type, dir, pose, flash, stage) {
-        const d = ((dir | 0) & 7), p = (pose | 0) & 7, fl = flash ? 1 : 0;
-        const mir = MOUNT_MIRROR[d] === 1;
-        if (type !== 'horse') return get(type, p, mir ? -1 : 1, fl, stage);
-        const base = MOUNT_BASE[d];
-        if (base === 0) return get('horse', p, mir ? -1 : 1, fl, stage);
-        const key = base + '|' + p + '|' + (mir ? 1 : 0) + '|' + fl;
-        if (_mountCache.has(key)) return _mountCache.get(key);
-        if (_mountCache.size > 96) _mountCache.clear();
-        const art = PET_ART.horse;
-        const idx = SpriteCore.finish48(mountGrid24(base, p), null);
-        const pal = SpriteCore.buildPalette(art.pal());
-        const cv = bakeCanvas(idx, pal, mir ? -1 : 1, fl);
-        _mountCache.set(key, cv);
-        return cv;
-    }
-
-    // ---------- montaria 3D do corcel: 64x64 nativo (1 célula = 1 px), duas camadas ----------
-    // Modelo de elipsoides rasterizado com z-buffer; câmera ¾ de cima: V = (0, sen E, cos E), sen E = 0,57.
-    // Camada 'back' fica atrás do cavaleiro; 'front' (pernas do cavaleiro, pescoço/cabeça voltados para a câmera,
-    // rédeas) é desenhada depois dele. Pixel 'front' = superfície mais perto da câmera que o cavaleiro.
-    const M3_N = 64, M3_OX = 31, M3_G0 = 54.5, M3_SE = 0.57, M3_CE = 0.82, M3_SAD = 36, M3_BODY = 27;
-    const M3_HERO_WAIST = 26;   // linha da cintura na célula 48 do herói (acima dela fica o recorte sobre a sela)
-    const M3_LIGHT = (() => { const v = [-0.45, 0.75, 0.5], l = Math.hypot(v[0], v[1], v[2]); return v.map(q => q / l); })();
-    const _m3Cache = new Map();
-    const m3Bob = p => (p < 4 && (p & 1)) ? 0.8 : 0;
-    const m3Blank = () => Array.from({ length: M3_N }, () => Array(M3_N).fill('.'));
-    const m3Zero = () => Array.from({ length: M3_N }, () => Array(M3_N).fill(0));
-
-    // Primitivas (coordenadas locais da montaria: f = frente, l = lateral (+ = lado direito, voltado para a câmera em E), u = altura)
-    function m3Prims(p, stg) {
-        const walk = p < 4, bob = m3Bob(p), breath = p === 5 ? 0.35 : 0;
-        const sway = walk ? Math.sin(Math.PI * p / 2) * 1.2 : (p === 5 ? 0.8 : -0.4);
-        const pr = [];
-        const add = (c, r, role, fl) => pr.push(Object.assign({ c, r, role }, fl || {}));
-        const A = 3.2;
-        // perna: cadeia de esferas do quadril ao casco; passo em trote de 4 tempos (LH 0, LF 1/4, RH 1/2, RF 3/4)
-        const leg = (fh, lh, ph) => {
-            const ang = 2 * Math.PI * (walk ? ((p / 4 + ph) % 1) : 0);
-            const dx = walk ? A * Math.cos(ang) : 0;
-            const lift = walk ? 3.2 * Math.max(0, -Math.sin(ang)) : 0;
-            const top = [fh, lh, 25 + bob], hoof = [fh + dx, lh, 1.6 + lift];
-            const rr = [2.8, 2.5, 2.3, 2.1, 2.0];
-            [0, 0.25, 0.5, 0.75, 1].forEach((t, i) => add([top[0] + (hoof[0] - top[0]) * t, lh, top[2] + (hoof[2] - top[2]) * t],
-                [rr[i], rr[i], rr[i] * 0.95], i < 2 ? 'M' : 'D'));
-            add([hoof[0] + 0.4, lh, 1.4 + lift], [2.6, 2.5, 1.7], 'W');
-        };
-        leg(8, 4, 0.75); leg(-9.5, 4, 0.5); leg(8, -4, 0.25); leg(-9.5, -4, 0);
-        // tronco, manta e garupa
-        add([0, 0, M3_BODY + bob], [14, 7.6 + breath * 0.3, 8.4 + breath], 'M');
-        add([10, 0, 26.5 + bob], [6.5, 7.2, 8.2], 'M');
-        add([-10, 0, M3_BODY + bob], [7.5, 7.6, 8.6], 'M');
-        add([-14, 0, 28 + bob], [4.5, 6.5, 7.2], 'M');
-        add([-1.5, 0, 27.6 + bob], [9.5, 7.8 + breath * 0.2, 7.0], 'V');
-        // pescoço arqueado e cabeça
-        add([10.5, 0, 31.5 + bob], [5.0, 4.0, 5.2], 'M');
-        add([15, 0, 38 + bob * 0.5], [4.0, 3.2, 4.2], 'M');
-        add([19, 0, 42.2 + bob * 0.5], [3.4, 2.9, 3.8], 'M');
-        add([11.5, 0, 37.2 + bob], [2.2, 2.0, 2.2], 'L');
-        add([15, 0, 42.5 + bob * 0.5], [2.2, 2.0, 2.2], 'L');
-        add([18.5, 0, 45.8 + bob * 0.5], [2.0, 1.8, 2.0], 'L');
-        add([22.8, 0, 43.6 + bob * 0.5], [5.4, 2.9, 3.8], 'M');
-        add([27.6, 0, 42.2 + bob * 0.5], [3.2, 2.4, 2.6], 'S');
-        add([23, 0, 41.5 + bob * 0.5], [3.6, 2.2, 2.0], 'M');
-        add([22, 0, 46.9 + bob * 0.5], [1.8, 1.4, 1.2], 'L');
-        add([21, 1.5, 46.4 + bob * 0.5], [0.9, 0.5, 1.8], 'D');
-        add([21, -1.5, 46.4 + bob * 0.5], [0.9, 0.5, 1.8], 'D');
-        add([25.5, 2.9, 46.2 + bob * 0.5], [0.9, 0.5, 0.9], 'O');
-        add([25.5, -2.9, 46.2 + bob * 0.5], [0.9, 0.5, 0.9], 'O');
-        // cauda (balança para os lados)
-        // cauda: cadeia densa de esferas (sem vãos) do ponto de inserção ao chão; balança para os lados
-        [[-16, 29.5, 2.4], [-18, 27.5, 2.2], [-19.8, 25, 2.0], [-20.9, 22, 1.9], [-21.8, 19, 1.8], [-22.4, 16, 1.6], [-22.9, 13, 1.5], [-23.1, 10.5, 1.4]]
-            .forEach(([f, u, r], i) => add([f, sway * (0.3 + i * 0.25), u + (i < 2 ? bob : bob * 0.5)], [r, r * 0.9, r], 'L'));
-        // sela, rédea e cavaleiro (pernas na camada da frente; o tronco do cavaleiro é o elipsoide 'rider', só para a ordem)
-        add([0.5, 0, 34.6 + bob], [5.2, 6.4, 1.4], 'D');
-        add([0.5, 0, 38.5 + bob], [3.2, 4.2, 9], 'M', { rider: true });
-        for (const s of [1, -1]) {
-            add([0.5, 9 * s, 30 + bob], [2.4, 2.1, 6], 'L', { front: true });
-            add([2.4, 9 * s, 20.5 + bob], [2.9, 2.2, 2.0], 'L', { front: true });
-            add([0.5, 8.5 * s, 17 + bob], [1.0, 0.9, 1.0], 'A', { front: true });
-        }
-        for (let i = 0; i <= 4; i++) add([15 + i * 2.2, 0, 35 + (i / 4) * 9 + bob * 0.5], [0.6, 0.6, 0.6], 'A', { front: true });
-        // Estágio II: chanfro de aço, barda peitoral/traseira com rebites de ouro
-        if (stg >= 2) {
-            add([26.5, 0, 44.5 + bob * 0.5], [3.4, 2.9, 2.9], 'W');
-            add([10.5, 0, 24.8 + bob], [6.2, 7.75, 5.4], 'W');
-            add([-10, 0, 23.8 + bob], [6.0, 7.75, 4.6], 'W');
-            for (const s of [1, -1]) add([10.5, 7.7 * s, 25.5 + bob], [0.5, 0.4, 0.5], 'A');
-        }
-        // Estágio III: runas do Véu nos flancos
-        if (stg >= 3) {
-            for (const s of [1, -1]) {
-                add([-2, 8.3 * s, 26 + bob], [0.9, 0.6, 0.9], 'G');
-                add([-6.5, 8.3 * s, 25 + bob], [0.9, 0.6, 0.9], 'G');
-                add([12, 8.0 * s, 25 + bob], [0.9, 0.6, 0.9], 'G');
+            if (!line || line.startsWith('#')) continue;
+            const p = line.split(/\s+/), op = p[0];
+            if (op === 'BLK') { blk = { layer: p[1], x: +p[2], y: +p[3], row: 0 }; continue; }
+            if (op === 'RECT') {
+                const L = p[1] === 'B' ? layers.B : layers.F;
+                const y1 = +p[2], y2 = +p[3], x1 = +p[4], x2 = +p[5], c = p[6];
+                for (let y = y1; y <= y2; y++) for (let x = x1; x <= x2; x++) L[y][x] = c;
+                continue;
+            }
+            if (op === 'CB' || op === 'CF') {
+                const L = op === 'CB' ? layers.B : layers.F;
+                const y1 = +p[1], y2 = +p[2], x1 = +p[3], x2 = +p[4];
+                for (let y = y1; y <= y2; y++) for (let x = x1; x <= x2; x++) L[y][x] = '.';
+                continue;
+            }
+            if (op !== 'B' && op !== 'F') continue;
+            const L = op === 'B' ? layers.B : layers.F;
+            const y = +p[1], x0 = +p[2], txt = p.slice(3).join('');
+            for (let i = 0; i < txt.length; i++) {
+                const x = x0 + i, c = txt[i];
+                if (c !== '.' && x >= 0 && x < MOUNT_N && y >= 0 && y < MOUNT_N) L[y][x] = c;
             }
         }
-        return pr;
     }
-
-    // Rasteriza as primitivas numa direção (heading = dir * 45°): z-buffer por pixel, papel e tom pelo normal.
-    function m3Raster(prims, heading) {
-        const N = M3_N, ca = Math.cos(heading), sa = Math.sin(heading), S = M3_SE, C = M3_CE;
-        const OX = 32 - 4.5 * ca;   // centro do corcel desloca-se para manter a silhueta (cauda e focinho) dentro da grade
-        const df = C * sa, dl = C * ca, du = S;   // direção do raio no referencial local
-        const tb = new Float64Array(N * N).fill(-Infinity), pb = new Int16Array(N * N).fill(-1);
-        const tr = new Float64Array(N * N).fill(-Infinity);
-        const body = prims.filter(q => !q.rider);
-        const hit = (q, of, ol, ou) => {
-            const [cf, cl, cu] = q.c, [rf, rl, ru] = q.r;
-            const ox = (of - cf) / rf, oy = (ol - cl) / rl, oz = (ou - cu) / ru;
-            const dx = df / rf, dy = dl / rl, dz = du / ru;
-            const A = dx * dx + dy * dy + dz * dz, B = 2 * (ox * dx + oy * dy + oz * dz), Cc = ox * ox + oy * oy + oz * oz - 1;
-            const disc = B * B - 4 * A * Cc;
-            return disc < 0 ? -Infinity : (-B + Math.sqrt(disc)) / (2 * A);
-        };
-        const pixel = (x, y) => {
-            const sx = x + 0.5 - OX, sy = y + 0.5 - M3_G0;
-            return [sx * ca + sy * S * sa, -sx * sa + sy * S * ca, -sy * C];
-        };
-        prims.forEach((q, qi) => {
-            const gxc = OX + q.c[0] * ca - q.c[1] * sa, gyc = M3_G0 + (q.c[0] * sa + q.c[1] * ca) * S - q.c[2] * C;
-            const R = Math.hypot(q.r[0], q.r[1], q.r[2]) + 0.6;
-            const x0 = Math.max(0, Math.floor(gxc - R)), x1 = Math.min(N - 1, Math.ceil(gxc + R));
-            const y0 = Math.max(0, Math.floor(gyc - R)), y1 = Math.min(N - 1, Math.ceil(gyc + R));
-            for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
-                const [of, ol, ou] = pixel(x, y);
-                const t = hit(q, of, ol, ou);
-                if (t === -Infinity) continue;
-                const i = y * N + x;
-                if (q.rider) { if (t > tr[i]) tr[i] = t; continue; }
-                if (t > tb[i]) { tb[i] = t; pb[i] = qi; }
+    // contorno de 1 px: célula vazia 4-adjacente a corpo vira 'O' (sombra 'x' não conta)
+    function mountOutline(L) {
+        const add = [];
+        for (let y = 0; y < MOUNT_N; y++) for (let x = 0; x < MOUNT_N; x++) {
+            if (L[y][x] !== '.') continue;
+            for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+                const nx = x + dx, ny = y + dy;
+                if (nx < 0 || ny < 0 || nx >= MOUNT_N || ny >= MOUNT_N) continue;
+                const c = L[ny][nx];
+                if (c !== '.' && c !== 'x' && c !== 'O') { add.push([x, y]); break; }
             }
-        });
-        const out = { back: { roles: m3Blank(), tones: m3Zero() }, front: { roles: m3Blank(), tones: m3Zero() } };
+        }
+        for (const [x, y] of add) L[y][x] = 'O';
+        return L;
+    }
+    function mountGrid(view, frameKey) {
+        const sec = mountSections(view);
+        const blank = () => Array.from({ length: MOUNT_N }, () => Array(MOUNT_N).fill('.'));
+        const layers = { B: blank(), F: blank() };
+        mountApply(layers, sec.base);
+        if (frameKey !== 'base' && sec[frameKey]) mountApply(layers, sec[frameKey]);
+        return { B: mountOutline(layers.B), F: mountOutline(layers.F) };
+    }
+    function mountBake(grid, stage, flash, mir) {
+        const N = MOUNT_N, cv = document.createElement('canvas');
+        cv.width = N; cv.height = N;
+        const ctx = cv.getContext('2d'), img = ctx.createImageData(N, N), px = img.data;
+        const map = stage >= 3 ? MOUNT_STAGE[3] : (stage >= 2 ? MOUNT_STAGE[2] : {});
         for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
-            const i = y * N + x, qi = pb[i];
-            if (qi < 0) continue;
-            const q = prims[qi], t = tb[i];
-            const [of, ol, ou] = pixel(x, y);
-            const pf = of + t * df, pl = ol + t * dl, pu = ou + t * du;
-            const nf = (pf - q.c[0]) / (q.r[0] * q.r[0]), nl = (pl - q.c[1]) / (q.r[1] * q.r[1]), nu = (pu - q.c[2]) / (q.r[2] * q.r[2]);
-            const nX = nf * ca - nl * sa, nY = nu, nZ = nf * sa + nl * ca;
-            const nn = Math.hypot(nX, nY, nZ) || 1;
-            const dot = (nX * M3_LIGHT[0] + nY * M3_LIGHT[1] + nZ * M3_LIGHT[2]) / nn;
-            const tone = dot > 0.5 ? 3 : dot > 0.12 ? 2 : dot > -0.25 ? 1 : 0;
-            const front = !!q.front || (tr[i] > -Infinity && t > tr[i]);
-            const L = front ? out.front : out.back;
-            L.roles[y][x] = q.role; L.tones[y][x] = tone;
-        }
-        out.ox = OX;
-        return out;
-    }
-
-    function bakeCanvasN(idx, pal, sz, flash) {
-        const cv = document.createElement('canvas');
-        cv.width = sz; cv.height = sz;
-        const ctx = cv.getContext('2d');
-        const img = ctx.createImageData(sz, sz), px = img.data;
-        const rgbCache = pal.map(h => SpriteCore.hexRgb(h));
-        for (let y = 0; y < sz; y++) for (let x = 0; x < sz; x++) {
-            const k = idx[y][x];
-            if (!k) continue;
-            const c = flash ? [255, 255, 255] : (rgbCache[k - 1] || [255, 255, 255]);
-            const o = (y * sz + x) * 4;
-            px[o] = c[0]; px[o + 1] = c[1]; px[o + 2] = c[2]; px[o + 3] = 255;
+            const ch = grid[y][mir ? N - 1 - x : x];
+            if (ch === '.') continue;
+            const o = (y * N + x) * 4;
+            if (ch === 'x') { px[o + 3] = 71; continue; }
+            if (flash) { px[o] = px[o + 1] = px[o + 2] = px[o + 3] = 255; continue; }
+            const hex = MOUNT_PAL[map[ch] || ch];
+            if (!hex) continue;
+            px[o] = parseInt(hex.substr(1, 2), 16); px[o + 1] = parseInt(hex.substr(3, 2), 16);
+            px[o + 2] = parseInt(hex.substr(5, 2), 16); px[o + 3] = 255;
         }
         ctx.putImageData(img, 0, 0);
         return cv;
     }
-
     // Camadas da montaria para uma direção (0=E 1=SE 2=S 3=SW 4=W 5=NW 6=N 7=NE), pose (0..3 passo, 4..5 parado) e estágio.
-    // Retorna { back, front } (canvas 64x64) e ox/oy/sadY: posição do centro do corcel (ox, oy) e da sela (sadY) no canvas.
+    // Retorna back e front (canvas 72x72), ox (coluna do cavaleiro), oy e sadY (linha da cintura) no canvas.
     function getMountLayers(dir, pose, flash, stage) {
         const d = (dir | 0) & 7, p = (pose | 0) & 7, stg = Math.max(1, Math.min(3, stage || 1)), fl = flash ? 1 : 0;
-        const key = d + '|' + p + '|' + stg + '|' + fl;
-        if (_m3Cache.has(key)) return _m3Cache.get(key);
-        if (_m3Cache.size > 96) _m3Cache.clear();
-        const L = m3Raster(m3Prims(p, stg), d * Math.PI / 4);
-        const pal9 = PET_ART.horse.pal().slice();   // [O,S,M,D,L,A,W,V,G]
-        if (stg >= 2) pal9[7] = '#4b5870';          // manta de aço (estágio II)
-        if (stg >= 3) pal9[7] = '#5b2c8a';          // manta do Véu (estágio III)
-        const pal = SpriteCore.buildPalette(pal9);
-        const bake = l => bakeCanvasN(SpriteCore.finishTones(l.roles, l.tones, M3_N), pal, M3_N, fl);
-        const res = {
-            back: bake(L.back), front: bake(L.front),
-            ox: L.ox, oy: M3_G0 - M3_BODY * M3_CE,
-            sadY: M3_G0 - (M3_SAD + m3Bob(p)) * M3_CE
-        };
-        _m3Cache.set(key, res);
-        return res;
+        const [view, mir] = MOUNT_DIR[d];
+        const frameKey = p < 4 ? 'w' + p : (p === 5 ? 'i1' : 'base');
+        const bob = (p === 1 || p === 3) ? 1 : 0;   // passo: a montaria sobe 1 px nos quadros 1 e 3
+        const key = view + '|' + frameKey + '|' + stg + '|' + fl + '|' + mir;
+        if (!_mountCache.has(key)) {
+            if (_mountCache.size > 160) _mountCache.clear();
+            const g = mountGrid(view, frameKey);
+            _mountCache.set(key, { back: mountBake(g.B, stg, fl, mir), front: mountBake(g.F, stg, fl, mir) });
+        }
+        const lay = _mountCache.get(key);
+        return { back: lay.back, front: lay.front, ox: mir ? MOUNT_N - 1 - MOUNT_OX : MOUNT_OX, oy: MOUNT_SAD + bob, sadY: MOUNT_SAD };
     }
 
     function petDetail(type, g48, pose, stage) {
@@ -6255,10 +7608,8 @@ const PetSprites = (() => {
     }
 
     function clear() { _cache.clear(); _mountCache.clear(); }
-    // Deslocamento vertical (px) da montaria por direção; a montaria de outros pets segue usando get()
-    const mountDy = dir => MOUNT_DY[(dir | 0) & 7];
 
-    return { get, getMount, getMountLayers, mountDy, mountGrid24, clear, TYPES: Object.keys(PET_ART), MOUNT3D: { N: M3_N, OX: M3_OX, G0: M3_G0, SAD: M3_SAD, CE: M3_CE, WAIST: M3_HERO_WAIST } };
+    return { get, getMountLayers, clear, TYPES: Object.keys(PET_ART), MOUNT: { N: MOUNT_N, OX: MOUNT_OX, SAD: MOUNT_SAD, WAIST: MOUNT_WAIST } };
 })();
 
 const SpriteRenderer = {

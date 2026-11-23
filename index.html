@@ -37024,15 +37024,14 @@ class Pet {
     draw(ctx, cx, cy) {
         if (!this.alive) return;
         // Corcel montado: 8 direções pela mesma direção do herói (spriteAngle, como a folha do herói); frente um pouco mais abaixo, costas mais acima
-        const mntHorse = !!(this.mounted && this.type === 'horse' && player && typeof PetSprites !== 'undefined' && PetSprites.getMount);
+        const mntHorse = !!(this.mounted && this.type === 'horse' && player && typeof PetSprites !== 'undefined' && PetSprites.getMountLayers);
         // Corcel 3D (64 px nativo, duas camadas): camada de trás aqui, a da frente em player.draw; sem sela/rédea por stroke
-        const mntNew = mntHorse && typeof PetSprites.getMountLayers === 'function';
+        const mntNew = mntHorse;
         this._mntLay = null;
         const mntDir = mntHorse ? SpriteManager.getDirIndex(player.spriteAngle !== undefined ? player.spriteAngle : (player.angle || 0)) : 0;
-        const mntDy = (mntHorse && !mntNew) ? PetSprites.mountDy(mntDir) : 0;
         const mntOffsetY = this.mounted ? 8 : 0;
         const sx = (this.mounted && player ? player.x : this.x) - cx;
-        const sy = (this.mounted && player ? player.y : this.y) - cy + mntOffsetY + mntDy;
+        const sy = (this.mounted && player ? player.y : this.y) - cy + mntOffsetY;
         const rmV = !!(window.GameSettings && GameSettings.reducedMotion);
         const celebHop = (!this.mounted && (this._celebT > 0 || this._pettedT > 0) && !rmV) ? -Math.abs(Math.sin(this.timer * 0.35)) * 7 : 0;
         const flyAlt = this.mounted ? (this.type === 'dragon' ? 4 : 0) : (PET_FLY_ALT[this.type] || 0);
@@ -37041,7 +37040,7 @@ class Pet {
         const bob = (this.mounted ? (this._mountBob || 0) : idleBob) + celebHop;
         const mScale = this.mounted ? (this.type === 'wolf' ? 1.18 : 1.24) : 1.0;
         // Corcel montado é arte nativa 48 px (escala 1, sem fracionário); o anel de aura segue o mScale antigo
-        const drawSz = mntNew ? 64 : (mntHorse ? 48 : Math.round(48 * mScale));
+        const drawSz = Math.round(48 * mScale);
         let ptop = sy + bob - flyAlt - Math.round(drawSz * 0.5);
 
         if (this._fxBeam) {
@@ -37083,12 +37082,12 @@ class Pet {
             ptop = Yc;
             spr = lay.back;
         } else {
-            spr = mntHorse ? PetSprites.getMount('horse', mntDir, pose, flash, stg) : _petMakeSprite(this.type, pose, this._face, flash, stg);
+            spr = _petMakeSprite(this.type, pose, this._face, flash, stg);
         }
 
         const bondLv = this._bondLv();
         const od = player && (player.overdriveTimer || 0) > 0;
-        if ((stg >= 2 || bondLv >= 3 || od) && (window.GFX === undefined || GFX.glows !== false)) {
+        if (!this.mounted && (stg >= 2 || bondLv >= 3 || od) && (window.GFX === undefined || GFX.glows !== false)) {
             ctx.save();
             const auraCol = od ? '#ffd86b' : (stg >= 3 ? '#c084fc' : (stg === 2 ? '#60a5fa' : '#8effc4'));
             ctx.globalAlpha = rmV ? 0.24 : 0.18 + Math.sin(this.timer * 0.12) * 0.09;
@@ -39652,7 +39651,7 @@ _thornNova(m){if(!RunBoons.hasSynergy(this,'carapaca'))return;const d=18+this.lv
             ctx.beginPath();
             ctx.rect(sx - 40, _mntL.Yc - 200, 80, _sadLine - (_mntL.Yc - 200));
             ctx.clip();
-            SpriteRenderer.drawCharacter.call(this, ctx, sx, _sadLine + 24 - PetSprites.MOUNT3D.WAIST, this.type, {
+            SpriteRenderer.drawCharacter.call(this, ctx, sx, _sadLine + 24 - PetSprites.MOUNT.WAIST, this.type, {
                 state: spriteState,
                 time: spriteTime,
                 angle: this.spriteAngle || this.angle,
