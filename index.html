@@ -24215,6 +24215,7 @@ const Inventory = {
         return this.items.length;
     }
 };
+window.Inventory = Inventory;
 
 </script>
     <script>
@@ -45033,7 +45034,7 @@ window.SkillTreeUI = SkillTreeUI;
         },
 
         heroEquipFromBag(uid, slotKey) {
-            if (!window.Inventory) return;
+            if (typeof Inventory === 'undefined') return;
             if (Inventory.inCombat()) {
                 if (typeof ToastSystem !== 'undefined') ToastSystem.show(_L('inv.noCombat', 'Não dá para trocar equipamento em combate'), 'info', 2200);
                 return;
@@ -45048,7 +45049,7 @@ window.SkillTreeUI = SkillTreeUI;
         },
 
         heroUnequipSlot(slotKey) {
-            if (!window.Inventory) return;
+            if (typeof Inventory === 'undefined') return;
             if (Inventory.inCombat()) {
                 if (typeof ToastSystem !== 'undefined') ToastSystem.show(_L('inv.noCombat', 'Não dá para trocar equipamento em combate'), 'info', 2200);
                 return;
