@@ -477,6 +477,7 @@ body.mm-hidden #top-bar { right: max(8px, env(safe-area-inset-right, 8px)); }
 #actions-right { bottom: calc(max(12px, env(safe-area-inset-bottom, 12px)) + var(--util-btn) + 4px); gap: 8px; }
 #dodge-btn, #special-btn, #tech-btn {width: min(44px, 12vh) !important; height: min(44px, 12vh) !important;min-width: 40px !important; min-height: 40px !important}}
 .hero-canvas {display: block;width: 56px;height: 60px;image-rendering: pixelated;pointer-events: none;-webkit-user-select: none;user-select: none}
+.hero-portrait + .hero-canvas { display: none; }
 .class-mini-card.warrior .hero-canvas { filter: drop-shadow(0 0 6px rgba(127, 168, 208, 0.45)); }
 .class-mini-card.rogue .hero-canvas { filter: drop-shadow(0 0 6px rgba(224, 90, 69, 0.5)); }
 .class-mini-card.mage .hero-canvas { filter: drop-shadow(0 0 6px rgba(58, 208, 255, 0.45)); }
@@ -51238,6 +51239,10 @@ Input.init();
         var heroes = [];
         for (var i = 0; i < canvases.length; i++) {
             var cv = canvases[i];
+            var prevImg = cv.previousElementSibling;
+            if (prevImg && prevImg.classList && prevImg.classList.contains('hero-portrait') && prevImg.complete && prevImg.naturalWidth > 0) {
+                cv.style.display = 'none';
+            }
             var cctx = cv.getContext('2d');
             if (!cctx) continue;
             heroes.push({
