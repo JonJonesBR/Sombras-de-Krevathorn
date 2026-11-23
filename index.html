@@ -408,14 +408,20 @@ body.gfx-low #start-screen::after { animation: none !important; opacity: 0.5 !im
 .skill-node.state-locked-req .sk-name,.skill-node.state-locked-funds .sk-name,.skill-node.state-speed-locked .sk-name,.skill-node.state-floor-locked .sk-name { color: #9ca3af; }
 .skill-node.state-locked-req .sk-status,.skill-node.state-locked-funds .sk-status,.skill-node.state-speed-locked .sk-status,.skill-node.state-floor-locked .sk-status { color: #6b7280; }
 body.pause-open #bag-btn-bar { visibility: hidden; }
-.bag-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 4px; }
-.bag-grid { display: grid; grid-template-columns: 1fr; gap: 8px; }
-@media (min-width: 380px) {.bag-tabs { grid-template-columns: repeat(4, 1fr); }
-.bag-grid { grid-template-columns: 1fr 1fr; }}
-.bag-card {display: block; width: 100%; min-height: 44px; text-align: left; padding: 8px 10px;border-radius: 12px; cursor: pointer; touch-action: manipulation;background: rgba(255, 255, 255, 0.04); border: 1.5px solid rgba(255, 255, 255, 0.12); color: #e2cff5}
+.bag-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-bottom: 4px; }
+.bag-tabs > button { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bag-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; min-width: 0; }
+@media (min-width: 380px) {.bag-tabs { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.bag-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }}
+.bag-name { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; line-height: 1.2; }
+.bag-chip { flex: none; min-width: 20px; padding: 1px 6px; border-radius: 999px; font-size: calc(10px * var(--font-scale, 1)); font-weight: 800; line-height: 1.3; text-align: center; background: rgba(10, 8, 18, 0.78); border: 1px solid currentColor; }
+.bag-filters { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.bag-card {position: relative; display: block; width: 100%; min-width: 0; min-height: 44px; overflow: hidden; box-sizing: border-box; text-align: left; padding: 8px 10px;border-radius: 12px; cursor: pointer; touch-action: manipulation;background: rgba(255, 255, 255, 0.04); border: 1.5px solid rgba(255, 255, 255, 0.12); color: #e2cff5}
 .bag-card[aria-pressed="true"] {border-color: #e0b6ff !important; background: rgba(224, 182, 255, 0.12);box-shadow: 0 0 12px rgba(224, 182, 255, 0.35)}
-.bag-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; }
-.bag-act {min-height: 44px; padding: 8px 6px; border-radius: 10px; cursor: pointer; touch-action: manipulation;font-size: calc(12px * var(--font-scale, 1)); font-weight: 800;background: rgba(255, 255, 255, 0.06); border: 1.5px solid rgba(255, 255, 255, 0.2); color: #e2cff5}
+.bag-btns { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-top: 8px; }
+#bag-footer .bag-btns > .bag-act-forge { grid-column: 1 / -1; }
+.bag-btns.bag-btns-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.bag-act {min-width: 0; min-height: 44px; padding: 8px 4px; overflow-wrap: anywhere; line-height: 1.15; border-radius: 10px; cursor: pointer; touch-action: manipulation;font-size: calc(12px * var(--font-scale, 1)); font-weight: 800;background: rgba(255, 255, 255, 0.06); border: 1.5px solid rgba(255, 255, 255, 0.2); color: #e2cff5}
 .bag-act-primary { background: rgba(157, 78, 221, 0.22); border-color: rgba(224, 182, 255, 0.55); color: #f0e0ff; }
 .bag-act-sell { background: rgba(255, 216, 107, 0.14); border-color: rgba(255, 216, 107, 0.5); color: #ffd86b; }
 .bag-act-danger { background: rgba(255, 80, 80, 0.12); border-color: rgba(255, 120, 120, 0.45); color: #ffb3b3; }
@@ -43771,6 +43777,21 @@ window.SkillTreeUI = SkillTreeUI;
             return '<span style="color:' + e[2] + ';font-weight:700;">' + this._esc(_L(e[0], e[1])) + '</span>';
         },
 
+        // Etiqueta curta no canto do cartão (o texto completo fica no aria-label e no rodapé)
+        _verdictChip(v) {
+            const map = {
+                new: ['eq.verdictNew', 'NOVO', 'NOVO', '#7ee08a'],
+                up: ['eq.verdictUp', 'MELHOR', '▲', '#7ee08a'],
+                down: ['eq.verdictDown', 'PIOR QUE O ANTERIOR', '▼', '#ff8080'],
+                mixed: ['eq.verdictMixed', 'MISTO', '◆', '#ffd86b'],
+                same: ['eq.verdictSame', 'EQUIVALENTE', '=', 'rgba(255,255,255,0.6)']
+            };
+            const e = map[v];
+            if (!e) return '';
+            const full = _L(e[0], e[1]);
+            return '<span class="bag-chip" role="img" aria-label="' + this._esc(full) + '" title="' + this._esc(full) + '" style="color:' + e[3] + ';">' + e[2] + '</span>';
+        },
+
         // Veredito da peça da bolsa contra a vestida no mesmo slot (mesma regra do cartão de loot)
         _verdictOf(equip) {
             const cur = (player && player.equipment && player.equipment[equip.slot]) || null;
@@ -43828,7 +43849,7 @@ window.SkillTreeUI = SkillTreeUI;
             let line = '', verdict = '';
             if (it.kind === 'equip') {
                 const vd = this._verdictOf(it.payload);
-                verdict = this._verdictTag(vd.v);
+                verdict = this._verdictChip(vd.v);
                 line = this._equipStatTexts(it.payload).slice(0, 3).join(' · ');
             } else {
                 line = this._weaponStatText(it.payload);
@@ -43837,11 +43858,10 @@ window.SkillTreeUI = SkillTreeUI;
                 + '<span style="display:flex;align-items:center;gap:8px;">'
                 + '<span style="flex:none;width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:' + color + '22;border:1px solid ' + color + '88;">' + this._icon(it, color) + '</span>'
                 + '<span style="min-width:0;flex:1;">'
-                + '<span style="display:block;font-size:calc(12px * var(--font-scale,1));font-weight:700;color:' + color + ';overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + this._esc(this._name(it)) + '</span>'
+                + '<span class="bag-name" style="font-size:calc(12px * var(--font-scale,1));font-weight:700;color:' + color + ';">' + this._esc(this._name(it)) + '</span>'
                 + '<span style="display:block;font-size:calc(10px * var(--font-scale,1));color:rgba(255,255,255,0.6);">' + this._esc(this._rarity(it)) + ' · ' + this._esc(this._slotLabel(this._slotKey(it))) + '</span>'
                 + '</span></span>'
-                + '<span style="display:block;font-size:calc(11px * var(--font-scale,1));color:#fff;margin-top:5px;line-height:1.3;">' + this._esc(line) + '</span>'
-                + (verdict ? '<span style="display:block;font-size:calc(11px * var(--font-scale,1));margin-top:2px;">' + verdict + '</span>' : '')
+                + '<span style="display:flex;align-items:flex-end;justify-content:space-between;gap:6px;margin-top:5px;"><span style="min-width:0;font-size:calc(11px * var(--font-scale,1));color:#fff;line-height:1.3;">' + this._esc(line) + '</span>' + verdict + '</span>'
                 + '</button>';
         },
 
@@ -43861,7 +43881,7 @@ window.SkillTreeUI = SkillTreeUI;
                 + '<span style="flex:none;width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;background:' + color + '22;border:1px solid ' + color + '77;"><svg class="icon-inline" width="14" height="14" style="color:' + color + ';" aria-hidden="true"><use href="#' + icId + '"/></svg></span>'
                 + '<span style="min-width:0;flex:1;">'
                 + '<span style="display:block;font-size:calc(10px * var(--font-scale,1));color:rgba(255,255,255,0.6);">' + this._esc(label) + ' · ' + this._esc(EquipmentCard._rarityText(equip.rarity)) + '</span>'
-                + '<span style="display:block;font-size:calc(12px * var(--font-scale,1));font-weight:700;color:' + color + ';overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + this._esc(equip.name || '') + '</span>'
+                + '<span class="bag-name" style="font-size:calc(12px * var(--font-scale,1));font-weight:700;color:' + color + ';">' + this._esc(equip.name || '') + '</span>'
                 + '</span></span>'
                 + '<span style="display:block;font-size:calc(11px * var(--font-scale,1));color:#fff;margin-top:4px;line-height:1.3;">' + this._esc(this._equipStatTexts(equip).join(' · ')) + '</span>'
                 + '</button>';
@@ -43871,7 +43891,7 @@ window.SkillTreeUI = SkillTreeUI;
             const labels = { equip: _L('inv.tabEquip', 'Equipados'), bag: _L('inv.tabBag', 'Bolsa'), cons: _L('inv.tabCons', 'Consumíveis'), relics: _L('inv.tabRelics', 'Relíquias') };
             return '<div class="bag-tabs" role="tablist">' + this.TABS.map(t => {
                 const on = this.tab === t;
-                return '<button type="button" role="tab" aria-selected="' + on + '" aria-pressed="' + on + '" onclick="BagPanel.setTab(\'' + t + '\')" style="min-height:44px;padding:6px 4px;border-radius:10px;font-size:calc(11px * var(--font-scale,1));font-weight:bold;border:1.5px solid ' + (on ? COLORS.PRIMARY : 'rgba(255,255,255,0.12)') + ';background:' + (on ? 'rgba(224,182,255,0.18)' : 'rgba(255,255,255,0.04)') + ';color:' + (on ? COLORS.PRIMARY : COLORS.TEXT_DIM) + ';cursor:pointer;touch-action:manipulation;">' + this._esc(labels[t]) + '</button>';
+                return '<button type="button" role="tab" aria-selected="' + on + '" aria-pressed="' + on + '" onclick="BagPanel.setTab(\'' + t + '\')" style="min-height:44px;padding:6px 2px;border-radius:10px;font-size:calc(11px * var(--font-scale,1));font-weight:bold;border:1.5px solid ' + (on ? COLORS.PRIMARY : 'rgba(255,255,255,0.12)') + ';background:' + (on ? 'rgba(224,182,255,0.18)' : 'rgba(255,255,255,0.04)') + ';color:' + (on ? COLORS.PRIMARY : COLORS.TEXT_DIM) + ';cursor:pointer;touch-action:manipulation;">' + this._esc(labels[t]) + '</button>';
             }).join('') + '</div>';
         },
 
@@ -43895,7 +43915,7 @@ window.SkillTreeUI = SkillTreeUI;
                     + '<span style="flex:none;width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:' + wColor + '22;border:1px solid ' + wColor + '77;"><svg class="icon-inline" width="16" height="16" style="color:' + wColor + ';" aria-hidden="true"><use href="#' + wIc + '"/></svg></span>'
                     + '<span style="min-width:0;flex:1;">'
                     + '<span style="display:block;font-size:calc(10px * var(--font-scale,1));color:rgba(255,255,255,0.6);">' + this._esc(_L('inv.weapon', 'Arma')) + ' · ' + this._esc(EquipmentCard._rarityText(CONFIG.WEAPON_TIERS[w.tier | 0])) + '</span>'
-                    + '<span style="display:block;font-size:calc(12px * var(--font-scale,1));font-weight:700;color:' + wColor + ';">' + this._esc(WeaponSystem.displayName(w) || w.name || '') + '</span>'
+                    + '<span class="bag-name" style="font-size:calc(12px * var(--font-scale,1));font-weight:700;color:' + wColor + ';">' + this._esc(WeaponSystem.displayName(w) || w.name || '') + '</span>'
                     + '</span></span>'
                     + '<span style="display:block;font-size:calc(11px * var(--font-scale,1));color:#fff;margin-top:4px;">' + this._esc(this._weaponStatText(w)) + '</span></button>';
             }
@@ -43917,7 +43937,7 @@ window.SkillTreeUI = SkillTreeUI;
                 ['up', _L('inv.filter.up', '▲ Melhorias')]
             ].map(([k, lbl]) => {
                 const on = curF === k;
-                return '<button type="button" onclick="BagPanel.setFilter(\'' + k + '\')" style="padding:5px 9px;border-radius:999px;font-size:calc(10px * var(--font-scale,1));font-weight:700;border:1px solid ' + (on ? COLORS.PRIMARY : 'rgba(255,255,255,0.14)') + ';background:' + (on ? 'rgba(224,182,255,0.22)' : 'rgba(255,255,255,0.04)') + ';color:' + (on ? '#fff' : COLORS.TEXT_DIM) + ';cursor:pointer;touch-action:manipulation;">' + this._esc(lbl) + '</button>';
+                return '<button type="button" onclick="BagPanel.setFilter(\'' + k + '\')" style="min-height:34px;padding:5px 12px;border-radius:999px;font-size:calc(11px * var(--font-scale,1));font-weight:700;border:1px solid ' + (on ? COLORS.PRIMARY : 'rgba(255,255,255,0.14)') + ';background:' + (on ? 'rgba(224,182,255,0.22)' : 'rgba(255,255,255,0.04)') + ';color:' + (on ? '#fff' : COLORS.TEXT_DIM) + ';cursor:pointer;touch-action:manipulation;">' + this._esc(lbl) + '</button>';
             }).join('');
             const capPct = Math.min(100, Math.round((Inventory.count() / Inventory.CAP) * 100));
             const capCol = Inventory.count() >= Inventory.CAP ? '#f87171' : (Inventory.count() >= Inventory.CAP - 2 ? '#fbbf24' : '#a78bfa');
@@ -43926,7 +43946,7 @@ window.SkillTreeUI = SkillTreeUI;
                 + '<span style="display:flex;align-items:center;gap:6px;font-size:calc(11px * var(--font-scale,1));color:' + capCol + ';font-weight:700;">'
                 + '<span style="width:48px;height:6px;border-radius:999px;background:rgba(255,255,255,0.1);overflow:hidden;display:inline-block;"><span style="display:block;height:100%;width:' + capPct + '%;background:' + capCol + ';"></span></span>'
                 + Inventory.count() + '/' + Inventory.CAP + '</span></div>'
-                + '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;">' + filters + '</div>';
+                + '<div class="bag-filters">' + filters + '</div>';
             if (!list.length) return head + this._empty(_L('inv.emptyBag', 'A bolsa não tem armas nem peças guardadas.'));
             return head + '<div class="bag-grid">' + list.map(it => this._cardHtml(it)).join('') + '</div>';
         },
@@ -44078,10 +44098,10 @@ window.SkillTreeUI = SkillTreeUI;
                         + this._esc(label)
                         + '<span style="display:block;font-size:calc(10px * var(--font-scale,1));font-weight:600;opacity:0.85;">' + this._esc(desc) + '</span></button>';
                 };
-                btns = '<div class="bag-btns">' + variantBtn('heavy') + variantBtn('swift') + '</div>'
+                btns = '<div class="bag-btns bag-btns-2">' + variantBtn('heavy') + variantBtn('swift') + '</div>'
                     + '<div class="bag-btns" style="grid-template-columns:1fr;">' + cancelBtn + '</div>';
             } else {
-                btns = '<div class="bag-btns">' + cancelBtn
+                btns = '<div class="bag-btns bag-btns-2">' + cancelBtn
                     + '<button type="button" class="bag-act ' + yesClass + '" onclick="BagPanel.askYes()">' + this._esc(yes) + '</button>'
                     + '</div>';
             }
