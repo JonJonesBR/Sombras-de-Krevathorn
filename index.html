@@ -4484,6 +4484,9 @@ const I18n = {
         'update.entry.v111.l2': 'Narrativa cinematográfica: novo motor de cutscenes com ritmo controlado por você, trilha dedicada nos 3 finais, sussurros de Eiran com distorção viva, últimas palavras nos chefes, Ecos de Memória nos andares e Grimório de Mistérios.',
         'update.entry.v111.l3': 'Herói e combate evoluídos: sprite vivo (Paper-Doll) refletindo armas e equipamentos reais, combos progressivos por nível (até 4 golpes), nova Técnica de Classe, Especial Desperto no Overdrive e NPCs em pixel art 48×48.',
         'update.entry.v111.l4': 'Telas e mobile refinados: nova ficha interativa do Personagem com slots clicáveis (equipar, substituir e retirar), Bolsa/Loja/Skills melhoradas, diálogos sem sobreposição de HUD, joystick ergonômico e curandeiro ativo no minimapa. Seus saves continuam funcionando.',
+        'update.entry.v113.title': 'v113 - Pixel art mais nítida e montarias novas',
+        'update.entry.v113.l1': 'Corcel e Lobo montados redesenhados: cavaleiro sentado na sela, com as pernas no flanco, e montaria acompanhando a direção do herói.',
+        'update.entry.v113.l2': 'Pets sem pixels soltos nas animações, auras contínuas e personagens mais visíveis no chão da Caverna de Lava.',
         'update.entry.v112.title': 'v112 - Bolsa mais clara',
         'update.entry.v112.l1': 'Bolsa sem cortes: cartões e abas cabem na tela, com nomes longos em até 2 linhas.',
         'update.entry.v112.l2': 'Comparação rápida: etiqueta curta (NOVO, ▲, ▼) em cada peça e ações Equipar, Vender e Descartar numa linha só.',
@@ -7221,6 +7224,9 @@ const I18n = {
         'update.entry.v111.l2': 'Cinematic storytelling: unified player-paced cutscene engine, dedicated music for all 3 endings, live-glitching Eiran whispers, boss last words, Memory Echoes across floors, and a Mystery Board Grimoire.',
         'update.entry.v111.l3': 'Evolved hero & combat: live Paper-Doll sprite reflecting your equipped gear and weapons, progressive level-up combos (up to 4-hit finishers), a new Class Technique, Awakened Overdrive Specials, and 48×48 pixel-art NPCs.',
         'update.entry.v111.l4': 'Refined RPG screens & mobile feel: interactive Character sheet with clickable slots (equip, swap, unequip), upgraded Bag/Shop/Skills screens, overlap-free NPC dialogues, ergonomic thumb joystick, and active Healer minimap tracking. Your saves keep working.',
+        'update.entry.v113.title': 'v113 - Sharper pixel art and new mounts',
+        'update.entry.v113.l1': 'Steed and Wolf mounts redrawn: the rider sits in the saddle with legs on the flank, and the mount follows the hero’s direction.',
+        'update.entry.v113.l2': 'Pets without stray pixels in their animations, continuous auras, and characters easier to see on the Lava Cave floor.',
         'update.entry.v112.title': 'v112 - Clearer Bag',
         'update.entry.v112.l1': 'Bag without clipping: cards and tabs fit the screen, with long names wrapping to 2 lines.',
         'update.entry.v112.l2': 'Quick comparison: a short badge (NEW, ▲, ▼) on every piece, and Equip, Sell and Discard on a single row.',
@@ -9968,6 +9974,9 @@ const I18n = {
         'update.entry.v111.l2': 'Narrativa cinematográfica: nuevo motor de escenas a tu ritmo, música dedicada en los 3 finales, susurros de Eiran con distorsión viva, últimas palabras de jefes, Ecos de Memoria y Grimorio de Misterios.',
         'update.entry.v111.l3': 'Héroe y combate evolucionados: sprite vivo (Paper-Doll) que muestra armas y equipo reales, combos progresivos por nivel (hasta 4 golpes), nueva Técnica de Clase, Especial Despierto en Overdrive y PNJ en pixel art 48×48.',
         'update.entry.v111.l4': 'Pantallas y móvil refinados: nueva ficha interactiva del Personaje con ranuras clicables (equipar, cambiar y retirar), Bolsa/Tienda/Habilidades mejoradas, diálogos sin solapamiento de HUD, joystick ergonómico y curandero activo en el minimapa. Tus partidas guardadas siguen funcionando.',
+        'update.entry.v113.title': 'v113 - Pixel art más nítido y nuevas monturas',
+        'update.entry.v113.l1': 'Corcel y Lobo montados rediseñados: el jinete va sentado en la silla, con las piernas en el flanco, y la montura sigue la dirección del héroe.',
+        'update.entry.v113.l2': 'Mascotas sin píxeles sueltos en sus animaciones, auras continuas y personajes más visibles en el suelo de la Cueva de Lava.',
         'update.entry.v112.title': 'v112 - Bolsa más clara',
         'update.entry.v112.l1': 'Bolsa sin recortes: las tarjetas y pestañas caben en la pantalla, con nombres largos en hasta 2 líneas.',
         'update.entry.v112.l2': 'Comparación rápida: etiqueta corta (NUEVO, ▲, ▼) en cada pieza y acciones Equipar, Vender y Descartar en una sola fila.',
@@ -50675,8 +50684,12 @@ Input.init();
        current MUST stay in sync with the SW CACHE_VERSION suffix (sw.js).
     */
     window.UPDATE_LOG = {
-        current: 'v112',
+        current: 'v113',
         entries: [
+            { v: 'v113', date: '2026-11-23', titleKey: 'update.entry.v113.title', title: 'v113 — Pixel art mais nítida e montarias novas',
+              linesKeys: ['update.entry.v113.l1', 'update.entry.v113.l2'],
+              lines: ['Corcel e Lobo montados redesenhados: cavaleiro sentado na sela, com as pernas no flanco, e montaria acompanhando a direção do herói.',
+                      'Pets sem pixels soltos nas animações, auras contínuas e personagens mais visíveis no chão da Caverna de Lava.'] },
             { v: 'v112', date: '2026-11-23', titleKey: 'update.entry.v112.title', title: 'v112 — Bolsa mais clara',
               linesKeys: ['update.entry.v112.l1', 'update.entry.v112.l2'],
               lines: ['Bolsa sem cortes: cartões e abas cabem na tela, com nomes longos em até 2 linhas.',
