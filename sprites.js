@@ -216,8 +216,8 @@ const SpriteCore = (() => {
     }
 
     // Versão para grades já sombreadas (renderizador 3D): roles + tons prontos, só aplica contorno.
-    function finishTones(roles, tones) {
-        return outlineGrid(roles, tones, N);
+    function finishTones(roles, tones, sz = N) {
+        return outlineGrid(roles, tones, sz);
     }
 
     // ---------- giro (direções intermediárias) ----------
@@ -5869,6 +5869,182 @@ const PetSprites = (() => {
         return cv;
     }
 
+    // ---------- montaria 3D do corcel: 64x64 nativo (1 célula = 1 px), duas camadas ----------
+    // Modelo de elipsoides rasterizado com z-buffer; câmera ¾ de cima: V = (0, sen E, cos E), sen E = 0,57.
+    // Camada 'back' fica atrás do cavaleiro; 'front' (pernas do cavaleiro, pescoço/cabeça voltados para a câmera,
+    // rédeas) é desenhada depois dele. Pixel 'front' = superfície mais perto da câmera que o cavaleiro.
+    const M3_N = 64, M3_OX = 31, M3_G0 = 54.5, M3_SE = 0.57, M3_CE = 0.82, M3_SAD = 36, M3_BODY = 27;
+    const M3_HERO_WAIST = 26;   // linha da cintura na célula 48 do herói (acima dela fica o recorte sobre a sela)
+    const M3_LIGHT = (() => { const v = [-0.45, 0.75, 0.5], l = Math.hypot(v[0], v[1], v[2]); return v.map(q => q / l); })();
+    const _m3Cache = new Map();
+    const m3Bob = p => (p < 4 && (p & 1)) ? 0.8 : 0;
+    const m3Blank = () => Array.from({ length: M3_N }, () => Array(M3_N).fill('.'));
+    const m3Zero = () => Array.from({ length: M3_N }, () => Array(M3_N).fill(0));
+
+    // Primitivas (coordenadas locais da montaria: f = frente, l = lateral (+ = lado direito, voltado para a câmera em E), u = altura)
+    function m3Prims(p, stg) {
+        const walk = p < 4, bob = m3Bob(p), breath = p === 5 ? 0.35 : 0;
+        const sway = walk ? Math.sin(Math.PI * p / 2) * 1.2 : (p === 5 ? 0.8 : -0.4);
+        const pr = [];
+        const add = (c, r, role, fl) => pr.push(Object.assign({ c, r, role }, fl || {}));
+        const A = 3.2;
+        // perna: cadeia de esferas do quadril ao casco; passo em trote de 4 tempos (LH 0, LF 1/4, RH 1/2, RF 3/4)
+        const leg = (fh, lh, ph) => {
+            const ang = 2 * Math.PI * (walk ? ((p / 4 + ph) % 1) : 0);
+            const dx = walk ? A * Math.cos(ang) : 0;
+            const lift = walk ? 3.2 * Math.max(0, -Math.sin(ang)) : 0;
+            const top = [fh, lh, 25 + bob], hoof = [fh + dx, lh, 1.6 + lift];
+            const rr = [2.8, 2.5, 2.3, 2.1, 2.0];
+            [0, 0.25, 0.5, 0.75, 1].forEach((t, i) => add([top[0] + (hoof[0] - top[0]) * t, lh, top[2] + (hoof[2] - top[2]) * t],
+                [rr[i], rr[i], rr[i] * 0.95], i < 2 ? 'M' : 'D'));
+            add([hoof[0] + 0.4, lh, 1.4 + lift], [2.6, 2.5, 1.7], 'W');
+        };
+        leg(8, 4, 0.75); leg(-9.5, 4, 0.5); leg(8, -4, 0.25); leg(-9.5, -4, 0);
+        // tronco, manta e garupa
+        add([0, 0, M3_BODY + bob], [14, 7.6 + breath * 0.3, 8.4 + breath], 'M');
+        add([10, 0, 26.5 + bob], [6.5, 7.2, 8.2], 'M');
+        add([-10, 0, M3_BODY + bob], [7.5, 7.6, 8.6], 'M');
+        add([-14, 0, 28 + bob], [4.5, 6.5, 7.2], 'M');
+        add([-1.5, 0, 27.6 + bob], [9.5, 7.8 + breath * 0.2, 7.0], 'V');
+        // pescoço arqueado e cabeça
+        add([10.5, 0, 31.5 + bob], [5.0, 4.0, 5.2], 'M');
+        add([15, 0, 38 + bob * 0.5], [4.0, 3.2, 4.2], 'M');
+        add([19, 0, 42.2 + bob * 0.5], [3.4, 2.9, 3.8], 'M');
+        add([11.5, 0, 37.2 + bob], [2.2, 2.0, 2.2], 'L');
+        add([15, 0, 42.5 + bob * 0.5], [2.2, 2.0, 2.2], 'L');
+        add([18.5, 0, 45.8 + bob * 0.5], [2.0, 1.8, 2.0], 'L');
+        add([22.8, 0, 43.6 + bob * 0.5], [5.4, 2.9, 3.8], 'M');
+        add([27.6, 0, 42.2 + bob * 0.5], [3.2, 2.4, 2.6], 'S');
+        add([23, 0, 41.5 + bob * 0.5], [3.6, 2.2, 2.0], 'M');
+        add([22, 0, 46.9 + bob * 0.5], [1.8, 1.4, 1.2], 'L');
+        add([21, 1.5, 46.4 + bob * 0.5], [0.9, 0.5, 1.8], 'D');
+        add([21, -1.5, 46.4 + bob * 0.5], [0.9, 0.5, 1.8], 'D');
+        add([25.5, 2.9, 46.2 + bob * 0.5], [0.9, 0.5, 0.9], 'O');
+        add([25.5, -2.9, 46.2 + bob * 0.5], [0.9, 0.5, 0.9], 'O');
+        // cauda (balança para os lados)
+        // cauda: cadeia densa de esferas (sem vãos) do ponto de inserção ao chão; balança para os lados
+        [[-16, 29.5, 2.4], [-18, 27.5, 2.2], [-19.8, 25, 2.0], [-20.9, 22, 1.9], [-21.8, 19, 1.8], [-22.4, 16, 1.6], [-22.9, 13, 1.5], [-23.1, 10.5, 1.4]]
+            .forEach(([f, u, r], i) => add([f, sway * (0.3 + i * 0.25), u + (i < 2 ? bob : bob * 0.5)], [r, r * 0.9, r], 'L'));
+        // sela, rédea e cavaleiro (pernas na camada da frente; o tronco do cavaleiro é o elipsoide 'rider', só para a ordem)
+        add([0.5, 0, 34.6 + bob], [5.2, 6.4, 1.4], 'D');
+        add([0.5, 0, 38.5 + bob], [3.2, 4.2, 9], 'M', { rider: true });
+        for (const s of [1, -1]) {
+            add([0.5, 9 * s, 30 + bob], [2.4, 2.1, 6], 'L', { front: true });
+            add([2.4, 9 * s, 20.5 + bob], [2.9, 2.2, 2.0], 'L', { front: true });
+            add([0.5, 8.5 * s, 17 + bob], [1.0, 0.9, 1.0], 'A', { front: true });
+        }
+        for (let i = 0; i <= 4; i++) add([15 + i * 2.2, 0, 35 + (i / 4) * 9 + bob * 0.5], [0.6, 0.6, 0.6], 'A', { front: true });
+        // Estágio II: chanfro de aço, barda peitoral/traseira com rebites de ouro
+        if (stg >= 2) {
+            add([26.5, 0, 44.5 + bob * 0.5], [3.4, 2.9, 2.9], 'W');
+            add([10.5, 0, 24.8 + bob], [6.2, 7.75, 5.4], 'W');
+            add([-10, 0, 23.8 + bob], [6.0, 7.75, 4.6], 'W');
+            for (const s of [1, -1]) add([10.5, 7.7 * s, 25.5 + bob], [0.5, 0.4, 0.5], 'A');
+        }
+        // Estágio III: runas do Véu nos flancos
+        if (stg >= 3) {
+            for (const s of [1, -1]) {
+                add([-2, 8.3 * s, 26 + bob], [0.9, 0.6, 0.9], 'G');
+                add([-6.5, 8.3 * s, 25 + bob], [0.9, 0.6, 0.9], 'G');
+                add([12, 8.0 * s, 25 + bob], [0.9, 0.6, 0.9], 'G');
+            }
+        }
+        return pr;
+    }
+
+    // Rasteriza as primitivas numa direção (heading = dir * 45°): z-buffer por pixel, papel e tom pelo normal.
+    function m3Raster(prims, heading) {
+        const N = M3_N, ca = Math.cos(heading), sa = Math.sin(heading), S = M3_SE, C = M3_CE;
+        const OX = 32 - 4.5 * ca;   // centro do corcel desloca-se para manter a silhueta (cauda e focinho) dentro da grade
+        const df = C * sa, dl = C * ca, du = S;   // direção do raio no referencial local
+        const tb = new Float64Array(N * N).fill(-Infinity), pb = new Int16Array(N * N).fill(-1);
+        const tr = new Float64Array(N * N).fill(-Infinity);
+        const body = prims.filter(q => !q.rider);
+        const hit = (q, of, ol, ou) => {
+            const [cf, cl, cu] = q.c, [rf, rl, ru] = q.r;
+            const ox = (of - cf) / rf, oy = (ol - cl) / rl, oz = (ou - cu) / ru;
+            const dx = df / rf, dy = dl / rl, dz = du / ru;
+            const A = dx * dx + dy * dy + dz * dz, B = 2 * (ox * dx + oy * dy + oz * dz), Cc = ox * ox + oy * oy + oz * oz - 1;
+            const disc = B * B - 4 * A * Cc;
+            return disc < 0 ? -Infinity : (-B + Math.sqrt(disc)) / (2 * A);
+        };
+        const pixel = (x, y) => {
+            const sx = x + 0.5 - OX, sy = y + 0.5 - M3_G0;
+            return [sx * ca + sy * S * sa, -sx * sa + sy * S * ca, -sy * C];
+        };
+        prims.forEach((q, qi) => {
+            const gxc = OX + q.c[0] * ca - q.c[1] * sa, gyc = M3_G0 + (q.c[0] * sa + q.c[1] * ca) * S - q.c[2] * C;
+            const R = Math.hypot(q.r[0], q.r[1], q.r[2]) + 0.6;
+            const x0 = Math.max(0, Math.floor(gxc - R)), x1 = Math.min(N - 1, Math.ceil(gxc + R));
+            const y0 = Math.max(0, Math.floor(gyc - R)), y1 = Math.min(N - 1, Math.ceil(gyc + R));
+            for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+                const [of, ol, ou] = pixel(x, y);
+                const t = hit(q, of, ol, ou);
+                if (t === -Infinity) continue;
+                const i = y * N + x;
+                if (q.rider) { if (t > tr[i]) tr[i] = t; continue; }
+                if (t > tb[i]) { tb[i] = t; pb[i] = qi; }
+            }
+        });
+        const out = { back: { roles: m3Blank(), tones: m3Zero() }, front: { roles: m3Blank(), tones: m3Zero() } };
+        for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+            const i = y * N + x, qi = pb[i];
+            if (qi < 0) continue;
+            const q = prims[qi], t = tb[i];
+            const [of, ol, ou] = pixel(x, y);
+            const pf = of + t * df, pl = ol + t * dl, pu = ou + t * du;
+            const nf = (pf - q.c[0]) / (q.r[0] * q.r[0]), nl = (pl - q.c[1]) / (q.r[1] * q.r[1]), nu = (pu - q.c[2]) / (q.r[2] * q.r[2]);
+            const nX = nf * ca - nl * sa, nY = nu, nZ = nf * sa + nl * ca;
+            const nn = Math.hypot(nX, nY, nZ) || 1;
+            const dot = (nX * M3_LIGHT[0] + nY * M3_LIGHT[1] + nZ * M3_LIGHT[2]) / nn;
+            const tone = dot > 0.5 ? 3 : dot > 0.12 ? 2 : dot > -0.25 ? 1 : 0;
+            const front = !!q.front || (tr[i] > -Infinity && t > tr[i]);
+            const L = front ? out.front : out.back;
+            L.roles[y][x] = q.role; L.tones[y][x] = tone;
+        }
+        out.ox = OX;
+        return out;
+    }
+
+    function bakeCanvasN(idx, pal, sz, flash) {
+        const cv = document.createElement('canvas');
+        cv.width = sz; cv.height = sz;
+        const ctx = cv.getContext('2d');
+        const img = ctx.createImageData(sz, sz), px = img.data;
+        const rgbCache = pal.map(h => SpriteCore.hexRgb(h));
+        for (let y = 0; y < sz; y++) for (let x = 0; x < sz; x++) {
+            const k = idx[y][x];
+            if (!k) continue;
+            const c = flash ? [255, 255, 255] : (rgbCache[k - 1] || [255, 255, 255]);
+            const o = (y * sz + x) * 4;
+            px[o] = c[0]; px[o + 1] = c[1]; px[o + 2] = c[2]; px[o + 3] = 255;
+        }
+        ctx.putImageData(img, 0, 0);
+        return cv;
+    }
+
+    // Camadas da montaria para uma direção (0=E 1=SE 2=S 3=SW 4=W 5=NW 6=N 7=NE), pose (0..3 passo, 4..5 parado) e estágio.
+    // Retorna { back, front } (canvas 64x64) e ox/oy/sadY: posição do centro do corcel (ox, oy) e da sela (sadY) no canvas.
+    function getMountLayers(dir, pose, flash, stage) {
+        const d = (dir | 0) & 7, p = (pose | 0) & 7, stg = Math.max(1, Math.min(3, stage || 1)), fl = flash ? 1 : 0;
+        const key = d + '|' + p + '|' + stg + '|' + fl;
+        if (_m3Cache.has(key)) return _m3Cache.get(key);
+        if (_m3Cache.size > 96) _m3Cache.clear();
+        const L = m3Raster(m3Prims(p, stg), d * Math.PI / 4);
+        const pal9 = PET_ART.horse.pal().slice();   // [O,S,M,D,L,A,W,V,G]
+        if (stg >= 2) pal9[7] = '#4b5870';          // manta de aço (estágio II)
+        if (stg >= 3) pal9[7] = '#5b2c8a';          // manta do Véu (estágio III)
+        const pal = SpriteCore.buildPalette(pal9);
+        const bake = l => bakeCanvasN(SpriteCore.finishTones(l.roles, l.tones, M3_N), pal, M3_N, fl);
+        const res = {
+            back: bake(L.back), front: bake(L.front),
+            ox: L.ox, oy: M3_G0 - M3_BODY * M3_CE,
+            sadY: M3_G0 - (M3_SAD + m3Bob(p)) * M3_CE
+        };
+        _m3Cache.set(key, res);
+        return res;
+    }
+
     function petDetail(type, g48, pose, stage) {
         const put = (x, y, r) => { if (y >= 0 && y < 48 && x >= 0 && x < 48) g48[y][x] = r; };
         const rect = (x0, y0, w, h, r) => { for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++) put(x, y, r); };
@@ -6082,7 +6258,7 @@ const PetSprites = (() => {
     // Deslocamento vertical (px) da montaria por direção; a montaria de outros pets segue usando get()
     const mountDy = dir => MOUNT_DY[(dir | 0) & 7];
 
-    return { get, getMount, mountDy, mountGrid24, clear, TYPES: Object.keys(PET_ART) };
+    return { get, getMount, getMountLayers, mountDy, mountGrid24, clear, TYPES: Object.keys(PET_ART), MOUNT3D: { N: M3_N, OX: M3_OX, G0: M3_G0, SAD: M3_SAD, CE: M3_CE, WAIST: M3_HERO_WAIST } };
 })();
 
 const SpriteRenderer = {

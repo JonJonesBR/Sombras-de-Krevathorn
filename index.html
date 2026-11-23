@@ -37025,8 +37025,11 @@ class Pet {
         if (!this.alive) return;
         // Corcel montado: 8 direções pela mesma direção do herói (spriteAngle, como a folha do herói); frente um pouco mais abaixo, costas mais acima
         const mntHorse = !!(this.mounted && this.type === 'horse' && player && typeof PetSprites !== 'undefined' && PetSprites.getMount);
+        // Corcel 3D (64 px nativo, duas camadas): camada de trás aqui, a da frente em player.draw; sem sela/rédea por stroke
+        const mntNew = mntHorse && typeof PetSprites.getMountLayers === 'function';
+        this._mntLay = null;
         const mntDir = mntHorse ? SpriteManager.getDirIndex(player.spriteAngle !== undefined ? player.spriteAngle : (player.angle || 0)) : 0;
-        const mntDy = mntHorse ? PetSprites.mountDy(mntDir) : 0;
+        const mntDy = (mntHorse && !mntNew) ? PetSprites.mountDy(mntDir) : 0;
         const mntOffsetY = this.mounted ? 8 : 0;
         const sx = (this.mounted && player ? player.x : this.x) - cx;
         const sy = (this.mounted && player ? player.y : this.y) - cy + mntOffsetY + mntDy;
@@ -37038,8 +37041,8 @@ class Pet {
         const bob = (this.mounted ? (this._mountBob || 0) : idleBob) + celebHop;
         const mScale = this.mounted ? (this.type === 'wolf' ? 1.18 : 1.24) : 1.0;
         // Corcel montado é arte nativa 48 px (escala 1, sem fracionário); o anel de aura segue o mScale antigo
-        const drawSz = mntHorse ? 48 : Math.round(48 * mScale);
-        const ptop = sy + bob - flyAlt - Math.round(drawSz * 0.5);
+        const drawSz = mntNew ? 64 : (mntHorse ? 48 : Math.round(48 * mScale));
+        let ptop = sy + bob - flyAlt - Math.round(drawSz * 0.5);
 
         if (this._fxBeam) {
             ctx.save();
@@ -37072,7 +37075,16 @@ class Pet {
 
         const stg = this._stage();
         const flash = this._hitT > 0 ? 1 : 0;
-        const spr = mntHorse ? PetSprites.getMount('horse', mntDir, pose, flash, stg) : _petMakeSprite(this.type, pose, this._face, flash, stg);
+        let spr;
+        if (mntNew) {
+            const lay = PetSprites.getMountLayers(mntDir, pose, flash, stg);
+            const Xc = Math.round(sx - lay.ox), Yc = Math.round(sy + bob - flyAlt - lay.oy);
+            this._mntLay = { Xc: Xc, Yc: Yc, sadY: lay.sadY, front: lay.front };
+            ptop = Yc;
+            spr = lay.back;
+        } else {
+            spr = mntHorse ? PetSprites.getMount('horse', mntDir, pose, flash, stg) : _petMakeSprite(this.type, pose, this._face, flash, stg);
+        }
 
         const bondLv = this._bondLv();
         const od = player && (player.overdriveTimer || 0) > 0;
@@ -37081,7 +37093,7 @@ class Pet {
             const auraCol = od ? '#ffd86b' : (stg >= 3 ? '#c084fc' : (stg === 2 ? '#60a5fa' : '#8effc4'));
             ctx.globalAlpha = rmV ? 0.24 : 0.18 + Math.sin(this.timer * 0.12) * 0.09;
             // Anel de 2 camadas (espessura 5) com grade ancorada na origem do drawImage do sprite
-            PixelFX.ring(ctx, sx, sy + bob - flyAlt, this.radius * mScale + (od ? 7 : 5), auraCol, 5, { gx: Math.round(sx - drawSz / 2), gy: Math.round(ptop) });
+            PixelFX.ring(ctx, sx, sy + bob - flyAlt, this.radius * mScale + (od ? 7 : 5), auraCol, 5, { gx: mntNew ? this._mntLay.Xc : Math.round(sx - drawSz / 2), gy: Math.round(ptop) });
             ctx.restore();
         }
 
@@ -37095,7 +37107,8 @@ class Pet {
         const smOld = ctx.imageSmoothingEnabled;
         ctx.imageSmoothingEnabled = false;
         ctx.globalAlpha = this.type === 'spirit' ? 0.92 : 1;
-        ctx.drawImage(spr, Math.round(sx - drawSz * 0.5 + lunge), Math.round(ptop), drawSz, drawSz);
+        if (mntNew) ctx.drawImage(spr, this._mntLay.Xc, this._mntLay.Yc);
+        else ctx.drawImage(spr, Math.round(sx - drawSz * 0.5 + lunge), Math.round(ptop), drawSz, drawSz);
         ctx.globalAlpha = 1;
         ctx.imageSmoothingEnabled = smOld;
 
@@ -39630,15 +39643,37 @@ _thornNova(m){if(!RunBoons.hasSynergy(this,'carapaca'))return;const d=18+this.lv
         if (this.invincibleTimer > 0 && (this.invincibleTimer % 4 < 2)) heroAlpha *= 0.4;
         ctx.globalAlpha = heroAlpha;
         const _mnt = (typeof PetSystem !== 'undefined' && PetSystem.getMountedPet) ? PetSystem.getMountedPet() : null;
-        const _mntOffY = (_mnt && _mnt.getRiderOffsetY) ? _mnt.getRiderOffsetY() : 0;
-        SpriteRenderer.drawCharacter.call(this, ctx, sx, sy + _mntOffY, this.type, {
-            state: spriteState,
-            time: spriteTime,
-            angle: this.spriteAngle || this.angle,
-            isHit: this.ft > 0
-        });
-        if (_mnt && _mnt.drawSaddleOverlay) {
-            _mnt.drawSaddleOverlay(ctx, sx, sy + _mntOffY);
+        const _mntL = (_mnt && _mnt.mounted && _mnt._mntLay) ? _mnt._mntLay : null;
+        const _mntOffY = (_mnt && _mnt.getRiderOffsetY && !_mntL) ? _mnt.getRiderOffsetY() : 0;
+        if (_mntL) {
+            // Cavaleiro sentado: só a metade de cima (acima da linha da sela) entre a camada de trás e a da frente da montaria
+            const _sadLine = _mntL.Yc + _mntL.sadY;
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(sx - 40, _mntL.Yc - 200, 80, _sadLine - (_mntL.Yc - 200));
+            ctx.clip();
+            SpriteRenderer.drawCharacter.call(this, ctx, sx, _sadLine + 24 - PetSprites.MOUNT3D.WAIST, this.type, {
+                state: spriteState,
+                time: spriteTime,
+                angle: this.spriteAngle || this.angle,
+                isHit: this.ft > 0
+            });
+            ctx.restore();
+            ctx.save();
+            ctx.globalAlpha = 1;
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(_mntL.front, _mntL.Xc, _mntL.Yc);
+            ctx.restore();
+        } else {
+            SpriteRenderer.drawCharacter.call(this, ctx, sx, sy + _mntOffY, this.type, {
+                state: spriteState,
+                time: spriteTime,
+                angle: this.spriteAngle || this.angle,
+                isHit: this.ft > 0
+            });
+            if (_mnt && _mnt.drawSaddleOverlay) {
+                _mnt.drawSaddleOverlay(ctx, sx, sy + _mntOffY);
+            }
         }
         // Indicador do combo: 3 pontinhos (ou 4 no Nv.5+) que acendem conforme o passo (somem após a janela sem atacar)
         if (this.chainStep > 0 && this.chainTimer < CONFIG.COMBO_CHAIN_WINDOW) {
