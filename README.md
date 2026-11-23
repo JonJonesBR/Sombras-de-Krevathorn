@@ -98,6 +98,10 @@ The daily leaderboard is stored on the device; there is no online leaderboard or
 ## 📄 License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
+## 🎨 Créditos de arte
+- Cavalo da montaria: "[LPC] Horses" de bluecarrot16, CC-BY 3.0, https://opengameart.org/content/lpc-horses — convertido ao estilo do jogo (paleta, contorno, sela).
+- O código segue a licença MIT; essa arte segue CC-BY 3.0.
+
 ---
 <div align="center">
   <i>Developed by JonJonesBR</i>

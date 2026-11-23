@@ -37076,7 +37076,7 @@ class Pet {
         const flash = this._hitT > 0 ? 1 : 0;
         let spr;
         if (mntNew) {
-            const lay = PetSprites.getMountLayers(mntDir, pose, flash, stg);
+            const lay = PetSprites.getMountLayers(mntDir, pose, flash, stg, player.type);
             const Xc = Math.round(sx - lay.ox), Yc = Math.round(sy + bob - flyAlt - lay.oy);
             this._mntLay = { Xc: Xc, Yc: Yc, sadY: lay.sadY, front: lay.front };
             ptop = Yc;
