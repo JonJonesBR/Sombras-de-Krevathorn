@@ -36468,7 +36468,7 @@ class Pet {
 
     getRiderOffsetY() {
         if (!this.mounted) return 0;
-        const base = this.type === 'dragon' ? -15 : (this.type === 'wolf' ? -11 : -14);
+        const base = this.type === 'dragon' ? -15 : -14;
         return base + Math.round(this._mountBob || 0);
     }
 
@@ -37023,14 +37023,13 @@ class Pet {
 
     draw(ctx, cx, cy) {
         if (!this.alive) return;
-        // Corcel montado: 8 direções pela mesma direção do herói (spriteAngle, como a folha do herói); frente um pouco mais abaixo, costas mais acima
-        const mntHorse = !!(this.mounted && this.type === 'horse' && player && typeof PetSprites !== 'undefined' && PetSprites.getMountLayers);
-        // Corcel 3D (64 px nativo, duas camadas): camada de trás aqui, a da frente em player.draw; sem sela/rédea por stroke
-        const mntNew = mntHorse;
+        // Montaria em arte nativa (corcel e lobo, duas camadas): 8 direções pela direção do herói (spriteAngle); a camada de trás aqui, a da frente em player.draw
+        const mntArt = !!(this.mounted && (this.type === 'horse' || this.type === 'wolf') && player && typeof PetSprites !== 'undefined' && PetSprites.getMountLayers);
+        const mntNew = mntArt;
         this._mntLay = null;
-        let mntDir = mntHorse ? SpriteManager.getDirIndex(player.spriteAngle !== undefined ? player.spriteAngle : (player.angle || 0)) : 0;
-        if (mntHorse) {
-            // Frente/costas do cavalo LPC são estreitas demais: na vertical o corcel fica de lado (último lado horizontal)
+        let mntDir = mntArt ? SpriteManager.getDirIndex(player.spriteAngle !== undefined ? player.spriteAngle : (player.angle || 0)) : 0;
+        if (mntArt) {
+            // Frente/costas das montarias LPC são estreitas demais: na vertical a montaria fica de lado (último lado horizontal)
             // e o cavaleiro olha na diagonal correspondente, para continuar mostrando para onde vai
             if (mntDir === 0 || mntDir === 1 || mntDir === 7) this._mntHz = 1;
             else if (mntDir === 3 || mntDir === 4 || mntDir === 5) this._mntHz = -1;
@@ -37047,8 +37046,8 @@ class Pet {
         const moving = !!this._isMoving;
         const idleBob = (!this.mounted && !rmV && (flyAlt > 0 || moving)) ? Math.sin(this.timer * 0.08) * 1.6 : 0;
         const bob = (this.mounted ? (this._mountBob || 0) : idleBob) + celebHop;
-        const mScale = this.mounted ? (this.type === 'wolf' ? 1.18 : 1.24) : 1.0;
-        // Corcel montado é arte nativa 48 px (escala 1, sem fracionário); o anel de aura segue o mScale antigo
+        const mScale = this.mounted ? 1.24 : 1.0;
+        // Montaria em arte nativa não usa drawSz (só o dragão montado, no caminho antigo)
         const drawSz = Math.round(48 * mScale);
         let ptop = sy + bob - flyAlt - Math.round(drawSz * 0.5);
 
@@ -37085,7 +37084,7 @@ class Pet {
         const flash = this._hitT > 0 ? 1 : 0;
         let spr;
         if (mntNew) {
-            const lay = PetSprites.getMountLayers(mntDir, pose, flash, stg, player.type);
+            const lay = PetSprites.getMountLayers(mntDir, pose, flash, stg, player.type, this.type);
             const Xc = Math.round(sx - lay.ox), Yc = Math.round(sy + bob - flyAlt - lay.oy);
             this._mntLay = { Xc: Xc, Yc: Yc, sadY: lay.sadY, front: lay.front };
             ptop = Yc;

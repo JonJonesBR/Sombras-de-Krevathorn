@@ -100,6 +100,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🎨 Créditos de arte
 - Cavalo da montaria: "[LPC] Horses" de bluecarrot16, CC-BY 3.0, https://opengameart.org/content/lpc-horses — convertido ao estilo do jogo (paleta, contorno, sela).
+- Lobo da montaria: "[LPC] Wolf Animation" de Stephen "Redshrike" Challener (arte gráfica) e William.Thompsonj (contribuição), CC-BY 3.0, https://opengameart.org/content/lpc-wolf-animation — convertido ao estilo do jogo (paleta, contorno, manta).
 - O código segue a licença MIT; essa arte segue CC-BY 3.0.
 
 ---

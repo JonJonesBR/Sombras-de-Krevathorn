@@ -5876,6 +5876,35 @@ const PetSprites = (() => {
     };
     // direção 0..7 (E, SE, S, SW, W, NW, N, NE) -> vista e espelho
     const MOUNT_DIR = [['E', 0], ['E', 0], ['S', 0], ['E', 1], ['E', 1], ['E', 1], ['N', 0], ['E', 0]];
+    // ---------- montaria do lobo: arte de "[LPC] Wolf Animation" ao estilo do jogo ----------
+    // Lobo: '[LPC] Wolf Animation' de Stephen "Redshrike" Challener (arte) e William.Thompsonj (contribuição), CC-BY 3.0, https://opengameart.org/content/lpc-wolf-animation
+    // Convertido: paleta cinza-esverdeada do lobo do jogo, contorno de 1 px, 4 tons chapados, manta e cilha em MOUNT_ART_WOLF. Só vista lateral (E); W é o espelho.
+    const MOUNT_PAL_WOLF = Object.assign({}, MOUNT_PAL, { O: '#120e1a', K: '#263029', D: '#425046', M: '#6d8072', H: '#8a9d8c', N: '#dce6d0', Z: '#ffd23a' });
+    const MOUNT_ART_WOLF = { E: { w: 64, h: 33, frames: [
+            '64.|49.2O.2O10.|48.ON4O10.|47.ONH4O10.|39.5O2.ODND4O10.|20.6O10.4ODHM3OK2HOK4O9.|17.11O6.3O2H2K2MKD2KHDOKOK3O8.|15.4OK6DK8O2KDMHD3MKDKHDKD2K4O7.|14.2OD2M3HM5DK3OK3M2K2MD3M2DM5DMHMKO7.|12.3OD7M8D6MD2MD3M2DM4DK2OKD2O6.|11.3OK7M9D6MD6MD2M5DMOZ5O4.|11.3OD9M8D8MD2M3D2M5DMHDOK4O2.|10.3OKD19M2H4M6DKHM2D2HMD3KM4O.|10.3O2D18M2H6M5D2KH5MD5M3O.|O7.2OKDO2D8MD12MK5M4D2K3MD2K2OK2D2MO2.|3O2.4OKMDOKD8MD7M2DK2OK5MK4D2K4D3K3OKO3.|.6OK2MDK2O2DM2H4M6D5MD2O5MKM3DKDKDK8O4.|.2O2DM4DKO.OKD2M3HMK4OD3MH2M2DKO3MH2MKDOMKD2O12.|2.3OK3M2O2.2OK2M2HMKO2K3OD4M3D2O2M3HMD2OMOMO13.|3.6O5.2OKMH2M3K6O5DK2O2M3HMK2OK3O13.|15.OK2D2MKD8OK2DK3O3M2HD6O14.|14.3O2DM2D5O3.8O3MHMK5O15.|13.2O2KD2H6O11.OKM7O17.|12.2OMO2MH6O12.OK2M5O18.|12.O2NDM7O13.2O2M5O18.|12.2O2NK3OHMO14.OKHNK2OMO18.|13.OK2M3O2H2O14.OMHM2OH2O17.|14.2OHMK3O2M2O12.2OKMH2O2HO16.|16.O2HM3O2H2MO12.OM2HKOHMO15.|16.OK3HMOM4HO11.OM4NO2HO14.|16.OK2NON2OKNONO12.ONHNHO2HO14.|17.12O12.9O14.|64.',
+            '64.|50.2O.2O9.|49.ON4O9.|48.ONH4O9.|40.5O2.ODND4O9.|21.6O10.4ODHM3OK2HOK4O8.|18.11O6.3O2H2K2MKD2KHDOKOK3O7.|16.4OK6DK8O2KDMHD3MKDKHDKD2K4O6.|15.2OD2M3HM5DK3OK3M2K2MD3M2DM5DMHMKO6.|14.2OD7M8D6MD2MD3M2DM4DK2OKD2O5.|13.2OK7M9D6MD6MD2M5DMOZ5O3.|12.3OD9M8D8MD2M3D2M5DMHDOK4O.|12.2OKD19M2H4M6DKHM2D2HMD3KM4O|11.3O2D18M2H6M5D2KH5MD5M3O|10.4O2D8MD12MK5M4D2K3MD2K2OK2D2MO.|9.2O2DOKD8MD7M2DK2OK5MK4D2K4D3K3OKO2.|3O3.4OK2D2O2DM2H4M6D5MDOK5MKM3DKDKDK8O3.|.7OKMD2O.OKD2M3HMK4OD3MH2M2DK3M2H2MKDOMKD2O11.|.2OK2DM3DKO2.2OD2M3HKO2K3OD4M3DKDM3HM2K2OMOMO12.|2.4OK3MO4.OK2M2HM3K6O5D2KDM3HD2K2OK3O12.|4.6O5.OKD2MHMKD8OK2DK2ODM2HMK8O12.|15.OKD4MK6O2.7OKMHM2K7O13.|13.2O2K3MHD6O9.OK2MK9O13.|13.O3N2MHK5O11.ODHMO3.5O14.|13.2O2N2MK5O11.2ODMKO3.6O13.|14.OKN7O12.OKHNO5.2OHKO13.|14.OKNM3O2K2O11.OMHKO5.2OHM2O12.|15.OHNK3O2K2O10.OMHKO6.O3HO12.|15.2O2HM2O4KO9.OM2HKO5.O3HMO11.|16.OK3HM2OK2O9.OK4NO4.OK4HO10.|16.OK2NON5O10.ONHNHO4.2OHKHKO10.|17.6O14.6O5.6O10.|64.',
+            '50.2O.2O9.|49.ON4O9.|48.ONH4O9.|40.5O2.ODND4O9.|21.6O10.4ODHM3OK2HOK4O8.|18.11O6.3O2H2K2MKD2KHDOKOK3O7.|16.4OK6DK8O2KDMHD3MKDKHDKD2K4O6.|15.2OD2M3HM5DK4O3M2K2MD3M2DM5DMHMKO6.|14.2OD7M9D5MD2MD3M2DM4DK2OKD2O5.|7.4O2.2OK7M10D5MD6MD2M5DMOZ5O3.|6.9OD9M9D7MD2M3D2M5DMHDOK4O.|5.2O3MD3OKD19M2H4M6DKHM2D2HMD3KM4O|4.2O3M2D2MO2D18M2H6M5D2KH5MD5M3O|3.2OM3D2O2DO2D8MD12MK5M4D2K3MD2K2OK2D2MO.|2.2O2D6ODOKD8MD9MK2OK5MK4D2K4D3K3OKO2.|.6O4.4O2DM2H4M6D3MHMD2O5MKM3DKDKDK8O3.|4O10.OKD2M3HMK4OD6M2DKO3MH2MKDOMKD2O11.|14.2OK2M2HMKO2K3OD4M3D2O2M2HM2K2OMOMO12.|15.ODKMH2M3K6OK4DK2O2M2HMDK2OK3O12.|15.O3D2MKD10OKDK3ODM3HD6O13.|15.OK2DH2D9O.8ODM2HK5O14.|12.5OKD2HD8O8.4O3M5O14.|11.OMN2MKD2HD9O12.2ODHNKO15.|11.O3NMD2HD9O14.2O3NO15.|11.O2NKD2HD2O.2O2K3O15.OM2NO15.|11.O2M6O2.O2MHKO16.OHNMO15.|11.OHMKO7.2O2MKO14.OM2N2O15.|11.O2HKO8.3OMH2O11.OH2NH3O14.|11.O2HM2O8.2OMHM2O10.O3NMOKO14.|11.OK3HMO8.2O4HO9.O3NKO2KO13.|11.OK2NONO8.2OKNONO10.OKN2O2KO13.|12.6O9.6O11.7O13.|49.2O13.',
+            '64.|50.2O.2O9.|49.ON4O9.|48.ONH4O9.|40.5O2.ODND4O9.|22.6O9.4ODHM3OK2HOK4O8.|19.11O5.3O2H2K2MKD2KHDOKOK3O7.|17.4OK6DK7O2KDMHD3MKDKHDKD2K4O6.|16.2OD2M3HM5D4O3M2K2MD3M2DM5DMHMKO6.|15.2OD7M8D5MD2MD3M2DM4DK2OKD2O5.|14.2OK7M9D5MD6MD2M5DMOZ5O3.|13.3OD9M8D7MD2M3D2M5DMHDOK4O.|11.4OKD18M2H4M6DKHM2D2HMD3KM4O|10.2OM2O2D17M2H6M5D2KH5MD5M3O|8.3O2MDO2D8MD11MK5M4D2K3MD2K2OK2D2MO.|6.4O2M2DOKD8MD8MK2OK5MK4D2K4D3K3OKO2.|8O4MDK2O2DM2H4M5D3MHMD2O5MKM3DKDKDK8O3.|.OK2DM2D5O2.2OD2M3HM2K3OD5M2DKO3MH2MKDOMKD2O11.|2.8O5.2OK2M2HMKD5O4M3D2ODM3HD3OMOMO12.|16.2O3MH2MD6OK4DK2ODM3HMK2OK3O12.|17.3OM2H2M8OKDK4O2M3H6O13.|17.3O2M2HM4O3.9ODM2HK4O14.|16.2OMN6MO14.O2KHD2O16.|16.O3NO2MDM2O13.4O2H2O16.|16.OK2N6O14.2OKOM2NO16.|17.2O3N4O14.2OKOKHNMO15.|18.OK3NK2O14.O2K2OM2H2O14.|19.OK4NKO12.2O2H4O2H3O12.|18.OKO5NO12.OK2HMO.2O3HKO11.|18.O2KO2NKNO12.O5HO.OM4NO10.|18.2O2K5O12.2OKHKHO2.ONHNHO10.|18.6O16.6O2.6O10.|21.6O22.2O.2O10.'
+        ], spec: `
+            AN 28 8
+            SPL 0
+            RECT B 17 18 39 41 b
+            RECT B 17 18 42 42 c
+            RECT F 8 8 23 37 R
+            RECT F 8 8 22 22 V
+            RECT F 8 8 38 38 V
+            RECT F 9 11 25 35 U
+            RECT F 12 12 25 35 V
+            F 10 29 AA
+            RECT F 9 12 33 36 p
+            RECT F 13 15 31 33 p
+            RECT F 9 15 35 35 q
+            RECT F 16 18 30 34 b
+            RECT F 16 18 34 35 c
+        ` } };
+    const MOUNT_DIR_WOLF = [['E', 0], ['E', 0], ['E', 0], ['E', 1], ['E', 1], ['E', 1], ['E', 0], ['E', 0]];
+    // Tipos de montaria: arte, direções e paleta (estágios II/III usam MOUNT_STAGE nos dois)
+    const MOUNT_TYPES = { horse: { art: MOUNT_ART, dir: MOUNT_DIR, pal: MOUNT_PAL }, wolf: { art: MOUNT_ART_WOLF, dir: MOUNT_DIR_WOLF, pal: MOUNT_PAL_WOLF } };
     const MOUNT_OVL = 'pqbcRVUAL';   // letras do overlay: geram contorno de 1 px nas células vazias vizinhas
     const MOUNT_LEG_DEF = { p: '#3c5a9a', q: '#24365e', b: '#4a2e1a', c: '#22150c' };
     const _mountLegs = {};
@@ -5913,10 +5942,10 @@ const PetSprites = (() => {
     }
     const _mountLay = {};
     // Grades B/F (sem cor) de uma vista e quadro: arte + overlay do spec
-    function mountLayers(view, frame) {
-        const key = view + frame;
+    function mountLayers(type, view, frame) {
+        const key = type + view + frame;
         if (_mountLay[key]) return _mountLay[key];
-        const v = MOUNT_ART[view], w = v.w, h = v.h;
+        const v = MOUNT_TYPES[type].art[view], w = v.w, h = v.h;
         const B = [], F = [];
         for (let y = 0; y < h; y++) { B.push(Array(w).fill('.')); F.push(Array(w).fill('.')); }
         const lines = v.spec.split('\n');
@@ -5982,7 +6011,7 @@ const PetSprites = (() => {
         return L;
     }
     const _mountCache = new Map();
-    function mountBake(grid, w, h, stage, flash, mir, legs) {
+    function mountBake(grid, w, h, stage, flash, mir, legs, pal) {
         const cv = document.createElement('canvas');
         cv.width = w; cv.height = h;
         const ctx = cv.getContext('2d'), img = ctx.createImageData(w, h), px = img.data;
@@ -5993,7 +6022,7 @@ const PetSprites = (() => {
             const o = (y * w + x) * 4;
             if (flash) { px[o] = px[o + 1] = px[o + 2] = px[o + 3] = 255; continue; }
             const k = map[ch] || ch;
-            const hex = legs[k] || MOUNT_PAL[k];
+            const hex = legs[k] || pal[k];
             if (!hex) continue;
             px[o] = parseInt(hex.substr(1, 2), 16); px[o + 1] = parseInt(hex.substr(3, 2), 16);
             px[o + 2] = parseInt(hex.substr(5, 2), 16); px[o + 3] = 255;
@@ -6004,20 +6033,21 @@ const PetSprites = (() => {
     // Camadas da montaria para uma direção (0=E 1=SE 2=S 3=SW 4=W 5=NW 6=N 7=NE), pose (0..3 passo; 4..7 parado) e estágio.
     // rider = classe do herói (cores da calça e da bota). Retorna back e front (canvas da vista), ox (coluna do cavaleiro),
     // oy (linha de referência no canvas) e sadY (linha da sela, usada para recortar o herói).
-    function getMountLayers(dir, pose, flash, stage, rider) {
+    function getMountLayers(dir, pose, flash, stage, rider, type) {
         const d = (dir | 0) & 7, p = (pose | 0) & 7, stg = Math.max(1, Math.min(3, stage || 1)), fl = flash ? 1 : 0;
-        const [view, mir] = MOUNT_DIR[d];
+        const mt = MOUNT_TYPES[type] || MOUNT_TYPES.horse;
+        const [view, mir] = mt.dir[d];
         const frame = p < 4 ? p : 0;
         const bob = (p === 1 || p === 3) ? 1 : 0;   // passo: a montaria sobe 1 px nos quadros 1 e 3
         const cls = rider || 'warrior';
-        const key = view + '|' + frame + '|' + stg + '|' + fl + '|' + mir + '|' + cls;
-        const lay = mountLayers(view, frame);
+        const key = (type || 'horse') + '|' + view + '|' + frame + '|' + stg + '|' + fl + '|' + mir + '|' + cls;
+        const lay = mountLayers(type && MOUNT_TYPES[type] ? type : 'horse', view, frame);
         if (!_mountCache.has(key)) {
             if (_mountCache.size > 400) _mountCache.clear();
             const legs = mountLegPal(cls);
             _mountCache.set(key, {
-                back: mountBake(lay.B, lay.w, lay.h, stg, fl, mir, legs),
-                front: mountBake(lay.F, lay.w, lay.h, stg, fl, mir, legs)
+                back: mountBake(lay.B, lay.w, lay.h, stg, fl, mir, legs, mt.pal),
+                front: mountBake(lay.F, lay.w, lay.h, stg, fl, mir, legs, mt.pal)
             });
         }
         const c = _mountCache.get(key);
