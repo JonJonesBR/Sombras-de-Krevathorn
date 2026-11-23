@@ -37023,9 +37023,13 @@ class Pet {
 
     draw(ctx, cx, cy) {
         if (!this.alive) return;
+        // Corcel montado: 8 direções pela mesma direção do herói (spriteAngle, como a folha do herói); frente um pouco mais abaixo, costas mais acima
+        const mntHorse = !!(this.mounted && this.type === 'horse' && player && typeof PetSprites !== 'undefined' && PetSprites.getMount);
+        const mntDir = mntHorse ? SpriteManager.getDirIndex(player.spriteAngle !== undefined ? player.spriteAngle : (player.angle || 0)) : 0;
+        const mntDy = mntHorse ? PetSprites.mountDy(mntDir) : 0;
         const mntOffsetY = this.mounted ? 8 : 0;
         const sx = (this.mounted && player ? player.x : this.x) - cx;
-        const sy = (this.mounted && player ? player.y : this.y) - cy + mntOffsetY;
+        const sy = (this.mounted && player ? player.y : this.y) - cy + mntOffsetY + mntDy;
         const rmV = !!(window.GameSettings && GameSettings.reducedMotion);
         const celebHop = (!this.mounted && (this._celebT > 0 || this._pettedT > 0) && !rmV) ? -Math.abs(Math.sin(this.timer * 0.35)) * 7 : 0;
         const flyAlt = this.mounted ? (this.type === 'dragon' ? 4 : 0) : (PET_FLY_ALT[this.type] || 0);
@@ -37033,7 +37037,8 @@ class Pet {
         const idleBob = (!this.mounted && !rmV && (flyAlt > 0 || moving)) ? Math.sin(this.timer * 0.08) * 1.6 : 0;
         const bob = (this.mounted ? (this._mountBob || 0) : idleBob) + celebHop;
         const mScale = this.mounted ? (this.type === 'wolf' ? 1.18 : 1.24) : 1.0;
-        const drawSz = Math.round(48 * mScale);
+        // Corcel montado é arte nativa 48 px (escala 1, sem fracionário); o anel de aura segue o mScale antigo
+        const drawSz = mntHorse ? 48 : Math.round(48 * mScale);
         const ptop = sy + bob - flyAlt - Math.round(drawSz * 0.5);
 
         if (this._fxBeam) {
@@ -37067,7 +37072,7 @@ class Pet {
 
         const stg = this._stage();
         const flash = this._hitT > 0 ? 1 : 0;
-        const spr = _petMakeSprite(this.type, pose, this._face, flash, stg);
+        const spr = mntHorse ? PetSprites.getMount('horse', mntDir, pose, flash, stg) : _petMakeSprite(this.type, pose, this._face, flash, stg);
 
         const bondLv = this._bondLv();
         const od = player && (player.overdriveTimer || 0) > 0;

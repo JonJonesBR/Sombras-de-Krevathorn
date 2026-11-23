@@ -5767,6 +5767,108 @@ const PetSprites = (() => {
     };
 
     // Sub-detalhes 48x48 e Insígnias de Evolução Estágio II e III (aplicados ANTES de shadeTones48 + outlineGrid!)
+    // ---------- montaria em 8 direções (corcel) ----------
+    // Frente (S) e costas (N), grades 24x24: topo (16 linhas, sobe/desce com PET_POSE_DY) + base com patas (8 linhas).
+    // Poses 0..3 caminhada (patas alternando, cauda balançando), 4..5 idle (5 com piscada). A sela fica sob o cavaleiro.
+    const MOUNT_HORSE = {
+        front: {
+            top: [
+                '........................', '........................', '........................', '........................',
+                '........LLMMMMMMLL......', '.......LLMMMMMMMMLL.....', '......LLLMMMMMMMMLLL....', '......LLLMMMMMMMMMMLLL..',
+                '.....LLLMMMMMMMMMMMMLLL.', '.....LLMMMMMMMMMMMMMMLL.', '....LLMMMMVVVVVVVVMMMMLL', '....LLMMMMMMMMMMMMMMMMLL',
+                '........MD....DM........', '........MMMMMMMM........', '........MMLMMLMM........', '........MOMMMMOM........'
+            ],
+            low: [
+                '........MMMMMMMM........', '........MMSSSSMM........', '........DSSSSSSD........', '........DDOSSOOD........',
+                '.......DDDDDDDDDD.......', '.....DDDDDDDDDDDDDD.....', '.....DDDDDDDDDDDDDD.....', '.....DDDDDDDDDDDDDD.....'
+            ]
+        },
+        back: {
+            top: [
+                '........................', '........................', '........................', '........................',
+                '........LLMMMMMMLL......', '.......LLMMMMMMMMLL.....', '......LLLMMMMMMMMLLL....', '......LLLMMMMMMMMMMLLL..',
+                '.....LLLMMMMMMMMMMMMLLL.', '.....LLMMMMMMMMMMMMMMLL.', '....LLMMMMMMMMMMMMMMMMLL', '....LMMMMMMMMMMMMMMMMMML',
+                '........DD....DD........', '........MMMMMMMM........', '........LLLLLLLL........', '.......LMMMMMMMMML......'
+            ],
+            low: [
+                '.......MMMMMMMMMM.......', '.....MMMMMMMMDVVVVDMMM..', '....MMMMMMMDDMMMMMMDDMMM', '....MMMMMMMMMMMMMMMMMMMM',
+                '.....MMMDDMMMMMMMMMMDD..', '......DDDDDDDDDDDDDD....', '.......DDDDDDDDDDDD.....', '........DDDDDDDDDD......'
+            ]
+        }
+    };
+    const MOUNT_LIFT = [[0, 2, 0], [0, 0, 1], [2, 0, 0], [0, 0, -1], [0, 0, 0], [0, 0, 0]];   // [casco esq., casco dir. (elevação), cauda]
+    const MOUNT_BASE = [0, 1, 2, 1, 0, 7, 6, 7];   // direção 0..7 -> vista-base (0 = lateral já existente)
+    const MOUNT_MIRROR = [0, 0, 0, 1, 1, 1, 0, 0];  // 1 = espelhado (oeste/sudoeste/noroeste)
+    const MOUNT_DY = [0, 4, 8, 4, 0, -4, -8, -4];  // deslocamento vertical em px: o que está virado para a câmera fica mais abaixo
+    const MOUNT_REF = { top: 4, bot: 23 };         // faixa de referência para SpriteCore.turn (¾)
+    const _mountCache = new Map();
+
+    // Patas (linhas 16..23): duas colunas por perna; elevação encurta a perna e levanta o casco.
+    function mountLegs(liftL, liftR, tailSway, back) {
+        const rows = Array.from({ length: 8 }, () => Array(24).fill('.'));
+        const leg = (c, lift) => {
+            for (let y = 0; y + lift <= 7; y++) for (let dx = 0; dx < 2; dx++) {
+                rows[y][c + dx] = y >= 6 - lift ? 'W' : (back && y < 2 ? 'M' : 'D');
+            }
+        };
+        leg(5, liftL); leg(17, liftR);
+        if (back) { const tx = 11 + (tailSway || 0); for (let y = 0; y < 6; y++) { rows[y][tx] = 'L'; rows[y][tx + 1] = 'L'; } }
+        return rows.map(r => r.join(''));
+    }
+    // 24 linhas de texto para a vista (front/back) e a pose
+    function mountRows(view, p) {
+        const v = MOUNT_HORSE[view];
+        const L = MOUNT_LIFT[p];
+        const lg = mountLegs(L[0], L[1], L[2], view === 'back');
+        const low = v.low.map((r, y) => r.split('').map((c, x) => (lg[y][x] !== '.' ? lg[y][x] : c)).join(''));
+        const top = (p === 5 && view === 'front') ? v.top.map((r, y) => (y === 15 ? r.replace(/O/g, 'D') : r)) : v.top;
+        // Sem bob vertical aqui: o deslocamento de PET_POSE_DY abriria uma linha vazia entre cabeça e corpo
+        return composeQuad(top, low, 0, 0);
+    }
+    // Remove peças soltas (componentes de até 3 células) deixadas pelo giro da grade
+    function mountClean(g) {
+        const H = g.length, W = g[0].length, seen = g.map(r => r.map(() => false));
+        for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+            if (g[y][x] === '.' || seen[y][x]) continue;
+            const cells = [[x, y]]; seen[y][x] = true;
+            for (let i = 0; i < cells.length; i++) {
+                const [cx, cy] = cells[i];
+                for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+                    const nx = cx + dx, ny = cy + dy;
+                    if (nx >= 0 && ny >= 0 && nx < W && ny < H && !seen[ny][nx] && g[ny][nx] !== '.') { seen[ny][nx] = true; cells.push([nx, ny]); }
+                }
+            }
+            if (cells.length <= 3) for (const [cx, cy] of cells) g[cy][cx] = '.';
+        }
+        return g;
+    }
+    // grade 24x24 de papéis para a vista-base (2 = frente, 6 = costas, 1 = ¾ frente, 7 = ¾ costas)
+    function mountGrid24(base, pose) {
+        const p = pose & 7;
+        if (base === 1) return mountClean(SpriteCore.turn(mountRows('front', p).map(r => r.split('')), 0.5, MOUNT_REF));
+        if (base === 7) return mountClean(SpriteCore.turn(mountRows('back', p).map(r => r.split('')), 0.5, MOUNT_REF));
+        return mountRows(base === 6 ? 'back' : 'front', p).map(r => r.split(''));
+    }
+
+    // Montaria em 8 direções com escala inteira: 24x24 de papéis -> finish48 -> 48x48 (1 px por célula da arte 48).
+    // dir: 0=E 1=SE 2=S 3=SW 4=W 5=NW 6=N 7=NE. Lateral (E/W) usa get(); o restante é montado aqui e cacheado.
+    function getMount(type, dir, pose, flash, stage) {
+        const d = ((dir | 0) & 7), p = (pose | 0) & 7, fl = flash ? 1 : 0;
+        const mir = MOUNT_MIRROR[d] === 1;
+        if (type !== 'horse') return get(type, p, mir ? -1 : 1, fl, stage);
+        const base = MOUNT_BASE[d];
+        if (base === 0) return get('horse', p, mir ? -1 : 1, fl, stage);
+        const key = base + '|' + p + '|' + (mir ? 1 : 0) + '|' + fl;
+        if (_mountCache.has(key)) return _mountCache.get(key);
+        if (_mountCache.size > 96) _mountCache.clear();
+        const art = PET_ART.horse;
+        const idx = SpriteCore.finish48(mountGrid24(base, p), null);
+        const pal = SpriteCore.buildPalette(art.pal());
+        const cv = bakeCanvas(idx, pal, mir ? -1 : 1, fl);
+        _mountCache.set(key, cv);
+        return cv;
+    }
+
     function petDetail(type, g48, pose, stage) {
         const put = (x, y, r) => { if (y >= 0 && y < 48 && x >= 0 && x < 48) g48[y][x] = r; };
         const rect = (x0, y0, w, h, r) => { for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++) put(x, y, r); };
@@ -5976,9 +6078,11 @@ const PetSprites = (() => {
         return cv;
     }
 
-    function clear() { _cache.clear(); }
+    function clear() { _cache.clear(); _mountCache.clear(); }
+    // Deslocamento vertical (px) da montaria por direção; a montaria de outros pets segue usando get()
+    const mountDy = dir => MOUNT_DY[(dir | 0) & 7];
 
-    return { get, clear, TYPES: Object.keys(PET_ART) };
+    return { get, getMount, mountDy, mountGrid24, clear, TYPES: Object.keys(PET_ART) };
 })();
 
 const SpriteRenderer = {
