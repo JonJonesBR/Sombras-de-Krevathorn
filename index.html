@@ -12238,7 +12238,7 @@ var CONFIG = {
 
     // Biome: Lava Cave
     BIOME_LAVA_WALL_COLOR: '#4a2c1d',
-    BIOME_LAVA_FLOOR_COLOR: '#1d0e0a',
+    BIOME_LAVA_FLOOR_COLOR: '#2a1510',
     BIOME_LAVA_HAZARD_TYPES: ['fire', 'fire', 'spikes', 'poison'], // more fire
     BIOME_LAVA_HAZARD_WEIGHTS: [0.66, 0.66, 0.34, 0.2],
     BIOME_LAVA_AMBIENT_COLOR: '#ff4400',
@@ -17317,9 +17317,14 @@ function update() {
 
 function drawGroundShadow(ctx2, wx, wy, r, cx, cy) {
     if (window.GFX !== undefined && window.GFX.shadows === false) return;
-    // Elipse pixelada em 2 tons: borda externa mais clara, núcleo mais escuro
-    PixelFX.drawEllipse(ctx2, wx - cx, wy - cy + r * 0.72, r * 0.85, r * 0.32, 'rgba(0,0,0,0.16)');
-    PixelFX.drawEllipse(ctx2, wx - cx, wy - cy + r * 0.72, r * 0.5, r * 0.19, 'rgba(0,0,0,0.26)');
+    // Sombra de contato: piso do bioma escurecido (não preto), elipse um pouco mais estreita, em 2 tons
+    let fl = '#1d0e0a';
+    try { fl = BiomeSystem.getFloorColor(); } catch (e) {}
+    const hex = PixelFX.shade(fl, -0.6);
+    const n = parseInt(String(hex).slice(1), 16);
+    const rgb = (n >> 16 & 255) + ',' + (n >> 8 & 255) + ',' + (n & 255);
+    PixelFX.drawEllipse(ctx2, wx - cx, wy - cy + r * 0.72, r * 0.8, r * 0.3, 'rgba(' + rgb + ',0.3)');
+    PixelFX.drawEllipse(ctx2, wx - cx, wy - cy + r * 0.72, r * 0.46, r * 0.17, 'rgba(' + rgb + ',0.45)');
 }
 
 // PixelFX: sprites pixel art pré-renderizados (itens, partículas). Cache por key em objeto puro
@@ -17396,6 +17401,8 @@ const PixelFX = (() => {
         if (!(r > 0)) return;
         const o = opts || {};
         const a0 = o.a0 === undefined ? 0 : o.a0, span = o.a1 === undefined ? Math.PI * 2 : (o.a1 - a0), dash = o.dash || 0;
+        // gx/gy (opcional): origem da grade de snap (ex.: canto do sprite), para o anel ficar na fase do sprite
+        const ggx = o.gx || 0, ggy = o.gy || 0;
         const layers = Math.max(1, Math.round(espessura / 3));
         const seen = Object.create(null);
         const steps = Math.max(8, Math.ceil(Math.abs(span) * r / 3));
@@ -17406,7 +17413,7 @@ const PixelFX = (() => {
             for (let i = 0; i <= steps; i++) {
                 if (dash && (Math.floor(i / dash) % 2)) continue;
                 const a = a0 + (span * i) / steps;
-                const gx = snap(x + Math.cos(a) * rr, 3), gy = snap(y + Math.sin(a) * rr, 3);
+                const gx = ggx + snap(x - ggx + Math.cos(a) * rr, 3), gy = ggy + snap(y - ggy + Math.sin(a) * rr, 3);
                 const k = gx + ',' + gy;
                 if (seen[k]) continue;
                 seen[k] = true;
@@ -17416,6 +17423,13 @@ const PixelFX = (() => {
     };
     // Disco em pixel: sprite baked por raio em células (cache por tamanho, não por frame).
     // edge (opcional): cor da borda em xadrez, para contorno mais suave em auras.
+    // Cor hex com alfa (rgba) para anéis de degradê; cor não hex volta inalterada
+    const alphaOf = (color, a) => {
+        const m = /^#([0-9a-f]{6})$/i.exec(String(color).trim());
+        if (!m) return color;
+        const n = parseInt(m[1], 16);
+        return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
+    };
     const disc = (r, color, edge, dither) => {
         const rc = Math.max(1, Math.round(r / 3));
         const key = 'disc|' + rc + '|' + color + '|' + (edge || '') + (dither ? '|dz' : '');
@@ -17426,13 +17440,13 @@ const PixelFX = (() => {
             for (let x = -rc; x <= rc; x++) {
                 const d = Math.hypot(x, y);
                 if (d > rc + 0.3) row += '.';
-                else if (dither && d > rc - 1.2 && ((x + y) & 1) === 0) row += '.';
-                else if (edge && d > rc - 0.7 && ((x + y) & 1) === 0) row += 'e';
+                else if (dither && rc >= 2 && d > rc - 1.2) row += 'h';
+                else if (edge && d > rc - 0.7) row += 'e';
                 else row += 'c';
             }
             rows.push(row);
         }
-        return bake(key, rows, { c: color, e: edge || color }, 3);
+        return bake(key, rows, { c: color, e: edge || color, h: alphaOf(color, 0.45) }, 3);
     };
     const drawDisc = (ctx, x, y, r, color, edge, dither) => draw(ctx, disc(r, color, edge, dither), x, y);
     // Elipse em células (sprite baked por tamanho e cor; cache). rx/ry em px.
@@ -17574,14 +17588,16 @@ function drawGlow(ctx2, px, py, r, color, intensity = 0.35) {
                 for (let dx = -rc; dx <= rc; dx++) {
                     const d2 = dx * dx + dy * dy;
                     if (d2 <= c2) row += 'c';
-                    else if (d2 <= r2 && ((dx + dy) & 1) === 0) row += 'h';
+                    else if (d2 <= r2 * 0.64) row += 'm';
+                    else if (d2 <= r2) row += 'h';
                     else row += '.';
                 }
                 rows.push(row);
             }
             spr = PixelFX.bake(key, rows, {
                 c: `rgba(${cr},${cg},${cb},0.9)`,
-                h: `rgba(${cr},${cg},${cb},0.42)`
+                m: `rgba(${cr},${cg},${cb},0.5)`,
+                h: `rgba(${cr},${cg},${cb},0.2)`
             }, 3);
         }
     }
@@ -28992,7 +29008,7 @@ class Pickup {
         const pulse = reduced ? 0 : Math.sin(gameTime * 0.12 + this.bobOffset) * 0.12;
         // Halo suave: raio 60% e intensidade no máximo 0.25 (sem disco chapado)
         const halo = (r, a) => drawGlow(ctx, px, py, r * 0.6, this.color, Math.min(0.25, a));
-        const SPR = 2; // escala 2 sobre grade 9-10 células (≈18–20 px nítidos)
+        const SPR = 3; // escala inteira 3 sobre grade 9-10 células (≈27–30 px nítidos)
         ctx.save();
         if(this.type === 'currency') {
             halo(10, 0.5);
@@ -29232,7 +29248,7 @@ const WorldSprites = (() => {
     };
     const status = (type, color) => {
         const g = STATUS_ICON[type] || STATUS_ICON.crystal, key = 'st2|' + type + '|' + color;
-        if (!PixelFX.get(key)) PixelFX.bake(key, _outlineStatus(g), { o: '#090612', '#': color, l: PixelFX.shade(color, 0.55) }, 2);
+        if (!PixelFX.get(key)) PixelFX.bake(key, _outlineStatus(g), { o: PixelFX.shade(color, -0.7), '#': color, l: PixelFX.shade(color, 0.55) }, 2);
         return PixelFX.get(key);
     };
 
@@ -29784,7 +29800,7 @@ const MapTileArt = (() => {
                     const diag = (x + y + fOff) & 15;
                     const cross = (x * 2 - y + fOff * 2 + 32) & 15;
                     const zone = (((x + y) >> 3) + v) % 5;
-                    if ((diag === 0 && (y & 3) !== 3) || (cross === 0 && y > 3 && y < 12)) g[y][x] = 'j';
+                    if ((diag === 0 && (y & 3) === 0) || (cross === 0 && y > 3 && y < 12 && (x & 1) === 0)) g[y][x] = 'j';
                     else if (zone === 0) g[y][x] = 'q';
                     else if (zone === 3 && ((x + y) & 1) === 0) g[y][x] = 'p';
                     else g[y][x] = 'b';
@@ -37059,7 +37075,8 @@ class Pet {
             ctx.save();
             const auraCol = od ? '#ffd86b' : (stg >= 3 ? '#c084fc' : (stg === 2 ? '#60a5fa' : '#8effc4'));
             ctx.globalAlpha = rmV ? 0.24 : 0.18 + Math.sin(this.timer * 0.12) * 0.09;
-            PixelFX.ring(ctx, sx, sy + bob - flyAlt, this.radius * mScale + (od ? 7 : 5), auraCol, stg >= 3 ? 2.5 : 2);
+            // Anel de 2 camadas (espessura 5) com grade ancorada na origem do drawImage do sprite
+            PixelFX.ring(ctx, sx, sy + bob - flyAlt, this.radius * mScale + (od ? 7 : 5), auraCol, 5, { gx: Math.round(sx - drawSz / 2), gy: Math.round(ptop) });
             ctx.restore();
         }
 
@@ -45670,7 +45687,8 @@ renderBestiaryContent() {
             else if (type === 'salamander' && typeof SalamanderArt !== 'undefined') src = SalamanderArt.sprite(0, 0, 2);
             else if (type === 'lurker' && typeof LurkerArt !== 'undefined') src = LurkerArt.sprite(true, 0);
             if (src) {
-                const sc = Math.min(44 / src.width, 44 / src.height, 1);
+                const fit = Math.min(44 / src.width, 44 / src.height);
+                const sc = fit >= 1 ? Math.floor(fit) : fit; // escala inteira quando cabe (nítido), centralizado abaixo
                 const dw = Math.round(src.width * sc), dh = Math.round(src.height * sc);
                 g.drawImage(src, Math.round((48 - dw) / 2), Math.round((48 - dh) / 2), dw, dh);
                 url = cv.toDataURL();

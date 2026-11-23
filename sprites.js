@@ -3119,7 +3119,7 @@ const SpriteManager = {
         const sheet = this.sheetRow(type, row, isHit);
 
         const ix = (x | 0), iy = (y | 0);
-        const d = (24 * sc) | 0;
+        const d = Math.round(24 * sc);
         const halfD = (d / 2) | 0;
         const feetY = iy + halfD;
         const rm = !!(window.GameSettings && GameSettings.reducedMotion);
@@ -3224,7 +3224,7 @@ const SpriteManager = {
                 ctx.translate(Math.round(-fx * off), Math.round(-fy * off));
             }
             if (tilt) ctx.rotate(tilt);
-            if (sxScale !== 1 || syScale !== 1) ctx.scale(sxScale, syScale);
+            if (sxScale !== 1 || syScale !== 1) ctx.scale(Math.round(sxScale * 24) / 24, Math.round(syScale * 24) / 24);
             ctx.imageSmoothingEnabled = false;
             const ts = this.tileSize;
             ctx.drawImage(ghost ? ghostSheet : sheet, col * ts, row * ts, ts, ts, -halfD, -d, d, d);
@@ -3267,8 +3267,8 @@ const SpriteManager = {
         const ec = (gp.wElem && elemColors[gp.wElem]) || (gp.wTier >= 3 ? ['#c784ff', '#ffe484'] : null);
         if (ec) {
             const phase = rm ? 1 : ((gt * 0.14) % (Math.PI * 2));
-            const wx = wSide * Math.round(halfD * 0.58) + Math.round(Math.cos(phase) * px);
-            const wy = -Math.round(d * 0.56) + Math.round(Math.sin(phase * 1.3) * px * 1.5);
+            const wx = Math.round((wSide * Math.round(halfD * 0.58) + Math.round(Math.cos(phase) * px)) / px) * px;
+            const wy = Math.round((-Math.round(d * 0.56) + Math.round(Math.sin(phase * 1.3) * px * 1.5)) / px) * px;
             ctx.fillStyle = ec[0];
             ctx.fillRect(wx, wy, px, px);
             if (!rm && ((gt >> 3) & 1)) {
@@ -3283,8 +3283,8 @@ const SpriteManager = {
             const rCols = ['#cccccc', '#4ade80', '#38bdf8', '#c084fc', '#fbbf24', '#ff3b5c'];
             const col = rCols[Math.min(5, topAcc)] || '#c084fc';
             const a = rm ? 0.6 : (gt * 0.07);
-            const ox = Math.round(Math.cos(a) * (halfD * 0.72));
-            const oy = -Math.round(d * 0.48) + Math.round(Math.sin(a) * (d * 0.14));
+            const ox = Math.round((Math.round(Math.cos(a) * (halfD * 0.72))) / px) * px;
+            const oy = Math.round((-Math.round(d * 0.48) + Math.round(Math.sin(a) * (d * 0.14))) / px) * px;
             ctx.fillStyle = col;
             ctx.fillRect(ox, oy, px, px);
         }
@@ -3347,7 +3347,7 @@ const SpriteManager = {
 
         // Desenha o herói com Paper-Doll em escala 3.0 (72x72 real)
         const scale = 3.0;
-        const d = (24 * scale) | 0;
+        const d = Math.round(24 * scale);
         const halfD = d >> 1;
         const ft = (state === 'attack' || state === 'cast') ? ((gt % 24) * 0.5) : gt;
         this.draw(ctx, cx, feetY - halfD, p.type, ft, false, angle, scale, state);
@@ -3893,6 +3893,15 @@ const PetSprites = (() => {
         return out;
     }
 
+    // Deslocamento vertical por pet e pose, em células 24x24. Corpo (composeQuad) e detalhe (petDetail, x2 em 48 px) leem esta mesma tabela.
+    const PET_POSE_DY = {
+        horse: [0, -1, 0, -1, 0, 0, -1, 0],
+        wolf: [0, -1, 0, -1, 0, 0, -1, 0],
+        faro: [0, -1, 0, -1, 0, 0, -1, 0],
+        salamander: [0, -1, 0, 0, 0, 0, -1, 0]
+    };
+    const petPoseDy = (type, pose) => ((PET_POSE_DY[type] || [])[pose & 7]) || 0;
+
     const PET_ART = {
         // 1. CORCEL DE GUERRA (horse) — Cavalo nobre dark-fantasy com pescoço arqueado, crina fluida, sela e galope de 4 tempos
         // O contorno; S focinho/chanfro claro; M pelagem castanho-baio; D pelagem escura/sombra; L crina/cauda negra; A ouro/freio/estribo; W aço/ferradura; V manta carmesim; G chama do Véu
@@ -4026,7 +4035,7 @@ const PetSprites = (() => {
             ],
             build(f) {
                 const isAtk = f === 6;
-                const dy = [0, -1, 0, -1, 0, 0, -1, 0][f];
+                const dy = petPoseDy("horse", f);
                 const wag = [1, 0, -1, 0, 0, 1, -1, 1][f];
                 return composeQuad(isAtk ? this.topAtk : this.top, this.legs[f], dy, wag);
             }
@@ -4156,7 +4165,7 @@ const PetSprites = (() => {
             ],
             build(f) {
                 const isAtk = f >= 6;
-                const dy = [0, -1, 0, -1, 0, 0, -1, 0][f];
+                const dy = petPoseDy("wolf", f);
                 const wag = [1, 0, -1, 0, 0, 1, 1, -1][f];
                 return composeQuad(isAtk ? this.topAtk : this.top, this.legs[f], dy, wag);
             }
@@ -4736,7 +4745,7 @@ const PetSprites = (() => {
             ],
             build(f) {
                 const isAtk = f >= 6;
-                const dy = [0, -1, 0, -1, 0, 0, -1, 0][f];
+                const dy = petPoseDy("faro", f);
                 const wag = [1, -1, 1, -1, 0, 1, 1, -1][f];
                 return composeQuad(isAtk ? this.topAtk : this.top, this.legs[f], dy, wag);
             }
@@ -5527,7 +5536,7 @@ const PetSprites = (() => {
             ],
             build(f) {
                 const isAtk = f >= 6;
-                const dy = [0, -1, 0, 0, 0, 0, -1, 0][f];
+                const dy = petPoseDy("salamander", f);
                 const wag = [1, 0, -1, 0, 0, 1, 1, -1][f];
                 return composeQuad(isAtk ? this.topAtk : this.top, this.legs[f], dy, wag);
             }
@@ -5761,7 +5770,9 @@ const PetSprites = (() => {
     function petDetail(type, g48, pose, stage) {
         const put = (x, y, r) => { if (y >= 0 && y < 48 && x >= 0 && x < 48) g48[y][x] = r; };
         const rect = (x0, y0, w, h, r) => { for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++) put(x, y, r); };
-        const dy = [0, -2, 0, -2, 0, 0, -2, 0][pose & 7] || 0;
+        const dy = petPoseDy(type, pose) * 2;
+        // Máscara do corpo antes dos detalhes de estágio (ver fim da função)
+        const corpo = g48.map(r => r.map(c => c !== '.'));
 
         // Detalhes finos 48x48 por espécie + Evolução Estágio II (Armadura/Runas) e Estágio III (Ascensão do Véu)
         if (pose === 5 && (type === 'horse' || type === 'wolf' || type === 'faro' || type === 'salamander')) {
@@ -5893,16 +5904,38 @@ const PetSprites = (() => {
                 for (let y = 4; y < 32; y += 2) for (let x = 4; x < 28; x++) if (g48[y][x] === 'V') g48[y][x] = 'G';
             }
         }
-        // Insígnia externa de silhueta por estágio (garante evolução visual imediata na silhueta de todos os 10 pets)
+        // Insígnia de silhueta por estágio: só recolore pixels do próprio corpo (nada é desenhado fora dele)
+        const tinta = (x0, y0, w, h, r) => {
+            for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++) {
+                if (y >= 0 && y < 48 && x >= 0 && x < 48 && g48[y][x] !== '.' && g48[y][x] !== 'O') g48[y][x] = r;
+            }
+        };
         if (stage >= 2) {
-            rect(6, 6 + dy, 3, 2, 'A');
-            rect(5, 8 + dy, 2, 2, 'W');
+            tinta(6, 6 + dy, 3, 2, 'A');
+            tinta(5, 8 + dy, 2, 2, 'W');
         }
         if (stage >= 3) {
-            rect(3, 3 + dy, 3, 2, 'G');
-            rect(41, 3 + dy, 3, 2, 'G');
-            put(4, 2 + dy, 'A');
-            put(42, 2 + dy, 'A');
+            tinta(3, 3 + dy, 3, 2, 'G');
+            tinta(41, 3 + dy, 3, 2, 'G');
+            tinta(4, 2 + dy, 1, 1, 'A');
+            tinta(42, 2 + dy, 1, 1, 'A');
+        }
+        // Peça de estágio que não esteja ligada ao corpo (4-conexa) é removida: nenhuma fica destacada
+        if (stage >= 2) {
+            const liga = g48.map(r => r.map(() => false));
+            const fila = [];
+            for (let y = 0; y < 48; y++) for (let x = 0; x < 48; x++) {
+                if (corpo[y][x] && g48[y][x] !== '.') { liga[y][x] = true; fila.push([x, y]); }
+            }
+            while (fila.length) {
+                const [x, y] = fila.pop();
+                for (const [nx, ny] of [[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]]) {
+                    if (nx >= 0 && ny >= 0 && nx < 48 && ny < 48 && !liga[ny][nx] && g48[ny][nx] !== '.') {
+                        liga[ny][nx] = true; fila.push([nx, ny]);
+                    }
+                }
+            }
+            for (let y = 0; y < 48; y++) for (let x = 0; x < 48; x++) if (!liga[y][x]) g48[y][x] = '.';
         }
     }
 
