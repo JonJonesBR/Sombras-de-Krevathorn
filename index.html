@@ -442,19 +442,34 @@ body { --util-btn: min(calc(44px * var(--ui-btn-scale, 1)), calc((100vw - 92px) 
 #bottom-controls { gap: 2px !important; left: max(4px, env(safe-area-inset-left, 4px)) !important; right: max(4px, env(safe-area-inset-right, 4px)) !important; }}
 body {--hud-clear: calc(max(8px, env(safe-area-inset-top, 8px)) + max(88px, min(128px, 22vw)) + 8px);--bottom-base: calc(max(12px, env(safe-area-inset-bottom, 12px)) + var(--util-btn) + 8px);--hud-center-w: calc(100vw - 2 * min(56px, 15vw) - 52px)}
 #currency-display > div, #run-objective > div, #minimap-container, #logs, .cd-badge,#status-chips > div, .toast-stack > div, .notification, #achievement-toast > div {backdrop-filter: none !important;-webkit-backdrop-filter: none !important}
-@media (max-width: 600px) {#top-bar {flex-direction: column;align-items: flex-start;gap: 4px;right: calc(max(8px, env(safe-area-inset-right, 8px)) + max(88px, min(128px, 22vw)) + 8px)}
+@media (max-width: 600px) {#top-bar {flex-direction: column;align-items: flex-start;gap: 2px;top: max(6px, env(safe-area-inset-top, 6px)) !important;right: calc(max(8px, env(safe-area-inset-right, 8px)) + 88px)}
 body.mm-hidden #top-bar { right: max(8px, env(safe-area-inset-right, 8px)); }
-#hud-left { flex: none; width: 100%; max-width: 200px; }
-#top-bar .top-right-chips { margin-right: 0; flex-wrap: wrap; max-width: 100%; }
-#boss-hp-container { top: max(var(--hud-clear, 0px), calc(max(8px, env(safe-area-inset-top, 8px)) + 112px)) !important; }
+#hud-left { flex: none; width: 100%; max-width: min(232px, calc(100vw - 102px)) !important; }
+#top-bar .hp-container { height: 14px !important; }
+#top-bar #hp-text { font-size: 10px !important; }
+#potion-chip { min-height: 28px !important; margin-top: 2px !important; }
+.surge-wrap { margin-top: 2px !important; }
+#dungeon-progress { margin-top: 2px !important; padding: 1px 6px !important; gap: 3px !important; }
+#dungeon-progress span { font-size: 9.5px !important; }
+#pet-hud { margin-top: 2px !important; gap: 3px !important; flex-wrap: wrap; }
+.pet-pill { min-width: 30px !important; min-height: 28px !important; padding: 1px 4px 1px 2px !important; border-radius: 8px !important; }
+.pet-pill img { width: 20px !important; height: 20px !important; }
+.pet-pill-cd { font-size: 8.5px !important; }
+.pet-pill-bond { font-size: 7.5px !important; }
+.pet-mount-btn { min-width: 26px !important; min-height: 28px !important; padding: 1px 4px !important; font-size: 10px !important; border-radius: 8px !important; }
+#top-bar .top-right-chips { margin-right: 0; flex-wrap: wrap; max-width: 100%; gap: 3px !important; }
+#difficulty-badge, #level-badge { padding: 1px 6px !important; font-size: 9.5px !important; line-height: 1.25 !important; }
+#minimap-container { top: max(6px, env(safe-area-inset-top, 6px)) !important; width: 82px !important; height: 82px !important; min-width: 76px !important; min-height: 76px !important; }
+#boss-hp-container { top: max(var(--hud-clear, 0px), calc(max(8px, env(safe-area-inset-top, 8px)) + 96px)) !important; }
 .notification { top: var(--hud-clear) !important; }
 #achievement-toast { top: var(--toast-top, var(--hud-clear)) !important; }
-.toast-stack { top: var(--toast-top, calc(var(--hud-clear) + 52px)) !important; }
-#status-chips {top: var(--hud-left-stack, 100px) !important;bottom: auto !important;left: max(8px, env(safe-area-inset-left, 8px)) !important;right: auto !important;align-items: flex-start !important}
+.toast-stack { top: var(--toast-top, calc(var(--hud-clear) + 46px)) !important; }
+#status-chips {top: var(--hud-left-stack, 94px) !important;bottom: auto !important;left: max(8px, env(safe-area-inset-left, 8px)) !important;right: auto !important;align-items: flex-start !important}
 #combo-display {top: var(--hud-clear) !important;bottom: auto !important;right: max(10px, env(safe-area-inset-right, 10px)) !important}
-#quest-panel {top: max(calc(env(safe-area-inset-top, 8px) + 148px), calc(var(--hud-clear) + 52px)) !important}}
+#quest-panel {top: max(calc(env(safe-area-inset-top, 8px) + 128px), calc(var(--hud-clear) + 46px)) !important}}
 #ro-icon { flex: none; }
-@media (max-width: 600px) {#run-objective > div:first-child { gap: 0 4px !important; padding: 3px 8px !important; flex-wrap: wrap; line-height: 1.25; }}
+@media (max-width: 600px) {#run-objective > div:first-child { gap: 0 4px !important; padding: 2px 8px !important; flex-wrap: wrap; line-height: 1.2; }
+#ro-title, #ro-progress { font-size: 10px !important; }}
 @media (orientation: landscape) and (max-height: 500px) {body { --util-btn: min(calc(36px * var(--ui-btn-scale, 1)), calc((100vw - 92px) / 6)); }
 #top-bar { top: max(4px, env(safe-area-inset-top, 4px)) !important; gap: 4px; }
 #top-bar .hp-container { height: 14px; }
@@ -685,6 +700,8 @@ body.pause-open #boss-echo-ribbon{display:none !important}
 .pet-pill.is-safe { border-color: rgba(255,170,210,0.78); box-shadow: 0 0 8px rgba(255,130,190,0.25); }
 .pet-pill.is-od { border-color: #ffd86b; box-shadow: 0 0 10px rgba(255,216,107,0.45); }
 body.reduce-motion .card-pop, body.reduce-motion .camp-fire-glow, body.reduce-motion .go-cta-pulse, body.reduce-motion .win-star, body.reduce-motion .cd-ready, body.gfx-low .camp-fire-glow, body.gfx-low .go-cta-pulse { animation: none !important; opacity: 1 !important; transform: none !important; }
+body.npc-dialog-open #top-bar, body.npc-dialog-open #minimap-container, body.npc-dialog-open #actions-right, body.npc-dialog-open #bottom-controls, body.npc-dialog-open #run-objective, body.npc-dialog-open #boss-hp-container, body.npc-dialog-open #combo-display, body.npc-dialog-open #status-chips, body.npc-dialog-open #xp-strip, body.npc-dialog-open #floor-intro, body.npc-dialog-open #whisper-overlay, body.npc-dialog-open #boss-echo-ribbon, body.npc-dialog-open #logs, body.npc-dialog-open .toast-stack, body.npc-dialog-open #equip-card, body.npc-dialog-open #achievement-toast, body.npc-dialog-open #quest-panel { opacity: 0 !important; pointer-events: none !important; transition: opacity 0.16s ease; }
+body.reduce-motion.npc-dialog-open #top-bar, body.reduce-motion.npc-dialog-open #minimap-container, body.reduce-motion.npc-dialog-open #actions-right, body.reduce-motion.npc-dialog-open #bottom-controls, body.reduce-motion.npc-dialog-open #run-objective, body.reduce-motion.npc-dialog-open #boss-hp-container, body.reduce-motion.npc-dialog-open #combo-display, body.reduce-motion.npc-dialog-open #status-chips, body.reduce-motion.npc-dialog-open #xp-strip, body.reduce-motion.npc-dialog-open #floor-intro, body.reduce-motion.npc-dialog-open #whisper-overlay, body.reduce-motion.npc-dialog-open #boss-echo-ribbon, body.reduce-motion.npc-dialog-open #logs, body.reduce-motion.npc-dialog-open .toast-stack, body.reduce-motion.npc-dialog-open #equip-card, body.reduce-motion.npc-dialog-open #achievement-toast, body.reduce-motion.npc-dialog-open #quest-panel { transition: none !important; }
 </style>
 
 </head>
@@ -1873,7 +1890,7 @@ const CanvasRecovery = (() => {
     function recover(reason) {
         _lastRecoverAt = Date.now();
         console.warn('[CanvasRecovery] reconstruindo canvas (' + reason + ')');
-        _step('pixelfx', () => { if (typeof PixelFX !== 'undefined') PixelFX.clear(); });
+        _step('pixelfx', () => { if (typeof PixelFX !== 'undefined') PixelFX.clear(); if (typeof NpcSprites !== 'undefined' && NpcSprites.clear) NpcSprites.clear(); });
         _step('folhas', () => { if (typeof SpriteManager !== 'undefined') SpriteManager.invalidate(); });
         _step('pets', () => { if (typeof PET_SPR_CACHE !== 'undefined') PET_SPR_CACHE.length = 0; });
         _step('luz', () => {
@@ -6071,6 +6088,8 @@ const I18n = {
             'camp.narr.pet.mimic.high': 'O Baú abre uma fresta e mostra um botão dourado antigo — o único tesouro que ele guarda só para lembrar de quem o criou.',
             'camp.narr.pet.salamander.low': 'A Salamandra de Brasa cochila sobre uma pedra quente, estalando como a forja de Halvard.',
             'camp.narr.pet.salamander.high': 'A Salamandra brilha em cobre vivo ao seu toque: nasceu das últimas brasas que aqueceram a espada do rei.',
+            'camp.narr.pet.raven.low': 'O Corvo das Sombras observa as frestas além da fogueira. Nenhuma sombra se move sem que seus olhos a sigam.',
+            'camp.narr.pet.raven.high': 'O Corvo inclina a cabeça ao seu lado e deixa cair uma moeda antiga — lembrança dos espiões de Aldric que ainda guardam seus segredos.',
             'npc.tapReveal': 'Toque para acelerar',
 'hd.od':'CHAMA DO VÉU!',
 'hd.st':'QUEBRA!',
@@ -8701,6 +8720,8 @@ const I18n = {
             'camp.narr.pet.mimic.high': 'The Chest cracks open to reveal an old gold button — the one treasure it keeps only to remember who made it.',
             'camp.narr.pet.salamander.low': 'The Ember Salamander dozes on a warm stone, crackling softly like Halvard’s forge.',
             'camp.narr.pet.salamander.high': 'The Salamander glows bright copper at your touch: born from the last embers that tempered the king’s blade.',
+            'camp.narr.pet.raven.low': 'The Shadow Raven watches the cracks beyond the firelight. No shadow shifts without its eyes following.',
+            'camp.narr.pet.raven.high': 'The Raven tilts its head beside you and drops an old coin — a keepsake of Aldric’s spies who still keep their secrets.',
             'npc.tapReveal': 'Tap to speed up',
 'hd.od':'VEIL OVERDRIVE!',
 'hd.st':'STAGGER!',
@@ -11328,6 +11349,8 @@ const I18n = {
             'camp.narr.pet.mimic.high': 'El Cofre entreabre la tapa mostrando un viejo botón dorado: el único tesoro que guarda para recordar a quien lo creó.',
             'camp.narr.pet.salamander.low': 'La Salamandra de Brasa dormita sobre una piedra tibia, chisporroteando suave como la fragua de Halvard.',
             'camp.narr.pet.salamander.high': 'La Salamandra brilla en cobre vivo al tocarla: nació de las últimas brasas que templaron la espada del rey.',
+            'camp.narr.pet.raven.low': 'El Cuervo de las Sombras vigila las grietas más allá del fuego. Ninguna sombra se mueve sin que sus ojos la sigan.',
+            'camp.narr.pet.raven.high': 'El Cuervo inclina la cabeza a tu lado y deja caer una moneda antigua: recuerdo de los espías de Aldric que aún guardan sus secretos.',
             'npc.tapReveal': 'Toca para acelerar',
 'hd.od':'¡LLAMA DEL VELO!',
 'hd.st':'¡QUIEBRE!',
@@ -17698,14 +17721,18 @@ function _drawInWorldHUD() {
 }
 
 function _drawScreenSpaceHUD() {
-    _drawNavArrows(ctx);
-    Input.drawJoystick(ctx, Input.left, "left"); Input.drawJoystick(ctx, Input.right, "right");
+    const _npcOpen = (gameState === 'PLAYING' && typeof NPCInteractionPanel !== 'undefined' && NPCInteractionPanel.visible);
+    if (document.body) document.body.classList.toggle('npc-dialog-open', _npcOpen);
+    if (!_npcOpen) {
+        _drawNavArrows(ctx);
+        Input.drawJoystick(ctx, Input.left, "left"); Input.drawJoystick(ctx, Input.right, "right");
+    }
     if (!_anyPanelOpen()) Debug.time('postfx', () => ScreenEffects.drawPostProcess(ctx, lightCanvas));
     // Minimap throttled to every 3rd frame (dots move slowly; static tile buffer is cached)
-    if (gameTime % 3 === 0) drawMinimap();
+    if (!_npcOpen && gameTime % 3 === 0) drawMinimap();
     // Expanded minimap overlay drawn every frame (needs to stay stable, not blink)
-    if (minimapExpanded && gameState === 'PLAYING') _drawExpandedMinimap();
-    if (typeof NPCInteractionPanel !== 'undefined' && NPCInteractionPanel.visible) NPCInteractionPanel.draw(ctx, width || 800);
+    if (!_npcOpen && minimapExpanded && gameState === 'PLAYING') _drawExpandedMinimap();
+    if (_npcOpen) NPCInteractionPanel.draw(ctx, width || 800);
 
     
     // --- ATUALIZACAO DE COOLDOWNS NA UI ---
@@ -24264,6 +24291,7 @@ const NarrativeSystem = {
         const pt = (typeof PET_TYPES !== 'undefined' && PET_TYPES[petId]) ? PET_TYPES[petId] : null;
         const name = pt ? (window._L ? _L(pt.nameKey, pt.name) : pt.name) : petId;
         if (pt && pt.fragment && !this.discovered[pt.fragment]) this.discover(pt.fragment);
+        else if (petId === 'raven' && !this.discovered['lore_040']) this.discover('lore_040');
         else if (tier >= 2 && !this.discovered['lore_017']) this.discover('lore_017');
         if (typeof showToast === 'function') {
             const msg = (window.I18n ? I18n.t('lore.petMilestoneToast') : '✦ Memória de {name} despertada no Grimório!').replace('{name}', name);
@@ -28751,312 +28779,13 @@ const WorldSprites = (() => {
         return { body: PixelFX.get(key), halo: opened ? null : PixelFX.get(key + '|h') };
     };
 
-    // NPCs (E5a): grades 24x24 de papéis (S pele, M, D, L, A, W, V, G, '.' vazio), renderizadas pelo mesmo
-    // pipeline dos heróis. `color` é a cor do tipo (usada no detalhe A e nas rampas de D); `k` é a última
-    // linha que sobe no quadro de respiração; `hem`/`robe` definem o balanço do manto; `pal` = [O,S,M,D,L,A,W,V,G].
-    const NPC_ART = {
-        // Seraphina (E5a-3): capuz pontudo com capa assimétrica, cabelo castanho, cachecol na cor do tipo,
-        // cajado com ponta brilhante à esquerda e lanterna na mão direita.
-        guide: { grid: true, k: 10, hem: 17, robe: 'M', rows: [
-            '........................',
-            '.........MMMMMM.........',
-            '.A......MMMMMMMM........',
-            '.D.....MMLLLLLLMM.......',
-            '.D....MMLLSSSSLLMM......',
-            '.D....MMLSOSSOSLMM......',
-            '.D....MMLSSSSSSLMM......',
-            '.D.....MMSSDDSSMM.......',
-            '.D......MMAAAAMM........',
-            '.D....MMMMAAAAMMMM......',
-            '.D...MMMMDDDDDDMMMM.....',
-            '.D..MMMMDDDDDDDDMMMM....',
-            '.D..MMM.DDDDDDDD.MMM....',
-            '.DSMMM..VVVWWVVV..MMMS..',
-            '.D.MMM..DDDDDDDD..MMM.A.',
-            '.D.MM...MDDDDDDM..MM.AGA',
-            '.D......MDDDDDDM.....AGA',
-            '.D......MMDDDDMM......A.',
-            '.D......MMMDDMMM........',
-            '.D......DDD..DDD........',
-            '.D......DDD..DDD........',
-            '.D......VVV..VVV........',
-            '.D.....VVVV..VVVV.......',
-            '........................'],
-            // O contorno; S pele; M capa verde-floresta; D couro e bastão; L cabelo castanho; A cor do tipo (gola/lanterna); W mapa; V botas e cinto; G chama
-            pal: c => ['#14101a', '#e8c4a0', '#2f6844', '#623e24', '#8b542c', c, '#f0e4b8', '#2e1e16', '#ffd27a'] },
-        // Dorian (E5a-2): chapéu largo curvado com faixa vermelha, mochila articulada com pergaminho e frasco,
-        // barba, avental claro, bolsa de moedas na mão direita e botas firmes.
-        merchant: { grid: true, k: 11, hem: 99, robe: '', rows: [
-            '........................',
-            '.........AAAAAA.........',
-            '........AAAAAAAA........',
-            '........VVVVVVVV..W.....',
-            '...AAAAAAAAAAAAAAAAAA...',
-            '..AA....SSSSSSSS....AA..',
-            '...D....SOSSSSOS........',
-            '..WDD...SSSDDSSS........',
-            '.DDD....LDDDDDDL........',
-            '.DDGM..MMVVVVVVMM.......',
-            '.DDDMMMMMDDDDDDMMMM.....',
-            '.DDDMMMMWWWWWWWWMMM.....',
-            '.DDDMMM.WWWWWWWW.MMMS...',
-            '.DDDMM..WWWWWWWW..MMAA..',
-            '..DDMM..VVVVVVVV..MAGA..',
-            '..DDMM..MMWWWWMM...AA...',
-            '...DM...MMWWWWMM........',
-            '........LLLLLLLL........',
-            '........LLL..LLL........',
-            '........LLL..LLL........',
-            '........DDD..DDD........',
-            '.......DDDD..DDDD.......',
-            '.......DDDD..DDDD.......',
-            '........................'],
-            // O contorno; S pele; M verde-oliva; D couro marrom; L oliva escuro; A cor do tipo (chapéu/moedas); W creme; V vermelho; G brilho
-            pal: c => ['#1c120a', '#e0b088', '#58682e', '#5c3820', '#384220', c, '#efe3c4', '#b23228', '#ffe27a'] },
-        // Vael (E5a-4): capuz pontudo com borda dourada, olhos âmbar, barba branca bifurcada, manto índigo
-        // com luz de contorno ciano, pingente-olho, cajado dourado com cristal ciano, orbe e faíscas.
-        oracle: { grid: true, k: 10, hem: 19, robe: 'MVL', orbit: [[1,12],[2,8],[1,4],[2,11]], sparks: [[[3,3],[21,9],[1,17]],[[2,6],[22,12],[0,20]],[[4,2],[21,6],[2,14]],[[3,8],[22,3],[1,11]]], rows: [
-            '...................GG...',
-            '..................GGGG..',
-            '...........AA....LGGGG..',
-            '..........AAAA.....GG...',
-            '.........AAAAAA....AA...',
-            '........AMVVVVMA....A...',
-            '.......AMVVVVVVMA...A...',
-            '.......AMVAASAAMA...A...',
-            '.......AMVSSSSVMA...A...',
-            '......LAMMWWWWMMAL..A...',
-            '.....LMAMMWWWWMMAML.A...',
-            '.....LMMMMWWWWMMMMLSA...',
-            '....LMMMMMMWWMMMMMLA....',
-            '....LMMMMMAAAMMMMMLA....',
-            '....LMMMMMAGAMMMMMLA....',
-            '.....LMAAAAAAAAAAMLA....',
-            '.....LMMMMMMMMMMMMLA....',
-            '....LMMAMVVVVVVMAMLA....',
-            '....LMMMVVVVVVVVMMLA....',
-            '...LMMMMVVVVVVVVMMMLA...',
-            '..VVMMMMMVVVVVVMMMMVVA..',
-            '..V.MMMM.VV..VV.MMMM.A..',
-            '....VV..........VV...A..',
-            '........................'],
-            // O contorno; S pele pálida; M índigo médio; D roxo; L ciano (luz de contorno); A dourado/âmbar; W barba; V roxo-escuro; G cristal
-            pal: c => ['#0b0918', '#cdbfe0', '#4a4fc4', PixelFX.shade(c, -0.5), '#6ef0ff', '#f0c050', '#f2f0fa', '#2a1450', '#7fe8ff'] },
-        // Eiran (E5b-3): rapaz de 17 anos para sempre (CANON §2), cabelo prateado desalinhado ao vento,
-        // rosto luminoso com olhos na cor do tipo, xale espectral ciano, mão no peito sobre o pingente dourado e névoa na base.
-        eiran: { grid: true, k: 9, hem: 99, robe: '', pulse: true,
-            sparks: [[[1,6],[21,10],[2,15]],[[2,9],[22,4],[21,16]],[[0,12],[21,7],[3,19]],[[1,17],[22,13],[19,21]]],
-            wisp: [[[10,20],[13,21],[11,22]],[[11,21],[13,22],[10,23]],[[10,21],[12,22],[9,23]],[[12,20],[11,21],[14,22]]],
-            rows: [
-            '........................',
-            '..........DDDD..........',
-            '........DDDDDDDD........',
-            '.......DDDDDDDDDD.......',
-            '......DDDSSDSSDDDD......',
-            '......DDSGSSSGSDDD......',
-            '.......DDSSSSSSDD.......',
-            '........DSSSSSSD........',
-            '.........SSSSSS.........',
-            '........L.SSSS.L........',
-            '......LLMMMMMMMMLL......',
-            '.....LMMMMMMMMMMMML.....',
-            '.....LMMMSSSSSSMMML.....',
-            '.....LMM..MAAM..MML.....',
-            '......LM..MAAM..ML......',
-            '.......LMMMMMMMMML......',
-            '.......LVVVMMMVVVL......',
-            '.......LMMMMMMMMML......',
-            '.......LMMMVVVMMML......',
-            '........LM.VVV.ML.......',
-            '........L.VV.VV.L.......',
-            '.........LV...VL........',
-            '.........L..L..L........',
-            '........................'],
-            // O contorno; S pele pálida; M túnica branco-azulada; D cabelo prateado; L ciano (contorno e névoa);
-            // A pingente dourado; W brilho do pingente e dos olhos; V calça azul-escura; G olhos (cor do tipo)
-            pal: c => ['#0d1a2e', '#d6e2f0', '#9fbde2', '#7d8ea8', '#6ef0ff', '#f0c050', '#ffffff', '#34466e', c] },
-        // Os três (E5b-4), piso 8 (Aposentos Reais): Seraphina, Dorian e Vael em miniatura.
-        trio: { grid: true, parts: [['guide', '#44aaff', 0, 21], ['merchant', '#ffcc44', 8, 18], ['oracle', '#cc44ff', 16, 21]] },
+    // NPCs em pixel art dark-fantasy 48x48 (gerados e cacheados em sprites.js via NpcSprites)
+    const npc = (type, color, frame) => {
+        if (typeof NpcSprites !== 'undefined' && typeof NpcSprites.get === 'function') {
+            return NpcSprites.get(type, color, frame & 3);
+        }
+        return null;
     };
-    // Quadros idle (0..3) das grades 24x24: 1 = respiração (linhas 0..k-1 sobem 1 px); 2 = manto/capa balança
-    // (papéis `robe` a partir da linha `hem` vão 1 px para a direita); 3 = respiração + balanço para a esquerda.
-    // Nos quadros 2 e 3 o brilho G acende (vira W), como um cintilar.
-    const npcRows = (art, f) => {
-        const src = art.rows;
-        let rows = (f & 1) ? src.map((r, i) => i < art.k ? src[i + 1] : r) : src.slice();
-        if (f >= 2 && art.hem < 24) {
-            const dx = (f & 1) ? -1 : 1;
-            rows = rows.map((r, y) => {
-                if (y < art.hem) return r;
-                const a = r.split(''), out = a.map(c => (art.robe.indexOf(c) >= 0 ? '.' : c));
-                for (let x = 0; x < 24; x++) {
-                    if (art.robe.indexOf(a[x]) >= 0 && x + dx >= 0 && x + dx < 24 && out[x + dx] === '.') out[x + dx] = a[x];
-                }
-                return out.join('');
-            });
-        }
-        // Orbe em órbita: 2x2 (brilho W no canto superior esquerdo), posição própria de cada quadro
-        if (art.orbit) {
-            const [ox, oy] = art.orbit[f], put2 = (x, y, ch) => { const a = rows[y].split(''); a[x] = ch; rows[y] = a.join(''); };
-            put2(ox, oy, 'W'); put2(ox + 1, oy, 'G'); put2(ox, oy + 1, 'G'); put2(ox + 1, oy + 1, 'G');
-        }
-        // Eiran: fiapos de névoa (L) nas células vazias da base, por quadro (wisp); pingente (A) pulsa em W nos quadros ímpares
-        if (art.wisp) for (const [x, y] of art.wisp[f]) { const a = rows[y].split(''); if (a[x] === '.') { a[x] = 'L'; rows[y] = a.join(''); } }
-        if (art.pulse && (f & 1)) rows = rows.map(r => r.replace(/A/g, 'W'));
-        if (f >= 2) rows = rows.map(r => r.replace(/G/g, 'W'));
-        return rows;
-    };
-    // Sub-detalhes 48x48 por NPC (chamado dentro de SpriteCore.finish48 antes do sombreamento e contorno de 1px).
-    const npcDetail = (type, art, g48, f) => {
-        const put = (x, y, ch) => { if (x >= 0 && y >= 0 && x < 48 && y < 48) g48[y][x] = ch; };
-        const dy = (f & 1) ? -2 : 0;
-        if (type === 'guide') {
-            put(20, 10 + dy, 'W'); put(21, 10 + dy, 'O'); put(20, 11 + dy, 'O'); put(21, 11 + dy, 'O');
-            put(26, 10 + dy, 'W'); put(27, 10 + dy, 'O'); put(26, 11 + dy, 'O'); put(27, 11 + dy, 'O');
-            put(16, 8 + dy, 'L'); put(31, 8 + dy, 'L');
-            put(2, 4 + dy, 'W'); put(3, 5 + dy, 'G'); put(2, 14 + dy, 'A'); put(3, 14 + dy, 'A');
-            put(23, 26, 'A'); put(24, 26, 'A'); put(23, 27, 'W');
-            put(44, 28, 'A'); put(45, 28, 'A'); put(43, 29, 'A'); put(46, 29, 'A');
-            for (let ly = 30; ly <= 33; ly++) { put(42, ly, 'V'); put(47, ly, 'V'); }
-            put(44, 31, 'W'); put(45, 31, 'W'); put(44, 32, 'W'); put(45, 32, 'G');
-            put(43, 30, 'G'); put(46, 30, 'G'); put(43, 33, 'G'); put(46, 33, 'G');
-            if (f & 1) put(45, 30, 'W');
-            put(43, 34, 'A'); put(46, 34, 'A'); put(44, 35, 'A'); put(45, 35, 'A');
-        } else if (type === 'merchant') {
-            put(18, 12 + dy, 'W'); put(19, 12 + dy, 'O'); put(18, 13 + dy, 'O'); put(19, 13 + dy, 'O');
-            put(28, 12 + dy, 'W'); put(29, 12 + dy, 'O'); put(28, 13 + dy, 'O'); put(29, 13 + dy, 'O');
-            put(22, 6 + dy, 'A'); put(23, 6 + dy, 'W'); put(24, 6 + dy, 'A'); put(25, 6 + dy, 'A');
-            put(22, 7 + dy, 'A'); put(23, 7 + dy, 'V'); put(24, 7 + dy, 'V'); put(25, 7 + dy, 'A');
-            put(37, 5 + dy, 'W'); put(36, 6 + dy, 'W'); put(36, 7 + dy, 'A');
-            put(6, 18 + dy, 'W'); put(7, 19 + dy, 'G');
-            put(22, 28, 'A'); put(23, 28, 'W'); put(24, 28, 'A'); put(25, 28, 'A');
-            put(22, 29, 'A'); put(25, 29, 'A');
-            put(40, 26, 'D'); put(41, 26, 'D');
-            put(40, 28, 'W'); put(41, 28, 'G'); put(42, 29, 'W'); put(39, 30, 'A'); put(42, 30, 'A');
-        } else if (type === 'oracle') {
-            put(21, 14 + dy, 'W'); put(22, 14 + dy, 'G'); put(21, 15 + dy, 'A'); put(22, 15 + dy, 'A');
-            put(27, 14 + dy, 'W'); put(28, 14 + dy, 'G'); put(27, 15 + dy, 'A'); put(28, 15 + dy, 'A');
-            put(38, Math.max(0, 2 + dy), 'W'); put(39, Math.max(0, 3 + dy), 'L');
-            put(40, Math.max(0, 4 + dy), 'W'); put(37, Math.max(0, 4 + dy), 'L');
-            for (const ry of [14, 22, 30, 38]) put(40, ry, (f & 1) ? 'W' : 'L');
-            put(24, 28, 'W'); put(25, 28, 'G'); put(23, 29, 'L'); put(26, 29, 'L');
-            if (art.orbit) {
-                const [ox, oy] = art.orbit[f];
-                put(ox * 2 + 1, oy * 2 + 1, 'W'); put(ox * 2 + 2, oy * 2 + 2, 'L');
-                put(ox * 2, oy * 2, '.'); put(ox * 2 + 3, oy * 2, '.');
-                put(ox * 2, oy * 2 + 3, '.'); put(ox * 2 + 3, oy * 2 + 3, '.');
-            }
-        } else if (type === 'eiran') {
-            put(18, 10 + dy, 'W'); put(19, 10 + dy, 'G'); put(18, 11 + dy, 'G'); put(19, 11 + dy, 'O');
-            put(26, 10 + dy, 'W'); put(27, 10 + dy, 'G'); put(26, 11 + dy, 'G'); put(27, 11 + dy, 'O');
-            put(18, 5 + dy, 'M'); put(22, 4 + dy, 'W'); put(26, 5 + dy, 'M');
-            put(23, 27, 'W'); put(24, 27, 'G'); put(23, 28, 'G'); put(24, 28, 'L');
-            const wx = [19, 21, 18, 22][f];
-            if (g48[43][wx] === '.') put(wx, 43, 'L');
-            if (g48[45][47 - wx] === '.') put(47 - wx, 45, 'L');
-        }
-    };
-    const epx48 = rows24 => {
-        const g = Array.from({ length: 48 }, () => Array(48).fill('.'));
-        const at = (x, y) => (x >= 0 && y >= 0 && x < 24 && y < 24) ? rows24[y][x] : '.';
-        for (let y = 0; y < 24; y++) for (let x = 0; x < 24; x++) {
-            const P = at(x, y), A = at(x, y - 1), B = at(x + 1, y), C = at(x - 1, y), D = at(x, y + 1);
-            const x2 = x * 2, y2 = y * 2;
-            g[y2][x2] = (C === A && C !== D && A !== B) ? A : P;
-            g[y2][x2 + 1] = (A === B && A !== C && B !== D) ? B : P;
-            g[y2 + 1][x2] = (D === C && D !== B && C !== A) ? C : P;
-            g[y2 + 1][x2 + 1] = (B === D && B !== A && D !== C) ? D : P;
-        }
-        return g;
-    };
-    // Os três (E5b-4): Seraphina, Dorian e Vael em miniatura numa grade 48x48 (16px de largura cada, scale=1).
-    const shrinkRows = (rows, w, h, srcSize = 24) => {
-        const wt = { G: 3, A: 2.2, S: 1.8, W: 1.6, O: 1.4 };
-        const out = [];
-        for (let Y = 0; Y < h; Y++) {
-            const y0 = Math.floor(Y * srcSize / h), y1 = Math.max(y0 + 1, Math.floor((Y + 1) * srcSize / h));
-            let line = '';
-            for (let X = 0; X < w; X++) {
-                const x0 = Math.floor(X * srcSize / w), x1 = Math.max(x0 + 1, Math.floor((X + 1) * srcSize / w));
-                const cnt = {}; let n = 0, tot = 0;
-                for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
-                    tot++; const ch = rows[y][x];
-                    if (ch !== '.') { cnt[ch] = (cnt[ch] || 0) + (wt[ch] || 1); n++; }
-                }
-                let best = '.', bn = 0;
-                for (const k in cnt) if (cnt[k] > bn) { bn = cnt[k]; best = k; }
-                line += n * 2 >= tot ? best : '.';
-            }
-            out.push(line);
-        }
-        return out;
-    };
-    const trioBake = (key, art, f) => {
-        const has48 = typeof SpriteCore.finish48 === 'function';
-        const N = has48 ? 48 : 24, sc = has48 ? 1 : 2, w = has48 ? 16 : 8;
-        const blank24 = has48 ? Array.from({ length: 24 }, () => Array(24).fill('.')) : null;
-        const figs = art.parts.map(([type, color, x0, h], p) => {
-            const src = NPC_ART[type], r24 = npcRows(src, f);
-            let idx;
-            if (has48) {
-                const g48 = epx48(r24);
-                npcDetail(type, src, g48, f);
-                const h2 = h * 2, small = shrinkRows(g48, w, h2, 48);
-                idx = SpriteCore.finish48(blank24, g => {
-                    for (let y = 0; y < h2; y++) for (let x = 0; x < w; x++) g[48 - h2 + y][x0 * 2 + x] = small[y][x];
-                });
-            } else {
-                const small = shrinkRows(r24, w, h, 24);
-                const grid = Array.from({ length: 24 }, () => Array(24).fill('.'));
-                for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) grid[24 - h + y][x0 + x] = small[y][x];
-                idx = SpriteCore.finish(grid);
-            }
-            return { p, color, pal: SpriteCore.buildPalette(src.pal(color)), idx };
-        });
-        const out = Array.from({ length: N }, () => Array(N).fill('.')), halo = Array.from({ length: N }, () => Array(N).fill(null)), map = {};
-        const rgba = (h, a) => { const n = parseInt(h.slice(1), 16); return 'rgba(' + (n >> 16) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')'; };
-        for (const { p, color, pal, idx } of figs) {
-            for (let k = 1; k <= 31; k++) map[String.fromCharCode(0x100 + p * 40 + k)] = pal[k - 1];
-            map[String.fromCharCode(0x200 + p)] = rgba(color, 0.32);
-            for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) if (idx[y][x]) out[y][x] = String.fromCharCode(0x100 + p * 40 + idx[y][x]);
-        }
-        // Fio dourado (cor do Vael) ligando as três figuras, só nas células livres
-        map[String.fromCharCode(0x210)] = '#f0c050'; map[String.fromCharCode(0x211)] = '#ffe27a';
-        const ty = has48 ? 4 : 2, step = has48 ? 4 : 3;
-        for (let x = 2; x < N - 2; x++) if (out[ty][x] === '.' && x % step !== 0) out[ty][x] = String.fromCharCode(0x210 + (f & 1));
-        // Halo de 1px: célula livre encostada em figura de um tipo recebe o halo daquele tipo
-        for (const { p, idx } of figs) for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
-            if (out[y][x] !== '.' || halo[y][x] !== null) continue;
-            for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, -1], [1, -1], [-1, 1]]) {
-                const xx = x + dx, yy = y + dy;
-                if (xx >= 0 && yy >= 0 && xx < N && yy < N && idx[yy][xx]) { halo[y][x] = p; break; }
-            }
-        }
-        for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) if (out[y][x] === '.' && halo[y][x] !== null) out[y][x] = String.fromCharCode(0x200 + halo[y][x]);
-        PixelFX.bake(key, out.map(r => r.join('')), map, sc);
-    };
-    // NPC em grade 48x48 (HD): mesmo pipeline dos heróis via SpriteCore.finish48 + sub-detalhes 48x48, bakeado a scale=1 (48px).
-    const npcGrid = (type, art, color, f) => {
-        const has48 = typeof SpriteCore.finish48 === 'function';
-        const key = (has48 ? 'npc48|' : 'npc24|') + type + '|' + color + '|' + f;
-        if (!PixelFX.get(key) && art.parts) trioBake(key, art, f);
-        else if (!PixelFX.get(key)) {
-            const r24 = npcRows(art, f).map(r => r.split(''));
-            const idx = has48 ? SpriteCore.finish48(r24, g48 => npcDetail(type, art, g48, f)) : SpriteCore.finish(r24);
-            const sc = has48 ? 1 : 2;
-            // Partículas de luz: pixels brilhantes (índice 31) em célula vazia, sem contorno
-            if (art.sparks) for (const [x, y] of art.sparks[f]) {
-                const sx = has48 ? x * 2 : x, sy = has48 ? y * 2 : y;
-                if (idx[sy] && !idx[sy][sx]) idx[sy][sx] = 31;
-                if (has48 && !(f & 1) && idx[sy] && sx + 1 < 48 && !idx[sy][sx + 1]) idx[sy][sx + 1] = 30;
-            }
-            const pal = SpriteCore.buildPalette(art.pal(color)), map = {};
-            for (let k = 1; k <= 31; k++) map[String.fromCharCode(64 + k)] = pal[k - 1];
-            PixelFX.bake(key, idx.map(r => r.map(k => k ? String.fromCharCode(64 + k) : '.').join('')), map, sc);
-        }
-        return PixelFX.get(key);
-    };
-    const npc = (type, color, frame) => npcGrid(type, NPC_ART[type] || NPC_ART.guide, color, frame & 3);
 
     // Ícones de status em 7x7 células ('#' = cor do status, 'l' = brilho), contornados em #090612 (9x9)
     const STATUS_ICON = {
@@ -39828,7 +39557,7 @@ function _tipKeyForAttackMode(key) {
 // ============================================================
 // Medidas do painel do NPC em unidades lógicas (compacto, para caber no celular em retrato)
 const NPC_PANEL_METRICS = {
-    maxW: 248,      // largura máxima compacta para celular retrato
+    maxW: 264,      // largura máxima limpa e legível para celular retrato
     pad: 12,        // margem lateral
     headBase: 26,   // linha de base do nome (alinhada ao retrato 34px)
     divider: 42,    // divisor abaixo do cabeçalho
@@ -39919,6 +39648,7 @@ const NPCInteractionPanel = {
     show(npc, message, buttons, note, opts) {
         const wasVisible = this.visible;
         this.visible = true;
+        if (document.body) document.body.classList.add('npc-dialog-open');
         this.npc = npc;
         this.message = message;
         this.buttons = buttons || [];
@@ -39947,6 +39677,7 @@ const NPCInteractionPanel = {
 
     hide() {
         this.visible = false;
+        if (document.body) document.body.classList.remove('npc-dialog-open');
         this.npc = null;
         this.message = '';
         this.buttons = [];
@@ -40035,18 +39766,20 @@ const NPCInteractionPanel = {
         ctx.font = _npcFont(M.msgSize, false);
         const msgLines = this._lines(ctx, this.message, innerW);
         let contentEnd = M.msgTop + msgLines.length * M.msgLH; // fim da fala, relativo ao topo
-        let panelY = this._panelY();
-        // Limite de baixo: borda da tela e, no toque, o topo dos analógicos (o painel
-        // não pode cobrir o anel nem passar da borda em celular pequeno)
-        const limit = this._bottomLimit();
+        const hh = (typeof height === 'number' && height > 0) ? height : 600;
+        const topMargin = 20;
+        const bottomMargin = 20;
+        const nBtn = Math.max(1, this.buttons.length);
+        const btnBlockH = this.stacked
+            ? (nBtn * M.btnH + (nBtn - 1) * M.btnGap)
+            : M.btnH;
         let noteLines = [], noteRel = 0, noteBoxH = 0;
         if (this.note) {
             ctx.font = _npcFont(M.noteSize, false);
             noteLines = this._lines(ctx, this.note, innerW - 16);
             noteRel = contentEnd + 6;
-            // A dica encolhe antes de tudo (fala e botões têm prioridade): corta as
-            // linhas que não cabem e, abaixo de 2 linhas, ela some
-            const room = Math.floor((limit - panelY - noteRel - 8 - 8 - M.btnH - M.bottomPad) / M.noteLH);
+            const maxNoteH = hh - topMargin - bottomMargin - noteRel - 8 - btnBlockH - M.bottomPad - 8;
+            const room = Math.floor(maxNoteH / M.noteLH);
             if (room < noteLines.length) {
                 if (room < 2) noteLines = [];
                 else {
@@ -40062,14 +39795,10 @@ const NPCInteractionPanel = {
             }
         }
         const btnRel = contentEnd + 8;
-        const nBtn = Math.max(1, this.buttons.length);
-        const btnBlockH = this.stacked
-            ? (nBtn * M.btnH + (nBtn - 1) * M.btnGap)
-            : M.btnH;
         const panelH = btnRel + btnBlockH + M.bottomPad;
-        // Último recurso (fala muito longa): sobe o painel para os botões ficarem na tela
-        // (e acima dos analógicos, quando existem)
-        panelY = Math.min(panelY, Math.max(10, limit - panelH));
+        // Com o HUD DOM oculto durante o diálogo (body.npc-dialog-open), centraliza
+        // verticalmente o painel com margens seguras em 360x800 e desktop.
+        const panelY = Math.max(topMargin, Math.min(hh - panelH - bottomMargin, Math.round((hh - panelH) / 2)));
         const btnY = panelY + btnRel;
         const cols = this._btnLayout(panelX, panelW);
         if (this.stacked) {
@@ -40110,9 +39839,12 @@ const NPCInteractionPanel = {
         const M = NPC_PANEL_METRICS, pad = M.pad;
         const g = this._geom(screenW);
         const { panelX, panelY, panelW, panelH, innerW } = g;
+        const screenH = (typeof height === 'number' && height > 0) ? height : 800;
 
-        // Background cinematográfico com leve gradiente e borda do falante
+        // Scrim escuro cinematográfico para isolar o diálogo sem competição visual
         ctx.save();
+        ctx.fillStyle = 'rgba(6, 4, 14, 0.68)';
+        ctx.fillRect(0, 0, screenW, screenH);
         const bgGrad = ctx.createLinearGradient(panelX, panelY, panelX, panelY + panelH);
         bgGrad.addColorStop(0, 'rgba(18, 12, 38, 0.96)');
         bgGrad.addColorStop(1, 'rgba(8, 5, 18, 0.96)');
@@ -40738,13 +40470,35 @@ class NPC {
             ctx.restore();
         }
 
-        // Corpo em pixel art (48 px, como os heróis): 4 quadros de idle; com reducedMotion, quadro 0 fixo
+        // Corpo em pixel art dark-fantasy (48 px): 4 quadros de idle + aura viva por arquétipo
+        const npcArtKey = this.art || this.type;
         const npcFrame = npcReduced ? 0 : Math.floor(this.indicatorAnim * 4 / (Math.PI * 2)) % 4;
         // Sombra no chão (respeita GFX.shadows)
         if (window.GFX === undefined || window.GFX.shadows !== false) {
-            PixelFX.drawEllipse(ctx, sx, sy + 22, 19, 7, 'rgba(0,0,0,0.3)');
+            PixelFX.drawEllipse(ctx, sx, sy + 22, 19, 7, 'rgba(0,0,0,0.34)');
         }
-        PixelFX.draw(ctx, WorldSprites.npc(this.art || this.type, this.color, npcFrame), sx, sy);
+        // Luz viva sutil (lanterna de Seraphina/Dorian, aura rúnica de Vael, halo espectral de Eiran)
+        if (window.GFX === undefined || window.GFX.glows !== false) {
+            const gPulse = npcReduced ? 0.18 : (0.15 + 0.08 * Math.sin(this.indicatorAnim * 2.2));
+            ctx.save();
+            ctx.globalAlpha = fade * gPulse;
+            if (npcArtKey === 'guide') {
+                PixelFX.drawDisc(ctx, sx + 17, sy + 7, 13, '#ffb85c', null, true);
+            } else if (npcArtKey === 'merchant') {
+                PixelFX.drawDisc(ctx, sx - 17, sy - 5, 13, '#ffd27a', null, true);
+            } else if (npcArtKey === 'oracle') {
+                PixelFX.drawDisc(ctx, sx + 16, sy - 16, 12, '#a78bfa', null, true);
+                PixelFX.drawDisc(ctx, sx - 14, sy + 4, 9, '#7ee8ff', null, true);
+            } else if (npcArtKey === 'eiran') {
+                PixelFX.drawDisc(ctx, sx, sy - 2, 20, '#8ad8ff', null, true);
+                PixelFX.drawDisc(ctx, sx, sy - 21, 10, '#ffd86b', null, true);
+            } else if (npcArtKey === 'trio') {
+                PixelFX.drawDisc(ctx, sx, sy - 4, 22, '#e2c268', null, true);
+            }
+            ctx.restore();
+        }
+        const npcSpr = WorldSprites.npc(npcArtKey, this.color, npcFrame);
+        if (npcSpr) PixelFX.draw(ctx, npcSpr, sx, sy);
 
         // Floating indicator above head (acima da cabeça: metade da altura do sprite + 10 px)
         const bobY = sy - 37 + (npcReduced ? 0 : Math.sin(this.indicatorAnim) * 4);
@@ -40933,10 +40687,6 @@ const NPCSystem = {
             this.npcs[i].draw(ctx, camX, camY);
         }
         if (window.SceneDirector && SceneDirector.draw) SceneDirector.draw(ctx, camX, camY);
-        // Draw interaction panel on top
-        if (NPCInteractionPanel.visible) {
-            NPCInteractionPanel.draw(ctx, width || 800);
-        }
     },
 
     // Handle touch/click on canvas for NPC panel buttons
@@ -45845,25 +45595,48 @@ renderAchievementsContent() {
         renderPetMemoriesSection() {
             const entries = (typeof PetSystem !== 'undefined' && typeof PetSystem.getMemoryEntries === 'function') ? PetSystem.getMemoryEntries() : [];
             const unlockedCount = entries.filter(e => e.unlocked).length;
+            const thumbs = (typeof PetSystem !== 'undefined' && PetSystem._hudThumbs) ? PetSystem._hudThumbs : {};
+            const getThumb = (petId, stg) => {
+                const k = petId + ':' + stg;
+                if (!thumbs[k] && typeof _petMakeSprite === 'function') {
+                    try { thumbs[k] = _petMakeSprite(petId, 0, 1, 0, stg).toDataURL(); } catch (err) {}
+                }
+                return thumbs[k] || '';
+            };
             const cards = entries.map(e => {
+                const stg = e.stage || ((typeof PetSystem !== 'undefined' && PetSystem.getStage) ? PetSystem.getStage(e.petId) : 1);
+                const stgRoman = stg === 3 ? 'III' : (stg === 2 ? 'II' : 'I');
+                const stgLabel = _L('pet.evo.stage', 'Estágio {s}').replace('{s}', stgRoman);
+                const tUrl = getThumb(e.petId, stg);
+                const imgFilter = e.rescued ? '' : 'filter:brightness(0.24) contrast(1.5);opacity:0.7;';
+                const thumbHtml = tUrl
+                    ? `<div style="width:34px;height:34px;flex-shrink:0;border-radius:8px;background:rgba(10,7,18,0.85);border:1px solid ${e.unlocked ? e.color + '66' : 'rgba(255,255,255,0.12)'};display:flex;align-items:center;justify-content:center;overflow:hidden"><img src="${tUrl}" alt="" style="width:30px;height:30px;image-rendering:pixelated;${imgFilter}"></div>`
+                    : '';
+                const stageBadge = `<span style="font-size:8.5px;font-weight:800;padding:1px 5px;border-radius:999px;background:rgba(255,216,107,0.14);border:1px solid rgba(255,216,107,0.38);color:#ffd86b;white-space:nowrap">${stgLabel}</span>`;
                 if (e.unlocked) {
-                    return `<div style="padding:11px 13px;border-radius:12px;border:1px solid ${e.color}55;background:rgba(26,18,48,0.68)">
-                        <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;margin-bottom:4px">
-                            <span style="font-weight:800;font-size:12px;color:${e.color}">${e.title}</span>
-                            <span style="font-size:9px;font-weight:700;color:#ffd86b;text-transform:uppercase">${e.petName} · Nv.${e.tier}</span>
+                    return `<div style="padding:11px 12px;border-radius:12px;border:1px solid ${e.color}55;background:rgba(26,18,48,0.68);display:flex;gap:10px;align-items:flex-start">
+                        ${thumbHtml}
+                        <div style="flex:1;min-width:0">
+                            <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px">
+                                <span style="font-weight:800;font-size:12px;color:${e.color}">${e.title}</span>
+                                <span style="display:inline-flex;align-items:center;gap:4px">${stageBadge}<span style="font-size:9px;font-weight:700;color:#e5daf7;text-transform:uppercase">${e.petName} · Nv.${e.tier}</span></span>
+                            </div>
+                            <div style="font-size:11px;color:#e5daf7;line-height:1.5">${e.text}</div>
                         </div>
-                        <div style="font-size:11px;color:#e5daf7;line-height:1.5">${e.text}</div>
                     </div>`;
                 }
                 const hint = e.rescued
                     ? _L('lore.petLocked', 'Alcance Vínculo Nv. {t} com {name} para despertar esta memória.').replace('{t}', e.tier).replace('{name}', e.petName)
                     : _L('lore.petNotFound', 'Resgate este companheiro durante a jornada para conhecer sua história.');
-                return `<div style="padding:10px 13px;border-radius:12px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.025)">
-                    <div style="display:flex;justify-content:space-between;align-items:center;gap:6px">
-                        <span class="lore-torn" style="font-size:12px;font-weight:700">${NarrativeSystem.getTornTitle ? NarrativeSystem.getTornTitle(e.title) : '???'}</span>
-                        <span style="font-size:9px;color:#7e7494">${e.rescued ? e.petName + ' · Nv.' + e.tier : '???'}</span>
+                return `<div style="padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.025);display:flex;gap:10px;align-items:center">
+                    ${thumbHtml}
+                    <div style="flex:1;min-width:0">
+                        <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap">
+                            <span class="lore-torn" style="font-size:12px;font-weight:700">${NarrativeSystem.getTornTitle ? NarrativeSystem.getTornTitle(e.title) : '???'}</span>
+                            <span style="display:inline-flex;align-items:center;gap:4px">${e.rescued ? stageBadge : ''}<span style="font-size:9px;color:#7e7494">${e.rescued ? e.petName + ' · Nv.' + e.tier : '???'}</span></span>
+                        </div>
+                        <div style="font-size:10px;color:#8e84a8;font-style:italic;margin-top:3px">${hint}</div>
                     </div>
-                    <div style="font-size:10px;color:#8e84a8;font-style:italic;margin-top:3px">${hint}</div>
                 </div>`;
             }).join('');
             return `

@@ -3009,6 +3009,342 @@ const SpriteManager = {
 })();
 
 
+// ============================================================
+// NPC SPRITES 48x48 DARK-FANTASY (Seraphina, Dorian, Vael, Eiran, Trio)
+// Pipeline unificado com SpriteCore.finish48 + buildPalette (4 tons + contorno #120e1a).
+// ============================================================
+const NpcSprites = (() => {
+    const _cache = new Map();
+    const NPC_ART = {
+        // Seraphina, a Guia: ex-capitã da guarda de Krevathorn. Manto cinza-luto com capuz,
+        // ombreiras de aço escuro, espada prateada à esquerda e lanterna acesa à direita.
+        guide: { k: 10, hem: 16, robe: 'MV', lantern: [21, 15],
+            sparks: [[[21,13],[22,12]],[[20,12],[22,13]],[[21,11],[23,13]],[[22,12],[20,13]]],
+            rows: [
+            '........................',
+            '.........MMMMMM.........',
+            '........MMMMMMMM........',
+            '..W....MMLLLLLLMM.......',
+            '..W...MMLLSSSSLLMM......',
+            '..W...MMLSOSSOSLMM......',
+            '..W...MMLSSSSSSLMM......',
+            '..W....MMSSDDSSMM.......',
+            '..W.....MMAAAAMM........',
+            '..W...DDMMAAAAMMDD......',
+            '..W..DDDMMWWWWMMDDD.....',
+            '..A..DDMMMWWWWMMMDD.....',
+            '.AAA.DMM.MVVVVM.MMD.....',
+            '..DS.MM..MVAAVM..MMS....',
+            '..D..MM..MVVVVM..MM.A...',
+            '..D..MM..MMVVMM..MMAGA..',
+            '.....M...MMVVMM...MAGA..',
+            '.....M...MMVVMM....MA...',
+            '.........MMMMMM.........',
+            '.........MM..MM.........',
+            '........DDD..DDD........',
+            '........VVV..VVV........',
+            '.......VVVV..VVVV.......',
+            '........................'],
+            // O contorno; S pele; M manto cinza-luto; D aço/ombreiras; L cabelo castanho escuro; A acento/guarda/lanterna; W lâmina/peitoral prata; V couro/botas; G chama
+            pal: c => ['#120e1a', '#e6c2a0', '#5a6272', '#3a4254', '#583828', c, '#cfd8e8', '#2a2230', '#ffd27a'] },
+        // Dorian, o Mercador: ex-tesoureiro do reino. Chapéu de aba larga com fivela, casaco índigo-escuro,
+        // avental de couro, mochila abarrotada de relíquias/pergaminho, lanterna de latão e bolsa de moedas.
+        merchant: { k: 11, hem: 18, robe: 'M', lantern: [2, 8],
+            sparks: [[[2,6],[20,13]],[[1,7],[21,12]],[[3,6],[20,14]],[[2,5],[19,13]]],
+            rows: [
+            '........................',
+            '.........DDDDDD.........',
+            '........DDDDDDDD........',
+            '........VVVVVVVV..W.....',
+            '...DDDDDDDDDDDDDDDDDD...',
+            '..DD....SSSSSSSS....DD..',
+            '..GA....SOSSSSOS........',
+            '.GGA....SSSDDSSS........',
+            '..A..D..LDDDDDDL........',
+            '..D.DD..MMVVVVMM........',
+            '.DDDDDMMMDDDDDDMMM......',
+            '.DDDDDMMWWWWWWWWMM......',
+            '.DDDDMM.WWWWWWWW.MMS....',
+            '.DDDDM..WWWWWWWW..MMAA..',
+            '..DDDM..VVVVVVVV..MAGA..',
+            '..DDDM..MMWWWWMM...AA...',
+            '...DD...MMWWWWMM........',
+            '........MMMMMMMM........',
+            '........MMM..MMM........',
+            '........LLL..LLL........',
+            '........DDD..DDD........',
+            '.......VVVV..VVVV.......',
+            '.......VVVV..VVVV.......',
+            '........................'],
+            // O contorno; S pele; M casaco tesoureiro; D couro/chapéu/mochila; L calça escura; A ouro/moedas/latão; W avental creme/pergaminho; V faixa carmesim; G brilho lanterna
+            pal: c => ['#120e1a', '#e0b088', '#3c435a', '#5a3a24', '#2c3040', c, '#e8dcc0', '#9e2e2b', '#ffe27a'] },
+        // Vael, o Oráculo: capuz pontudo com borda dourada, venda/olhos vazios luminosos, barba branca bifurcada,
+        // manto crepuscular com runas, cajado dourado com cristal do Véu e runa orbital flutuante.
+        oracle: { k: 10, hem: 18, robe: 'MVL', orbit: [[1,11],[2,7],[1,4],[2,10]],
+            sparks: [[[3,3],[21,9],[1,17]],[[2,6],[22,12],[0,20]],[[4,2],[21,6],[2,14]],[[3,8],[22,3],[1,11]]],
+            rows: [
+            '...................GG...',
+            '..................GGGG..',
+            '...........AA....LGGGG..',
+            '..........AAAA.....GG...',
+            '.........AAAAAA....AA...',
+            '........AMVVVVMA....A...',
+            '.......AMVVVVVVMA...A...',
+            '.......AMVLLSSLMA...A...',
+            '.......AMVSSSSVMA...A...',
+            '......LAMMWWWWMMAL..A...',
+            '.....LMAMMWWWWMMAML.A...',
+            '.....LMMMMWWWWMMMMLSA...',
+            '....LMMMMMMWWMMMMMLA....',
+            '....LMMMMMAAAMMMMMLA....',
+            '....LMMMMMAGAMMMMMLA....',
+            '.....LMAAAAAAAAAAMLA....',
+            '.....LMMMMMMMMMMMMLA....',
+            '....LMMAMVVVVVVMAMLA....',
+            '....LMMMVVVVVVVVMMLA....',
+            '...LMMMMVVVVVVVVMMMLA...',
+            '..VVMMMMMVVVVVVMMMMVVA..',
+            '..V.MMMM.VV..VV.MMMM.A..',
+            '....VV..........VV...A..',
+            '........................'],
+            // O contorno; S pele pálida; M índigo crepuscular; D roxo profundo; L ciano/luz arcana; A ouro antigo; W barba prata; V manto interno; G cristal do Véu
+            pal: c => ['#120e1a', '#cfc4e0', '#4845a8', '#2a1848', '#78e8ff', '#eab848', '#f2f0fa', '#241242', '#b884ff'] },
+        // Eiran: o príncipe de 17 anos preso no fundo do vale. Coroa de sol dourada flutuando suave acima
+        // do cabelo prateado, manto espectral azul-pálido, mão sobre o pingente no peito e névoa na base.
+        eiran: { k: 9, hem: 17, robe: 'ML', pulse: true,
+            sparks: [[[1,6],[21,10],[2,15]],[[2,9],[22,4],[21,16]],[[0,12],[21,7],[3,19]],[[1,17],[22,13],[19,21]]],
+            wisp: [[[9,20],[13,21],[11,22]],[[11,21],[14,22],[9,23]],[[10,21],[12,22],[8,23]],[[12,20],[10,21],[14,22]]],
+            rows: [
+            '.........A.AA.A.........',
+            '..........AAAA..........',
+            '........DDDDDDDD........',
+            '.......DDDDDDDDDD.......',
+            '......DDDSSDSSDDDD......',
+            '......DDSGSSSGSDDD......',
+            '.......DDSSSSSSDD.......',
+            '........DSSSSSSD........',
+            '.........SSSSSS.........',
+            '........L.SSSS.L........',
+            '......LLMMMMMMMMLL......',
+            '.....LMMMMMMMMMMMML.....',
+            '.....LMMMSSSSSSMMML.....',
+            '.....LMM..MAAM..MML.....',
+            '......LM..MAAM..ML......',
+            '.......LMMMMMMMMML......',
+            '......LLVVVMMMVVVLL.....',
+            '......LMMMMMMMMMMML.....',
+            '......LMMMMVVVMMMML.....',
+            '.......LM..VVV..ML......',
+            '........L.VV.VV.L.......',
+            '.........LV...VL........',
+            '.........L..L..L........',
+            '........................'],
+            // O contorno; S pele pálida; M túnica espectral; D cabelo prateado; L ciano/névoa espectral; A coroa de sol/pingente; W brilho puro; V sombra azul-profundo; G olhos luminosos
+            pal: c => ['#120e1a', '#d8e6f6', '#92b6e4', '#8698b8', '#7ce8ff', '#ffd86b', '#ffffff', '#2d3f68', c] },
+        // Os Três (Piso 8 · Aposentos Reais): Seraphina, Dorian e Vael lado a lado.
+        trio: { parts: [['guide', '#44aaff', 0, 21], ['merchant', '#ffcc44', 8, 18], ['oracle', '#cc44ff', 16, 21]] }
+    };
+
+    const npcRows = (art, f) => {
+        const src = art.rows;
+        let rows = (f & 1) ? src.map((r, i) => i < art.k ? src[i + 1] : r) : src.slice();
+        if (f >= 2 && art.hem < 24) {
+            const dx = (f & 1) ? -1 : 1;
+            rows = rows.map((r, y) => {
+                if (y < art.hem) return r;
+                const a = r.split(''), out = a.map(c => (art.robe.indexOf(c) >= 0 ? '.' : c));
+                for (let x = 0; x < 24; x++) {
+                    if (art.robe.indexOf(a[x]) >= 0 && x + dx >= 0 && x + dx < 24 && out[x + dx] === '.') out[x + dx] = a[x];
+                }
+                return out.join('');
+            });
+        }
+        if (art.orbit) {
+            const [ox, oy] = art.orbit[f], put2 = (x, y, ch) => { const a = rows[y].split(''); a[x] = ch; rows[y] = a.join(''); };
+            put2(ox, oy, 'W'); put2(ox + 1, oy, 'G'); put2(ox, oy + 1, 'G'); put2(ox + 1, oy + 1, 'G');
+        }
+        if (art.wisp) for (const [x, y] of art.wisp[f]) { const a = rows[y].split(''); if (a[x] === '.') { a[x] = 'L'; rows[y] = a.join(''); } }
+        if (art.pulse && (f & 1)) rows = rows.map(r => r.replace(/A/g, 'W'));
+        if (f >= 2) rows = rows.map(r => r.replace(/G/g, 'W'));
+        return rows;
+    };
+
+    const npcDetail = (type, art, g48, f) => {
+        const put = (x, y, ch) => { if (x >= 0 && y >= 0 && x < 48 && y < 48) g48[y][x] = ch; };
+        const dy = (f & 1) ? -2 : 0;
+        if (type === 'guide') {
+            // Olhos expressivos + brilho de aço na espada + lanterna quente pulsante
+            put(20, 10 + dy, 'W'); put(21, 10 + dy, 'O'); put(20, 11 + dy, 'O'); put(21, 11 + dy, 'O');
+            put(26, 10 + dy, 'W'); put(27, 10 + dy, 'O'); put(26, 11 + dy, 'O'); put(27, 11 + dy, 'O');
+            // Lâmina da espada prateada à esquerda (reflexo)
+            for (let sy = 6; sy <= 20; sy += 2) put(4, sy + dy, 'W');
+            put(4, 24, 'A'); put(5, 24, 'W'); put(3, 24, 'A'); put(6, 24, 'A');
+            // Fivela do manto cinza + armadura
+            put(23, 21, 'A'); put(24, 21, 'W'); put(23, 26, 'A'); put(24, 26, 'A');
+            // Lanterna de latão na mão direita
+            put(41, 29, 'A'); put(42, 29, 'A');
+            for (let ly = 30; ly <= 33; ly++) { put(39, ly, 'V'); put(44, ly, 'V'); }
+            put(41, 31, 'W'); put(42, 31, 'W'); put(41, 32, 'G'); put(42, 32, (f & 1) ? 'W' : 'G');
+            put(40, 30, 'G'); put(43, 30, 'G'); put(40, 33, 'G'); put(43, 33, 'G');
+            put(41, 34, 'A'); put(42, 34, 'A');
+        } else if (type === 'merchant') {
+            put(18, 12 + dy, 'W'); put(19, 12 + dy, 'O'); put(18, 13 + dy, 'O'); put(19, 13 + dy, 'O');
+            put(28, 12 + dy, 'W'); put(29, 12 + dy, 'O'); put(28, 13 + dy, 'O'); put(29, 13 + dy, 'O');
+            // Fivela do chapéu + pergaminho na mochila + lanterna de latão à esquerda
+            put(22, 6 + dy, 'A'); put(23, 6 + dy, 'W'); put(24, 6 + dy, 'A'); put(25, 6 + dy, 'A');
+            put(37, 5 + dy, 'W'); put(36, 6 + dy, 'W'); put(36, 7 + dy, 'A');
+            put(4, 13 + dy, 'W'); put(5, 14 + dy, (f & 1) ? 'W' : 'G'); put(3, 14 + dy, 'G');
+            // Fivela do avental + bolsa de moedas brilhante
+            put(22, 28, 'A'); put(23, 28, 'W'); put(24, 28, 'A'); put(25, 28, 'A');
+            put(40, 28, 'W'); put(41, 28, 'G'); put(42, 29, 'W'); put(39, 30, 'A'); put(42, 30, 'A');
+        } else if (type === 'oracle') {
+            // Olhos cegos com brilho etéreo + cristal do cajado + runas pulsantes
+            put(21, 14 + dy, 'W'); put(22, 14 + dy, 'L'); put(21, 15 + dy, 'L'); put(22, 15 + dy, 'G');
+            put(27, 14 + dy, 'W'); put(28, 14 + dy, 'L'); put(27, 15 + dy, 'L'); put(28, 15 + dy, 'G');
+            put(38, Math.max(0, 2 + dy), 'W'); put(39, Math.max(0, 3 + dy), 'L');
+            put(40, Math.max(0, 4 + dy), 'W'); put(37, Math.max(0, 4 + dy), 'L');
+            for (const ry of [14, 22, 30, 38]) put(40, ry, (f & 1) ? 'W' : 'L');
+            put(24, 28, 'W'); put(25, 28, 'G'); put(23, 29, 'L'); put(26, 29, 'L');
+            if (art.orbit) {
+                const [ox, oy] = art.orbit[f];
+                put(ox * 2 + 1, oy * 2 + 1, 'W'); put(ox * 2 + 2, oy * 2 + 2, 'L');
+                put(ox * 2, oy * 2, '.'); put(ox * 2 + 3, oy * 2, '.');
+                put(ox * 2, oy * 2 + 3, '.'); put(ox * 2 + 3, oy * 2 + 3, '.');
+            }
+        } else if (type === 'eiran') {
+            // Coroa de sol dourada acima da cabeça + olhos luminosos + pingente + névoa
+            put(22, Math.max(0, 1 + dy), 'W'); put(25, Math.max(0, 1 + dy), 'W');
+            put(19, Math.max(0, 2 + dy), 'A'); put(28, Math.max(0, 2 + dy), 'A');
+            put(18, 10 + dy, 'W'); put(19, 10 + dy, 'G'); put(18, 11 + dy, 'G'); put(19, 11 + dy, 'O');
+            put(26, 10 + dy, 'W'); put(27, 10 + dy, 'G'); put(26, 11 + dy, 'G'); put(27, 11 + dy, 'O');
+            put(23, 27, 'W'); put(24, 27, 'A'); put(23, 28, 'A'); put(24, 28, 'L');
+            const wx = [19, 21, 18, 22][f];
+            if (g48[43] && g48[43][wx] === '.') put(wx, 43, 'L');
+            if (g48[45] && g48[45][47 - wx] === '.') put(47 - wx, 45, 'L');
+        }
+    };
+
+    const epx48 = rows24 => {
+        const g = Array.from({ length: 48 }, () => Array(48).fill('.'));
+        const at = (x, y) => (x >= 0 && y >= 0 && x < 24 && y < 24) ? rows24[y][x] : '.';
+        for (let y = 0; y < 24; y++) for (let x = 0; x < 24; x++) {
+            const P = at(x, y), A = at(x, y - 1), B = at(x + 1, y), C = at(x - 1, y), D = at(x, y + 1);
+            const x2 = x * 2, y2 = y * 2;
+            g[y2][x2] = (C === A && C !== D && A !== B) ? A : P;
+            g[y2][x2 + 1] = (A === B && A !== C && B !== D) ? B : P;
+            g[y2 + 1][x2] = (D === C && D !== B && C !== A) ? C : P;
+            g[y2 + 1][x2 + 1] = (B === D && B !== A && D !== C) ? D : P;
+        }
+        return g;
+    };
+
+    const shrinkRows = (rows, w, h, srcSize = 24) => {
+        const wt = { G: 3, A: 2.2, S: 1.8, W: 1.6, O: 1.4 };
+        const out = [];
+        for (let Y = 0; Y < h; Y++) {
+            const y0 = Math.floor(Y * srcSize / h), y1 = Math.max(y0 + 1, Math.floor((Y + 1) * srcSize / h));
+            let line = '';
+            for (let X = 0; X < w; X++) {
+                const x0 = Math.floor(X * srcSize / w), x1 = Math.max(x0 + 1, Math.floor((X + 1) * srcSize / w));
+                const cnt = {}; let n = 0, tot = 0;
+                for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
+                    tot++; const ch = rows[y][x];
+                    if (ch !== '.') { cnt[ch] = (cnt[ch] || 0) + (wt[ch] || 1); n++; }
+                }
+                let best = '.', bn = 0;
+                for (const k in cnt) if (cnt[k] > bn) { bn = cnt[k]; best = k; }
+                line += n * 2 >= tot ? best : '.';
+            }
+            out.push(line);
+        }
+        return out;
+    };
+
+    const renderToCanvas = (gridStrs, map, scale) => {
+        const h = gridStrs.length, w = gridStrs[0].length;
+        const cv = document.createElement('canvas');
+        cv.width = w * scale; cv.height = h * scale;
+        const g = cv.getContext('2d');
+        g.imageSmoothingEnabled = false;
+        for (let y = 0; y < h; y++) {
+            const row = gridStrs[y];
+            for (let x = 0; x < w; x++) {
+                const ch = row[x];
+                if (ch === '.') continue;
+                const col = map[ch];
+                if (!col) continue;
+                g.fillStyle = col;
+                g.fillRect(x * scale, y * scale, scale, scale);
+            }
+        }
+        return cv;
+    };
+
+    const bakeTrio = (art, f) => {
+        const blank24 = Array.from({ length: 24 }, () => Array(24).fill('.'));
+        const figs = art.parts.map(([type, color, x0, h], p) => {
+            const src = NPC_ART[type], r24 = npcRows(src, f);
+            const g48 = epx48(r24);
+            npcDetail(type, src, g48, f);
+            const h2 = h * 2, small = shrinkRows(g48, 16, h2, 48);
+            const idx = SpriteCore.finish48(blank24, g => {
+                for (let y = 0; y < h2; y++) for (let x = 0; x < 16; x++) g[48 - h2 + y][x0 * 2 + x] = small[y][x];
+            });
+            return { p, color, pal: SpriteCore.buildPalette(src.pal(color)), idx };
+        });
+        const out = Array.from({ length: 48 }, () => Array(48).fill('.'));
+        const halo = Array.from({ length: 48 }, () => Array(48).fill(null));
+        const map = {};
+        const rgba = (h, a) => { const n = parseInt(h.slice(1), 16); return 'rgba(' + (n >> 16) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')'; };
+        for (const { p, color, pal, idx } of figs) {
+            for (let k = 1; k <= 31; k++) map[String.fromCharCode(0x100 + p * 40 + k)] = pal[k - 1];
+            map[String.fromCharCode(0x200 + p)] = rgba(color, 0.30);
+            for (let y = 0; y < 48; y++) for (let x = 0; x < 48; x++) if (idx[y][x]) out[y][x] = String.fromCharCode(0x100 + p * 40 + idx[y][x]);
+        }
+        map[String.fromCharCode(0x210)] = '#f0c050'; map[String.fromCharCode(0x211)] = '#ffe27a';
+        for (let x = 2; x < 46; x++) if (out[4][x] === '.' && x % 4 !== 0) out[4][x] = String.fromCharCode(0x210 + (f & 1));
+        for (const { p, idx } of figs) for (let y = 0; y < 48; y++) for (let x = 0; x < 48; x++) {
+            if (out[y][x] !== '.' || halo[y][x] !== null) continue;
+            for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,-1],[1,-1],[-1,1]]) {
+                const xx = x + dx, yy = y + dy;
+                if (xx >= 0 && yy >= 0 && xx < 48 && yy < 48 && idx[yy][xx]) { halo[y][x] = p; break; }
+            }
+        }
+        for (let y = 0; y < 48; y++) for (let x = 0; x < 48; x++) if (out[y][x] === '.' && halo[y][x] !== null) out[y][x] = String.fromCharCode(0x200 + halo[y][x]);
+        return renderToCanvas(out.map(r => r.join('')), map, 1);
+    };
+
+    function get(type, color, frame) {
+        const t = NPC_ART[type] ? type : 'guide';
+        const f = (frame | 0) & 3;
+        const c = color || '#44aaff';
+        const key = t + '|' + c + '|' + f;
+        if (_cache.has(key)) return _cache.get(key);
+        const art = NPC_ART[t];
+        let cv;
+        if (art.parts) {
+            cv = bakeTrio(art, f);
+        } else {
+            const r24 = npcRows(art, f).map(r => r.split(''));
+            const idx = SpriteCore.finish48(r24, g48 => npcDetail(t, art, g48, f));
+            if (art.sparks) for (const [x, y] of art.sparks[f]) {
+                const sx = x * 2, sy = y * 2;
+                if (idx[sy] && !idx[sy][sx]) idx[sy][sx] = 31;
+                if (!(f & 1) && idx[sy] && sx + 1 < 48 && !idx[sy][sx + 1]) idx[sy][sx + 1] = 30;
+            }
+            const pal = SpriteCore.buildPalette(art.pal(c)), map = {};
+            for (let k = 1; k <= 31; k++) map[String.fromCharCode(64 + k)] = pal[k - 1];
+            cv = renderToCanvas(idx.map(r => r.map(k => k ? String.fromCharCode(64 + k) : '.').join('')), map, 1);
+        }
+        _cache.set(key, cv);
+        return cv;
+    }
+
+    function clear() { _cache.clear(); }
+
+    return { get, clear };
+})();
+
 const SpriteRenderer = {
     drawCharacter(ctx, x, y, type, frame, angle=0, isHit=false) {
         const f = (typeof frame === 'object') ? frame : { time: frame || 0, state: 'idle' };
@@ -3030,11 +3366,12 @@ const SpriteRenderer = {
 if (typeof window !== 'undefined') {
     window.SpriteManager = SpriteManager;
     window.SpriteRenderer = SpriteRenderer;
+    window.NpcSprites = NpcSprites;
 }
 
 // Export for Node.js testing
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { SpriteManager };
+    module.exports = { SpriteManager, NpcSprites };
 }
 
 
