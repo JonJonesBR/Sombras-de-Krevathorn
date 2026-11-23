@@ -861,7 +861,6 @@ body.reduce-motion.npc-dialog-open #top-bar, body.reduce-motion.npc-dialog-open 
                     <div style="display:flex;justify-content:center;align-items:flex-end;height:60px;margin-bottom:3px;"><img class="hero-portrait" src="art/hero-warrior.webp" alt="" aria-hidden="true" decoding="async" onload="if(this.nextElementSibling)this.nextElementSibling.style.display='none'" onerror="this.remove()"><canvas class="hero-canvas" data-class="warrior" width="56" height="60" aria-hidden="true"></canvas></div>
                     <div class="start-class-name" data-i18n="start.classWarrior" style="font-weight:800;text-transform:uppercase;color:#facc15;text-shadow:0 0 8px rgba(201,162,39,0.35);">Guerreiro</div>
                     <div class="start-class-desc" data-i18n="class.desc.warrior">Tanque e escudo</div>
-                    <div class="class-pet-badge"><canvas class="class-pet-canvas" data-pet="horse" width="48" height="48" aria-hidden="true"></canvas><span data-i18n="pet.horse.short">CORCEL</span></div>
                     <div style="display:flex;gap:3px;justify-content:center;margin-top:4px;">
                         <span class="stat-dot" style="width:6px;height:6px;border-radius:50%;background:#dbb55c;box-shadow:0 0 4px #dbb55c;"></span>
                         <span class="stat-dot" style="width:4px;height:6px;border-radius:2px;background:rgba(255,255,255,0.15);"></span>
@@ -872,7 +871,6 @@ body.reduce-motion.npc-dialog-open #top-bar, body.reduce-motion.npc-dialog-open 
                     <div style="display:flex;justify-content:center;align-items:flex-end;height:60px;margin-bottom:3px;"><img class="hero-portrait" src="art/hero-rogue.webp" alt="" aria-hidden="true" decoding="async" onload="if(this.nextElementSibling)this.nextElementSibling.style.display='none'" onerror="this.remove()"><canvas class="hero-canvas" data-class="rogue" width="56" height="60" aria-hidden="true"></canvas></div>
                     <div class="start-class-name" data-i18n="start.classRogue" style="font-weight:800;text-transform:uppercase;color:#e8816a;text-shadow:0 0 8px rgba(224,90,69,0.35);">Ladino</div>
                     <div class="start-class-desc" data-i18n="class.desc.rogue">Ágil, crítico, frágil</div>
-                    <div class="class-pet-badge"><canvas class="class-pet-canvas" data-pet="raven" width="48" height="48" aria-hidden="true"></canvas><span data-i18n="pet.raven.short">CORVO</span></div>
                     <div style="display:flex;gap:3px;justify-content:center;margin-top:4px;">
                         <span class="stat-dot" style="width:4px;height:6px;border-radius:2px;background:rgba(255,255,255,0.15);"></span>
                         <span class="stat-dot" style="width:6px;height:6px;border-radius:50%;background:#e0563e;box-shadow:0 0 4px #e0563e;"></span>
@@ -883,7 +881,6 @@ body.reduce-motion.npc-dialog-open #top-bar, body.reduce-motion.npc-dialog-open 
                     <div style="display:flex;justify-content:center;align-items:flex-end;height:60px;margin-bottom:3px;"><img class="hero-portrait" src="art/hero-mage.webp" alt="" aria-hidden="true" decoding="async" onload="if(this.nextElementSibling)this.nextElementSibling.style.display='none'" onerror="this.remove()"><canvas class="hero-canvas" data-class="mage" width="56" height="60" aria-hidden="true"></canvas></div>
                     <div class="start-class-name" data-i18n="start.classMage" style="font-weight:800;text-transform:uppercase;color:#b78be8;text-shadow:0 0 8px rgba(106,61,145,0.5);">Mago</div>
                     <div class="start-class-desc" data-i18n="class.desc.mage">Magia em área</div>
-                    <div class="class-pet-badge"><canvas class="class-pet-canvas" data-pet="owl" width="48" height="48" aria-hidden="true"></canvas><span data-i18n="pet.owl.short">CORUJA</span></div>
                     <div style="display:flex;gap:3px;justify-content:center;margin-top:4px;">
                         <span class="stat-dot" style="width:4px;height:6px;border-radius:2px;background:rgba(255,255,255,0.15);"></span>
                         <span class="stat-dot" style="width:4px;height:6px;border-radius:2px;background:rgba(255,255,255,0.15);"></span>
@@ -894,7 +891,6 @@ body.reduce-motion.npc-dialog-open #top-bar, body.reduce-motion.npc-dialog-open 
                     <div style="display:flex;justify-content:center;align-items:flex-end;height:60px;margin-bottom:3px;"><img class="hero-portrait" src="art/hero-elf.webp" alt="" aria-hidden="true" decoding="async" onload="if(this.nextElementSibling)this.nextElementSibling.style.display='none'" onerror="this.remove()"><canvas class="hero-canvas" data-class="elf" width="56" height="60" aria-hidden="true"></canvas></div>
                     <div class="start-class-name" data-i18n="start.classElf" style="font-weight:800;text-transform:uppercase;color:#a5cf6e;text-shadow:0 0 8px rgba(165,207,110,0.35);">Elfa</div>
                     <div class="start-class-desc" data-i18n="class.desc.elf">Arqueira veloz</div>
-                    <div class="class-pet-badge"><canvas class="class-pet-canvas" data-pet="wolf" width="48" height="48" aria-hidden="true"></canvas><span data-i18n="pet.wolf.short">LOBO</span></div>
                     <div style="display:flex;gap:3px;justify-content:center;margin-top:4px;">
                         <span class="stat-dot" style="width:6px;height:6px;border-radius:50%;background:#dbb55c;box-shadow:0 0 4px #dbb55c;"></span>
                         <span class="stat-dot" style="width:4px;height:6px;border-radius:2px;background:rgba(255,255,255,0.15);"></span>
@@ -1898,7 +1894,7 @@ const CanvasRecovery = (() => {
         console.warn('[CanvasRecovery] reconstruindo canvas (' + reason + ')');
         _step('pixelfx', () => { if (typeof PixelFX !== 'undefined') PixelFX.clear(); if (typeof NpcSprites !== 'undefined' && NpcSprites.clear) NpcSprites.clear(); });
         _step('folhas', () => { if (typeof SpriteManager !== 'undefined') SpriteManager.invalidate(); });
-        _step('pets', () => { if (typeof PET_SPR_CACHE !== 'undefined') PET_SPR_CACHE.length = 0; });
+        _step('pets', () => { if (typeof PET_SPR_CACHE !== 'undefined') PET_SPR_CACHE.length = 0; if (window.PetSprites && PetSprites.clear) PetSprites.clear(); });
         _step('luz', () => {
             if (typeof LightPixelizer !== 'undefined') LightPixelizer.reset();
             _cachedLightCanvas = null; _lightingThrottle = 0;
@@ -12943,9 +12939,6 @@ const Statistics = {
             const lv = xp >= 140 ? 3 : (xp >= 65 ? 2 : (xp >= 20 ? 1 : 0));
             _cleanBonds[k] = { xp: xp, level: Math.max(lv, Number.isInteger(b.level) ? Math.min(3, Math.max(0, b.level)) : 0), runs: Number.isFinite(b.runs) && b.runs >= 0 ? Math.floor(b.runs) : 0 };
         });
-        ['horse', 'raven', 'owl', 'wolf'].forEach(sig => {
-            if (data.petsRescued.indexOf(sig) === -1) data.petsRescued.push(sig);
-        });
         data.petsRescued.forEach(k => {
             if (!_cleanBonds[k]) _cleanBonds[k] = { xp: 20, level: 1, runs: 1 };
         });
@@ -12957,7 +12950,7 @@ const Statistics = {
             if (stg === 2 || stg === 3) _cleanEvos[k] = stg;
         });
         data.petEvolutions = _cleanEvos;
-        if (typeof data.favoritePet !== 'string' || !data.petBonds[data.favoritePet] || data.petBonds[data.favoritePet].level < 2) data.favoritePet = null;
+        if (typeof data.favoritePet !== 'string' || data.petsRescued.indexOf(data.favoritePet) === -1 || !data.petBonds[data.favoritePet] || data.petBonds[data.favoritePet].level < 2) data.favoritePet = null;
         // Booleanos: aceita 0/1 de save antigo, grava sempre true/false.
         ['creditsSeen', 'prophecyHeard', 'eiranWhisperHeard', 'openingSeen', 'openingFinished',
          'abyssOpeningSeen', 'prologueSeen', 'seraphinaGift', 'oracleGift', 'goddessBlessing'].forEach(key => {
@@ -35035,15 +35028,15 @@ class ActiveMutation {
 }
 
 // ============================================================
-// COMPANION SYSTEM 3.0 — "Ecos Fiéis" (Rodada 2)
-// - 10 Pets (4 exclusivos de classe no Slot 1 + 6 resgatáveis no mundo p/ Slot 2)
-// - Montar / Desmontar real (Corcel, Lobo, Dragão) c/ botão mobile e tecla M
+// COMPANION SYSTEM 3.0 — "Ecos Fiéis" (Rodada 3)
+// - Encontros aleatórios de resgate (run começa sozinha; exclusividade de classe nos encontros!)
+// - Montar / Desmontar real com escala heroica (Corcel, Lobo, Dragão) c/ botão mobile e tecla M
 // - Evolução em 3 Estágios (I -> II -> III) c/ upgrade visual e mecânico
-// - Pixel Art 48x48 Dark-Fantasy volumétrica com membros conectados (zero pernas soltas)
+// - Pixel Art 48x48 artesanal via window.PetSprites (SpriteCore 24x24 -> finish48, 8 poses)
 // ============================================================
 const PET_FIRE = { range: 135, damage: 24, small: 0.65 };
 
-// Companheiro exclusivo de assinatura de cada classe (entra no Slot 1 no início da run)
+// Companheiro exclusivo de cada classe (encontrado em resgates aleatórios apenas pela respectiva classe)
 const CLASS_SIGNATURE_PETS = {
     warrior: 'horse',
     rogue: 'raven',
@@ -35148,20 +35141,52 @@ const PET_TYPES = {
     }
 };
 
-// Encontros no mundo para o Slot 2 (os 4 pets de classe nascem no Slot 1 com sua classe;
-// os 6 companheiros do mundo são encontrados nas câmaras da História e no Abismo).
+// Encontros aleatórios no mundo: os 4 pets exclusivos de classe só podem aparecer para sua classe;
+// os 6 pets de mundo podem aparecer para qualquer classe.
 const PET_ENCOUNTERS = {
-    1: [{ pet: 'mimic', chamber: 1, kind: 'cage', lore: 'pet.rescue.mimic.lore' }],
-    2: [{ pet: 'faro', chamber: 2, kind: 'wounded', lore: 'pet.rescue.faro.lore' }],
-    3: [{ pet: 'salamander', chamber: 2, kind: 'cage', lore: 'pet.rescue.salamander.lore' }],
-    4: [{ pet: 'eagle', chamber: 2, kind: 'wounded', lore: 'pet.rescue.eagle.lore' }],
-    5: [{ pet: 'salamander', chamber: 2, kind: 'cage', lore: 'pet.rescue.salamander.lore' }],
+    1: [
+        { pet: 'horse', chamber: 2, kind: 'wounded', lore: 'pet.rescue.horse.lore' },
+        { pet: 'raven', chamber: 2, kind: 'cage', lore: 'pet.rescue.raven.lore' },
+        { pet: 'owl', chamber: 2, kind: 'cage', lore: 'pet.rescue.owl.lore' },
+        { pet: 'wolf', chamber: 2, kind: 'cage', lore: 'pet.rescue.wolf.lore' },
+        { pet: 'mimic', chamber: 1, kind: 'cage', lore: 'pet.rescue.mimic.lore' }
+    ],
+    2: [
+        { pet: 'faro', chamber: 2, kind: 'wounded', lore: 'pet.rescue.faro.lore' },
+        { pet: 'horse', chamber: 1, kind: 'wounded', lore: 'pet.rescue.horse.lore' },
+        { pet: 'raven', chamber: 1, kind: 'cage', lore: 'pet.rescue.raven.lore' }
+    ],
+    3: [
+        { pet: 'wolf', chamber: 2, kind: 'cage', lore: 'pet.rescue.wolf.lore' },
+        { pet: 'owl', chamber: 2, kind: 'cage', lore: 'pet.rescue.owl.lore' },
+        { pet: 'salamander', chamber: 1, kind: 'cage', lore: 'pet.rescue.salamander.lore' }
+    ],
+    4: [
+        { pet: 'owl', chamber: 2, kind: 'cage', lore: 'pet.rescue.owl.lore' },
+        { pet: 'raven', chamber: 2, kind: 'cage', lore: 'pet.rescue.raven.lore' },
+        { pet: 'horse', chamber: 2, kind: 'wounded', lore: 'pet.rescue.horse.lore' },
+        { pet: 'eagle', chamber: 1, kind: 'wounded', lore: 'pet.rescue.eagle.lore' }
+    ],
+    5: [
+        { pet: 'salamander', chamber: 2, kind: 'cage', lore: 'pet.rescue.salamander.lore' },
+        { pet: 'wolf', chamber: 1, kind: 'cage', lore: 'pet.rescue.wolf.lore' },
+        { pet: 'faro', chamber: 1, kind: 'wounded', lore: 'pet.rescue.faro.lore' }
+    ],
     6: [
         { pet: 'spirit', chamber: 2, kind: 'cage', lore: 'pet.rescue.spirit.lore' },
         { pet: 'dragon', chamber: 2, kind: 'wounded', lore: 'pet.rescue.dragon.lore', rare: true }
     ],
-    7: [{ pet: 'eagle', chamber: 2, kind: 'wounded', lore: 'pet.rescue.eagle.lore' }],
-    8: [{ pet: 'dragon', chamber: 2, kind: 'wounded', lore: 'pet.rescue.dragon.lore', rare: true }]
+    7: [
+        { pet: 'eagle', chamber: 2, kind: 'wounded', lore: 'pet.rescue.eagle.lore' },
+        { pet: 'horse', chamber: 1, kind: 'wounded', lore: 'pet.rescue.horse.lore' },
+        { pet: 'raven', chamber: 1, kind: 'cage', lore: 'pet.rescue.raven.lore' },
+        { pet: 'owl', chamber: 1, kind: 'cage', lore: 'pet.rescue.owl.lore' },
+        { pet: 'wolf', chamber: 1, kind: 'cage', lore: 'pet.rescue.wolf.lore' }
+    ],
+    8: [
+        { pet: 'dragon', chamber: 2, kind: 'wounded', lore: 'pet.rescue.dragon.lore', rare: true },
+        { pet: 'spirit', chamber: 1, kind: 'cage', lore: 'pet.rescue.spirit.lore' }
+    ]
 };
 
 let _petRunSeed = 0x51a7c3d1;
@@ -35181,9 +35206,19 @@ function _petRescueRoll(floor, chamber, salt) {
     return ((h ^ (h >>> 15)) >>> 0) / 4294967296;
 }
 
+// Filtra estritamente por exclusividade de classe (horse=warrior, raven=rogue, owl=mage, wolf=elf)
+function _petEligibleForClass(petId, playerClass) {
+    const pt = PET_TYPES[petId];
+    if (!pt) return false;
+    if (pt.classExclusive && pt.classExclusive !== playerClass) return false;
+    return true;
+}
+
 function _petEncounterFor(floor, chamber, playerClass) {
     if (typeof PetSystem === 'undefined') return null;
-    const cand = (PET_ENCOUNTERS[floor] || []).filter(e => PET_TYPES[e.pet] && !PetSystem.petActive.includes(e.pet));
+    const cand = (PET_ENCOUNTERS[floor] || []).filter(e =>
+        _petEligibleForClass(e.pet, playerClass) && !PetSystem.petActive.includes(e.pet)
+    );
     if (!cand.length) return null;
     const rares = cand.filter(e => e.rare);
     if (rares.length) {
@@ -35195,25 +35230,39 @@ function _petEncounterFor(floor, chamber, playerClass) {
     }
     const nonRare = cand.filter(e => !e.rare);
     if (!nonRare.length) return null;
-    const aff = nonRare.filter(e => PET_TYPES[e.pet].affinity === playerClass);
+    const sigOrAff = nonRare.filter(e => PET_TYPES[e.pet].classExclusive === playerClass || PET_TYPES[e.pet].affinity === playerClass);
     let pool = null;
-    if (aff.length) pool = aff;
+    if (sigOrAff.length && _petRescueRoll(floor, -1, 17) < 0.65) pool = sigOrAff;
     else if (_petRescueRoll(floor, -1, 13) < 0.65) pool = nonRare;
     if (!pool || !pool.length) return null;
     const won = pool[Math.floor(_petRescueRoll(floor + 50, -1, 29) * pool.length)];
     return won.chamber === chamber ? won : null;
 }
 
+const PET_ART_KEYS = ['horse', 'raven', 'dragon', 'eagle', 'wolf', 'owl', 'spirit', 'faro', 'mimic', 'salamander'];
+const PET_FLY_ALT = { raven: 8, dragon: 7, eagle: 9, owl: 6, spirit: 5 };
+const PET_SPR_CACHE = [];
+
 function _petCacheIdx(type, pose, face, flash, stage) {
     const tIdx = Math.max(0, PET_ART_KEYS.indexOf(type));
     const stg = Math.max(0, Math.min(2, (stage || 1) - 1));
-    return (((tIdx * 3 + stg) * 6 + (pose || 0)) * 2 + (face > 0 ? 0 : 1)) * 2 + (flash ? 1 : 0);
+    return (((tIdx * 3 + stg) * 8 + ((pose || 0) & 7)) * 2 + (face > 0 ? 0 : 1)) * 2 + (flash ? 1 : 0);
+}
+
+// Delega diretamente para window.PetSprites (SpriteCore 24x24 -> finish48 artesanal em sprites.js)
+function _petMakeSprite(type, pose, face, flash, stage) {
+    const stg = Math.max(1, Math.min(3, stage || ((typeof PetSystem !== 'undefined' && PetSystem.getStage) ? PetSystem.getStage(type) : 1)));
+    if (typeof PetSprites !== 'undefined' && PetSprites.get) {
+        return PetSprites.get(type, pose || 0, face, flash, stg);
+    }
+    const cv = document.createElement('canvas');
+    cv.width = 48; cv.height = 48;
+    return cv;
 }
 
 function _petRescueSprite(type) {
     const stg = (typeof PetSystem !== 'undefined' && PetSystem.getStage) ? PetSystem.getStage(type) : 1;
-    const idx = _petCacheIdx(type, 0, 1, 0, stg);
-    return PET_SPR_CACHE[idx] || (PET_SPR_CACHE[idx] = _petMakeSprite(type, 0, 1, 0, stg));
+    return _petMakeSprite(type, 4, 1, 0, stg);
 }
 
 // ---- Sistema de Vínculo (0 Desconfiado -> 1 Companheiro -> 2 Leal -> 3 Inseparável) ----
@@ -35226,8 +35275,7 @@ const PetBondSystem = {
         if (typeof Statistics === 'undefined' || !Statistics.data) return { xp: 0, level: 0, runs: 0 };
         if (!Statistics.data.petBonds || typeof Statistics.data.petBonds !== 'object') Statistics.data.petBonds = {};
         if (!Statistics.data.petBonds[petId]) {
-            const isSig = !!PET_TYPES[petId].classExclusive;
-            Statistics.data.petBonds[petId] = { xp: isSig ? 20 : 0, level: isSig ? 1 : 0, runs: isSig ? 1 : 0 };
+            Statistics.data.petBonds[petId] = { xp: 0, level: 0, runs: 0 };
         }
         return Statistics.data.petBonds[petId];
     },
@@ -35317,9 +35365,10 @@ const PetRescue = {
         if (_storyRules() || !map || !player) return;
         const fl = typeof dungeonLevel === 'number' ? dungeonLevel : 1;
         if (fl !== 1 && fl % 3 !== 0) return;
-        const worldTypes = Object.keys(PET_TYPES).filter(t => !PET_TYPES[t].classExclusive && !PetSystem.petActive.includes(t));
-        if (!worldTypes.length) return;
-        const pet = worldTypes[Math.floor(_petRescueRoll(fl, 99, 41) * worldTypes.length)];
+        const pCls = player.type || 'warrior';
+        const eligible = Object.keys(PET_TYPES).filter(t => _petEligibleForClass(t, pCls) && !PetSystem.petActive.includes(t));
+        if (!eligible.length) return;
+        const pet = eligible[Math.floor(_petRescueRoll(fl, 99, 41) * eligible.length)];
         const kind = _petRescueRoll(fl, 99, 53) < 0.5 ? 'cage' : 'wounded';
         const at = this._spotFor();
         if (at) this.objs.push({ pet: pet, kind: kind, lore: 'pet.rescue.' + pet + '.lore', chamber: -1, x: at.x, y: at.y, dismissed: false, abyss: true });
@@ -35446,8 +35495,6 @@ const PetRescue = {
             buttons.push({ label: _L('pet.rescue.free', 'Libertar'), action: () => self.free(o) });
         } else {
             PetSystem.petActive.forEach((curId, idx) => {
-                // O Slot 0 é o Companheiro de Classe se for classExclusive; ainda permite trocar o Slot 1 (ou ambos)
-                if (idx === 0 && PET_TYPES[curId] && PET_TYPES[curId].classExclusive && PetSystem.petActive.length > 1) return;
                 const curPt = PET_TYPES[curId];
                 const curNm = curPt ? _L(curPt.nameKey, curPt.name) : curId;
                 buttons.push({ label: _L('pet.rescue.swap', 'Trocar por {name}').replace('{name}', curNm), action: () => self.swap(o, idx) });
@@ -35524,7 +35571,7 @@ const PetRescue = {
 };
 window.PetRescue = PetRescue;
 
-// ---- PetSystem 3.0: Companheiro de Classe, Montaria, Evolução I-III, Passivas Dinâmicas e Contrato Narrativo ----
+// ---- PetSystem 3.0: Encontros Aleatórios, Montaria Heroica, Evolução I-III, Passivas Dinâmicas e Contrato Narrativo ----
 const PetSystem = {
     petActive: [],
     runState: {},
@@ -35632,7 +35679,6 @@ const PetSystem = {
         if (target.mounted) {
             target.dismount();
         } else {
-            // Desmonta qualquer outra montaria antes de montar nesta
             pets.forEach(p => { if (p && p !== target && p.mounted) p.dismount(true); });
             target.mount();
         }
@@ -35702,22 +35748,18 @@ const PetSystem = {
         return true;
     },
 
-    // Slot 1: Companheiro Exclusivo da Classe; Slot 2: Companheiro Inicial favorito (se diferente e desbloqueado)
-    spawnClassSignature(cls) {
-        const c = cls || (player && player.type) || 'warrior';
-        const sig = CLASS_SIGNATURE_PETS[c] || 'horse';
-        if (PET_TYPES[sig] && !this.petActive.includes(sig)) {
-            this.add(sig, true);
-        }
+    // Run nova começa sozinha por padrão! Só traz pet se o jogador escolheu manualmente um favoritePet na coleção.
+    spawnFavorite() {
         const fav = (typeof Statistics !== 'undefined' && Statistics.data) ? Statistics.data.favoritePet : null;
-        if (fav && fav !== sig && PET_TYPES[fav] && !PET_TYPES[fav].classExclusive && PetBondSystem.getLevel(fav) >= 2 && this.petActive.length < CONFIG.PET_MAX_ACTIVE) {
-            this.add(fav, true);
-        }
-        return true;
+        if (!fav || !PET_TYPES[fav] || PetBondSystem.getLevel(fav) < 2) return false;
+        const pCls = (player && player.type) || 'warrior';
+        if (!_petEligibleForClass(fav, pCls)) return false;
+        if (this.petActive.length > 0) return false;
+        return this.add(fav, true);
     },
 
-    spawnFavorite() {
-        return this.spawnClassSignature(player && player.type);
+    spawnClassSignature() {
+        return this.spawnFavorite();
     },
 
     reset() {
@@ -35819,7 +35861,6 @@ const PetSystem = {
         if (this.has('raven')) {
             m += 0.10 + (this.getStage('raven') - 1) * 0.05;
             if (target && target._petMarkT > 0) m += 0.08;
-            // Saqueia moedas em golpes críticos (com cooldown curto para equilíbrio)
             if (player && (typeof gameTime !== 'number' || gameTime - (this._lastRavenCoinT || -99) > 90)) {
                 this._lastRavenCoinT = typeof gameTime === 'number' ? gameTime : 0;
                 player.currency = (player.currency || 0) + (1 + (this.getStage('raven') >= 3 ? 1 : 0));
@@ -35851,7 +35892,6 @@ const PetSystem = {
             this._dodgeBoostT = 120;
             spawnParticles(p.x, p.y, '#e8c47a', 6, 3);
         }
-        // Investida montada durante o dash!
         const mnt = this.getMountedPet();
         if (mnt && typeof map !== 'undefined' && map) {
             mnt._trampleAround(map, 1.35);
@@ -35866,7 +35906,6 @@ const PetSystem = {
 
     onPlayerHit(p, dmg, source) {
         if (!(dmg > 0) || !p) return dmg;
-        // Redução de dano enquanto montado
         const mnt = this.getMountedPet();
         if (mnt && mnt.data) {
             const stgArm = (this.getStage(mnt.type) - 1) * 0.04;
@@ -36017,7 +36056,6 @@ const PetSystem = {
         return true;
     },
 
-    // ---- HUD compacto de Companheiros c/ botão de Montar e Estágio (I/II/III) ----
     updateHud() {
         const el = document.getElementById('pet-hud');
         if (!el) return;
@@ -36042,7 +36080,7 @@ const PetSystem = {
             const stg = this.getStage(id);
             const tKey = id + ':' + stg;
             if (!this._hudThumbs[tKey] && typeof _petMakeSprite === 'function') {
-                try { this._hudThumbs[tKey] = _petMakeSprite(id, 0, 1, 0, stg).toDataURL(); } catch (e) {}
+                try { this._hudThumbs[tKey] = _petMakeSprite(id, 4, 1, 0, stg).toDataURL(); } catch (e) {}
             }
             const cdSec = Math.ceil((this._cmdCd[id] || 0) / 60);
             const lv = PetBondSystem.getLevel(id);
@@ -36061,13 +36099,12 @@ const PetSystem = {
         }).join('');
     },
 
-    // ---- CONTRATO COM A NARRATIVA (20 memórias: 10 pets x 2 tiers) ----
     getMemoryEntries() {
         const got = (typeof Statistics !== 'undefined' && Statistics.data && Array.isArray(Statistics.data.petsRescued)) ? Statistics.data.petsRescued : [];
         const entries = [];
         Object.keys(PET_TYPES).forEach(petId => {
             const pt = PET_TYPES[petId];
-            const rescued = got.indexOf(petId) !== -1 || !!pt.classExclusive;
+            const rescued = got.indexOf(petId) !== -1;
             const bondLevel = PetBondSystem.getLevel(petId);
             const stg = this.getStage(petId);
             [1, 2].forEach(n => {
@@ -36122,607 +36159,6 @@ const PetSystem = {
 };
 window.PetSystem = PetSystem;
 
-// ============================================================
-// DARK-FANTASY 48x48 VOLUMETRIC PIXEL-ART ENGINE (10 Pets x 3 Stages x 6 Poses)
-// Contorno escuro profundo (#120e1a), sombreamento volumétrico de 4 tons em
-// TODOS os materiais (corpo e acessórios) e primitiva L() de cápsula anatômica
-// contínua (zero pernas soltas ou flutuando!).
-// ============================================================
-const PET_ART_KEYS = ['horse', 'raven', 'dragon', 'eagle', 'wolf', 'owl', 'spirit', 'faro', 'mimic', 'salamander'];
-const PET_FLY_ALT = { raven: 8, dragon: 7, eagle: 9, owl: 6, spirit: 5 };
-const PET_ART_ACC = {
-    horse:      { S: '#9e2e24', Y: '#f0c448', M: '#3a2010', H: '#6e7a8e', B: '#c8d4e6', V: '#c084fc' },
-    raven:      { D: '#231c38', L: '#7c68a8', Y: '#e8b838', H: '#6e788c', B: '#d0dcf0', V: '#c084fc' },
-    dragon:     { F: '#ff8c24', Y: '#ffe36e', B: '#e8c888', H: '#dfd4be', V: '#c084fc', r: '#7a1c10' },
-    eagle:      { W: '#eef2f8', Y: '#f5c02a', P: '#b88658', B: '#c4d0e4', G: '#60a5fa', V: '#c084fc' },
-    wolf:       { C: '#d4dec4', Y: '#ffd23a', S: '#9e2e24', H: '#748296', B: '#c8d4e8', V: '#8effc4' },
-    owl:        { W: '#eae2f8', Y: '#f5b832', G: '#52ecff', P: '#c8b8e4', H: '#7a689a', V: '#c084fc' },
-    spirit:     { G: '#e8fff8', T: '#2e9e7c', C: '#6ef0ff', Y: '#ffd86b', V: '#c084fc' },
-    faro:       { L: '#4e2e18', Y: '#f5c542', C: '#f0dcc0', H: '#748094', S: '#9e2e24', V: '#ffd86b' },
-    mimic:      { Y: '#f0bc40', T: '#e03440', L: '#fff2a0', H: '#5e6a7e', B: '#a8b6cc', V: '#c084fc' },
-    salamander: { Y: '#ffd24a', F: '#ff3810', B: '#f5d8a0', H: '#5c6474', V: '#ff9a2e' }
-};
-const PET_SPR_CACHE = [];
-function _petRGB(hex) { const n = parseInt(hex.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }
-function _petMix(c, t, k) { return [Math.round(c[0] + (t[0] - c[0]) * k), Math.round(c[1] + (t[1] - c[1]) * k), Math.round(c[2] + (t[2] - c[2]) * k)]; }
-
-const PET_ART_DEF = {
-    // 1. CORCEL DE GUERRA (Guerreiro · Montável · Estágios I, II Ferro, III Véu)
-    horse(E, L, R, T, F, p, P, P48, stg) {
-        const rear = p === 4;
-        const dy = [0, -1, 0, -1, -1, 0][p];
-        // 4 quadros de galope real + empinada (pose 4): [quadril/ombro -> joelho/jarrete -> casco]
-        const poses = [
-            [[10,16, 8,21, 7,26],  [12,16, 11,21, 11,26.5], [19,16, 21,21, 23,26],  [21,16, 20,21, 19,26.5]],
-            [[10,16, 11,21, 12,26],[12,16, 9,21, 8,25.5],   [19,16, 18,21, 17,26],  [21,16, 23,20.5, 24,25.5]],
-            [[10,16, 7,20.5, 5.5,25.5],[12,16, 10,21, 9,26],[19,16, 22,20.5, 24.5,25.5],[21,16, 22,21, 22,26.5]],
-            [[10,16, 9.5,21, 10,26.5],[12,16, 12,21, 13,26],[19,16, 19.5,21, 19,26.5],[21,16, 21,21, 21,26.5]],
-            [[10,17, 8.5,22, 8,26.5],[12.5,17, 11.5,22, 11.5,26.5],[20,14, 24,16, 26,19],[21.5,13, 25.5,14.5, 27.5,17.5]]
-        ];
-        const legs = poses[p < 5 ? p : 0];
-        const hoofCol = stg >= 3 ? 'V' : (stg >= 2 ? 'B' : 'H');
-        const maneCol = stg >= 3 ? 'V' : 'M';
-        const drawLeg = (seg, back) => {
-            const [x0, y0, x1, y1, x2, y2] = seg;
-            const a = back ? -1 : 0;
-            L(x0, y0 + dy, x1, y1 + dy, 2.3, 1.5, a);
-            L(x1, y1 + dy, x2, y2 + dy, 1.5, 1.25, a);
-            E(x2 + 0.3, y2 + dy, 1.6, 1.1, a, hoofCol);
-        };
-        // Pernas traseiras (plano de fundo)
-        drawLeg(legs[0], true); drawLeg(legs[2], true);
-        // Cauda esvoaçante conectada à garupa
-        const ty = [0, -0.8, 0, 0.8, -1.2, 0][p];
-        L(8.5, 13.5 + dy, 4.2, 17.5 + dy + ty, 1.8, 2.3, 0, maneCol);
-        L(4.2, 17.5 + dy + ty, 2.5, 22 + dy + ty, 2.1, 1.0, -1, maneCol);
-        if (stg >= 3) L(7.5, 14 + dy, 3.5, 19 + dy + ty, 1.1, 0.8, 1, 'Y');
-        // Torso musculoso contínuo (garupa + barriga + peito largo)
-        E(11.2, 15.2 + dy, 4.4, 3.8, 0);
-        E(15.5, 15.2 + dy, 5.6, 4.0, 0);
-        E(19.8, 14.6 + dy, 4.2, 4.0, 1);
-        // Pescoço arqueado robusto + crina densa
-        const ny = rear ? -1.5 : 0;
-        L(19.5, 13.8 + dy, 24.0, 7.8 + dy + ny, 3.3, 2.3, 1);
-        L(18.0, 12.2 + dy, 23.0, 6.4 + dy + ny, 1.7, 1.4, 0, maneCol);
-        // Barda de armadura (Estágio II: Ferro; Estágio III: Véu Dourado)
-        if (stg >= 2) {
-            E(10.8, 15.0 + dy, 4.2, 3.2, 1, 'H');
-            E(20.4, 14.8 + dy, 3.6, 3.3, 1, 'H');
-            L(19.2, 12.5 + dy, 23.2, 7.8 + dy + ny, 1.4, 1.1, 1, 'B');
-            L(9.0, 16.5 + dy, 22.0, 16.5 + dy, 0.9, 0.9, 1, 'Y');
-        }
-        // Sela de guerra carmesim e estribo
-        E(15.2, 13.2 + dy, 3.6, 2.2, 1, 'S');
-        L(13.0, 12.6 + dy, 17.4, 12.6 + dy, 1.1, 1.1, 1, 'Y');
-        L(15.2, 14.0 + dy, 15.2, 17.5 + dy, 0.7, 0.7, 0, 'H');
-        // Cabeça equina esculpida + orelhas + chanfro
-        L(24.0, 7.8 + dy + ny, 28.4, 9.8 + dy + ny, 2.4, 1.5, 1);
-        T([[22.8, 6.8 + dy + ny], [24.0, 4.0 + dy + ny], [25.0, 6.8 + dy + ny]], 1);
-        if (stg >= 2) {
-            L(24.2, 6.8 + dy + ny, 28.6, 9.0 + dy + ny, 1.2, 0.9, 1, stg >= 3 ? 'Y' : 'B');
-            if (stg >= 3) T([[24.8, 6.2 + dy + ny], [26.8, 3.5 + dy + ny], [26.2, 7.0 + dy + ny]], 1, 'Y');
-        }
-        // Rédea dourada ligando o freio à sela
-        L(27.2, 10.2 + dy + ny, 17.5, 12.4 + dy, 0.65, 0.65, 1, 'Y');
-        // Olho expressivo e narina
-        P48(37, Math.round((7.4 + dy + ny) * 1.5), [stg >= 3 ? 'VW' : 'KW', 'KK']);
-        P48(42, Math.round((9.3 + dy + ny) * 1.5), ['K']);
-        // Pernas dianteiras (primeiro plano)
-        drawLeg(legs[1], false); drawLeg(legs[3], false);
-    },
-
-    // 2. CORVO DAS SOMBRAS (Ladino · Exclusivo · Estágios I, II Lâmina-Negra, III Espectral do Véu)
-    raven(E, L, R, T, F, p, P, P48, stg) {
-        const wy = [0, -3.5, 2.5, -1.5, -2.5, 0][p];
-        const dy = [0, -1, 1, 0, -1, 0][p];
-        const tipCol = stg >= 2 ? 'B' : 'L';
-        // Asa traseira (sombra)
-        L(15, 14 + dy, 10, 7 + dy + wy, 2.2, 1.4, -1, 'D');
-        L(10, 7 + dy + wy, 5, 9 + dy + wy * 1.2, 1.6, 0.9, -1, tipCol);
-        // Cauda em leque de corvo + fitas espectrais no Estágio III
-        L(11, 17 + dy, 4.5, 20.5 + dy, 2.2, 1.4, 0, 'D');
-        L(11, 16 + dy, 4.0, 18.0 + dy, 1.8, 1.1, 0);
-        if (stg >= 3) {
-            L(9, 18 + dy, 2.5, 23 + dy - wy * 0.4, 1.0, 0.6, 1, 'V');
-            L(9, 15.5 + dy, 2.5, 14 + dy + wy * 0.4, 1.0, 0.6, 1, 'V');
-        }
-        // Corpo aerodinâmico + peito emplumado
-        E(15.2, 16.0 + dy, 5.2, 3.6, 0);
-        E(18.8, 15.2 + dy, 3.6, 3.3, 1, 'L');
-        if (stg >= 2) L(16.5, 13.0 + dy, 19.5, 16.5 + dy, 0.9, 0.9, 1, 'Y');
-        // Garras douradas (avançam em rasante na pose 4)
-        const cx = p === 4 ? 22.5 : 17.5, cy = p === 4 ? 19.5 : 20.5;
-        L(16.5, 18.5 + dy, cx, cy + dy, 1.1, 0.8, 1, 'Y');
-        L(18.0, 18.5 + dy, cx + 1.8, cy + dy, 1.1, 0.8, 1, 'Y');
-        // Cabeça e bico curvo afiado de corvo
-        E(21.2, 12.0 + dy, 3.1, 2.7, 1);
-        T([[20.5, 10.0 + dy], [17.2, 8.8 + dy], [19.5, 12.0 + dy]], 1, stg >= 3 ? 'V' : 'L');
-        T([[23.2, 10.6 + dy], [29.2, 12.0 + dy], [23.2, 13.5 + dy]], 1, stg >= 2 ? 'B' : 'H');
-        if (stg >= 3) {
-            // Coroa sombria do Véu
-            T([[20.2, 9.2 + dy], [21.5, 6.2 + dy], [22.6, 9.2 + dy]], 1, 'Y');
-            E(21.5, 7.2 + dy, 1.1, 1.1, 1, 'V');
-        }
-        // Olho ametista brilhante
-        P48(33, Math.round((11.2 + dy) * 1.5), ['VW', 'VV']);
-        // Asa dianteira articulada com 3 penas primárias
-        L(16.0, 14.8 + dy, 11.5, 9.5 + dy + wy, 2.5, 1.8, 1);
-        L(11.5, 9.5 + dy + wy, 5.5, 11.0 + dy + wy * 1.25, 1.8, 1.0, 1, tipCol);
-        L(12.5, 11.5 + dy + wy * 0.8, 6.8, 14.0 + dy + wy, 1.5, 0.9, 1, tipCol);
-        L(14.0, 13.5 + dy + wy * 0.5, 8.8, 16.5 + dy + wy * 0.7, 1.4, 0.8, 0, stg >= 3 ? 'V' : 'L');
-    },
-
-    // 3. DRAGÃO ARCANO (Raro · Montável · Estágios I, II Escama Rúnica, III Grão-Dragão do Véu)
-    dragon(E, L, R, T, F, p, P, P48, stg) {
-        const wy = [0, -4, 3, -1.5, -3, 0][p];
-        const dy = [0, -1, 1, 0, -1, 0][p];
-        const wingCol = stg >= 3 ? 'V' : 'F';
-        // Asa traseira
-        L(15, 12 + dy, 9, 5 + dy + wy, 2.2, 1.4, -1);
-        T([[15, 13 + dy], [9, 5 + dy + wy], [5, 12 + dy + wy]], -1, wingCol);
-        // Cauda chicote com espinhos
-        const tw = [0, 1, 0, -1, 1.5, 0][p];
-        L(10.5, 17.5 + dy, 5.5, 20.5 + dy + tw, 2.4, 1.5, 0);
-        L(5.5, 20.5 + dy + tw, 2.0, 18.5 + dy - tw, 1.5, 0.9, 0);
-        T([[2.5, 17.2 + dy - tw], [0.5, 18.5 + dy - tw], [2.8, 20.0 + dy - tw]], 1, stg >= 3 ? 'V' : 'Y');
-        // Pernas traseiras e dianteiras musculosas com garras
-        L(12, 18 + dy, 10.5, 23.5 + dy, 2.2, 1.4, 0);
-        L(10.5, 23.5 + dy, 12.5, 25 + dy, 1.3, 1.0, 1, 'H');
-        // Torso blindado + placas peitorais
-        E(15.5, 16.0 + dy, 5.6, 4.3, 0);
-        E(18.5, 15.8 + dy, 3.8, 3.8, 1, 'B');
-        if (stg >= 2) {
-            // Trono/sela rúnica e peitoral dourado
-            E(14.8, 13.0 + dy, 3.2, 1.8, 1, 'Y');
-            L(18.5, 13.0 + dy, 20.8, 18.5 + dy, 1.1, 1.1, 1, stg >= 3 ? 'V' : 'Y');
-        }
-        // Pescoço serpentino + cabeça chifruda
-        L(19.0, 14.0 + dy, 23.5, 8.8 + dy, 3.1, 2.3, 1);
-        E(25.2, 8.8 + dy, 3.4, 2.5, 1);
-        L(25.5, 9.2 + dy, 29.5, 9.8 + dy, 2.0, 1.4, 1);
-        // Chifres curvos
-        L(23.5, 7.2 + dy, 18.5, 4.5 + dy, 1.4, 0.7, 1, stg >= 2 ? 'Y' : 'H');
-        if (stg >= 3) L(24.0, 8.2 + dy, 19.0, 7.0 + dy, 1.2, 0.6, 1, 'V');
-        // Perna dianteira
-        L(19.0, 18.2 + dy, 20.5, 23.5 + dy, 2.0, 1.3, 1);
-        L(20.5, 23.5 + dy, 22.5, 25.0 + dy, 1.2, 0.9, 1, 'H');
-        // Olho dracônico e chama na mandíbula (pose 4)
-        P48(38, Math.round((7.8 + dy) * 1.5), ['YW', 'YY']);
-        if (p === 4) {
-            E(30.2, 10.2 + dy, 2.0, 1.4, 1, stg >= 3 ? 'V' : 'Y');
-        }
-        // Asa dianteira articulada com membrana sombreada
-        L(16.2, 13.5 + dy, 10.5, 5.5 + dy + wy, 2.0, 1.3, 1, stg >= 2 ? 'Y' : null);
-        T([[16.0, 14.5 + dy], [10.5, 5.5 + dy + wy], [5.5, 11.5 + dy + wy * 1.1]], 1, wingCol);
-        T([[16.0, 14.5 + dy], [5.5, 11.5 + dy + wy * 1.1], [9.5, 16.5 + dy + wy * 0.6]], 0, wingCol);
-    },
-
-    // 4. ÁGUIA SOMBRIA (Piso 7 · Estágios I, II Crista Dourada, III Tempestade do Véu)
-    eagle(E, L, R, T, F, p, P, P48, stg) {
-        const wy = [0, -4, 3, -1.5, -2.5, 0][p];
-        const dy = [0, -1, 1, 0, -1, 0][p];
-        const plumeCol = stg >= 3 ? 'G' : (stg >= 2 ? 'Y' : 'P');
-        // Asa traseira
-        L(15, 14 + dy, 9, 6 + dy + wy, 2.2, 1.4, -1);
-        L(9, 6 + dy + wy, 4.5, 8.5 + dy + wy * 1.2, 1.7, 0.9, -1, plumeCol);
-        // Cauda branca em leque
-        T([[12, 16 + dy], [4, 17 + dy], [5, 21 + dy]], 0, 'W');
-        // Torso + peito blindado (Estágio II+)
-        E(15.5, 16.0 + dy, 5.4, 3.8, 0);
-        E(19.0, 15.5 + dy, 3.5, 3.4, 1, stg >= 2 ? 'B' : 'P');
-        // Garras de rapina
-        const tx = p === 4 ? 23.5 : 17.5, ty = p === 4 ? 19.0 : 21.0;
-        L(16.5, 18.5 + dy, tx, ty + dy, 1.2, 0.9, 1, 'Y');
-        L(18.2, 18.5 + dy, tx + 1.8, ty + dy, 1.2, 0.9, 1, 'Y');
-        // Cabeça branca imponente + bico adunco dourado
-        E(21.8, 12.2 + dy, 3.3, 2.8, 1, 'W');
-        T([[24.2, 11.0 + dy], [29.5, 12.5 + dy], [24.2, 14.2 + dy]], 1, 'Y');
-        T([[28.2, 12.2 + dy], [29.5, 12.5 + dy], [28.0, 14.8 + dy]], 1, 'Y');
-        if (stg >= 2) {
-            T([[20.0, 10.2 + dy], [16.8, 8.0 + dy], [21.5, 11.2 + dy]], 1, stg >= 3 ? 'G' : 'Y');
-        }
-        P48(34, Math.round((11.4 + dy) * 1.5), [stg >= 3 ? 'GW' : 'KW', 'KK']);
-        // Asa dianteira larga com penas primárias
-        L(16.2, 14.5 + dy, 11.0, 8.0 + dy + wy, 2.6, 1.8, 1);
-        L(11.0, 8.0 + dy + wy, 4.8, 10.0 + dy + wy * 1.25, 1.9, 1.0, 1, plumeCol);
-        L(12.2, 10.8 + dy + wy * 0.8, 6.2, 13.5 + dy + wy, 1.6, 0.9, 1, plumeCol);
-        L(14.0, 13.2 + dy + wy * 0.5, 8.5, 16.2 + dy + wy * 0.6, 1.5, 0.9, 0);
-    },
-
-    // 5. LOBO GUARDIÃO (Elfa · Exclusivo · Montável · Estágios I, II Alfa de Ferro, III Espiritual do Véu)
-    wolf(E, L, R, T, F, p, P, P48, stg) {
-        const dy = [0, -1, 0, -1, -1.5, 0][p];
-        const poses = [
-            [[9.5,17, 7.5,21.5, 6.5,26], [12,17, 11,22, 11,26.5], [19.5,17, 21.5,21.5, 23.5,26], [21.5,17, 20,22, 19.5,26.5]],
-            [[9.5,17, 11,21.5, 12.5,26], [12,17, 9,21.5, 8,25.5], [19.5,17, 18,21.5, 17,26],     [21.5,17, 23.5,21, 24.5,25.5]],
-            [[9.5,17, 6.8,21, 5,25.5],   [12,17, 10,21.5, 9,26],  [19.5,17, 22.5,21, 25,25.5],   [21.5,17, 22,21.5, 22,26.5]],
-            [[9.5,17, 9.5,22, 10,26.5],  [12,17, 12,21.5, 13,26], [19.5,17, 19.5,22, 19,26.5],   [21.5,17, 21,22, 21,26.5]],
-            [[9.5,17.5, 8,22, 7.5,26.5], [12,17.5, 11,22, 11,26.5],[20.5,15.5, 24.5,17, 27,19.5],[22,15, 26,16, 28.5,18]]
-        ];
-        const legs = poses[p < 5 ? p : 0];
-        const pawCol = stg >= 3 ? 'V' : 'C';
-        const drawLeg = (seg, back) => {
-            const [x0, y0, x1, y1, x2, y2] = seg;
-            const a = back ? -1 : 0;
-            L(x0, y0 + dy, x1, y1 + dy, 2.3, 1.6, a);
-            L(x1, y1 + dy, x2, y2 + dy, 1.6, 1.3, a);
-            E(x2 + 0.4, y2 + dy, 1.7, 1.1, a, pawCol);
-        };
-        drawLeg(legs[0], true); drawLeg(legs[2], true);
-        // Cauda lupina felpuda
-        const ty = [0, -1, 0, 1, -1.5, 0][p];
-        L(8.5, 15.0 + dy, 3.5, 17.5 + dy + ty, 2.2, 2.6, 0);
-        L(3.5, 17.5 + dy + ty, 1.8, 19.0 + dy + ty, 2.0, 1.0, 1, stg >= 3 ? 'V' : 'C');
-        // Torso + juba espessa no peito/ombros
-        E(11.5, 16.2 + dy, 4.5, 3.7, 0);
-        E(16.0, 16.0 + dy, 5.5, 4.0, 0);
-        E(20.5, 15.0 + dy, 4.8, 4.5, 1);
-        E(21.2, 16.2 + dy, 3.8, 3.6, 1, 'C');
-        // Arreio élfico / ombreira de ferro (Estágio II+)
-        E(15.5, 14.0 + dy, 3.2, 1.9, 1, 'S');
-        if (stg >= 2) {
-            E(20.2, 14.2 + dy, 3.8, 3.2, 1, 'H');
-            T([[18.5, 12.2 + dy], [20.0, 9.8 + dy], [21.5, 12.5 + dy]], 1, stg >= 3 ? 'V' : 'Y');
-            L(12.0, 15.8 + dy, 19.0, 15.8 + dy, 0.9, 0.9, 1, stg >= 3 ? 'V' : 'Y');
-        }
-        // Cabeça de lobo, orelhas pontudas e focinho
-        E(24.0, 11.8 + dy, 3.6, 3.1, 1);
-        L(25.0, 12.2 + dy, 29.2, 12.8 + dy, 2.2, 1.5, 1);
-        L(25.2, 13.2 + dy, 28.8, 13.6 + dy, 1.4, 1.1, 1, 'C');
-        T([[21.5, 9.8 + dy], [22.5, 6.2 + dy], [24.2, 9.8 + dy]], 1);
-        T([[23.5, 9.8 + dy], [25.0, 6.5 + dy], [26.0, 9.8 + dy]], 0);
-        if (stg >= 3) E(23.8, 8.2 + dy, 1.2, 1.2, 1, 'V');
-        P48(38, Math.round((10.8 + dy) * 1.5), [stg >= 3 ? 'VW' : 'YW', 'YY']);
-        P48(44, Math.round((12.0 + dy) * 1.5), ['K']);
-        if (p === 4) P48(41, Math.round((13.5 + dy) * 1.5), ['W.W']);
-        drawLeg(legs[1], false); drawLeg(legs[3], false);
-    },
-
-    // 6. CORUJA ARCANA (Mago · Exclusiva · Estágios I, II Runalar, III Oráculo do Véu)
-    owl(E, L, R, T, F, p, P, P48, stg) {
-        const wy = [0, -3.5, 2.5, -1, -2.5, 0][p];
-        const dy = [0, -1, 1, 0, -1, 0][p];
-        // Halo rúnico no Estágio III
-        if (stg >= 3) {
-            E(16.0, 13.0 + dy, 8.2, 8.2, 1, 'V');
-            E(16.0, 13.0 + dy, 6.6, 6.6, 0);
-        }
-        // Asa traseira
-        L(14, 14 + dy, 8.5, 8 + dy + wy, 2.6, 1.6, -1);
-        // Corpo rechonchudo de coruja + peito claro Mosqueado
-        E(16.0, 16.5 + dy, 5.2, 4.8, 0);
-        E(17.5, 17.0 + dy, 3.8, 3.8, 1, 'W');
-        if (stg >= 2) {
-            L(15.0, 14.5 + dy, 19.8, 14.5 + dy, 1.0, 1.0, 1, 'Y');
-            E(18.0, 15.2 + dy, 1.4, 1.4, 1, 'G');
-        }
-        // Garras
-        L(15.5, 20.5 + dy, 16.0, 23.0 + dy, 1.2, 0.9, 1, 'Y');
-        L(18.0, 20.5 + dy, 19.0, 23.0 + dy, 1.2, 0.9, 1, 'Y');
-        // Cabeça grande com disco facial e penachos (orelhas)
-        E(17.2, 10.5 + dy, 4.6, 3.8, 1);
-        E(18.4, 10.8 + dy, 3.4, 2.8, 1, 'W');
-        T([[13.5, 8.5 + dy], [11.5, 5.2 + dy], [15.5, 7.8 + dy]], 1, stg >= 2 ? 'Y' : 'P');
-        T([[18.5, 7.8 + dy], [21.5, 5.0 + dy], [20.5, 8.8 + dy]], 1, stg >= 2 ? 'Y' : 'P');
-        if (stg >= 2) E(17.5, 7.5 + dy, 1.3, 1.0, 1, stg >= 3 ? 'G' : 'Y');
-        // Olhos grandes luminosos (pisca na pose 5) e bico
-        if (p === 5) {
-            P48(26, Math.round((10.5 + dy) * 1.5), ['KK.KK']);
-        } else {
-            P48(25, Math.round((9.8 + dy) * 1.5), ['GG.GG', 'GW.GW', 'YY.YY']);
-        }
-        P48(28, Math.round((11.5 + dy) * 1.5), ['YY', '.Y']);
-        // Asa dianteira arredondada
-        L(14.8, 14.5 + dy, 8.5, 10.5 + dy + wy, 3.0, 2.0, 1, stg >= 3 ? 'V' : null);
-        L(8.5, 10.5 + dy + wy, 5.5, 14.0 + dy + wy * 1.1, 2.0, 1.1, 1, stg >= 2 ? 'P' : null);
-    },
-
-    // 7. ESPÍRITO CURADOR (Piso 6 · Estágios I, II Espírito do Altar, III Serafim de Luz Silente)
-    spirit(E, L, R, T, F, p, P, P48, stg) {
-        const wy = Math.sin(p * 1.5) * 1.5;
-        const dy = [0, -1, 0, 1, -1.5, 0][p];
-        // Asas de luz seráficas (maiores no Estágio II e 4 asas no Estágio III)
-        if (stg >= 2) {
-            L(14, 13 + dy, 7, 7 + dy + wy, 2.2, 1.2, 1, 'C');
-            L(18, 13 + dy, 25, 7 + dy + wy, 2.2, 1.2, 1, 'C');
-        }
-        if (stg >= 3) {
-            L(14, 16 + dy, 6, 18 + dy - wy, 1.8, 1.0, 1, 'Y');
-            L(18, 16 + dy, 26, 18 + dy - wy, 1.8, 1.0, 1, 'Y');
-        }
-        // Cauda etérea ondulante
-        const tx = [0, 1.2, 0, -1.2, 0, 0][p];
-        L(16, 17 + dy, 15 + tx, 23 + dy, 3.6, 1.8, 0);
-        L(15 + tx, 23 + dy, 13 - tx, 26.5 + dy, 1.8, 0.8, 1, 'C');
-        // Manto e núcleo luminoso
-        E(16.0, 14.0 + dy, 4.8, 5.2, 0);
-        E(16.0, 13.0 + dy, 3.6, 3.8, 1, 'G');
-        L(13.0, 15.5 + dy, 19.0, 15.5 + dy, 1.0, 1.0, 1, stg >= 2 ? 'Y' : 'T');
-        // Halo sagrado acima da cabeça
-        E(16.0, 6.2 + dy, stg >= 3 ? 3.8 : 2.8, 1.1, 1, stg >= 2 ? 'Y' : 'C');
-        // Olhos serenos
-        P48(22, Math.round((12.2 + dy) * 1.5), ['TK..KT', 'TK..KT']);
-    },
-
-    // 8. FARO, O CÃO DE CAÇA (Piso 2 · Estágios I, II Vigia Real, III Guardião de Eiran)
-    faro(E, L, R, T, F, p, P, P48, stg) {
-        const dy = [0, -1, 0, -1, -1, 0][p];
-        const poses = [
-            [[10,17.5, 8.5,22, 8,26], [12.5,17.5, 12,22, 12,26.5], [19,17.5, 21,22, 22.5,26], [21,17.5, 19.5,22, 19,26.5]],
-            [[10,17.5, 11,22, 12,26], [12.5,17.5, 9.5,22, 9,25.5], [19,17.5, 18,22, 17.5,26], [21,17.5, 23,21.5, 24,25.5]],
-            [[10,17.5, 7.5,21.5, 6.5,25.5],[12.5,17.5, 10.5,22, 10,26],[19,17.5, 22,21.5, 24,25.5],[21,17.5, 21.5,22, 21.5,26.5]],
-            [[10,17.5, 10,22, 10,26.5],[12.5,17.5, 12.5,22, 13,26],[19,17.5, 19.5,22, 19,26.5],[21,17.5, 21,22, 21,26.5]],
-            [[10,18, 8.5,22.5, 8,26.5],[12.5,18, 11.5,22.5, 11.5,26.5],[20,16, 23.5,17.5, 26,19.5],[21.5,15.5, 25,16.5, 27.5,18.5]]
-        ];
-        const legs = poses[p < 5 ? p : 0];
-        const drawLeg = (seg, back) => {
-            const [x0, y0, x1, y1, x2, y2] = seg;
-            const a = back ? -1 : 0;
-            L(x0, y0 + dy, x1, y1 + dy, 2.1, 1.5, a);
-            L(x1, y1 + dy, x2, y2 + dy, 1.5, 1.25, a);
-            E(x2 + 0.3, y2 + dy, 1.5, 1.0, a, 'C');
-        };
-        drawLeg(legs[0], true); drawLeg(legs[2], true);
-        // Cauda abanando alegremente
-        const tw = [0, -1.5, 0, 1.5, -2, 0][p];
-        L(9.0, 15.0 + dy, 4.8, 11.5 + dy + tw, 1.7, 1.1, 0, stg >= 3 ? 'Y' : 'L');
-        // Torso de sabujo + mancha dorsal e barriga creme
-        E(15.5, 16.5 + dy, 6.2, 3.9, 0);
-        E(16.2, 17.6 + dy, 4.8, 2.2, 1, 'C');
-        E(14.5, 15.0 + dy, 3.8, 2.2, 0, 'L');
-        if (stg >= 2) {
-            // Colete real de vigia
-            E(15.5, 15.5 + dy, 4.5, 2.8, 1, stg >= 3 ? 'S' : 'H');
-            L(11.5, 15.5 + dy, 19.5, 15.5 + dy, 0.9, 0.9, 1, 'Y');
-        }
-        // Coleira dourada + medalhão
-        L(20.0, 13.0 + dy, 22.2, 16.2 + dy, 1.1, 1.1, 1, 'Y');
-        E(22.2, 16.8 + dy, 1.2, 1.2, 1, 'Y');
-        // Cabeça de cão de caça, focinho farejador e orelhas caídas longas
-        E(23.5, 12.2 + dy, 3.5, 3.0, 1);
-        L(24.5, 12.5 + dy, 28.8, 13.0 + dy, 2.2, 1.6, 1);
-        L(24.5, 13.5 + dy, 28.5, 13.8 + dy, 1.4, 1.1, 1, 'C');
-        // Orelha caída característica de sabujo
-        L(22.2, 11.5 + dy, 21.5, 16.5 + dy, 1.8, 2.1, 0, 'L');
-        if (stg >= 3) T([[22.5, 9.5 + dy], [24.0, 7.0 + dy], [25.2, 9.8 + dy]], 1, 'Y');
-        P48(37, Math.round((11.2 + dy) * 1.5), ['KW', 'KK']);
-        P48(43, Math.round((12.0 + dy) * 1.5), ['KK', 'K.']);
-        drawLeg(legs[1], false); drawLeg(legs[3], false);
-    },
-
-    // 9. BAÚ FAMINTO FILHOTE (Piso 1 · Estágios I, II Arca Real Blindada, III Cofre Voraz do Véu)
-    mimic(E, L, R, T, F, p, P, P48, stg) {
-        const open = p === 4;
-        const hop = [0, -2, 0, -1, -2.5, 0][p];
-        const l0 = [0, -1.5, 0, 1.5, -1, 0][p], l1 = -l0;
-        const bandCol = stg >= 3 ? 'V' : (stg >= 2 ? 'Y' : 'H');
-        // Pezinhos com garras (conectados à base do cofre!)
-        L(11, 21 + hop, 10 + l0, 25.5 + hop, 2.0, 1.5, 0);
-        E(10.5 + l0, 25.8 + hop, 1.8, 1.1, 1, 'Y');
-        L(20, 21 + hop, 21 + l1, 25.5 + hop, 2.0, 1.5, 1);
-        E(21.5 + l1, 25.8 + hop, 1.8, 1.1, 1, 'Y');
-        // Caixa inferior do cofre com cintas metálicas e cantoneiras de ouro
-        R(8, 14 + hop, 16, 8, 0);
-        R(8, 14 + hop, 2.2, 8, 1, bandCol);
-        R(21.8, 14 + hop, 2.2, 8, 1, bandCol);
-        R(8, 20 + hop, 16, 2, 0, 'Y');
-        // Fresta da boca (olhos brilhantes espiando, ou bocarra aberta com dentes, língua e moedas!)
-        const lidY = open ? 6.5 + hop : 9.0 + hop;
-        R(8.5, 12.2 + hop, 15, 2.5, -1, 'K');
-        if (open) {
-            P48(14, Math.round((11.5 + hop) * 1.5), ['LL.LL.LL.LL.LL', '.L..L..L..L..L']);
-            L(17, 14.5 + hop, 25.5, 12.5 + hop, 2.0, 1.3, 1, 'T');
-            E(21.5, 15.0 + hop, 1.5, 1.5, 1, 'Y');
-        } else {
-            P48(16, Math.round((12.4 + hop) * 1.5), ['LY..K....LY..K', 'LL.......LL...']);
-            if (stg >= 2) P48(15, Math.round((14.0 + hop) * 1.5), ['L.L.L.L.L']);
-        }
-        // Tampa abaulada 3D do cofre
-        E(16.0, lidY + 2.2, 8.2, 3.4, 1);
-        R(8, lidY + 1.5, 16, 3.0, 1);
-        R(8, lidY + 1.0, 2.2, 3.5, 1, bandCol);
-        R(21.8, lidY + 1.0, 2.2, 3.5, 1, bandCol);
-        // Fechadura real / joia do Véu
-        E(16.5, 14.2 + hop, 2.0, 2.2, 1, 'Y');
-        if (stg >= 2) E(16.5, 14.2 + hop, 1.1, 1.2, 1, stg >= 3 ? 'V' : 'T');
-        if (stg >= 3) {
-            // Coroa no topo da tampa
-            T([[13, lidY - 0.5], [14.5, lidY - 3.2], [16, lidY - 0.5]], 1, 'Y');
-            T([[15, lidY - 0.5], [16.5, lidY - 3.8], [18, lidY - 0.5]], 1, 'Y');
-            T([[17, lidY - 0.5], [18.5, lidY - 3.2], [20, lidY - 0.5]], 1, 'Y');
-        }
-    },
-
-    // 10. SALAMANDRA DE BRASA (Piso 5 · Estágios I, II Forja, III Draco de Magma de Dorian)
-    salamander(E, L, R, T, F, p, P, P48, stg) {
-        const dy = [0, -0.8, 0, 0.8, -1, 0][p];
-        const l0 = [0, -1.5, 0, 1.5, -1, 0][p], l1 = -l0;
-        // Pernas traseiras e dianteiras de réptil (conectadas ao tronco!)
-        L(11, 18.5 + dy, 9.5 + l0, 23.5 + dy, 2.0, 1.4, -1);
-        L(19.5, 18.5 + dy, 21 + l1, 23.5 + dy, 2.0, 1.4, -1);
-        // Cauda enrolada com chama viva na ponta
-        const tw = [0, 1, 0, -1, 1.2, 0][p];
-        L(9.5, 17.5 + dy, 4.5, 16.5 + dy + tw, 2.5, 1.5, 0);
-        E(3.2, 15.0 + dy + tw, stg >= 3 ? 2.4 : 1.8, stg >= 3 ? 2.8 : 2.0, 1, 'F');
-        E(3.2, 15.2 + dy + tw, 1.1, 1.2, 1, 'Y');
-        // Tronco e barriga clara
-        E(15.5, 17.2 + dy, 5.8, 3.6, 0);
-        E(16.0, 18.5 + dy, 4.6, 2.0, 1, 'B');
-        // Placas da forja de Dorian (Estágio II+) e crista de chamas
-        if (stg >= 2) {
-            E(15.2, 15.5 + dy, 4.6, 2.2, 1, 'H');
-            L(11.5, 15.5 + dy, 19.0, 15.5 + dy, 0.8, 0.8, 1, 'Y');
-        }
-        for (const sx of [11.5, 14.5, 17.5]) {
-            T([[sx - 1.2, 14.2 + dy], [sx, (stg >= 3 ? 10.2 : 11.5) + dy], [sx + 1.2, 14.2 + dy]], 1, stg >= 3 ? 'F' : 'Y');
-        }
-        // Cabeça larga de draco-salamandra
-        E(22.2, 15.2 + dy, 4.0, 3.1, 1);
-        L(23.0, 15.6 + dy, 27.2, 16.0 + dy, 2.3, 1.6, 1);
-        T([[20.0, 13.0 + dy], [17.5, 10.2 + dy], [21.8, 13.2 + dy]], 1, 'F');
-        if (stg >= 3) L(21.5, 12.5 + dy, 17.0, 8.5 + dy, 1.3, 0.7, 1, 'Y');
-        P48(35, Math.round((13.8 + dy) * 1.5), ['YW', 'YY']);
-        if (p === 4) E(28.8, 16.0 + dy, 1.8, 1.3, 1, 'Y');
-        // Pernas do primeiro plano
-        L(11.5, 19.0 + dy, 10.5 + l1, 24.5 + dy, 2.1, 1.5, 1);
-        L(20.0, 19.0 + dy, 21.5 + l0, 24.5 + dy, 2.1, 1.5, 1);
-    }
-};
-
-// Renderizador 48x48 Volumétrico com sombreamento 4-tons em TODOS os materiais e cápsulas L()
-function _petMakeSprite(type, pose, face, flash, stage) {
-    if (!PET_ART_DEF[type]) type = 'horse';
-    const stg = Math.max(1, Math.min(3, stage || ((typeof PetSystem !== 'undefined' && PetSystem.getStage) ? PetSystem.getStage(type) : 1)));
-    const N = 48, S = 1.5;
-    const base = _petRGB(PET_TYPES[type] ? PET_TYPES[type].color : '#b87333');
-    const darkShadow = [14, 10, 28], midShadow = [28, 18, 52], warmLight = [255, 244, 214], white = [255, 255, 255];
-    const makeRamp = (rgb) => [
-        null,
-        _petMix(rgb, darkShadow, 0.58),
-        _petMix(rgb, midShadow, 0.30),
-        rgb,
-        _petMix(rgb, warmLight, 0.34)
-    ];
-    const baseTones = makeRamp(base);
-    const outline = [18, 14, 26]; // contorno dark-fantasy consistente (#120e1a)
-    const accRamps = {
-        K: [null, [18, 14, 26], [18, 14, 26], [22, 18, 30], [45, 40, 60]],
-        W: [null, [200, 205, 225], [225, 230, 245], white, white]
-    };
-    const accSrc = PET_ART_ACC[type] || {};
-    for (const k in accSrc) accRamps[k] = makeRamp(_petRGB(accSrc[k]));
-
-    const tone = new Uint8Array(N * N), det = new Array(N * N).fill(null);
-    const put = (x, y, t, k) => {
-        if (x < 0 || y < 0 || x >= N || y >= N) return;
-        const i = y * N + x;
-        tone[i] = Math.max(1, Math.min(4, t || 3));
-        det[i] = k || null;
-    };
-    const shade = (nx, ny, adj) => {
-        const t = -0.52 * nx - 0.72 * ny + (adj || 0) * 0.42;
-        return t > 0.52 ? 4 : t > -0.08 ? 3 : t > -0.68 ? 2 : 1;
-    };
-    const E = (cx, cy, rx, ry, adj, k) => {
-        const sx = cx * S, sy = cy * S, srx = Math.max(0.8, rx * S), sry = Math.max(0.8, ry * S);
-        for (let y = Math.floor(sy - sry) - 1; y <= Math.ceil(sy + sry) + 1; y++)
-            for (let x = Math.floor(sx - srx) - 1; x <= Math.ceil(sx + srx) + 1; x++) {
-                const nx = (x + 0.5 - sx) / srx, ny = (y + 0.5 - sy) / sry;
-                if (nx * nx + ny * ny <= 1) put(x, y, shade(nx, ny, adj), k);
-            }
-    };
-    // Cápsula anatômica contínua com sombreamento cilíndrico 3D (conecta articulações sem falhas!)
-    const L = (x0, y0, x1, y1, r0, r1, adj, k) => {
-        const sx0 = x0 * S, sy0 = y0 * S, sx1 = x1 * S, sy1 = y1 * S;
-        const sr0 = Math.max(0.75, r0 * S), sr1 = Math.max(0.75, (r1 != null ? r1 : r0) * S);
-        const dx = sx1 - sx0, dy = sy1 - sy0;
-        const len = Math.hypot(dx, dy);
-        const steps = Math.max(1, Math.ceil(len * 2.5));
-        for (let s = 0; s <= steps; s++) {
-            const u = s / steps;
-            const cx = sx0 + dx * u, cy = sy0 + dy * u, r = sr0 + (sr1 - sr0) * u;
-            for (let y = Math.floor(cy - r); y <= Math.ceil(cy + r); y++)
-                for (let x = Math.floor(cx - r); x <= Math.ceil(cx + r); x++) {
-                    const nx = (x + 0.5 - cx) / r, ny = (y + 0.5 - cy) / r;
-                    if (nx * nx + ny * ny <= 1) put(x, y, shade(nx, ny, adj), k);
-                }
-        }
-    };
-    const R = (x0, y0, w, h, adj, k) => {
-        const sx = Math.round(x0 * S), sy = Math.round(y0 * S);
-        const sw = Math.max(1, Math.round(w * S)), sh = Math.max(1, Math.round(h * S));
-        for (let y = sy; y < sy + sh; y++)
-            for (let x = sx; x < sx + sw; x++) {
-                const nx = (x + 0.5 - (sx + sw / 2)) / Math.max(0.5, sw / 2);
-                const ny = (y + 0.5 - (sy + sh / 2)) / Math.max(0.5, sh / 2);
-                put(x, y, shade(nx, ny, adj), k);
-            }
-    };
-    const T = (pts, adj, k) => {
-        const sp = pts.map(q => [q[0] * S, q[1] * S]);
-        const xs = sp.map(q => q[0]), ys = sp.map(q => q[1]);
-        const x0 = Math.floor(Math.min(...xs)), x1 = Math.ceil(Math.max(...xs));
-        const y0 = Math.floor(Math.min(...ys)), y1 = Math.ceil(Math.max(...ys));
-        const cx = (xs[0] + xs[1] + xs[2]) / 3, cy = (ys[0] + ys[1] + ys[2]) / 3;
-        const hw = Math.max((x1 - x0) / 2, 0.5), hh = Math.max((y1 - y0) / 2, 0.5);
-        const A = sp[0], B = sp[1], C = sp[2];
-        const sg = (px, py, a, b) => (px - b[0]) * (a[1] - b[1]) - (a[0] - b[0]) * (py - b[1]);
-        for (let y = y0; y <= y1; y++)
-            for (let x = x0; x <= x1; x++) {
-                const px = x + 0.5, py = y + 0.5;
-                const d1 = sg(px, py, A, B), d2 = sg(px, py, B, C), d3 = sg(px, py, C, A);
-                const neg = d1 < 0 || d2 < 0 || d3 < 0, pos = d1 > 0 || d2 > 0 || d3 > 0;
-                if (!(neg && pos)) put(x, y, shade((px - cx) / hw, (py - cy) / hh, adj), k);
-            }
-    };
-    const F = (x, y, k) => put(Math.round(x * S), Math.round(y * S), 3, k);
-    const P = (x0, y0, rows) => {
-        for (let ry = 0; ry < rows.length; ry++) {
-            const row = rows[ry];
-            const gy0 = Math.floor((y0 + ry) * S), gy1 = Math.floor((y0 + ry + 1) * S);
-            for (let rx = 0; rx < row.length; rx++) {
-                const ch = row[rx];
-                if (ch === '.') continue;
-                const gx0 = Math.floor((x0 + rx) * S), gx1 = Math.floor((x0 + rx + 1) * S);
-                const t = (ch >= '1' && ch <= '4') ? +ch : 3, k = (ch >= '1' && ch <= '4') ? null : ch;
-                for (let y = gy0; y < gy1; y++) for (let x = gx0; x < gx1; x++) put(x, y, t, k);
-            }
-        }
-    };
-    const P48 = (x0, y0, rows) => {
-        for (let ry = 0; ry < rows.length; ry++) {
-            const row = rows[ry];
-            for (let rx = 0; rx < row.length; rx++) {
-                const ch = row[rx];
-                if (ch === '.') continue;
-                if (ch === ' ') {
-                    const xx = x0 + rx, yy = y0 + ry;
-                    if (xx >= 0 && yy >= 0 && xx < N && yy < N) { tone[yy * N + xx] = 0; det[yy * N + xx] = null; }
-                } else if (ch >= '1' && ch <= '4') put(x0 + rx, y0 + ry, +ch, null);
-                else put(x0 + rx, y0 + ry, 4, ch);
-            }
-        }
-    };
-    PET_ART_DEF[type](E, L, R, T, F, pose || 0, P, P48, stg);
-    // Insígnias de silhueta de evolução: Estágio II (Crista/Estandarte de Guerra) e Estágio III (Coroa & Chamas do Véu)
-    if (stg >= 2) {
-        const dyE = [0, -1, 0, -1, -1, 0][pose || 0] || 0;
-        // Estágio II: Crista/Flâmula dorsal de aço e ouro visível fora da silhueta base
-        L(12.5, 11.5 + dyE, 8.5, 6.2 + dyE, 1.3, 0.8, 1, 'Y');
-        T([[8.5, 5.8 + dyE], [4.5, 6.8 + dyE], [8.8, 8.2 + dyE]], 1, stg >= 3 ? 'V' : 'Y');
-    }
-    if (stg >= 3) {
-        const dyE = [0, -1, 0, -1, -1, 0][pose || 0] || 0;
-        // Estágio III: Asas/Chamas ascendentes do Véu e coroa estelar
-        L(14.5, 11.0 + dyE, 7.0, 3.8 + dyE, 1.4, 0.7, 1, 'V');
-        L(13.5, 12.5 + dyE, 5.2, 8.5 + dyE, 1.3, 0.7, 1, 'Y');
-        E(17.5, 3.8 + dyE, 1.6, 1.0, 1, 'Y');
-    }
-
-    const cv = document.createElement('canvas'); cv.width = N; cv.height = N;
-    const g = cv.getContext('2d');
-    const img = g.createImageData(N, N), px = img.data;
-    const filled = (x, y) => x >= 0 && y >= 0 && x < N && y < N && tone[y * N + x] !== 0;
-    for (let y = 0; y < N; y++)
-        for (let x = 0; x < N; x++) {
-            const sx = face > 0 ? x : N - 1 - x;
-            const i = y * N + sx;
-            let c = null;
-            if (tone[i]) {
-                if (flash) c = white;
-                else {
-                    const ramp = (det[i] && accRamps[det[i]]) ? accRamps[det[i]] : baseTones;
-                    c = ramp[tone[i]] || baseTones[3];
-                }
-            } else if (filled(sx - 1, y) || filled(sx + 1, y) || filled(sx, y - 1) || filled(sx, y + 1)) {
-                c = outline;
-            }
-            if (c) { const o = (y * N + x) * 4; px[o] = c[0]; px[o + 1] = c[1]; px[o + 2] = c[2]; px[o + 3] = 255; }
-        }
-    g.putImageData(img, 0, 0);
-    return cv;
-}
-
 class Pet {
     constructor(type, x, y, silent) {
         const data = PET_TYPES[type] || PET_TYPES.horse;
@@ -36766,7 +36202,6 @@ class Pet {
         }
     }
 
-    // ---- Montar / Desmontar Real (Corcel, Lobo, Dragão) ----
     mount() {
         if (this.mounted || !this.alive || !this.data || !this.data.mountable || !player) return false;
         this.mounted = true;
@@ -36813,32 +36248,28 @@ class Pet {
 
     getRiderOffsetY() {
         if (!this.mounted) return 0;
-        const base = this.type === 'dragon' ? -14 : (this.type === 'wolf' ? -9 : -12);
+        const base = this.type === 'dragon' ? -15 : (this.type === 'wolf' ? -11 : -14);
         return base + Math.round(this._mountBob || 0);
     }
 
-    // Desenha o arção frontal da sela, estribo e rédea sobre a cintura do herói montado
     drawSaddleOverlay(ctx, sx, riderY) {
         if (!this.mounted || !this.alive) return;
         const f = this._face || 1;
         const stg = this._stage();
         ctx.save();
-        // Arção frontal e rédea conectando a mão do herói ao pescoço da montaria
         ctx.fillStyle = stg >= 3 ? '#c084fc' : '#9e2e24';
-        ctx.fillRect(Math.round(sx + f * 3 - 2), Math.round(riderY + 9), 5, 4);
+        ctx.fillRect(Math.round(sx + f * 3 - 2), Math.round(riderY + 10), 5, 4);
         ctx.fillStyle = '#f0c448';
-        ctx.fillRect(Math.round(sx + f * 4 - 1), Math.round(riderY + 8), 3, 2);
-        // Bota no estribo
+        ctx.fillRect(Math.round(sx + f * 4 - 1), Math.round(riderY + 9), 3, 2);
         ctx.fillStyle = '#2a2018';
-        ctx.fillRect(Math.round(sx - 2), Math.round(riderY + 13), 4, 4);
+        ctx.fillRect(Math.round(sx - 2), Math.round(riderY + 14), 4, 4);
         ctx.fillStyle = '#8a9bb0';
-        ctx.fillRect(Math.round(sx - 2), Math.round(riderY + 16), 4, 2);
-        // Rédea
+        ctx.fillRect(Math.round(sx - 2), Math.round(riderY + 17), 4, 2);
         ctx.strokeStyle = stg >= 3 ? '#ffd86b' : '#d4a238';
         ctx.lineWidth = 1.5;
         ctx.beginPath();
-        ctx.moveTo(sx + f * 4, riderY + 6);
-        ctx.lineTo(sx + f * 15, riderY + 3);
+        ctx.moveTo(sx + f * 4, riderY + 7);
+        ctx.lineTo(sx + f * 17, riderY + 4);
         ctx.stroke();
         ctx.restore();
     }
@@ -36847,7 +36278,7 @@ class Pet {
         if (!this.mounted || !this.alive || !player) return;
         ctx.save();
         ctx.globalAlpha = 0.45 + Math.sin(gameTime * 0.1) * 0.15;
-        PixelFX.ring(ctx, player.x - cx, player.y - cy + 4, this.radius + 6, this.color, 2);
+        PixelFX.ring(ctx, player.x - cx, player.y - cy + 4, this.radius + 7, this.color, 2);
         ctx.restore();
     }
 
@@ -36885,12 +36316,11 @@ class Pet {
         const fl = Math.max(1, typeof dungeonLevel === 'number' ? dungeonLevel : 1);
         const floorMult = 1 + (fl - 1) * 0.16;
         const bondMult = 1 + this._bondLv() * 0.10;
-        const stgMult = 1 + (this._stage() - 1) * 0.22; // Estágio II: +22%, Estágio III: +44%
+        const stgMult = 1 + (this._stage() - 1) * 0.22;
         const campMult = (typeof PetSystem !== 'undefined' && PetSystem._hasCampFeed(this.type)) ? 1.12 : 1;
         return floorMult * bondMult * stgMult * campMult * this._synMult();
     }
 
-    // Atropelo / Investida enquanto montado (Corcel, Lobo, Dragão)
     _trampleAround(m, mult) {
         if (!this.mounted || !player) return false;
         const r = (this.radius + 26) * (mult > 1 ? 1.25 : 1);
@@ -36916,7 +36346,7 @@ class Pet {
             spawnParticles(e.x, e.y, this.color, 6, 3);
             hit = true;
         }
-        if (hit) this._atkT = 12;
+        if (hit) this._atkT = 14;
         return hit;
     }
 
@@ -37245,7 +36675,6 @@ class Pet {
         if (this._fxBeam && --this._fxBeam.t <= 0) this._fxBeam = null;
         if (this._fxRing && --this._fxRing.t <= 0) this._fxRing = null;
 
-        // Comportamento Montado: sincroniza com o herói, faz atropelo em movimento e solta poeira/faíscas
         if (this.mounted) {
             this.x = player.x;
             this.y = player.y;
@@ -37361,14 +36790,16 @@ class Pet {
 
     draw(ctx, cx, cy) {
         if (!this.alive) return;
-        const mntOffsetY = this.mounted ? 6 : 0;
+        const mntOffsetY = this.mounted ? 8 : 0;
         const sx = (this.mounted && player ? player.x : this.x) - cx;
         const sy = (this.mounted && player ? player.y : this.y) - cy + mntOffsetY;
         const rmV = !!(window.GameSettings && GameSettings.reducedMotion);
         const celebHop = (!this.mounted && (this._celebT > 0 || this._pettedT > 0) && !rmV) ? -Math.abs(Math.sin(this.timer * 0.35)) * 7 : 0;
-        const bob = (this.mounted ? (this._mountBob || 0) : (rmV ? 0 : Math.sin(this.timer * 0.08) * 2)) + celebHop;
+        const bob = (this.mounted ? (this._mountBob || 0) : (rmV ? 0 : Math.sin(this.timer * 0.08) * 1.6)) + celebHop;
         const flyAlt = this.mounted ? (this.type === 'dragon' ? 4 : 0) : (PET_FLY_ALT[this.type] || 0);
-        const ptop = sy + bob - flyAlt - 24;
+        const mScale = this.mounted ? (this.type === 'wolf' ? 1.18 : 1.24) : 1.0;
+        const drawSz = Math.round(48 * mScale);
+        const ptop = sy + bob - flyAlt - Math.round(drawSz * 0.5);
 
         if (this._fxBeam) {
             ctx.save();
@@ -37389,6 +36820,7 @@ class Pet {
             ctx.restore();
         }
 
+        // Seleção fluida de 8 quadros: 0..3 movimento, 4..5 idle vivo (respiração/piscada), 6..7 ataque
         const dpx = this._dpx != null ? this._dpx : this.x, dpy = this._dpy != null ? this._dpy : this.y;
         const mvx = this.mounted && player ? (player._pvx || 0) : (this.x - dpx);
         const mvy = this.mounted && player ? (player._pvy || 0) : (this.y - dpy);
@@ -37396,24 +36828,25 @@ class Pet {
         if (mvx > 0.25) this._face = 1; else if (mvx < -0.25) this._face = -1;
         const moving = mvx * mvx + mvy * mvy > 0.09;
         let pose;
-        if (this._atkT > 0 && !this.mounted) pose = 4;
-        else if (!moving && (this.type === 'owl' || this.type === 'wolf' || this.type === 'faro' || this.type === 'raven') && this.timer % 240 >= 228) pose = 5;
-        else if (moving || flyAlt > 0) pose = Math.floor(this.timer / (moving ? 4 : 6)) % 4;
-        else pose = 0;
+        if (this._atkT > 0 && !this.mounted) {
+            pose = this._atkT > 7 ? 6 : 7;
+        } else if (moving || flyAlt > 0) {
+            pose = Math.floor(this.timer / (moving ? 5 : 7)) & 3;
+        } else {
+            pose = (this.timer % 180 >= 166) ? 5 : ((Math.floor(this.timer / 30) & 1) ? 4 : 0);
+        }
 
         const stg = this._stage();
         const flash = this._hitT > 0 ? 1 : 0;
-        const sIdx = _petCacheIdx(this.type, pose, this._face, flash, stg);
-        const spr = PET_SPR_CACHE[sIdx] || (PET_SPR_CACHE[sIdx] = _petMakeSprite(this.type, pose, this._face, flash, stg));
+        const spr = _petMakeSprite(this.type, pose, this._face, flash, stg);
 
-        // Aura de Evolução (Estágio II / III), Vínculo Nv. 3 ou Overdrive
         const bondLv = this._bondLv();
         const od = player && (player.overdriveTimer || 0) > 0;
         if ((stg >= 2 || bondLv >= 3 || od) && (window.GFX === undefined || GFX.glows !== false)) {
             ctx.save();
             const auraCol = od ? '#ffd86b' : (stg >= 3 ? '#c084fc' : (stg === 2 ? '#60a5fa' : '#8effc4'));
             ctx.globalAlpha = rmV ? 0.24 : 0.18 + Math.sin(this.timer * 0.12) * 0.09;
-            PixelFX.ring(ctx, sx, sy + bob - flyAlt, this.radius + (od ? 7 : 5), auraCol, stg >= 3 ? 2.5 : 2);
+            PixelFX.ring(ctx, sx, sy + bob - flyAlt, this.radius * mScale + (od ? 7 : 5), auraCol, stg >= 3 ? 2.5 : 2);
             ctx.restore();
         }
 
@@ -37426,8 +36859,8 @@ class Pet {
         const lunge = (this._atkT > 0 && !this.mounted) ? Math.sin((this._atkT / 14) * Math.PI) * 3 * this._face : 0;
         const smOld = ctx.imageSmoothingEnabled;
         ctx.imageSmoothingEnabled = false;
-        ctx.globalAlpha = this.type === 'spirit' ? 0.90 : 1;
-        ctx.drawImage(spr, Math.round(sx - 24 + lunge), Math.round(ptop), 48, 48);
+        ctx.globalAlpha = this.type === 'spirit' ? 0.92 : 1;
+        ctx.drawImage(spr, Math.round(sx - drawSz * 0.5 + lunge), Math.round(ptop), drawSz, drawSz);
         ctx.globalAlpha = 1;
         ctx.imageSmoothingEnabled = smOld;
 
@@ -48181,10 +47614,8 @@ window.GameBootstrap = {
             }
             this._initModeSpecific(cls);
             this._spawnInitialEntities(cls);
-            if (typeof PetSystem !== 'undefined') {
-                if (PetSystem.spawnClassSignature) PetSystem.spawnClassSignature(cls);
-                else if (PetSystem.spawnFavorite) PetSystem.spawnFavorite();
-            }
+            // Run nova começa sozinha (encontros aleatórios nas câmaras/Abismo), exceto se o jogador escolheu manualmente um favoritePet na coleção.
+            if (typeof PetSystem !== 'undefined' && PetSystem.spawnFavorite) PetSystem.spawnFavorite();
             if (!_storyRules() && typeof PetRescue !== 'undefined' && PetRescue.placeAbyss) PetRescue.placeAbyss();
             this._startUI();
             if (window.RunObjectiveSystem) RunObjectiveSystem.start();

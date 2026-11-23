@@ -3852,6 +3852,2096 @@ const NpcSprites = (() => {
     return { get, clear };
 })();
 
+
+// ============================================================
+// PET SPRITES 48x48 DARK-FANTASY ARTESANAL (10 Pets x 8 Poses x 3 Estágios)
+// Grades 24x24 pixel-a-pixel no SpriteCore (finish48 + shadeTones48 + outlineGrid + buildPalette)
+// Poses: 0..3 movimento (4 quadros), 4..5 idle vivo (respiração/piscada), 6..7 ataque/habilidade
+// ============================================================
+const PetSprites = (() => {
+    const _cache = new Map();
+
+    // Monta grade 24x24 combinando topo (16 linhas) + base/pernas (8 linhas) com deslocamento dy opcional
+    function composeQuad(top16, legs8, dy, tailWag) {
+        const out = Array.from({ length: 24 }, () => '........................');
+        for (let y = 0; y < 16; y++) {
+            const ty = y + (dy || 0);
+            if (ty >= 0 && ty < 24) {
+                let row = top16[y];
+                if (tailWag && y >= 9 && y <= 15) {
+                    // Oscilação viva da cauda nas colunas 0..5
+                    const chars = row.split('');
+                    if (tailWag > 0 && y > 9) {
+                        for (let x = 0; x <= 5; x++) chars[x] = top16[y - 1][x];
+                    } else if (tailWag < 0 && y < 15) {
+                        for (let x = 0; x <= 5; x++) chars[x] = top16[y + 1][x];
+                    }
+                    row = chars.join('');
+                }
+                out[ty] = row;
+            }
+        }
+        for (let y = 0; y < 8; y++) {
+            const ly = 16 + y;
+            const legRow = legs8[y];
+            const prev = out[ly].split('');
+            for (let x = 0; x < 24; x++) {
+                if (legRow[x] !== '.') prev[x] = legRow[x];
+            }
+            out[ly] = prev.join('');
+        }
+        return out;
+    }
+
+    const PET_ART = {
+        // 1. CORCEL DE GUERRA (horse) — Cavalo nobre dark-fantasy com pescoço arqueado, crina fluida, sela e galope de 4 tempos
+        // O contorno; S focinho/chanfro claro; M pelagem castanho-baio; D pelagem escura/sombra; L crina/cauda negra; A ouro/freio/estribo; W aço/ferradura; V manta carmesim; G chama do Véu
+        horse: {
+            pal: () => ['#120e1a', '#dfa878', '#a45a2a', '#633315', '#2e180c', '#f0c448', '#d0dae8', '#9e2e24', '#c084fc'],
+            top: [
+                '........................',
+                '.................MM.M...',
+                '...............LLMMMD...',
+                '..............LLMMSOMM..',
+                '.............LLMMMMMMM..',
+                '............LLLMMAMMMSS.',
+                '...........LLLMMMMMMASS.',
+                '..........LLLMMMMMAAA...',
+                '.........LLLMMMMMM......',
+                '....LLL..LLMMMMMMM......',
+                '...LLLLLDVVVAAAVMMMM....',
+                '..LLLLDDDVVVVVVVMMMMM...',
+                '..LLLDDDDVVAAAVVMMMMM...',
+                '.LLL.DDDDMMMMMAMMMMMM...',
+                '.LL..DDDDDDDDDADDDDDD...',
+                '.....DDDDDDDD..DDDDDD...'
+            ],
+            topAtk: [
+                '.................MM.M...',
+                '...............LLMMMD...',
+                '..............LLMMSOMM..',
+                '.............LLMMMMMMM..',
+                '............LLLMMAMMMSS.',
+                '...........LLLMMMMMMASS.',
+                '..........LLLMMMMMAAA...',
+                '.........LLLMMMMMM..WW..',
+                '........LLLMMMMMMM.DDW..',
+                '....LLL.LLVVAAAVMMDDD...',
+                '...LLLLDDVVVVVVVMMMM....',
+                '..LLLLDDDVVAAAVVMMMM....',
+                '..LLLDDDDMMMMMAMMMM.....',
+                '.LLL.DDDDDDDDDDDDDD.....',
+                '.LL..DDDDDDDDDDDD.......',
+                '.....DDDDDDDD...........'
+            ],
+            legs: [
+                // 0: Galope tempo 1 (extensão aberta)
+                [
+                    '.....DDDD........DDDD...',
+                    '....DDD.DD......DD..DD..',
+                    '...DDD...DD....DD....DD.',
+                    '...DD....DD....DD....DD.',
+                    '..DD......DD..DD......DD',
+                    '..WW......WW..WW......WW',
+                    '........................',
+                    '........................'
+                ],
+                // 1: Galope tempo 2 (recolhimento cruzado)
+                [
+                    '.....DDDD........DDDD...',
+                    '......DDDD......DDDD....',
+                    '.......DDDD....DDDD.....',
+                    '.......DD.DD..DD.DD.....',
+                    '......DD..DD..DD..DD....',
+                    '......WW..WW..WW..WW....',
+                    '........................',
+                    '........................'
+                ],
+                // 2: Galope tempo 3 (impulso cruzado oposto)
+                [
+                    '.....DDDD........DDDD...',
+                    '....DD..DD......DDD.DD..',
+                    '...DD....DD....DDD...DD.',
+                    '...DD....DD....DD.....DD',
+                    '....DD..DD....DD......DD',
+                    '....WW..WW....WW......WW',
+                    '........................',
+                    '........................'
+                ],
+                // 3: Galope tempo 4 (suspensão e apoio)
+                [
+                    '.....DDDD........DDDD...',
+                    '.....DD.DD......DD.DD...',
+                    '.....DD..DD....DD..DD...',
+                    '.....DD..DD....DD..DD...',
+                    '.....DD..DD....DD..DD...',
+                    '.....WW..WW....WW..WW...',
+                    '........................',
+                    '........................'
+                ],
+                // 4: Idle 1 (postura firme de guarda)
+                [
+                    '.....DDDD........DDDD...',
+                    '.....DD.DD......DD.DD...',
+                    '.....DD.DD......DD.DD...',
+                    '.....DD.DD......DD.DD...',
+                    '.....DD.DD......DD.DD...',
+                    '.....WW.WW......WW.WW...',
+                    '........................',
+                    '........................'
+                ],
+                // 5: Idle 2 (bate o casco dianteiro de leve)
+                [
+                    '.....DDDD........DDDD...',
+                    '.....DD.DD......DD.DD...',
+                    '.....DD.DD......DD..DD..',
+                    '.....DD.DD......DD...DD.',
+                    '.....DD.DD......DD...WW.',
+                    '.....WW.WW......WW......',
+                    '........................',
+                    '........................'
+                ],
+                // 6: Ataque 1 (empinada de guerra)
+                [
+                    '.....DDDD...............',
+                    '....DDD.DD..............',
+                    '....DD..DD..............',
+                    '...DD...DD..............',
+                    '...DD...DD..............',
+                    '...WW...WW..............',
+                    '........................',
+                    '........................'
+                ],
+                // 7: Ataque 2 (investida blindada à frente)
+                [
+                    '.....DDDD........DDDD...',
+                    '....DD..........DD..DD..',
+                    '...DD..........DD....DD.',
+                    '..DD..........DD......WW',
+                    '..WW..........WW........',
+                    '........................',
+                    '........................',
+                    '........................'
+                ]
+            ],
+            build(f) {
+                const isAtk = f === 6;
+                const dy = [0, -1, 0, -1, 0, 0, -1, 0][f];
+                const wag = [1, 0, -1, 0, 0, 1, -1, 1][f];
+                return composeQuad(isAtk ? this.topAtk : this.top, this.legs[f], dy, wag);
+            }
+        },
+
+        // 2. LOBO GUARDIÃO (wolf) — Lobo feroz com orelhas pontudas, focinho longo, juba espessa no peito e cauda felpuda
+        // O contorno; S pelagem clara peito/focinho; M pelagem cinza-floresta; D dorso escuro; L sombra profunda; A olho âmbar/ouro; W presas/garras; V arreio élfico; G brilho do Véu
+        wolf: {
+            pal: () => ['#120e1a', '#dce6d0', '#6d8072', '#425046', '#263029', '#ffd23a', '#eef4fa', '#9e2e24', '#8effc4'],
+            top: [
+                '........................',
+                '........................',
+                '................DD.D....',
+                '...............DDMMD....',
+                '..............DDMMGMD...',
+                '.............DDDMMMMDDDD',
+                '............DDSSMMMMMMMO',
+                '...........DDSSSSMMMMSSS',
+                '..........DDSSSSSSMMWW..',
+                '....DDD..DDDSSSSSSMMM...',
+                '..DDDDDDDDVVAAAVSSSSS...',
+                '.DDSSDDDDDVVVVVVSSSSS...',
+                '.DSS..DDDDMMMMMMSSSS....',
+                '..S...DDDDDDDDDDDDDD....',
+                '......DDDDDDDDDDDDD.....',
+                '......DDDDD....DDDD.....'
+            ],
+            topAtk: [
+                '........................',
+                '................DD.D....',
+                '...............DDMMD....',
+                '..............DDMMGMD...',
+                '.............DDDMMMMDDDD',
+                '............DDSSMMMMMMMO',
+                '...........DDSSSSMMMWWWW',
+                '..........DDSSSSSSMM..WW',
+                '....DDD..DDDSSSSSSVVV...',
+                '..DDDDDDDDVVAAAVSSSSS...',
+                '.DDSSDDDDDVVVVVVSSSSS...',
+                '.DSS..DDDDMMMMMMSSSS....',
+                '......DDDDDDDDDDDDDD....',
+                '......DDDDDDDDDDDDD.....',
+                '......DDDDD....DDDD.....',
+                '........................'
+            ],
+            legs: [
+                [
+                    '......DDDD......DDDD....',
+                    '.....DD..DD....DD..DD...',
+                    '....DD....DD..DD....DD..',
+                    '...DD.....DD..DD.....DD.',
+                    '...SS.....SS..SS.....SS.',
+                    '...WW.....WW..WW.....WW.',
+                    '........................',
+                    '........................'
+                ],
+                [
+                    '......DDDD......DDDD....',
+                    '.......DDDD....DDDD.....',
+                    '.......DD.DD..DD.DD.....',
+                    '......DD..DD..DD..DD....',
+                    '......SS..SS..SS..SS....',
+                    '......WW..WW..WW..WW....',
+                    '........................',
+                    '........................'
+                ],
+                [
+                    '......DDDD......DDDD....',
+                    '.....DD..DD....DDD.DD...',
+                    '....DD....DD..DDD...DD..',
+                    '....DD....DD..DD.....DD.',
+                    '....SS....SS..SS.....SS.',
+                    '....WW....WW..WW.....WW.',
+                    '........................',
+                    '........................'
+                ],
+                [
+                    '......DDDD......DDDD....',
+                    '......DD.DD....DD.DD....',
+                    '......DD.DD....DD.DD....',
+                    '......DD.DD....DD.DD....',
+                    '......SS.SS....SS.SS....',
+                    '......WW.WW....WW.WW....',
+                    '........................',
+                    '........................'
+                ],
+                [
+                    '......DDDD......DDDD....',
+                    '......DD.DD....DD.DD....',
+                    '......DD.DD....DD.DD....',
+                    '......DD.DD....DD.DD....',
+                    '......SS.SS....SS.SS....',
+                    '......WW.WW....WW.WW....',
+                    '........................',
+                    '........................'
+                ],
+                [
+                    '......DDDD......DDDD....',
+                    '......DD.DD....DD.DD....',
+                    '......DD.DD....DD..DD...',
+                    '......DD.DD....DD..SS...',
+                    '......SS.SS....SS..WW...',
+                    '......WW.WW....WW.......',
+                    '........................',
+                    '........................'
+                ],
+                [
+                    '......DDDD......DDDD....',
+                    '.....DD..DD......DD.DD..',
+                    '....DD...DD.......DD.DD.',
+                    '...SS....SS........SS.WW',
+                    '...WW....WW........WW...',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                [
+                    '......DDDD......DDDD....',
+                    '....DD..........DD..DD..',
+                    '...DD..........DD....SS.',
+                    '..SS...........SS....WW.',
+                    '..WW...........WW.......',
+                    '........................',
+                    '........................',
+                    '........................'
+                ]
+            ],
+            build(f) {
+                const isAtk = f >= 6;
+                const dy = [0, -1, 0, -1, 0, 0, -1, 0][f];
+                const wag = [1, 0, -1, 0, 0, 1, 1, -1][f];
+                return composeQuad(isAtk ? this.topAtk : this.top, this.legs[f], dy, wag);
+            }
+        },
+
+        // 3. CORVO DAS SOMBRAS (raven) — Corvo sombrio elegante com bico curvo, penas detalhadas e 8 quadros de voo/rasante
+        // O contorno; S brilho plumagem peito; M penas índigo-obsidiana; D asas profundas; L sombra; A garras/anel dourado; W lâmina prata; V crista ametista; G olho sombrio
+        raven: {
+            pal: () => ['#120e1a', '#8e7cb5', '#463a64', '#261e3a', '#181226', '#f0c040', '#d8e4f4', '#c084fc', '#f472b6'],
+            frames: [
+                // 0: Asas no alto (upstroke)
+                [
+                    '........................',
+                    '.......DDDD...DDDD......',
+                    '......DDDDDD.DDDDDD.....',
+                    '.....DDDDDDMMDDDDDDD....',
+                    '.....DDDDDMMMMDDDDDD....',
+                    '......DDDDMMMMMDDDD.....',
+                    '.......DDDMMMMMDDVV.....',
+                    '........DDMMMMMMVMMMM...',
+                    '.........DMMMMMMMGMMWW..',
+                    '.........MMMMMMMMMMWWWW.',
+                    '........MMMMMMMMSSMMWW..',
+                    '.......MMMMMMSSSSSSMM...',
+                    '.....DDMMMMMSSSSSSSSM...',
+                    '....DDDMMMMMMSSSSSSM....',
+                    '...DDDDDMMMMMMMMMMM.....',
+                    '..DDDDDD.DDDDDDDDD......',
+                    '.DDDD.....AA...AA.......',
+                    '..........AA...AA.......',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                // 1: Asas médias (transição)
+                [
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '................VV......',
+                    '...............VVMMMM...',
+                    '......DDDDD...MMMMGMMWW.',
+                    '....DDDDDDDDDMMMMMMMWWWW',
+                    '...DDDDDDDDDDDMMSSMMWW..',
+                    '..DDDDDMMMMMMMSSSSSSM...',
+                    '...DDDMMMMMMMMSSSSSSM...',
+                    '....DDMMMMMMMMMMMMMM....',
+                    '....DDMMMMDDDDDDDDD.....',
+                    '...DDDDDDDDDDDDDDD......',
+                    '..DDDDD....AA...AA......',
+                    '.DDDD......AA...AA......',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                // 2: Asas embaixo (downstroke profundo)
+                [
+                    '........................',
+                    '........................',
+                    '........................',
+                    '................VV......',
+                    '...............VVMMMM...',
+                    '..............MMMMGMMWW.',
+                    '............MMMMMMMMWWWW',
+                    '..........MMMMMMSSMMWW..',
+                    '........MMMMMMSSSSSSM...',
+                    '......DDMMMMMMSSSSSSM...',
+                    '....DDDDMMMMMMMMMMMM....',
+                    '...DDDDDMMMMDDDDDDDD....',
+                    '..DDDDDDD..DDDDDDDDD....',
+                    '.DDDD......DDDDDDDDD....',
+                    '...........DDDDDDDD.....',
+                    '............DDDDDD.AA...',
+                    '.............DDDD..AA...',
+                    '..............DD........',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                // 3: Planado largo
+                [
+                    '........................',
+                    '........................',
+                    '........................',
+                    '.........DDDDDD.VV......',
+                    '.......DDDDDDDDVVMMMM...',
+                    '.....DDDDDDDDDMMMMGMMWW.',
+                    '....DDDDDDDDMMMMMMMWWWW.',
+                    '.....DDDDDMMMMMMSSMMWW..',
+                    '.......DDDMMMMSSSSSSM...',
+                    '......DDMMMMMMSSSSSSM...',
+                    '.....DDDMMMMMMMMMMMM....',
+                    '....DDDDDDDDDDDDDDD.....',
+                    '...DDDDD...AA...AA......',
+                    '..DDDD.....AA...AA......',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                // 4: Idle poleiro 1 (respiração)
+                [
+                    '........................',
+                    '........................',
+                    '........................',
+                    '...............VV.......',
+                    '..............VVMMMM....',
+                    '.............MMMMGMMWW..',
+                    '............MMMMMMMMWWWW',
+                    '...........MMMMMSSMMWW..',
+                    '..........MMMMSSSSSSM...',
+                    '.........DMMMMSSSSSSM...',
+                    '........DDMMMMSSSSSM....',
+                    '.......DDDMMMMMMMMM.....',
+                    '......DDDDMMMMDDDD......',
+                    '.....DDDDDMMMMDDD.......',
+                    '....DDDDDD.DDDDD........',
+                    '...DDDDDD...AA.AA.......',
+                    '..DDDD......AA.AA.......',
+                    '...........AAA.AAA......',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                // 5: Idle poleiro 2 (piscada e pena)
+                [
+                    '........................',
+                    '........................',
+                    '........................',
+                    '..............VV........',
+                    '.............VVMMMM.....',
+                    '............MMMMOMMWW...',
+                    '...........MMMMMMMMWWWW.',
+                    '..........MMMMMMSSMMWW..',
+                    '.........MMMMMSSSSSSM...',
+                    '........DDMMMMSSSSSSM...',
+                    '.......DDDMMMMSSSSSM....',
+                    '......DDDDMMMMMMMMM.....',
+                    '.....DDDDDMMMMDDDD......',
+                    '....DDDDDDMMMMDDD.......',
+                    '...DDDDDD..DDDDD........',
+                    '..DDDD......AA.AA.......',
+                    '............AA.AA.......',
+                    '...........AAA.AAA......',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                // 6: Ataque 1 (rasante sombrio armado)
+                [
+                    '........................',
+                    '....DDDDD...DDDDD.......',
+                    '...DDDDDDD.DDDDDDD......',
+                    '..DDDDDDDDMDDDDDDDD.....',
+                    '...DDDDDDMMMMDDDDD..VV..',
+                    '....DDDDMMMMMMDDD..VVMMM',
+                    '.....DDDMMMMMMM...MMMMGM',
+                    '......DDMMMMMMMMMMMMMMWW',
+                    '.....DDDMMMMMMSSSSMMWWWW',
+                    '....DDDDMMMMMSSSSSSMMWW.',
+                    '...DDDDD......SSSSSM....',
+                    '..DDDD..........AA.AA...',
+                    '.................AA.AA..',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                // 7: Ataque 2 (corte de garras e lâminas à frente)
+                [
+                    '........................',
+                    '........................',
+                    '........................',
+                    '......DDDDDD............',
+                    '....DDDDDDDDDD....VV....',
+                    '...DDDDDDDDDDDD..VVMMMM.',
+                    '....DDDDDMMMMMMDMMMMGMMW',
+                    '.....DDDMMMMMMMMMMMMWWWW',
+                    '....DDDMMMMMMMSSSSMMWW..',
+                    '...DDDDMMMMMMSSSSSSM....',
+                    '..DDDD..DDDDDDDDDDD.AA..',
+                    '.DDD.....DDDDDDDDD...AA.',
+                    '..........DDDDDDD....WW.',
+                    '.....................WW.',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................'
+                ]
+            ],
+            build(f) { return this.frames[f & 7]; }
+        },
+
+        // 4. CORUJA ARCANA (owl) — Coruja mística com penachos dourados, disco facial claro, grandes olhos ciano e asas emplumadas
+        // O contorno; S disco facial/peito creme; M plumagem ameixa-arcana; D asas escuras; L sombra; A penachos/bico/garras ouro; W brilho; V manto rúnico; G olhos/runas ciano
+        owl: {
+            pal: () => ['#120e1a', '#eee6fa', '#7e68aa', '#4d3c72', '#31244d', '#f5b832', '#ffffff', '#c084fc', '#52ecff'],
+            frames: [
+                // 0: Asas erguidas
+                [
+                    '........................',
+                    '....DDDD.......DDDD.....',
+                    '...DDDDDD.AA..AA.DDDD...',
+                    '..DDDDDDD.AMMMMMA.DDDD..',
+                    '..DDDDDD.MMSGGSMMM.DDD..',
+                    '..DDDDD.MMSSGGSSMMM.DD..',
+                    '...DDDD.MMSSAAASSMM.DD..',
+                    '....DDD..MMSSSSSMM..D...',
+                    '.....DD..MMVVVVVMM......',
+                    '.........MMSSSSSMM......',
+                    '........MMMMSMSMMMM.....',
+                    '........MMMMSMSMMMM.....',
+                    '........MMMMSSSSMMM.....',
+                    '.........MMMMMMMMM......',
+                    '.........DDDDDDDDD......',
+                    '..........AA...AA.......',
+                    '..........AA...AA.......',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                // 1: Asas abertas horizontais
+                [
+                    '........................',
+                    '........................',
+                    '..........AA...AA.......',
+                    '.........AAMMMMMAA......',
+                    '........MMSSGGGSSMM.....',
+                    '........MMSSGGGSSMM.....',
+                    '...DDDDDMMSSAAASSMMDDDD.',
+                    '..DDDDDDDMMSSSSSMMDDDDD.',
+                    '.DDDDDDDDMMVVVVVMMDDDDDD',
+                    '..DDDDDDDMMSSSSSMMDDDDD.',
+                    '...DDDDDMMMMSMSMMMMDDDD.',
+                    '.....DDDMMMMSMSMMMMDDD..',
+                    '........MMMMSSSSMMM.....',
+                    '.........MMMMMMMMM......',
+                    '.........DDDDDDDDD......',
+                    '..........AA...AA.......',
+                    '..........AA...AA.......',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                // 2: Asas baixas (downstroke)
+                [
+                    '........................',
+                    '..........AA...AA.......',
+                    '.........AAMMMMMAA......',
+                    '........MMSSGGGSSMM.....',
+                    '........MMSSGGGSSMM.....',
+                    '........MMSSAAASSMM.....',
+                    '.........MMSSSSSMM......',
+                    '.......DDMMVVVVVMMDD....',
+                    '......DDDMMSSSSSMMDDD...',
+                    '.....DDDDMMMSMSMMMDDDD..',
+                    '....DDDDDMMMSMSMMMDDDDD.',
+                    '...DDDDDDMMMSSSSMMDDDDDD',
+                    '..DDDDDD.MMMMMMMMM.DDDDD',
+                    '..DDDD...DDDDDDDDD..DDDD',
+                    '..........AA...AA.......',
+                    '..........AA...AA.......',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                // 3: Planado místico
+                [
+                    '........................',
+                    '........................',
+                    '..........AA...AA.......',
+                    '.........AAMMMMMAA......',
+                    '........MMSSGGGSSMM.....',
+                    '.....DDDMMSSGGGSSMMDDD..',
+                    '...DDDDDMMSSAAASSMMDDDD.',
+                    '..DDDDDDDMMSSSSSMMDDDDD.',
+                    '...DDDDDDMMVVVVVMMDDDD..',
+                    '.....DDDDMMSSSSSMMDDD...',
+                    '........MMMMSMSMMMM.....',
+                    '........MMMMSSSSMMM.....',
+                    '.........MMMMMMMMM......',
+                    '.........DDDDDDDDD......',
+                    '..........AA...AA.......',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                // 4: Idle empoleirada 1 (olhos abertos luminosos)
+                [
+                    '........................',
+                    '........................',
+                    '..........AA...AA.......',
+                    '.........AAMMMMMAA......',
+                    '........MMSSGGGSSMM.....',
+                    '........MMSSGGGSSMM.....',
+                    '........MMSSAAASSMM.....',
+                    '.........MMSSSSSMM......',
+                    '........DMMVVVVVMMD.....',
+                    '.......DDMMSSSSSMMDD....',
+                    '.......DDMMMSMSMMMDD....',
+                    '.......DDMMMSMSMMMDD....',
+                    '.......DDMMMSSSSMMDD....',
+                    '........DMMMMMMMMMD.....',
+                    '.........DDDDDDDDD......',
+                    '..........AA...AA.......',
+                    '.........AAA...AAA......',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                // 5: Idle empoleirada 2 (piscada suave)
+                [
+                    '........................',
+                    '........................',
+                    '.........AA.....AA......',
+                    '.........AAMMMMMAA......',
+                    '........MMSSOOOSSMM.....',
+                    '........MMSSSSSSSMM.....',
+                    '........MMSSAAASSMM.....',
+                    '.........MMSSSSSMM......',
+                    '........DMMVVVVVMMD.....',
+                    '.......DDMMSSSSSMMDD....',
+                    '.......DDMMMSMSMMMDD....',
+                    '.......DDMMMSMSMMMDD....',
+                    '.......DDMMMSSSSMMDD....',
+                    '........DMMMMMMMMMD.....',
+                    '.........DDDDDDDDD......',
+                    '..........AA...AA.......',
+                    '.........AAA...AAA......',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                // 6: Ataque 1 (abertura de asas rúnicas)
+                [
+                    '........................',
+                    '...DDDD...AA...AA...DDD.',
+                    '..DDDDDD.AAMMMMMAA.DDDDD',
+                    '.DDDDDDDMMSSGGGSSMMDDDDD',
+                    '.DDDDDDDMMSSGGGSSMMDDDDD',
+                    '..DDDDDDMMSSAAASSMMDDDD.',
+                    '...DDDDD.MMVVVVVMM.DDD..',
+                    '....DDD..MMSSSSSMM..D...',
+                    '........MMMMSMSMMMM.....',
+                    '........MMMMSSSSMMM.....',
+                    '.........MMMMMMMMM......',
+                    '..........AA...AA.......',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                // 7: Ataque 2 (disparo de leitura do Véu)
+                [
+                    '........................',
+                    '..........AA...AA.......',
+                    '.........AAMMMMMAA......',
+                    '....DDDDMMSSGGGSSMM..GG.',
+                    '..DDDDDDMMSSGGGSSMM.GGGG',
+                    '.DDDDDDDMMSSAAASSMM..GG.',
+                    '..DDDDDD.MMVVVVVMM......',
+                    '...DDDD..MMSSSSSMM......',
+                    '........MMMMSMSMMMM.....',
+                    '........MMMMSSSSMMM.....',
+                    '.........MMMMMMMMM......',
+                    '..........AA...AA.......',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................'
+                ]
+            ],
+            build(f) { return this.frames[f & 7]; }
+        },
+
+        // 5. FARO, O CÃO DE CAÇA (faro) — Sabujo leal de Eiran com orelhas caídas longas, lenço vermelho-ouro e focinho farejador
+        // O contorno; S peito/focinho/patas creme; M pelagem caramelo-ruivo; D manta dorsal e orelha caída; L marrom escuro; A medalhão ouro; W brilho; V lenço real vermelho; G centelha
+        faro: {
+            pal: () => ['#120e1a', '#f2dfc4', '#b85c34', '#753418', '#421c0c', '#f5c542', '#ffffff', '#b82e2a', '#ffd86b'],
+            top: [
+                '........................',
+                '........................',
+                '........................',
+                '........................',
+                '................MMMM....',
+                '...............MMMMMM...',
+                '..............MDDMMOMM..',
+                '.............MDDDMMMMMMO',
+                '....DD......MMDDDMMMMSSS',
+                '...DDD.....MMMDDDMMSSSS.',
+                '..DDD.....MMMMVVVSSSS...',
+                '..DD....DDDDMMVVVASSS...',
+                '..DDD..DDDDDDDMMMVSSS...',
+                '...DDDDDDDDDDDDMMSSSS...',
+                '.....DDDDDDDDDDDDSSS....',
+                '.....DDDDD.....DDDD.....'
+            ],
+            topAtk: [
+                '........................',
+                '........................',
+                '........................',
+                '................MMMM....',
+                '...............MMMMMM...',
+                '..............MDDMMOMM..',
+                '.............MDDDMMMMMMO',
+                '....DD......MMDDDMMMWWWW',
+                '...DDD.....MMMDDDMM..SSS',
+                '..DDD.....MMMMVVVSSSS...',
+                '..DD....DDDDMMVVVASSS...',
+                '..DDD..DDDDDDDMMMVSSS...',
+                '...DDDDDDDDDDDDMMSSSS...',
+                '.....DDDDDDDDDDDDSSS....',
+                '.....DDDDD.....DDDD.....',
+                '........................'
+            ],
+            legs: [
+                [
+                    '.....DDDD......DDDD.....',
+                    '....DD..DD....DD..DD....',
+                    '...DD....DD..DD....DD...',
+                    '...DD....DD..DD....DD...',
+                    '...SS....SS..SS....SS...',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                [
+                    '.....DDDD......DDDD.....',
+                    '......DDDD....DDDD......',
+                    '......DD.DD..DD.DD......',
+                    '.....DD..DD..DD..DD.....',
+                    '.....SS..SS..SS..SS.....',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                [
+                    '.....DDDD......DDDD.....',
+                    '....DD..DD....DDD.DD....',
+                    '...DD....DD..DDD...DD...',
+                    '....DD..DD...DD.....DD..',
+                    '....SS..SS...SS.....SS..',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                [
+                    '.....DDDD......DDDD.....',
+                    '.....DD.DD....DD.DD.....',
+                    '.....DD.DD....DD.DD.....',
+                    '.....DD.DD....DD.DD.....',
+                    '.....SS.SS....SS.SS.....',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                [
+                    '.....DDDD......DDDD.....',
+                    '.....DD.DD....DD.DD.....',
+                    '.....DD.DD....DD.DD.....',
+                    '.....DD.DD....DD.DD.....',
+                    '.....SS.SS....SS.SS.....',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                [
+                    '.....DDDD......DDDD.....',
+                    '.....DD.DD....DD.DD.....',
+                    '.....DD.DD....DD..DD....',
+                    '.....DD.DD....DD..SS....',
+                    '.....SS.SS....SS........',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                [
+                    '.....DDDD......DDDD.....',
+                    '....DD..DD......DD.DD...',
+                    '...DD...DD.......DD.SS..',
+                    '...SS...SS........SS....',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                [
+                    '.....DDDD......DDDD.....',
+                    '...DD..........DD..DD...',
+                    '..DD...........DD...SS..',
+                    '..SS...........SS.......',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................'
+                ]
+            ],
+            build(f) {
+                const isAtk = f >= 6;
+                const dy = [0, -1, 0, -1, 0, 0, -1, 0][f];
+                const wag = [1, -1, 1, -1, 0, 1, 1, -1][f];
+                return composeQuad(isAtk ? this.topAtk : this.top, this.legs[f], dy, wag);
+            }
+        },
+
+        // 6. ESPÍRITO CURADOR (spirit) — Serafim etéreo encapuzado com manto esvoaçante, asas de luz e orbe sagrado
+        // O contorno; S rosto/núcleo luminoso; M manto celadon; D verde-templo; L dobra escura; A halo/estola dourada; W asas de luz pura; V detalhe místico; G orbe sagrado ciano
+        spirit: {
+            pal: () => ['#120e1a', '#e8fff8', '#68e8b8', '#34a884', '#1d6b54', '#ffd86b', '#ffffff', '#c084fc', '#6ef0ff'],
+            frames: [
+                [
+                    '..........AAAA..........',
+                    '.........AAWWAA.........',
+                    '..........AAAA..........',
+                    '.........MMMMMM.........',
+                    '....WW..MMSSSSMM........',
+                    '...WWWW.MSgSSgSM........',
+                    '..WWWWW.MSSSSSSM...GG...',
+                    '..WWWW..MMAAAAMM..GGGG..',
+                    '...WW..MMMAAAAMMM.GGGG..',
+                    '......MMMMWWWWMMMM.GG...',
+                    '......MMMMWWWWMMMM......',
+                    '......MMMMAWWAMMMM......',
+                    '.......MMMAWWAMMM.......',
+                    '.......MMMMWWMMMM.......',
+                    '.......DDDDDDDDDD.......',
+                    '......DDDDDDDDDDDD......',
+                    '......DDD..DDD..DDD.....',
+                    '.....DDD...DDD...DD.....',
+                    '.....DD....DD...........',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                [
+                    '..........AAAA..........',
+                    '.........AAWWAA.........',
+                    '..........AAAA..........',
+                    '.........MMMMMM.........',
+                    '...WW...MMSSSSMM........',
+                    '..WWWW..MSgSSgSM...GG...',
+                    '.WWWWWW.MSSSSSSM..GGGG..',
+                    '..WWWWW.MMAAAAMM..GGGG..',
+                    '...WWW.MMMAAAAMMM..GG...',
+                    '......MMMMWWWWMMMM......',
+                    '......MMMMWWWWMMMM......',
+                    '......MMMMAWWAMMMM......',
+                    '.......MMMAWWAMMM.......',
+                    '.......MMMMWWMMMM.......',
+                    '.......DDDDDDDDDD.......',
+                    '.......DDDDDDDDDDD......',
+                    '.......DDD.DDD.DDD......',
+                    '........DD..DD..DDD.....',
+                    '............DD...DD.....',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                [
+                    '..........AAAA..........',
+                    '.........AAWWAA.........',
+                    '..........AAAA..........',
+                    '.........MMMMMM.........',
+                    '....WW..MMSSSSMM........',
+                    '...WWWW.MSgSSgSM........',
+                    '..WWWWW.MSSSSSSM........',
+                    '..WWWW..MMAAAAMM...GG...',
+                    '...WW..MMMAAAAMMM.GGGG..',
+                    '......MMMMWWWWMMMMGGGG..',
+                    '......MMMMWWWWMMMM.GG...',
+                    '......MMMMAWWAMMMM......',
+                    '.......MMMAWWAMMM.......',
+                    '.......MMMMWWMMMM.......',
+                    '.......DDDDDDDDDD.......',
+                    '......DDDDDDDDDDD.......',
+                    '.....DDD.DDD.DDD........',
+                    '....DDD..DD..DD.........',
+                    '....DD...DD.............',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                [
+                    '..........AAAA..........',
+                    '.........AAWWAA.........',
+                    '..........AAAA..........',
+                    '.........MMMMMM.........',
+                    '...WW...MMSSSSMM........',
+                    '..WWWW..MSgSSgSM...GG...',
+                    '..WWWWW.MSSSSSSM..GGGG..',
+                    '...WWWW.MMAAAAMM..GGGG..',
+                    '....WW.MMMAAAAMMM..GG...',
+                    '......MMMMWWWWMMMM......',
+                    '......MMMMWWWWMMMM......',
+                    '......MMMMAWWAMMMM......',
+                    '.......MMMAWWAMMM.......',
+                    '.......MMMMWWMMMM.......',
+                    '.......DDDDDDDDDD.......',
+                    '......DDDDDDDDDDDD......',
+                    '......DDD..DDD..DDD.....',
+                    '......DD...DDD...DD.....',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                [
+                    '..........AAAA..........',
+                    '.........AAWWAA.........',
+                    '..........AAAA..........',
+                    '.........MMMMMM.........',
+                    '....WW..MMSSSSMM........',
+                    '...WWWW.MSgSSgSM........',
+                    '...WWWW.MSSSSSSM...GG...',
+                    '....WW..MMAAAAMM..GGGG..',
+                    '.......MMMAAAAMMM.GGGG..',
+                    '......MMMMWWWWMMMM.GG...',
+                    '......MMMMWWWWMMMM......',
+                    '......MMMMAWWAMMMM......',
+                    '.......MMMAWWAMMM.......',
+                    '.......MMMMWWMMMM.......',
+                    '.......DDDDDDDDDD.......',
+                    '......DDDDDDDDDDDD......',
+                    '......DDD..DDD..DDD.....',
+                    '......DD...DD....DD.....',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                [
+                    '..........AAAA..........',
+                    '.........AAWWAA.........',
+                    '..........AAAA..........',
+                    '.........MMMMMM.........',
+                    '....WW..MMSSSSMM........',
+                    '...WWWW.MSoSSoSM...GG...',
+                    '...WWWW.MSSSSSSM..GGGG..',
+                    '....WW..MMAAAAMM..GGGG..',
+                    '.......MMMAAAAMMM..GG...',
+                    '......MMMMWWWWMMMM......',
+                    '......MMMMWWWWMMMM......',
+                    '......MMMMAWWAMMMM......',
+                    '.......MMMAWWAMMM.......',
+                    '.......MMMMWWMMMM.......',
+                    '.......DDDDDDDDDD.......',
+                    '......DDDDDDDDDDDD......',
+                    '......DDD..DDD..DDD.....',
+                    '......DD...DD....DD.....',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                [
+                    '.........AAAAAA.........',
+                    '........AAWWWWAA........',
+                    '..WWWW...AAAAAA...WWWW..',
+                    '.WWWWWW..MMMMMM..WWWWWW.',
+                    '.WWWWWW.MMSSSSMM.WWWWWW.',
+                    '..WWWWW.MSGGGGSM.WWWWW..',
+                    '...WWWW.MSSSSSSM.WWWW...',
+                    '....WW..MMAAAAMM..WW....',
+                    '.......MMMAAAAMMM.......',
+                    '......MMMMWWWWMMMM......',
+                    '......MMMMWWWWMMMM......',
+                    '......MMMMAWWAMMMM......',
+                    '.......MMMAWWAMMM.......',
+                    '.......DDDDDDDDDD.......',
+                    '......DDDDDDDDDDDD......',
+                    '.....DDD..DDDD..DDD.....',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                [
+                    '.........AAAAAA.........',
+                    '........AAWWWWAA...GG...',
+                    '..WWWW...AAAAAA...GGGG..',
+                    '.WWWWWW..MMMMMM..GGGGGG.',
+                    '.WWWWWW.MMSSSSMM..GGGG..',
+                    '..WWWWW.MSGGGGSM...GG...',
+                    '...WWWW.MSSSSSSM........',
+                    '....WW..MMAAAAMM........',
+                    '.......MMMAAAAMMM.......',
+                    '......MMMMWWWWMMMM......',
+                    '......MMMMWWWWMMMM......',
+                    '......MMMMAWWAMMMM......',
+                    '.......MMMAWWAMMM.......',
+                    '.......DDDDDDDDDD.......',
+                    '......DDDDDDDDDDDD......',
+                    '.....DDD..DDDD..DDD.....',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................'
+                ]
+            ],
+            build(f) {
+                return this.frames[f & 7].map(r => r.replace(/g/g, 'G').replace(/o/g, 'O'));
+            }
+        },
+
+        // 7. ÁGUIA SOMBRIA (eagle) — Ave de rapina majestosa com cabeça branca-dourada, bico adunco, garras e asas largas
+        // O contorno; S peito bronze; M penas umber; D primárias escuras; L sombra; A bico/garras ouro; W cabeça/cauda branca; V crista real; G raio
+        eagle: {
+            pal: () => ['#120e1a', '#d29b68', '#7d4e30', '#4c2c18', '#2a160c', '#f5c02a', '#f2f6fc', '#c084fc', '#60a5fa'],
+            frames: [
+                [
+                    '........................',
+                    '.....DDDDD....DDDDD.....',
+                    '....DDDDDDD..DDDDDDD....',
+                    '...DDDDDDDDMMDDDDDDDD...',
+                    '...DDDDDDDMMMMDDDDDDD...',
+                    '....DDDDDMMMMMMDDDDD....',
+                    '.....DDDDMMMMMMDDDD.....',
+                    '......DDDMMMMMMWWWW.....',
+                    '.......DDMMMMMWWWWOWAA..',
+                    '........MMMMMMWWWWWWAAA.',
+                    '.......MMMMMMSSSSSWWAA..',
+                    '......MMMMMMSSSSSSSM....',
+                    '....WWMMMMMMSSSSSSM.....',
+                    '...WWWWMMMMMMMMMMM......',
+                    '..WWWWW.DDDDDDDDD.......',
+                    '.........AA...AA........',
+                    '.........AA...AA........',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                [
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '...............WWWW.....',
+                    '.....DDDDDD...WWWWOWAA..',
+                    '...DDDDDDDDDDMWWWWWWAAA.',
+                    '..DDDDDDDDDDDDSSSSWWAA..',
+                    '.DDDDDDMMMMMMSSSSSSSM...',
+                    '..DDDDMMMMMMMMSSSSSSM...',
+                    '...DDMMMMMMMMMMMMMMM....',
+                    '....WWMMMMDDDDDDDDD.....',
+                    '...WWWWDDDDDDDDDDD......',
+                    '..WWWWW...AA...AA.......',
+                    '..........AA...AA.......',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                [
+                    '........................',
+                    '........................',
+                    '........................',
+                    '...............WWWW.....',
+                    '..............WWWWOWAA..',
+                    '............MMWWWWWWAAA.',
+                    '..........MMMMSSSSWWAA..',
+                    '........MMMMMMSSSSSSM...',
+                    '......DDMMMMMMSSSSSSM...',
+                    '....DDDDMMMMMMMMMMMM....',
+                    '...WWDDDMMMMDDDDDDDD....',
+                    '..WWWWDDDDDDDDDDDDDD....',
+                    '.WWWWW....DDDDDDDDDD....',
+                    '...........DDDDDDDD.AA..',
+                    '............DDDDDD..AA..',
+                    '.............DDDD.......',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                [
+                    '........................',
+                    '........................',
+                    '........DDDDDDD.........',
+                    '......DDDDDDDDDWWWW.....',
+                    '....DDDDDDDDDMWWWWOWAA..',
+                    '...DDDDDDDDMMMWWWWWWAAA.',
+                    '....DDDDDMMMMMSSSSWWAA..',
+                    '......DDDMMMMSSSSSSSM...',
+                    '.....WWMMMMMMSSSSSSM....',
+                    '....WWWWMMMMMMMMMMM.....',
+                    '...WWWWWDDDDDDDDDD......',
+                    '.........AA...AA........',
+                    '.........AA...AA........',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                [
+                    '........................',
+                    '........................',
+                    '........................',
+                    '..............WWWW......',
+                    '.............WWWWOWAA...',
+                    '............MWWWWWWAAA..',
+                    '...........MMMSSSSWWAA..',
+                    '..........MMMMSSSSSSM...',
+                    '.........DMMMMSSSSSSM...',
+                    '........DDMMMMSSSSSM....',
+                    '.......DDDMMMMMMMMM.....',
+                    '......DDDDMMMMDDDD......',
+                    '.....WWDDDMMMMDDD.......',
+                    '....WWWWDD.DDDDD........',
+                    '...WWWWW....AA.AA.......',
+                    '............AA.AA.......',
+                    '...........AAA.AAA......',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                [
+                    '........................',
+                    '........................',
+                    '........................',
+                    '.............WWWW.......',
+                    '............WWWWOWAA....',
+                    '...........MWWWWWWAAA...',
+                    '..........MMMMSSSSWWAA..',
+                    '.........MMMMMSSSSSSM...',
+                    '........DDMMMMSSSSSSM...',
+                    '.......DDDMMMMSSSSSM....',
+                    '......DDDDMMMMMMMMM.....',
+                    '.....DDDDDMMMMDDDD......',
+                    '....WWDDDDMMMMDDD.......',
+                    '...WWWWDD..DDDDD........',
+                    '..WWWWW.....AA.AA.......',
+                    '............AA.AA.......',
+                    '...........AAA.AAA......',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                [
+                    '........................',
+                    '...DDDDD....DDDDD.......',
+                    '..DDDDDDD..DDDDDDD......',
+                    '.DDDDDDDDMMDDDDDDDD.....',
+                    '..DDDDDDMMMMDDDDD.WWWW..',
+                    '...DDDDMMMMMMDDD.WWWWOWA',
+                    '....DDDMMMMMMM..MWWWWWWA',
+                    '.....DDMMMMMMMMMMSSSSWWA',
+                    '....WWMMMMMMMMMSSSSSSM..',
+                    '...WWWWMMMMMMMSSSSSSM...',
+                    '..WWWWW.........AA.AA...',
+                    '.................AA.AA..',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                [
+                    '........................',
+                    '........................',
+                    '.....DDDDDDD............',
+                    '...DDDDDDDDDDD...WWWW...',
+                    '..DDDDDDDDDDDDD.WWWWOWAA',
+                    '...DDDDDMMMMMMDMWWWWWWAA',
+                    '....DDDMMMMMMMMMMSSSSWWA',
+                    '...WWMMMMMMMMMMSSSSSSM..',
+                    '..WWWWMMMMMMMMSSSSSSM...',
+                    '.WWWWW..DDDDDDDDDDD.AAA.',
+                    '.........DDDDDDDDD...AAA',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................'
+                ]
+            ],
+            build(f) { return this.frames[f & 7]; }
+        },
+
+        // 8. BAÚ FAMINTO FILHOTE (mimic) — Baú de carvalho e ouro com boca dentada articulada, língua e olhinhos brilhantes
+        // O contorno; S madeira clara; M carvalho; D madeira escura/ferro; L interior da bocarra; A ferragens/moedas ouro; W dentes afiados; V língua monstruosa; G olhos brilhantes
+        mimic: {
+            pal: () => ['#120e1a', '#c98a46', '#8c5424', '#4e2c10', '#1c0c08', '#f0bc40', '#ffffff', '#e03440', '#ffea70'],
+            frames: [
+                // 0: Pulo 1 (fechado espiando)
+                [
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '......AAAAAAAAAAAA......',
+                    '.....AAMMMMMMMMMMAA.....',
+                    '....AAMSSSSSSSSSSMMAA...',
+                    '....AAMMMMMMMMMMMMMAA...',
+                    '....AAAAAAAAAAAAAAAAA...',
+                    '....AALLLGLLLLGLLLLAA...',
+                    '....AALLWWWLLWWWLLLAA...',
+                    '....AAAAAAAADAAAAAAAA...',
+                    '....AAMMMMMAAAMMMMMAA...',
+                    '....AAMMMMMAAAMMMMMAA...',
+                    '....AAMMMMMDADMMMMMAA...',
+                    '....AADDDDDDDDDDDDDAA...',
+                    '....AAAAAAAAAAAAAAAAA...',
+                    '......DDDD.....DDDD.....',
+                    '.....DDDDD.....DDDDD....',
+                    '.....AAAA.......AAAA....',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                // 1: Pulo 2 (no ar abrindo a tampa!)
+                [
+                    '........................',
+                    '........................',
+                    '........................',
+                    '......AAAAAAAAAAAA......',
+                    '.....AAMMMMMMMMMMAA.....',
+                    '....AAMSSSSSSSSSSMMAA...',
+                    '....AAAAAAAAAAAAAAAAA...',
+                    '....AALWWWWWWWWWWWLAA...',
+                    '....AALLLGLLLLGLLLLAA...',
+                    '....AALLLLLVVVVVLLLAA...',
+                    '....AALWWWWVVVVVWWLAA...',
+                    '....AAAAAAAADAAAAAAAA...',
+                    '....AAMMMMMAAAMMMMMAA...',
+                    '....AAMMMMMAAAMMMMMAA...',
+                    '....AADDDDDDDDDDDDDAA...',
+                    '....AAAAAAAAAAAAAAAAA...',
+                    '.....DDDD.......DDDD....',
+                    '....AAAA.........AAAA...',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                // 2: Pulo 3 (passo alternado)
+                [
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '......AAAAAAAAAAAA......',
+                    '.....AAMMMMMMMMMMAA.....',
+                    '....AAMSSSSSSSSSSMMAA...',
+                    '....AAMMMMMMMMMMMMMAA...',
+                    '....AAAAAAAAAAAAAAAAA...',
+                    '....AALLLGLLLLGLLLLAA...',
+                    '....AALLWWWLLWWWLLLAA...',
+                    '....AAAAAAAADAAAAAAAA...',
+                    '....AAMMMMMAAAMMMMMAA...',
+                    '....AAMMMMMAAAMMMMMAA...',
+                    '....AAMMMMMDADMMMMMAA...',
+                    '....AADDDDDDDDDDDDDAA...',
+                    '....AAAAAAAAAAAAAAAAA...',
+                    '.......DDDD...DDDD......',
+                    '.......DDDDD.DDDDD......',
+                    '.......AAAA...AAAA......',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                // 3: Pulo 4 (pouso tilintando)
+                [
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '.....AAAAAAAAAAAAAA.....',
+                    '....AAMMMMMMMMMMMMAA....',
+                    '...AAMSSSSSSSSSSSSMMAA..',
+                    '...AAAAAAAAAAAAAAAAAAA..',
+                    '...AALLLLGLLLLGLLLLLAA..',
+                    '...AALLLWWWLLWWWLLLLAA..',
+                    '...AAAAAAAAADAAAAAAAAA..',
+                    '...AAMMMMMMAAAMMMMMMAA..',
+                    '...AAMMMMMMAAAMMMMMMAA..',
+                    '...AADDDDDDDDDDDDDDDAA..',
+                    '...AAAAAAAAAAAAAAAAAAA..',
+                    '.....DDDDD.....DDDDD....',
+                    '....AAAA.........AAAA...',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                // 4: Idle 1 (espiando)
+                [
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '......AAAAAAAAAAAA......',
+                    '.....AAMMMMMMMMMMAA.....',
+                    '....AAMSSSSSSSSSSMMAA...',
+                    '....AAMMMMMMMMMMMMMAA...',
+                    '....AAAAAAAAAAAAAAAAA...',
+                    '....AALLLGLLLLGLLLLAA...',
+                    '....AALLWWWLLWWWLLLAA...',
+                    '....AAAAAAAADAAAAAAAA...',
+                    '....AAMMMMMAAAMMMMMAA...',
+                    '....AAMMMMMAAAMMMMMAA...',
+                    '....AAMMMMMDADMMMMMAA...',
+                    '....AADDDDDDDDDDDDDAA...',
+                    '....AAAAAAAAAAAAAAAAA...',
+                    '......DDDD.....DDDD.....',
+                    '......AAAA.....AAAA.....',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                // 5: Idle 2 (piscada e moeda brilhando)
+                [
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '......AAAAAAAAAAAA......',
+                    '.....AAMMMMMMMMMMAA.....',
+                    '....AAMSSSSSSSSSSMMAA...',
+                    '....AAMMMMMMMMMMMMMAA...',
+                    '....AAAAAAAAAAAAAAAAA...',
+                    '....AALLLLLLLLLLLLLAA...',
+                    '....AALLWWWAAWWWLLLAA...',
+                    '....AAAAAAAADAAAAAAAA...',
+                    '....AAMMMMMAAAMMMMMAA...',
+                    '....AAMMMMMAAAMMMMMAA...',
+                    '....AAMMMMMDADMMMMMAA...',
+                    '....AADDDDDDDDDDDDDAA...',
+                    '....AAAAAAAAAAAAAAAAA...',
+                    '......DDDD.....DDDD.....',
+                    '......AAAA.....AAAA.....',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                // 6: Ataque 1 (bocarra escancarada com língua e presas!)
+                [
+                    '........................',
+                    '........................',
+                    '......AAAAAAAAAAAA......',
+                    '.....AAMMMMMMMMMMAA.....',
+                    '....AAMSSSSSSSSSSMMAA...',
+                    '....AAAAAAAAAAAAAAAAA...',
+                    '....AALWWWWWWWWWWWLAA...',
+                    '....AALWLLLLGLLLLWLAA...',
+                    '....AALLLLLVVVVVVVVVV...',
+                    '....AALLLLLVVVVVVVVVVV..',
+                    '....AALWWWWVVVVVWWLAA...',
+                    '....AAAAAAAADAAAAAAAA...',
+                    '....AAMMMMMAAAMMMMMAA...',
+                    '....AAMMMMMAAAMMMMMAA...',
+                    '....AADDDDDDDDDDDDDAA...',
+                    '....AAAAAAAAAAAAAAAAA...',
+                    '.....DDDD.......DDDD....',
+                    '....AAAA.........AAAA...',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                // 7: Ataque 2 (mordida ávida cuspindo moedas)
+                [
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '......AAAAAAAAAAAA......',
+                    '.....AAMMMMMMMMMMAA.....',
+                    '....AAMSSSSSSSSSSMMAA...',
+                    '....AAAAAAAAAAAAAAAAA...',
+                    '....AALWWWWWWWWWWWLAA.GG',
+                    '....AALWWLGLLLLGLWWAA.AA',
+                    '....AALLLWWWWWWWWWLAVV..',
+                    '....AAAAAAAADAAAAAAAA...',
+                    '....AAMMMMMAAAMMMMMAA...',
+                    '....AAMMMMMAAAMMMMMAA...',
+                    '....AADDDDDDDDDDDDDAA...',
+                    '....AAAAAAAAAAAAAAAAA...',
+                    '......DDDD.....DDDD.....',
+                    '......AAAA.....AAAA.....',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................'
+                ]
+            ],
+            build(f) { return this.frames[f & 7]; }
+        },
+
+        // 9. SALAMANDRA DE BRASA (salamander) — Réptil vulcânico da forja com crista incandescente e cauda flamejante
+        // O contorno; S barriga creme; M pele laranja-brasa; D escamas dorsais rubras; L ferro da forja; A crista/olho dourado; W garras/aço; V magma; G chama viva
+        salamander: {
+            pal: () => ['#120e1a', '#fae0a8', '#e85520', '#9e2c0c', '#4a5264', '#ffd24a', '#d0dae8', '#ff2200', '#ff9a2e'],
+            top: [
+                '........................',
+                '........................',
+                '........................',
+                '........................',
+                '........................',
+                '........................',
+                '........................',
+                '..GG............GG......',
+                '.GAAG....A..A..GAAG.....',
+                '.GVAG...AA.AA..GAAAG....',
+                '..VV...GAAGAAGGMMMMMM...',
+                '..DD..DDDDDDDDDMMMGOMM..',
+                '..DDD.DDDDDDDDMMMMMMMMM.',
+                '...DDDDDDDDDDDMMMMMMSSSS',
+                '....DDDDDDDDDDSSSSSSSS..',
+                '......DDDDDDDDSSSSS.....'
+            ],
+            topAtk: [
+                '........................',
+                '........................',
+                '........................',
+                '........................',
+                '........................',
+                '........................',
+                '..GG............GG......',
+                '.GAAG....A..A..GAAG.....',
+                '.GVAG...AA.AA..GAAAG....',
+                '..VV...GAAGAAGGMMMMMM...',
+                '..DD..DDDDDDDDDMMMGOMM..',
+                '..DDD.DDDDDDDDMMMMMMGGGG',
+                '...DDDDDDDDDDDMMMMMVVGGG',
+                '....DDDDDDDDDDSSSSSSSS..',
+                '......DDDDDDDDSSSSS.....',
+                '........................'
+            ],
+            legs: [
+                [
+                    '......DDDD......DDDD....',
+                    '.....DD..DD....DD..DD...',
+                    '....DD...DD....DD...DD..',
+                    '....WW...WW....WW...WW..',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                [
+                    '......DDDD......DDDD....',
+                    '......DDDD......DDDD....',
+                    '.....DD..DD....DD..DD...',
+                    '.....WW..WW....WW..WW...',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                [
+                    '......DDDD......DDDD....',
+                    '.....DD..DD....DDD.DD...',
+                    '.....DD..DD....DD...DD..',
+                    '.....WW..WW....WW...WW..',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                [
+                    '......DDDD......DDDD....',
+                    '......DD.DD....DD.DD....',
+                    '......DD.DD....DD.DD....',
+                    '......WW.WW....WW.WW....',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                [
+                    '......DDDD......DDDD....',
+                    '......DD.DD....DD.DD....',
+                    '......DD.DD....DD.DD....',
+                    '......WW.WW....WW.WW....',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                [
+                    '......DDDD......DDDD....',
+                    '......DD.DD....DD.DD....',
+                    '......DD.DD....DD..DD...',
+                    '......WW.WW....WW..WW...',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                [
+                    '......DDDD......DDDD....',
+                    '.....DD..DD......DD.DD..',
+                    '....DD...DD.......DD.WW.',
+                    '....WW...WW.......WW....',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                [
+                    '......DDDD......DDDD....',
+                    '....DD..........DD..DD..',
+                    '...DD...........DD...WW.',
+                    '...WW...........WW......',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................'
+                ]
+            ],
+            build(f) {
+                const isAtk = f >= 6;
+                const dy = [0, -1, 0, 0, 0, 0, -1, 0][f];
+                const wag = [1, 0, -1, 0, 0, 1, 1, -1][f];
+                return composeQuad(isAtk ? this.topAtk : this.top, this.legs[f], dy, wag);
+            }
+        },
+
+        // 10. DRAGÃO ARCANO (dragon) — Dragão nobre com chifres dourados, asas membranosas amplas, peito escamoso e núcleo do Véu
+        // O contorno; S escamas peitorais creme-ouro; M escamas carmesim; D dorso rubi escuro; L osso da asa; A chifres/runas ouro; W garras/presas marfim; V membrana de fogo; G núcleo do Véu
+        dragon: {
+            pal: () => ['#120e1a', '#f2d498', '#c83228', '#7d1814', '#3d1016', '#ffd858', '#eef4fc', '#ff7818', '#c084fc'],
+            frames: [
+                // 0: Asas erguidas no alto
+                [
+                    '......LLLL....AAA.......',
+                    '.....LLVVLL....AAA......',
+                    '....LLVVVVLL....AAMMM...',
+                    '...LLVVVVVVLL...MMMMMM..',
+                    '...LLVVVVVVVLL..MMMGOMM.',
+                    '....LLVVVVVVVLL.MMMMMMMM',
+                    '.....LLVVVVVVLL.MMMMMMWW',
+                    '......LLVVVVLL.MMMMMM...',
+                    '.......LLVVLL..MMMMSS...',
+                    '........LLLL..MMMMGSSS..',
+                    '...DD........MMMMMSSSS..',
+                    '..DDD.......DDDDMMSSSS..',
+                    '.DDD.......DDDDDDMSSS...',
+                    '..DDD.....DDDDDDDDSSS...',
+                    '...DDDDDDDDDDDDDDDD.....',
+                    '.....DDDDDD..DDDDDD.....',
+                    '......DD.DD...DD.DD.....',
+                    '.....DD..DD...DD..DD....',
+                    '.....WW..WW...WW..WW....',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                // 1: Asas abertas médias
+                [
+                    '..............AAA.......',
+                    '...............AAA......',
+                    '................AAMMM...',
+                    '................MMMMMM..',
+                    '.....LLLLLLLL...MMMGOMM.',
+                    '...LLLVVVVVVLLL.MMMMMMMM',
+                    '..LLVVVVVVVVVVLLMMMMMMWW',
+                    '..LLVVVVVVVVVVLLMMMMSS..',
+                    '...LLVVVVVVVVLLMMMMGSSS.',
+                    '....LLLLVVVVLLMMMMMSSSS.',
+                    '...DD...LLLL.DDDDMMSSSS.',
+                    '..DDD.......DDDDDDMSSS..',
+                    '..DDD......DDDDDDDDSSS..',
+                    '...DDDDDDDDDDDDDDDD.....',
+                    '.....DDDDDD..DDDDDD.....',
+                    '......DDDD....DDDD......',
+                    '......DD.DD..DD.DD......',
+                    '.....WW..WW..WW..WW.....',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                // 2: Asas em batida baixa (downstroke)
+                [
+                    '..............AAA.......',
+                    '...............AAA......',
+                    '................AAMMM...',
+                    '................MMMMMM..',
+                    '................MMMGOMM.',
+                    '...............MMMMMMMMM',
+                    '..............MMMMMMMMWW',
+                    '............LLMMMMMMSS..',
+                    '..........LLLLMMMMMGSSS.',
+                    '........LLVVVVMMMMMSSSS.',
+                    '...DD..LLVVVVVVDDDMMSSS.',
+                    '..DDD.LLVVVVVVVDDDDMSSS.',
+                    '..DDD.LLVVVVVVVDDDDD....',
+                    '...DDDLLVVVVVVDDDDD.....',
+                    '.....DLLVVVVLLDDDDD.....',
+                    '......LLVVLL..DD.DD.....',
+                    '......LLLL...DD...DD....',
+                    '.............WW...WW....',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                // 3: Planado majestoso
+                [
+                    '..............AAA.......',
+                    '...............AAA......',
+                    '......LLLLLL....AAMMM...',
+                    '....LLLVVVVLLL..MMMMMM..',
+                    '...LLVVVVVVVVLL.MMMGOMM.',
+                    '..LLVVVVVVVVVVLLMMMMMMMM',
+                    '...LLVVVVVVVVLLMMMMMMMWW',
+                    '....LLLLVVVVLL.MMMMMSS..',
+                    '........LLLL..MMMMMGSSS.',
+                    '...DD........MMMMMMSSSS.',
+                    '..DDD.......DDDDDMMSSSS.',
+                    '..DDD......DDDDDDDMSSS..',
+                    '...DDDDDDDDDDDDDDDDSSS..',
+                    '.....DDDDDD..DDDDDD.....',
+                    '......DD.DD...DD.DD.....',
+                    '......DD.DD...DD.DD.....',
+                    '......WW.WW...WW.WW.....',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                // 4: Idle 1 (guarda imperial)
+                [
+                    '..............AAA.......',
+                    '...............AAA......',
+                    '.......LLLL.....AAMMM...',
+                    '......LLVVLL....MMMMMM..',
+                    '.....LLVVVVLL...MMMGOMM.',
+                    '.....LLVVVVLL...MMMMMMMM',
+                    '.....LLVVVVVLL.MMMMMMMWW',
+                    '......LLVVVVLL.MMMMMSS..',
+                    '......LLVVVVLLMMMMMGSSS.',
+                    '...DD..LLVVLLMMMMMMSSSS.',
+                    '..DDD...LLLL.DDDDMMSSSS.',
+                    '..DDD.......DDDDDDMSSS..',
+                    '...DDDDDDDDDDDDDDDDSSS..',
+                    '.....DDDDDD..DDDDDD.....',
+                    '......DD.DD...DD.DD.....',
+                    '......DD.DD...DD.DD.....',
+                    '......DD.DD...DD.DD.....',
+                    '......WW.WW...WW.WW.....',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                // 5: Idle 2 (respiração rúnica e piscada)
+                [
+                    '..............AAA.......',
+                    '...............AAA......',
+                    '......LLLL......AAMMM...',
+                    '.....LLVVLL.....MMMMMM..',
+                    '....LLVVVVLL....MMMOOMM.',
+                    '....LLVVVVLL....MMMMMMMM',
+                    '....LLVVVVVLL..MMMMMMMWW',
+                    '.....LLVVVVLL..MMMMMSS..',
+                    '.....LLVVVVLL.MMMMGGSSS.',
+                    '..DD..LLVVLL.MMMMGGSSSS.',
+                    '.DDD...LLLL..DDDDMMSSSS.',
+                    '..DDD.......DDDDDDMSSS..',
+                    '...DDDDDDDDDDDDDDDDSSS..',
+                    '.....DDDDDD..DDDDDD.....',
+                    '......DD.DD...DD.DD.....',
+                    '......DD.DD...DD.DD.....',
+                    '......DD.DD...DD.DD.....',
+                    '......WW.WW...WW.WW.....',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                // 6: Ataque 1 (inspiração dracônica com asas abertas)
+                [
+                    '.....LLLLL....AAA.......',
+                    '....LLVVVLL....AAA......',
+                    '...LLVVVVVLL....AAMMM...',
+                    '..LLVVVVVVVLL...MMMMMM..',
+                    '..LLVVVVVVVVLL..MMMGOMM.',
+                    '...LLVVVVVVVVLL.MMMMMMWW',
+                    '....LLVVVVVVLL.MMMMM....',
+                    '.....LLVVVVLL..MMMMSS...',
+                    '......LLVVLL..MMMMGGSSS.',
+                    '..DD...LLLL..MMMMMSSSS..',
+                    '.DDD........DDDDMMSSSS..',
+                    '..DDD......DDDDDDMSSS...',
+                    '...DDDDDDDDDDDDDDDD.....',
+                    '.....DDDDDD..DDDDDD.....',
+                    '.....DD..DD...DD..DD....',
+                    '.....WW..WW...WW..WW....',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................'
+                ],
+                // 7: Ataque 2 (Sopro do Véu!)
+                [
+                    '..............AAA.......',
+                    '...............AAA......',
+                    '.....LLLLLL.....AAMMM...',
+                    '...LLLVVVVLLL...MMMMMM..',
+                    '..LLVVVVVVVVLL..MMMGOMM.',
+                    '..LLVVVVVVVVLL.MMMMMMMWW',
+                    '...LLVVVVVVLL.MMMMMMVVGG',
+                    '....LLLLVVLL.MMMMMSSGGGG',
+                    '........LLL.MMMMMGGSSSGG',
+                    '..DD........MMMMMMSSSS..',
+                    '.DDD.......DDDDDMMSSSS..',
+                    '..DDD.....DDDDDDDMSSS...',
+                    '...DDDDDDDDDDDDDDDD.....',
+                    '.....DDDDDD..DDDDDD.....',
+                    '....DD...DD....DD..DD...',
+                    '....WW...WW....WW..WW...',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................',
+                    '........................'
+                ]
+            ],
+            build(f) { return this.frames[f & 7]; }
+        }
+    };
+
+    // Sub-detalhes 48x48 e Insígnias de Evolução Estágio II e III (aplicados ANTES de shadeTones48 + outlineGrid!)
+    function petDetail(type, g48, pose, stage) {
+        const put = (x, y, r) => { if (y >= 0 && y < 48 && x >= 0 && x < 48) g48[y][x] = r; };
+        const rect = (x0, y0, w, h, r) => { for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++) put(x, y, r); };
+        const dy = [0, -2, 0, -2, 0, 0, -2, 0][pose & 7] || 0;
+
+        // Detalhes finos 48x48 por espécie + Evolução Estágio II (Armadura/Runas) e Estágio III (Ascensão do Véu)
+        if (type === 'horse') {
+            // Olho nobre com brilho especular + rédea dourada
+            if (pose !== 5) { put(37, 8 + dy, 'W'); put(38, 8 + dy, 'O'); put(37, 9 + dy, 'O'); put(38, 9 + dy, 'O'); }
+            for (let i = 0; i < 8; i++) put(27 + i, 15 + Math.floor(i * 0.25) + dy, 'A');
+            if (stage >= 2) {
+                // Estágio II (Corcel de Ferro): chanfro de aço na cabeça + barda peitoral e traseira com rebites de ouro
+                for (let i = 0; i < 6; i++) { put(35 + i, 6 + i + dy, 'W'); put(36 + i, 6 + i + dy, 'A'); }
+                rect(12, 22 + dy, 8, 5, 'W'); rect(12, 22 + dy, 8, 1, 'A');
+                rect(32, 22 + dy, 7, 5, 'W'); rect(32, 22 + dy, 7, 1, 'A');
+            }
+            if (stage >= 3) {
+                // Estágio III (Corcel do Véu): chifre de guerra dourado, crina e cascos com chamas do Véu
+                put(39, 3 + dy, 'A'); put(40, 2 + dy, 'A'); put(41, 1 + dy, 'G');
+                for (let y = 7; y <= 18; y += 2) { put(24, y + dy, 'G'); put(25, y + dy, 'A'); }
+                for (let x = 6; x < 44; x++) {
+                    for (let y = 38; y < 46; y++) if (g48[y][x] === 'W') g48[y][x] = (y & 1) ? 'G' : 'A';
+                }
+            }
+        } else if (type === 'wolf') {
+            if (pose !== 5) { put(36, 10 + dy, 'W'); put(37, 10 + dy, 'A'); put(37, 11 + dy, 'O'); }
+            if (stage >= 2) {
+                // Estágio II (Lobo Alfa de Ferro): ombreira de aço com espinhos dourados e elmo lupino
+                rect(24, 20 + dy, 9, 5, 'W'); rect(24, 20 + dy, 9, 1, 'A');
+                put(26, 18 + dy, 'A'); put(29, 18 + dy, 'A');
+                put(35, 8 + dy, 'W'); put(36, 8 + dy, 'A');
+            }
+            if (stage >= 3) {
+                // Estágio III (Lobo Espiritual do Véu): runas luminosas na pelagem, aura na cauda e coroa alfa
+                put(34, 4 + dy, 'G'); put(35, 3 + dy, 'A'); put(36, 4 + dy, 'G');
+                rect(16, 22 + dy, 6, 2, 'G');
+                for (let y = 20; y <= 25; y++) for (let x = 2; x <= 7; x++) if (g48[y][x] === 'S') g48[y][x] = 'G';
+            }
+        } else if (type === 'raven') {
+            if (pose !== 5) { put(34, 15, 'W'); put(35, 15, 'G'); }
+            if (stage >= 2) {
+                // Estágio II (Corvo Lâmina-Negra): bordas das penas primárias em aço prateado e colar de ouro
+                for (let y = 6; y < 32; y++) for (let x = 4; x < 26; x++) {
+                    if (g48[y][x] === 'D' && g48[y][x - 1] === '.') { g48[y][x] = 'W'; g48[y][x + 1] = 'A'; }
+                }
+            }
+            if (stage >= 3) {
+                // Estágio III (Corvo Espectral do Véu): coroa sombria flutuante e pontas espectrais
+                put(33, 4, 'A'); put(34, 3, 'G'); put(35, 4, 'A');
+                for (let y = 10; y < 34; y += 3) for (let x = 4; x < 24; x++) if (g48[y][x] === 'W') g48[y][x] = 'G';
+            }
+        } else if (type === 'owl') {
+            if (pose !== 5) { put(23, 9, 'W'); put(28, 9, 'W'); }
+            if (stage >= 2) {
+                // Estágio II (Coruja Runalar): diadema dourado acima dos penachos e peitoral rúnico
+                rect(24, 3, 6, 3, 'A'); put(26, 3, 'G');
+                rect(23, 18, 7, 2, 'A'); put(26, 19, 'G');
+            }
+            if (stage >= 3) {
+                // Estágio III (Coruja Oráculo do Véu): auréola arcana de runas flutuantes
+                for (const [rx, ry] of [[18, 3], [22, 1], [26, 1], [30, 1], [34, 3]]) {
+                    put(rx, ry, 'G'); put(rx + 1, ry, 'A');
+                }
+            }
+        } else if (type === 'faro') {
+            if (pose !== 5) { put(38, 12 + dy, 'W'); put(39, 12 + dy, 'O'); }
+            if (stage >= 2) {
+                // Estágio II (Faro, Vigia Real): colete real cravado de ouro
+                rect(18, 23 + dy, 12, 5, 'V'); rect(18, 23 + dy, 12, 1, 'A'); rect(18, 27 + dy, 12, 1, 'A');
+            }
+            if (stage >= 3) {
+                // Estágio III (Faro, Guardião de Eiran): insígnia solar de Eiran e coleira radiante
+                put(36, 6 + dy, 'A'); put(37, 5 + dy, 'G'); put(38, 6 + dy, 'A');
+                rect(21, 24 + dy, 6, 3, 'G');
+            }
+        } else if (type === 'spirit') {
+            if (stage >= 2) {
+                // Estágio II (Espírito do Altar): asas de luz expandidas e estola dourada
+                rect(4, 12, 4, 8, 'W'); rect(20, 20, 6, 2, 'A');
+            }
+            if (stage >= 3) {
+                // Estágio III (Serafim de Luz Silente): coroa seráfica radiante e asas douradas inferiores
+                rect(18, 1, 10, 2, 'A'); put(23, 0, 'W');
+                rect(4, 24, 5, 6, 'A');
+            }
+        } else if (type === 'eagle') {
+            if (pose !== 5) { put(36, 15, 'W'); put(37, 15, 'O'); }
+            if (stage >= 2) {
+                // Estágio II (Águia de Crista Dourada): elmo-crista de falcoaria e peitoral
+                rect(31, 7, 5, 2, 'A'); rect(26, 20, 7, 3, 'A');
+            }
+            if (stage >= 3) {
+                // Estágio III (Águia Tempestade do Véu): penas elétricas azuis e coroa de trovão
+                put(33, 5, 'G'); put(34, 4, 'W'); put(35, 5, 'G');
+                for (let y = 4; y < 30; y += 2) for (let x = 4; x < 26; x++) if (g48[y][x] === 'D') g48[y][x] = 'G';
+            }
+        } else if (type === 'mimic') {
+            if (stage >= 2) {
+                // Estágio II (Arca Real Blindada): reforços de aço e cravos dourados extras
+                rect(10, 14, 28, 2, 'A'); rect(21, 24, 6, 6, 'A');
+            }
+            if (stage >= 3) {
+                // Estágio III (Cofre Voraz do Véu): coroa real no topo da tampa e olho do Véu na fechadura
+                put(20, 7, 'A'); put(21, 6, 'A'); put(24, 5, 'A'); put(24, 6, 'G'); put(27, 6, 'A'); put(28, 7, 'A');
+                rect(22, 25, 4, 4, 'G');
+            }
+        } else if (type === 'salamander') {
+            if (pose !== 5) { put(39, 21 + dy, 'W'); put(40, 21 + dy, 'O'); }
+            if (stage >= 2) {
+                // Estágio II (Salamandra da Forja): placas dorsais de ferro forjado de Dorian
+                rect(18, 23 + dy, 14, 4, 'L'); rect(18, 23 + dy, 14, 1, 'A');
+            }
+            if (stage >= 3) {
+                // Estágio III (Draco de Magma de Dorian): chifres de magma e fornalha dorsal
+                put(33, 15 + dy, 'A'); put(32, 14 + dy, 'G'); put(31, 13 + dy, 'V');
+                rect(20, 24 + dy, 10, 2, 'G');
+            }
+        } else if (type === 'dragon') {
+            if (pose !== 5) { put(39, 8, 'W'); put(40, 8, 'A'); }
+            if (stage >= 2) {
+                // Estágio II (Dragão de Escama Rúnica): anéis dourados nos chifres e sela-trono rúnica
+                rect(24, 19, 7, 3, 'A'); rect(32, 14, 4, 6, 'A');
+            }
+            if (stage >= 3) {
+                // Estágio III (Grão-Dragão do Véu): coroa dracônica ancestral e asas do Véu
+                put(33, 1, 'A'); put(34, 0, 'G'); put(35, 1, 'A');
+                for (let y = 4; y < 32; y += 2) for (let x = 4; x < 28; x++) if (g48[y][x] === 'V') g48[y][x] = 'G';
+            }
+        }
+        // Insígnia externa de silhueta por estágio (garante evolução visual imediata na silhueta de todos os 10 pets)
+        if (stage >= 2) {
+            rect(6, 6 + dy, 3, 2, 'A');
+            rect(5, 8 + dy, 2, 2, 'W');
+        }
+        if (stage >= 3) {
+            rect(3, 3 + dy, 3, 2, 'G');
+            rect(41, 3 + dy, 3, 2, 'G');
+            put(4, 2 + dy, 'A');
+            put(42, 2 + dy, 'A');
+        }
+    }
+
+    function bakeCanvas(idx, pal, face, flash) {
+        const cv = document.createElement('canvas');
+        cv.width = 48; cv.height = 48;
+        const ctx = cv.getContext('2d');
+        const img = ctx.createImageData(48, 48), px = img.data;
+        const rgbCache = pal.map(h => SpriteCore.hexRgb(h));
+        for (let y = 0; y < 48; y++) {
+            for (let x = 0; x < 48; x++) {
+                const sx = face >= 0 ? x : 47 - x;
+                const k = idx[y][sx];
+                if (!k) continue;
+                const c = flash ? [255, 255, 255] : (rgbCache[k - 1] || [255, 255, 255]);
+                const o = (y * 48 + x) * 4;
+                px[o] = c[0]; px[o + 1] = c[1]; px[o + 2] = c[2]; px[o + 3] = 255;
+            }
+        }
+        ctx.putImageData(img, 0, 0);
+        return cv;
+    }
+
+    function get(type, pose, face, flash, stage) {
+        const t = PET_ART[type] ? type : 'horse';
+        const p = (pose | 0) & 7;
+        const fc = (face === undefined || face >= 0) ? 1 : -1;
+        const fl = flash ? 1 : 0;
+        const stg = Math.max(1, Math.min(3, stage || 1));
+        const key = t + '|' + p + '|' + fc + '|' + fl + '|' + stg;
+        if (_cache.has(key)) return _cache.get(key);
+        const art = PET_ART[t];
+        const rows24 = art.build(p).map(r => r.slice(0, 24).padEnd(24, '.').split(''));
+        const idx = SpriteCore.finish48(rows24, g48 => petDetail(t, g48, p, stg));
+        const pal = SpriteCore.buildPalette(art.pal());
+        const cv = bakeCanvas(idx, pal, fc, fl);
+        _cache.set(key, cv);
+        return cv;
+    }
+
+    function clear() { _cache.clear(); }
+
+    return { get, clear, TYPES: Object.keys(PET_ART) };
+})();
+
 const SpriteRenderer = {
     drawCharacter(ctx, x, y, type, frame, angle=0, isHit=false) {
         const f = (typeof frame === 'object') ? frame : { time: frame || 0, state: 'idle' };
@@ -3874,11 +5964,12 @@ if (typeof window !== 'undefined') {
     window.SpriteManager = SpriteManager;
     window.SpriteRenderer = SpriteRenderer;
     window.NpcSprites = NpcSprites;
+    window.PetSprites = PetSprites;
 }
 
 // Export for Node.js testing
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { SpriteManager, NpcSprites };
+    module.exports = { SpriteManager, NpcSprites, PetSprites };
 }
 
 
