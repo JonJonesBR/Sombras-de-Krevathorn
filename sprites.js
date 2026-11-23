@@ -305,7 +305,7 @@ const SpriteCore = (() => {
         return row === undefined ? [0, 1, 2, 3, 4, 5, 6, 7].map(pick) : pick(row);
     }
 
-    return { N, M, blank, bbox, mirror, finish, finishTones, finish48, upscaleRole48, turn, back, directions, buildPalette, decode, encode, copy };
+    return { N, M, blank, bbox, mirror, finish, finishTones, finish48, upscaleRole48, turn, back, directions, buildPalette, ramp, hexRgb, rgbHex, mix, decode, encode, copy };
 })();
 
 // Arte v44: quadros desenhados 24x24 por vista (f frente, b costas, s lado); linhas separadas por "|",
@@ -2581,9 +2581,375 @@ const SpriteManager = {
     _auth: {},
     _sheets: {},
     _details: {},
+    _heroDoll: null,
 
     registerDetail(type, fn) {
         if (type && typeof fn === 'function') this._details[type] = fn;
+    },
+
+    _isHeroType(type) {
+        return type === 'warrior' || type === 'rogue' || type === 'mage' || type === 'elf';
+    },
+
+    _resolveHero(type, hero) {
+        if (hero && hero.type === type) return hero;
+        if (typeof window !== 'undefined' && window.player && window.player.type === type) return window.player;
+        return null;
+    },
+
+    // Extrai perfil visual compacto do equipamento real vestido pelo herói (Paper-Doll vivo)
+    getGearProfile(type, hero) {
+        if (!this._isHeroType(type)) return null;
+        const p = this._resolveHero(type, hero);
+        if (!p) return null;
+        const eq = p.equipment || {};
+        const w = p.currentWeapon || null;
+        const wLvl = (p.weaponLevel | 0) || 1;
+        const hasEq = !!(w || eq.helm || eq.armor || eq.boots || eq.amulet || eq.ring || wLvl > 1);
+        if (!hasEq) return null;
+        const RAR = ['Comum', 'Incomum', 'Raro', 'Epico', 'Lendario', 'Mitico'];
+        const rOf = it => it && it.rarity ? Math.max(0, RAR.indexOf(it.rarity)) : -1;
+        const pfxOf = it => {
+            if (!it || !it.name) return '';
+            const w0 = String(it.name).trim().split(/\s+/)[0] || '';
+            return w0.normalize ? w0.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase() : w0.toLowerCase();
+        };
+        return {
+            type,
+            wId: w ? (w.id || '') : '',
+            wTier: w && typeof w.tier === 'number' ? (w.tier | 0) : Math.min(4, Math.max(0, wLvl - 1)),
+            wElem: w ? (w.element || '') : '',
+            wVar: w ? (w.variant || '') : '',
+            wLvl,
+            helmR: rOf(eq.helm), helmP: pfxOf(eq.helm),
+            armorR: rOf(eq.armor), armorP: pfxOf(eq.armor),
+            bootsR: rOf(eq.boots), bootsP: pfxOf(eq.boots),
+            amuletR: rOf(eq.amulet), amuletP: pfxOf(eq.amulet),
+            ringR: rOf(eq.ring), ringP: pfxOf(eq.ring),
+            relicsN: (p.relics && p.relics.size) ? p.relics.size : 0
+        };
+    },
+
+    getGearSig(gp) {
+        if (!gp) return '';
+        return gp.type + '|' + gp.wId + ':' + gp.wTier + ':' + gp.wElem + ':' + gp.wVar + ':' + gp.wLvl +
+            '|h' + gp.helmR + ':' + gp.helmP + '|a' + gp.armorR + ':' + gp.armorP +
+            '|b' + gp.bootsR + ':' + gp.bootsP + '|m' + gp.amuletR + '|r' + gp.ringR;
+    },
+
+    // Sintetiza paleta de 31 cores refletindo armadura, elmo, arma/elemento e acessórios
+    _buildHeroPalette(type, gp) {
+        const base = (this.palettes[type] || this.palettes.warrior).slice();
+        if (!gp) return base;
+        const setRamp = (roleIdx, hex) => {
+            const r = SpriteCore.ramp(hex);
+            const off = 1 + roleIdx * 4;
+            for (let i = 0; i < 4; i++) base[off + i] = r[i];
+        };
+        // Temas por prefixo e raridade da armadura (papéis M=1, D=2, L=3)
+        const ARMOR_THEMES = {
+            sombrio:    ['#36284e', '#1e1530', '#8d73c4'],
+            amaldicoado:['#541e2e', '#2b0f19', '#c94a64'],
+            sagrado:    ['#756b54', '#463f31', '#ebd69c'],
+            brilhante:  ['#617696', '#37445c', '#d8ecff'],
+            runico:     ['#2d5478', '#1b314a', '#70d6ff'],
+            arcano:     ['#593485', '#311b4f', '#c78fff'],
+            primordial: ['#2f5e41', '#1c3827', '#7de096'],
+            antigo:     ['#634e3a', '#3b2e22', '#c4a274'],
+            vingativo:  ['#6e2424', '#3d1212', '#f0624d'],
+            eterno:     ['#4e5778', '#2a3047', '#e0c67b']
+        };
+        const RAR_ARMOR = [
+            null, // Comum mantém matiz base com leve polimento
+            ['#3d5e50', '#243830', '#82c4a4'], // Incomum: aço-esmeralda
+            ['#355482', '#1e304d', '#82c0f5'], // Raro: mithril azul
+            ['#5c3882', '#331d4d', '#c594f5'], // Épico: ametista real
+            ['#855a25', '#4d3213', '#ffd269'], // Lendário: ouro dracônico
+            ['#7d1e2e', '#450e18', '#ff6e7a']  // Mítico: carmesim abissal
+        ];
+        if (gp.armorR >= 0) {
+            const th = ARMOR_THEMES[gp.armorP] || RAR_ARMOR[gp.armorR];
+            if (th) {
+                setRamp(1, th[0]); // M (armadura/túnica principal)
+                setRamp(2, th[1]); // D (camada escura/calças)
+                setRamp(3, th[2]); // L (bordas/placas claras)
+            } else if (gp.armorR === 0) {
+                // Comum: reforça contraste metálico/couro
+                setRamp(3, '#a6b3c4');
+            }
+        }
+        // Elmo/Capa (papel A=4: acento/crista/capa)
+        const RAR_ACCENT = ['#8c444e', '#2ea866', '#2e8fd6', '#9b4de0', '#e69822', '#f02e48'];
+        if (gp.helmR >= 0 || gp.armorR >= 2) {
+            const rA = Math.max(gp.helmR, gp.armorR - 1);
+            if (rA >= 0 && RAR_ACCENT[rA]) setRamp(4, RAR_ACCENT[rA]);
+        }
+        // Arma (papel W=5 lâmina/arco/cristal, V=6 punho/madeira, G=29..30 brilho)
+        const ELEM_W = {
+            fire:      { w: '#ffb066', v: '#7a2e1d', g0: '#ff6a22', g1: '#ffe6b0'.replace('\u0104', '') },
+            ice:       { w: '#9eeeff', v: '#2e5875', g0: '#4ce4ff', g1: '#e6ffff' },
+            lightning: { w: '#e0b8ff', v: '#5e3d82', g0: '#ffe04d', g1: '#ffffff' },
+            poison:    { w: '#7ae895', v: '#2b4f34', g0: '#42f56c', g1: '#d9ffe0' }
+        };
+        const TIER_W = [
+            { w: '#b8c0cc', v: '#6b4938' }, // Tier 0
+            { w: '#8ee6b0', v: '#4d6b53', g0: '#45e685', g1: '#d4ffe4' }, // Tier 1
+            { w: '#8acfff', v: '#3d587a', g0: '#42baff', g1: '#dcf4ff' }, // Tier 2
+            { w: '#d19eff', v: '#583b73', g0: '#b966ff', g1: '#f3e0ff' }, // Tier 3
+            { w: '#ffe07d', v: '#804d1f', g0: '#ffae2b', g1: '#fff7d6' }  // Tier 4
+        ];
+        const ew = (gp.wElem && ELEM_W[gp.wElem]) || TIER_W[Math.min(4, Math.max(0, gp.wTier))] || TIER_W[0];
+        if (ew) {
+            setRamp(5, ew.w);
+            setRamp(6, ew.v);
+            if (ew.g0) { base[29] = ew.g0; base[30] = ew.g1 || '#ffffff'; }
+        }
+        // Amuleto/Anel mítico ou lendário realça o brilho G se a arma for básica
+        if (!gp.wElem && (gp.amuletR >= 3 || gp.ringR >= 3)) {
+            const topAcc = Math.max(gp.amuletR, gp.ringR);
+            base[29] = topAcc >= 5 ? '#ff4466' : (topAcc === 4 ? '#ffcc33' : '#c466ff');
+            base[30] = '#ffffff';
+        }
+        return base;
+    },
+
+    // Modifica a grade 48x48 de papéis ANTES do sombreamento volumétrico e contorno 1px,
+    // adicionando elmo/coroa/capuz, capa, ombreiras, silhueta da arma por tier e botas.
+    _applyHeroGearDetail(g, row, name, type, gp) {
+        if (!gp || (name && name.indexOf('death') === 0)) return;
+        const put = (x, y, ch) => { if (x >= 1 && x < 47 && y >= 1 && y < 47) g[y][x] = ch; };
+        const putIfEmpty = (x, y, ch) => { if (x >= 1 && x < 47 && y >= 1 && y < 47 && g[y][x] === '.') g[y][x] = ch; };
+        const isBack = (row === 5 || row === 6 || row === 7);
+        const isSide = (row === 0 || row === 4);
+        const facingLeft = (row === 3 || row === 4 || row === 5);
+
+        // Encontra topo da cabeça (yTop) e centro X da cabeça na grade 48x48
+        let yTop = 48, hx0 = 48, hx1 = 0;
+        for (let y = 2; y < 22; y++) {
+            for (let x = 10; x < 38; x++) {
+                const c = g[y][x];
+                if (c !== '.' && c !== 'W' && c !== 'G') {
+                    if (y < yTop) yTop = y;
+                    if (y <= yTop + 6) { if (x < hx0) hx0 = x; if (x > hx1) hx1 = x; }
+                }
+            }
+        }
+        const hcx = (hx0 <= hx1) ? ((hx0 + hx1) >> 1) : 24;
+
+        // 1. ELMO / CAPUZ / COROA (gp.helmR >= 0)
+        if (gp.helmR >= 0 && yTop < 22) {
+            if (type === 'warrior') {
+                // Viseira metálica + guarda nasal; Raro+ ganha chifres/penacho real; Lendário+ ganha joia G
+                const vy = Math.min(20, yTop + 4);
+                if (!isBack) {
+                    for (let x = hcx - 4; x <= hcx + 4; x++) if (g[vy][x] !== '.') put(x, vy, 'L');
+                    put(hcx, vy + 1, 'W'); put(hcx, vy + 2, 'L');
+                }
+                if (gp.helmR >= 1) {
+                    // Crista superior
+                    put(hcx, Math.max(1, yTop - 1), 'A'); put(hcx + (facingLeft ? 1 : -1), Math.max(1, yTop - 1), 'A');
+                    put(hcx, Math.max(1, yTop - 2), 'A');
+                }
+                if (gp.helmR >= 2) {
+                    // Chifres de aço/ouro nas laterais do elmo
+                    const lx = Math.max(4, hx0 - 1), rx = Math.min(43, hx1 + 1);
+                    put(lx, yTop + 2, 'L'); put(lx - 1, yTop + 1, 'W'); put(lx - 1, Math.max(1, yTop), gp.helmR >= 4 ? 'G' : 'W');
+                    put(rx, yTop + 2, 'L'); put(rx + 1, yTop + 1, 'W'); put(rx + 1, Math.max(1, yTop), gp.helmR >= 4 ? 'G' : 'W');
+                }
+                if (gp.helmR >= 4 && !isBack) { put(hcx, yTop + 2, 'G'); }
+            } else if (type === 'rogue') {
+                // Máscara sombria / faixa de assassino + capuz pontiagudo em Raro+
+                const my = Math.min(21, yTop + 6);
+                if (!isBack) {
+                    for (let x = hcx - 3; x <= hcx + 3; x++) if (g[my][x] === 'S') put(x, my, 'D');
+                }
+                // Faixa na testa com pontas ao vento
+                const by = Math.min(18, yTop + 3);
+                for (let x = hcx - 4; x <= hcx + 4; x++) if (g[by][x] !== '.') put(x, by, 'A');
+                const tailDir = facingLeft ? 1 : -1;
+                putIfEmpty(hcx + tailDir * 6, by, 'A');
+                putIfEmpty(hcx + tailDir * 7, by + 1, 'A');
+                if (gp.helmR >= 2) {
+                    put(hcx, Math.max(1, yTop - 1), 'A');
+                    put(hcx + tailDir, Math.max(1, yTop - 1), 'D');
+                    if (gp.helmR >= 3 && !isBack) put(hcx, by, 'G');
+                }
+            } else if (type === 'mage') {
+                // Diadema arcano / chapéu de arquimago com aba larga e gema astral
+                const cy = Math.min(18, yTop + 2);
+                put(hcx, Math.max(1, yTop - 1), 'A');
+                put(hcx, Math.max(1, yTop - 2), gp.helmR >= 3 ? 'G' : 'A');
+                if (gp.helmR >= 1) {
+                    for (let dx = -5; dx <= 5; dx++) putIfEmpty(hcx + dx, cy + 1, 'A');
+                }
+                if (gp.helmR >= 2 && !isBack) {
+                    put(hcx, cy + 1, 'G'); put(hcx - 2, cy + 1, 'L'); put(hcx + 2, cy + 1, 'L');
+                }
+            } else if (type === 'elf') {
+                // Tiara silvestre / coroa alada élfica com esmeralda estelar
+                const ty = Math.min(18, yTop + 3);
+                for (let dx = -3; dx <= 3; dx++) if (g[ty][hcx + dx] !== '.') put(hcx + dx, ty, 'A');
+                if (!isBack) put(hcx, ty, gp.helmR >= 2 ? 'G' : 'W');
+                if (gp.helmR >= 2) {
+                    // Asas laterais da coroa élfica
+                    putIfEmpty(hx0 - 1, ty, 'A'); putIfEmpty(hx0 - 1, ty - 1, 'W');
+                    putIfEmpty(hx1 + 1, ty, 'A'); putIfEmpty(hx1 + 1, ty - 1, 'W');
+                }
+            }
+        }
+
+        // 2. ARMADURA, OMBREIRAS & CAPA/MANTO (gp.armorR >= 0)
+        if (gp.armorR >= 0) {
+            // Ombreiras reforçadas (y = 20..25)
+            const py = Math.min(28, yTop + 13);
+            if (gp.armorR >= 1) {
+                for (let dy = 0; dy <= 2; dy++) {
+                    for (let x = 12; x <= 35; x++) {
+                        if ((x <= 18 || x >= 29) && (g[py + dy][x] === 'M' || g[py + dy][x] === 'D')) {
+                            g[py + dy][x] = (dy === 0) ? 'L' : (gp.armorR >= 3 && dy === 1 ? 'A' : 'L');
+                        }
+                    }
+                }
+            }
+            // Brasão peitoral / núcleo rúnico (Raro+)
+            if (gp.armorR >= 2 && !isBack && !isSide) {
+                put(hcx, py + 3, gp.armorR >= 4 ? 'G' : 'A');
+                put(hcx - 1, py + 3, 'L'); put(hcx + 1, py + 3, 'L');
+                put(hcx, py + 4, 'A');
+            }
+            // Capa / Manto dark-fantasy (visível nas costas, perfil e caindo atrás dos ombros na frente em Raro+)
+            if (gp.armorR >= 1 || gp.helmR >= 2) {
+                const capeLen = (gp.armorR >= 3) ? 14 : 11;
+                if (isBack) {
+                    for (let dy = 2; dy <= capeLen; dy++) {
+                        const cy = py + dy;
+                        if (cy >= 43) break;
+                        const halfW = 4 + (dy >> 2);
+                        for (let dx = -halfW; dx <= halfW; dx++) {
+                            const cx = hcx + dx;
+                            if (cx >= 10 && cx <= 37 && (g[cy][cx] === 'M' || g[cy][cx] === 'D' || g[cy][cx] === '.')) {
+                                g[cy][cx] = (Math.abs(dx) === halfW && gp.armorR >= 3) ? 'L' : 'A';
+                            }
+                        }
+                    }
+                } else {
+                    const backSide = facingLeft ? 1 : -1;
+                    for (let dy = 2; dy <= capeLen; dy++) {
+                        const cy = py + dy;
+                        if (cy >= 42) break;
+                        const cx = hcx + backSide * (5 + (dy >> 2));
+                        putIfEmpty(cx, cy, 'A');
+                        if (gp.armorR >= 2) putIfEmpty(cx + backSide, cy, (dy === capeLen && gp.armorR >= 4) ? 'L' : 'A');
+                    }
+                }
+            }
+        }
+
+        // 3. AMULETO / COLAR RÚNICO (gp.amuletR >= 0)
+        if (gp.amuletR >= 0 && !isBack) {
+            const ay = Math.min(27, yTop + 12);
+            put(hcx, ay, gp.amuletR >= 2 ? 'G' : 'A');
+        }
+
+        // 4. BOTAS / GREVAS (gp.bootsR >= 0)
+        if (gp.bootsR >= 0) {
+            for (let y = 38; y <= 45; y++) {
+                for (let x = 12; x <= 36; x++) {
+                    if (g[y][x] === 'M' || g[y][x] === 'D') {
+                        if (y === 39 || (gp.bootsR >= 3 && y === 41)) g[y][x] = 'L';
+                        else if (gp.bootsR >= 2 && y === 40 && (x === 15 || x === 32)) g[y][x] = 'A';
+                    }
+                }
+            }
+        }
+
+        // 5. EVOLUÇÃO DE SILHUETA DA ARMA POR CLASSE & TIER (gp.wTier >= 1 ou gp.wId)
+        if (gp.wTier >= 1 || gp.wElem) {
+            // Localiza o maior cluster de pixels 'W' (arma) na grade 48x48
+            let wx0 = 48, wx1 = -1, wy0 = 48, wy1 = -1, wCount = 0;
+            for (let y = 2; y < 44; y++) {
+                for (let x = 1; x < 47; x++) {
+                    if (g[y][x] === 'W') {
+                        wCount++;
+                        if (x < wx0) wx0 = x;
+                        if (x > wx1) wx1 = x;
+                        if (y < wy0) wy0 = y;
+                        if (y > wy1) wy1 = y;
+                    }
+                }
+            }
+            if (wCount >= 4 && wy0 < 40) {
+                const wSide = ((wx0 + wx1) >> 1) < hcx ? -1 : 1;
+                const tipX = wSide < 0 ? wx0 : wx1;
+                const tipY = wy0;
+                const coreRole = (gp.wElem || gp.wTier >= 3) ? 'G' : 'W';
+                if (type === 'warrior') {
+                    if (gp.wId === 'w_axe1' || gp.wTier === 2) {
+                        // Machado de Guerra: aba larga de lâmina dupla no topo da arma
+                        for (let dy = 2; dy <= 7; dy++) {
+                            putIfEmpty(tipX + wSide, tipY + dy, 'W');
+                            putIfEmpty(tipX + wSide * 2, tipY + dy, (dy >= 3 && dy <= 6) ? 'W' : '.');
+                            put(tipX, tipY + dy, 'L');
+                        }
+                    } else if (gp.wId === 'w_hammer1' || gp.wTier === 3) {
+                        // Martelo Trovão: cabeça retangular pesada com núcleo elétrico
+                        for (let dy = 1; dy <= 5; dy++) {
+                            for (let dx = -2; dx <= 2; dx++) {
+                                put(tipX + dx, tipY + dy, (dy === 3 && dx === 0) ? 'G' : (Math.abs(dx) === 2 ? 'W' : 'L'));
+                            }
+                        }
+                    } else if (gp.wId === 'w_greatsword' || gp.wTier >= 4) {
+                        // Lâmina Infernal / Montante Lendária: ponta estendida + núcleo flamejante
+                        putIfEmpty(tipX, Math.max(1, tipY - 1), 'W');
+                        putIfEmpty(tipX, Math.max(1, tipY - 2), 'G');
+                        for (let y = tipY + 2; y <= Math.min(36, wy1 - 2); y += 2) {
+                            putIfEmpty(tipX + wSide, y, 'W');
+                            if (g[y][tipX] === 'W') g[y][tipX] = 'G';
+                        }
+                    } else {
+                        // Espada Longa (tier 1): ponta afiada + fio brilhante
+                        putIfEmpty(tipX, Math.max(1, tipY - 1), 'W');
+                        put(tipX, tipY + 2, coreRole);
+                    }
+                } else if (type === 'rogue') {
+                    // Adagas Sombrias / Besta / Sussurro da Morte: pontas venenosas/sombrias alongadas
+                    putIfEmpty(wx0, Math.max(1, wy0 - 1), coreRole);
+                    putIfEmpty(wx1, Math.max(1, wy0 - 1), coreRole);
+                    if (gp.wTier >= 2) {
+                        putIfEmpty(wx0 - 1, wy0 + 2, 'W');
+                        putIfEmpty(wx1 + 1, wy0 + 2, 'W');
+                    }
+                    if (gp.wTier >= 3) {
+                        put(wx0, wy0 + 1, 'G');
+                        put(wx1, wy0 + 1, 'G');
+                    }
+                } else if (type === 'mage') {
+                    // Cetro / Cajado Trovão / Glacial / Vazio: coroa arcana expandida no topo do cajado
+                    let gx = tipX, gy = tipY;
+                    for (let y = 2; y < 22; y++) for (let x = 2; x < 46; x++) {
+                        if (g[y][x] === 'G') { gx = x; gy = y; y = 99; break; }
+                    }
+                    put(gx, gy, 'G');
+                    putIfEmpty(gx, Math.max(1, gy - 1), 'G');
+                    putIfEmpty(gx - 1, gy, gp.wTier >= 2 ? 'W' : 'G');
+                    putIfEmpty(gx + 1, gy, gp.wTier >= 2 ? 'W' : 'G');
+                    if (gp.wTier >= 3) {
+                        putIfEmpty(gx - 2, Math.max(1, gy - 1), 'A');
+                        putIfEmpty(gx + 2, Math.max(1, gy - 1), 'A');
+                        putIfEmpty(gx, Math.max(1, gy - 2), 'G');
+                    }
+                } else if (type === 'elf') {
+                    // Arco Longo / Élfico / Vento / Sombrio: pontas recurvas e flecha elemental
+                    putIfEmpty(tipX + wSide, Math.max(1, wy0), 'A');
+                    putIfEmpty(tipX + wSide, Math.min(45, wy1), 'A');
+                    const midY = (wy0 + wy1) >> 1;
+                    if (gp.wTier >= 2) {
+                        put(tipX + wSide, midY, 'G');
+                        putIfEmpty(tipX + wSide * 2, midY, 'G');
+                    }
+                }
+            }
+        }
     },
 
     init() {
@@ -2604,10 +2970,35 @@ const SpriteManager = {
     },
 
     // Folha do tipo (29 colunas x 8 direções de 48px) com a direção `row` garantidamente pronta.
-    // A versão branca (flash de dano) é preenchida junto, direção por direção.
-    sheetRow(type, row, white) {
+    // Quando o herói tem equipamento vestido, usa o buffer único reutilizável `_heroDoll` (Paper-Doll vivo).
+    sheetRow(type, row, white, hero) {
         const base = (this._artBase && this._artBase[type]) || type;
         if (!this.palettes[type] || !ART_PACKED[base + '_f_idle0']) type = 'warrior';
+        const gp = this.getGearProfile(type, hero);
+        if (gp && typeof document !== 'undefined') {
+            const sig = this.getGearSig(gp);
+            let d = this._heroDoll;
+            if (!d) {
+                const ts = this.tileSize;
+                const mk = () => {
+                    const c = document.createElement('canvas'); c.width = ts * this.COLS; c.height = ts * 8;
+                    if (typeof window !== 'undefined' && window.CanvasRecovery) CanvasRecovery.watch(c, 'folha hero-paperdoll');
+                    return c;
+                };
+                d = this._heroDoll = { color: mk(), white: mk(), rows: 0, sig: '', pal: null, gp: null };
+            }
+            if (d.sig !== sig) {
+                d.sig = sig;
+                d.rows = 0;
+                d.gp = gp;
+                d.pal = this._buildHeroPalette(type, gp);
+            }
+            if (!(d.rows & (1 << row))) {
+                this._buildRow(type, row, d, d.pal, d.gp);
+                d.rows |= (1 << row);
+            }
+            return white ? d.white : d.color;
+        }
         let e = this._sheets[type];
         if (!e) {
             const ts = this.tileSize;
@@ -2619,13 +3010,14 @@ const SpriteManager = {
             e = this._sheets[type] = { color: mk(), white: mk(), rows: 0 };
             this.sprites[type] = e.color; this.spritesWhite[type] = e.white;
         }
-        if (!(e.rows & (1 << row))) { this._buildRow(type, row, e); e.rows |= (1 << row); }
+        if (!(e.rows & (1 << row))) { this._buildRow(type, row, e, null, null); e.rows |= (1 << row); }
         return white ? e.white : e.color;
     },
 
-    _buildRow(type, row, e) {
+    _buildRow(type, row, e, customPal, gearProfile) {
         const ts = this.tileSize;
-        const rgba = this.palettes[type].map(h => ((255 << 24) | (parseInt(h.slice(5, 7), 16) << 16) | (parseInt(h.slice(3, 5), 16) << 8) | parseInt(h.slice(1, 3), 16)) >>> 0);
+        const pal = customPal || this.palettes[type];
+        const rgba = pal.map(h => ((255 << 24) | (parseInt(h.slice(5, 7), 16) << 16) | (parseInt(h.slice(3, 5), 16) << 8) | parseInt(h.slice(1, 3), 16)) >>> 0);
         const ctx = e.color.getContext('2d');
         const img = ctx.createImageData(ts, ts), px = new Uint32Array(img.data.buffer);
         const ref = SpriteCore.bbox(this._frame(type, 'f', 'idle0'));
@@ -2634,7 +3026,10 @@ const SpriteManager = {
             const name = this.COL_NAMES[col];
             const auth = { f: this._frame(type, 'f', name) };
             auth.b = this._frame(type, 'b', name); auth.s = this._frame(type, 's', name); auth.q = this._frame(type, 'q', name); auth.r = this._frame(type, 'r', name);
-            const detailFn = det ? (g48 => det(g48, row, name)) : null;
+            const detailFn = (det || gearProfile) ? (g48 => {
+                if (det) det(g48, row, name);
+                if (gearProfile) this._applyHeroGearDetail(g48, row, name, type, gearProfile);
+            }) : null;
             const idx = SpriteCore.finish48(SpriteCore.directions(auth, ref, row), detailFn);
             for (let yy = 0; yy < ts; yy++) for (let xx = 0; xx < ts; xx++) {
                 const k = idx[yy][xx];
@@ -2642,9 +3037,10 @@ const SpriteManager = {
             }
             ctx.putImageData(img, col * ts, row * ts);
         }
-        // versão branca desta direção: recorta a faixa e pinta de branco só onde há pixel
+        // versão branca desta direção: limpa a faixa antes e pinta de branco só onde há pixel
         const wc = e.white.getContext('2d'), W = e.color.width;
         wc.save();
+        wc.clearRect(0, row * ts, W, ts);
         wc.beginPath(); wc.rect(0, row * ts, W, ts); wc.clip();
         wc.drawImage(e.color, 0, row * ts, W, ts, 0, row * ts, W, ts);
         wc.globalCompositeOperation = 'source-in';
@@ -2659,6 +3055,7 @@ const SpriteManager = {
         this._sheets = {};
         this.sprites = {};
         this.spritesWhite = {};
+        if (this._heroDoll) { this._heroDoll.rows = 0; this._heroDoll.sig = ''; }
     },
 
     getDirIndex(angle) {
@@ -2835,7 +3232,7 @@ const SpriteManager = {
         }
 
         // Brilho de magia nas mãos (círculo radial em cache)
-        if (castT >= 0) {
+        if (castT >= 0 && typeof PixelFX !== 'undefined') {
             const gs = d * 0.7;
             ctx.save();
             ctx.globalCompositeOperation = 'lighter';
@@ -2843,7 +3240,117 @@ const SpriteManager = {
             PixelFX.drawDisc(ctx, 0, -d * 0.55, gs / 2, 'rgb(150,200,255)', null, true);
             ctx.restore();
         }
+        // Camada viva de Paper-Doll: faíscas elementais da arma, aura de amuleto/anel e brilho mítico
+        if (isHero && !isHit && state !== 'death') {
+            this.drawHeroOverlay(ctx, type, d, halfD, row, gt, rm);
+        }
         ctx.restore();
+    },
+
+    // Overlay pixel-art leve em tempo real sobre o herói (coordenadas locais: 0,0 = pés)
+    drawHeroOverlay(ctx, type, d, halfD, row, gt, rm) {
+        const gp = this.getGearProfile(type);
+        if (!gp) return;
+        const glowOn = (typeof window === 'undefined' || window.GFX === undefined || window.GFX.glows !== false);
+        if (!glowOn) return;
+        const px = Math.max(2, Math.round(d / 24));
+        const facingLeft = (row === 3 || row === 4 || row === 5);
+        const wSide = (type === 'warrior') ? (facingLeft ? 1 : -1) : (facingLeft ? -1 : 1);
+
+        // 1. Faíscas elementais / tier alto na arma
+        const elemColors = {
+            fire:      ['#ff6a1a', '#ffd266'],
+            ice:       ['#5ce6ff', '#e0ffff'],
+            lightning: ['#ffe04d', '#d094ff'],
+            poison:    ['#3ee068', '#b8ff9e']
+        };
+        const ec = (gp.wElem && elemColors[gp.wElem]) || (gp.wTier >= 3 ? ['#c784ff', '#ffe484'] : null);
+        if (ec) {
+            const phase = rm ? 1 : ((gt * 0.14) % (Math.PI * 2));
+            const wx = wSide * Math.round(halfD * 0.58) + Math.round(Math.cos(phase) * px);
+            const wy = -Math.round(d * 0.56) + Math.round(Math.sin(phase * 1.3) * px * 1.5);
+            ctx.fillStyle = ec[0];
+            ctx.fillRect(wx, wy, px, px);
+            if (!rm && ((gt >> 3) & 1)) {
+                ctx.fillStyle = ec[1];
+                ctx.fillRect(wx - wSide * px, wy - px * 2, px, px);
+            }
+        }
+
+        // 2. Orbe/runa orbital de Amuleto ou Anel (Raro+)
+        const topAcc = Math.max(gp.amuletR, gp.ringR);
+        if (topAcc >= 2) {
+            const rCols = ['#cccccc', '#4ade80', '#38bdf8', '#c084fc', '#fbbf24', '#ff3b5c'];
+            const col = rCols[Math.min(5, topAcc)] || '#c084fc';
+            const a = rm ? 0.6 : (gt * 0.07);
+            const ox = Math.round(Math.cos(a) * (halfD * 0.72));
+            const oy = -Math.round(d * 0.48) + Math.round(Math.sin(a) * (d * 0.14));
+            ctx.fillStyle = col;
+            ctx.fillRect(ox, oy, px, px);
+        }
+
+        // 3. Halo nos pés se tiver peça Lendária ou Mítica
+        const maxR = Math.max(gp.helmR, gp.armorR, gp.bootsR, gp.amuletR, gp.ringR, gp.wTier);
+        if (maxR >= 4) {
+            const hCol = maxR >= 5 ? 'rgba(255,56,92,0.28)' : 'rgba(255,200,55,0.24)';
+            ctx.fillStyle = hCol;
+            const hw = Math.round(halfD * 0.75);
+            ctx.fillRect(-hw, -px, hw * 2, px);
+        }
+    },
+
+    // Renderiza palco Paper-Doll ampliado e animado na Tela do Personagem
+    drawHeroPreview(canvas, hero, opts) {
+        if (!canvas || !canvas.getContext) return;
+        const p = hero || (typeof window !== 'undefined' ? window.player : null);
+        if (!p) return;
+        const ctx = canvas.getContext('2d');
+        const W = canvas.width || 136, H = canvas.height || 136;
+        ctx.clearRect(0, 0, W, H);
+        ctx.imageSmoothingEnabled = false;
+
+        const o = opts || {};
+        const gt = (typeof o.tick === 'number') ? o.tick : ((typeof gameTime === 'number') ? gameTime : 0);
+        const dirIdx = (typeof o.dir === 'number') ? (o.dir & 7) : 2; // 2 = Sul (frente)
+        const angle = dirIdx * (Math.PI / 4);
+        const state = o.pose || 'idle';
+        const gp = this.getGearProfile(p.type, p);
+        const maxR = gp ? Math.max(gp.helmR, gp.armorR, gp.bootsR, gp.amuletR, gp.ringR, gp.wTier) : 0;
+        const auraColors = ['#7c6f94', '#4ade80', '#38bdf8', '#c084fc', '#fbbf24', '#ff3b5c'];
+        const auraHex = auraColors[Math.max(0, Math.min(5, maxR))] || '#9d6ef0';
+
+        // Fundo de alcova gótica + brilho radial por raridade máxima equipada
+        const cx = W >> 1, feetY = Math.round(H * 0.78);
+        const grad = ctx.createRadialGradient(cx, feetY - 28, 6, cx, feetY - 24, Math.round(W * 0.48));
+        grad.addColorStop(0, auraHex + '38');
+        grad.addColorStop(0.6, 'rgba(24,16,38,0.35)');
+        grad.addColorStop(1, 'rgba(10,6,18,0)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, W, H);
+
+        // Pedestal de pedra dark-fantasy em pixel art (degraus + runas acesas)
+        const pW = 76, pH = 14, px0 = cx - (pW >> 1), py0 = feetY - 4;
+        ctx.fillStyle = '#140e20';
+        ctx.fillRect(px0 - 4, py0 + 3, pW + 8, pH);
+        ctx.fillStyle = '#271e3b';
+        ctx.fillRect(px0, py0, pW, pH - 2);
+        ctx.fillStyle = '#3f325c';
+        ctx.fillRect(px0 + 4, py0, pW - 8, 3);
+        // Runas no pedestal
+        ctx.fillStyle = auraHex;
+        for (let rx = -24; rx <= 24; rx += 12) {
+            ctx.fillRect(cx + rx - 1, py0 + 6, 3, 2);
+        }
+        // Sombra do herói no pedestal
+        ctx.fillStyle = 'rgba(5,3,10,0.55)';
+        ctx.fillRect(cx - 20, feetY - 3, 40, 5);
+
+        // Desenha o herói com Paper-Doll em escala 3.0 (72x72 real)
+        const scale = 3.0;
+        const d = (24 * scale) | 0;
+        const halfD = d >> 1;
+        const ft = (state === 'attack' || state === 'cast') ? ((gt % 24) * 0.5) : gt;
+        this.draw(ctx, cx, feetY - halfD, p.type, ft, false, angle, scale, state);
     }
 };
 

@@ -475,7 +475,7 @@ body.mm-hidden #top-bar { right: max(8px, env(safe-area-inset-right, 8px)); }
 #top-bar .hp-container { height: 14px; }
 #minimap-container {top: max(4px, env(safe-area-inset-top, 4px)) !important;width: min(102px, 18vw) !important; height: min(102px, 18vw) !important;min-width: 72px !important; min-height: 72px !important}
 #actions-right { bottom: calc(max(12px, env(safe-area-inset-bottom, 12px)) + var(--util-btn) + 4px); gap: 8px; }
-#dodge-btn, #special-btn {width: min(44px, 12vh) !important; height: min(44px, 12vh) !important;min-width: 40px !important; min-height: 40px !important}}
+#dodge-btn, #special-btn, #tech-btn {width: min(44px, 12vh) !important; height: min(44px, 12vh) !important;min-width: 40px !important; min-height: 40px !important}}
 .hero-canvas {display: block;width: 56px;height: 60px;image-rendering: pixelated;pointer-events: none;-webkit-user-select: none;user-select: none}
 .class-mini-card.warrior .hero-canvas { filter: drop-shadow(0 0 6px rgba(127, 168, 208, 0.45)); }
 .class-mini-card.rogue .hero-canvas { filter: drop-shadow(0 0 6px rgba(224, 90, 69, 0.5)); }
@@ -659,6 +659,8 @@ body.pause-open #boss-echo-ribbon{display:none !important}
 .action-btn.dodge .icon-inline { width: 24px; height: 24px; color: #7ef7a6 !important; }
 .action-btn.special { background: radial-gradient(circle at 35% 30%, rgba(88,46,20,0.88), rgba(20,12,14,0.92)) !important; border: 2px solid rgba(255,184,77,0.78) !important; box-shadow: 0 4px 14px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.16) !important; }
 .action-btn.special .icon-inline { width: 24px; height: 24px; color: #ffd27a !important; }
+.action-btn.tech { background: radial-gradient(circle at 35% 30%, rgba(30,52,98,0.88), rgba(14,12,28,0.94)) !important; border: 2px solid rgba(112,214,255,0.78) !important; box-shadow: 0 4px 14px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.16) !important; }
+.action-btn.tech .icon-inline { width: 21px; height: 21px; color: #7ee8ff !important; filter: drop-shadow(0 0 5px rgba(112,214,255,0.45)); }
 @keyframes cdReady { 0% { transform: scale(1); } 45% { transform: scale(1.16); box-shadow: 0 0 22px rgba(255,220,110,0.85); } 100% { transform: scale(1); } }
 .action-btn.cd-ready { animation: cdReady 0.38s ease-out; }
 #boss-hp-head { display: flex; align-items: center; justify-content: center; gap: 5px; margin-bottom: 2px; }
@@ -1167,6 +1169,10 @@ body.reduce-motion.npc-dialog-open #top-bar, body.reduce-motion.npc-dialog-open 
             <button id="dodge-btn" class="action-btn dodge" data-i18n-aria-label="a11y.dodge" style="width:min(calc(56px * var(--ui-btn-scale,1)),18vw);height:min(calc(56px * var(--ui-btn-scale,1)),18vw);min-width:48px;min-height:48px;">
                 <svg class="icon-inline" width="22" height="22"><use href="#ic-dodge"/></svg>
                 <span id="dodge-cd" class="cd-badge hidden" style="font-size:13px;">1</span>
+            </button>
+            <button id="tech-btn" class="action-btn tech" data-i18n-aria-label="a11y.tech" aria-keyshortcuts="E" style="width:min(calc(48px * var(--ui-btn-scale,1)),16vw);height:min(calc(48px * var(--ui-btn-scale,1)),16vw);min-width:44px;min-height:44px;">
+                <svg class="icon-inline" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 19 9 12 22 5 9 12 2"/><circle cx="12" cy="10" r="2.5"/></svg>
+                <span id="tech-cd" class="cd-badge hidden" style="font-size:12px;">4</span>
             </button>
             <button id="special-btn" class="action-btn special" data-i18n-aria-label="a11y.ability" style="width:min(calc(56px * var(--ui-btn-scale,1)),18vw);height:min(calc(56px * var(--ui-btn-scale,1)),18vw);min-width:48px;min-height:48px;">
                 <svg class="icon-inline" width="22" height="22"><use href="#ic-fire"/></svg>
@@ -2821,6 +2827,7 @@ const SaveSystem = {
             regenerating: !!player.regenerating,
             greedBonus: !!player.greedBonus,
             heatMaxBonus: player.heatMaxBonus || 0,
+            techCooldown: player.techCooldown || 0,
             perfectChambers:player.perfectChambers||0,overdrivesTriggered:player.overdrivesTriggered||0,_surgeMult:player._surgeMult||1,_staggerMult:player._staggerMult||1,_dashCdMult:player._dashCdMult||1,
             objective: (typeof RunObjectiveSystem !== 'undefined' && RunObjectiveSystem.exportSave) ? RunObjectiveSystem.exportSave() : null,
             campState: (typeof CampSystem !== 'undefined' && CampSystem.state) ? CampSystem.state : null,
@@ -3184,6 +3191,7 @@ const SaveSystem = {
         p.regenerating = !!data.regenerating;
         p.greedBonus = !!data.greedBonus;
         p.heatMaxBonus = data.heatMaxBonus || 0;
+        p.techCooldown = (typeof data.techCooldown === 'number' && data.techCooldown > 0) ? Math.floor(data.techCooldown) : 0;
         p.perfectChambers=data.perfectChambers||0;p.overdrivesTriggered=data.overdrivesTriggered||0;p._surgeMult=data._surgeMult>0?data._surgeMult:1;p._staggerMult=data._staggerMult>0?data._staggerMult:1;p._dashCdMult=data._dashCdMult>0?data._dashCdMult:1;
         p.currentWeapon = data.currentWeapon || null;
         p.weaponLevel = data.weaponLevel || 1;
@@ -6090,6 +6098,93 @@ const I18n = {
             'camp.narr.pet.salamander.high': 'A Salamandra brilha em cobre vivo ao seu toque: nasceu das últimas brasas que aqueceram a espada do rei.',
             'camp.narr.pet.raven.low': 'O Corvo das Sombras observa as frestas além da fogueira. Nenhuma sombra se move sem que seus olhos a sigam.',
             'camp.narr.pet.raven.high': 'O Corvo inclina a cabeça ao seu lado e deixa cair uma moeda antiga — lembrança dos espiões de Aldric que ainda guardam seus segredos.',
+            'a11y.tech': 'Técnica de classe',
+            'combat.awakened.warrior': 'CATACLISMO!',
+            'combat.awakened.rogue': 'MIL SOMBRAS!',
+            'combat.awakened.mage': 'JUÍZO ASTRAL!',
+            'combat.awakened.elf': 'IRA SILVESTRE!',
+            'combo.finisher4.warrior': 'MARTELO DO ABISMO!',
+            'combo.finisher4.rogue': 'LÂMINA FANTASMA!',
+            'combo.finisher4.mage': 'SINGULARIDADE!',
+            'combo.finisher4.elf': 'FLECHA ESTELAR!',
+            'tech.warrior.float': 'ÉGIDE DE FERRO!',
+            'tech.rogue.float': 'FIO DAS SOMBRAS!',
+            'tech.mage.float': 'GLIFO TEMPORAL!',
+            'tech.elf.float': 'VÓRTICE SILVESTRE!',
+            'tech.warrior.name': 'Égide de Ferro',
+            'tech.warrior.desc': 'Ergue barreira refletora por 1.25s que devolve projéteis inimigos, concede escudo e dispara impacto frontal escalado por Fúria.',
+            'tech.rogue.name': 'Fio das Sombras',
+            'tech.rogue.desc': 'Dispara leque de kunais perfurantes, deixa névoa venenosa e teleporta em segurança até o alvo na mira com golpe furtivo.',
+            'tech.mage.name': 'Glifo Temporal',
+            'tech.mage.desc': 'Dissipa 38% do calor e grava um selo rúnico no chão (4s) que desacelera projéteis inimigos, resfria você e pulsa dano arcano.',
+            'tech.elf.name': 'Vórtice de Espinhos',
+            'tech.elf.desc': 'Dispara 5 flechas de espinhos e planta um vórtice espiritual (3.5s) que puxa inimigos, desacelera e aplica Marca da Caçada.',
+            'spec.warrior.name': 'Impacto Sísmico / Grito de Guerra',
+            'spec.warrior.awk': 'Despertar (Overdrive): Cataclismo Titânico — 2 ondas tectônicas extras, +5 Fúria e +30 Escudo.',
+            'spec.rogue.name': 'Passo das Sombras / Chuva de Lâminas',
+            'spec.rogue.awk': 'Despertar (Overdrive): Dança das Mil Sombras — anel de 10 lâminas venenosas perfurantes e foco crítico.',
+            'spec.mage.name': 'Tempestade Arcana / Meteoro',
+            'spec.mage.awk': 'Despertar (Overdrive): Juízo Astral — 2 pilares estelares em área e restaura o Escudo de Orbe.',
+            'spec.elf.name': 'Tempestade de Vento / Fúria da Natureza',
+            'spec.elf.awk': 'Despertar (Overdrive): Ira Silvestre — 6 flechas espirituais teleguiadas e cura +12 HP.',
+            'combo.warrior.lv1.name': 'Cadeia de Aço (3 Golpes)',
+            'combo.warrior.lv1.desc': 'Corte 120° → Varredura 150° → Giro Finalizador 360° (1.3x dano + empurrão).',
+            'combo.warrior.lv3.name': 'Onda Sísmica (3º Golpe)',
+            'combo.warrior.lv3.desc': 'O 3º golpe projeta uma onda de choque frontal e gera +1 Fúria extra.',
+            'combo.warrior.lv5.name': 'Martelo do Abismo (4º Golpe Épico)',
+            'combo.warrior.lv5.desc': 'Libera o 4º golpe na cadeia (1.65x dano + fenda sísmica tardia + alto Stagger em chefes).',
+            'combo.warrior.lv8.name': 'Maestria Ascendida',
+            'combo.warrior.lv8.desc': 'Fechar o combo máximo concede +6 Chama do Véu e reduz a recarga da Técnica em 0.75s.',
+            'combo.rogue.lv1.name': 'Dança de Adagas (3 Golpes)',
+            'combo.rogue.lv1.desc': 'Estocada rápida → Leque duplo → Arremesso perfurante venenoso (1.2x dano).',
+            'combo.rogue.lv3.name': 'Corte em X Sombrio (3º Golpe)',
+            'combo.rogue.lv3.desc': 'O 3º golpe dispara 2 lâminas fantasmas convergentes que atravessam e envenenam.',
+            'combo.rogue.lv5.name': 'Lâmina Fantasma (4º Golpe Épico)',
+            'combo.rogue.lv5.desc': 'Libera o 4º golpe: micro-avanço sombrio com i-frames + salva tripla e próximo acerto crítico!',
+            'combo.rogue.lv8.name': 'Maestria Ascendida',
+            'combo.rogue.lv8.desc': 'Fechar o combo máximo concede +6 Chama do Véu e reduz a recarga da Técnica em 0.75s.',
+            'combo.mage.lv1.name': 'Tríade Arcana (3 Golpes)',
+            'combo.mage.lv1.desc': 'Orbe focado → Explosão em área no 2º disparo → Rajada tripla finalizadora.',
+            'combo.mage.lv3.name': 'Convergência Arcana (3º Golpe)',
+            'combo.mage.lv3.desc': 'O 3º golpe detona um pulso arcano concentrado a 80px na direção da mira.',
+            'combo.mage.lv5.name': 'Singularidade Prismática (4º Golpe Épico)',
+            'combo.mage.lv5.desc': 'Libera o 4º golpe: salva quádrupla + estrela astral em área e dissipa 22% do calor!',
+            'combo.mage.lv8.name': 'Maestria Ascendida',
+            'combo.mage.lv8.desc': 'Fechar o combo máximo concede +6 Chama do Véu e reduz a recarga da Técnica em 0.75s.',
+            'combo.elf.lv1.name': 'Cadência Silvestre (3 Golpes)',
+            'combo.elf.lv1.desc': 'Disparo preciso → Salva dupla → Flecha perfurante de longo alcance (1.2x dano).',
+            'combo.elf.lv3.name': 'Lança de Vento (3º Golpe)',
+            'combo.elf.lv3.desc': 'O 3º golpe dispara uma flecha de vento extra de alta velocidade com empurrão.',
+            'combo.elf.lv5.name': 'Flecha Estelar (4º Golpe Épico)',
+            'combo.elf.lv5.desc': 'Libera o 4º golpe: salva tripla + flecha estelar teleguiada e Marca da Caçada em área!',
+            'combo.elf.lv8.name': 'Maestria Ascendida',
+            'combo.elf.lv8.desc': 'Fechar o combo máximo concede +6 Chama do Véu e reduz a recarga da Técnica em 0.75s.',
+            'skills.tabTree': 'Árvore de Skills',
+            'skills.tabCombos': 'Combos & Técnicas',
+            'skills.comboActive': 'ATIVO',
+            'skills.techHeader': 'TÉCNICA DE CLASSE',
+            'skills.specHeader': 'ESPECIAL ÉPICO',
+            'skills.combosHeader': 'PROGRESSÃO DE COMBOS POR NÍVEL',
+            'inv.filter.all': 'Todos',
+            'inv.filter.weapon': 'Armas',
+            'inv.filter.armor': 'Armaduras',
+            'inv.filter.acc': 'Joias',
+            'inv.filter.up': '▲ Melhorias',
+            'inv.unequip': 'Retirar para a Bolsa',
+            'inv.unequipped': '{name} guardado na bolsa',
+            'inv.bagFull': 'A bolsa está cheia (12/12).',
+            'hero.inBag': 'na bolsa',
+            'hero.unequipBtn': 'Retirar',
+            'hero.replaceBtn': 'Substituir',
+            'hero.noSlotItems': 'Nenhum item compatível para este slot na bolsa.',
+            'hero.manageSlot': 'Gerenciar Slot',
+            'hero.bagOptions': 'Na Bolsa',
+            'hero.tapRotate': 'Toque para girar',
+            'hero.poseIdle': 'Pose',
+            'hero.poseAtk': 'Golpe',
+            'hero.poseCast': 'Magia',
+            'hero.paperDollHint': 'Visual vivo: reflete arma e peças equipadas.',
+            'hero.equipSlotsTitle': 'EQUIPAMENTO (TOQUE EM UM SLOT PARA EQUIPAR / RETIRAR)',
             'npc.tapReveal': 'Toque para acelerar',
 'hd.od':'CHAMA DO VÉU!',
 'hd.st':'QUEBRA!',
@@ -8722,6 +8817,93 @@ const I18n = {
             'camp.narr.pet.salamander.high': 'The Salamander glows bright copper at your touch: born from the last embers that tempered the king’s blade.',
             'camp.narr.pet.raven.low': 'The Shadow Raven watches the cracks beyond the firelight. No shadow shifts without its eyes following.',
             'camp.narr.pet.raven.high': 'The Raven tilts its head beside you and drops an old coin — a keepsake of Aldric’s spies who still keep their secrets.',
+            'a11y.tech': 'Class technique',
+            'combat.awakened.warrior': 'CATACLYSM!',
+            'combat.awakened.rogue': 'THOUSAND SHADOWS!',
+            'combat.awakened.mage': 'ASTRAL JUDGMENT!',
+            'combat.awakened.elf': 'WILD WRATH!',
+            'combo.finisher4.warrior': 'ABYSS HAMMER!',
+            'combo.finisher4.rogue': 'PHANTOM BLADE!',
+            'combo.finisher4.mage': 'SINGULARITY!',
+            'combo.finisher4.elf': 'STARLIGHT ARROW!',
+            'tech.warrior.float': 'IRON AEGIS!',
+            'tech.rogue.float': 'SHADOW WIRE!',
+            'tech.mage.float': 'TEMPORAL GLYPH!',
+            'tech.elf.float': 'BRIAR VORTEX!',
+            'tech.warrior.name': 'Iron Aegis',
+            'tech.warrior.desc': 'Raises a reflective barrier for 1.25s that deflects enemy projectiles, grants shield and unleashes a Fury-scaled frontal bash.',
+            'tech.rogue.name': 'Shadow Wire',
+            'tech.rogue.desc': 'Throws a fan of piercing kunai, leaves venom mist and safely shadow-steps to the aimed foe with an ambush strike.',
+            'tech.mage.name': 'Temporal Glyph',
+            'tech.mage.desc': 'Vents 38% heat and etches a runic floor seal (4s) that slows enemy projectiles, cools your heat and pulses arcane damage.',
+            'tech.elf.name': 'Briar Vortex',
+            'tech.elf.desc': 'Fires 5 thorn arrows and plants a spirit vortex (3.5s) that pulls enemies inward, slows them and applies Hunt Mark.',
+            'spec.warrior.name': 'Ground Slam / War Cry',
+            'spec.warrior.awk': 'Awakened (Overdrive): Titanic Cataclysm — 2 extra tectonic shockwaves, +5 Fury and +30 Shield.',
+            'spec.rogue.name': 'Shadow Step / Blade Rain',
+            'spec.rogue.awk': 'Awakened (Overdrive): Thousand Shadows Dance — ring of 10 piercing venom blades and critical focus.',
+            'spec.mage.name': 'Arcane Storm / Meteor',
+            'spec.mage.awk': 'Awakened (Overdrive): Astral Judgment — 2 starlight pillars in area and restores Orb Shield.',
+            'spec.elf.name': 'Wind Gust / Nature’s Fury',
+            'spec.elf.awk': 'Awakened (Overdrive): Wild Wrath — 6 homing spirit arrows and heals +12 HP.',
+            'combo.warrior.lv1.name': 'Steel Chain (3 Hits)',
+            'combo.warrior.lv1.desc': '120° Slash → 150° Sweep → 360° Finisher Spin (1.3x damage + knockback).',
+            'combo.warrior.lv3.name': 'Seismic Wave (3rd Hit)',
+            'combo.warrior.lv3.desc': 'The 3rd hit projects a frontal shockwave and grants +1 extra Fury.',
+            'combo.warrior.lv5.name': 'Abyss Hammer (4th Epic Hit)',
+            'combo.warrior.lv5.desc': 'Unlocks the 4th combo hit (1.65x damage + delayed seismic fissure + heavy boss Stagger).',
+            'combo.warrior.lv8.name': 'Ascended Mastery',
+            'combo.warrior.lv8.desc': 'Completing the max combo grants +6 Veil Surge and reduces Technique cooldown by 0.75s.',
+            'combo.rogue.lv1.name': 'Dagger Dance (3 Hits)',
+            'combo.rogue.lv1.desc': 'Quick thrust → Twin fan → Piercing venom throw (1.2x damage).',
+            'combo.rogue.lv3.name': 'Shadow X-Slash (3rd Hit)',
+            'combo.rogue.lv3.desc': 'The 3rd hit fires 2 converging phantom blades that pierce and poison.',
+            'combo.rogue.lv5.name': 'Phantom Blade (4th Epic Hit)',
+            'combo.rogue.lv5.desc': 'Unlocks the 4th hit: shadow micro-dash with i-frames + triple volley and guaranteed next crit!',
+            'combo.rogue.lv8.name': 'Ascended Mastery',
+            'combo.rogue.lv8.desc': 'Completing the max combo grants +6 Veil Surge and reduces Technique cooldown by 0.75s.',
+            'combo.mage.lv1.name': 'Arcane Triad (3 Hits)',
+            'combo.mage.lv1.desc': 'Focused orb → Area blast on 2nd shot → Triple finisher burst.',
+            'combo.mage.lv3.name': 'Arcane Convergence (3rd Hit)',
+            'combo.mage.lv3.desc': 'The 3rd hit detonates a concentrated arcane pulse 80px ahead along your aim.',
+            'combo.mage.lv5.name': 'Prismatic Singularity (4th Epic Hit)',
+            'combo.mage.lv5.desc': 'Unlocks the 4th hit: 4-orb volley + astral star burst and vents 22% heat!',
+            'combo.mage.lv8.name': 'Ascended Mastery',
+            'combo.mage.lv8.desc': 'Completing the max combo grants +6 Veil Surge and reduces Technique cooldown by 0.75s.',
+            'combo.elf.lv1.name': 'Sylvan Cadence (3 Hits)',
+            'combo.elf.lv1.desc': 'Precise shot → Double volley → Long-range piercing arrow (1.2x damage).',
+            'combo.elf.lv3.name': 'Wind Lance (3rd Hit)',
+            'combo.elf.lv3.desc': 'The 3rd hit fires an extra high-velocity wind arrow with knockback.',
+            'combo.elf.lv5.name': 'Starlight Arrow (4th Epic Hit)',
+            'combo.elf.lv5.desc': 'Unlocks the 4th hit: triple volley + homing starlight arrow and area Hunt Mark!',
+            'combo.elf.lv8.name': 'Ascended Mastery',
+            'combo.elf.lv8.desc': 'Completing the max combo grants +6 Veil Surge and reduces Technique cooldown by 0.75s.',
+            'skills.tabTree': 'Skill Tree',
+            'skills.tabCombos': 'Combos & Techniques',
+            'skills.comboActive': 'ACTIVE',
+            'skills.techHeader': 'CLASS TECHNIQUE',
+            'skills.specHeader': 'EPIC SPECIAL',
+            'skills.combosHeader': 'LEVEL COMBO PROGRESSION',
+            'inv.filter.all': 'All',
+            'inv.filter.weapon': 'Weapons',
+            'inv.filter.armor': 'Armor',
+            'inv.filter.acc': 'Jewelry',
+            'inv.filter.up': '▲ Upgrades',
+            'inv.unequip': 'Return to Bag',
+            'inv.unequipped': '{name} stored in bag',
+            'inv.bagFull': 'Your bag is full (12/12).',
+            'hero.inBag': 'in bag',
+            'hero.unequipBtn': 'Unequip',
+            'hero.replaceBtn': 'Replace',
+            'hero.noSlotItems': 'No compatible items for this slot in your bag.',
+            'hero.manageSlot': 'Manage Slot',
+            'hero.bagOptions': 'In Bag',
+            'hero.tapRotate': 'Tap to rotate',
+            'hero.poseIdle': 'Pose',
+            'hero.poseAtk': 'Strike',
+            'hero.poseCast': 'Spell',
+            'hero.paperDollHint': 'Live Paper-Doll: reflects equipped weapon and gear.',
+            'hero.equipSlotsTitle': 'EQUIPMENT (TAP A SLOT TO EQUIP / UNEQUIP)',
             'npc.tapReveal': 'Tap to speed up',
 'hd.od':'VEIL OVERDRIVE!',
 'hd.st':'STAGGER!',
@@ -11351,6 +11533,93 @@ const I18n = {
             'camp.narr.pet.salamander.high': 'La Salamandra brilla en cobre vivo al tocarla: nació de las últimas brasas que templaron la espada del rey.',
             'camp.narr.pet.raven.low': 'El Cuervo de las Sombras vigila las grietas más allá del fuego. Ninguna sombra se mueve sin que sus ojos la sigan.',
             'camp.narr.pet.raven.high': 'El Cuervo inclina la cabeza a tu lado y deja caer una moneda antigua: recuerdo de los espías de Aldric que aún guardan sus secretos.',
+            'a11y.tech': 'Técnica de clase',
+            'combat.awakened.warrior': '¡CATACLISMO!',
+            'combat.awakened.rogue': '¡MIL SOMBRAS!',
+            'combat.awakened.mage': '¡JUICIO ASTRAL!',
+            'combat.awakened.elf': '¡IRA SILVESTRE!',
+            'combo.finisher4.warrior': '¡MARTILLO DEL ABISMO!',
+            'combo.finisher4.rogue': '¡HOJA FANTASMA!',
+            'combo.finisher4.mage': '¡SINGULARIDAD!',
+            'combo.finisher4.elf': '¡FLECHA ESTELAR!',
+            'tech.warrior.float': '¡ÉGIDA DE HIERRO!',
+            'tech.rogue.float': '¡HILO DE SOMBRAS!',
+            'tech.mage.float': '¡GLIFO TEMPORAL!',
+            'tech.elf.float': '¡VÓRTICE DE ESPINAS!',
+            'tech.warrior.name': 'Égida de Hierro',
+            'tech.warrior.desc': 'Alza una barrera reflectora por 1.25s que devuelve proyectiles enemigos, otorga escudo y lanza un impacto frontal escalado por Furia.',
+            'tech.rogue.name': 'Hilo de Sombras',
+            'tech.rogue.desc': 'Lanza un abanico de kunais perforantes, deja niebla venenosa y se teletransporta con seguridad al objetivo apuntado con golpe furtivo.',
+            'tech.mage.name': 'Glifo Temporal',
+            'tech.mage.desc': 'Disipa 38% del calor y graba un sello rúnico en el suelo (4s) que frena proyectiles enemigos, te enfría y pulsa daño arcano.',
+            'tech.elf.name': 'Vórtice de Espinas',
+            'tech.elf.desc': 'Dispara 5 flechas de espinas y planta un vórtice espiritual (3.5s) que atrae enemigos, los frena y aplica Marca de Caza.',
+            'spec.warrior.name': 'Impacto Sísmico / Grito de Guerra',
+            'spec.warrior.awk': 'Despertar (Overdrive): Cataclismo Titánico — 2 ondas tectónicas extra, +5 Furia y +30 Escudo.',
+            'spec.rogue.name': 'Paso de las Sombras / Lluvia de Hojas',
+            'spec.rogue.awk': 'Despertar (Overdrive): Danza de las Mil Sombras — anillo de 10 hojas venenosas perforantes y foco crítico.',
+            'spec.mage.name': 'Tormenta Arcana / Meteoro',
+            'spec.mage.awk': 'Despertar (Overdrive): Juicio Astral — 2 pilares estelares en área y restaura el Escudo de Orbe.',
+            'spec.elf.name': 'Ráfaga de Viento / Furia de la Naturaleza',
+            'spec.elf.awk': 'Despertar (Overdrive): Ira Silvestre — 6 flechas espirituales dirigidas y cura +12 HP.',
+            'combo.warrior.lv1.name': 'Cadena de Acero (3 Golpes)',
+            'combo.warrior.lv1.desc': 'Corte 120° → Barrido 150° → Giro Finalizador 360° (1.3x daño + empuje).',
+            'combo.warrior.lv3.name': 'Onda Sísmica (3.º Golpe)',
+            'combo.warrior.lv3.desc': 'El 3.º golpe proyecta una onda de choque frontal y genera +1 Furia extra.',
+            'combo.warrior.lv5.name': 'Martillo del Abismo (4.º Golpe Épico)',
+            'combo.warrior.lv5.desc': 'Desbloquea el 4.º golpe en la cadena (1.65x daño + grieta sísmica tardía + alto Stagger en jefes).',
+            'combo.warrior.lv8.name': 'Maestría Ascendida',
+            'combo.warrior.lv8.desc': 'Completar el combo máximo otorga +6 Llama del Velo y reduce la recarga de la Técnica en 0.75s.',
+            'combo.rogue.lv1.name': 'Danza de Dagas (3 Golpes)',
+            'combo.rogue.lv1.desc': 'Estocada rápida → Abanico doble → Lanzamiento perforante venenoso (1.2x daño).',
+            'combo.rogue.lv3.name': 'Corte en X Sombrío (3.º Golpe)',
+            'combo.rogue.lv3.desc': 'El 3.º golpe dispara 2 hojas fantasma convergentes que atraviesan y envenenan.',
+            'combo.rogue.lv5.name': 'Hoja Fantasma (4.º Golpe Épico)',
+            'combo.rogue.lv5.desc': 'Desbloquea el 4.º golpe: micro-avance sombrío con i-frames + salva triple y próximo golpe crítico!',
+            'combo.rogue.lv8.name': 'Maestría Ascendida',
+            'combo.rogue.lv8.desc': 'Completar el combo máximo otorga +6 Llama del Velo y reduce la recarga de la Técnica en 0.75s.',
+            'combo.mage.lv1.name': 'Tríada Arcana (3 Golpes)',
+            'combo.mage.lv1.desc': 'Orbe enfocado → Explosión en área en el 2.º disparo → Ráfaga triple finalizadora.',
+            'combo.mage.lv3.name': 'Convergencia Arcana (3.º Golpe)',
+            'combo.mage.lv3.desc': 'El 3.º golpe detona un pulso arcano concentrado a 80px en la dirección de apuntado.',
+            'combo.mage.lv5.name': 'Singularidad Prismática (4.º Golpe Épico)',
+            'combo.mage.lv5.desc': 'Desbloquea el 4.º golpe: salva cuádruple + estrella astral en área y disipa 22% del calor!',
+            'combo.mage.lv8.name': 'Maestría Ascendida',
+            'combo.mage.lv8.desc': 'Completar el combo máximo otorga +6 Llama del Velo y reduce la recarga de la Técnica en 0.75s.',
+            'combo.elf.lv1.name': 'Cadencia Silvestre (3 Golpes)',
+            'combo.elf.lv1.desc': 'Disparo preciso → Salva doble → Flecha perforante de largo alcance (1.2x daño).',
+            'combo.elf.lv3.name': 'Lanza de Viento (3.º Golpe)',
+            'combo.elf.lv3.desc': 'El 3.º golpe dispara una flecha de viento extra de alta velocidad con empuje.',
+            'combo.elf.lv5.name': 'Flecha Estelar (4.º Golpe Épico)',
+            'combo.elf.lv5.desc': 'Desbloquea el 4.º golpe: salva triple + flecha estelar dirigida y Marca de Caza en área!',
+            'combo.elf.lv8.name': 'Maestría Ascendida',
+            'combo.elf.lv8.desc': 'Completar el combo máximo otorga +6 Llama del Velo y reduce la recarga de la Técnica en 0.75s.',
+            'skills.tabTree': 'Árbol de Habilidades',
+            'skills.tabCombos': 'Combos y Técnicas',
+            'skills.comboActive': 'ACTIVO',
+            'skills.techHeader': 'TÉCNICA DE CLASE',
+            'skills.specHeader': 'ESPECIAL ÉPICO',
+            'skills.combosHeader': 'PROGRESIÓN DE COMBOS POR NIVEL',
+            'inv.filter.all': 'Todos',
+            'inv.filter.weapon': 'Armas',
+            'inv.filter.armor': 'Armaduras',
+            'inv.filter.acc': 'Joyas',
+            'inv.filter.up': '▲ Mejoras',
+            'inv.unequip': 'Guardar en la Bolsa',
+            'inv.unequipped': '{name} guardado en la bolsa',
+            'inv.bagFull': 'La bolsa está llena (12/12).',
+            'hero.inBag': 'en la bolsa',
+            'hero.unequipBtn': 'Retirar',
+            'hero.replaceBtn': 'Sustituir',
+            'hero.noSlotItems': 'Ningún objeto compatible para esta ranura en la bolsa.',
+            'hero.manageSlot': 'Gestionar Ranura',
+            'hero.bagOptions': 'En la Bolsa',
+            'hero.tapRotate': 'Toca para girar',
+            'hero.poseIdle': 'Pose',
+            'hero.poseAtk': 'Golpe',
+            'hero.poseCast': 'Magia',
+            'hero.paperDollHint': 'Visual vivo: refleja el arma y las piezas equipadas.',
+            'hero.equipSlotsTitle': 'EQUIPO (TOCA UNA RANURA PARA EQUIPAR / RETIRAR)',
             'npc.tapReveal': 'Toca para acelerar',
 'hd.od':'¡LLAMA DEL VELO!',
 'hd.st':'¡QUIEBRE!',
@@ -12002,18 +12271,21 @@ var CONFIG = {
     WARRIOR_FURY_DECAY_FRAMES: 180,    // 3s without hitting = start losing stacks
     WARRIOR_FURY_DMG_PER_STACK: 0.12,   // +12% dano por stack (máx. 15 stacks = +180%)
     WARRIOR_MELEE_RANGE: 80,
-    // Combo de golpes (3 passos por classe; passo 3 = finalizador). Janela em frames sem atacar -> volta ao passo 1.
+    // Combo de golpes (3 passos no Nv. 1-4; 4 passos épicos a partir do Nv. 5). Janela em frames sem atacar -> volta ao passo 1.
     COMBO_CHAIN_WINDOW: 36,                 // ~0.6 s
-    // Dano por golpe em cada passo. Soma nominal por ciclo de 3 golpes: guerreiro 3,1 (média ~1.03x do ataque base);
-    // ladino/elfa 2,55; mago 2,30. A soma efetiva por ciclo é maior por causa dos projéteis múltiplos.
-    COMBO_CHAIN_MULT: { warrior: [0.9, 0.9, 1.3], rogue: [0.9, 0.45, 1.2], elf: [0.9, 0.45, 1.2], mage: [0.9, 1.0, 0.4] },
-    // Ângulo (rad) de cada projétil por passo (leque no passo 2; mago: rajada no passo 3)
-    COMBO_CHAIN_SHOTS: { rogue: [[0], [-0.08, 0.08], [0]], elf: [[0], [-0.1, 0.1], [0]], mage: [[0], [0], [-0.12, 0, 0.12]] },
-    COMBO_CHAIN_WARRIOR_ARC: [120, 150, 360],     // graus do arco por passo
-    COMBO_CHAIN_WARRIOR_REACH: [1.0, 1.05, 1.25], // alcance (x WARRIOR_MELEE_RANGE) por passo
-    COMBO_CHAIN_WARRIOR_KB: [1.0, 1.1, 1.8],      // knockback (x) por passo
+    COMBO_LVL_TIER2: 3,                     // Nv. 3: Finalizador do 3º golpe aprimorado
+    COMBO_LVL_TIER3: 5,                     // Nv. 5: Desbloqueia 4º golpe Épico na cadeia
+    COMBO_LVL_TIER4: 8,                     // Nv. 8: Maestria Ascendida (+Chama do Véu e -CD Técnica)
+    // Dano por golpe em cada passo (índice 3 = 4º golpe épico, só ativo no Nv. 5+).
+    COMBO_CHAIN_MULT: { warrior: [0.9, 0.9, 1.3, 1.65], rogue: [0.9, 0.45, 1.2, 1.45], elf: [0.9, 0.45, 1.2, 1.45], mage: [0.9, 1.0, 0.4, 0.65] },
+    // Ângulo (rad) de cada projétil por passo (passo 4 = salva épica no Nv. 5+)
+    COMBO_CHAIN_SHOTS: { rogue: [[0], [-0.08, 0.08], [0], [-0.14, 0, 0.14]], elf: [[0], [-0.1, 0.1], [0], [-0.15, 0, 0.15]], mage: [[0], [0], [-0.12, 0, 0.12], [-0.18, -0.06, 0.06, 0.18]] },
+    COMBO_CHAIN_WARRIOR_ARC: [120, 150, 360, 360],     // graus do arco por passo
+    COMBO_CHAIN_WARRIOR_REACH: [1.0, 1.05, 1.25, 1.4], // alcance (x WARRIOR_MELEE_RANGE) por passo
+    COMBO_CHAIN_WARRIOR_KB: [1.0, 1.1, 1.8, 2.2],      // knockback (x) por passo
     COMBO_CHAIN_BLAST_RADIUS: 70,                 // mago passo 2: área da explosão (px)
     COMBO_CHAIN_BLAST_MULT: 0.5,                  // dano da explosão nos outros inimigos (x dano do golpe)
+    TECH_COOLDOWN: { warrior: 300, rogue: 270, mage: 330, elf: 285 }, // Técnica de Classe (2ª habilidade ativa)
     // Nós de comportamento da árvore de skills (v56)
     SKILL_PULSE_RADIUS: 130,                      // onda extra do guerreiro (Eco do Trovão / Terremoto), px
     SKILL_PULSE_DELAY: 14,                        // quadros até a onda/pulso extra
@@ -17786,6 +18058,36 @@ function _drawScreenSpaceHUD() {
                 } else {
                     overlay.remove();
                 }
+            }
+        }
+
+        // Technique cooldown badge + overlay (#tech-btn)
+        const techBtn = document.getElementById('tech-btn');
+        const techCdEl = document.getElementById('tech-cd');
+        if (techBtn) {
+            const tMax = (CONFIG.TECH_COOLDOWN && CONFIG.TECH_COOLDOWN[player.type]) || 300;
+            const tCur = player.techCooldown || 0;
+            if (techCdEl) {
+                const tTxt = tCur > 0 ? String(Math.ceil(tCur / 60)) : '';
+                if (techCdEl._shown !== tTxt) {
+                    const wasTCd = !!techCdEl._shown;
+                    techCdEl._shown = tTxt;
+                    if (tTxt) techCdEl.textContent = tTxt;
+                    techCdEl.classList.toggle('hidden', !tTxt);
+                    if (wasTCd && !tTxt) { techBtn.classList.remove('cd-ready'); void techBtn.offsetWidth; techBtn.classList.add('cd-ready'); }
+                }
+            }
+            const tPct = (tCur / tMax) * 100;
+            let tOv = techBtn.querySelector('.cd-overlay-fill');
+            if (!tOv && tPct > 0) {
+                tOv = document.createElement('div');
+                tOv.className = 'cd-overlay-fill';
+                tOv.style.cssText = 'position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.45);transition:height 0.1s;pointer-events:none;border-radius:0 0 50% 50%;';
+                techBtn.appendChild(tOv);
+            }
+            if (tOv) {
+                if (tPct > 0) tOv.style.height = Math.min(100, tPct) + '%';
+                else tOv.remove();
             }
         }
     }
@@ -23835,6 +24137,41 @@ const Inventory = {
             return true;
         }
         return false;
+    },
+
+    // Lista itens da bolsa compatíveis com um slot ('weapon', 'helm', 'armor', 'boots', 'amulet', 'ring')
+    listForSlot(slotKey) {
+        if (!slotKey) return [];
+        const list = this.items.filter(it => slotKey === 'weapon' ? it.kind === 'weapon' : (it.kind === 'equip' && it.slot === slotKey));
+        return this.sortItems(list, this.sortMode);
+    },
+
+    // Retira o item equipado de um slot e devolve para a bolsa (fora de combate e com espaço na bolsa)
+    unequipSlot(slotKey) {
+        if (typeof player === 'undefined' || !player) return { ok: false, reason: 'no_player' };
+        if (this.inCombat()) return { ok: false, reason: 'combat' };
+        if (this.items.length >= this.CAP) return { ok: false, reason: 'full' };
+        if (slotKey === 'weapon') {
+            const cur = player.currentWeapon || null;
+            if (!cur) return { ok: false, reason: 'empty' };
+            WeaponSystem.removeWeaponEffects(player);
+            this._insert(this._fromWeapon(cur));
+            this._changed();
+            if (typeof _markHudLayoutDirty === 'function') _markHudLayoutDirty();
+            return { ok: true, item: cur };
+        }
+        if (CONFIG.EQUIPMENT_SLOTS.indexOf(slotKey) >= 0) {
+            const cur = (player.equipment && player.equipment[slotKey]) || null;
+            if (!cur) return { ok: false, reason: 'empty' };
+            EquipmentSystem.removeEquipmentStats(player, cur);
+            delete player.equipment[slotKey];
+            player.hp = Math.min(player.hp, player.maxHp);
+            this._insert(this._fromEquip(cur));
+            this._changed();
+            if (typeof _markHudLayoutDirty === 'function') _markHudLayoutDirty();
+            return { ok: true, item: cur };
+        }
+        return { ok: false, reason: 'invalid' };
     },
 
     // Vende um item da bolsa: soma o valor ao ouro. Retorna o valor, ou 0 se não vendeu.
@@ -38277,6 +38614,11 @@ class Player extends Entity {
         this.dodgeCooldown = 0;
         this._dodgeBuffer = 0;
         this._skillBuffer = 0;
+        this.techCooldown = 0;
+        this._techBuffer = 0;
+        this._ironAegisT = 0;
+        this._arcaneSigil = null;
+        this._briarVortex = null;
         this.parryWindow = 0;
         this.dodgeAnim = 0;
         this.levelUpAnim = 0;
@@ -38287,7 +38629,7 @@ class Player extends Entity {
         this.angle = Math.PI / 2; // Default South
         this._lastMoveAngle = this.angle; // último ângulo de movimento real (dash sem direção usa este, não a mira automática)
         this.spriteAngle = this.angle;
-        // Combo de golpes (estado próprio; comboCount é kill-streak): passo atual 0-3, frames desde o último golpe, giro do finalizador
+        // Combo de golpes (estado próprio; comboCount é kill-streak): passo atual 0-4, frames desde o último golpe, giro do finalizador
         this.chainStep = 0;
         this.chainTimer = CONFIG.COMBO_CHAIN_WINDOW;
         this.chainSpinT = 0;
@@ -38304,9 +38646,15 @@ class Player extends Entity {
 
     updateMutations() { Object.keys(this.mutations).forEach(key => { if(!this.mutations[key].update()) delete this.mutations[key]; }); }
 
-    // Combo de golpes: avança o passo (1 -> 2 -> 3 -> 1) a cada golpe. Mais de COMBO_CHAIN_WINDOW frames sem golpe reinicia no passo 1.
+    // Máximo de golpes na cadeia: 3 nos níveis 1-4; 4 golpes a partir do Nv. 5 (Combo Épico)
+    getMaxComboSteps() {
+        return (this.lvl >= (CONFIG.COMBO_LVL_TIER3 || 5)) ? 4 : 3;
+    }
+
+    // Combo de golpes: avança o passo (1 -> 2 -> 3 [-> 4 no Nv.5+]). Mais de COMBO_CHAIN_WINDOW frames sem golpe reinicia no passo 1.
     _chainAdvance() {
-        if(this.chainTimer >= CONFIG.COMBO_CHAIN_WINDOW || this.chainStep >= 3) this.chainStep = 0;
+        const maxSteps = this.getMaxComboSteps();
+        if(this.chainTimer >= CONFIG.COMBO_CHAIN_WINDOW || this.chainStep >= maxSteps) this.chainStep = 0;
         this.chainStep++;
         this.chainTimer = 0;
         return this.chainStep;
@@ -38773,6 +39121,238 @@ _thornNova(m){if(!RunBoons.hasSynergy(this,'carapaca'))return;const d=18+this.lv
                 shake = CONFIG.SHAKE_STORM; addLog(I18n.t('log.windGust'));
             }
         }
+        // Despertar Épico (Overdrive ativo ao usar Especial): manifesta o poder supremo da classe com LoS
+        if (this.overdriveTimer > 0) {
+            const awkDmg = Math.max(12, Math.floor((22 + this.lvl * 5) * this.weaponLevel * this.weaponDamageMult));
+            if (this.type === 'warrior') {
+                this.furyStacks = Math.min(CONFIG.WARRIOR_FURY_MAX_STACKS, (this.furyStacks || 0) + 5);
+                this.shield = (this.shield || 0) + 30;
+                this._schedulePulse(this.x, this.y, awkDmg, '#ffd86b', 150, 10);
+                this._schedulePulse(this.x, this.y, Math.floor(awkDmg * 0.8), '#ff6622', 190, 22);
+                DamageNumbers.add(this.x, this.y - 22, _L('combat.awakened.warrior', 'CATACLISMO!'), 'crit');
+            } else if (this.type === 'rogue') {
+                this.critZoomTimer = Math.max(this.critZoomTimer || 0, 180);
+                const rSpd = CONFIG.PLAYER.rogue.bulletSpeed || 13;
+                for (let k = 0; k < 10; k++) {
+                    const a = (k / 10) * Math.PI * 2 + 0.15;
+                    const b = window.PoolManager ? PoolManager.acquire('Bullet', this.x, this.y, Math.cos(a) * rSpd, Math.sin(a) * rSpd, '#ff4d6d', Math.floor(awkDmg * 0.65), true, this.currentWeapon, 340, 'knife') : new Bullet(this.x, this.y, Math.cos(a) * rSpd, Math.sin(a) * rSpd, '#ff4d6d', Math.floor(awkDmg * 0.65), true, this.currentWeapon, 340, 'knife');
+                    b.applyPoison = true; b.chainPierce = true;
+                    bullets.push(b);
+                }
+                DamageNumbers.add(this.x, this.y - 22, _L('combat.awakened.rogue', 'MIL SOMBRAS!'), 'crit');
+            } else if (this.type === 'mage') {
+                this.orbShieldReady = true;
+                this._schedulePulse(this.x, this.y, awkDmg, '#c084fc', 165, 8);
+                this._schedulePulse(this.x, this.y, Math.floor(awkDmg * 0.85), '#66e0ff', 200, 18);
+                DamageNumbers.add(this.x, this.y - 22, _L('combat.awakened.mage', 'JUÍZO ASTRAL!'), 'crit');
+            } else if (this.type === 'elf') {
+                this.hp = Math.min(this.maxHp, this.hp + 12);
+                const eSpd = CONFIG.PLAYER.elf.bulletSpeed || 13;
+                for (let k = 0; k < 6; k++) {
+                    const a = (k / 6) * Math.PI * 2;
+                    const b = window.PoolManager ? PoolManager.acquire('Bullet', this.x, this.y, Math.cos(a) * eSpd, Math.sin(a) * eSpd, '#a7f3d0', Math.floor(awkDmg * 0.75), true, this.currentWeapon, 380, 'arrow') : new Bullet(this.x, this.y, Math.cos(a) * eSpd, Math.sin(a) * eSpd, '#a7f3d0', Math.floor(awkDmg * 0.75), true, this.currentWeapon, 380, 'arrow');
+                    b.homing = true; b.chainPierce = true;
+                    bullets.push(b);
+                }
+                DamageNumbers.add(this.x, this.y - 22, _L('combat.awakened.elf', 'IRA SILVESTRE!'), 'crit');
+            }
+        }
+    }
+
+    // 2ª Habilidade Ativa — Técnica de Classe (#tech-btn / tecla Q ou E / Gamepad X)
+    useTechnique() {
+        if (!this.alive) return;
+        if (typeof gameState !== 'undefined' && gameState !== 'PLAYING') return;
+        if (window.isAnyPanelOpen && window.isAnyPanelOpen()) return;
+        if (this.techCooldown > 0) { this._techBuffer = CONFIG.INPUT_BUFFER_FRAMES; return; }
+        const baseCd = (CONFIG.TECH_COOLDOWN && CONFIG.TECH_COOLDOWN[this.type]) || 300;
+        this.techCooldown = Math.floor(baseCd * Math.max(0.5, 1 - (this.cdrMult || 0)));
+        this.shootAnim = 14;
+        this._skillPose = true;
+        this.addSurge(10);
+        this._staggerNearbyBoss(14);
+        const aimA = this.angle || 0;
+        const fx = Math.cos(aimA), fy = Math.sin(aimA);
+
+        if (this.type === 'warrior') {
+            // Égide de Ferro: postura refletora de projéteis (1.25s) + onda de impacto de escudo com LoS
+            this._ironAegisT = 75;
+            this.parryWindow = Math.max(this.parryWindow || 0, 45);
+            this.shield = (this.shield || 0) + 20 + this.lvl * 4;
+            const bashDmg = Math.floor((26 + this.lvl * 6 + (this.furyStacks || 0) * 3) * this.weaponLevel * this.weaponDamageMult);
+            const bashRange = 145;
+            _losFoes(this.x, this.y, bashRange, this, (e, edx, edy, dSq) => {
+                e.takeDamage(bashDmg, map, this, true);
+                const d = Math.sqrt(dSq) || 1;
+                const kbx = (edx / d) * 14, kby = (edy / d) * 14;
+                if (_entityClear(map, e.x + kbx, e.y + kby, e.radius)) { e.x += kbx; e.y += kby; }
+                if (e.isB && e.addStagger) e.addStagger(12);
+                spawnParticles(e.x, e.y, '#ffd86b', 8, 4);
+            }, map);
+            ScreenEffects._addRing(this.x, this.y, '#7ee8ff', bashRange, 16, 4, 0);
+            ScreenEffects.triggerShake(10);
+            SND.play(160, 'triangle', 0.25, 0.28);
+            DamageNumbers.add(this.x, this.y - 14, _L('tech.warrior.float', 'ÉGIDE DE FERRO!'), 'heal');
+        } else if (this.type === 'rogue') {
+            // Fio das Sombras: leque de kunais + passo-relâmpago seguro até alvo em LoS + poça de fumaça venenosa
+            const ox = this.x, oy = this.y;
+            this._venomPools.push({ x: ox, y: oy, t: 130, tick: 12 });
+            const kSpd = (CONFIG.PLAYER.rogue.bulletSpeed || 13) * 1.15;
+            const kDmg = Math.floor((22 + this.lvl * 5) * this.weaponLevel * this.weaponDamageMult);
+            for (const off of [-0.14, 0, 0.14]) {
+                const a = aimA + off;
+                const b = window.PoolManager ? PoolManager.acquire('Bullet', this.x, this.y, Math.cos(a) * kSpd, Math.sin(a) * kSpd, '#7ee8ff', kDmg, true, this.currentWeapon, 300, 'knife') : new Bullet(this.x, this.y, Math.cos(a) * kSpd, Math.sin(a) * kSpd, '#7ee8ff', kDmg, true, this.currentWeapon, 300, 'knife');
+                b.applyPoison = true; b.chainPierce = true;
+                bullets.push(b);
+            }
+            // Procura alvo prioritário em LoS até 230px na direção da mira
+            let target = null, bestScore = 1e9;
+            for (let i = 0; i < entities.length; i++) {
+                const e = entities[i];
+                if (!e || e === this || !e.alive || !(e.isEnemy || (typeof Enemy !== 'undefined' && e instanceof Enemy))) continue;
+                const edx = e.x - this.x, edy = e.y - this.y, dSq = edx * edx + edy * edy;
+                if (dSq > 230 * 230 || dSq < 16 || !hasLineOfSight(map, this.x, this.y, e.x, e.y)) continue;
+                let da = Math.abs(Math.atan2(edy, edx) - aimA);
+                if (da > Math.PI) da = Math.PI * 2 - da;
+                const sc = dSq + da * 4000;
+                if (sc < bestScore) { bestScore = sc; target = e; }
+            }
+            if (target) {
+                const tAng = Math.atan2(target.y - this.y, target.x - this.x);
+                const dist = target.radius + this.radius + 10;
+                const cands = [0, Math.PI, 0.8, -0.8];
+                for (let ci = 0; ci < cands.length; ci++) {
+                    const ca = tAng + cands[ci];
+                    const tx = target.x + Math.cos(ca) * dist, ty = target.y + Math.sin(ca) * dist;
+                    if (_entityClear(map, tx, ty, this.radius) && hasLineOfSight(map, this.x, this.y, tx, ty)) {
+                        this.x = tx; this.y = ty;
+                        break;
+                    }
+                }
+                const strikeDmg = Math.floor((32 + this.lvl * 7) * this.weaponLevel * this.weaponDamageMult);
+                target.takeDamage(strikeDmg, map, this, true);
+                spawnParticles(target.x, target.y, '#7ee8ff', 14, 5);
+            }
+            this.invincibleTimer = Math.max(this.invincibleTimer || 0, 24);
+            this.stealth = Math.max(this.stealth || 0, 75);
+            ScreenEffects._addRing(this.x, this.y, '#5cff82', 64, 14, 3, 0);
+            SND.play(520, 'sine', 0.16, 0.22);
+            DamageNumbers.add(this.x, this.y - 14, _L('tech.rogue.float', 'FIO DAS SOMBRAS!'), 'crit');
+        } else if (this.type === 'mage') {
+            // Glifo Temporal: selo rúnico no chão (4s) que desacelera projéteis inimigos, resfria calor e pulsa choque LoS
+            const effHeatMax = CONFIG.HEAT_MAX + (this.heatMaxBonus || 0);
+            this.attackHeat = Math.max(0, (this.attackHeat || 0) - effHeatMax * 0.38);
+            this.overheated = false;
+            this._arcaneSigil = { x: this.x, y: this.y, r: 115, t: 240, tick: 0 };
+            const pulseDmg = Math.floor((22 + this.lvl * 5) * this.weaponLevel * this.weaponDamageMult);
+            _losFoes(this.x, this.y, 115, this, e => {
+                e.takeDamage(pulseDmg, map, this, true);
+                spawnParticles(e.x, e.y, '#7ee8ff', 6, 3);
+            }, map);
+            ScreenEffects._addRing(this.x, this.y, '#7ee8ff', 115, 18, 4, 0);
+            SND.play(420, 'sine', 0.24, 0.22);
+            DamageNumbers.add(this.x, this.y - 14, _L('tech.mage.float', 'GLIFO TEMPORAL!'), 'heal');
+        } else if (this.type === 'elf') {
+            // Vórtice de Espinhos: planta um vórtice espiritual à frente que puxa inimigos em LoS e aplica Marca da Caçada
+            let vx = this.x, vy = this.y;
+            for (let step = 20; step <= 110; step += 18) {
+                const nx = this.x + fx * step, ny = this.y + fy * step;
+                if (map && !map.isWall(nx, ny) && hasLineOfSight(map, this.x, this.y, nx, ny)) { vx = nx; vy = ny; }
+                else break;
+            }
+            this._briarVortex = { x: vx, y: vy, r: 118, t: 210, tick: 0 };
+            const eSpd = CONFIG.PLAYER.elf.bulletSpeed || 13;
+            const vDmg = Math.floor((18 + this.lvl * 4) * this.weaponLevel * this.weaponDamageMult);
+            for (const off of [-0.22, -0.11, 0, 0.11, 0.22]) {
+                const a = aimA + off;
+                const b = window.PoolManager ? PoolManager.acquire('Bullet', this.x, this.y, Math.cos(a) * eSpd, Math.sin(a) * eSpd, '#58e08a', vDmg, true, this.currentWeapon, 320, 'arrow') : new Bullet(this.x, this.y, Math.cos(a) * eSpd, Math.sin(a) * eSpd, '#58e08a', vDmg, true, this.currentWeapon, 320, 'arrow');
+                b.chainPierce = true;
+                bullets.push(b);
+            }
+            ScreenEffects._addRing(vx, vy, '#58e08a', 118, 16, 4, 0);
+            SND.play(380, 'sine', 0.22, 0.24);
+            DamageNumbers.add(this.x, this.y - 14, _L('tech.elf.float', 'VÓRTICE SILVESTRE!'), 'crit');
+        }
+    }
+
+    // Atualiza efeitos contínuos da Técnica de Classe (Égide refletora, Glifo Temporal, Vórtice de Espinhos)
+    _tickTechniques(m) {
+        if (this.techCooldown > 0) this.techCooldown--;
+        if (this._techBuffer > 0) {
+            this._techBuffer--;
+            if (this.techCooldown <= 0) { this._techBuffer = 0; this.useTechnique(); }
+        }
+        // Guerreiro: Égide de Ferro reflete projéteis inimigos próximos
+        if (this._ironAegisT > 0) {
+            this._ironAegisT--;
+            const rSq = (this.radius + 20) * (this.radius + 20);
+            for (let i = 0; i < bullets.length; i++) {
+                const b = bullets[i];
+                if (!b || !b.alive || b.isP) continue;
+                const dx = b.x - this.x, dy = b.y - this.y;
+                if (dx * dx + dy * dy <= rSq) {
+                    b.isP = true;
+                    b.vx = -b.vx * 1.2;
+                    b.vy = -b.vy * 1.2;
+                    b.color = '#ffd86b';
+                    spawnParticles(b.x, b.y, '#ffd86b', 4, 3);
+                }
+            }
+        }
+        // Mago: Glifo Temporal no chão
+        if (this._arcaneSigil) {
+            const sig = this._arcaneSigil;
+            sig.t--;
+            sig.tick++;
+            const rSq = sig.r * sig.r;
+            // Resfria o mago mais rápido enquanto estiver dentro do glifo
+            const pdx = this.x - sig.x, pdy = this.y - sig.y;
+            if (pdx * pdx + pdy * pdy <= rSq && this.attackHeat > 0) {
+                this.attackHeat = Math.max(0, this.attackHeat - 0.55);
+            }
+            // Desacelera projéteis inimigos dentro do glifo (uma única vez por projétil)
+            for (let i = 0; i < bullets.length; i++) {
+                const b = bullets[i];
+                if (!b || !b.alive || b.isP || b._sigilSlow) continue;
+                const bx = b.x - sig.x, by = b.y - sig.y;
+                if (bx * bx + by * by <= rSq) {
+                    b.vx *= 0.48;
+                    b.vy *= 0.48;
+                    b._sigilSlow = true;
+                }
+            }
+            // Pulso rúnico a cada 35 frames com LoS
+            if (sig.tick % 35 === 0) {
+                const sDmg = Math.max(1, Math.floor((14 + this.lvl * 3) * this.weaponLevel * this.weaponDamageMult));
+                _losFoes(sig.x, sig.y, sig.r, this, e => {
+                    e.takeDamage(sDmg, m, this, true, true);
+                    spawnParticles(e.x, e.y, '#7ee8ff', 4, 3);
+                }, m);
+            }
+            if (sig.t <= 0) this._arcaneSigil = null;
+        }
+        // Elfa: Vórtice de Espinhos no chão
+        if (this._briarVortex) {
+            const vx = this._briarVortex;
+            vx.t--;
+            vx.tick++;
+            if (vx.tick % 28 === 0) {
+                const vDmg = Math.max(1, Math.floor((12 + this.lvl * 3) * this.weaponLevel * this.weaponDamageMult));
+                _losFoes(vx.x, vx.y, vx.r, this, (e, edx, edy, dSq) => {
+                    e.takeDamage(vDmg, m, this, true, true);
+                    e.huntMarkT = Math.max(e.huntMarkT || 0, CONFIG.HUNT_MARK_FRAMES || 240);
+                    if (!(e._slowT > 0) || e._slowF > 0.55) e._slowF = 0.55;
+                    e._slowT = 55;
+                    if (!e.isB && dSq > 400) {
+                        const d = Math.sqrt(dSq) || 1;
+                        const nx = e.x - (edx / d) * 12, ny = e.y - (edy / d) * 12;
+                        if (_entityClear(m, nx, ny, e.radius)) { e.x = nx; e.y = ny; }
+                    }
+                    spawnParticles(e.x, e.y, '#58e08a', 4, 3);
+                }, m);
+            }
+            if (vx.t <= 0) this._briarVortex = null;
+        }
     }
 
     update(m) {
@@ -38832,6 +39412,7 @@ _thornNova(m){if(!RunBoons.hasSynergy(this,'carapaca'))return;const d=18+this.lv
         // Buffered input: fire what was pressed during cooldown as soon as it is ready.
         if(this._dodgeBuffer > 0) { this._dodgeBuffer--; if(this.dodgeCooldown <= 0) { this._dodgeBuffer = 0; this.dodge(); } }
         if(this._skillBuffer > 0) { this._skillBuffer--; if(this.skillCooldown <= 0) { this._skillBuffer = 0; this.useSkill(); } }
+        this._tickTechniques(m);
         if(this.goldRushTimer > 0) this.goldRushTimer--;
         if(this.critBoost > 0) this.critBoost--;
         if(this.shopDiscountTimer > 0) this.shopDiscountTimer--;
@@ -38886,9 +39467,9 @@ _thornNova(m){if(!RunBoons.hasSynergy(this,'carapaca'))return;const d=18+this.lv
             // O rótulo "SUPERAQUECIDO" na HUD e o aviso no log existem só para a trava não parecer
             // travamento do jogo, que era o que ela parecia antes.
             this.combatTimer = 0; this.shootAnim = 14; this._skillPose = false;
-            const chainStep = this._chainAdvance(); // 1, 2 ou 3 (finalizador)
-            if(chainStep === 3) this.chainSpinT = (this.type === 'warrior') ? 18 : 0;
-            if(chainStep === 3 && this === player && typeof Statistics !== 'undefined') Statistics.data.comboFinishers = (Statistics.data.comboFinishers || 0) + 1;
+            const chainStep = this._chainAdvance(); // 1..3 (ou 1..4 no Nv.5+)
+            if(chainStep >= 3) this.chainSpinT = (this.type === 'warrior') ? (chainStep === 4 ? 20 : 18) : 0;
+            if(chainStep === this.getMaxComboSteps() && this === player && typeof Statistics !== 'undefined') Statistics.data.comboFinishers = (Statistics.data.comboFinishers || 0) + 1;
             const cls = CONFIG.PLAYER[this.type];
             const effectiveHeatMax = CONFIG.HEAT_MAX + (this.heatMaxBonus || 0);
             this.attackHeat = Math.min(effectiveHeatMax, this.attackHeat + CONFIG.HEAT_PER_SHOT);
@@ -39013,7 +39594,24 @@ _thornNova(m){if(!RunBoons.hasSynergy(this,'carapaca'))return;const d=18+this.lv
                     }
                 }
                 // Eco do Trovão (v56): o finalizador deixa uma onda de choque extra com atraso
-                if(chainStep === 3 && this.skills.thunderEcho) this._schedulePulse(this.x, this.y, Math.max(1, Math.floor(dmg * CONFIG.SKILL_PULSE_MULT)), '#ffcc00');
+                if(chainStep >= 3 && this.skills.thunderEcho) this._schedulePulse(this.x, this.y, Math.max(1, Math.floor(dmg * CONFIG.SKILL_PULSE_MULT)), '#ffcc00');
+                // Combo Nv. 3+ (Guerreiro — Onda Sísmica no 3º golpe): pulso frontal extra + +1 Fúria
+                if (chainStep === 3 && this.lvl >= (CONFIG.COMBO_LVL_TIER2 || 3)) {
+                    this.furyStacks = Math.min(CONFIG.WARRIOR_FURY_MAX_STACKS, (this.furyStacks || 0) + 1);
+                    const sx3 = this.x + Math.cos(attackAngle) * (reach * 0.55), sy3 = this.y + Math.sin(attackAngle) * (reach * 0.55);
+                    if (hasLineOfSight(m, this.x, this.y, sx3, sy3)) this._schedulePulse(sx3, sy3, Math.max(1, Math.floor(dmg * 0.45)), '#ffaa33', 85, 6);
+                }
+                // Combo Nv. 5+ (Guerreiro — 4º Golpe Épico: Martelo do Abismo): fenda sísmica + alto stagger
+                if (chainStep === 4) {
+                    ScreenEffects._addRing(this.x, this.y, '#ff4422', reach * 1.45, 20, 6, 0);
+                    ScreenEffects.triggerFlash(0.24, '#ff6622');
+                    ScreenEffects.triggerShake(20);
+                    ScreenEffects._hitstop(4);
+                    SND.play(58, 'sawtooth', 0.22, 0.3);
+                    this._staggerNearbyBoss(16);
+                    this._schedulePulse(this.x, this.y, Math.max(1, Math.floor(dmg * 0.6)), '#ff4422', Math.round(reach * 1.35), 9);
+                    DamageNumbers.add(this.x, this.y - 18, _L('combo.finisher4.warrior', 'MARTELO DO ABISMO!'), 'crit');
+                }
                 if(this.overdriveTimer>0)_mkShot(this.x,this.y,Math.cos(attackAngle)*11,Math.sin(attackAngle)*11,'#ffd86b',Math.max(1,Math.floor(dmg*0.55)),220,'magic',b=>{b.chainPierce=true;});
                 this.scd = effectiveFireRate; if(hitAny) SND.play(150, 'sawtooth', 0.15, 0.3); else SND.play(80, 'triangle', 0.04, 0.08);
             } else {
@@ -39106,6 +39704,55 @@ _thornNova(m){if(!RunBoons.hasSynergy(this,'carapaca'))return;const d=18+this.lv
                     ScreenEffects.triggerShake(8);
                     ScreenEffects._hitstop(2);
                     SND.play(90, 'triangle', 0.15, 0.2);
+                    // Combo Nv. 3+ (3º golpe aprimorado para Ladino, Mago e Elfa; Nv. 1 fica 100% inalterado)
+                    if (this.lvl >= (CONFIG.COMBO_LVL_TIER2 || 3)) {
+                        const ba3 = Math.atan2(sy, sx);
+                        if (this.type === 'rogue') {
+                            for (const s of [-0.22, 0.22]) {
+                                _mkShot(this.x, this.y, Math.cos(ba3 + s) * bulletSpeed * 1.1, Math.sin(ba3 + s) * bulletSpeed * 1.1, '#ff4d6d', Math.max(1, Math.floor(chainDmg * 0.55)), range * 0.9, 'knife', b => { b.applyPoison = true; b.chainPierce = true; });
+                            }
+                        } else if (this.type === 'mage') {
+                            // Pulso arcano puro à frente em LoS (sem aplicar gelo para preservar cadência de congelamento)
+                            const px3 = this.x + Math.cos(ba3) * 80, py3 = this.y + Math.sin(ba3) * 80;
+                            if (hasLineOfSight(m, this.x, this.y, px3, py3)) {
+                                this._schedulePulse(px3, py3, Math.max(1, Math.floor(chainDmg * 0.65)), '#c084fc', 72, 6);
+                            }
+                        } else if (this.type === 'elf') {
+                            _mkShot(this.x, this.y, Math.cos(ba3) * bulletSpeed * 1.25, Math.sin(ba3) * bulletSpeed * 1.25, '#7fffd4', Math.max(1, Math.floor(chainDmg * 0.6)), range * 1.15, 'arrow', b => { b.chainPierce = true; b.galeKb = true; });
+                        }
+                    }
+                }
+                // Combo Nv. 5+ (4º Golpe Épico para Ladino, Mago e Elfa)
+                if (chainStep === 4) {
+                    const ba4 = Math.atan2(sy, sx);
+                    ScreenEffects._addRing(this.x, this.y, '#ffd86b', 62, 16, 4, 0);
+                    ScreenEffects.triggerFlash(0.22, this.color);
+                    ScreenEffects.triggerShake(12);
+                    ScreenEffects._hitstop(3);
+                    SND.play(115, 'sawtooth', 0.18, 0.24);
+                    if (this.type === 'rogue') {
+                        // Lâmina Fantasma: micro-avanço seguro + crítico garantido
+                        const stepX = this.x + Math.cos(ba4) * 24, stepY = this.y + Math.sin(ba4) * 24;
+                        if (_entityClear(m, stepX, stepY, this.radius) && hasLineOfSight(m, this.x, this.y, stepX, stepY)) {
+                            this.x = stepX; this.y = stepY;
+                        }
+                        this._perfectCritT = Math.max(this._perfectCritT || 0, 45);
+                        this.invincibleTimer = Math.max(this.invincibleTimer || 0, 12);
+                        DamageNumbers.add(this.x, this.y - 18, _L('combo.finisher4.rogue', 'LÂMINA FANTASMA!'), 'crit');
+                    } else if (this.type === 'mage') {
+                        // Singularidade Prismática: dissipa 22% do calor + estrela arcana à frente em LoS
+                        this.attackHeat = Math.max(0, (this.attackHeat || 0) - effectiveHeatMax * 0.22);
+                        const sx4 = this.x + Math.cos(ba4) * 95, sy4 = this.y + Math.sin(ba4) * 95;
+                        if (hasLineOfSight(m, this.x, this.y, sx4, sy4)) {
+                            this._schedulePulse(sx4, sy4, Math.max(1, Math.floor(chainDmg * 0.95)), '#7ee8ff', 92, 7);
+                        }
+                        DamageNumbers.add(this.x, this.y - 18, _L('combo.finisher4.mage', 'SINGULARIDADE!'), 'crit');
+                    } else if (this.type === 'elf') {
+                        // Flecha Estelar: disparo teleguiado astral + marca de caça em LoS
+                        _mkShot(this.x, this.y, Math.cos(ba4) * bulletSpeed * 1.3, Math.sin(ba4) * bulletSpeed * 1.3, '#fde68a', Math.max(1, Math.floor(chainDmg * 0.85)), range * 1.25, 'arrow', b => { b.homing = true; b.chainPierce = true; });
+                        _losFoes(this.x, this.y, 150, this, e => { e.huntMarkT = Math.max(e.huntMarkT || 0, CONFIG.HUNT_MARK_FRAMES || 240); }, m);
+                        DamageNumbers.add(this.x, this.y - 18, _L('combo.finisher4.elf', 'FLECHA ESTELAR!'), 'crit');
+                    }
                 }
                 if(this.spellEcho) {
                     const spreadAngle = Math.atan2(sy, sx) + 0.25;
@@ -39127,8 +39774,14 @@ _thornNova(m){if(!RunBoons.hasSynergy(this,'carapaca'))return;const d=18+this.lv
                 this.scd = effectiveFireRate; SND.playShoot(this.type);
             }
             if(chainStep===3){const ff=RunBoons.count(this,'frost_finisher');if(ff>0){_losFoes(this.x,this.y,115,this,e=>{e.takeDamage(10*ff,m,this,true,true);ElementalSystem.applyStatus(e,'ice',1,150,this);},m);ScreenEffects._addRing(this.x,this.y,'#88ddff',115,14,3,0);}}
+            // Maestria Ascendida (Nv. 8+): ao fechar o combo máximo, gera +6 Chama do Véu e reduz 0.75s da Técnica
+            if (this.lvl >= (CONFIG.COMBO_LVL_TIER4 || 8) && chainStep === this.getMaxComboSteps()) {
+                this.addSurge(6);
+                if (this.techCooldown > 0) this.techCooldown = Math.max(0, this.techCooldown - 45);
+            }
         }
         if(Input.keys[' ']) this.useSkill();
+        if(Input.keys['e'] || Input.keys['E'] || Input.keys['f'] || Input.keys['F']) this.useTechnique();
     }
 
     draw(ctx, cx, cy) {
@@ -39316,16 +39969,47 @@ _thornNova(m){if(!RunBoons.hasSynergy(this,'carapaca'))return;const d=18+this.lv
         if (_mnt && _mnt.drawSaddleOverlay) {
             _mnt.drawSaddleOverlay(ctx, sx, sy + _mntOffY);
         }
-        // Indicador do combo: 3 pontinhos que acendem conforme o passo (somem após a janela sem atacar)
+        // Indicador do combo: 3 pontinhos (ou 4 no Nv.5+) que acendem conforme o passo (somem após a janela sem atacar)
         if (this.chainStep > 0 && this.chainTimer < CONFIG.COMBO_CHAIN_WINDOW) {
+            const maxS = this.getMaxComboSteps();
             const cdy = sy + this.radius + 8;
+            const xStart = sx - ((maxS - 1) * 3);
             ctx.globalAlpha = 1;
-            for (let cdi = 0; cdi < 3; cdi++) {
-                ctx.fillStyle = cdi < this.chainStep ? (this.chainStep === 3 ? '#ffcc00' : '#ffffff') : 'rgba(255,255,255,0.25)';
-                ctx.fillRect(sx - 6 + cdi * 6, cdy, 3, 3);
+            for (let cdi = 0; cdi < maxS; cdi++) {
+                const isLit = cdi < this.chainStep;
+                const isEpic = this.chainStep === 4;
+                const isFin = this.chainStep >= 3;
+                ctx.fillStyle = isLit ? (isEpic ? '#ff5533' : (isFin ? '#ffcc00' : '#ffffff')) : 'rgba(255,255,255,0.25)';
+                ctx.fillRect(xStart + cdi * 6, cdy, 3, 3);
             }
         }
         ctx.restore();
+
+        // Visuais no mapa das Técnicas de Classe ativas (Glifo Temporal, Vórtice de Espinhos, Égide de Ferro)
+        if (this._arcaneSigil) {
+            const sig = this._arcaneSigil;
+            const gsx = sig.x - cx, gsy = sig.y - cy;
+            ctx.save();
+            ctx.globalAlpha = Math.min(0.75, (sig.t / 40) * 0.65);
+            PixelFX.ring(ctx, gsx, gsy, sig.r, '#7ee8ff', 3, { dash: 4 });
+            PixelFX.ring(ctx, gsx, gsy, sig.r * 0.58, '#c084fc', 2, { dash: 2 });
+            ctx.restore();
+        }
+        if (this._briarVortex) {
+            const vx = this._briarVortex;
+            const vsx = vx.x - cx, vsy = vx.y - cy;
+            ctx.save();
+            ctx.globalAlpha = Math.min(0.75, (vx.t / 40) * 0.65);
+            PixelFX.ring(ctx, vsx, vsy, vx.r, '#58e08a', 3, { dash: 3 });
+            PixelFX.ring(ctx, vsx, vsy, vx.r * 0.5, '#a7f3d0', 2);
+            ctx.restore();
+        }
+        if (this._ironAegisT > 0) {
+            ctx.save();
+            ctx.globalAlpha = 0.7;
+            PixelFX.ring(ctx, sx, sy, this.radius + 11, '#ffd86b', 3, { dash: 2 });
+            ctx.restore();
+        }
 
         // Indicadores sobre a cabeça (coordenadas separadas para não colidir)
         if (wc && (window.GFX === undefined || window.GFX.glows)) {
@@ -43474,7 +44158,34 @@ window.SkillTreeUI = SkillTreeUI;
         },
 
         // Itens da aba Bolsa: armas e peças, na ordem escolhida
-        bagList() { return Inventory.sortItems(Inventory.items.filter(i => i.kind !== 'consumable'), Inventory.sortMode); },
+        bagList() {
+            const raw = Inventory.items.filter(i => i.kind !== 'consumable');
+            const f = this.filter || 'all';
+            const filtered = raw.filter(it => {
+                if (f === 'weapon') return it.kind === 'weapon';
+                if (f === 'armor') return it.kind === 'equip' && (it.slot === 'helm' || it.slot === 'armor' || it.slot === 'boots');
+                if (f === 'acc') return it.kind === 'equip' && (it.slot === 'amulet' || it.slot === 'ring');
+                if (f === 'up') {
+                    if (it.kind === 'equip') {
+                        const v = this._verdictOf(it.payload).v;
+                        return v === 'up' || v === 'new';
+                    }
+                    if (it.kind === 'weapon') {
+                        const curT = (player && player.currentWeapon && typeof player.currentWeapon.tier === 'number') ? player.currentWeapon.tier : -1;
+                        return ((it.payload && it.payload.tier) || 0) > curT;
+                    }
+                }
+                return true;
+            });
+            return Inventory.sortItems(filtered, Inventory.sortMode);
+        },
+
+        setFilter(f) {
+            this.filter = f || 'all';
+            this.sel = null;
+            if (window.SND && SND.playUI) SND.playUI();
+            this._refresh();
+        },
 
         // Card de item da bolsa (botão: toque seleciona)
         _cardHtml(it) {
@@ -43563,9 +44274,25 @@ window.SkillTreeUI = SkillTreeUI;
             const list = this.bagList();
             const modeName = { rarity: _L('inv.sort_rarity', 'raridade'), slot: _L('inv.sort_slot', 'slot'), recent: _L('inv.sort_recent', 'recentes') }[Inventory.sortMode] || Inventory.sortMode;
             const sortLabel = _L('inv.sortLabel', 'Ordem: {m}').replace('{m}', modeName);
-            const head = '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;">'
-                + '<button type="button" class="bag-sort" onclick="BagPanel.cycleSort()" style="min-height:44px;padding:6px 12px;border-radius:999px;font-size:calc(11px * var(--font-scale,1));font-weight:700;border:1.5px solid rgba(224,182,255,0.35);background:rgba(224,182,255,0.1);color:#e6d0ff;cursor:pointer;touch-action:manipulation;">' + this._esc(sortLabel) + ' ▾</button>'
-                + '<span style="font-size:calc(11px * var(--font-scale,1));color:' + COLORS.TEXT_DIM + ';">' + Inventory.count() + '/' + Inventory.CAP + '</span></div>';
+            const curF = this.filter || 'all';
+            const filters = [
+                ['all', _L('inv.filter.all', 'Todos')],
+                ['weapon', _L('inv.filter.weapon', 'Armas')],
+                ['armor', _L('inv.filter.armor', 'Armaduras')],
+                ['acc', _L('inv.filter.acc', 'Joias')],
+                ['up', _L('inv.filter.up', '▲ Melhorias')]
+            ].map(([k, lbl]) => {
+                const on = curF === k;
+                return '<button type="button" onclick="BagPanel.setFilter(\'' + k + '\')" style="padding:5px 9px;border-radius:999px;font-size:calc(10px * var(--font-scale,1));font-weight:700;border:1px solid ' + (on ? COLORS.PRIMARY : 'rgba(255,255,255,0.14)') + ';background:' + (on ? 'rgba(224,182,255,0.22)' : 'rgba(255,255,255,0.04)') + ';color:' + (on ? '#fff' : COLORS.TEXT_DIM) + ';cursor:pointer;touch-action:manipulation;">' + this._esc(lbl) + '</button>';
+            }).join('');
+            const capPct = Math.min(100, Math.round((Inventory.count() / Inventory.CAP) * 100));
+            const capCol = Inventory.count() >= Inventory.CAP ? '#f87171' : (Inventory.count() >= Inventory.CAP - 2 ? '#fbbf24' : '#a78bfa');
+            const head = '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px;">'
+                + '<button type="button" class="bag-sort" onclick="BagPanel.cycleSort()" style="min-height:38px;padding:5px 12px;border-radius:999px;font-size:calc(11px * var(--font-scale,1));font-weight:700;border:1.5px solid rgba(224,182,255,0.35);background:rgba(224,182,255,0.1);color:#e6d0ff;cursor:pointer;touch-action:manipulation;">' + this._esc(sortLabel) + ' ▾</button>'
+                + '<span style="display:flex;align-items:center;gap:6px;font-size:calc(11px * var(--font-scale,1));color:' + capCol + ';font-weight:700;">'
+                + '<span style="width:48px;height:6px;border-radius:999px;background:rgba(255,255,255,0.1);overflow:hidden;display:inline-block;"><span style="display:block;height:100%;width:' + capPct + '%;background:' + capCol + ';"></span></span>'
+                + Inventory.count() + '/' + Inventory.CAP + '</span></div>'
+                + '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;">' + filters + '</div>';
             if (!list.length) return head + this._empty(_L('inv.emptyBag', 'A bolsa não tem armas nem peças guardadas.'));
             return head + '<div class="bag-grid">' + list.map(it => this._cardHtml(it)).join('') + '</div>';
         },
@@ -43619,7 +44346,7 @@ window.SkillTreeUI = SkillTreeUI;
             const hint = _L('inv.selectHint', 'Toque em um item para ver detalhes e ações.');
             if (this.tab === 'relics' || !this.sel) return box(hintHtml(hint));
 
-            // Equipado: somente leitura (não há desequipar; equipar um item da bolsa troca)
+            // Equipado: permite retirar para a bolsa ou trocar rapidamente
             if (String(this.sel).indexOf('eq:') === 0) {
                 const key = String(this.sel).slice(3);
                 let title, color, body = '';
@@ -43636,8 +44363,11 @@ window.SkillTreeUI = SkillTreeUI;
                     color = eq.color || CONFIG.EQUIPMENT_RARITY_COLORS[0];
                     body = this._equipStatTexts(eq).map(t => this._esc(t)).join('<br>');
                 }
+                const canUnequip = !Inventory.inCombat() && Inventory.count() < Inventory.CAP;
+                const unequipBtn = '<div class="bag-btns" style="margin-top:6px;"><button type="button" class="bag-act bag-act-forge"' + (canUnequip ? '' : ' disabled') + ' onclick="BagPanel.unequip(\'' + key + '\')">↩ ' + this._esc(_L('inv.unequip', 'Retirar para a Bolsa')) + '</button></div>';
                 return box('<div style="font-size:calc(13px * var(--font-scale,1));font-weight:700;color:' + color + ';">' + this._esc(title) + '</div>'
                     + '<div style="font-size:calc(11px * var(--font-scale,1));color:#fff;margin-top:4px;line-height:1.35;">' + body + '</div>'
+                    + unequipBtn
                     + hintHtml(_L('inv.equippedHint', 'Vestido. Para trocar, equipe outra peça da bolsa.')));
             }
 
@@ -43838,6 +44568,17 @@ window.SkillTreeUI = SkillTreeUI;
             this._refresh();
         },
 
+        unequip(slotKey) {
+            if (Inventory.inCombat()) { this._toast(_L('inv.noCombat', 'Não dá para trocar equipamento em combate')); return; }
+            if (Inventory.count() >= Inventory.CAP) { this._toast(_L('inv.bagFull', 'A bolsa está cheia (12/12).')); return; }
+            const res = Inventory.unequipSlot(slotKey);
+            if (!res || !res.ok) return;
+            const nm = slotKey === 'weapon' ? (WeaponSystem.displayName(res.item) || res.item.name || '') : (res.item.name || '');
+            this._toast(_L('inv.unequipped', '{name} guardado na bolsa').replace('{name}', nm));
+            this.sel = null;
+            this._refresh();
+        },
+
         use(uid) {
             const it = Inventory.get(uid);
             if (!it) return;
@@ -44030,12 +44771,30 @@ window.SkillTreeUI = SkillTreeUI;
                 skills: document.getElementById('skills-btn-bar'),
                 stats: document.getElementById('stats-btn-bar'),
                 dodge: document.getElementById('dodge-btn'),
+                tech: document.getElementById('tech-btn'),
                 special: document.getElementById('special-btn')
             };
 
             if(btns.shop) btns.shop.onclick = () => window.toggleShop ? window.toggleShop() : this.openPanel('shop');
             if(btns.skills) btns.skills.onclick = () => window.toggleSkillTree ? window.toggleSkillTree() : this.openPanel('skills');
             if(btns.stats) btns.stats.onclick = () => window.toggleStats ? window.toggleStats() : this.openPanel('stats');
+            if(btns.tech) {
+                let _lastTechBtn = 0;
+                const fireTech = () => {
+                    if (typeof gameState !== 'undefined' && gameState !== 'PLAYING') return;
+                    if (window.isAnyPanelOpen && window.isAnyPanelOpen()) return;
+                    const now = performance.now();
+                    if (now - _lastTechBtn < 250) return;
+                    _lastTechBtn = now;
+                    if (window.player && player.useTechnique) player.useTechnique();
+                };
+                btns.tech.onclick = fireTech;
+                btns.tech.ontouchstart = (e) => {
+                    fireTech();
+                    if (e.cancelable) e.preventDefault();
+                    e.stopPropagation();
+                };
+            }
 
             if(btns.dodge) {
                 // Toque + click sintético podem chegar em sequência no mesmo toque:
@@ -44202,7 +44961,108 @@ window.SkillTreeUI = SkillTreeUI;
 
              // Restaura a posição de rolagem após o re-render (mesmo painel)
              if (isRefresh && contentEl) contentEl.scrollTop = scrollTop;
+             if (panelId === 'stats') this._startHeroPaperDollLoop();
+             else this._stopHeroPaperDollLoop();
          },
+
+        _paperDollRaf: 0,
+        _paperDollDir: 2,
+        _paperDollPose: 'idle',
+        _paperDollTick: 0,
+        _heroSlotSel: null,
+
+        _startHeroPaperDollLoop() {
+            this._stopHeroPaperDollLoop();
+            const step = () => {
+                const cv = document.getElementById('hero-paperdoll-canvas');
+                if (!cv || !cv.isConnected || this.currentPanel !== 'stats') {
+                    this._paperDollRaf = 0;
+                    return;
+                }
+                this._paperDollTick++;
+                if (typeof SpriteManager !== 'undefined' && SpriteManager.drawHeroPreview && window.player) {
+                    SpriteManager.drawHeroPreview(cv, window.player, {
+                        dir: this._paperDollDir,
+                        pose: this._paperDollPose,
+                        tick: this._paperDollTick
+                    });
+                }
+                // Pinta miniatura pixel-art do Companheiro na ficha do Personagem (uma vez por render)
+                const petCv = document.getElementById('hero-pet-mini-cv');
+                if (petCv && !petCv._drawn && typeof _petMakeSprite === 'function') {
+                    const pType = petCv.getAttribute('data-pet');
+                    const pStg = parseInt(petCv.getAttribute('data-stage') || '1', 10) || 1;
+                    const spr = _petMakeSprite(pType, 0, 0, false, pStg);
+                    if (spr) {
+                        const pctx = petCv.getContext('2d');
+                        pctx.clearRect(0, 0, petCv.width, petCv.height);
+                        pctx.imageSmoothingEnabled = false;
+                        pctx.drawImage(spr, 0, 0, petCv.width, petCv.height);
+                        petCv._drawn = true;
+                    }
+                }
+                this._paperDollRaf = requestAnimationFrame(step);
+            };
+            step();
+        },
+
+        _stopHeroPaperDollLoop() {
+            if (this._paperDollRaf) {
+                cancelAnimationFrame(this._paperDollRaf);
+                this._paperDollRaf = 0;
+            }
+        },
+
+        rotateHeroPaperDoll(delta) {
+            this._paperDollDir = ((this._paperDollDir || 2) + (delta || 1) + 8) & 7;
+            if (window.SND && SND.playUI) SND.playUI();
+        },
+
+        setHeroPaperDollPose(pose) {
+            this._paperDollPose = pose || 'idle';
+            this._paperDollTick = 0;
+            if (window.SND && SND.playUI) SND.playUI();
+        },
+
+        selectHeroSlot(slotKey) {
+            this._heroSlotSel = (this._heroSlotSel === slotKey) ? null : slotKey;
+            if (window.SND && SND.playUI) SND.playUI();
+            this.openPanel('stats');
+        },
+
+        heroEquipFromBag(uid, slotKey) {
+            if (!window.Inventory) return;
+            if (Inventory.inCombat()) {
+                if (typeof ToastSystem !== 'undefined') ToastSystem.show(_L('inv.noCombat', 'Não dá para trocar equipamento em combate'), 'info', 2200);
+                return;
+            }
+            const it = Inventory.get(uid);
+            const name = it ? BagPanel._name(it) : '';
+            if (Inventory.equipFromBag(uid)) {
+                if (typeof ToastSystem !== 'undefined') ToastSystem.show(_L('inv.equipped', '{name} equipado').replace('{name}', name), 'info', 2200);
+                if (window.SND && SND.playUI) SND.playUI();
+                this.openPanel('stats');
+            }
+        },
+
+        heroUnequipSlot(slotKey) {
+            if (!window.Inventory) return;
+            if (Inventory.inCombat()) {
+                if (typeof ToastSystem !== 'undefined') ToastSystem.show(_L('inv.noCombat', 'Não dá para trocar equipamento em combate'), 'info', 2200);
+                return;
+            }
+            if (Inventory.count() >= Inventory.CAP) {
+                if (typeof ToastSystem !== 'undefined') ToastSystem.show(_L('inv.bagFull', 'A bolsa está cheia (12/12).'), 'info', 2200);
+                return;
+            }
+            const res = Inventory.unequipSlot(slotKey);
+            if (res && res.ok) {
+                const nm = slotKey === 'weapon' ? (WeaponSystem.displayName(res.item) || res.item.name || '') : (res.item.name || '');
+                if (typeof ToastSystem !== 'undefined') ToastSystem.show(_L('inv.unequipped', '{name} guardado na bolsa').replace('{name}', nm), 'info', 2200);
+                if (window.SND && SND.playUI) SND.playUI();
+                this.openPanel('stats');
+            }
+        },
 
         // Foco do teclado através do re-render do painel (openPanel recria o DOM inteiro).
         // Identificador estável: o onclick do elemento focado (ex.: buyItem('id', 1, false))
@@ -44454,6 +45314,7 @@ window.SkillTreeUI = SkillTreeUI;
         },
 
         closePanel() {
+            this._stopHeroPaperDollLoop();
             // Bolsa aberta da loja/acampamento (Inv3-2): fechar volta para a tela de origem, sem fechar o jogo
             if (this.currentPanel === 'bag' && BagPanel._origin) {
                 const back = BagPanel._origin;
@@ -44575,6 +45436,7 @@ window.SkillTreeUI = SkillTreeUI;
                             </div>
                         </div>
                         <div style="font-size:12px;color:${COLORS.TEXT_DIM};line-height:1.3">${(window._L ? _L(item.descKey, item.desc) : item.desc)}</div>
+                        ${this._shopPreviewBadge(item, p)}
                         ${!soldOut && !opts.flash ? `<div style="font-size:calc(10px * var(--font-scale,1));color:${COLORS.TEXT_MUTED};margin-top:5px">Estoque: ${item.stock}x</div>` : ''}
                         ${multi}
                     </div>
@@ -44622,6 +45484,30 @@ window.SkillTreeUI = SkillTreeUI;
                 </div>
                 ${history}
             `;
+        },
+
+        _shopPreviewBadge(item, p) {
+            if (!item || !p) return '';
+            const curHp = Math.round(p.hp || 0), maxHp = Math.round(p.maxHp || 100);
+            const curSh = Math.round(p.shield || 0), wLv = p.weaponLevel || 1;
+            const cls = CONFIG.PLAYER[p.type];
+            const curDmg = cls ? Math.floor(cls.baseDmg * wLv * (p.weaponDamageMult || 1) * (p.damageMult || 1)) : 0;
+            const nxtDmg = cls ? Math.floor(cls.baseDmg * Math.min(5, wLv + 1) * (p.weaponDamageMult || 1) * (p.damageMult || 1)) : 0;
+            let txt = '';
+            if (item.id === 'healthPotion') txt = `HP ${curHp} → ${Math.min(maxHp, curHp + 50)}/${maxHp}`;
+            else if (item.id === 'fullHeal') txt = `HP ${curHp} → ${maxHp}/${maxHp}`;
+            else if (item.id === 'shieldPotion') txt = `${_L('hud.shield', 'Escudo')} ${curSh} → ${curSh + 50}`;
+            else if (item.id === 'maxHpUp') txt = `HP Máx ${maxHp} → ${maxHp + 30}`;
+            else if (item.id === 'weaponUpgrade') txt = wLv >= 5 ? _L('inv.fuseMaxTier', 'Nível máximo atingido') : `${_L('inv.weapon', 'Arma')} Nv.${wLv} → Nv.${wLv + 1} (${_L('skills.damage', 'DANO')} ${curDmg} → ${nxtDmg})`;
+            else if (item.id === 'crystal') txt = `Calor/Mana +${p.heatMaxBonus || 0} → +${(p.heatMaxBonus || 0) + 20}`;
+            else if (item.id === 'torch') txt = `Luz ${Math.round(p.lr || 0)} → ${Math.round(p.lr || 0) + 60}`;
+            else if (item.id === 'damageBoost') txt = `${_L('skills.damage', 'DANO')} ${curDmg} → ${Math.floor(curDmg * 1.25)} (30s)`;
+            else if (item.id === 'critPotion') {
+                const c0 = Math.round(Math.min(1, CONFIG.CRIT_CHANCE_BASE + (p.critChance || 0) + (p.classCritChance || 0)) * 100);
+                txt = `${_L('skills.crit', 'CRÍTICO')} ${c0}% → ${Math.min(100, c0 + 10)}% (30s)`;
+            }
+            if (!txt) return '';
+            return `<div style="margin-top:5px;display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:6px;background:rgba(74,222,128,0.12);border:1px solid rgba(74,222,128,0.35);font-size:10px;font-weight:700;color:#4ade80">▲ ${txt}</div>`;
         },
 
         setShopTab(tabKey) {
@@ -44796,24 +45682,127 @@ window.SkillTreeUI = SkillTreeUI;
                 </div>
             `).join('');
 
+            const subTab = this._skillsSubTab || 'tree';
+            const subTabsHtml = `
+                <div style="display:flex;gap:6px;margin-bottom:12px">
+                    <button type="button" onclick="UIManager.setSkillsSubTab('tree')" style="flex:1;min-height:40px;padding:6px 8px;border-radius:10px;font-size:11px;font-weight:800;border:1.5px solid ${subTab === 'tree' ? COLORS.PRIMARY : 'rgba(255,255,255,0.14)'};background:${subTab === 'tree' ? 'rgba(224,182,255,0.2)' : 'rgba(255,255,255,0.04)'};color:${subTab === 'tree' ? '#fff' : COLORS.TEXT_DIM};cursor:pointer;touch-action:manipulation">🌳 ${_L('skills.tabTree', 'Árvore de Skills')}</button>
+                    <button type="button" onclick="UIManager.setSkillsSubTab('combos')" style="flex:1;min-height:40px;padding:6px 8px;border-radius:10px;font-size:11px;font-weight:800;border:1.5px solid ${subTab === 'combos' ? '#7ee8ff' : 'rgba(255,255,255,0.14)'};background:${subTab === 'combos' ? 'rgba(126,232,255,0.18)' : 'rgba(255,255,255,0.04)'};color:${subTab === 'combos' ? '#7ee8ff' : COLORS.TEXT_DIM};cursor:pointer;touch-action:manipulation">⚔ ${_L('skills.tabCombos', 'Combos & Técnicas')}</button>
+                </div>`;
+
+            const combosSectionHtml = this._renderClassCombosAndTechHtml(p);
+
             return `
-                <div style="text-align:center;margin-bottom:12px;color:${COLORS.GOLD};font-weight:bold;letter-spacing:0.1em;font-size:13px;background:rgba(40,30,20,0.6);padding:8px 0;border-radius:12px;border:1.5px solid rgba(250,204,21,0.35);box-shadow:0 0 10px rgba(255,204,0,0.1)">
+                <div style="text-align:center;margin-bottom:10px;color:${COLORS.GOLD};font-weight:bold;letter-spacing:0.1em;font-size:13px;background:rgba(40,30,20,0.6);padding:8px 0;border-radius:12px;border:1.5px solid rgba(250,204,21,0.35);box-shadow:0 0 10px rgba(255,204,0,0.1)">
                     <svg class="coin-s" width="12" height="12" style="color:#ffcc00;vertical-align:-1px;margin-right:4px"><use href="#ic-coin"/></svg> ${_L('shop.yourGold', 'SEU OURO')}: ${p.currency}
                 </div>
-                <div style="text-align:center;margin-bottom:12px;font-size:calc(11px * var(--font-scale,1));font-weight:bold;padding:6px 0;border-radius:10px;border:1px solid ${floorReached ? 'rgba(248,113,113,0.4)' : 'rgba(255,255,255,0.12)'};background:${floorReached ? 'rgba(248,113,113,0.12)' : 'rgba(255,255,255,0.04)'};color:${floorReached ? '#f87171' : COLORS.TEXT_DIM}">
+                <div style="text-align:center;margin-bottom:10px;font-size:calc(11px * var(--font-scale,1));font-weight:bold;padding:6px 0;border-radius:10px;border:1px solid ${floorReached ? 'rgba(248,113,113,0.4)' : 'rgba(255,255,255,0.12)'};background:${floorReached ? 'rgba(248,113,113,0.12)' : 'rgba(255,255,255,0.04)'};color:${floorReached ? '#f87171' : COLORS.TEXT_DIM}">
                     ${_L('skills.floorPurchases', 'HABILIDADES DESTE ANDAR')}: ${floorUsed}/${floorLimit}${floorReached ? ' — ' + _L('skills.floorLimitShort', 'limite atingido, desça um andar') : ''}
                 </div>
-                <div style="display:flex;gap:6px;margin-bottom:14px">
+                <div style="display:flex;gap:6px;margin-bottom:10px">
                     ${statChip('HP', p.maxHp, '#4ade80')}
                     ${statChip(_L('skills.damage', 'DANO'), dmg, '#f87171')}
                     ${statChip(_L('skills.crit', 'CRÍTICO'), Math.round(Math.min(1, CONFIG.CRIT_CHANCE_BASE + (p.critChance || 0) + (p.classCritChance || 0)) * 100) + '%', '#fbbf24')}
                     ${statChip(_L('skills.speed', 'VEL.'), p.speed.toFixed(1), '#60a5fa')}
                 </div>
+                ${subTabsHtml}
+                ${subTab === 'combos' ? combosSectionHtml : `
+                    <div style="display:flex;flex-direction:column;gap:10px">
+                        ${groupHtml}
+                    </div>
+                    <button onclick="window._copyCurrentBuild()" style="width:100%;margin-top:12px;padding:10px;border-radius:12px;font-size:11px;font-weight:bold;text-transform:uppercase;letter-spacing:0.06em;border:1.5px solid rgba(224,182,255,0.35);background:rgba(224,182,255,0.12);color:#e0b6ff;cursor:pointer;touch-action:manipulation;">${_L('skills.copyBuild', '📋 Copiar código do build')}</button>
+                    <p style="text-align:center;font-size:10px;color:${COLORS.TEXT_MUTED};margin-top:12px">${_L('skills.tapHint', 'Toque em um nó para ver detalhes e desbloquear.')}</p>
+                `}
+            `;
+        },
+
+        setSkillsSubTab(tab) {
+            this._skillsSubTab = tab === 'combos' ? 'combos' : 'tree';
+            if (window.SND && SND.playUI) SND.playUI();
+            this.openPanel('skills');
+        },
+
+        _renderClassCombosAndTechHtml(p) {
+            const cls = p.type || 'warrior';
+            const lv = p.lvl || 1;
+            const cdr = Math.max(0.5, 1 - (p.cdrMult || 0));
+            const techCdSec = (((CONFIG.TECH_COOLDOWN && CONFIG.TECH_COOLDOWN[cls]) || 300) * cdr / 60).toFixed(1);
+            const specRaw = cls === 'warrior' ? CONFIG.WARRIOR_SLAM_COOLDOWN : (cls === 'rogue' ? CONFIG.ROGUE_SHADOW_STEP_COOLDOWN : (cls === 'elf' ? CONFIG.ELF_GUST_COOLDOWN : CONFIG.MAGE_ARCANE_STORM_COOLDOWN));
+            const specCdSec = ((specRaw || 240) * cdr / 60).toFixed(1);
+
+            const COMBO_DATA = {
+                warrior: [
+                    [1, _L('combo.warrior.lv1.name', 'Cadeia de Aço (3 Golpes)'), _L('combo.warrior.lv1.desc', 'Corte 120° → Varredura 150° → Giro Finalizador 360° (1.3x dano + empurrão).')],
+                    [3, _L('combo.warrior.lv3.name', 'Onda Sísmica (3º Golpe)'), _L('combo.warrior.lv3.desc', 'O 3º golpe projeta uma onda de choque frontal com LoS e gera +1 Fúria extra.')],
+                    [5, _L('combo.warrior.lv5.name', 'Martelo do Abismo (4º Golpe Épico)'), _L('combo.warrior.lv5.desc', 'Libera o 4º golpe na cadeia (1.65x dano + fenda sísmica tardia + alto Stagger em chefes).')],
+                    [8, _L('combo.warrior.lv8.name', 'Maestria Ascendida'), _L('combo.warrior.lv8.desc', 'Fechar o combo máximo concede +6 Chama do Véu e reduz a recarga da Técnica em 0.75s.')]
+                ],
+                rogue: [
+                    [1, _L('combo.rogue.lv1.name', 'Dança de Adagas (3 Golpes)'), _L('combo.rogue.lv1.desc', 'Estocada rápida → Leque duplo → Arremesso perfurante venenoso (1.2x dano).')],
+                    [3, _L('combo.rogue.lv3.name', 'Corte em X Sombrio (3º Golpe)'), _L('combo.rogue.lv3.desc', 'O 3º golpe dispara 2 lâminas fantasmas convergentes que atravessam e envenenam.')],
+                    [5, _L('combo.rogue.lv5.name', 'Lâmina Fantasma (4º Golpe Épico)'), _L('combo.rogue.lv5.desc', 'Libera o 4º golpe: micro-avanço sombrio com i-frames + salva tripla e próximo acerto crítico!')],
+                    [8, _L('combo.rogue.lv8.name', 'Maestria Ascendida'), _L('combo.rogue.lv8.desc', 'Fechar o combo máximo concede +6 Chama do Véu e reduz a recarga da Técnica em 0.75s.')]
+                ],
+                mage: [
+                    [1, _L('combo.mage.lv1.name', 'Tríade Arcana (3 Golpes)'), _L('combo.mage.lv1.desc', 'Orbe focado → Explosão em área no 2º disparo → Rajada tripla finalizadora.')],
+                    [3, _L('combo.mage.lv3.name', 'Convergência Arcana (3º Golpe)'), _L('combo.mage.lv3.desc', 'O 3º golpe detona um pulso arcano concentrado a 80px na direção da mira.')],
+                    [5, _L('combo.mage.lv5.name', 'Singularidade Prismática (4º Golpe Épico)'), _L('combo.mage.lv5.desc', 'Libera o 4º golpe: salva quádrupla + estrela astral em área e dissipa 22% do calor!')],
+                    [8, _L('combo.mage.lv8.name', 'Maestria Ascendida'), _L('combo.mage.lv8.desc', 'Fechar o combo máximo concede +6 Chama do Véu e reduz a recarga da Técnica em 0.75s.')]
+                ],
+                elf: [
+                    [1, _L('combo.elf.lv1.name', 'Cadência Silvestre (3 Golpes)'), _L('combo.elf.lv1.desc', 'Disparo preciso → Salva dupla → Flecha perfurante de longo alcance (1.2x dano).')],
+                    [3, _L('combo.elf.lv3.name', 'Lança de Vento (3º Golpe)'), _L('combo.elf.lv3.desc', 'O 3º golpe dispara uma flecha de vento extra de alta velocidade com empurrão.')],
+                    [5, _L('combo.elf.lv5.name', 'Flecha Estelar (4º Golpe Épico)'), _L('combo.elf.lv5.desc', 'Libera o 4º golpe: salva tripla + flecha estelar teleguiada e Marca da Caçada em área!')],
+                    [8, _L('combo.elf.lv8.name', 'Maestria Ascendida'), _L('combo.elf.lv8.desc', 'Fechar o combo máximo concede +6 Chama do Véu e reduz a recarga da Técnica em 0.75s.')]
+                ]
+            };
+
+            const TECH_DATA = {
+                warrior: { name: _L('tech.warrior.name', 'Égide de Ferro'), desc: _L('tech.warrior.desc', 'Ergue barreira refletora por 1.25s que devolve projéteis inimigos, concede escudo e dispara impacto frontal escalado por Fúria.') },
+                rogue:   { name: _L('tech.rogue.name', 'Fio das Sombras'), desc: _L('tech.rogue.desc', 'Dispara leque de kunais perfurantes, deixa névoa venenosa e teleporta em segurança até o alvo na mira com golpe furtivo.') },
+                mage:    { name: _L('tech.mage.name', 'Glifo Temporal'), desc: _L('tech.mage.desc', 'Dissipa 38% do calor e grava um selo rúnico no chão (4s) que desacelera projéteis inimigos, resfria você e pulsa dano arcano.') },
+                elf:     { name: _L('tech.elf.name', 'Vórtice de Espinhos'), desc: _L('tech.elf.desc', 'Dispara 5 flechas de espinhos e planta um vórtice espiritual (3.5s) que puxa inimigos, desacelera e aplica Marca da Caçada.') }
+            };
+
+            const SPEC_DATA = {
+                warrior: { name: _L('spec.warrior.name', 'Impacto Sísmico / Grito de Guerra'), awk: _L('spec.warrior.awk', 'Despertar (Overdrive): Cataclismo Titânico — 2 ondas tectônicas extras, +5 Fúria e +30 Escudo.') },
+                rogue:   { name: _L('spec.rogue.name', 'Passo das Sombras / Chuva de Lâminas'), awk: _L('spec.rogue.awk', 'Despertar (Overdrive): Dança das Mil Sombras — anel de 10 lâminas venenosas perfurantes e foco crítico.') },
+                mage:    { name: _L('spec.mage.name', 'Tempestade Arcana / Meteoro'), awk: _L('spec.mage.awk', 'Despertar (Overdrive): Juízo Astral — 2 pilares estelares em área e restaura o Escudo de Orbe.') },
+                elf:     { name: _L('spec.elf.name', 'Tempestade de Vento / Fúria da Natureza'), awk: _L('spec.elf.awk', 'Despertar (Overdrive): Ira Silvestre — 6 flechas espirituais teleguiadas e cura +12 HP.') }
+            };
+
+            const rows = (COMBO_DATA[cls] || COMBO_DATA.warrior).map(([reqLv, title, desc]) => {
+                const ok = lv >= reqLv;
+                return `<div style="padding:10px;border-radius:12px;border:1.5px solid ${ok ? 'rgba(74,222,128,0.45)' : 'rgba(255,255,255,0.1)'};background:${ok ? 'linear-gradient(135deg,rgba(74,222,128,0.12),rgba(20,15,32,0.75))' : 'rgba(18,14,28,0.6)'};opacity:${ok ? '1' : '0.72'}">
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;margin-bottom:4px">
+                        <span style="font-size:12px;font-weight:800;color:${ok ? '#4ade80' : '#d1d5db'}">${title}</span>
+                        <span style="font-size:10px;font-weight:800;padding:2px 7px;border-radius:999px;background:${ok ? 'rgba(74,222,128,0.2)' : 'rgba(255,255,255,0.08)'};color:${ok ? '#4ade80' : '#9ca3af'}">${ok ? '✓ ' + _L('skills.comboActive', 'ATIVO') : '🔒 Nv. ' + reqLv}</span>
+                    </div>
+                    <div style="font-size:11px;color:${COLORS.TEXT_DIM};line-height:1.35">${desc}</div>
+                </div>`;
+            }).join('');
+
+            const td = TECH_DATA[cls] || TECH_DATA.warrior;
+            const sd = SPEC_DATA[cls] || SPEC_DATA.warrior;
+
+            return `
                 <div style="display:flex;flex-direction:column;gap:10px">
-                    ${groupHtml}
+                    <div style="padding:11px;border-radius:12px;border:1.5px solid rgba(126,232,255,0.45);background:linear-gradient(135deg,rgba(26,48,88,0.45),rgba(18,14,30,0.85))">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+                            <span style="font-size:12px;font-weight:800;color:#7ee8ff">💠 ${_L('skills.techHeader', 'TÉCNICA DE CLASSE')}: ${td.name}</span>
+                            <span style="font-size:10px;font-weight:800;padding:2px 7px;border-radius:999px;background:rgba(126,232,255,0.18);color:#7ee8ff">Tecla E · ${techCdSec}s</span>
+                        </div>
+                        <div style="font-size:11px;color:#dbeafe;line-height:1.35">${td.desc}</div>
+                    </div>
+                    <div style="padding:11px;border-radius:12px;border:1.5px solid rgba(255,184,77,0.45);background:linear-gradient(135deg,rgba(88,46,20,0.42),rgba(18,14,30,0.85))">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+                            <span style="font-size:12px;font-weight:800;color:#ffd27a">🔥 ${_L('skills.specHeader', 'ESPECIAL ÉPICO')}: ${sd.name}</span>
+                            <span style="font-size:10px;font-weight:800;padding:2px 7px;border-radius:999px;background:rgba(255,184,77,0.18);color:#ffd27a">Espaço · ${specCdSec}s</span>
+                        </div>
+                        <div style="font-size:11px;color:#fde68a;line-height:1.35">${sd.awk}</div>
+                    </div>
+                    <div style="font-size:10px;color:${COLORS.TEXT_MUTED};font-weight:800;text-transform:uppercase;letter-spacing:0.1em;margin-top:4px">${_L('skills.combosHeader', 'PROGRESSÃO DE COMBOS POR NÍVEL')} (Nv. ${lv})</div>
+                    ${rows}
                 </div>
-                <button onclick="window._copyCurrentBuild()" style="width:100%;margin-top:12px;padding:10px;border-radius:12px;font-size:11px;font-weight:bold;text-transform:uppercase;letter-spacing:0.06em;border:1.5px solid rgba(224,182,255,0.35);background:rgba(224,182,255,0.12);color:#e0b6ff;cursor:pointer;touch-action:manipulation;">${_L('skills.copyBuild', '📋 Copiar código do build')}</button>
-                <p style="text-align:center;font-size:10px;color:${COLORS.TEXT_MUTED};margin-top:12px">${_L('skills.tapHint', 'Toque em um nó para ver detalhes e desbloquear.')}</p>
             `;
         },
 
@@ -45251,11 +46240,12 @@ renderStatsContent() {
             const hours = Math.floor(playSeconds / 3600);
             const mins = Math.floor((playSeconds % 3600) / 60);
             const clearMsg = JSON.stringify(_L('stats.clearConfirm', 'Limpar TODAS as estatísticas de carreira?')).replace(/"/g, '&quot;');
-            return tabs + `
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            const heroSheetHtml = this._renderHeroCharacterSheet(p, dmg);
+            return tabs + heroSheetHtml + `
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px">
                     ${statCard(_L('stats.card.baseDmg', 'DANO BASE'), dmg)}
                     ${statCard(_L('eqStat.speedMult', 'Velocidade'), p.speed.toFixed(1))}
-                    ${statCard(_L('eqStat.critChance', 'Crítico'), (p.critChance * 100).toFixed(0) + '%')}
+                    ${statCard(_L('eqStat.critChance', 'Crítico'), Math.round(Math.min(1, CONFIG.CRIT_CHANCE_BASE + (p.critChance || 0) + (p.classCritChance || 0)) * 100) + '%')}
                     ${statCard(_L('stats.card.kills', 'KILLS'), p.kills || 0)}
                 </div>
                 ${barHtml}
@@ -45268,6 +46258,193 @@ renderStatsContent() {
                     onclick="if (window.confirm(${clearMsg})) { Statistics.reset(); UIManager.openPanel('stats'); }">
                     ${_L('stats.clearBtn', '🗑 LIMPAR ESTATÍSTICAS')}
                 </button>
+            `;
+        },
+
+        // Ficha Interativa do Personagem (Paper-Doll pixel art ao vivo + 6 slots clicáveis + gaveta de Equipar/Substituir/Retirar)
+        _renderHeroCharacterSheet(p, dmg) {
+            if (!p) return '';
+            const clsNames = { warrior: _L('class.warrior', 'Guerreiro'), rogue: _L('class.rogue', 'Ladino'), mage: _L('class.mage', 'Mago'), elf: _L('class.elf', 'Elfa') };
+            const clsName = clsNames[p.type] || p.type;
+            const xpReq = p.xpNeeded > 0 ? p.xpNeeded : (p.lvl * CONFIG.XP_LEVEL_MULTIPLIER);
+            const xpPct = Math.min(100, Math.round(((p.xp || 0) / xpReq) * 100));
+            const eq = p.equipment || {};
+            const w = p.currentWeapon || null;
+            const pose = this._paperDollPose || 'idle';
+
+            // Slot definitions (Arma + 5 slots de equipamento)
+            const slots = [
+                { key: 'weapon', label: _L('inv.weapon', 'Arma'), item: w, isW: true },
+                { key: 'helm',   label: _L('slot.helm', 'Elmo'), item: eq.helm || null },
+                { key: 'armor',  label: _L('slot.armor', 'Armadura'), item: eq.armor || null },
+                { key: 'boots',  label: _L('slot.boots', 'Botas'), item: eq.boots || null },
+                { key: 'amulet', label: _L('slot.amulet', 'Amuleto'), item: eq.amulet || null },
+                { key: 'ring',   label: _L('slot.ring', 'Anel'), item: eq.ring || null }
+            ];
+
+            const slotCardsHtml = slots.map(s => {
+                const sel = this._heroSlotSel === s.key;
+                const bagCompat = (typeof Inventory !== 'undefined' && Inventory.listForSlot) ? Inventory.listForSlot(s.key) : [];
+                let name = _L('inv.emptySlot', 'Vazio'), color = 'rgba(255,255,255,0.35)', sub = bagCompat.length ? `(${bagCompat.length} ${_L('hero.inBag', 'na bolsa')})` : '—';
+                let iconHtml = '';
+                if (s.item) {
+                    if (s.isW) {
+                        const rName = CONFIG.WEAPON_TIERS[s.item.tier | 0] || 'Comum';
+                        color = BagPanel._color({ kind: 'weapon', rarity: rName });
+                        name = (WeaponSystem.displayName(s.item) || s.item.name || '') + ' +' + (p.weaponLevel || 1);
+                        sub = BagPanel._weaponStatText(s.item);
+                        iconHtml = `<svg class="icon-inline" width="15" height="15" style="color:${color}"><use href="#${BagPanel._weaponIconId(s.item)}"/></svg>`;
+                    } else {
+                        color = s.item.color || CONFIG.EQUIPMENT_RARITY_COLORS[0];
+                        name = s.item.name || '';
+                        sub = BagPanel._equipStatTexts(s.item).slice(0, 2).join(' · ');
+                        iconHtml = `<svg class="icon-inline" width="15" height="15" style="color:${color}"><use href="#${BagPanel._slotIconId(s.key)}"/></svg>`;
+                    }
+                } else {
+                    const icId = s.isW ? 'ic-sword' : BagPanel._slotIconId(s.key);
+                    iconHtml = `<svg class="icon-inline" width="14" height="14" style="color:rgba(255,255,255,0.35)"><use href="#${icId}"/></svg>`;
+                }
+                return `<button type="button" class="hero-equip-slot" aria-pressed="${sel}" onclick="UIManager.selectHeroSlot('${s.key}')"
+                    style="text-align:left;padding:7px 8px;border-radius:10px;border:1.5px solid ${sel ? '#fff' : (s.item ? color + '77' : 'rgba(255,255,255,0.12)')};
+                    background:${sel ? 'rgba(224,182,255,0.2)' : (s.item ? 'rgba(24,18,38,0.85)' : 'rgba(16,12,26,0.5)')};cursor:pointer;touch-action:manipulation;min-width:0;transition:all 0.15s">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:4px">
+                        <span style="display:inline-flex;align-items:center;gap:4px;font-size:9.5px;font-weight:800;color:rgba(255,255,255,0.65);text-transform:uppercase">${iconHtml} ${BagPanel._esc(s.label)}</span>
+                        ${bagCompat.length ? `<span style="font-size:9px;font-weight:800;padding:1px 5px;border-radius:999px;background:rgba(224,182,255,0.18);color:#e0b6ff">${bagCompat.length}</span>` : ''}
+                    </div>
+                    <div style="font-size:11px;font-weight:800;color:${s.item ? color : 'rgba(255,255,255,0.45)'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px">${BagPanel._esc(name)}</div>
+                    <div style="font-size:9.5px;color:${s.item ? '#d1d5db' : 'rgba(255,255,255,0.4)'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px">${BagPanel._esc(sub)}</div>
+                </button>`;
+            }).join('');
+
+            // Gaveta contextual do slot selecionado (Equipar / Substituir / Retirar)
+            let drawerHtml = '';
+            if (this._heroSlotSel) {
+                const sk = this._heroSlotSel;
+                const sObj = slots.find(x => x.key === sk);
+                if (sObj) {
+                    const compat = (typeof Inventory !== 'undefined' && Inventory.listForSlot) ? Inventory.listForSlot(sk) : [];
+                    const inCombat = typeof Inventory !== 'undefined' && Inventory.inCombat();
+                    const bagFull = typeof Inventory !== 'undefined' && Inventory.count() >= Inventory.CAP;
+                    let curBlock = '';
+                    if (sObj.item) {
+                        const cCol = sObj.isW ? BagPanel._color({ kind: 'weapon', rarity: CONFIG.WEAPON_TIERS[sObj.item.tier | 0] }) : (sObj.item.color || '#ccc');
+                        const cName = sObj.isW ? (WeaponSystem.displayName(sObj.item) || sObj.item.name) : sObj.item.name;
+                        const cStats = sObj.isW ? BagPanel._weaponStatText(sObj.item) : BagPanel._equipStatTexts(sObj.item).join(' · ');
+                        const canUn = !inCombat && !bagFull;
+                        curBlock = `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding-bottom:8px;margin-bottom:8px;border-bottom:1px solid rgba(255,255,255,0.1)">
+                            <div style="min-width:0;flex:1">
+                                <div style="font-size:11.5px;font-weight:800;color:${cCol}">${BagPanel._esc(cName)}</div>
+                                <div style="font-size:10px;color:#d1d5db;margin-top:2px">${BagPanel._esc(cStats)}</div>
+                            </div>
+                            <button type="button" ${canUn ? '' : 'disabled'} onclick="UIManager.heroUnequipSlot('${sk}')"
+                                style="flex:none;min-height:36px;padding:6px 10px;border-radius:8px;font-size:10.5px;font-weight:800;border:1px solid ${canUn ? 'rgba(250,204,21,0.55)' : 'rgba(255,255,255,0.15)'};background:${canUn ? 'rgba(250,204,21,0.15)' : 'rgba(255,255,255,0.05)'};color:${canUn ? '#fde68a' : '#6b7280'};cursor:${canUn ? 'pointer' : 'default'}">
+                                ↩ ${_L('hero.unequipBtn', 'Retirar')}
+                            </button>
+                        </div>`;
+                    }
+                    const listHtml = compat.length ? compat.map(it => {
+                        const icCol = BagPanel._color(it);
+                        const iName = BagPanel._name(it);
+                        const iStats = it.kind === 'weapon' ? BagPanel._weaponStatText(it.payload) : BagPanel._equipStatTexts(it.payload).join(' · ');
+                        let cmpHtml = '';
+                        if (it.kind === 'equip') {
+                            const vd = BagPanel._verdictOf(it.payload);
+                            cmpHtml = `<div style="margin-top:2px;font-size:10px">${BagPanel._verdictTag(vd.v)}</div>` + BagPanel._compareRowsHtml(it.payload, vd.cur);
+                        }
+                        return `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 8px;border-radius:9px;background:rgba(12,8,22,0.7);border:1px solid ${icCol}55;margin-top:5px">
+                            <div style="min-width:0;flex:1">
+                                <div style="font-size:11px;font-weight:800;color:${icCol}">${BagPanel._esc(iName)}</div>
+                                <div style="font-size:10px;color:#d1d5db">${BagPanel._esc(iStats)}</div>
+                                ${cmpHtml}
+                            </div>
+                            <button type="button" ${inCombat ? 'disabled' : ''} onclick="UIManager.heroEquipFromBag('${it.uid}', '${sk}')"
+                                style="flex:none;min-height:36px;padding:6px 11px;border-radius:8px;font-size:10.5px;font-weight:800;border:1px solid rgba(74,222,128,0.55);background:rgba(74,222,128,0.18);color:#4ade80;cursor:pointer">
+                                ⚡ ${sObj.item ? _L('hero.replaceBtn', 'Substituir') : _L('inv.equip', 'Equipar')}
+                            </button>
+                        </div>`;
+                    }).join('') : `<div style="font-size:11px;color:${COLORS.TEXT_MUTED};text-align:center;padding:6px 0">${_L('hero.noSlotItems', 'Nenhum item compatível para este slot na bolsa.')}</div>`;
+
+                    drawerHtml = `<div id="hero-slot-drawer" style="margin-top:8px;padding:10px;border-radius:12px;background:rgba(16,11,28,0.95);border:1.5px solid rgba(224,182,255,0.38)">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                            <span style="font-size:10.5px;font-weight:800;color:#e0b6ff;text-transform:uppercase;letter-spacing:0.08em">${BagPanel._esc(sObj.label)} — ${_L('hero.manageSlot', 'Gerenciar Slot')}</span>
+                            <button type="button" onclick="UIManager.selectHeroSlot(null)" style="background:none;border:none;color:${COLORS.TEXT_MUTED};font-size:14px;cursor:pointer;padding:0 4px">&times;</button>
+                        </div>
+                        ${curBlock}
+                        <div style="font-size:10px;font-weight:700;color:${COLORS.TEXT_MUTED};text-transform:uppercase">${_L('hero.bagOptions', 'Na Bolsa')} (${compat.length}):</div>
+                        ${listHtml}
+                    </div>`;
+                }
+            }
+
+            // Companheiro Ativo (integração com Etapa A #20: _petMakeSprite + PetSystem.getStage)
+            let petCardHtml = '';
+            const activePet = (typeof pets !== 'undefined' && pets && pets.length && pets[0]) ? pets[0] : null;
+            if (activePet && typeof PetSystem !== 'undefined') {
+                const pType = activePet.type;
+                const stg = PetSystem.getStage ? PetSystem.getStage(pType) : 1;
+                const stgRoman = stg === 3 ? 'III' : (stg === 2 ? 'II' : 'I');
+                const pName = _L('pet.' + pType + '.stage' + stg, _L('pet.' + pType + '.name', pType));
+                const pRole = _L('pet.' + pType + '.role', '');
+                petCardHtml = `<div style="margin-top:8px;padding:7px 10px;border-radius:10px;background:rgba(20,15,34,0.8);border:1px solid rgba(142,255,196,0.3);display:flex;align-items:center;gap:8px">
+                    <canvas id="hero-pet-mini-cv" data-pet="${pType}" data-stage="${stg}" width="32" height="32" style="width:32px;height:32px;image-rendering:pixelated;flex:none;border-radius:6px;background:rgba(10,6,18,0.7);border:1px solid rgba(255,216,107,0.35)"></canvas>
+                    <div style="min-width:0;flex:1">
+                        <div style="display:flex;align-items:center;gap:5px">
+                            <span style="font-size:11px;font-weight:800;color:#a7f3d0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${BagPanel._esc(pName)}</span>
+                            <span class="pet-stage-tag">${_L('pet.evo.stage', 'Estágio')} ${stgRoman}</span>
+                        </div>
+                        <div style="font-size:9.5px;color:${COLORS.TEXT_DIM};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${BagPanel._esc(pRole)}</div>
+                    </div>
+                </div>`;
+            }
+
+            // Relíquias ativas
+            const relicIds = p.relics ? Array.from(p.relics) : [];
+            const relicsStrip = relicIds.length ? `<div style="margin-top:8px;padding:7px 9px;border-radius:10px;background:rgba(20,15,34,0.65);border:1px solid rgba(255,255,255,0.08)">
+                <div style="font-size:9.5px;font-weight:800;color:${COLORS.TEXT_MUTED};text-transform:uppercase;margin-bottom:4px">${_L('inv.tabRelics', 'Relíquias')} (${relicIds.length})</div>
+                <div style="display:flex;flex-wrap:wrap;gap:5px">
+                    ${relicIds.map(id => {
+                        const r = RELICS[id] || { id, color: '#e0b6ff' };
+                        const lv = (p.relicLevels && p.relicLevels[id]) || 1;
+                        return `<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;background:rgba(224,182,255,0.12);border:1px solid ${r.color || '#e0b6ff'}66;color:${r.color || '#e0b6ff'}">${BagPanel._esc(_L(r.nameKey, id))}${lv > 1 ? ' II' : ''}</span>`;
+                    }).join('')}
+                </div>
+            </div>` : '';
+
+            return `
+                <div id="hero-character-sheet" style="padding:12px;border-radius:14px;background:linear-gradient(180deg,rgba(28,20,46,0.92),rgba(14,10,24,0.95));border:1.5px solid rgba(224,182,255,0.28);box-shadow:0 8px 24px rgba(0,0,0,0.45)">
+                    <div style="display:flex;gap:10px;align-items:center">
+                        <div style="position:relative;flex:none;width:124px;height:124px;border-radius:12px;background:rgba(10,6,18,0.9);border:1.5px solid rgba(224,182,255,0.32);overflow:hidden;display:flex;align-items:center;justify-content:center">
+                            <canvas id="hero-paperdoll-canvas" width="124" height="124" style="width:124px;height:124px;image-rendering:pixelated;cursor:pointer" onclick="UIManager.rotateHeroPaperDoll(1)" title="${_L('hero.tapRotate', 'Toque para girar')}"></canvas>
+                            <div style="position:absolute;bottom:4px;left:4px;right:4px;display:flex;justify-content:space-between;pointer-events:none">
+                                <button type="button" onclick="UIManager.rotateHeroPaperDoll(-1)" style="pointer-events:auto;width:24px;height:22px;border-radius:6px;background:rgba(20,14,34,0.85);border:1px solid rgba(224,182,255,0.35);color:#e0b6ff;font-size:11px;cursor:pointer">⟲</button>
+                                <button type="button" onclick="UIManager.rotateHeroPaperDoll(1)" style="pointer-events:auto;width:24px;height:22px;border-radius:6px;background:rgba(20,14,34,0.85);border:1px solid rgba(224,182,255,0.35);color:#e0b6ff;font-size:11px;cursor:pointer">⟳</button>
+                            </div>
+                        </div>
+                        <div style="min-width:0;flex:1">
+                            <div style="display:flex;align-items:center;justify-content:space-between;gap:4px">
+                                <span style="font-size:15px;font-weight:900;color:#fff;letter-spacing:0.03em">${BagPanel._esc(clsName)}</span>
+                                <span style="font-size:11px;font-weight:800;padding:2px 8px;border-radius:999px;background:rgba(250,204,21,0.18);border:1px solid rgba(250,204,21,0.45);color:#ffd86b">Nv. ${p.lvl}</span>
+                            </div>
+                            <div style="margin-top:5px;height:6px;border-radius:999px;background:rgba(255,255,255,0.1);overflow:hidden">
+                                <div style="height:100%;width:${xpPct}%;background:linear-gradient(90deg,#a855f7,#ffd86b)"></div>
+                            </div>
+                            <div style="font-size:9.5px;color:${COLORS.TEXT_MUTED};margin-top:2px">XP ${Math.floor(p.xp || 0)}/${xpReq} · HP ${Math.round(p.hp)}/${p.maxHp}</div>
+                            <div style="display:flex;gap:4px;margin-top:7px">
+                                ${[['idle', _L('hero.poseIdle', 'Pose')], ['attack', _L('hero.poseAtk', 'Golpe')], ['cast', _L('hero.poseCast', 'Magia')]].map(([k, lbl]) => `
+                                    <button type="button" onclick="UIManager.setHeroPaperDollPose('${k}')" style="flex:1;padding:4px 2px;border-radius:7px;font-size:9.5px;font-weight:800;border:1px solid ${pose === k ? COLORS.PRIMARY : 'rgba(255,255,255,0.14)'};background:${pose === k ? 'rgba(224,182,255,0.22)' : 'rgba(255,255,255,0.04)'};color:${pose === k ? '#fff' : COLORS.TEXT_DIM};cursor:pointer">${lbl}</button>
+                                `).join('')}
+                            </div>
+                            <div style="font-size:9.5px;color:#c4b5fd;margin-top:6px">✨ ${_L('hero.paperDollHint', 'Visual vivo: reflete arma e peças equipadas.')}</div>
+                        </div>
+                    </div>
+                    ${petCardHtml}
+                    <div style="font-size:10px;font-weight:800;color:${COLORS.TEXT_MUTED};text-transform:uppercase;letter-spacing:0.08em;margin:10px 0 6px">${_L('hero.equipSlotsTitle', 'EQUIPAMENTO (TOQUE EM UM SLOT PARA EQUIPAR / RETIRAR)')}</div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+                        ${slotCardsHtml}
+                    </div>
+                    ${drawerHtml}
+                    ${relicsStrip}
+                </div>
             `;
         },
 
@@ -49201,10 +50378,12 @@ const Input = {
         const map = (GameSettings && GameSettings.gamepadMap) || GameSettings.GAMEPAD_DEFAULT_MAP;
         const abilityPressed = justPressed(map.ability);
         const dodgePressed = justPressed(map.dodge);
+        const techPressed = justPressed(2) || justPressed(5);
         const pausePressed = justPressed(map.pause);
         this._gamepadButtons = Array.from(buttons, button => !!(button && (button.pressed || button.value > 0.5)));
         if (gameState === 'PLAYING' && player) {
             if (abilityPressed && player.useSkill) player.useSkill();
+            if (techPressed && player.useTechnique) player.useTechnique();
             if (dodgePressed && player.dodge) player.dodge();
             if (pausePressed && window.PauseSystem) PauseSystem.toggle();
         }
