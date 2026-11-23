@@ -30968,8 +30968,8 @@ class Entity {
         const _petCrit = (source === player && typeof PetSystem !== 'undefined' && PetSystem.getCritBonus) ? PetSystem.getCritBonus() : 0;
         const _critChance = Math.min(1.0, CONFIG.CRIT_CHANCE_BASE + (source ? ((source.critChance || 0) + (source.classCritChance || 0)) : 0) + _comboCrit + _petCrit + (source && source.critBoost > 0 ? 0.10 : 0) + (this.poisonStacks > 0 && source === player ? CONFIG.CRIT_BONUS_POISONED : 0));
         // Esquiva perfeita (v67, classes não-guerreiras): o próximo golpe do jogador vira crítico garantido.
-        // Decidido aqui, no mesmo ponto do crítico normal, para não duplicar multiplicadores. Consumido só por golpe do jogador.
-        const _perfectArmed = !!(source && source === player && source._perfectCritT > 0);
+        // Decidido aqui, no mesmo ponto do crítico normal, para não duplicar multiplicadores. Consumido só por golpe direto do jogador (!dot).
+        const _perfectArmed = !!(source && source === player && !dot && source._perfectCritT > 0);
         if(_perfectArmed) source._perfectCritT = 0;
         if(_perfectArmed || SeedSystem.random() < _critChance) {
             const _petCritDmg = (source === player && typeof PetSystem !== 'undefined' && PetSystem.getCritDmgMult) ? PetSystem.getCritDmgMult(this) : 1;
@@ -36902,7 +36902,7 @@ class Pet {
             const dx = e.x - player.x, dy = e.y - player.y;
             if (dx * dx + dy * dy > rSq) continue;
             if (m && !hasLineOfSight(m, player.x, player.y, e.x, e.y)) continue;
-            e.takeDamage(dmg, m, player, true);
+            e.takeDamage(dmg, m, player, true, true);
             if (this.type === 'horse') {
                 const a = Math.atan2(dy, dx);
                 if (!e.isB) { e.kbVx = (e.kbVx || 0) + Math.cos(a) * 6; e.kbVy = (e.kbVy || 0) + Math.sin(a) * 6; }
@@ -36983,7 +36983,7 @@ class Pet {
             while (da < -Math.PI) da += Math.PI * 2;
             if (Math.abs(da) > 0.62) continue;
             if (m && !hasLineOfSight(m, this.x, this.y, e.x, e.y)) continue;
-            e.takeDamage(dmg, m, player, true);
+            e.takeDamage(dmg, m, player, true, true);
             if (typeof ElementalSystem !== 'undefined') ElementalSystem.applyStatus(e, 'fire', 1, 150, player);
             if (e.isB && e.addStagger) e.addStagger((this.data.stagger || 8) * (mult > 1 ? 1.5 : 1));
             spawnParticles(e.x, e.y, '#ff6622', 8, 4);
@@ -37012,10 +37012,10 @@ class Pet {
                 const nx = t.x - Math.cos(ang) * (t.radius + 14), ny = t.y - Math.sin(ang) * (t.radius + 14);
                 if (!m || !m.isWall(nx, ny)) { this.x = nx; this.y = ny; }
             }
-            t.takeDamage(dmg, m, player, true);
+            t.takeDamage(dmg, m, player, true, true);
             if (!t.isB) { t.kbVx = (t.kbVx || 0) + Math.cos(ang) * 7; t.kbVy = (t.kbVy || 0) + Math.sin(ang) * 7; }
             if (t.isB && t.addStagger) t.addStagger((this.data.stagger || 14) * (M > 1 ? 1.4 : 1));
-            if (t.elite && t._affix === 'bastion' && t.shield > 0) t.takeDamage(Math.round(dmg * 0.9), m, player, true);
+            if (t.elite && t._affix === 'bastion' && t.shield > 0) t.takeDamage(Math.round(dmg * 0.9), m, player, true, true);
             this._atkT = 14;
             this._fxRing = { x: t.x, y: t.y, r: 30, color: '#f0c448', t: 14, maxT: 14 };
             spawnParticles(t.x, t.y, '#e8c47a', 10, 4);
@@ -37028,7 +37028,7 @@ class Pet {
             if (!t) return false;
             this._face = t.x >= this.x ? 1 : -1;
             const execMult = (t.hp / Math.max(1, t.maxHp)) < 0.45 ? 1.35 : 1;
-            t.takeDamage(Math.round(dmg * execMult), m, player, true);
+            t.takeDamage(Math.round(dmg * execMult), m, player, true, true);
             t._petMarkT = Math.max(t._petMarkT || 0, 210);
             if (t.poisonStacks !== undefined) { t.poisonStacks = Math.min(5, (t.poisonStacks || 0) + 1); t.poisonTimer = Math.max(t.poisonTimer || 0, 140); }
             if (t.elite || t.isB || M > 1) {
@@ -37046,7 +37046,7 @@ class Pet {
             const t = this._findTarget(m, (this.data.range || 125) * (M > 1 ? 1.3 : 1), 'threat');
             if (!t) return false;
             this._face = t.x >= this.x ? 1 : -1;
-            t.takeDamage(dmg, m, player, true);
+            t.takeDamage(dmg, m, player, true, true);
             t._petMarkT = Math.max(t._petMarkT || 0, Math.round((this.data.markFrames || 240) * (M > 1 ? 1.35 : 1)));
             if (t.poisonStacks !== undefined) { t.poisonStacks = Math.min(5, (t.poisonStacks || 0) + 1); t.poisonTimer = Math.max(t.poisonTimer || 0, 120); }
             this._atkT = 14;
@@ -37070,7 +37070,7 @@ class Pet {
                 if (dx * dx + dy * dy > rSq) continue;
                 if (m && !hasLineOfSight(m, this.x, this.y, e.x, e.y)) continue;
                 const bonus = (e.enemyType === 'swarm' || e.isSwarm) ? 1.6 : 1;
-                e.takeDamage(Math.round(dmg * bonus), m, player, true);
+                e.takeDamage(Math.round(dmg * bonus), m, player, true, true);
                 e._slowT = Math.max(e._slowT || 0, this.data.slowFrames || 150);
                 if (e.elite && e._sniperT > 0) e._sniperT = 0;
                 if (e.elite && e._blinkT > 0) e._blinkT = 0;
@@ -37089,7 +37089,7 @@ class Pet {
             const t = this._findTarget(m, (this.data.range || 195) * (M > 1 ? 1.25 : 1), 'strongest');
             if (!t) return false;
             this._face = t.x >= this.x ? 1 : -1;
-            t.takeDamage(dmg, m, player, true);
+            t.takeDamage(dmg, m, player, true, true);
             t._petVulnT = Math.max(t._petVulnT || 0, Math.round((this.data.vulnFrames || 220) * (M > 1 ? 1.4 : 1)));
             this._atkT = 14;
             this._fxBeam = { x1: this.x, y1: this.y - 6, x2: t.x, y2: t.y, color: '#d8b4fe', t: 14 };
@@ -37127,7 +37127,7 @@ class Pet {
             if (!t) return false;
             this._face = t.x >= this.x ? 1 : -1;
             const execMult = (t.hp / Math.max(1, t.maxHp)) < 0.4 ? 1.45 : 1;
-            t.takeDamage(Math.round(dmg * execMult), m, player, true);
+            t.takeDamage(Math.round(dmg * execMult), m, player, true, true);
             if ((M > 1 || this._stage() >= 3) && typeof ElementalSystem !== 'undefined') ElementalSystem.applyStatus(t, 'lightning', 1, 150, player);
             this._atkT = 14;
             this._fxBeam = { x1: this.x, y1: this.y - 9, x2: t.x, y2: t.y, color: '#f5c02a', t: 12 };
@@ -37140,7 +37140,7 @@ class Pet {
             const t = this._findTarget(m, (this.data.range || 90) * (M > 1 ? 1.45 : 1), 'threat');
             if (t) {
                 this._face = t.x >= this.x ? 1 : -1;
-                t.takeDamage(dmg, m, player, true);
+                t.takeDamage(dmg, m, player, true, true);
                 this._atkT = 14;
                 spawnParticles(t.x, t.y, '#ffd24a', 8, 3);
                 if (t.elite || t.isB || M > 1) {
@@ -37159,7 +37159,7 @@ class Pet {
             const t = this._findTarget(m, (this.data.range || 135) * (M > 1 ? 1.25 : 1), 'threat');
             if (!t) return false;
             this._face = t.x >= this.x ? 1 : -1;
-            t.takeDamage(dmg, m, player, true);
+            t.takeDamage(dmg, m, player, true, true);
             if (typeof ElementalSystem !== 'undefined') ElementalSystem.applyStatus(t, 'fire', M > 1 || this._stage() >= 3 ? 2 : 1, 160, player);
             if (typeof Hazard !== 'undefined' && (!m || !m.isWall(t.x, t.y))) {
                 const hz = new Hazard(t.x, t.y, 'fire', true);
