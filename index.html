@@ -32927,15 +32927,22 @@ class Enemy extends Entity {
             }
         }
     }
-    // Telegraph do pré-golpe melee (v67): anel vermelho que enche até o golpe, mesmo visual do telegraph dos elites
+    // Telegraph do pré-golpe melee (v67): anel no raio de acerto + anel que fecha até o golpe, mesmo visual
+    // do telegraph dos elites. Em anel (nunca disco) para o corpo do inimigo continuar legível com vários
+    // golpes ao mesmo tempo na tela.
     _drawMeleeWindup(ctx, cx, cy) {
         if(!(this._meleeWindup > 0)) return;
         const maxR = this.radius + (this.elite ? 25 : 15);
         const progress = 1 - (this._meleeWindup / CONFIG.ENEMY_MELEE_WINDUP_FRAMES);
-        ctx.globalAlpha = 0.2;
-        PixelFX.drawDisc(ctx, this.x-cx, this.y-cy, maxR, '#ff0000');
-        ctx.globalAlpha = 0.6;
-        PixelFX.drawDisc(ctx, this.x-cx, this.y-cy, maxR * progress, '#ff0000');
+        const px = this.x - cx, py = this.y - cy;
+        ctx.globalAlpha = 0.28;
+        PixelFX.ring(ctx, px, py, maxR, '#ff0000', 3, { dash: 4 });
+        ctx.globalAlpha = 0.20 + 0.35 * progress;
+        PixelFX.ring(ctx, px, py, Math.max(4, maxR * (1 - progress)), '#ff5533', 3);
+        if (progress >= 0.7) {
+            ctx.globalAlpha = 0.65;
+            PixelFX.ring(ctx, px, py, this.radius + 2, '#ff8888', 2);
+        }
         ctx.globalAlpha = 1;
     }
     // Nuvem de veneno / sangria (bolhas verdes subindo por cima do inimigo). Fica neste método porque
@@ -33028,11 +33035,10 @@ class Enemy extends Entity {
             ctx.globalAlpha = 1;
         }
         
-        // Swarm indicator (pulsating ring)
+        // Swarm indicator: anel pulsante (disco cheio escondia o corpo)
         if(this.enemyType === 'swarm' && isNear) {
-            ctx.globalAlpha = 0.15 + Math.sin(gameTime * 0.15) * 0.1;
-            ctx.fillStyle = '#ff66ff';
-            PixelFX.drawDisc(ctx, px, py, this.radius + 4, '#ff66ff');
+            ctx.globalAlpha = 0.2 + Math.sin(gameTime * 0.15) * 0.1;
+            PixelFX.ring(ctx, px, py, this.radius + 4, '#ff66ff', 3, { dash: 4 });
             ctx.globalAlpha = 1;
         }
         
@@ -33053,6 +33059,19 @@ class Enemy extends Entity {
             ctx.globalAlpha = 1;
         }
         
+        // Bioma do inimigo (brasa/espectro/espinho): halo desenhado ATRÁS do sprite, em disco
+        // com dither e contorno — na frente ele lavava o corpo e escondia a silhueta.
+        if(this._variant && isNear) {
+            const rmV = !!(window.GameSettings && GameSettings.reducedMotion);
+            ctx.save();
+            ctx.globalAlpha = rmV ? 0.15 : 0.13 + Math.sin(gameTime * 0.13 + px) * 0.05;
+            PixelFX.drawDisc(ctx, px, py, this.radius + 7, this.variantAura || 'rgba(255,200,100,0.25)', null, true);
+            ctx.globalAlpha = 0.4;
+            PixelFX.ring(ctx, px, py, this.radius + 3, this.variantColor || '#fff', 3);
+            ctx.restore();
+            ctx.globalAlpha = 1;
+        }
+
         // Draw the enemy sprite (once; squashed & stretched while flinching from a hit)
         const _flinch = this.flinchTimer > 0 && isNear;
         if (_flinch) {
@@ -33064,19 +33083,6 @@ class Enemy extends Entity {
         }
         SpriteRenderer.drawEnemy.call(this, ctx, px, py, this.enemyType === 'melee' ? 'melee' : this.enemyType, (this.attackAnim > 0 ? 12 - this.attackAnim : this.walkTimer), this.angle, 2.0, this.ft > 0, this.attackAnim > 0 ? 'attack' : (this.walkTimer > 0 ? 'walk' : 'idle'));
         if (_flinch) ctx.restore();
-        
-        // Biome variant aura (brasa/espectro/espinho)
-        if(this._variant && isNear) {
-            ctx.save();
-            ctx.globalAlpha = 0.13 + Math.sin(gameTime * 0.13 + px) * 0.05;
-            PixelFX.drawDisc(ctx, px, py, this.radius + 7, this.variantAura || 'rgba(255,200,100,0.25)');
-            ctx.globalAlpha = 0.5;
-            ctx.strokeStyle = this.variantColor || '#fff';
-            ctx.lineWidth = 1.5;
-            PixelFX.ring(ctx, px, py, this.radius + 3, this.variantColor || '#fff', 3);
-            ctx.restore();
-            ctx.globalAlpha = 1;
-        }
         
         // Draw elemental statuses
         if(typeof ElementalSystem !== 'undefined') ElementalSystem.drawStatuses(ctx, this, cx, cy);
@@ -33439,7 +33445,7 @@ class SwarmEnemy extends Entity {
             drawGlow(ctx, px + this._lungeDx * 9, py + this._lungeDy * 9, 7 + 5 * t, CONFIG.SWARM_COLOR, 0.35 + 0.4 * t);
         }
         ctx.globalAlpha = rm ? 0.18 : (0.15 + Math.sin(gameTime * 0.15) * 0.1);
-        PixelFX.drawDisc(ctx, px, py, this.radius + 4, CONFIG.SWARM_COLOR);
+        PixelFX.ring(ctx, px, py, this.radius + 4, CONFIG.SWARM_COLOR, 3, { dash: 4 });
         ctx.globalAlpha = 1;
         let pose, ft;
         if (st === 'windup') { pose = 'attack'; ft = 0; }
@@ -40796,14 +40802,15 @@ _thornNova(m){if(!RunBoons.hasSynergy(this,'carapaca'))return;const d=18+this.lv
             ctx.restore();
         }
 
-        // Class-specific Hero Aura VFX: disco de pixels em 2 tons (no lugar do gradiente radial)
-        const auraAlpha = rmAura ? 0.15 : (0.15 + Math.sin(gameTime * 0.05) * 0.05);
-        const auraRadius = this.radius * (rmAura ? 1.3 : (1.3 + Math.sin(gameTime * 0.08) * 0.15));
+        // Aura de classe: arco claro nos pés (o disco cheio lavava a silhueta e o anel fino sumia
+        // na camada de luz). Desenhado na cor clareada da classe para sobreviver ao escurecimento.
+        const auraAlpha = rmAura ? 0.22 : (0.22 + Math.sin(gameTime * 0.05) * 0.05);
+        const auraRadius = this.radius * (rmAura ? 1.15 : (1.15 + Math.sin(gameTime * 0.08) * 0.1));
         ctx.save();
         ctx.globalAlpha = auraAlpha;
-        PixelFX.drawDisc(ctx, sx, sy, auraRadius, this.color, PixelFX.shade(this.color, 0.4));
-        ctx.globalAlpha = auraAlpha * 0.6;
-        PixelFX.drawDisc(ctx, sx, sy, auraRadius * 0.5, this.color);
+        PixelFX.ring(ctx, sx, sy + this.radius * 0.55, auraRadius, PixelFX.shade(this.color, 0.4), 3, { dash: 5, a0: 0.35, a1: Math.PI - 0.35 });
+        ctx.globalAlpha = auraAlpha * 0.5;
+        PixelFX.ring(ctx, sx, sy + this.radius * 0.55, auraRadius * 0.8, PixelFX.shade(this.color, 0.55), 2, { a0: 0.5, a1: Math.PI - 0.5 });
         if (this.overdriveTimer > 0) {
             ctx.globalAlpha = 0.72;
             PixelFX.ring(ctx, sx, sy, this.radius * 1.65 + (rmAura ? 0 : Math.sin(gameTime * 0.25) * 3), this.color, 3);
