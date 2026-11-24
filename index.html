@@ -37593,11 +37593,7 @@ class Pet {
     }
 
     drawMountIndicator(ctx, cx, cy) {
-        if (!this.mounted || !this.alive || !player) return;
-        ctx.save();
-        ctx.globalAlpha = 0.45 + Math.sin(gameTime * 0.1) * 0.15;
-        PixelFX.ring(ctx, player.x - cx, player.y - cy + 4, this.radius + 7, this.color, 2);
-        ctx.restore();
+        // Sem anel pulsante ao redor da montaria (mantém a silhueta limpa; o estado montado fica no botão do HUD e na sela)
     }
 
     onPlayerHit(dmg) { return dmg; }
@@ -38121,8 +38117,8 @@ class Pet {
 
     draw(ctx, cx, cy) {
         if (!this.alive) return;
-        // Montaria em arte nativa (corcel e lobo, duas camadas): 8 direções pela direção do herói (spriteAngle); a camada de trás aqui, a da frente em player.draw
-        const mntArt = !!(this.mounted && (this.type === 'horse' || this.type === 'wolf') && player && typeof PetSprites !== 'undefined' && PetSprites.getMountLayers);
+        // Montaria em arte nativa (corcel, lobo e dragão, duas camadas): 8 direções pela direção do herói (spriteAngle); a camada de trás aqui, a da frente em player.draw
+        const mntArt = !!(this.mounted && (this.type === 'horse' || this.type === 'wolf' || this.type === 'dragon') && player && typeof PetSprites !== 'undefined' && PetSprites.getMountLayers);
         const mntNew = mntArt;
         this._mntLay = null;
         let mntDir = mntArt ? SpriteManager.getDirIndex(player.spriteAngle !== undefined ? player.spriteAngle : (player.angle || 0)) : 0;
