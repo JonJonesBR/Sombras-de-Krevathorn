@@ -23,13 +23,15 @@
  * Save data lives in localStorage and is NEVER touched by this worker — only
  * Cache Storage entries with the krevathorn- prefix are cleaned on activate.
  */
-const CACHE_VERSION = 'krevathorn-v117';
+const CACHE_VERSION = 'krevathorn-v118';
 const CACHE_NAME = CACHE_VERSION;
 const APP_SHELL = ['./', './index.html', './sprites.js', './manifest.webmanifest',
     './icon-192.png', './icon-512.png', './icon-maskable-512.png', './apple-touch-icon.png',
     './cutscenes/opening-1.webp', './cutscenes/opening-2.webp',
     './cutscenes/opening-3.webp', './cutscenes/opening-4.webp',
     './cutscenes/prophecy-vael.webp', './cutscenes/boss-guardian.webp',
+    './cutscenes/boss-shadow_warden.webp', './cutscenes/boss-dark_lord.webp',
+    './cutscenes/boss-death_herald.webp', './cutscenes/boss-stone_colossus.webp',
     './cutscenes/ending-blood.webp', './cutscenes/ending-freedom.webp', './cutscenes/ending-peace.webp',
     './art/menu-bg.webp', './art/abyss-opening.webp', './art/camp-banner.webp',
     './art/gameover-veil.webp', './art/win-surface.webp',
