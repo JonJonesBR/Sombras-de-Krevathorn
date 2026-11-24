@@ -5903,8 +5903,202 @@ const PetSprites = (() => {
             RECT F 16 18 34 35 c
         ` } };
     const MOUNT_DIR_WOLF = [['E', 0], ['E', 0], ['E', 0], ['E', 1], ['E', 1], ['E', 1], ['E', 0], ['E', 0]];
-    // Tipos de montaria: arte, direções e paleta (estágios II/III usam MOUNT_STAGE nos dois)
-    const MOUNT_TYPES = { horse: { art: MOUNT_ART, dir: MOUNT_DIR, pal: MOUNT_PAL }, wolf: { art: MOUNT_ART_WOLF, dir: MOUNT_DIR_WOLF, pal: MOUNT_PAL_WOLF } };
+    // ---------- montaria do dragão: arte nativa 72x50 em 2 camadas (pixel-art-mastery: 4 tons chapados hue-shifted, contorno 1px, sela-trono e 4 fases de asa) ----------
+    const MOUNT_PAL_DRAGON = Object.assign({}, MOUNT_PAL, {
+        O: '#120c18', K: '#3d1018', D: '#781a18', M: '#b82d24', H: '#e8562a',
+        W: '#d8c28a', E: '#fae6a8', A: '#e8b438', Z: '#ffef66', N: '#f0f4f8'
+    });
+    const MOUNT_ART_DRAGON = (() => {
+        const W = 72, H = 50;
+        const mkFrame = f => {
+            const G = Array.from({ length: H }, () => Array(W).fill('.'));
+            const put = (x, y, ch) => {
+                x = Math.round(x); y = Math.round(y);
+                if (x >= 0 && x < W && y >= 0 && y < H) G[y][x] = ch;
+            };
+            const fillEllipse = (cx, cy, rx, ry, fn) => {
+                for (let y = Math.floor(cy - ry - 1); y <= Math.ceil(cy + ry + 1); y++) {
+                    for (let x = Math.floor(cx - rx - 1); x <= Math.ceil(cx + rx + 1); x++) {
+                        const dx = (x - cx) / rx, dy = (y - cy) / ry, d = dx * dx + dy * dy;
+                        if (d <= 1.0) {
+                            const ch = typeof fn === 'function' ? fn(dx, dy, d, x, y) : fn;
+                            if (ch) put(x, y, ch);
+                        }
+                    }
+                }
+            };
+            const fillPoly = (pts, fn) => {
+                let minX = W, maxX = 0, minY = H, maxY = 0;
+                for (const [x, y] of pts) {
+                    if (x < minX) minX = Math.floor(x);
+                    if (x > maxX) maxX = Math.ceil(x);
+                    if (y < minY) minY = Math.floor(y);
+                    if (y > maxY) maxY = Math.ceil(y);
+                }
+                for (let y = Math.max(0, minY); y <= Math.min(H - 1, maxY); y++) {
+                    for (let x = Math.max(0, minX); x <= Math.min(W - 1, maxX); x++) {
+                        let inside = false;
+                        for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+                            const xi = pts[i][0], yi = pts[i][1], xj = pts[j][0], yj = pts[j][1];
+                            if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) inside = !inside;
+                        }
+                        if (inside) {
+                            const ch = typeof fn === 'function' ? fn(x, y) : fn;
+                            if (ch) put(x, y, ch);
+                        }
+                    }
+                }
+            };
+            const drawBone = (x0, y0, x1, y1, r, chMain, chShade) => {
+                const steps = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0) * 2));
+                for (let s = 0; s <= steps; s++) {
+                    const t = s / steps, cx = x0 + (x1 - x0) * t, cy = y0 + (y1 - y0) * t;
+                    for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
+                        if (dx * dx + dy * dy <= r * r + 0.2) put(cx + dx, cy + dy, dy > 0 ? (chShade || chMain) : chMain);
+                    }
+                }
+            };
+            const tailWave = [0, 1, 2, 1][f];
+            const farWingTipY = [2, 10, 19, 12][f], farWingMidY = [5, 12, 18, 13][f];
+            fillPoly([[36, 21], [24, farWingMidY], [11, farWingTipY], [15, farWingTipY + 10], [28, 24]], (x, y) => (x + y) % 5 === 0 ? 'K' : 'D');
+            drawBone(36, 21, 24, farWingMidY, 1, 'K', 'K');
+            drawBone(24, farWingMidY, 11, farWingTipY, 1, 'K', 'K');
+
+            for (let x = 3; x <= 25; x++) {
+                const t = (25 - x) / 22;
+                const cy = 27 + Math.sin(t * 2.6 + f * 0.8) * 3.2 + t * 2;
+                const rad = Math.max(1.1, 4.6 * (1 - t * 0.72));
+                for (let y = Math.floor(cy - rad); y <= Math.ceil(cy + rad); y++) {
+                    const dy = y - cy;
+                    if (Math.abs(dy) <= rad) put(x, y, dy > rad * 0.45 ? 'W' : (dy < -rad * 0.3 ? 'M' : 'D'));
+                }
+                if (x % 4 === 1 && x >= 7) { put(x, cy - rad - 1, 'A'); put(x, cy - rad - 2, 'E'); }
+            }
+            fillPoly([[1, 29 + tailWave], [5, 26 + tailWave], [7, 29 + tailWave], [5, 32 + tailWave]], 'A');
+
+            const legSwing = [0, 1, 0, -1][f];
+            drawBone(28, 31, 24 - legSwing, 41, 2, 'D', 'K');
+            put(25 - legSwing, 42, 'N'); put(27 - legSwing, 42, 'N');
+            drawBone(46, 31, 49 + legSwing, 40, 2, 'D', 'K');
+            put(51 + legSwing, 41, 'N'); put(53 + legSwing, 41, 'N');
+
+            fillEllipse(36, 28, 15, 7.0, (dx, dy) => {
+                if (dy > 0.42) return (Math.round((dx + 1) * 7) % 2 === 0) ? 'W' : 'E';
+                if (dy < -0.35 && dx < 0.3) return 'H';
+                if (dy < 0.15) return 'M';
+                return 'D';
+            });
+
+            for (let s = 0; s <= 14; s++) {
+                const t = s / 14, nx = 46 + t * 9, ny = 26 - t * 11, nr = 5.0 - t * 1.3;
+                fillEllipse(nx, ny, nr, nr * 0.9, (dx, dy) => {
+                    if (dx > 0.38 && dy > -0.1) return (s % 2 === 0) ? 'E' : 'W';
+                    if (dx < -0.25) return 'H';
+                    if (dy < 0.2) return 'M';
+                    return 'D';
+                });
+                if (s % 3 === 1 && s < 12) { put(nx - nr, ny - 2, 'A'); put(nx - nr - 1, ny - 3, 'E'); }
+            }
+
+            fillEllipse(58, 14, 6.0, 4.0, (dx, dy) => dy < -0.25 ? 'H' : (dy > 0.35 ? 'D' : 'M'));
+            fillEllipse(64, 14.5, 4.8, 2.7, (dx, dy) => dy < -0.15 ? 'H' : (dy > 0.3 ? 'K' : 'M'));
+            put(67, 13, 'K');
+            fillPoly([[56, 16], [67, 16], [65, 19], [57, 18]], (x, y) => y >= 18 ? 'W' : 'D');
+            put(66, 17, 'N'); put(63, 17, 'N');
+            put(60, 12, 'A'); put(61, 12, 'A');
+            put(60, 13, 'Z'); put(61, 13, 'E');
+            drawBone(56, 11, 47, 6, 1.2, 'A', 'W');
+            drawBone(47, 6, 43, 4, 0.8, 'E', 'A');
+            drawBone(55, 15, 49, 14, 0.9, 'A', 'W');
+
+            fillEllipse(27, 32, 4.0, 4.3, (dx, dy) => dy < 0 ? 'M' : 'D');
+            drawBone(26, 35, 22 + legSwing, 43, 2.0, 'M', 'D');
+            put(21 + legSwing, 44, 'N'); put(23 + legSwing, 44, 'N'); put(25 + legSwing, 44, 'N');
+
+            fillEllipse(44, 32, 3.5, 3.8, (dx, dy) => dy < 0 ? 'M' : 'D');
+            drawBone(45, 35, 47 - legSwing, 43, 1.8, 'M', 'D');
+            put(46 - legSwing, 44, 'N'); put(48 - legSwing, 44, 'N'); put(50 - legSwing, 44, 'N');
+
+            const wingPoses = [
+                { elbow: [25, 6], tip: [6, 2], f1: [14, 14], f2: [22, 18], root: [33, 23] },
+                { elbow: [23, 12], tip: [4, 11], f1: [13, 21], f2: [22, 23], root: [33, 24] },
+                { elbow: [24, 22], tip: [7, 31], f1: [16, 35], f2: [25, 33], root: [34, 26] },
+                { elbow: [24, 14], tip: [6, 16], f1: [14, 24], f2: [23, 25], root: [33, 24] }
+            ][f];
+            fillPoly([[40, 23], wingPoses.elbow, wingPoses.tip, wingPoses.f1, wingPoses.f2, wingPoses.root], (x, y) => {
+                const dEdge = Math.min(Math.abs(y - wingPoses.elbow[1]), Math.abs(x - wingPoses.elbow[0]));
+                return dEdge < 3 ? 'H' : ((x + y) % 7 === 0 ? 'D' : 'M');
+            });
+            drawBone(wingPoses.elbow[0], wingPoses.elbow[1], wingPoses.f1[0], wingPoses.f1[1], 0.6, 'A', 'D');
+            drawBone(wingPoses.elbow[0], wingPoses.elbow[1], wingPoses.f2[0], wingPoses.f2[1], 0.6, 'A', 'D');
+            drawBone(40, 23, wingPoses.elbow[0], wingPoses.elbow[1], 1.3, 'A', 'W');
+            drawBone(wingPoses.elbow[0], wingPoses.elbow[1], wingPoses.tip[0], wingPoses.tip[1], 1.1, 'A', 'W');
+            put(wingPoses.elbow[0], wingPoses.elbow[1] - 1, 'N');
+
+            const snap = G.map(r => r.slice());
+            for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+                if (snap[y][x] !== '.') continue;
+                for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+                    const nx = x + dx, ny = y + dy;
+                    if (nx >= 0 && nx < W && ny >= 0 && ny < H && snap[ny][nx] !== '.') {
+                        G[y][x] = 'O';
+                        break;
+                    }
+                }
+            }
+            return G.map(row => {
+                let out = '', i = 0;
+                while (i < W) {
+                    let j = i + 1;
+                    while (j < W && row[j] === row[i]) j++;
+                    const n = j - i;
+                    out += (n > 1 ? n : '') + row[i];
+                    i = j;
+                }
+                return out;
+            }).join('|');
+        };
+        return {
+            E: {
+                w: W, h: H,
+                frames: [0, 1, 2, 3].map(mkFrame),
+                spec: `
+                    AN 35 21
+                    SPL 21
+                    RECT B 29 30 41 43 b
+                    RECT B 29 30 44 44 c
+                    RECT F 21 21 29 41 R
+                    RECT F 20 21 27 28 V
+                    RECT F 20 21 42 43 V
+                    F 19 27 AA
+                    F 19 42 AA
+                    RECT F 22 24 28 42 U
+                    RECT F 25 25 29 41 V
+                    F 23 35 AA
+                    RECT F 23 26 33 37 p
+                    RECT F 27 30 34 38 p
+                    RECT F 23 30 33 33 q
+                    RECT F 31 33 34 39 b
+                    RECT F 34 34 34 39 c
+                    F 24 36 L
+                    F 25 36 L
+                    F 26 36 L
+                    F 27 36 L
+                    F 28 36 L
+                    F 29 36 L
+                    F 30 36 L
+                    F 31 36 L
+                    F 32 36 LLLLL
+                `
+            }
+        };
+    })();
+    // Tipos de montaria: arte, direções e paleta (estágios II/III usam MOUNT_STAGE nos três)
+    const MOUNT_TYPES = {
+        horse: { art: MOUNT_ART, dir: MOUNT_DIR, pal: MOUNT_PAL },
+        wolf: { art: MOUNT_ART_WOLF, dir: MOUNT_DIR_WOLF, pal: MOUNT_PAL_WOLF },
+        dragon: { art: MOUNT_ART_DRAGON, dir: MOUNT_DIR_WOLF, pal: MOUNT_PAL_DRAGON }
+    };
     const MOUNT_OVL = 'pqbcRVUAL';   // letras do overlay: geram contorno de 1 px nas células vazias vizinhas
     const MOUNT_LEG_DEF = { p: '#3c5a9a', q: '#24365e', b: '#4a2e1a', c: '#22150c' };
     const _mountLegs = {};
