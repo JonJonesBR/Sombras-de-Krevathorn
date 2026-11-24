@@ -12037,6 +12037,10 @@ var CONFIG = {
         mage:    { color: '#9966ff', hp: 60,  speed: 3.5, radius: 12, lightRadius: 250, baseDmg: 14, fireRate: 8 }, // area control: faster fire rate for spells
         elf:     { color: '#58e08a', hp: 100, speed: 4.5, radius: 12, lightRadius: 230, baseDmg: 13, fireRate: 7, bulletSpeed: 13, critChance: 0.08 } // wind/nature: ranged arrows, balanced
     },
+    // Teto da velocidade efetiva = base da classe × este fator. Skills, bênçãos,
+    // relíquias, conquistas, montaria e poção empilham e deixavam o herói rápido
+    // demais para controlar no celular. O teto vale para o movimento, não para o dash.
+    PLAYER_SPEED_CAP_MULT: 1.9,
     BULLET_SPEED_DEFAULT: 10,
     ELF_GUST_COOLDOWN: 480,          // frames (~8s) rajada de vento / fúria da natureza
     ELF_WIND_RANGE: 260,             // alcance da rajada de vento
@@ -12328,7 +12332,12 @@ var CONFIG = {
     STORY_LATE_DAMAGE_STEP: 0.10,    // +10% de dano por andar a partir do 7 (andar 10: x1,30)
 
     // Boss scaling - extra power at high dungeons
-    BOSS_HP_PER_LEVEL: 0.38,           // +38% HP per dungeon level (multiplicative - keeps pace with the player's multiplicative damage growth so bosses stop melting in late floors)
+    // Exponencial com teto: nos andares 3-10 o herói ganha poder multiplicativo
+    // (arma, habilidades e bênçãos) e o antigo +38%/andar linear ficava para trás,
+    // derretendo os chefes no meio da campanha. O teto evita que o Abismo fundo
+    // vire saco de pancadas depois que o dano do herói estabiliza.
+    BOSS_HP_GROWTH: 1.38,              // fator de HP por andar (sobre o nível efetivo)
+    BOSS_HP_GROWTH_CAP: 26,            // teto do fator (atingido por volta do andar 12)
     BOSS_SCALING_PHASE4_THRESHOLD: 10, // phase 4 starts at dungeon 10
     BOSS_SCALING_PHASE4_SPEED_MULT: 1.6,
     BOSS_SCALING_PHASE4_DAMAGE_MULT: 1.8,
@@ -25391,7 +25400,7 @@ window.MemoryEchoSystem = MemoryEchoSystem;
 // ============================================================
 const DIFFICULTY_PRESETS = {
     facil:    { name: 'Fácil',    nameKey: 'difficulty.facil.name', descKey: 'difficulty.facil.desc', icon: 'ic-leaf', hpMult: 0.70, bossHpMult: 1.12, dmgMult: 0.60, xpMult: 0.80, color: '#6fce85', desc: 'Inimigos mais fracos. Ideal para aprender o jogo.' },
-    normal:   { name: 'Normal',   nameKey: 'difficulty.normal.name', descKey: 'difficulty.normal.desc', icon: 'ic-swords', hpMult: 1.00, bossHpMult: 1.60, dmgMult: 1.00, xpMult: 1.00, color: '#e0b6ff', desc: 'A experiência padrão de Krevathorn.' },
+    normal:   { name: 'Normal',   nameKey: 'difficulty.normal.name', descKey: 'difficulty.normal.desc', icon: 'ic-swords', hpMult: 1.10, bossHpMult: 1.60, dmgMult: 1.00, xpMult: 1.00, color: '#e0b6ff', desc: 'A experiência padrão de Krevathorn.' },
     dificil:  { name: 'Difícil',  nameKey: 'difficulty.dificil.name', descKey: 'difficulty.dificil.desc', icon: 'ic-skull', hpMult: 1.40, bossHpMult: 2.25, dmgMult: 1.35, xpMult: 1.30, color: '#eea55c', desc: 'Inimigos mais fortes. +30% de XP.' },
     pesadelo: { name: 'Pesadelo', nameKey: 'difficulty.pesadelo.name', descKey: 'difficulty.pesadelo.desc', icon: 'ic-flame-alt', hpMult: 1.90, bossHpMult: 3.00, dmgMult: 1.70, xpMult: 1.60, color: '#e05246', desc: 'Só para veteranos. +60% de XP.' }
 };
@@ -25476,12 +25485,12 @@ const DifficultySystem = {
         let hp = baseHp;
 
         if (isBoss) {
-            // Multiplicative boss HP growth: keeps bosses tanky relative to the
-            // player's multiplicative damage scaling. The old flat +100/level
-            // fell behind and made bosses melt faster than common enemies.
-            // Boss scaling uses the same effective level as regulars (log beyond 50):
-            // deep bosses keep growing, but slower, instead of unbounded linear growth.
-            hp *= 1 + (this.getEffectiveLevel() - 1) * CONFIG.BOSS_HP_PER_LEVEL;
+            // Crescimento exponencial com teto (CONFIG.BOSS_HP_GROWTH): acompanha o
+            // ganho multiplicativo de dano do herói nos andares iniciais e médios.
+            // Usa o nível efetivo (log acima do andar 50), então o teto segura o
+            // Abismo fundo sem crescimento infinito.
+            const _bossLvl = this.getEffectiveLevel();
+            hp *= Math.min(CONFIG.BOSS_HP_GROWTH_CAP, Math.pow(CONFIG.BOSS_HP_GROWTH, _bossLvl - 1));
         } else {
             hp *= this.getEnemyHpMult();
             hp *= this._storyLateMult('hp');
@@ -39573,6 +39582,14 @@ class Bullet {
     <script>
 // === js/entities/player.js ===
 // PLAYER CLASS
+// Velocidade permanente que os painéis devem mostrar: o valor guardado pode passar
+// do teto, mas o movimento real é limitado em Player.update (CONFIG.PLAYER_SPEED_CAP_MULT).
+function playerSpeedCapped(p) {
+    if (!p) return 0;
+    const base = (CONFIG.PLAYER && CONFIG.PLAYER[p.type] && CONFIG.PLAYER[p.type].speed) || p.speed || 1;
+    const cap = base * (CONFIG.PLAYER_SPEED_CAP_MULT || 1.9);
+    return Math.min(p.speed || 0, cap);
+}
 class Player extends Entity {
     constructor(x,y,t) {
         let stats = CONFIG.PLAYER[t];
@@ -40393,6 +40410,13 @@ _thornNova(m){if(!RunBoons.hasSynergy(this,'carapaca'))return;const d=18+this.lv
         if(typeof PetSystem !== 'undefined' && PetSystem.getSpeedMult) currentSpeed *= PetSystem.getSpeedMult(this);
         if(typeof WeaponSystem !== 'undefined' && WeaponSystem.getSpeedMult) currentSpeed *= WeaponSystem.getSpeedMult(this);
         if(this._hazardSlowTimer > 0) { currentSpeed *= 0.6; this._hazardSlowTimer--; }
+
+        // Teto de velocidade efetiva (equilíbrio): skills, bênçãos, relíquias,
+        // conquistas, montaria e poção somavam multiplicadores demais e o herói
+        // ficava impossível de controlar no celular. O dash e o empurrão não passam por aqui.
+        const _spBase = (CONFIG.PLAYER[this.type] && CONFIG.PLAYER[this.type].speed) || this.speed;
+        const _spCap = _spBase * (CONFIG.PLAYER_SPEED_CAP_MULT || 1.9);
+        if (currentSpeed > _spCap) currentSpeed = _spCap;
 
         if (dx !== 0 || dy !== 0) {
             this._pvx = dx * currentSpeed;
@@ -46787,7 +46811,7 @@ window.SkillTreeUI = SkillTreeUI;
                     ${statChip('HP', p.maxHp, '#4ade80')}
                     ${statChip(_L('skills.damage', 'DANO'), dmg, '#f87171')}
                     ${statChip(_L('skills.crit', 'CRÍTICO'), Math.round(Math.min(1, CONFIG.CRIT_CHANCE_BASE + (p.critChance || 0) + (p.classCritChance || 0)) * 100) + '%', '#fbbf24')}
-                    ${statChip(_L('skills.speed', 'VEL.'), p.speed.toFixed(1), '#60a5fa')}
+                    ${statChip(_L('skills.speed', 'VEL.'), playerSpeedCapped(p).toFixed(1), '#60a5fa')}
                 </div>
                 ${subTabsHtml}
                 ${subTab === 'combos' ? combosSectionHtml : `
@@ -47330,7 +47354,7 @@ renderStatsContent() {
             return tabs + heroSheetHtml + `
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px">
                     ${statCard(_L('stats.card.baseDmg', 'DANO BASE'), dmg)}
-                    ${statCard(_L('eqStat.speedMult', 'Velocidade'), p.speed.toFixed(1))}
+                    ${statCard(_L('eqStat.speedMult', 'Velocidade'), playerSpeedCapped(p).toFixed(1))}
                     ${statCard(_L('eqStat.critChance', 'Crítico'), Math.round(Math.min(1, CONFIG.CRIT_CHANCE_BASE + (p.critChance || 0) + (p.classCritChance || 0)) * 100) + '%')}
                     ${statCard(_L('stats.card.kills', 'KILLS'), p.kills || 0)}
                 </div>
