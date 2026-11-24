@@ -16028,29 +16028,30 @@ class Portal {
             ctx.globalAlpha = 1;
             return;
         }
-        // Portal de descida/ascensão de andar: vórtice arcano roxo/ciano
+        // Portal de descida/ascensão de andar: pórtico 3D de pedra aberto com vórtice arcano roxo/ciano
         const step = rm ? 0 : Math.floor(this.angle / (Math.PI / 6)) * (Math.PI / 6);
         const pf = rm ? 1 : Math.floor((Math.sin(gameTime * 0.1) + 1) * 1.5);
         ctx.save();
         drawGlow(ctx, sx, sy, R * 2, COLORS.PORTAL, 0.6);
         // Halo externo em disco de pixels
-        ctx.globalAlpha = 0.3 + (rm ? 0 : Math.sin(gameTime * 0.1) * 0.1);
-        PixelFX.drawDisc(ctx, sx, sy, R + 5, COLORS.PORTAL, null, true);
-        // Vórtice: 3 braços em meia-elipse achatada, girando em passos
-        ctx.globalAlpha = 0.85;
-        for (let i = 0; i < 3; i++) {
-            const a0 = step + i * Math.PI * 2 / 3;
-            PixelFX.ringE(ctx, sx, sy, R, R * 0.3, i === 0 ? '#7dd3fc' : '#ffffff', a0, a0 + Math.PI);
+        ctx.globalAlpha = 0.28 + (rm ? 0 : Math.sin(gameTime * 0.1) * 0.08);
+        PixelFX.drawDisc(ctx, sx, sy + 4, R + 4, COLORS.PORTAL, null, true);
+        const sp = WorldSprites.portalArch('floor', rm ? 0 : Math.floor(gameTime / 8));
+        if (sp.halo && (window.GFX === undefined || window.GFX.glows)) {
+            ctx.globalAlpha = 0.52;
+            PixelFX.draw(ctx, sp.halo, sx, sy - 6);
         }
+        ctx.globalAlpha = 1;
+        PixelFX.draw(ctx, sp.body, sx, sy - 6);
         // Runas em pixel no anel externo: 6 marcas que acompanham o passo do vórtice
         ctx.globalAlpha = 0.9;
         for (let k = 0; k < 6; k++) {
             const a = step + k * Math.PI / 3;
             PixelFX.drawDisc(ctx, sx + Math.cos(a) * (R + 10), sy + Math.sin(a) * (R + 10) * 0.6, 2, (k & 1) ? '#7dd3fc' : COLORS.PORTAL);
         }
-        // Núcleo pulsante
-        ctx.globalAlpha = 0.92;
-        PixelFX.drawDisc(ctx, sx, sy, R * 0.3 + pf * 3, '#ffffff');
+        // Núcleo pulsante no vão do pórtico
+        ctx.globalAlpha = 0.85;
+        PixelFX.drawDisc(ctx, sx, sy - 2, R * 0.22 + pf * 2, '#ffffff');
         ctx.restore();
         ctx.globalAlpha = 1;
     }
@@ -16481,25 +16482,28 @@ class SecretPortal {
         // Losango que gira em passos de 45 graus; núcleo em xadrez (dithering), distinto do portal comum
         const step = rm ? 0 : Math.floor(this.angle / (Math.PI / 4)) * (Math.PI / 4);
         ctx.save();
-        drawGlow(ctx, sx, sy, R * 2.6, this.color, 0.7 + pulse * 0.15);
-        ctx.globalAlpha = 0.3 + pulse * 0.1;
-        PixelFX.drawDisc(ctx, sx, sy, R + 4, this.color, '#f3e6ff');
-        // Contorno do losango em células de 3 px
-        ctx.globalAlpha = 0.9;
+        drawGlow(ctx, sx, sy, R * 2.4, this.color, 0.65 + pulse * 0.15);
+        ctx.globalAlpha = 0.28 + pulse * 0.08;
+        PixelFX.drawDisc(ctx, sx, sy + 4, R + 2, this.color, '#f3e6ff');
+        // Contorno do losango rúnico na base
+        ctx.globalAlpha = 0.85;
         const V = [];
         for (let k = 0; k < 4; k++) {
             const a = step + k * Math.PI / 2;
-            V.push([sx + Math.cos(a) * (R + 2), sy + Math.sin(a) * (R + 2)]);
+            V.push([sx + Math.cos(a) * (R + 2), sy + Math.sin(a) * (R + 2) * 0.65]);
         }
         for (let k = 0; k < 4; k++) {
             const p0 = V[k], p1 = V[(k + 1) % 4];
             PixelFX.seg3(ctx, p0[0], p0[1], p1[0], p1[1], '#f3e6ff');
         }
-        // Runas internas: um ponto em cada vértice, dentro do losango
-        ctx.globalAlpha = 0.8;
-        for (let k = 0; k < 4; k++) {
-            PixelFX.drawDisc(ctx, sx + (V[k][0] - sx) * 0.5, sy + (V[k][1] - sy) * 0.5, 2, '#ffffff');
+        // Pórtico/arco 3D dimensional violeta-dourado
+        const sp = WorldSprites.portalArch('secret', rm ? 0 : Math.floor(gameTime / 8));
+        if (sp.halo && (window.GFX === undefined || window.GFX.glows)) {
+            ctx.globalAlpha = 0.55;
+            PixelFX.draw(ctx, sp.halo, sx, sy - 6);
         }
+        ctx.globalAlpha = 1;
+        PixelFX.draw(ctx, sp.body, sx, sy - 6);
         ctx.restore();
     }
 }
@@ -16918,7 +16922,7 @@ function _storyRoomBudget() {
 let _bloodAltar=null;
 function _findAltarPos(m){if(!m||!m.tiles)return null;const T=CONFIG.TILE_SIZE,cx=m.width>>1,cy=m.height>>1;for(let r=0;r<Math.max(m.width,m.height);r++)for(let dx=-r;dx<=r;dx++)for(let dy=-r;dy<=r;dy++){if(Math.abs(dx)!==r&&Math.abs(dy)!==r)continue;const tx=cx+dx,ty=cy+dy;if(tx<2||ty<2||tx>=m.width-2||ty>=m.height-2)continue;const wx=tx*T+T/2,wy=ty*T+T/2;if(_entityClear(m,wx,wy,20)&&(!player||Math.hypot(wx-player.x,wy-player.y)>=130))return{x:wx,y:wy};}return null;}
 function _updateBloodAltar(){if(!_bloodAltar||!player||!player.alive||_secretRoom)return;const a=_bloodAltar;if(a.state==='idle'){if(Math.hypot(player.x-a.x,player.y-a.y)<38){if(++a.charge>=48){a.state='active';const c=dungeonLevel>=4?2:1,d=[[1,0],[-1,0],[0,1],[0,-1]];for(let i=0;i<c;i++){let ex=a.x,ey=a.y;for(let k=0;k<4;k++){const tx=a.x+d[(k+i)%4][0]*76,ty=a.y+d[(k+i)%4][1]*76;if(map&&_entityClear(map,tx,ty,20)){ex=tx;ey=ty;break;}}const el=new EliteEnemy(ex,ey,i%2?'ranged':'melee',true);entities.push(el);a.elites.push(el);}addLog(_L('al.wk'),true);ScreenEffects._addRing(a.x,a.y,'#ff2244',120,18,4,0);shake=Math.max(shake,8);if(SND.playBoss)SND.playBoss();}}else if(a.charge>0)a.charge=Math.max(0,a.charge-2);}else if(a.state==='active'&&a.elites.every(e=>!e||!e.alive)){a.state='done';chests.push(new Chest(a.x,a.y,'epico'));addLog(_L('al.rw'),true);ScreenEffects._addRing(a.x,a.y,'#ffd86b',90,16,4,0);if(SND.playAchievement)SND.playAchievement();}}
-function _drawBloodAltar(ctx){const a=_bloodAltar;if(!a||a.state==='done'||_secretRoom)return;const ax=a.x-camX,ay=a.y-camY;if(ax<-50||ax>width+50||ay<-50||ay>height+50)return;ctx.save();const col=a.state==='active'?'#ff6622':'#ff2244';if(window.GFX===undefined||window.GFX.glows){ctx.globalAlpha=0.22;ctx.fillStyle=col;ctx.fillRect(PixelFX.snap(ax-2,2),ay-58,4,56);ctx.fillStyle='#ffd86b';ctx.fillRect(PixelFX.snap(ax-1,2),ay-46,2,44);}ctx.globalAlpha=0.28+Math.sin(gameTime*0.1)*0.12;PixelFX.drawDisc(ctx,ax,ay,24,col);ctx.globalAlpha=0.9;PixelFX.ring(ctx,ax,ay,20,col,3);if(a.charge>0&&a.state==='idle')PixelFX.ring(ctx,ax,ay,28,'#ffd86b',3,{a0:-1.57,a1:-1.57+(a.charge/48)*6.283});ctx.font='bold 9px '+COLORS.CANVAS_FONT;ctx.textAlign='center';ctx.fillStyle='#ff99aa';ctx.fillText(_L('al.lb'),ax,ay-26);ctx.restore();}
+function _drawBloodAltar(ctx){const a=_bloodAltar;if(!a||a.state==='done'||_secretRoom)return;const ax=Math.round(a.x-camX),ay=Math.round(a.y-camY);if(ax<-50||ax>width+50||ay<-50||ay>height+50)return;ctx.save();const act=a.state==='active',col=act?'#ff6622':'#ff2244';const rm=!!(window.GameSettings&&GameSettings.reducedMotion);if(window.GFX===undefined||window.GFX.glows){ctx.globalAlpha=0.22;ctx.fillStyle=col;ctx.fillRect(PixelFX.snap(ax-2,2),ay-58,4,56);ctx.fillStyle='#ffd86b';ctx.fillRect(PixelFX.snap(ax-1,2),ay-46,2,44);}ctx.globalAlpha=0.22+Math.sin(gameTime*0.1)*0.08;PixelFX.drawDisc(ctx,ax,ay+4,22,col);const sp=WorldSprites.bloodAltar(act,rm?0:Math.floor(gameTime/8));if(sp.halo&&(window.GFX===undefined||window.GFX.glows)){ctx.globalAlpha=0.45;PixelFX.draw(ctx,sp.halo,ax,ay-4);}ctx.globalAlpha=1;PixelFX.draw(ctx,sp.body,ax,ay-4);if(a.charge>0&&a.state==='idle')PixelFX.ring(ctx,ax,ay,28,'#ffd86b',3,{a0:-1.57,a1:-1.57+(a.charge/48)*6.283});ctx.font='bold 9px '+COLORS.CANVAS_FONT;ctx.textAlign='center';ctx.fillStyle='#ff99aa';ctx.fillText(_L('al.lb'),ax,ay-30);ctx.restore();}
 
 // Preenche a câmara atual: um baú e os inimigos do orçamento. O tutorial suprime os nascimentos;
 // nesse caso o spawner solta o resto quando ele termina.
@@ -30307,19 +30311,61 @@ const WorldSprites = (() => {
         return { chamber, sealed };
     })();
     const portalArch = (kind, frame) => {
-        const isChamber = kind === 'chamber';
         const f = (frame || 0) & 3;
-        const key = 'parch3d|' + (isChamber ? 'ch' : 'sl') + '|' + f;
+        const kTag = kind === 'chamber' ? 'ch' : (kind === 'floor' ? 'fl' : (kind === 'secret' ? 'sc' : 'sl'));
+        const key = 'parch3d|' + kTag + '|' + f;
         if (!PixelFX.get(key)) {
-            const pal = isChamber ? {
-                k: '#120e0a', d: '#52473b', s: '#8a7b6a', l: '#c8b89e',
-                a: '#d97706', b: '#ffbb44', w: (f & 1) ? '#ffffff' : '#fff4c2'
-            } : {
-                k: '#0b0c10', d: '#1f222d', g: '#282a38', m: '#58606e',
-                s: '#7d8590', l: '#b0b0c0', w: (f & 1) ? '#d8dee9' : '#b0b0c0'
+            let pal, haloCol, slices = _portalArchSlices.chamber;
+            if (kind === 'chamber') {
+                pal = { k: '#120e0a', d: '#52473b', s: '#8a7b6a', l: '#c8b89e', a: '#d97706', b: '#ffbb44', w: (f & 1) ? '#ffffff' : '#fff4c2' };
+                haloCol = '#ffaa33';
+            } else if (kind === 'floor') {
+                pal = { k: '#0b0c10', d: '#252836', s: '#5c6478', l: '#9aa4b8', a: '#6d28d9', b: '#38bdf8', w: (f & 1) ? '#ffffff' : '#bae6fd' };
+                haloCol = '#7dd3fc';
+            } else if (kind === 'secret') {
+                pal = { k: '#140824', d: '#361a54', s: '#6b3fa0', l: '#b794f4', a: '#9333ea', b: '#f472b6', w: (f & 1) ? '#ffffff' : '#fde047' };
+                haloCol = '#e879f9';
+            } else {
+                slices = _portalArchSlices.sealed;
+                pal = { k: '#0b0c10', d: '#1f222d', g: '#282a38', m: '#58606e', s: '#7d8590', l: '#b0b0c0', w: (f & 1) ? '#d8dee9' : '#b0b0c0' };
+                haloCol = '#7d8590';
+            }
+            return stack(key, slices, pal, 0, { scale: 2, spacing: 1.0, squash: 0.72, haloColor: haloCol });
+        }
+        return { body: PixelFX.get(key), halo: PixelFX.get(key + '|h') };
+    };
+
+    // Altar de Sangue 3D (14x8 células, 10 fatias em angle = 0, squash = 0.72, scale = 2):
+    // pedestal escalonado de pedra obsidiana ('d'->'s'->'l') com veios carmesim ('r'), bacia sacrificial de sangue ('b'/'p')
+    // e chama/cálice ardente ('y'/'g'/'w') quando ativo
+    const _bloodAltarSlices = [
+        ['.dddddddddddd.', 'dssssssssssssd', 'dsllllllllllsd', 'dslsssssssslsd', 'dslsrrrrrrslsd', 'dslsssssssslsd', 'dssssssssssssd', '.dddddddddddd.'],
+        ['.dddddddddddd.', 'dssssssssssssd', 'dsllllllllllsd', 'dslsssssssslsd', 'dslsrrrrrrslsd', 'dslsssssssslsd', 'dssrrrrrrrrssd', '.dddddddddddd.'],
+        ['..dddddddddd..', '.dssssssssssd.', '.dsllllllllsd.', '.dslsssssslsd.', '.dslsrrrrslsd.', '.dslsssssslsd.', '.dssssssssssd.', '..dddddddddd..'],
+        ['...dddddddd...', '..dssssssssd..', '..dsllllllsd..', '..dslsssslsd..', '..dslsrrslsd..', '..dslsssslsd..', '..dssrrrrssd..', '...dddddddd...'],
+        ['...dddddddd...', '..dssssssssd..', '..dsllllllsd..', '..dslsssslsd..', '..dslsrrslsd..', '..dslsssslsd..', '..dssssssssd..', '...dddddddd...'],
+        ['..dddddddddd..', '.dssssssssssd.', '.dsllllllllsd.', '.dslrrrrrrlsd.', '.dslrbbbbrlsd.', '.dslrrrrrrlsd.', '.dssrrrrrrssd.', '..dddddddddd..'],
+        ['..dddddddddd..', '.dssssssssssd.', '.dslrrrrrrlsd.', '.dsrbbbbTbrsd.', '.dsrbTppTbrsd.', '.dsrbbbbTbrsd.', '.dssrrrrrrssd.', '..dddddddddd..'],
+        ['..............', '..d........d..', '..F...yy...F..', '.....yyyy.....', '.....ygwy.....', '.....yyyy.....', '..............', '..............'],
+        ['..............', '..............', '..w...yy...w..', '.....ygwy.....', '.....gwwwg....', '.....ygwy.....', '..............', '..............'],
+        ['..............', '..............', '......gw......', '.....gwwwg....', '......www.....', '......gw......', '..............', '..............']
+    ];
+    const bloodAltar = (active, frame) => {
+        const f = (frame || 0) & 3;
+        const act = active ? 1 : 0;
+        const key = 'baltar3d|' + act + '|' + f;
+        if (!PixelFX.get(key)) {
+            const pal = {
+                k: '#120818', d: '#241a30', s: '#3d2e52', l: '#685484',
+                r: '#7a0c20', b: '#d91c38', p: (f & 1) ? '#ff758f' : '#ff4766',
+                T: (f === 1 || f === 3) ? '#ff8fa3' : '#d91c38',
+                F: (f & 1) ? '#ffaa33' : '#ff4422',
+                y: act ? '#ff6622' : '#d91c38',
+                g: act ? '#ffd86b' : '#ff4766',
+                w: act ? ((f & 1) ? '#ffffff' : '#ffe89e') : ((f & 1) ? '#ff8fa3' : '#ff4766')
             };
-            return stack(key, isChamber ? _portalArchSlices.chamber : _portalArchSlices.sealed,
-                pal, 0, { scale: 2, spacing: 1.0, squash: 0.72, haloColor: isChamber ? '#ffaa33' : '#7d8590' });
+            const slices = act ? _bloodAltarSlices : _bloodAltarSlices.slice(0, 8);
+            return stack(key, slices, pal, 0, { scale: 2, spacing: 1.0, squash: 0.72, haloColor: act ? '#ff6622' : '#ff2244' });
         }
         return { body: PixelFX.get(key), halo: PixelFX.get(key + '|h') };
     };
@@ -30373,7 +30419,7 @@ const WorldSprites = (() => {
         return PixelFX.get(key);
     };
 
-    return { stack, fire, crystal, blob, spikes, medal, medalUrl, chest, sceneObj, echoRelic, portalArch, npc, status };
+    return { stack, fire, crystal, blob, spikes, medal, medalUrl, chest, sceneObj, echoRelic, portalArch, bloodAltar, npc, status };
 })();
 
 class Hazard {
