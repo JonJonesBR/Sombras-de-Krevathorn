@@ -29471,39 +29471,226 @@ const WorldSprites = (() => {
         return { body: PixelFX.get(key), halo: PixelFX.get(key + '|h') };
     };
 
-    // Baú 3D empilhado em 11 fatias de 12x8 células (scale = 2, ângulo 3/4 isométrico de 28 graus)
-    // Rampa de madeira com sombra carmesim (d->w->p->h->e) + ferragens e fecho da raridade (m->l->s)
+    // Baú 3D empilhado em 11 fatias de 16x7 células (scale = 2, projeção 3/4 frontal-oblíqua angle = 0)
+    // Anatomia clássica de RPG: madeira dominante (~70%: d->w->p->h->e), junção escura (d) entre caixa e tampa
+    // abobadada, duas cintas verticais da raridade (x=3..4 e x=11..12: ms->m->ml) com rebites e escudo de
+    // fechadura central (x=6..9) com contorno claro (ml/s) e buraco de fechadura escuro ('k' 1x2 px em x=7..8).
     const CHEST_SLICES_CLOSED = [
-        // z=0: pés/cantoneiras e base escura
-        ['mmmmmmmmmmmm', 'mddddddddddm', 'mddddddddddm', 'mddddddddddm', 'mddddddddddm', 'mddddddddddm', 'mddddddddddm', 'mmmmmmmmmmmm'],
-        // z=1..4: corpo de madeira com tábuas chanfradas, cintas metálicas e fecho frontal
-        ['mmmmmmmmmmmm', 'mddmmddmmddm', 'mwwmmwwmmwwm', 'mppppppppppm', 'mwwmmwwmmwwm', 'mddmmddmmddm', 'mwwmmwwmmwwm', 'mmmmmmmmmmmm'],
-        ['mddmmddmmddm', 'mwwmmwwmmwwm', 'mppppppppppm', 'mwwmmwwmmwwm', 'mddmmddmmddm', 'mppppppppppm', 'mddmmllmdddm', 'mmmmsllsmmmm'],
-        ['mwwmmwwmmwwm', 'mppppppppppm', 'mhhmmhhmmhhm', 'mddmmddmmddm', 'mppppppppppm', 'mddmmddmmddm', 'mwwmmllmwwwm', 'mmmmmmmmmmmm'],
-        ['mmmmmmmmmmmm', 'mmmmmmmmmmmm', 'mddmmddmmddm', 'mppppppppppm', 'mppppppppppm', 'mddmmddmmddm', 'mmmmmmmmmmmm', 'mmmmmmmmmmmm'],
-        // z=5..10: tampa abobadada estreitando no eixo Y com chanfro claro (h/e) no topo
-        ['mmmmmmmmmmmm', 'mwwmmwwmmwwm', 'mhhmmhhmmhhm', 'mppppppppppm', 'mppppppppppm', 'mhhmmhhmmhhm', 'mwwmmllmwwwm', 'mmmmmmmmmmmm'],
-        ['.mmmmmmmmmm.', '.mpmppppmpm.', '.mhmhhhhmhm.', '.mpmppppmpm.', '.mpmppppmpm.', '.mhmhhhhmhm.', '.mpmppppmpm.', '.mmmmmmmmmm.'],
-        ['.mmmmmmmmmm.', '.mhmhhhhmhm.', '.memeeeemem.', '.mhmhhhhmhm.', '.mhmhhhhmhm.', '.mpmppppmpm.', '.mhmhhhhmhm.', '.mmmmmmmmmm.'],
-        ['..mmmmmmmm..', '..mhhhhhhm..', '..meeeeeem..', '..mhhhhhhm..', '..mhhhhhhm..', '..mppppppm..', '..mhhhhhhm..', '..mmmmmmmm..'],
-        ['............', '..mmmmmmmm..', '..meeeeeem..', '..mhhhhhhm..', '..mhhhhhhm..', '..mhhhhhhm..', '..mmmmmmmm..', '............'],
-        ['............', '............', '...mmmmmm...', '...meeeem...', '...mhhhhm...', '...mmmmmm...', '............', '............']
+        // z=0: base da caixa com pés cantoneiros, cintas (x=3..4, 11..12) e sombra inferior
+        [
+            'dddddddddddddddd',
+            'dwwwwwwwwwwwwwwd',
+            'dwwwwwwwwwwwwwwd',
+            'dwwwwwwwwwwwwwwd',
+            'dwwwwwwwwwwwwwwd',
+            'dwwcmwwwwwwmcwwd',
+            'mmddddddddddddmm'
+        ],
+        // z=1: parte inferior da caixa frontal com tábuas iluminadas à esquerda (p) e sombreadas à direita (w)
+        [
+            'dwwwwwwwwwwwwwwd',
+            'dppppppppppppwwd',
+            'dppppppppppppwwd',
+            'dppppppppppppwwd',
+            'dppppppppppppwwd',
+            'dppcmppppppmcwwd',
+            'dppcmppwwwwmcwwd'
+        ],
+        // z=2: linha horizontal de divisão das tábuas da caixa ('d') + base da placa de fechadura (x=6..9)
+        [
+            'dwwwwwwwwwwwwwwd',
+            'dppppppppppppwwd',
+            'dppppppppppppwwd',
+            'dppppppppppppwwd',
+            'dppppppppppppwwd',
+            'dddcmddddddmcddd',
+            'dddcmddmmmmmcddd'
+        ],
+        // z=3: parte superior da caixa frontal + placa da fechadura com buraco escuro ('k') no centro (x=7..8)
+        [
+            'dwwwwwwwwwwwwwwd',
+            'dppppppppppppwwd',
+            'dppppppppppppwwd',
+            'dppppppppppppwwd',
+            'dppppppppppppwwd',
+            'dppcmplmmllmcwwd',
+            'dppcmplkkmlmcwwd'
+        ],
+        // z=4: sombra projetada logo abaixo do aro da tampa ('d') + coração da fechadura ('k' 1x2 vertical)
+        [
+            'dddddddddddddddd',
+            'dwwwwwwwwwwwwwwd',
+            'dwwwwwwwwwwwwwwd',
+            'dwwwwwwwwwwwwwwd',
+            'dwwwwwwwwwwwwwwd',
+            'dddcmplkkmlmcddd',
+            'dddcmplkkmlmcddd'
+        ],
+        // z=5: aro inferior da tampa + topo iluminado do escudo da fechadura ('l'/'s')
+        [
+            'dwwwwwwwwwwwwwwd',
+            'dppcmppppppmcwwd',
+            'dhhcmllhhhlmcwwd',
+            'dhhcmllhhhlmcwwd',
+            'dppcmppppppmcwwd',
+            'dppcmplssllmcwwd',
+            'dppcmplllllmcwwd'
+        ],
+        // z=6: curva frontal da tampa abobadada (p/h) com cintas recebendo luz (m/l) e rebite ('s')
+        [
+            'dwwwwwwwwwwwwwwd',
+            'dhhcmllhhhlmcppd',
+            'deecmlleeeelchhd',
+            'deecmlleeeelchhd',
+            'dhhcmllhhhlmcppd',
+            'dhhcmlsmppmlchhd',
+            'dppcmlmmppmlcppd'
+        ],
+        // z=7: meio da abóbada da tampa (recuo y=1..5 para curvar o perfil 3D, mantendo as cintas contínuas)
+        [
+            '................',
+            'dhhcmllhhhhlchhd',
+            'deecmlleeeelchhd',
+            'deecmlleeeelchhd',
+            'dhhcmllhhhhlchhd',
+            'dhhcmllhhhhlchhd',
+            '................'
+        ],
+        // z=8: curva superior da tampa abobadada (h/e) com brilho especular ('l') nas duas cintas
+        [
+            '................',
+            'deecmlleeeelchhd',
+            'deecmlleeeelchhd',
+            'deecmlleeeelchhd',
+            'dhhcmllhhhhlchhd',
+            'dhhcmllhhhhlchhd',
+            '................'
+        ],
+        // z=9: topo da abóbada da tampa (recuo y=1..4) — tábuas claras ('e') e cintas iluminadas ('l'/'s')
+        [
+            '................',
+            '.deecmlleellced.',
+            '.deecmlleellced.',
+            '.deecmlleellced.',
+            '.dhhcmlleellchd.',
+            '................',
+            '................'
+        ],
+        // z=10: crista superior da tampa cilíndrica (recuo y=2..3)
+        [
+            '................',
+            '................',
+            '.deecmlleellced.',
+            '.dhhcmlleellchd.',
+            '................',
+            '................',
+            '................'
+        ]
     ];
     const CHEST_SLICES_OPEN = [
-        // z=0..1: fundo do baú
-        ['mmmmmmmmmmmm', 'mddddddddddm', 'mddddddddddm', 'mddddddddddm', 'mddddddddddm', 'mddddddddddm', 'mddddddddddm', 'mmmmmmmmmmmm'],
-        ['mmmmmmmmmmmm', 'mddddddddddm', 'mddggggggddm', 'mddggggggddm', 'mddggggggddm', 'mddggggggddm', 'mddddddddddm', 'mmmmmmmmmmmm'],
-        // z=2..4: caixa oca com tesouro dourado/brilhante dentro
-        ['mddmmddmmddm', 'mdnnnnnnnndm', 'mdnggsggsndm', 'mdnggggggndm', 'mdngsggggndm', 'mdngggggsndm', 'mdnnnnnnnndm', 'mmmmsggsmmmm'],
-        ['mwwmmwwmmwwm', 'mwnnnnnnnnwm', 'mwnggsggsnwm', 'mwnggsgggnwm', 'mwngggggsnwm', 'mwngsggggnwm', 'mwnnnnnnnnwm', 'mmmmmmmmmmmm'],
-        ['mmmmmmmmmmmm', 'mmnnnnnnnnmm', 'mnnggsggsnnm', 'mnnggggggnnm', 'mnngsggggnnm', 'mnnnnnnnnnnm', 'mmmmmmmmmmmm', 'mmmmmmmmmmmm'],
-        // z=5..10: tampa levantada na parte de trás (y=0..2)
-        ['mmmmmmmmmmmm', 'mwwmmwwmmwwm', 'mmmmmmmmmmmm', '............', '............', '............', '............', '............'],
-        ['mmmmmmmmmmmm', 'mhhmmhhmmhhm', 'mppppppppppm', '............', '............', '............', '............', '............'],
-        ['.mmmmmmmmmm.', '.mpmppppmpm.', '.mhmhhhhmhm.', '............', '............', '............', '............', '............'],
-        ['.mmmmmmmmmm.', '.mhmhhhhmhm.', '.memeeeemem.', '............', '............', '............', '............', '............'],
-        ['..mmmmmmmm..', '..meeeeeem..', '..mmmmmmmm..', '............', '............', '............', '............', '............'],
-        ['...mmmmmm...', '...meeeem...', '............', '............', '............', '............', '............', '............']
+        // z=0..1: base da caixa aberta
+        [
+            'dddddddddddddddd',
+            'dwwwwwwwwwwwwwwd',
+            'dwwwwwwwwwwwwwwd',
+            'dwwwwwwwwwwwwwwd',
+            'dwwwwwwwwwwwwwwd',
+            'dwwcmwwwwwwmcwwd',
+            'mmddddddddddddmm'
+        ],
+        [
+            'dwwwwwwwwwwwwwwd',
+            'dppnnnnnnnnnnwwd',
+            'dppnggggggggnwwd',
+            'dppnggggggggnwwd',
+            'dppnnnnnnnnnnwwd',
+            'dppcmppppppmcwwd',
+            'dppcmppwwwwmcwwd'
+        ],
+        // z=2..3: caixa inferior com parede frontal de madeira, cintas, fecho e interior escuro ('n') cheio de ouro ('g'/'a'), gemas ('m'/'l') e brilhos ('s')
+        [
+            'dwwwwwwwwwwwwwwd',
+            'dppnnggsggsnnwwd',
+            'dppnggmlggmgnwwd',
+            'dppnggsggggsnwwd',
+            'dppnnggggggnnwwd',
+            'dddcmddddddmcddd',
+            'dddcmddmmmmmcddd'
+        ],
+        [
+            'dwwwwwwwwwwwwwwd',
+            'dppnnggsmlgnnwwd',
+            'dppnggsgglggnwwd',
+            'dppnggmlgsggnwwd',
+            'dppnnggsggsnnwwd',
+            'dppcmplkkmlmcwwd',
+            'dppcmplkkmlmcwwd'
+        ],
+        // z=4: borda superior da caixa aberta com aro de madeira ('h'/'e') e moedas/gemas transbordando no interior
+        [
+            'dddddddddddddddd',
+            'dhhnnggsmlgnnhhd',
+            'dhenggsgglggnehd',
+            'dhenggmlgsggnehd',
+            'dhhnnggsggsnnhhd',
+            'deecmplssllmceed',
+            'dhhcmplllllmchhd'
+        ],
+        // z=5..10: tampa erguida na parte de trás (y=0..2), exibindo o forro escuro ('n'), a moldura de madeira ('h'/'e') e as duas cintas metálicas ('c'/'m'/'l')
+        [
+            'dwwwwwwwwwwwwwwd',
+            'dhhcmnnnnnnmchhd',
+            'deecmnnnnnnmceed',
+            '................',
+            '................',
+            '................',
+            '................'
+        ],
+        [
+            'dwwwwwwwwwwwwwwd',
+            'dhhcmnnnnnnmchhd',
+            'deecmnnnnnnmceed',
+            '................',
+            '................',
+            '................',
+            '................'
+        ],
+        [
+            'dhhhhhhhhhhhhppd',
+            'dhhcmnnnnnnmchhd',
+            'deecmnnnnnnmceed',
+            '................',
+            '................',
+            '................',
+            '................'
+        ],
+        [
+            'dhhhhhhhhhhhhppd',
+            'dhhcmwwwwwwmchhd',
+            'deecmppppppmceed',
+            '................',
+            '................',
+            '................',
+            '................'
+        ],
+        [
+            '.dhhhhhhhhhhhhd.',
+            '.dhcmlleellcmhd.',
+            '.decmlleellcmed.',
+            '................',
+            '................',
+            '................',
+            '................'
+        ],
+        [
+            '..dhhhhhhhhhhd..',
+            '..deeeeeeeeeed..',
+            '................',
+            '................',
+            '................',
+            '................',
+            '................'
+        ]
     ];
     const chest = (color, frame, opened = false) => {
         const f = opened ? 'o' : (frame & 3);
@@ -29511,20 +29698,20 @@ const WorldSprites = (() => {
         if (!PixelFX.get(key)) {
             const base = (opened ? CHEST_SLICES_OPEN : CHEST_SLICES_CLOSED).map(sl => sl.slice());
             if (!opened) {
-                const spCoords = [[2, 7, 5], [7, 3, 4], [9, 2, 6], [5, 7, 6]][f];
+                const spCoords = [[5, 5, 7], [6, 5, 4], [8, 5, 11], [9, 3, 4]][f];
                 const zSp = spCoords[0], ySp = spCoords[1], xSp = spCoords[2];
                 const rSp = base[zSp][ySp].split('');
                 rSp[xSp] = 's';
                 base[zSp] = base[zSp].slice();
                 base[zSp][ySp] = rSp.join('');
             }
-            const t = PixelFX.tones(color);
             const pal = {
-                k: '#241217', K: '#422127',
-                d: '#422127', w: '#6b3f30', p: '#996740', h: '#c2966b', e: '#e0bb8b',
-                m: color, l: t.l, g: '#ffd86b', n: '#141018', s: '#fffad1'
+                k: '#1a0c12', K: '#381c22',
+                d: '#47241e', w: '#704324', p: '#9c6438', h: '#c68f56', e: '#e8c496',
+                c: PixelFX.shade(color, -0.32), m: color, l: PixelFX.shade(color, 0.45),
+                g: '#ffd86b', a: '#c88a28', n: '#160e18', s: '#fffad1'
             };
-            return stack(key, base, pal, 28, { scale: 2, spacing: 1.0, squash: 0.75, haloColor: opened ? null : color });
+            return stack(key, base, pal, 0, { scale: 2, spacing: 1.0, squash: 0.72, haloColor: opened ? null : color });
         }
         return { body: PixelFX.get(key), halo: opened ? null : PixelFX.get(key + '|h') };
     };
@@ -29533,9 +29720,11 @@ const WorldSprites = (() => {
     // Todos plantados no chão com sombra projetada e animação secundária viva nos quadros (chama, tomo, cálice, folhagem, coroa, anel).
     const _sceneModels = (() => {
         const models = Object.create(null);
-        // 'bunk' (Beliche 14): madeira com sombra carmesim, postes de ferro frio, dois colchões com travesseiro creme e lanterna no poste superior
+        // 'bunk' (Beliche 14): projeção 3/4 frontal-oblíqua (angle = 0) alinhada às paredes ortogonais.
+        // Dois leitos sobrepostos com moldura de madeira, colchão azul-acinzentado, travesseiro creme à esquerda,
+        // escada frontal à direita (x=9..10) e lanterna acesa no poste superior esquerdo.
         models.bunk = {
-            rot: false, angle: 30, halo: '#88ccff',
+            rot: false, angle: 0, halo: '#88ccff',
             pal: {
                 k: '#181425', K: '#262b44',
                 p: '#3a4466', i: '#8b9bb4',
@@ -29544,69 +29733,89 @@ const WorldSprites = (() => {
                 g: '#e8b84b', f: '#ff8822', s: '#fffad1'
             },
             slices: [
-                ['pp........pp', 'pp........pp', '............', '............', '............', '............', 'pp........pp', 'pp........pp'],
-                ['ppddddddddpp', 'pwwwwwwwwwwp', 'pwbbbbbbbbwp', 'pwbbbbbbbbwp', 'pwbbbbbbbbwp', 'pwbbbbbbbbwp', 'pwwwwwwwwwwp', 'ppddddddddpp'],
-                ['pphhhhhhhhpp', 'phccccccccbp', 'phccclllllbp', 'phccclllllbp', 'phccclllllbp', 'phccccccccbp', 'pheeeeeeeehp', 'pphhhhhhhhpp'],
-                ['pi........pp', 'pp........pp', '............', '............', '............', '............', 'pi...hh...pp', 'pp...hh...pp'],
-                ['pi........pp', 'pp........pp', '............', '............', '............', '............', 'pi...ww...pp', 'pp...ww...pp'],
-                ['pi........pp', 'pp........pp', '............', '............', '............', '............', 'pi...hh...pp', 'pp...hh...pp'],
-                ['ppddddddddpp', 'pwwwwwwwwwwp', 'pwbbbbbbbbwp', 'pwbbbbbbbbwp', 'pwbbbbbbbbwp', 'pwbbbbbbbbwp', 'pwwwwwwwwwwp', 'ppddddddddpp'],
-                ['pphhhhhhhhpp', 'phccccccccbp', 'phccclllllbp', 'phccclllllbp', 'phccclllllbp', 'phccccccccbp', 'pheeeeeeeehp', 'pphhhhhhhhpp'],
-                ['pi........pp', 'pp........pp', '............', '............', '............', '............', 'pi........pp', 'pp........pp'],
-                ['pihhhhhhhhpp', 'pp........pp', '............', '............', '............', '............', 'pg........pp', 'pphhhhhhhhpp'],
-                ['............', '............', '............', '............', '............', '............', 'fs..........', 'gg..........'],
-                ['............', '............', '............', '............', '............', '............', '.s..........', '............']
+                // z=0: 4 postes de ferro nos cantos + sombra sob o leito inferior
+                ['pp..........pp', 'pi..........pi', '..............', '..............', '..............', 'pp..........pp', 'pi..........pi'],
+                // z=1: estrado de madeira do leito inferior (face frontal visível em y=5..6)
+                ['ppddddddddddpp', 'pwwwwwwwwwwwwp', 'pwwwwwwwwwwwwp', 'pwwwwwwwwwwwwp', 'pwwwwwwwwwwwwp', 'pphhhhhhhhhhpp', 'piwwwwwwwwwwpi'],
+                // z=2: colchão inferior com travesseiro creme (x=2..4) e cobertor azul (x=5..11) visíveis na frente
+                ['ppddddddddddpp', 'pwccccbbbbbbwp', 'pwccccllllllwp', 'pwccccllllllwp', 'pwccccbbbbbbwp', 'phccccllllllhp', 'pieeeeeeeeeepi'],
+                // z=3..5: vão entre os beliches com os 4 postes e degraus da escada frontal (x=9..10)
+                ['pp..........pp', 'pi..........pi', '..............', '..............', '..............', 'pp.......hh.pp', 'pi.......ee.pi'],
+                ['pp..........pp', 'pi..........pi', '..............', '..............', '..............', 'pp.......dd.pp', 'pi.......ww.pi'],
+                ['pp..........pp', 'pi..........pi', '..............', '..............', '..............', 'pp.......hh.pp', 'pi.......ee.pi'],
+                // z=6: estrado de madeira do leito superior
+                ['ppddddddddddpp', 'pwwwwwwwwwwwwp', 'pwwwwwwwwwwwwp', 'pwwwwwwwwwwwwp', 'pwwwwwwwwwwwwp', 'pphhhhhhhhhhpp', 'piwwwwwwwwwwpi'],
+                // z=7: colchão superior com travesseiro creme e cobertor azul
+                ['ppddddddddddpp', 'pwccccbbbbbbwp', 'pwccccllllllwp', 'pwccccllllllwp', 'pwccccbbbbbbwp', 'phccccllllllhp', 'pieeeeeeeeeepi'],
+                // z=8: grade/cabeceira superior + postes
+                ['ppddddddddddpp', 'pi..........pi', '..............', '..............', '..............', 'pp..........pp', 'pihhhhhhhhhhpi'],
+                // z=9: remate dos postes + base dourada da lanterna no poste frontal esquerdo
+                ['pihhhhhhhhhhpi', '..............', '..............', '..............', '..............', 'gg..........pp', 'gg..........pi'],
+                // z=10..11: chama viva da lanterna no poste frontal esquerdo
+                ['..............', '..............', '..............', '..............', '..............', 'fs............', 'gf............'],
+                ['..............', '..............', '..............', '..............', '..............', '.s............', '..............']
             ],
             anim(base, f) {
-                const r10 = base[10][6].split(''), r11 = base[11][6].split('');
+                const r10 = base[10][5].split(''), r11 = base[11][5].split('');
                 r10[0] = (f & 1) ? 's' : 'f';
                 r10[1] = (f === 2) ? 'f' : 's';
                 r11[0] = (f === 1) ? 'f' : '.';
                 r11[1] = (f === 3) ? 'f' : 's';
-                base[10] = base[10].slice(); base[10][6] = r10.join('');
-                base[11] = base[11].slice(); base[11][6] = r11.join('');
+                base[10] = base[10].slice(); base[10][5] = r10.join('');
+                base[11] = base[11].slice(); base[11][5] = r11.join('');
             }
         };
-        // 'library' (Biblioteca): estante 3D de madeira nobre com 3 prateleiras de lombadas (azul, rubi, esmeralda, ouro) e tomo aberto/vela rúnica no topo
+        // 'library' (Biblioteca): estante 3D ortogonal (angle = 0) em madeira nobre.
+        // Face frontal (y=4..5) exibe claramente 3 prateleiras horizontais de madeira ('h'/'e') intercaladas com
+        // fileiras de lombadas coloridas verticais (rubi 'r', safira 'b', esmeralda 'm', violeta 'v', ouro 'g'),
+        // e no topo (z=10..11) um púlpito com grimório aberto e brilho rúnico animado.
         models.library = {
-            rot: false, angle: 28, halo: '#c084fc',
+            rot: false, angle: 0, halo: '#c084fc',
             pal: {
                 k: '#241217', K: '#422127',
                 d: '#422127', w: '#6b3f30', h: '#996740', e: '#c2966b',
                 r: '#e43b44', b: '#3b78c9', m: '#2eaa68', v: '#9d4edd', g: '#e8b84b', p: '#e5d4b3', s: '#fffad1'
             },
             slices: [
-                ['dddddddddddd', 'dwwwwwwwwwwd', 'dwwwwwwwwwwd', 'dwwwwwwwwwwd', 'dwwwwwwwwwwd', 'dddddddddddd'],
-                ['dwwwwwwwwwwd', 'dwwrrbbmmggd', 'dwwrrbbmmggd', 'dwwrrbbmmggd', 'dwwppppppppd', 'dwwwwwwwwwwd'],
-                ['dwwwwwwwwwwd', 'dwwrrbbmmggd', 'dwwrrbbmmggd', 'dwwrrbbmmggd', 'dwwppppppppd', 'dwwwwwwwwwwd'],
-                ['deeeeeeeeeed', 'dhhhhhhhhhhd', 'dwwwwwwwwwwd', 'dwwwwwwwwwwd', 'dhhhhhhhhhhd', 'deeeeeeeeeed'],
-                ['dwwwwwwwwwwd', 'dwwmmggrrbbd', 'dwwmmggrrbbd', 'dwwmmggrrbbd', 'dwwppppppppd', 'dwwwwwwwwwwd'],
-                ['dwwwwwwwwwwd', 'dwwmmggrrbbd', 'dwwmmggrrbbd', 'dwwmmggrrbbd', 'dwwppppppppd', 'dwwwwwwwwwwd'],
-                ['deeeeeeeeeed', 'dhhhhhhhhhhd', 'dwwwwwwwwwwd', 'dwwwwwwwwwwd', 'dhhhhhhhhhhd', 'deeeeeeeeeed'],
-                ['dwwwwwwwwwwd', 'dwwggrrvvbbd', 'dwwggrrvvbbd', 'dwwggrrvvbbd', 'dwwppppppppd', 'dwwwwwwwwwwd'],
-                ['dwwwwwwwwwwd', 'dwwggrrvvbbd', 'dwwggrrvvbbd', 'dwwggrrvvbbd', 'dwwppppppppd', 'dwwwwwwwwwwd'],
-                ['deeeeeeeeeed', 'dhhhhhhhhhhd', 'dwwwwwwwwwwd', 'dwwwwwwwwwwd', 'dhhhhhhhhhhd', 'deeeeeeeeeed'],
-                ['.dddddddddd.', '.dhhhhhhhhd.', '.dhppgppghd.', '.dhpsgspghd.', '.dhhhhhhhhd.', '.dddddddddd.'],
-                ['............', '............', '...ppvpp....', '...psvsp....', '............', '............']
+                // z=0: rodapé e base de madeira da estante
+                ['dddddddddddddd', 'dwwwwwwwwwwwwd', 'dwwwwwwwwwwwwd', 'dwwwwwwwwwwwwd', 'dhhhhhhhhhhhhd', 'deeeeeeeeeeeed'],
+                // z=1..2: 1ª fileira de livros (lombadas visíveis na face frontal y=4..5)
+                ['dwwwwwwwwwwwwd', 'dwwwwwwwwwwwwd', 'dwwrrbbmmggvvd', 'dwwrrbbmmggvvd', 'dwhrrbbmmggvhd', 'dwhrrbbmmggvhd'],
+                ['dwwwwwwwwwwwwd', 'dwwwwwwwwwwwwd', 'dwwrrbbmmggvvd', 'dwwrrbbmmggvvd', 'dwhrrbbmmggvhd', 'dwhrrddbmmgvhd'],
+                // z=3: prateleira divisória de madeira maciça (borda frontal 'e' contínua em y=5)
+                ['dddddddddddddd', 'dwwwwwwwwwwwwd', 'dwwwwwwwwwwwwd', 'dhhhhhhhhhhhhd', 'dhhhhhhhhhhhhd', 'deeeeeeeeeeeed'],
+                // z=4..5: 2ª fileira de livros (ordem variada de cores de tomo)
+                ['dwwwwwwwwwwwwd', 'dwwwwwwwwwwwwd', 'dwwmmggrrvvbbd', 'dwwmmggrrvvbbd', 'dwhmmggrrvvbhd', 'dwhmmggrrvvbhd'],
+                ['dwwwwwwwwwwwwd', 'dwwwwwwwwwwwwd', 'dwwmmggrrvvbbd', 'dwwmmggrrvvbbd', 'dwhmmggrrvvbhd', 'dwhmmgddrvvbhd'],
+                // z=6: 2ª prateleira divisória de madeira
+                ['dddddddddddddd', 'dwwwwwwwwwwwwd', 'dwwwwwwwwwwwwd', 'dhhhhhhhhhhhhd', 'dhhhhhhhhhhhhd', 'deeeeeeeeeeeed'],
+                // z=7..8: 3ª fileira de livros + pergaminhos claros ('p')
+                ['dwwwwwwwwwwwwd', 'dwwwwwwwwwwwwd', 'dwwggrrppbbmmd', 'dwwggrrppbbmmd', 'dwhggrrppbbmhd', 'dwhggrrppbbmhd'],
+                ['dwwwwwwwwwwwwd', 'dwwwwwwwwwwwwd', 'dwwggrrppbbmmd', 'dwwggrrppbbmmd', 'dwhggrrppbbmhd', 'dwhggrrddbbmhd'],
+                // z=9: cornija e tampo superior da estante (plano de topo iluminado 'h'/'e')
+                ['dddddddddddddd', 'dhhhhhhhhhhhhd', 'deeeeeeeeeeeed', 'deeeeeeeeeeeed', 'dhhhhhhhhhhhhd', 'deeeeeeeeeeeed'],
+                // z=10..11: grimório aberto com páginas creme ('p'), marcador dourado ('g') e glifo astral ('v'/'s') no topo
+                ['..............', '..dddddddddd..', '..dhhhhhhhhd..', '..dhppgppghd..', '..dhpsgspghd..', '..deeeeeeeed..'],
+                ['..............', '..............', '....ppvpp.....', '....psvsp.....', '....ppgpp.....', '..............']
             ],
             anim(base, f) {
                 if (f === 1 || f === 3) {
                     base[11] = [
-                        '............',
-                        '...ppgpp....',
-                        '...psssp....',
-                        '...ppvpp....',
-                        '............',
-                        '............'
+                        '..............',
+                        '....ppgpp.....',
+                        '....psssp.....',
+                        '....ppvpp.....',
+                        '..............',
+                        '..............'
                     ];
                 } else if (f === 2) {
                     base[11] = [
-                        '............',
-                        '............',
-                        '...psvsp....',
-                        '...pvsvp....',
-                        '............',
-                        '............'
+                        '..............',
+                        '..............',
+                        '....psvsp.....',
+                        '....pvsvp.....',
+                        '....ppgpp.....',
+                        '..............'
                     ];
                 }
             }
@@ -29683,24 +29892,32 @@ const WorldSprites = (() => {
                 }
             }
         };
-        // 'room' (Quarto de Eiran): arca/berço real entalhado em madeira escura e ouro com almofada de veludo violeta e coroa solar que pulsa nos 4 quadros
+        // 'room' (Quarto de Eiran): arca/berço real 3D ortogonal (angle = 0) entalhado em madeira escura e ouro,
+        // com face frontal entalhada em brasão solar ('g'/'y'), almofada de veludo violeta ('l'/'v') e coroa solar que pulsa nos 4 quadros
         models.room = {
-            rot: false, angle: 30, halo: '#ffd86b',
+            rot: false, angle: 0, halo: '#ffd86b',
             pal: {
                 k: '#241217', K: '#422127',
-                d: '#422127', w: '#6b3f30', h: '#996740',
+                d: '#422127', w: '#6b3f30', h: '#996740', e: '#c2966b',
                 l: '#7a2eb8', v: '#b458f2',
                 g: '#e8b84b', y: '#ffe97d', s: '#fffad1'
             },
             slices: [
-                ['ggddddddddgg', 'gwwwwwwwwwwg', 'gwwwwwwwwwwg', 'gwwwwwwwwwwg', 'gwwwwwwwwwwg', 'gwwwwwwwwwwg', 'gwwwwwwwwwwg', 'ggddddddddgg'],
-                ['gddddddddddg', 'dwwwwwwwwwwd', 'dwhhhhhhhhwd', 'dwhhhhhhhhwd', 'dwhhhhhhhhwd', 'dwhhhhhhhhwd', 'dwwwwwwwwwwd', 'gddddddddddg'],
-                ['gddddddddddg', 'dwllllllllwd', 'dwlvvvvvvlwd', 'dwlvvvvvvlwd', 'dwlvvvvvvlwd', 'dwlvvvvvvlwd', 'dwllllllllwd', 'gddddddddddg'],
-                ['ghhhhhhhhhhg', 'dwlvvvvvvlwd', 'dwlvvggvvlwd', 'dwlvgyygvlwd', 'dwlvgyygvlwd', 'dwlvvggvvlwd', 'dwlvvvvvvlwd', 'ghhhhhhhhhhg'],
-                ['gg........gg', 'gd...gg...dg', 'gd..gyyg..dg', 'gd..gwwg..dg', 'gd..gyyg..dg', 'gd...gg...dg', 'gd........dg', 'gg........gg'],
+                // z=0: pés dourados nos 4 cantos e base de madeira escura
+                ['ggddddddddgg', 'gwwwwwwwwwwg', 'gwwwwwwwwwwg', 'gwwwwwwwwwwg', 'gwwwwwwwwwwg', 'gwwwwwwwwwwg', 'gwhhhhhhhhwg', 'ggddddddddgg'],
+                // z=1: caixa inferior com painel frontal de madeira e friso dourado central (x=4..7 em y=6..7)
+                ['gddddddddddg', 'dwwwwwwwwwwd', 'dwhhhhhhhhwd', 'dwhhhhhhhhwd', 'dwhhhhhhhhwd', 'dwwwwwwwwwwd', 'dwhhgggghhwd', 'gdddggggdddg'],
+                // z=2: corpo do berço com interior de veludo violeta ('l'/'v') e brasão solar entalhado na frente (y=6..7)
+                ['gddddddddddg', 'dwllllllllwd', 'dwlvvvvvvlwd', 'dwlvvvvvvlwd', 'dwlvvvvvvlwd', 'dwllllllllwd', 'dwhggyggyhhd', 'gddggyggyddg'],
+                // z=3: almofada real violeta com bordado dourado no topo e aro superior entalhado em madeira clara ('h'/'e') e ouro ('g'/'y')
+                ['ghhhhhhhhhhg', 'dhlvvvvvvlhd', 'dhlvvggvvlhd', 'dhlvgyygvlhd', 'dhlvgyygvlhd', 'dhlvvggvvlhd', 'dheegyygeehd', 'ghhhggggghhh'],
+                // z=4: cabeceira/colunas nos cantos e base da coroa solar repousando sobre a almofada
+                ['ggddddddddgg', 'gd...gg...dg', 'gd..gyyg..dg', 'gd..gwwg..dg', 'gd..gyyg..dg', 'gd...gg...dg', 'gd........dg', 'gg........gg'],
+                // z=5: pontas da coroa solar + colunas douradas
                 ['gg........gg', 'gd........dg', '....g..g....', '...gy..yg...', '...gy..yg...', '....g..g....', 'gd........dg', 'gg........gg'],
+                // z=6..7: remates das 4 colunas e brilho astral da coroa
                 ['gg........gg', '............', '............', '....s..s....', '............', '............', '............', 'gg........gg'],
-                ['gg........gg', '............', '............', '............', '............', '............', '............', 'gg........gg']
+                ['yy........yy', '............', '............', '............', '............', '............', '............', 'yy........yy']
             ],
             anim(base, f) {
                 const crowns = [
@@ -29767,7 +29984,7 @@ const WorldSprites = (() => {
             const slices = m.slices.map(sl => sl.slice());
             if (m.anim) m.anim(slices, f);
             const angle = m.rot ? (f * 45) : m.angle;
-            return stack(key, slices, m.pal, angle, { scale: 2, spacing: 1.0, squash: 0.75, haloColor: m.halo });
+            return stack(key, slices, m.pal, angle, { scale: 2, spacing: 1.0, squash: angle === 0 ? 0.72 : 0.75, haloColor: m.halo });
         }
         return { body: PixelFX.get(key), halo: PixelFX.get(key + '|h') };
     };
@@ -29796,37 +30013,47 @@ const WorldSprites = (() => {
         return { body: PixelFX.get(key), halo: PixelFX.get(key + '|h') };
     };
 
-    // Pórtico/arco 3D para passagem de câmara ('chamber') e saída selada ('sealed')
+    // Pórtico/arco 3D ortogonal (angle = 0) para passagem de câmara ('chamber') e saída selada ('sealed')
     const _portalArchSlices = (() => {
-        // 16x10 células, 13 fatias de altura
+        // 16x8 células, 12 fatias de altura: pilares esquerdo (x=1..4) e direito (x=11..14), vão/portão central (x=5..10)
+        // Em angle = 0, a face frontal visível para a câmera são as linhas y=6..7 e o topo 3D são as fatias z=9..11.
         const chamber = [
-            ['.dddddddddddddd.', 'dssssssssssssssd', 'dssllllllllllssd', 'dslllaaaaaalllsd', 'dsllaaaaaaaaalls', 'dsllaaaaaaaaalls', 'dslllaaaaaalllsd', 'dssllllllllllssd', 'dssssssssssssssd', '.dddddddddddddd.'],
-            ['.dddd......dddd.', 'dsssd......dsssd', 'dslsd.aaaa.dslsd', 'dslsdaaaaaadslsd', 'dslsdawwwaadslsd', 'dslsdawwwaadslsd', 'dslsdaaaaaadslsd', 'dslsd.aaaa.dslsd', 'dsssd......dsssd', '.dddd......dddd.'],
-            ['.dddd......dddd.', 'dsssd......dsssd', 'dslsd.aaaa.dslsd', 'dslsdabbbbadslsd', 'dslsdabwwbadslsd', 'dslsdabwwbadslsd', 'dslsdabbbbadslsd', 'dslsd.aaaa.dslsd', 'dsssd......dsssd', '.dddd......dddd.'],
-            ['.dddd......dddd.', 'dsssd......dsssd', 'dslsd.aaaa.dslsd', 'dslsdabbbbadslsd', 'dslsdabwwbadslsd', 'dslsdabwwbadslsd', 'dslsdabbbbadslsd', 'dslsd.aaaa.dslsd', 'dsssd......dsssd', '.dddd......dddd.'],
-            ['.dddd......dddd.', 'dsssd......dsssd', 'dslsd.aaaa.dslsd', 'dslsdabbbbadslsd', 'dslsdabwwbadslsd', 'dslsdabwwbadslsd', 'dslsdabbbbadslsd', 'dslsd.aaaa.dslsd', 'dsssd......dsssd', '.dddd......dddd.'],
-            ['.dddd......dddd.', 'dsssd......dsssd', 'dslsd.aaaa.dslsd', 'dslsdabbbbadslsd', 'dslsdabwwbadslsd', 'dslsdabwwbadslsd', 'dslsdabbbbadslsd', 'dslsd.aaaa.dslsd', 'dsssd......dsssd', '.dddd......dddd.'],
-            ['.dddd......dddd.', 'dsssd......dsssd', 'dslsd.aaaa.dslsd', 'dslsdabbbbadslsd', 'dslsdabwwbadslsd', 'dslsdabwwbadslsd', 'dslsdabbbbadslsd', 'dslsd.aaaa.dslsd', 'dsssd......dsssd', '.dddd......dddd.'],
-            ['.ddddd....ddddd.', 'dssssd....dssssd', 'dslssd.aa.dsslsd', 'dslssdabbbadslsd', 'dslssdabwbadslsd', 'dslssdabwbadslsd', 'dslssdabbbadslsd', 'dslssd.aa.dsslsd', 'dssssd....dssssd', '.ddddd....ddddd.'],
-            ['.dddddd..dddddd.', 'dsssssd..dsssssd', 'dslsssd..dssslsd', 'dslsssdabbadslsd', 'dslsssdabbadslsd', 'dslsssdabbadslsd', 'dslsssdabbadslsd', 'dslsssd..dssslsd', 'dsssssd..dsssssd', '.dddddd..dddddd.'],
-            ['.dddddddddddddd.', 'dssssssssssssssd', 'dsslssssssssllsd', 'dsllllllllllllsd', 'dsllllbbbbllllsd', 'dsllllbbbbllllsd', 'dsllllllllllllsd', 'dsslssssssssllsd', 'dssssssssssssssd', '.dddddddddddddd.'],
-            ['..dddddddddddd..', '.dssssssssssssd.', '.dsllllllllllsd.', '.dsllllllllllsd.', '.dsllbbbbbbllsd.', '.dsllbbbbbbllsd.', '.dsllllllllllsd.', '.dsllllllllllsd.', '.dssssssssssssd.', '..dddddddddddd..'],
-            ['...dddddddddd...', '..dssssssssssd..', '..dsllllllllsd..', '..dsllllllllsd..', '..dsllllllllsd..', '..dsllllllllsd..', '..dsllllllllsd..', '..dsllllllllsd..', '..dssssssssssd..', '...dddddddddd...']
+            // z=0: soleira de pedra e base dos pilares com reflexo âmbar no piso do vão
+            ['.dddddddddddddd.', 'dssssssssssssssd', 'dssllllllllllssd', 'dslssaaaaaaaassd', 'dslssabbbbbaassd', 'dslssabbbbbaassd', 'dssssaaaaaaaassd', '.ddddaaaaaaaaadd.'],
+            // z=1..6: dois pilares de pedra talhada (luz 'l' à esquerda, sombra 's'/'d' à direita) e vórtice dourado ('a'->'b'->'w') no vão central
+            ['.dddd......dddd.', 'dsssd.aaaa.dsssd', 'dslsdaaaaaadslsd', 'dslsdabbbbadslsd', 'dslsdabwwbadslsd', 'dslsdabwwbadslsd', 'dslsdaaaaaadsssd', '.ddddabbbbaaddd.'],
+            ['.dddd......dddd.', 'dsssd.aaaa.dsssd', 'dslsdaaaaaadslsd', 'dslsdabbbbadslsd', 'dslsdabwwbadslsd', 'dslsdabwwbadslsd', 'dslsdabbbbadsssd', '.ddddabwwbaaddd.'],
+            ['.dddd......dddd.', 'dsssd.aaaa.dsssd', 'dslsdaaaaaadslsd', 'dslsdabbbbadslsd', 'dslsdabwwbadslsd', 'dslsdabwwbadslsd', 'dslsdaaaaaadsssd', '.ddddabbbbaaddd.'],
+            ['.dddd......dddd.', 'dsssd.aaaa.dsssd', 'dslsdaaaaaadslsd', 'dslsdabbbbadslsd', 'dslsdabwwbadslsd', 'dslsdabwwbadslsd', 'dslsdabbbbadsssd', '.ddddabwwbaaddd.'],
+            ['.dddd......dddd.', 'dsssd.aaaa.dsssd', 'dslsdaaaaaadslsd', 'dslsdabbbbadslsd', 'dslsdabwwbadslsd', 'dslsdabwwbadslsd', 'dslsdaaaaaadsssd', '.ddddabbbbaaddd.'],
+            ['.dddd......dddd.', 'dsssd.aaaa.dsssd', 'dslsdaaaaaadslsd', 'dslsdabbbbadslsd', 'dslsdabwwbadslsd', 'dslsdabwwbadslsd', 'dslsdabbbbadsssd', '.ddddabwwbaaddd.'],
+            // z=7..8: impostas e curvatura interna do arco fechando sobre o vão iluminado
+            ['.ddddd....ddddd.', 'dssssd.aa.dssssd', 'dslssdaaaadsslsd', 'dslssdabbadsslsd', 'dslssdabbadsslsd', 'dslssdabbadsslsd', 'dssssdaaaadssssd', '.dddddabbaddddd.'],
+            ['.dddddd..dddddd.', 'dsssssd..dsssssd', 'dslsssdaaddsslsd', 'dslsssdabbdsslsd', 'dslsssdabbdsslsd', 'dslsssdabbdsslsd', 'dsssssdaaddssssd', '.ddddddbbdddddd.'],
+            // z=9: arquitrave/lintel contínuo com pedra-chave dourada ('b'/'w') no centro da face frontal (x=7..8, y=6..7)
+            ['.dddddddddddddd.', 'dssssssssssssssd', 'dsllllllllllllsd', 'dsllllbbbbllllsd', 'dsllllbbbbllllsd', 'dsllllllllllllsd', 'dsslssbbbbssllsd', '.dddddbaabddddd.'],
+            // z=10..11: cornija escalonada e topo 3D iluminado ('l') do pórtico
+            ['..dddddddddddd..', '.dssssssssssssd.', '.dsllllllllllsd.', '.dslllbbbblllsd.', '.dslllbbbblllsd.', '.dsllllllllllsd.', '.dslllbbbblllsd.', '..dddddddddddd..'],
+            ['...dddddddddd...', '..dssssssssssd..', '..dsllllllllsd..', '..dsllllllllsd..', '..dsllllllllsd..', '..dsllllllllsd..', '..dssssssssssd..', '...dddddddddd...']
         ];
         const sealed = [
-            ['.dddddddddddddd.', 'dssssssssssssssd', 'dssllllllllllssd', 'dslllgggggglllsd', 'dsllggggggggllsd', 'dsllggggggggllsd', 'dslllgggggglllsd', 'dssllllllllllssd', 'dssssssssssssssd', '.dddddddddddddd.'],
-            ['.dddddddddddddd.', 'dsssdggggggdsssd', 'dslsdggggggdslsd', 'dslsdggddggdslsd', 'dslsdggddggdslsd', 'dslsdggddggdslsd', 'dslsdggddggdslsd', 'dslsdggggggdslsd', 'dsssdggggggdsssd', '.dddddddddddddd.'],
-            ['.dddddddddddddd.', 'dsssdggggggdsssd', 'dslsdggggggdslsd', 'dslsdggddggdslsd', 'dslsdggddggdslsd', 'dslsdggddggdslsd', 'dslsdggddggdslsd', 'dslsdggggggdslsd', 'dsssdggggggdsssd', '.dddddddddddddd.'],
-            ['.dddddddddddddd.', 'dsssdggggggdsssd', 'dslsdggggggdslsd', 'dslsdggddggdslsd', 'dslsdggddggdslsd', 'dslsdggddggdslsd', 'dslsdggddggdslsd', 'dslsdggggggdslsd', 'dsssdggggggdsssd', '.dddddddddddddd.'],
-            // Barra rúnica horizontal em relevo (z=4..5)
-            ['.dddddddddddddd.', 'dsssdmmmmmmssssd', 'dslsdmmllmmmslsd', 'dslsdmmlwlmmslsd', 'dslsdmmllmmmslsd', 'dslsdmmllmmmslsd', 'dslsdmmlwlmmslsd', 'dslsdmmllmmmslsd', 'dsssdmmmmmmssssd', '.dddddddddddddd.'],
-            ['.dddddddddddddd.', 'dsssdmmmmmmssssd', 'dslsdmmllmmmslsd', 'dslsdmmlwlmmslsd', 'dslsdmmllmmmslsd', 'dslsdmmllmmmslsd', 'dslsdmmlwlmmslsd', 'dslsdmmllmmmslsd', 'dsssdmmmmmmssssd', '.dddddddddddddd.'],
-            ['.dddddddddddddd.', 'dsssdggggggdsssd', 'dslsdggggggdslsd', 'dslsdggddggdslsd', 'dslsdggddggdslsd', 'dslsdggddggdslsd', 'dslsdggddggdslsd', 'dslsdggggggdslsd', 'dsssdggggggdsssd', '.dddddddddddddd.'],
-            ['.dddddddddddddd.', 'dssssdggggdssssd', 'dslssdggggdsslsd', 'dslssdggddgsslsd', 'dslssdggddgsslsd', 'dslssdggddgsslsd', 'dslssdggddgsslsd', 'dslssdggggdsslsd', 'dssssdggggdssssd', '.dddddddddddddd.'],
-            ['.dddddddddddddd.', 'dsssssdggdsssssd', 'dslsssdggdssslsd', 'dslsssdggdssslsd', 'dslsssdggdssslsd', 'dslsssdggdssslsd', 'dslsssdggdssslsd', 'dslsssdggdssslsd', 'dsssssdggdsssssd', '.dddddddddddddd.'],
-            ['.dddddddddddddd.', 'dssssssssssssssd', 'dsslssssssssllsd', 'dsllllllllllllsd', 'dsllllmmmmllllsd', 'dsllllmmmmllllsd', 'dsllllllllllllsd', 'dsslssssssssllsd', 'dssssssssssssssd', '.dddddddddddddd.'],
-            ['..dddddddddddd..', '.dssssssssssssd.', '.dsllllllllllsd.', '.dsllllllllllsd.', '.dslllmmmmlllsd.', '.dslllmmmmlllsd.', '.dsllllllllllsd.', '.dsllllllllllsd.', '.dssssssssssssd.', '..dddddddddddd..'],
-            ['...dddddddddd...', '..dssssssssssd..', '..dsllllllllsd..', '..dsllllllllsd..', '..dsllllllllsd..', '..dsllllllllsd..', '..dsllllllllsd..', '..dsllllllllsd..', '..dssssssssssd..', '...dddddddddd...']
+            // z=0: soleira de pedra escura e base das grades/portão selado ('g')
+            ['.dddddddddddddd.', 'dssssssssssssssd', 'dssllllllllllssd', 'dslssggggggggssd', 'dslssggddggggssd', 'dslssggddggggssd', 'dssssggggggggssd', '.ddddggggggggdd.'],
+            // z=1..3: pilares laterais de pedra fria e portão selado com barras verticais ('g'/'d') visíveis na frente (y=6..7)
+            ['.dddddddddddddd.', 'dsssdggggggdsssd', 'dslsdggggggdslsd', 'dslsdggddggdslsd', 'dslsdggddggdslsd', 'dslsdggddggdslsd', 'dslsdggddggdsssd', '.ddddgddddgdddd.'],
+            ['.dddddddddddddd.', 'dsssdggggggdsssd', 'dslsdggggggdslsd', 'dslsdggddggdslsd', 'dslsdggddggdslsd', 'dslsdggddggdslsd', 'dslsdggddggdsssd', '.ddddgddddgdddd.'],
+            ['.dddddddddddddd.', 'dsssdggggggdsssd', 'dslsdggggggdslsd', 'dslsdggddggdslsd', 'dslsdggddggdslsd', 'dslsdggddggdslsd', 'dslsdggddggdsssd', '.ddddgddddgdddd.'],
+            // z=4..5: trava/barra rúnica horizontal em relevo ('m'/'l'/'w') cruzando a face frontal do portão (y=6..7)
+            ['.dddddddddddddd.', 'dsssdmmmmmmssssd', 'dslsdmmllmmmslsd', 'dslsdmmlwlmmslsd', 'dslsdmmlwlmmslsd', 'dslsdmmllmmmslsd', 'dslsdmmlwlmmslsd', '.ddddmmllmmdddd.'],
+            ['.dddddddddddddd.', 'dsssdmmmmmmssssd', 'dslsdmmllmmmslsd', 'dslsdmmlwlmmslsd', 'dslsdmmlwlmmslsd', 'dslsdmmllmmmslsd', 'dslsdmmlwlmmslsd', '.ddddmmwwmmdddd.'],
+            // z=6..8: parte superior do portão selado e curvatura do arco de pedra
+            ['.dddddddddddddd.', 'dsssdggggggdsssd', 'dslsdggggggdslsd', 'dslsdggddggdslsd', 'dslsdggddggdslsd', 'dslsdggddggdslsd', 'dslsdggddggdsssd', '.ddddgddddgdddd.'],
+            ['.dddddddddddddd.', 'dssssdggggdssssd', 'dslssdggggdsslsd', 'dslssdggddgsslsd', 'dslssdggddgsslsd', 'dslssdggddgsslsd', 'dssssdggddgssssd', '.dddddgddgddddd.'],
+            ['.dddddddddddddd.', 'dsssssdggdsssssd', 'dslsssdggdssslsd', 'dslsssdggdssslsd', 'dslsssdggdssslsd', 'dslsssdggdssslsd', 'dsssssdggdsssssd', '.ddddddggdddddd.'],
+            // z=9..11: lintel com selo metálico na pedra-chave frontal e topo escalonado 3D
+            ['.dddddddddddddd.', 'dssssssssssssssd', 'dsllllllllllllsd', 'dsllllmmmmllllsd', 'dsllllmmmmllllsd', 'dsllllllllllllsd', 'dsslssmmmmssllsd', '.dddddmllmddddd.'],
+            ['..dddddddddddd..', '.dssssssssssssd.', '.dsllllllllllsd.', '.dslllmmmmlllsd.', '.dslllmmmmlllsd.', '.dsllllllllllsd.', '.dslllmmmmlllsd.', '..dddddddddddd..'],
+            ['...dddddddddd...', '..dssssssssssd..', '..dsllllllllsd..', '..dsllllllllsd..', '..dsllllllllsd..', '..dsllllllllsd..', '..dssssssssssd..', '...dddddddddd...']
         ];
         return { chamber, sealed };
     })();
@@ -29843,7 +30070,7 @@ const WorldSprites = (() => {
                 s: '#7d8590', l: '#b0b0c0', w: (f & 1) ? '#d8dee9' : '#b0b0c0'
             };
             return stack(key, isChamber ? _portalArchSlices.chamber : _portalArchSlices.sealed,
-                pal, 14, { scale: 2, spacing: 1.0, squash: 0.76, haloColor: isChamber ? '#ffaa33' : '#7d8590' });
+                pal, 0, { scale: 2, spacing: 1.0, squash: 0.72, haloColor: isChamber ? '#ffaa33' : '#7d8590' });
         }
         return { body: PixelFX.get(key), halo: PixelFX.get(key + '|h') };
     };
@@ -30152,7 +30379,7 @@ class Chest {
         const op = this._openingT > 0 ? (1 - this._openingT / 14) : 0;
         const jx = op > 0 ? Math.sin(this._openingT * 2.4) * (2 + op * 3) : 0;
         const bob = op > 0 ? -op * 4 : 0;
-        const glow = (op > 0 ? 0.55 + op * 0.4 : 0.25 + Math.sin(gameTime * 0.12 + this.glowPhase) * 0.15);
+        const glow = (op > 0 ? 0.55 + op * 0.4 : 0.18 + Math.sin(gameTime * 0.12 + this.glowPhase) * 0.08);
         if (op > 0 && (window.GFX === undefined || window.GFX.glows)) {
             const bh = 18 + op * 52;
             ctx.globalAlpha = 0.35 + op * 0.4; ctx.fillStyle = this.color; ctx.fillRect(PixelFX.snap(sx - 3, 2), sy - bh, 6, bh);
