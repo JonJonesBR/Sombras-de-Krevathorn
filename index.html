@@ -4484,6 +4484,9 @@ const I18n = {
         'update.entry.v111.l2': 'Narrativa cinematográfica: novo motor de cutscenes com ritmo controlado por você, trilha dedicada nos 3 finais, sussurros de Eiran com distorção viva, últimas palavras nos chefes, Ecos de Memória nos andares e Grimório de Mistérios.',
         'update.entry.v111.l3': 'Herói e combate evoluídos: sprite vivo (Paper-Doll) refletindo armas e equipamentos reais, combos progressivos por nível (até 4 golpes), nova Técnica de Classe, Especial Desperto no Overdrive e NPCs em pixel art 48×48.',
         'update.entry.v111.l4': 'Telas e mobile refinados: nova ficha interativa do Personagem com slots clicáveis (equipar, substituir e retirar), Bolsa/Loja/Skills melhoradas, diálogos sem sobreposição de HUD, joystick ergonômico e curandeiro ativo no minimapa. Seus saves continuam funcionando.',
+        'update.entry.v117.title': 'v117 - Velocidade sob controle e chefes mais resistentes',
+        'update.entry.v117.l1': 'A velocidade do herói agora tem teto de 1,9× a base da classe: habilidades, bênçãos, relíquias, montaria e poção continuam somando, mas o herói não fica mais impossível de controlar no celular.',
+        'update.entry.v117.l2': 'Chefes ficam bem mais resistentes nos andares iniciais e médios (cerca de 4× no andar 10, com teto a partir do 12), porque o seu dano cresce multiplicativo e o antigo +38% por andar ficava para trás. Inimigos comuns na Normal ganharam +10% de vida.',
         'update.entry.v116.title': 'v116 - Combate mais legível',
         'update.entry.v116.l1': 'Avisos de golpe, auras de inimigos e do herói deixam de ser discos cheios: agora são anéis e halos que mantêm os sprites visíveis, mesmo com vários inimigos atacando ao mesmo tempo.',
         'update.entry.v116.l2': 'Telegrafias do chefe em anel, preenchimento da área de impacto mais discreto e sombra com viés frio: a cena fica menos lavada sem clarear o clima.',
@@ -7233,6 +7236,9 @@ const I18n = {
         'update.entry.v111.l2': 'Cinematic storytelling: unified player-paced cutscene engine, dedicated music for all 3 endings, live-glitching Eiran whispers, boss last words, Memory Echoes across floors, and a Mystery Board Grimoire.',
         'update.entry.v111.l3': 'Evolved hero & combat: live Paper-Doll sprite reflecting your equipped gear and weapons, progressive level-up combos (up to 4-hit finishers), a new Class Technique, Awakened Overdrive Specials, and 48×48 pixel-art NPCs.',
         'update.entry.v111.l4': 'Refined RPG screens & mobile feel: interactive Character sheet with clickable slots (equip, swap, unequip), upgraded Bag/Shop/Skills screens, overlap-free NPC dialogues, ergonomic thumb joystick, and active Healer minimap tracking. Your saves keep working.',
+        'update.entry.v117.title': 'v117 - Speed control and tougher bosses',
+        'update.entry.v117.l1': 'Hero speed now caps at 1.9× the class base: skills, boons, relics, mounts and potions still add up, but the hero no longer becomes impossible to control on a phone.',
+        'update.entry.v117.l2': 'Bosses are much tougher on the early and mid floors (about 4× at floor 10, capped from floor 12), because your damage grows multiplicatively and the old +38% per floor fell behind. Common enemies on Normal gained +10% health.',
         'update.entry.v116.title': 'v116 - More readable combat',
         'update.entry.v116.l1': 'Attack warnings, enemy auras and the hero aura are no longer filled discs: they are rings and halos that keep sprites visible, even with several enemies attacking at once.',
         'update.entry.v116.l2': 'Boss telegraphs in rings, a subtler impact-area fill and cool-shifted shadows: the scene reads cleaner without brightening the mood.',
@@ -9992,6 +9998,9 @@ const I18n = {
         'update.entry.v111.l2': 'Narrativa cinematográfica: nuevo motor de escenas a tu ritmo, música dedicada en los 3 finales, susurros de Eiran con distorsión viva, últimas palabras de jefes, Ecos de Memoria y Grimorio de Misterios.',
         'update.entry.v111.l3': 'Héroe y combate evolucionados: sprite vivo (Paper-Doll) que muestra armas y equipo reales, combos progresivos por nivel (hasta 4 golpes), nueva Técnica de Clase, Especial Despierto en Overdrive y PNJ en pixel art 48×48.',
         'update.entry.v111.l4': 'Pantallas y móvil refinados: nueva ficha interactiva del Personaje con ranuras clicables (equipar, cambiar y retirar), Bolsa/Tienda/Habilidades mejoradas, diálogos sin solapamiento de HUD, joystick ergonómico y curandero activo en el minimapa. Tus partidas guardadas siguen funcionando.',
+        'update.entry.v117.title': 'v117 - Velocidad bajo control y jefes más resistentes',
+        'update.entry.v117.l1': 'La velocidad del héroe ahora tiene un tope de 1,9× la base de la clase: habilidades, bendiciones, reliquias, montura y poción siguen sumando, pero el héroe ya no se vuelve imposible de controlar en el celular.',
+        'update.entry.v117.l2': 'Los jefes son mucho más resistentes en los pisos iniciales y medios (cerca de 4× en el piso 10, con tope desde el 12), porque tu daño crece de forma multiplicativa y el antiguo +38% por piso se quedaba atrás. Los enemigos comunes en Normal ganaron +10% de vida.',
         'update.entry.v116.title': 'v116 - Combate más legible',
         'update.entry.v116.l1': 'Los avisos de golpe, las auras de enemigos y la del héroe dejan de ser discos rellenos: ahora son anillos y halos que mantienen visibles los sprites, incluso con varios enemigos atacando a la vez.',
         'update.entry.v116.l2': 'Telegrafías del jefe en anillo, relleno del área de impacto más discreto y sombras con tono frío: la escena se ve más limpia sin aclarar el ambiente.',
@@ -52057,8 +52066,12 @@ Input.init();
        current MUST stay in sync with the SW CACHE_VERSION suffix (sw.js).
     */
     window.UPDATE_LOG = {
-        current: 'v116',
+        current: 'v117',
         entries: [
+            { v: 'v117', date: '2026-11-24', titleKey: 'update.entry.v117.title', title: 'v117 — Velocidade sob controle e chefes mais resistentes',
+              linesKeys: ['update.entry.v117.l1', 'update.entry.v117.l2'],
+              lines: ['A velocidade do herói agora tem teto de 1,9× a base da classe: habilidades, bênçãos, relíquias, montaria e poção continuam somando, mas o herói não fica mais impossível de controlar no celular.',
+                      'Chefes ficam bem mais resistentes nos andares iniciais e médios (cerca de 4× no andar 10, com teto a partir do 12), porque o seu dano cresce multiplicativo e o antigo +38% por andar ficava para trás. Inimigos comuns na Normal ganharam +10% de vida.'] },
             { v: 'v116', date: '2026-11-24', titleKey: 'update.entry.v116.title', title: 'v116 — Combate mais legível',
               linesKeys: ['update.entry.v116.l1', 'update.entry.v116.l2'],
               lines: ['Avisos de golpe, auras de inimigos e do herói deixam de ser discos cheios: agora são anéis e halos que mantêm os sprites visíveis, mesmo com vários inimigos atacando ao mesmo tempo.',
