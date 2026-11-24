@@ -15984,27 +15984,20 @@ class Portal {
     draw(ctx, cx, cy) {
         const sx = Math.round(this.x - cx), sy = Math.round(this.y - cy), R = this.radius;
         const rm = !!(window.GameSettings && GameSettings.reducedMotion);
-        // Passagem de câmara intermediária da História: arco de pedra aberto com luz âmbar quente (distinto do portal de andar)
+        // Passagem de câmara intermediária da História: pórtico/arco 3D de pedra com luz âmbar quente (distinto do portal de andar)
         if (this.kind === 'chamber') {
             const pulse = rm ? 0.78 : 0.72 + Math.sin(gameTime * 0.1) * 0.16;
             ctx.save();
             drawGlow(ctx, sx, sy, R * 1.9, '#ffaa33', 0.55);
             ctx.globalAlpha = 0.28 + (rm ? 0 : Math.sin(gameTime * 0.1) * 0.08);
             PixelFX.drawDisc(ctx, sx, sy + 4, R + 2, '#ffaa33', null, true);
-            // Arco de pedra (pilares + lintel em degrau) com contorno escuro
-            const ax0 = sx - 15, ax1 = sx + 15, ay0 = sy - 18, ay1 = sy + 12;
-            ctx.globalAlpha = 0.95;
-            PixelFX.seg3(ctx, ax0 - 3, ay0, ax0 - 3, ay1 + 3, '#120e0a');
-            PixelFX.seg3(ctx, ax1 + 3, ay0, ax1 + 3, ay1 + 3, '#120e0a');
-            PixelFX.seg3(ctx, ax0, ay0 - 6, ax1, ay0 - 6, '#120e0a');
-            PixelFX.seg3(ctx, ax0, ay0 - 3, ax0, ay1, '#9a8c7a');
-            PixelFX.seg3(ctx, ax1, ay0 - 3, ax1, ay1, '#9a8c7a');
-            PixelFX.seg3(ctx, ax0 + 3, ay0 - 3, ax1 - 3, ay0 - 3, '#c8b89e');
-            // Vão luminoso âmbar e núcleo dourado pulsante
-            ctx.globalAlpha = pulse;
-            PixelFX.drawDisc(ctx, sx, sy - 2, 12, '#ffbb44');
-            ctx.globalAlpha = 0.95;
-            PixelFX.drawDisc(ctx, sx, sy - 2, rm ? 6 : 5 + Math.floor((Math.sin(gameTime * 0.12) + 1) * 1.5), '#fff4c2');
+            const sp = WorldSprites.portalArch('chamber', rm ? 0 : Math.floor(gameTime / 10));
+            if (sp.halo && (window.GFX === undefined || window.GFX.glows)) {
+                ctx.globalAlpha = pulse * 0.55;
+                PixelFX.draw(ctx, sp.halo, sx, sy - 6);
+            }
+            ctx.globalAlpha = 1;
+            PixelFX.draw(ctx, sp.body, sx, sy - 6);
             // 4 fagulhas douradas orbitando a moldura
             const step = rm ? 0 : Math.floor(this.angle / (Math.PI / 4)) * (Math.PI / 4);
             ctx.globalAlpha = 0.9;
@@ -16090,7 +16083,7 @@ function _floorShapeFor(piso, cls) {
     return shapes[(i + off) % 9];
 }
 
-// Selo fechado em pixel art (células de 3 px): anel de runas de pedra clara e pórtico em arco
+// Selo fechado em pixel art: anel de runas de pedra clara no chão e pórtico 3D em arco
 // trancado por barra rúnica no centro. Brilho fraco e lento (alpha entre 0,6 e 0,9), sem drawGlow.
 function _drawSealedExit(ctx, sx, sy) {
     const R = 28;
@@ -16113,28 +16106,14 @@ function _drawSealedExit(ctx, sx, sy) {
         ctx.globalAlpha = pulse * 0.85;
         PixelFX.drawDisc(ctx, rx, ry, 3, FLOOR_EXIT.STONE);
     }
-    // Pórtico em arco de pedra com contorno escuro, folha trancada e barra rúnica
-    const x0 = rx0 - 12, x1 = rx0 + 12, y0 = ry0 - 12, y1 = ry0 + 12;
-    ctx.globalAlpha = 0.9;
-    PixelFX.seg3(ctx, x0 - 3, y0, x0 - 3, y1 + 3, FLOOR_EXIT.EDGE);
-    PixelFX.seg3(ctx, x1 + 3, y0, x1 + 3, y1 + 3, FLOOR_EXIT.EDGE);
-    PixelFX.seg3(ctx, x0 - 3, y1 + 3, x1 + 3, y1 + 3, FLOOR_EXIT.EDGE);
-    PixelFX.seg3(ctx, x0, y0 - 6, x1, y0 - 6, FLOOR_EXIT.EDGE);
-    // Preenchimento interno escuro das tábuas da porta selada
-    ctx.fillStyle = '#252630';
-    ctx.fillRect(x0 + 3, y0, 18, 21);
-    ctx.fillStyle = '#181922';
-    ctx.fillRect(rx0 - 1, y0, 2, 21);
-    // Moldura em arco (degrau superior chanfrado) + soleira
-    ctx.globalAlpha = pulse * 0.9;
-    PixelFX.seg3(ctx, x0, y0, x0, y1, FLOOR_EXIT.STONE_DK);
-    PixelFX.seg3(ctx, x1, y0, x1, y1, FLOOR_EXIT.STONE_DK);
-    PixelFX.seg3(ctx, x0 + 3, y0 - 3, x1 - 3, y0 - 3, FLOOR_EXIT.STONE);
-    PixelFX.seg3(ctx, x0, y1, x1, y1, FLOOR_EXIT.STONE_DK);
-    // Barra horizontal de ferro e pedra-chave rúnica no centro
-    PixelFX.seg3(ctx, x0 + 3, ry0 + 1, x1 - 3, ry0 + 1, FLOOR_EXIT.MARK);
-    PixelFX.drawDisc(ctx, rx0, ry0 + 1, 4, FLOOR_EXIT.EDGE);
-    PixelFX.drawDisc(ctx, rx0, ry0 + 1, 2, FLOOR_EXIT.STONE);
+    // Pórtico 3D em arco de pedra escura trancado com portão pesado e barra rúnica
+    const sp = WorldSprites.portalArch('sealed', rm ? 0 : Math.floor(gameTime / 20));
+    if (sp.halo && (window.GFX === undefined || window.GFX.glows)) {
+        ctx.globalAlpha = (pulse - 0.5) * 0.45;
+        PixelFX.draw(ctx, sp.halo, rx0, ry0 - 6);
+    }
+    ctx.globalAlpha = 0.95;
+    PixelFX.draw(ctx, sp.body, rx0, ry0 - 6);
     ctx.restore();
 }
 
@@ -25206,23 +25185,25 @@ const MemoryEchoSystem = {
         const bob = rm ? 0 : Math.sin(t * 0.05) * 3;
         const pulse = rm ? 0.85 : (0.65 + 0.35 * Math.sin(t * 0.07));
         ctx.save();
+        if (typeof drawGroundShadow === 'function') drawGroundShadow(ctx, e.x, e.y, 11, camX, camY);
         const grd = ctx.createRadialGradient(sx, sy + bob, 2, sx, sy + bob, 26);
         grd.addColorStop(0, 'rgba(255,216,107,' + (0.42 * pulse).toFixed(2) + ')');
         grd.addColorStop(0.6, 'rgba(192,132,252,' + (0.22 * pulse).toFixed(2) + ')');
         grd.addColorStop(1, 'rgba(192,132,252,0)');
         ctx.fillStyle = grd;
         ctx.beginPath(); ctx.arc(sx, sy + bob, 26, 0, Math.PI * 2); ctx.fill();
-        ctx.strokeStyle = 'rgba(255,216,107,0.85)';
-        ctx.lineWidth = 1.5;
-        ctx.beginPath(); ctx.arc(sx, sy + bob, 11, 0, Math.PI * 2); ctx.stroke();
-        ctx.fillStyle = '#ffe9a8';
-        ctx.font = 'bold 12px ' + COLORS.CANVAS_FONT;
-        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText('✦', sx, sy + bob);
+        const sp = WorldSprites.echoRelic(rm ? 0 : Math.floor(t / 8));
+        if (sp.halo && (window.GFX === undefined || window.GFX.glows)) {
+            ctx.globalAlpha = pulse * 0.55;
+            PixelFX.draw(ctx, sp.halo, sx, sy + bob - 4);
+        }
+        ctx.globalAlpha = 1;
+        PixelFX.draw(ctx, sp.body, sx, sy + bob - 4);
         const near = window.player && Math.hypot(player.x - e.x, player.y - e.y) < 110;
         if (near) {
             ctx.font = 'bold 9px ' + COLORS.CANVAS_FONT;
             ctx.fillStyle = '#ffe9a8';
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
             const lbl = window.I18n ? I18n.t('echo.prompt') : 'Eco';
             ctx.fillText(lbl, sx, sy + 22 + bob);
         }
@@ -29079,7 +29060,7 @@ const WorldSprites = (() => {
         return false;
     };
     // Contorno escuro (4 direções) em volta do corpo
-    const outline = g => g.map((row, y) => [...row].map((c, x) => (c === '.' && near(g, x, y, false)) ? 'k' : c).join(''));
+    const outline = (g, ch = 'k') => g.map((row, y) => [...row].map((c, x) => (c === '.' && near(g, x, y, false)) ? ch : c).join(''));
     // Halo: células vazias (8 direções) encostadas no corpo viram 'h'
     const halo = g => g.map((row, y) => [...row].map((c, x) => (c === '.' && near(g, x, y, true)) ? 'h' : '.').join(''));
     // Bake do corpo (com contorno) e do halo, uma vez por chave
@@ -29090,6 +29071,53 @@ const WorldSprites = (() => {
             PixelFX.bake(key + '|h', halo(rows), { h: haloColor }, scale);
         }
         return { body: PixelFX.get(key), halo: PixelFX.get(key + '|h') };
+    };
+
+    // Rasterizador 3D de Sprite Stacking: empilha fatias 2D (z = 0..N-1) rotacionadas por angleDeg
+    // com achatamento oblíquo (squash) e passo vertical (spacing), aplicando contorno 1x no volume final.
+    const stack = (key, slices, pal, angleDeg, opts) => {
+        const o = opts || {};
+        const haloColor = o.haloColor !== undefined ? o.haloColor : null;
+        if (!PixelFX.get(key)) {
+            const squash = o.squash !== undefined ? o.squash : 0.75;
+            const spacing = o.spacing !== undefined ? o.spacing : 1.0;
+            const scale = o.scale !== undefined ? o.scale : 2;
+            const outlineChar = o.outlineChar !== undefined ? o.outlineChar : 'k';
+            const H = slices[0].length, W = slices[0][0].length;
+            const diag = Math.ceil(Math.hypot(W, H)) + 4;
+            const liftMax = Math.ceil((slices.length - 1) * spacing);
+            const cw = diag + 4;
+            const ch = Math.ceil(diag * squash) + liftMax + 6;
+            const cx = (cw - 1) * 0.5;
+            const baseY = ch - Math.ceil(diag * squash * 0.5) - 3;
+            const rad = (angleDeg || 0) * Math.PI / 180;
+            const ca = Math.cos(rad), sa = Math.sin(rad);
+            const out = Array.from({ length: ch }, () => new Array(cw).fill('.'));
+            const hw = (W - 1) * 0.5, hh = (H - 1) * 0.5;
+            for (let z = 0; z < slices.length; z++) {
+                const slice = slices[z];
+                const liftY = Math.round(z * spacing);
+                const cy = baseY - liftY;
+                for (let y = 0; y < ch; y++) {
+                    const dy = (y - cy) / squash;
+                    const rowOut = out[y];
+                    for (let x = 0; x < cw; x++) {
+                        const dx = x - cx;
+                        const sx = Math.round(dx * ca + dy * sa + hw);
+                        const sy = Math.round(-dx * sa + dy * ca + hh);
+                        if (sx >= 0 && sx < W && sy >= 0 && sy < H) {
+                            const c = slice[sy][sx];
+                            if (c !== '.') rowOut[x] = c;
+                        }
+                    }
+                }
+            }
+            const grid = out.map(r => r.join(''));
+            const rows = outlineChar ? outline(grid, outlineChar) : grid;
+            PixelFX.bake(key, rows, pal, scale);
+            if (haloColor) PixelFX.bake(key + '|h', halo(rows), { h: haloColor }, scale);
+        }
+        return { body: PixelFX.get(key), halo: haloColor ? PixelFX.get(key + '|h') : null };
     };
 
     // Chama de fogo: 4 quadros (sway e ponta variam), núcleo claro na base
@@ -29112,60 +29140,134 @@ const WorldSprites = (() => {
     };
     const fire = (color, frame, scale) => {
         const sc = scale || 3;   // 3 = fogo comum; 2 = versão menor (poça da Salamandra)
-        return build('hz|fire|' + color + '|' + (frame % 6) + '|' + sc, fireBody(frame),
-            { k: '#3a0e00', o: color, y: '#ffaa00', c: '#fff2b0' }, sc, '#ff4400');
+        const key = 'hz|fire|' + color + '|' + (frame % 6) + '|' + sc;
+        if (!PixelFX.get(key)) {
+            return build(key, fireBody(frame), { k: '#3a0e00', o: color, y: '#ffaa00', c: '#fff2b0' }, sc, '#ff4400');
+        }
+        return { body: PixelFX.get(key), halo: PixelFX.get(key + '|h') };
     };
 
-    // Cristal triangular (gelo): lado escuro à esquerda, claro à direita, faísca em quadros 1 e 3
-    const crystalBody = (W, H, frame) => {
-        const c = (W - 1) / 2, g = [];
-        for (let y = 0; y < H; y++) {
-            const hw = (y / (H - 1)) * c, r = [];
-            for (let x = 0; x < W; x++) r.push(Math.abs(x - c) > hw + 0.01 ? '.' : (x < c ? 's' : (x > c ? 'b' : 'l')));
-            g.push(r);
+    // Cristal 3D facetado (obelisco/prisma empilhado em 12 fatias, girando em 8 ângulos)
+    const _crystalSlices = (W, H) => {
+        const w = Math.max(7, W | 1), h = Math.max(7, H | 1);
+        const cx = (w - 1) * 0.5, cy = (h - 1) * 0.5, rMax = Math.min(cx, cy);
+        const N = 12, slices = [];
+        for (let z = 0; z < N; z++) {
+            // Base chanfrada (z=0..1), corpo facetado largo (z=2..6), ponta piramidal (z=7..11)
+            const rf = z === 0 ? 0.68 : (z === 1 ? 0.85 : (z <= 6 ? 0.96 - (z - 2) * 0.04 : Math.max(0.18, 0.78 * (1 - (z - 6) / 5.4))));
+            const rad = rMax * rf;
+            const rows = [];
+            for (let y = 0; y < h; y++) {
+                let row = '';
+                for (let x = 0; x < w; x++) {
+                    const dx = x - cx, dy = y - cy;
+                    // Norma octogonal/losangular para faces de cristal
+                    const d = Math.max(Math.abs(dx) + Math.abs(dy) * 0.75, Math.abs(dy) + Math.abs(dx) * 0.75);
+                    if (d > rad + 0.15) { row += '.'; continue; }
+                    if (z >= 10 || d < rad * 0.28) row += 'w';
+                    else if (dx + dy < -rad * 0.25) row += 'l';
+                    else if (dx + dy > rad * 0.35) row += 's';
+                    else row += 'b';
+                }
+                rows.push(row);
+            }
+            slices.push(rows);
         }
-        const sp = (frame & 3) === 1 ? [Math.floor(c) - 1, Math.round(H * 0.4)] : ((frame & 3) === 3 ? [Math.ceil(c) + 1, Math.round(H * 0.6)] : null);
-        if (sp && g[sp[1]] && g[sp[1]][sp[0]] !== '.') g[sp[1]][sp[0]] = 'w';
-        return g.map(r => r.join(''));
+        return slices;
     };
+    const _crySliceCache = Object.create(null);
     const crystal = (W, H, color, frame, haloColor) => {
-        const t = PixelFX.tones(color);
-        return build('hz|cry|' + W + 'x' + H + '|' + color + '|' + (frame & 3), crystalBody(W, H, frame),
-            { k: t.o, s: t.s, b: t.b, l: t.l, w: '#ffffff' }, 3, haloColor);
+        const f = frame & 7;
+        const key = 'hz|cry3d|' + W + 'x' + H + '|' + color + '|' + f;
+        if (!PixelFX.get(key)) {
+            const sk = W + 'x' + H;
+            if (!_crySliceCache[sk]) _crySliceCache[sk] = _crystalSlices(W, H);
+            const t = PixelFX.tones(color);
+            return stack(key, _crySliceCache[sk],
+                { k: t.o, s: t.s, b: t.b, l: t.l, w: '#ffffff' },
+                f * 45, { scale: 2, spacing: 1.0, squash: 0.75, haloColor: haloColor || color });
+        }
+        return { body: PixelFX.get(key), halo: PixelFX.get(key + '|h') };
     };
 
     // Nuvem de veneno: círculo com luz no alto-esquerda e sombra embaixo (R = raio em células)
     const blob = (R, color) => {
-        const t = PixelFX.tones(color), g = [];
-        for (let y = 0; y <= 2 * R; y++) {
-            const r = [];
-            for (let x = 0; x <= 2 * R; x++) {
-                const dx = x - R, dy = y - R;
-                if (Math.hypot(dx, dy) > R + 0.2) { r.push('.'); continue; }
-                r.push(dx + dy < -R * 0.6 ? 'l' : (dx + dy > R * 0.7 ? 's' : 'b'));
+        const key = 'hz|blob|' + R + '|' + color;
+        if (!PixelFX.get(key)) {
+            const t = PixelFX.tones(color), g = [];
+            for (let y = 0; y <= 2 * R; y++) {
+                const r = [];
+                for (let x = 0; x <= 2 * R; x++) {
+                    const dx = x - R, dy = y - R;
+                    if (Math.hypot(dx, dy) > R + 0.2) { r.push('.'); continue; }
+                    r.push(dx + dy < -R * 0.6 ? 'l' : (dx + dy > R * 0.7 ? 's' : 'b'));
+                }
+                g.push(r.join(''));
             }
-            g.push(r.join(''));
+            return build(key, g, { k: t.o, s: t.s, b: t.b, l: t.l }, 3, color);
         }
-        return build('hz|blob|' + R + '|' + color, g, { k: t.o, s: t.s, b: t.b, l: t.l }, 3, color);
+        return { body: PixelFX.get(key), halo: PixelFX.get(key + '|h') };
     };
 
-    // Espinhos: placa de 9x2 células e 4 pontas (base de 2 células, lado sombreado) que sobem e descem (4 quadros)
+    // Espinhos 3D: base de pedra/ferro no chão (2 fatias) + 4 pirâmides/espinhos 3D que sobem conforme hs
     const spikes = (color, frame) => {
-        const t = PixelFX.tones(color), hs = [5, 3, 1, 4][frame & 3], g = [];
-        for (let y = 0; y < 7; y++) g.push(new Array(9).fill('.'));
-        for (const x of [1, 3, 5, 7]) {
+        const f = frame & 3;
+        const key = 'hz|spk3d|' + color + '|' + f;
+        if (!PixelFX.get(key)) {
+            const t = PixelFX.tones(color);
+            const hs = [6, 3, 1, 5][f];
+            const slices = [
+                [
+                    '.ddddddddddd.',
+                    'dsssssssssssd',
+                    'dssbbbbbbbssd',
+                    'dsbbbbbbbbbsd',
+                    'dsbbbbbbbbbsd',
+                    'dsbbbbbbbbbsd',
+                    'dssbbbbbbbssd',
+                    'dsssssssssssd',
+                    '.ddddddddddd.'
+                ],
+                [
+                    '..ddddddddd..',
+                    '.dsssssssssd.',
+                    '.dsbbbbbbbsd.',
+                    '.dsbbbbbbbsd.',
+                    '.dsbbbbbbbsd.',
+                    '.dsbbbbbbbsd.',
+                    '.dsbbbbbbbsd.',
+                    '.dsssssssssd.',
+                    '..ddddddddd..'
+                ]
+            ];
+            const centers = [[3, 2], [8, 2], [3, 6], [8, 6]];
             for (let k = 0; k < hs; k++) {
-                const y = 4 - k;
-                if (k === hs - 1) g[y][x] = 'l';
-                else { g[y][x] = 'b'; g[y][x + 1] = (k === 0) ? 'b' : 's'; }
+                const g = Array.from({ length: 9 }, () => new Array(13).fill('.'));
+                const isTip = (k === hs - 1);
+                const isWide = (k < Math.ceil(hs * 0.45));
+                for (let i = 0; i < centers.length; i++) {
+                    const cx = centers[i][0], cy = centers[i][1];
+                    if (isTip) {
+                        g[cy][cx] = 'w';
+                    } else if (isWide) {
+                        g[cy - 1][cx] = 'l';
+                        g[cy][cx - 1] = 'l'; g[cy][cx] = 'b'; g[cy][cx + 1] = 's';
+                        g[cy + 1][cx] = 's'; g[cy + 1][cx + 1] = 'd';
+                    } else {
+                        g[cy][cx] = 'l'; g[cy][cx + 1] = 'b';
+                        g[cy + 1][cx] = 'b'; g[cy + 1][cx + 1] = 's';
+                    }
+                }
+                slices.push(g.map(r => r.join('')));
             }
+            return stack(key, slices,
+                { k: t.o, s: t.s, b: t.b, l: t.l, d: PixelFX.shade(color, -0.55), w: '#ffffff' },
+                30, { scale: 2, spacing: 1.0, squash: 0.75, haloColor: color });
         }
-        for (let x = 0; x < 9; x++) { g[5][x] = 's'; g[6][x] = 'd'; }
-        return build('hz|spk|' + color + '|' + (frame & 3), g.map(r => r.join('')),
-            { k: t.o, s: t.s, b: t.b, l: t.l, d: PixelFX.shade(color, -0.55) }, 3, color);
+        return { body: PixelFX.get(key), halo: PixelFX.get(key + '|h') };
     };
 
-    // Medalhão de item: anel na cor da raridade, miolo escuro e ícone pixel art 7x7 por categoria/slot
+    // Medalhão 3D: moeda/pedestal chanfrado (4 fatias em scale = 2) com GLYPH[iconKey] em alto-relevo iluminado
     const GLYPH = {
         W: ['#...#', '#...#', '#.#.#', '#.#.#', '.#.#.'],
         E: ['###', '#..', '###', '#..', '###'],
@@ -29180,42 +29282,307 @@ const WorldSprites = (() => {
         ring:   ['..###..', '.#...#.', '#.....#', '#.....#', '#.....#', '.#...#.', '..###..']
     };
     const medal = (iconKey, color) => {
-        const R = 7.2, Ri = 5.2, C = 7, gl = GLYPH[iconKey] || GLYPH.W, gw = gl[0].length, gh = gl.length;
-        const gx0 = C - Math.floor(gw / 2), gy0 = C - Math.floor(gh / 2), g = [];
-        for (let y = 0; y <= 2 * C; y++) {
-            const r = [];
-            for (let x = 0; x <= 2 * C; x++) {
-                const d = Math.hypot(x - C, y - C);
-                let ch = '.';
-                if (d <= R) ch = d <= Ri ? 'd' : 'c';
-                const gxx = x - gx0, gyy = y - gy0;
-                if (ch === 'd' && gxx >= 0 && gxx < gw && gyy >= 0 && gyy < gh && gl[gyy][gxx] === '#') ch = 'l';
-                r.push(ch);
-            }
-            g.push(r.join(''));
+        const key = 'pk3d|' + iconKey + '|' + color;
+        if (!PixelFX.get(key)) {
+            const C = 6, gl = GLYPH[iconKey] || GLYPH.W, gw = gl[0].length, gh = gl.length;
+            const gx0 = C - Math.floor(gw / 2), gy0 = C - Math.floor(gh / 2);
+            const mkDisc = (R, Ri, isTop, isRelief) => {
+                const rows = [];
+                for (let y = 0; y <= 2 * C; y++) {
+                    let r = '';
+                    for (let x = 0; x <= 2 * C; x++) {
+                        const dx = x - C, dy = y - C;
+                        const d = Math.hypot(dx, dy);
+                        const gxx = x - gx0, gyy = y - gy0;
+                        const inGlyph = gxx >= 0 && gxx < gw && gyy >= 0 && gyy < gh && gl[gyy][gxx] === '#';
+                        if (isRelief) {
+                            r += (d <= Ri && inGlyph) ? ((dx + dy < 0) ? 'w' : 'l') : '.';
+                            continue;
+                        }
+                        if (d > R) { r += '.'; continue; }
+                        if (d > Ri) {
+                            r += (dx + dy < -R * 0.35) ? 'l' : ((dx + dy > R * 0.35) ? 's' : 'c');
+                        } else if (isTop && inGlyph) {
+                            r += 'l';
+                        } else {
+                            r += 'd';
+                        }
+                    }
+                    rows.push(r);
+                }
+                return rows;
+            };
+            const slices = [
+                mkDisc(5.6, 4.0, false, false),
+                mkDisc(6.2, 4.4, false, false),
+                mkDisc(6.2, 4.4, true, false),
+                mkDisc(6.0, 4.4, true, true)
+            ];
+            return stack(key, slices, {
+                k: PixelFX.shade(color, -0.7),
+                s: PixelFX.shade(color, -0.35),
+                c: color,
+                l: PixelFX.shade(color, 0.42),
+                w: '#ffffff',
+                d: '#14141c'
+            }, 12, { scale: 2, spacing: 0.9, squash: 0.86, haloColor: color });
         }
-        return build('pk2|' + iconKey + '|' + color, g, { k: PixelFX.shade(color, -0.65), c: color, l: PixelFX.shade(color, 0.4), d: '#14141c' }, 2, color);
+        return { body: PixelFX.get(key), halo: PixelFX.get(key + '|h') };
     };
 
-    // Baú fechado e aberto: tampa, faixa metálica na cor da raridade e fecho; faísca piscando em 4 quadros
-    const CHEST_ROWS = ['...kkkkkk...', '..kwwwwwwk..', '.kwhhhhhhwk.', 'kwwwwwwwwwwk', 'kmmmmmmmmmmk',
-        'kddddmmddddk', 'kddddmnmdddk', 'kddddmmddddk', 'kddddmmddddk', 'kkkkkkkkkkkk'];
-    const CHEST_OPEN_ROWS = ['..kkkkkkkk..', '.khhhhhhhhk.', '.kwwwwwwwwk.', 'kmmmmmmmmmmk', 'knnnnnnnnnnk',
-        'knmknnnnmknk', 'kmmmmmmmmmmk', 'kddddmmddddk', 'kddddmmddddk', 'kkkkkkkkkkkk'];
+    // Baú 3D empilhado em 11 fatias de 12x8 células (scale = 2, ângulo 3/4 isométrico de 28 graus)
+    const CHEST_SLICES_CLOSED = [
+        // z=0: pés/cantoneiras e base escura
+        ['mmmmmmmmmmmm', 'mddddddddddm', 'mddddddddddm', 'mddddddddddm', 'mddddddddddm', 'mddddddddddm', 'mddddddddddm', 'mmmmmmmmmmmm'],
+        // z=1..4: corpo de madeira com cintas metálicas e fecho frontal
+        ['mmmmmmmmmmmm', 'mddmmddmmddm', 'mwwmmwwmmwwm', 'mddddddddddm', 'mwwmmwwmmwwm', 'mddmmddmmddm', 'mwwmmwwmmwwm', 'mmmmmmmmmmmm'],
+        ['mddmmddmmddm', 'mwwmmwwmmwwm', 'mddddddddddm', 'mwwmmwwmmwwm', 'mddmmddmmddm', 'mwwmmwwmmwwm', 'mddmmllmdddm', 'mmmmsllsmmmm'],
+        ['mwwmmwwmmwwm', 'mddddddddddm', 'mwwmmwwmmwwm', 'mddmmddmmddm', 'mwwmmwwmmwwm', 'mddmmddmmddm', 'mwwmmllmwwwm', 'mmmmmmmmmmmm'],
+        ['mmmmmmmmmmmm', 'mmmmmmmmmmmm', 'mddmmddmmddm', 'mwwmmwwmmwwm', 'mwwmmwwmmwwm', 'mddmmddmmddm', 'mmmmmmmmmmmm', 'mmmmmmmmmmmm'],
+        // z=5..10: tampa abobadada estreitando no eixo Y com brilho h no topo
+        ['mmmmmmmmmmmm', 'mwwmmwwmmwwm', 'mhhmmhhmmhhm', 'mwwmmwwmmwwm', 'mwwmmwwmmwwm', 'mhhmmhhmmhhm', 'mwwmmllmwwwm', 'mmmmmmmmmmmm'],
+        ['.mmmmmmmmmm.', '.mwmwwwwmwm.', '.mhmhhhhmhm.', '.mwmwwwwmwm.', '.mwmwwwwmwm.', '.mhmhhhhmhm.', '.mwmwwwwmwm.', '.mmmmmmmmmm.'],
+        ['.mmmmmmmmmm.', '.mhmhhhhmhm.', '.mwmwwwwmwm.', '.mhmhhhhmhm.', '.mhmhhhhmhm.', '.mwmwwwwmwm.', '.mhmhhhhmhm.', '.mmmmmmmmmm.'],
+        ['..mmmmmmmm..', '..mhhhhhhm..', '..mwwwwwwm..', '..mhhhhhhm..', '..mhhhhhhm..', '..mwwwwwwm..', '..mhhhhhhm..', '..mmmmmmmm..'],
+        ['............', '..mmmmmmmm..', '..mhhhhhhm..', '..mhhhhhhm..', '..mhhhhhhm..', '..mhhhhhhm..', '..mmmmmmmm..', '............'],
+        ['............', '............', '...mmmmmm...', '...mhhhhm...', '...mhhhhm...', '...mmmmmm...', '............', '............']
+    ];
+    const CHEST_SLICES_OPEN = [
+        // z=0..1: fundo do baú
+        ['mmmmmmmmmmmm', 'mddddddddddm', 'mddddddddddm', 'mddddddddddm', 'mddddddddddm', 'mddddddddddm', 'mddddddddddm', 'mmmmmmmmmmmm'],
+        ['mmmmmmmmmmmm', 'mddddddddddm', 'mddggggggddm', 'mddggggggddm', 'mddggggggddm', 'mddggggggddm', 'mddddddddddm', 'mmmmmmmmmmmm'],
+        // z=2..4: caixa oca com tesouro dourado/brilhante dentro
+        ['mddmmddmmddm', 'mdnnnnnnnndm', 'mdnggsggsndm', 'mdnggggggndm', 'mdngsggggndm', 'mdngggggsndm', 'mdnnnnnnnndm', 'mmmmsggsmmmm'],
+        ['mwwmmwwmmwwm', 'mwnnnnnnnnwm', 'mwnggsggsnwm', 'mwnggsgggnwm', 'mwngggggsnwm', 'mwngsggggnwm', 'mwnnnnnnnnwm', 'mmmmmmmmmmmm'],
+        ['mmmmmmmmmmmm', 'mmnnnnnnnnmm', 'mnnggsggsnnm', 'mnnggggggnnm', 'mnngsggggnnm', 'mnnnnnnnnnnm', 'mmmmmmmmmmmm', 'mmmmmmmmmmmm'],
+        // z=5..10: tampa levantada na parte de trás (y=0..2)
+        ['mmmmmmmmmmmm', 'mwwmmwwmmwwm', 'mmmmmmmmmmmm', '............', '............', '............', '............', '............'],
+        ['mmmmmmmmmmmm', 'mhhmmhhmmhhm', 'mwwmmwwmmwwm', '............', '............', '............', '............', '............'],
+        ['.mmmmmmmmmm.', '.mwmwwwwmwm.', '.mhmhhhhmhm.', '............', '............', '............', '............', '............'],
+        ['.mmmmmmmmmm.', '.mhmhhhhmhm.', '.mwmwwwwmwm.', '............', '............', '............', '............', '............'],
+        ['..mmmmmmmm..', '..mhhhhhhm..', '..mmmmmmmm..', '............', '............', '............', '............', '............'],
+        ['...mmmmmm...', '...mhhhhm...', '............', '............', '............', '............', '............', '............']
+    ];
     const chest = (color, frame, opened = false) => {
         const f = opened ? 'o' : (frame & 3);
-        const key = 'chest|' + color + '|' + f;
+        const key = 'chest3d|' + color + '|' + f;
         if (!PixelFX.get(key)) {
-            const rows = (opened ? CHEST_OPEN_ROWS : CHEST_ROWS).map(r => r.split(''));
-            if (!opened) {
-                if (f === 1) rows[2][4] = 's';
-                if (f === 3) rows[1][8] = 's';
+            const base = (opened ? CHEST_SLICES_OPEN : CHEST_SLICES_CLOSED).map(sl => sl.slice());
+            if (!opened && (f === 1 || f === 3)) {
+                const zSp = f === 1 ? 7 : 9;
+                const rSp = base[zSp][3].split('');
+                rSp[f === 1 ? 4 : 7] = 's';
+                base[zSp] = base[zSp].slice();
+                base[zSp][3] = rSp.join('');
             }
-            const body = rows.map(r => r.join(''));
-            PixelFX.bake(key, body, { k: '#1a0e02', d: '#4a2e0a', w: '#6a4520', h: '#8a5f30', m: color, n: '#111111', s: '#ffffff' }, 3);
-            if (!opened) PixelFX.bake(key + '|h', halo(pad(body, 1)), { h: color }, 3);
+            const pal = {
+                k: '#1a0e02', d: '#4a2e0a', w: '#6a4520', h: '#9a6b38',
+                m: color, l: PixelFX.shade(color, 0.4), g: '#ffd86b', n: '#141018', s: '#ffffff'
+            };
+            return stack(key, base, pal, 28, { scale: 2, spacing: 1.0, squash: 0.75, haloColor: opened ? null : color });
         }
         return { body: PixelFX.get(key), halo: opened ? null : PixelFX.get(key + '|h') };
+    };
+
+    // Objetos 3D de cena narrativa (SceneDirector): beliche, biblioteca, altar, árvore, quarto, câmara do pacto
+    const _sceneModels = (() => {
+        const models = Object.create(null);
+        // 'bunk' (Beliche 14): estrutura 3D de beliche de madeira e ferro com dois leitos empilhados e travesseiro (12x8, 11 fatias)
+        models.bunk = {
+            rot: false, angle: 30, halo: '#88ccff',
+            pal: { k: '#120a04', p: '#3b4252', w: '#5c3a1e', h: '#855830', b: '#3d5a80', l: '#6b8cae', c: '#e8eef5' },
+            slices: [
+                ['pp........pp', 'pp........pp', '............', '............', '............', '............', 'pp........pp', 'pp........pp'],
+                ['ppwwwwwwwwpp', 'pwwwwwwwwwwp', 'pwbbbbbbbbwp', 'pwbbbbbbbbwp', 'pwbbbbbbbbwp', 'pwbbbbbbbbwp', 'pwwwwwwwwwwp', 'ppwwwwwwwwpp'],
+                ['pphhhhhhhhpp', 'phccccccccbp', 'phccclllllbp', 'phccclllllbp', 'phccclllllbp', 'phccccccccbp', 'phhhhhhhhhhp', 'pphhhhhhhhpp'],
+                ['pp........pp', 'pp........pp', '............', '............', '............', '............', 'pp...hh...pp', 'pp...hh...pp'],
+                ['pp........pp', 'pp........pp', '............', '............', '............', '............', 'pp...ww...pp', 'pp...ww...pp'],
+                ['pp........pp', 'pp........pp', '............', '............', '............', '............', 'pp...hh...pp', 'pp...hh...pp'],
+                ['ppwwwwwwwwpp', 'pwwwwwwwwwwp', 'pwbbbbbbbbwp', 'pwbbbbbbbbwp', 'pwbbbbbbbbwp', 'pwbbbbbbbbwp', 'pwwwwwwwwwwp', 'ppwwwwwwwwpp'],
+                ['pphhhhhhhhpp', 'phccccccccbp', 'phccclllllbp', 'phccclllllbp', 'phccclllllbp', 'phccccccccbp', 'phhhhhhhhhhp', 'pphhhhhhhhpp'],
+                ['pp........pp', 'pp........pp', '............', '............', '............', '............', 'pp........pp', 'pp........pp'],
+                ['pphhhhhhhhpp', 'pp........pp', '............', '............', '............', '............', 'pp........pp', 'pphhhhhhhhpp']
+            ]
+        };
+        // 'library' (Biblioteca): estante 3D de madeira escura com fileiras de tomos coloridos/dourados nas prateleiras (12x6, 12 fatias)
+        models.library = {
+            rot: false, angle: 28, halo: '#c084fc',
+            pal: { k: '#120804', d: '#3d2310', w: '#5e3819', h: '#8a562c', r: '#c93b3b', b: '#3b78c9', v: '#9d4edd', g: '#ffd86b', p: '#e5d4b3' },
+            slices: [
+                ['dddddddddddd', 'dwwwwwwwwwwd', 'dwwwwwwwwwwd', 'dwwwwwwwwwwd', 'dwwwwwwwwwwd', 'dddddddddddd'],
+                ['dwwwwwwwwwwd', 'dwwrrbbvvggd', 'dwwrrbbvvggd', 'dwwrrbbvvggd', 'dwwppppppppd', 'dwwwwwwwwwwd'],
+                ['dwwwwwwwwwwd', 'dwwrrbbvvggd', 'dwwrrbbvvggd', 'dwwrrbbvvggd', 'dwwppppppppd', 'dwwwwwwwwwwd'],
+                ['dhhhhhhhhhhd', 'dwwwwwwwwwwd', 'dwwwwwwwwwwd', 'dwwwwwwwwwwd', 'dwwwwwwwwwwd', 'dhhhhhhhhhhd'],
+                ['dwwwwwwwwwwd', 'dwwvvggrrbbd', 'dwwvvggrrbbd', 'dwwvvggrrbbd', 'dwwppppppppd', 'dwwwwwwwwwwd'],
+                ['dwwwwwwwwwwd', 'dwwvvggrrbbd', 'dwwvvggrrbbd', 'dwwvvggrrbbd', 'dwwppppppppd', 'dwwwwwwwwwwd'],
+                ['dhhhhhhhhhhd', 'dwwwwwwwwwwd', 'dwwwwwwwwwwd', 'dwwwwwwwwwwd', 'dwwwwwwwwwwd', 'dhhhhhhhhhhd'],
+                ['dwwwwwwwwwwd', 'dwwggrrvvbbd', 'dwwggrrvvbbd', 'dwwggrrvvbbd', 'dwwppppppppd', 'dwwwwwwwwwwd'],
+                ['dwwwwwwwwwwd', 'dwwggrrvvbbd', 'dwwggrrvvbbd', 'dwwggrrvvbbd', 'dwwppppppppd', 'dwwwwwwwwwwd'],
+                ['dhhhhhhhhhhd', 'dhhhhhhhhhhd', 'dwwwwwwwwwwd', 'dwwwwwwwwwwd', 'dhhhhhhhhhhd', 'dhhhhhhhhhhd'],
+                ['.dddddddddd.', '.dhhhhhhhhd.', '.dhhhhhhhhd.', '.dhhhhhhhhd.', '.dhhhhhhhhd.', '.dddddddddd.']
+            ]
+        };
+        // 'altar' (Altar): pedestal de pedra em degraus com cálice/chama rúnica violeta/dourada no topo, girando em 8 ângulos (11x11, 12 fatias)
+        models.altar = {
+            rot: true, halo: '#e0b6ff',
+            pal: { k: '#110b1a', d: '#39324b', s: '#5c5275', l: '#8c7fa8', g: '#ffd86b', v: '#c084fc', w: '#ffffff' },
+            slices: [
+                ['.ddddddddd.', 'dsssssssssd', 'dsssssssssd', 'dsssssssssd', 'dsssssssssd', 'dsssssssssd', 'dsssssssssd', 'dsssssssssd', 'dsssssssssd', 'dsssssssssd', '.ddddddddd.'],
+                ['..ddddddd..', '.dsssssssd.', '.dslllllsd.', '.dslllllsd.', '.dslllllsd.', '.dslllllsd.', '.dslllllsd.', '.dslllllsd.', '.dslllllsd.', '.dsssssssd.', '..ddddddd..'],
+                ['...ddddd...', '..dsssssd..', '..dslllsd..', '..dslllsd..', '..dslllsd..', '..dslllsd..', '..dslllsd..', '..dslllsd..', '..dslllsd..', '..dsssssd..', '...ddddd...'],
+                ['...........', '...ddddd...', '..dsgggsd..', '..dgggggd..', '..dgglggd..', '..dgglggd..', '..dgglggd..', '..dgggggd..', '..dsgggsd..', '...ddddd...', '...........'],
+                ['...........', '...........', '...sssss...', '..sllllls..', '..sllllls..', '..sllglls..', '..sllllls..', '..sllllls..', '...sssss...', '...........', '...........'],
+                ['...........', '...........', '...........', '...ggggg...', '...gvvvg...', '...gvwwvg..', '...gvvvg...', '...ggggg...', '...........', '...........', '...........'],
+                ['...........', '...........', '...........', '....ggg....', '...gvvvg...', '...gvwvg...', '...gvvvg...', '....ggg....', '...........', '...........', '...........'],
+                ['...........', '...........', '...........', '....vvv....', '...vvgvv...', '...vgwgv...', '...vvgvv...', '....vvv....', '...........', '...........', '...........'],
+                ['...........', '...........', '...........', '...........', '....vvv....', '...vvwvv...', '....vvv....', '...........', '...........', '...........', '...........'],
+                ['...........', '...........', '...........', '...........', '....ggg....', '...gwwwg...', '....ggg....', '...........', '...........', '...........', '...........'],
+                ['...........', '...........', '...........', '...........', '.....v.....', '....vwv....', '.....v.....', '...........', '...........', '...........', '...........'],
+                ['...........', '...........', '...........', '...........', '...........', '.....w.....', '...........', '...........', '...........', '...........', '...........']
+            ]
+        };
+        // 'tree' (Árvore E+S): tronco retorcido escuro com raízes e copa volumétrica em camadas (folhagem azul-escura/prateada luminosa do Véu, 13x13, 13 fatias)
+        models.tree = {
+            rot: false, angle: 25, halo: '#88ccff',
+            pal: { k: '#0c0914', d: '#3b2416', w: '#5e3b24', g: '#ffd86b', b: '#1e3a5f', c: '#4a7c9b', l: '#98c1d9', s: '#e0fbfc' },
+            slices: [
+                ['...dd...dd...', '..dwwd.dwwd..', '.dwwwwdwwwwd.', '..dwwwwwwwd..', '...dwwwwwd...', '..dwwwwwwwd..', '.dwwwwwwwwwd.', '..dwwwdwwwd..', '.dwwwd.dwwwd.', 'dwwwd...dwwwd', '.dd.......dd.', '.............', '.............'],
+                ['.............', '....dd.dd....', '...dwwwwwd...', '...dwwwwwd...', '....dwwwd....', '....dwwwd....', '...dwwwwwd...', '...dwwdwwd...', '..dwwd.dwwd..', '.............', '.............', '.............', '.............'],
+                ['.............', '.............', '....ddddd....', '...dwwwwwd...', '....dwwwd....', '....dwgwd....', '....dwwwd....', '...dwwwwwd...', '.............', '.............', '.............', '.............', '.............'],
+                ['.............', '.............', '.............', '....ddddd....', '....dwgwd....', '....dwwwd....', '....dwgwd....', '....ddddd....', '.............', '.............', '.............', '.............', '.............'],
+                ['.............', '.............', '.............', '....dd.dd....', '...dww.wwd...', '....dwwwd....', '...dww.wwd...', '....dd.dd....', '.............', '.............', '.............', '.............', '.............'],
+                ['.............', '....bbbbb....', '..bbcccccbb..', '.bccclllcccb.', '.bccldwdlcgb.', '.bcclwwwlccb.', '.bccldwdlccb.', '.bccclllcccb.', '..bbcccccbb..', '....bbbbb....', '.............', '.............', '.............'],
+                ['...bbbbbbb...', '.bbcccccccbb.', 'bccclllllcccb', 'bcclllsslcccb', 'bccllsdslcccb', 'bccllssslcccb', 'bcclllsslcccb', 'bccclllllcccb', '.bbcccccccbb.', '...bbbbbbb...', '.............', '.............', '.............'],
+                ['..bbbbbbbbb..', '.bcccccccccbb', 'bccclllllllcb', 'bcclllsssllcb', 'bccllssssslcb', 'bccllssssslcb', 'bcclllsssllcb', 'bccclllllllcb', '.bbccccccccb.', '..bbbbbbbbb..', '.............', '.............', '.............'],
+                ['...bbbbbbb...', '.bbcccccccbb.', 'bccclllllcccb', 'bcclllsslcccb', 'bccllsssslccb', 'bcclllsslcccb', 'bccclllllcccb', '.bbcccccccbb.', '...bbbbbbb...', '.............', '.............', '.............', '.............'],
+                ['.............', '...bbbbbbb...', '..bcccccccb..', '.bcclllllccb.', '.bccllsslccb.', '.bccllsslccb.', '.bcclllllccb.', '..bcccccccb..', '...bbbbbbb...', '.............', '.............', '.............', '.............'],
+                ['.............', '.............', '...bbbbbbb...', '..bcclllccb..', '..bclssslcb..', '..bclssslcb..', '..bcclllccb..', '...bbbbbbb...', '.............', '.............', '.............', '.............', '.............'],
+                ['.............', '.............', '.............', '....bbbbb....', '...bclllcb...', '...bclslcb...', '...bclllcb...', '....bbbbb....', '.............', '.............', '.............', '.............', '.............']
+            ]
+        };
+        // 'room' (Quarto de Eiran): berço/arca real esculpida com relíquia luminosa (coroa de sol) sobre almofada (12x8, 10 fatias)
+        models.room = {
+            rot: false, angle: 30, halo: '#ffd86b',
+            pal: { k: '#140c1c', d: '#3d2645', w: '#643a71', l: '#9b6b9e', v: '#c084fc', g: '#ffd86b', s: '#ffffff' },
+            slices: [
+                ['ggddddddddgg', 'gwwwwwwwwwwg', 'gwwwwwwwwwwg', 'gwwwwwwwwwwg', 'gwwwwwwwwwwg', 'gwwwwwwwwwwg', 'gwwwwwwwwwwg', 'ggddddddddgg'],
+                ['gddddddddddg', 'dwwwwwwwwwwd', 'dwllllllllwd', 'dwllllllllwd', 'dwllllllllwd', 'dwllllllllwd', 'dwwwwwwwwwwd', 'gddddddddddg'],
+                ['gddddddddddg', 'dwllllllllwd', 'dwlvvvvvvlwd', 'dwlvvvvvvlwd', 'dwlvvvvvvlwd', 'dwlvvvvvvlwd', 'dwllllllllwd', 'gddddddddddg'],
+                ['gddddddddddg', 'dwlvvvvvvlwd', 'dwlvvggvvlwd', 'dwlvgssgvlwd', 'dwlvgssgvlwd', 'dwlvvggvvlwd', 'dwlvvvvvvlwd', 'gddddddddddg'],
+                ['gg........gg', 'gd...gg...dg', 'gd..gssg..dg', 'gd..gwwg..dg', 'gd..gssg..dg', 'gd...gg...dg', 'gd........dg', 'gg........gg'],
+                ['gg........gg', 'gd........dg', '....g..g....', '...gs..sg...', '...gs..sg...', '....g..g....', 'gd........dg', 'gg........gg'],
+                ['gg........gg', '............', '............', '....s..s....', '............', '............', '............', 'gg........gg'],
+                ['gg........gg', '............', '............', '............', '............', '............', '............', 'gg........gg']
+            ]
+        };
+        // 'chamber' (Câmara do pacto): obelisco rúnico partido com anel flutuante em camadas, girando em 8 ângulos (11x11, 13 fatias)
+        models.chamber = {
+            rot: true, halo: '#c084fc',
+            pal: { k: '#0d0714', d: '#2b1e3d', s: '#4c386e', l: '#7c62a8', v: '#c084fc', g: '#ffd86b', w: '#ffffff' },
+            slices: [
+                ['..ddddddd..', '.dsssssssd.', 'dsssssssssd', 'dsssssssssd', 'dsssssssssd', 'dsssssssssd', 'dsssssssssd', 'dsssssssssd', 'dsssssssssd', '.dsssssssd.', '..ddddddd..'],
+                ['...ddddd...', '..dsssssd..', '.dsslllssd.', '.dslllllsd.', '.dslllllsd.', '.dslllllsd.', '.dslllllsd.', '.dslllllsd.', '.dsslllssd.', '..dsssssd..', '...ddddd...'],
+                ['...........', '...ddddd...', '..dsssssd..', '..dslllsd..', '..dslvlsd..', '..dslvlsd..', '..dslvlsd..', '..dslllsd..', '..dsssssd..', '...ddddd...', '...........'],
+                ['...........', '...........', '...ddddd...', '...dsssd...', '...dsvsd...', '...dvuvd...'.replace('u', 'w'), '...dsvsd...', '...dsssd...', '...ddddd...', '...........', '...........'],
+                ['...........', '...........', '....ddd....', '...dsssd...', '...dsvsd...', '...dvwvd...', '...dsvsd...', '...dsssd...', '....ddd....', '...........', '...........'],
+                // Vão partido + anel flutuante
+                ['...........', '...vvvvv...', '..vv...vv..', '.vv.....vv.', '.v...w...v.', '.v..www..v.', '.v...w...v.', '.vv.....vv.', '..vv...vv..', '...vvvvv...', '...........'],
+                ['...........', '...ggggg...', '..gg...gg..', '.gg.sss.gg.', '.g..svs..g.', '.g..vwv..g.', '.g..svs..g.', '.gg.sss.gg.', '..gg...gg..', '...ggggg...', '...........'],
+                ['...........', '...........', '...........', '...dsssd...', '...dslsd...', '...dlwld...', '...dslsd...', '...dsssd...', '...........', '...........', '...........'],
+                ['...........', '...........', '...........', '...dsssd...', '...dslsd...', '...dlvld...', '...dslsd...', '...dsssd...', '...........', '...........', '...........'],
+                ['...........', '...........', '...........', '....ddd....', '...dslsd...', '...dlwld...', '...dslsd...', '....ddd....', '...........', '...........', '...........'],
+                ['...........', '...........', '...........', '...........', '....vvv....', '...vvwvv...', '....vvv....', '...........', '...........', '...........', '...........'],
+                ['...........', '...........', '...........', '...........', '.....g.....', '....gwg....', '.....g.....', '...........', '...........', '...........', '...........']
+            ]
+        };
+        models.default = models.altar;
+        return models;
+    })();
+    const sceneObj = (type, frame) => {
+        const m = _sceneModels[type] || _sceneModels.default;
+        const f = m.rot ? (frame & 7) : 0;
+        const key = 'sc3d|' + (type || 'def') + '|' + f;
+        if (!PixelFX.get(key)) {
+            const angle = m.rot ? (f * 45) : m.angle;
+            return stack(key, m.slices, m.pal, angle, { scale: 2, spacing: 1.0, squash: 0.75, haloColor: m.halo });
+        }
+        return { body: PixelFX.get(key), halo: PixelFX.get(key + '|h') };
+    };
+
+    // Relíquia de Eco de Memória: ampulheta/cálice astral 3D empilhado em 11 fatias, girando em 8 ângulos
+    const ECHO_SLICES = [
+        ['..ggggg..', '.ggdddgg.', 'ggdddddgg', 'gddvvvddg', 'gddvvvddg', 'gddvvvddg', 'ggdddddgg', '.ggdddgg.', '..ggggg..'],
+        ['...ggg...', '..gdddg..', '.gdvvvdg.', '.gdvwvdg.', '.gdwwwdg.', '.gdvwvdg.', '.gdvvvdg.', '..gdddg..', '...ggg...'],
+        ['.........', '...ggg...', '..gvvvg..', '..gvwwvg.', '..gwwwg..', '..gvwwvg.', '..gvvvg..', '...ggg...', '.........'],
+        ['.........', '.........', '...ggg...', '..gvvvg..', '..gvwwvg.', '..gvvvg..', '...ggg...', '.........', '.........'],
+        ['.........', '.........', '....g....', '...gvg...', '...gwg...', '...gvg...', '....g....', '.........', '.........'],
+        ['.........', '.........', '...ggg...', '...gwg...', '..gwwwg..', '...gwg...', '...ggg...', '.........', '.........'],
+        ['.........', '.........', '....g....', '...gvg...', '...gwg...', '...gvg...', '....g....', '.........', '.........'],
+        ['.........', '.........', '...ggg...', '..gvvvg..', '..gvwwvg.', '..gvvvg..', '...ggg...', '.........', '.........'],
+        ['.........', '...ggg...', '..gvvvg..', '..gvwwvg.', '..gwwwg..', '..gvwwvg.', '..gvvvg..', '...ggg...', '.........'],
+        ['...ggg...', '..gdddg..', '.gdvvvdg.', '.gdvwvdg.', '.gdwwwdg.', '.gdvwvdg.', '.gdvvvdg.', '..gdddg..', '...ggg...'],
+        ['..ggggg..', '.ggvvvgg.', 'ggvvvvvgg', 'gvvwwwvvg', 'gvwwwwwvg', 'gvvwwwvvg', 'ggvvvvvgg', '.ggvvvgg.', '..ggggg..']
+    ];
+    const ECHO_PAL = { k: '#1a0c2e', d: '#8a5a1e', g: '#ffd86b', v: '#c084fc', w: '#ffffff' };
+    const echoRelic = frame => {
+        const f = frame & 7;
+        const key = 'echo3d|' + f;
+        if (!PixelFX.get(key)) {
+            return stack(key, ECHO_SLICES, ECHO_PAL, f * 45, { scale: 2, spacing: 1.0, squash: 0.75, haloColor: '#ffd86b' });
+        }
+        return { body: PixelFX.get(key), halo: PixelFX.get(key + '|h') };
+    };
+
+    // Pórtico/arco 3D para passagem de câmara ('chamber') e saída selada ('sealed')
+    const _portalArchSlices = (() => {
+        // 16x10 células, 13 fatias de altura
+        const chamber = [
+            ['.dddddddddddddd.', 'dssssssssssssssd', 'dssllllllllllssd', 'dslllaaaaaalllsd', 'dsllaaaaaaaaalls', 'dsllaaaaaaaaalls', 'dslllaaaaaalllsd', 'dssllllllllllssd', 'dssssssssssssssd', '.dddddddddddddd.'],
+            ['.dddd......dddd.', 'dsssd......dsssd', 'dslsd.aaaa.dslsd', 'dslsdaaaaaadslsd', 'dslsdawwwaadslsd', 'dslsdawwwaadslsd', 'dslsdaaaaaadslsd', 'dslsd.aaaa.dslsd', 'dsssd......dsssd', '.dddd......dddd.'],
+            ['.dddd......dddd.', 'dsssd......dsssd', 'dslsd.aaaa.dslsd', 'dslsdabbbbadslsd', 'dslsdabwwbadslsd', 'dslsdabwwbadslsd', 'dslsdabbbbadslsd', 'dslsd.aaaa.dslsd', 'dsssd......dsssd', '.dddd......dddd.'],
+            ['.dddd......dddd.', 'dsssd......dsssd', 'dslsd.aaaa.dslsd', 'dslsdabbbbadslsd', 'dslsdabwwbadslsd', 'dslsdabwwbadslsd', 'dslsdabbbbadslsd', 'dslsd.aaaa.dslsd', 'dsssd......dsssd', '.dddd......dddd.'],
+            ['.dddd......dddd.', 'dsssd......dsssd', 'dslsd.aaaa.dslsd', 'dslsdabbbbadslsd', 'dslsdabwwbadslsd', 'dslsdabwwbadslsd', 'dslsdabbbbadslsd', 'dslsd.aaaa.dslsd', 'dsssd......dsssd', '.dddd......dddd.'],
+            ['.dddd......dddd.', 'dsssd......dsssd', 'dslsd.aaaa.dslsd', 'dslsdabbbbadslsd', 'dslsdabwwbadslsd', 'dslsdabwwbadslsd', 'dslsdabbbbadslsd', 'dslsd.aaaa.dslsd', 'dsssd......dsssd', '.dddd......dddd.'],
+            ['.dddd......dddd.', 'dsssd......dsssd', 'dslsd.aaaa.dslsd', 'dslsdabbbbadslsd', 'dslsdabwwbadslsd', 'dslsdabwwbadslsd', 'dslsdabbbbadslsd', 'dslsd.aaaa.dslsd', 'dsssd......dsssd', '.dddd......dddd.'],
+            ['.ddddd....ddddd.', 'dssssd....dssssd', 'dslssd.aa.dsslsd', 'dslssdabbbadslsd', 'dslssdabwbadslsd', 'dslssdabwbadslsd', 'dslssdabbbadslsd', 'dslssd.aa.dsslsd', 'dssssd....dssssd', '.ddddd....ddddd.'],
+            ['.dddddd..dddddd.', 'dsssssd..dsssssd', 'dslsssd..dssslsd', 'dslsssdabbadslsd', 'dslsssdabbadslsd', 'dslsssdabbadslsd', 'dslsssdabbadslsd', 'dslsssd..dssslsd', 'dsssssd..dsssssd', '.dddddd..dddddd.'],
+            ['.dddddddddddddd.', 'dssssssssssssssd', 'dsslssssssssllsd', 'dsllllllllllllsd', 'dsllllbbbbllllsd', 'dsllllbbbbllllsd', 'dsllllllllllllsd', 'dsslssssssssllsd', 'dssssssssssssssd', '.dddddddddddddd.'],
+            ['..dddddddddddd..', '.dssssssssssssd.', '.dsllllllllllsd.', '.dsllllllllllsd.', '.dsllbbbbbbllsd.', '.dsllbbbbbbllsd.', '.dsllllllllllsd.', '.dsllllllllllsd.', '.dssssssssssssd.', '..dddddddddddd..'],
+            ['...dddddddddd...', '..dssssssssssd..', '..dsllllllllsd..', '..dsllllllllsd..', '..dsllllllllsd..', '..dsllllllllsd..', '..dsllllllllsd..', '..dsllllllllsd..', '..dssssssssssd..', '...dddddddddd...']
+        ];
+        const sealed = [
+            ['.dddddddddddddd.', 'dssssssssssssssd', 'dssllllllllllssd', 'dslllgggggglllsd', 'dsllggggggggllsd', 'dsllggggggggllsd', 'dslllgggggglllsd', 'dssllllllllllssd', 'dssssssssssssssd', '.dddddddddddddd.'],
+            ['.dddddddddddddd.', 'dsssdggggggdsssd', 'dslsdggggggdslsd', 'dslsdggddggdslsd', 'dslsdggddggdslsd', 'dslsdggddggdslsd', 'dslsdggddggdslsd', 'dslsdggggggdslsd', 'dsssdggggggdsssd', '.dddddddddddddd.'],
+            ['.dddddddddddddd.', 'dsssdggggggdsssd', 'dslsdggggggdslsd', 'dslsdggddggdslsd', 'dslsdggddggdslsd', 'dslsdggddggdslsd', 'dslsdggddggdslsd', 'dslsdggggggdslsd', 'dsssdggggggdsssd', '.dddddddddddddd.'],
+            ['.dddddddddddddd.', 'dsssdggggggdsssd', 'dslsdggggggdslsd', 'dslsdggddggdslsd', 'dslsdggddggdslsd', 'dslsdggddggdslsd', 'dslsdggddggdslsd', 'dslsdggggggdslsd', 'dsssdggggggdsssd', '.dddddddddddddd.'],
+            // Barra rúnica horizontal em relevo (z=4..5)
+            ['.dddddddddddddd.', 'dsssdmmmmmmssssd', 'dslsdmmllmmmslsd', 'dslsdmmlwlmmslsd', 'dslsdmmllmmmslsd', 'dslsdmmllmmmslsd', 'dslsdmmlwlmmslsd', 'dslsdmmllmmmslsd', 'dsssdmmmmmmssssd', '.dddddddddddddd.'],
+            ['.dddddddddddddd.', 'dsssdmmmmmmssssd', 'dslsdmmllmmmslsd', 'dslsdmmlwlmmslsd', 'dslsdmmllmmmslsd', 'dslsdmmllmmmslsd', 'dslsdmmlwlmmslsd', 'dslsdmmllmmmslsd', 'dsssdmmmmmmssssd', '.dddddddddddddd.'],
+            ['.dddddddddddddd.', 'dsssdggggggdsssd', 'dslsdggggggdslsd', 'dslsdggddggdslsd', 'dslsdggddggdslsd', 'dslsdggddggdslsd', 'dslsdggddggdslsd', 'dslsdggggggdslsd', 'dsssdggggggdsssd', '.dddddddddddddd.'],
+            ['.dddddddddddddd.', 'dssssdggggdssssd', 'dslssdggggdsslsd', 'dslssdggddgsslsd', 'dslssdggddgsslsd', 'dslssdggddgsslsd', 'dslssdggddgsslsd', 'dslssdggggdsslsd', 'dssssdggggdssssd', '.dddddddddddddd.'],
+            ['.dddddddddddddd.', 'dsssssdggdsssssd', 'dslsssdggdssslsd', 'dslsssdggdssslsd', 'dslsssdggdssslsd', 'dslsssdggdssslsd', 'dslsssdggdssslsd', 'dslsssdggdssslsd', 'dsssssdggdsssssd', '.dddddddddddddd.'],
+            ['.dddddddddddddd.', 'dssssssssssssssd', 'dsslssssssssllsd', 'dsllllllllllllsd', 'dsllllmmmmllllsd', 'dsllllmmmmllllsd', 'dsllllllllllllsd', 'dsslssssssssllsd', 'dssssssssssssssd', '.dddddddddddddd.'],
+            ['..dddddddddddd..', '.dssssssssssssd.', '.dsllllllllllsd.', '.dsllllllllllsd.', '.dslllmmmmlllsd.', '.dslllmmmmlllsd.', '.dsllllllllllsd.', '.dsllllllllllsd.', '.dssssssssssssd.', '..dddddddddddd..'],
+            ['...dddddddddd...', '..dssssssssssd..', '..dsllllllllsd..', '..dsllllllllsd..', '..dsllllllllsd..', '..dsllllllllsd..', '..dsllllllllsd..', '..dsllllllllsd..', '..dssssssssssd..', '...dddddddddd...']
+        ];
+        return { chamber, sealed };
+    })();
+    const portalArch = (kind, frame) => {
+        const isChamber = kind === 'chamber';
+        const f = (frame || 0) & 3;
+        const key = 'parch3d|' + (isChamber ? 'ch' : 'sl') + '|' + f;
+        if (!PixelFX.get(key)) {
+            const pal = isChamber ? {
+                k: '#120e0a', d: '#52473b', s: '#8a7b6a', l: '#c8b89e',
+                a: '#d97706', b: '#ffbb44', w: (f & 1) ? '#ffffff' : '#fff4c2'
+            } : {
+                k: '#0b0c10', d: '#1f222d', g: '#282a38', m: '#58606e',
+                s: '#7d8590', l: '#b0b0c0', w: (f & 1) ? '#d8dee9' : '#b0b0c0'
+            };
+            return stack(key, isChamber ? _portalArchSlices.chamber : _portalArchSlices.sealed,
+                pal, 14, { scale: 2, spacing: 1.0, squash: 0.76, haloColor: isChamber ? '#ffaa33' : '#7d8590' });
+        }
+        return { body: PixelFX.get(key), halo: PixelFX.get(key + '|h') };
     };
 
     // NPCs em pixel art dark-fantasy 48x48 (gerados e cacheados em sprites.js via NpcSprites)
@@ -29261,7 +29628,7 @@ const WorldSprites = (() => {
         return PixelFX.get(key);
     };
 
-    return { fire, crystal, blob, spikes, medal, chest, npc, status };
+    return { stack, fire, crystal, blob, spikes, medal, chest, sceneObj, echoRelic, portalArch, npc, status };
 })();
 
 class Hazard {
@@ -41506,15 +41873,20 @@ const SceneDirector = {
         const H = (typeof height === 'number' && height > 0) ? height : 600;
         if (sx < -60 || sx > W + 60 || sy < -60 || sy > H + 60) return;
         const rm = !!(window.GameSettings && GameSettings.reducedMotion);
-        const bob = rm ? 0 : Math.sin((typeof gameTime === 'number' ? gameTime : 0) * 0.04) * 3;
+        const t = typeof gameTime === 'number' ? gameTime : 0;
+        const bob = rm ? 0 : Math.sin(t * 0.04) * 3;
+        const pulse = rm ? 0.85 : (0.65 + 0.35 * Math.sin(t * 0.06));
         ctx.save();
-        // pedestal
-        ctx.fillStyle = 'rgba(224,182,255,0.12)';
-        ctx.strokeStyle = '#e0b6ff'; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.arc(sx, sy, 16, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-        ctx.fillStyle = '#e0b6ff'; ctx.font = 'bold 13px ' + COLORS.CANVAS_FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText('◈', sx, sy + bob);
+        if (typeof drawGroundShadow === 'function') drawGroundShadow(ctx, this.object.x, this.object.y, 16, camX, camY);
+        const sp = WorldSprites.sceneObj(this.object.type, rm ? 0 : Math.floor(t / 10));
+        if (sp.halo && (window.GFX === undefined || window.GFX.glows)) {
+            ctx.globalAlpha = pulse * 0.5;
+            PixelFX.draw(ctx, sp.halo, sx, sy + bob - 6);
+        }
+        ctx.globalAlpha = 1;
+        PixelFX.draw(ctx, sp.body, sx, sy + bob - 6);
         ctx.font = '9px ' + COLORS.CANVAS_FONT; ctx.fillStyle = '#cbb8e8';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         const label = _scT(this.object.label || { pt: '', en: '', es: '' });
         if (label) ctx.fillText(label, sx, sy + 26 + bob);
         ctx.textBaseline = 'alphabetic';
