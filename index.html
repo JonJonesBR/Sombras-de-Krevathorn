@@ -29633,25 +29633,33 @@ const WorldSprites = (() => {
         return { body: PixelFX.get(key), halo: PixelFX.get(key + '|h') };
     };
 
-    // Medalhão 3D: moeda/pedestal chanfrado (4 fatias em scale = 2) com GLYPH[iconKey] em alto-relevo iluminado
+    // Medalhão 3D: pedestal chanfrado (4 fatias 13x13 em scale = 2, projeção ortogonal angle = 0 sem distorção)
+    // com GLYPH[iconKey] 9x9 multi-material em alto-relevo iluminado:
+    // w=especular, l=brilho, #=base, s=sombra, g/y=ouro, c/C/n=madeira/couro, v=cristal/vidro, d=recesso escuro
     const GLYPH = {
-        W: ['#...#', '#...#', '#.#.#', '#.#.#', '.#.#.'],
-        E: ['###', '#..', '###', '#..', '###'],
-        sword:  ['.....##', '....##.', '...##..', '..##...', '.###...', '#.#....', '.#.....'],
-        dagger: ['....##.', '...##..', '..##...', '.###...', '.#.#...', '#......', '.......'],
-        staff:  ['....###', '....#.#', '...####', '..##...', '.##....', '##.....', '#......'],
-        bow:    ['..###..', '.#..#..', '#...#..', '#...#..', '#...#..', '.#..#..', '..###..'],
-        helm:   ['..###..', '.#####.', '#######', '##.#.##', '#######', '.##.##.', '.......'],
-        armor:  ['##...##', '#######', '.#####.', '.#####.', '.#####.', '..###..', '.......'],
-        boots:  ['.##....', '.##....', '.##....', '.###...', '.#####.', '.#####.', '.......'],
-        amulet: ['..###..', '.#...#.', '..#.#..', '...#...', '..###..', '..###..', '...#...'],
-        ring:   ['..###..', '.#...#.', '#.....#', '#.....#', '#.....#', '.#...#.', '..###..']
+        W:            ['...gwg...', '...wl#...', '...wl#...', '...wl#...', '..gwwwg..', '...ycy...', '....c....', '....n....', '....g....'],
+        E:            ['.gg...gg.', 'gwl#d#lwg', '.wll#llw.', '.wl###lw.', '.gggyggg.', '.l#####s.', '..l###s..', '..s###s..', '.........'],
+        sword:        ['.......gw', '......wll', '.....wll#', '....wll#.', '..gyll#..', '..cgy#...', '.cn.g....', 'gn.......', '.........'],
+        dagger:       ['......gww', '.....wll#', '....wll#s', '..gyll#s.', '..cgy#...', '.cn.g....', 'g........', '.........', '.........'],
+        staff:        ['.....gwg.', '....gwvlg', '....gvlvg', '....cygy.', '...cn....', '..cn.....', '.cn......', 'cn.......', 'g........'],
+        bow:          ['..ggc....', '.cn.w....', 'cn..w....', 'c...w....', 'g...w....', 'c...w....', 'cn..w....', '.cn.w....', '..ggc....'],
+        helm:         ['...gyg...', '..gwll#..', '.lwllll#.', '.lw###l#s', '.ldddddd#', '.lwlddl#s', '.l#ldds#s', '..s#dd#s.', '.........'],
+        armor:        ['.gg...gg.', 'gwl#d#l#g', 'lwll#ll#s', '.wll#ll#.', '.wl###l#.', '.gggyggg.', '.ll#d#ls.', '..s###s..', '.........'],
+        boots:        ['..gggg...', '..cyyy...', '..wll#...', '..wll#...', '..wll#...', '..wlll#..', '.lwllll#s', '.l######s', '.ssssssss'],
+        amulet:       ['..g...g..', '...g.y...', '....y....', '..ggygg..', '.gywvl#y.', '.gyl#lsy.', '..gyssy..', '...gyg...', '.........'],
+        ring:         ['...gwg...', '..gwvlg..', '.ggygygg.', 'gyldddlyg', 'gyddddd#y', 'gyddddd#y', 'gyl###lyy', '.gyyyyyg.', '..ggggg..'],
+        healthPotion: ['...cCc...', '...vvv...', '..vlllv..', '.vwlllwv.', 'vwl###l#v', 'wl##w###s', '.l#www#s.', '..s###s..', '...sss...'],
+        shieldPotion: ['...cCc...', '...vvv...', '..ggggg..', '.gwlllwg.', 'gwl###l#g', 'gl##w###g', '.g#####g.', '..g###g..', '...ggg...'],
+        fullHeal:     ['...gwg...', '...vvv...', '..glllg..', '.gwlllwg.', 'gwl#w#l#g', 'gl#www##g', '.gl#w##g.', '..g###g..', '...ggg...'],
+        bomb:         ['.....gw..', '....c....', '...ggg...', '.gwl#l#s.', 'gwll###ss', 'gl#####ss', 'l######ss', '.s#####s.', '..sssss..']
     };
+    const _medalUrlCache = Object.create(null);
     const medal = (iconKey, color) => {
-        const key = 'pk3d|' + iconKey + '|' + color;
+        const key = 'pk3d2|' + iconKey + '|' + color;
         if (!PixelFX.get(key)) {
             const C = 6, gl = GLYPH[iconKey] || GLYPH.W, gw = gl[0].length, gh = gl.length;
             const gx0 = C - Math.floor(gw / 2), gy0 = C - Math.floor(gh / 2);
+            const t = PixelFX.tones(color);
             const mkDisc = (R, Ri, isTop, isRelief) => {
                 const rows = [];
                 for (let y = 0; y <= 2 * C; y++) {
@@ -29660,16 +29668,17 @@ const WorldSprites = (() => {
                         const dx = x - C, dy = y - C;
                         const d = Math.hypot(dx, dy);
                         const gxx = x - gx0, gyy = y - gy0;
-                        const inGlyph = gxx >= 0 && gxx < gw && gyy >= 0 && gyy < gh && gl[gyy][gxx] === '#';
+                        const gch = (gxx >= 0 && gxx < gw && gyy >= 0 && gyy < gh) ? gl[gyy][gxx] : '.';
+                        const inGlyph = gch !== '.';
                         if (isRelief) {
-                            r += (d <= Ri && inGlyph) ? ((dx + dy < 0) ? 'w' : 'l') : '.';
+                            r += (d <= Ri + 0.35 && inGlyph) ? gch : '.';
                             continue;
                         }
                         if (d > R) { r += '.'; continue; }
                         if (d > Ri) {
-                            r += (dx + dy < -R * 0.35) ? 'l' : ((dx + dy > R * 0.35) ? 's' : 'c');
+                            r += (dx + dy < -R * 0.35) ? 'l' : ((dx + dy > R * 0.35) ? 's' : '#');
                         } else if (isTop && inGlyph) {
-                            r += 'l';
+                            r += (gch === 'd') ? 'd' : 's';
                         } else {
                             r += 'd';
                         }
@@ -29679,21 +29688,36 @@ const WorldSprites = (() => {
                 return rows;
             };
             const slices = [
-                mkDisc(5.6, 4.0, false, false),
-                mkDisc(6.2, 4.4, false, false),
-                mkDisc(6.2, 4.4, true, false),
-                mkDisc(6.0, 4.4, true, true)
+                mkDisc(5.6, 4.3, false, false),
+                mkDisc(6.2, 4.6, false, false),
+                mkDisc(6.2, 4.6, true, false),
+                mkDisc(6.0, 4.6, true, true)
             ];
             return stack(key, slices, {
-                k: PixelFX.shade(color, -0.7),
-                s: PixelFX.shade(color, -0.35),
-                c: color,
-                l: PixelFX.shade(color, 0.42),
+                k: t.o,
+                K: t.k_lit,
+                s: t.s,
+                '#': t.b,
+                l: t.l,
                 w: '#ffffff',
-                d: '#14141c'
-            }, 12, { scale: 2, spacing: 0.9, squash: 0.86, haloColor: color });
+                g: '#ffe97d',
+                y: '#d9a036',
+                c: '#dfb178',
+                C: '#f5d3a2',
+                n: '#8a5632',
+                v: '#99eeff',
+                d: '#141220'
+            }, 0, { scale: 2, spacing: 0.9, squash: 0.86, haloColor: color });
         }
         return { body: PixelFX.get(key), halo: PixelFX.get(key + '|h') };
+    };
+    const medalUrl = (iconKey, color) => {
+        const k = iconKey + '|' + color;
+        if (!_medalUrlCache[k]) {
+            const cv = medal(iconKey, color).body;
+            _medalUrlCache[k] = (cv && cv.toDataURL) ? cv.toDataURL() : '';
+        }
+        return _medalUrlCache[k];
     };
 
     // Baú 3D empilhado em 11 fatias de 16x7 células (scale = 2, projeção 3/4 frontal-oblíqua angle = 0)
@@ -30349,7 +30373,7 @@ const WorldSprites = (() => {
         return PixelFX.get(key);
     };
 
-    return { stack, fire, crystal, blob, spikes, medal, chest, sceneObj, echoRelic, portalArch, npc, status };
+    return { stack, fire, crystal, blob, spikes, medal, medalUrl, chest, sceneObj, echoRelic, portalArch, npc, status };
 })();
 
 class Hazard {
@@ -45041,17 +45065,33 @@ window.SkillTreeUI = SkillTreeUI;
             return _L('inv.slot.' + key, String(CONFIG.EQUIPMENT_SLOT_NAMES[key] || key).trim());
         },
 
-        // Ícone SVG dedicado por classe de arma e por slot de equipamento
+        // Ícone pixel art 3D (via WorldSprites.medalUrl) e fallback SVG por classe de arma e por slot
         _weaponIconId(w) {
             const wid = String((w && w.id) || '');
             if (/wand|staff/.test(wid)) return 'ic-staff-orb';
             if (/dagger|crossbow|windrunner|deathwhisper/.test(wid)) return (typeof player !== 'undefined' && player && player.type === 'elf') ? 'ic-bow' : 'ic-daggers';
             return 'ic-swords';
         },
+        _weaponGlyphKey(w) {
+            const wid = String((w && w.id) || '');
+            if (/wand|staff/.test(wid)) return 'staff';
+            if (/dagger|crossbow|windrunner|deathwhisper/.test(wid)) return (typeof player !== 'undefined' && player && player.type === 'elf') ? 'bow' : 'dagger';
+            return 'sword';
+        },
         _slotIconId(slot) {
             return { helm: 'ic-helm', armor: 'ic-armor', boots: 'ic-boots', amulet: 'ic-amulet', ring: 'ic-ring' }[slot] || 'ic-shield-sword';
         },
+        _medalImg(glyphKey, color, sz) {
+            if (typeof WorldSprites !== 'undefined' && WorldSprites.medalUrl) {
+                const url = WorldSprites.medalUrl(glyphKey, color);
+                if (url) return '<img src="' + url + '" alt="" aria-hidden="true" width="' + sz + '" height="' + sz + '" style="width:' + sz + 'px;height:' + sz + 'px;image-rendering:pixelated;flex-shrink:0;display:block;">';
+            }
+            return '';
+        },
         _icon(it, color) {
+            const gKey = it.kind === 'weapon' ? this._weaponGlyphKey(it.payload) : (it.kind === 'consumable' ? it.id : (it.slot || 'E'));
+            const img = this._medalImg(gKey, color, 24);
+            if (img) return img;
             const ic = it.kind === 'weapon' ? this._weaponIconId(it.payload) : this._slotIconId(it.slot);
             return '<svg class="icon-inline" width="16" height="16" style="color:' + color + ';flex-shrink:0;" aria-hidden="true"><use href="#' + ic + '"/></svg>';
         },
@@ -45182,9 +45222,10 @@ window.SkillTreeUI = SkillTreeUI;
                     + '<span style="display:block;font-size:calc(10px * var(--font-scale,1));color:rgba(255,255,255,0.5);">' + this._esc(_L('inv.emptySlot', 'Vazio')) + '</span></div>';
             }
             const color = equip.color || CONFIG.EQUIPMENT_RARITY_COLORS[0];
+            const eqImg = this._medalImg(key, color, 20) || ('<svg class="icon-inline" width="14" height="14" style="color:' + color + ';" aria-hidden="true"><use href="#' + icId + '"/></svg>');
             return '<button type="button" class="bag-card" aria-pressed="' + (sel ? 'true' : 'false') + '" onclick="BagPanel.select(\'eq:' + key + '\')" style="border-color:' + color + '66;">'
                 + '<span style="display:flex;align-items:center;gap:6px;">'
-                + '<span style="flex:none;width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;background:' + color + '22;border:1px solid ' + color + '77;"><svg class="icon-inline" width="14" height="14" style="color:' + color + ';" aria-hidden="true"><use href="#' + icId + '"/></svg></span>'
+                + '<span style="flex:none;width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;background:' + color + '22;border:1px solid ' + color + '77;">' + eqImg + '</span>'
                 + '<span style="min-width:0;flex:1;">'
                 + '<span style="display:block;font-size:calc(10px * var(--font-scale,1));color:rgba(255,255,255,0.6);">' + this._esc(label) + ' · ' + this._esc(EquipmentCard._rarityText(equip.rarity)) + '</span>'
                 + '<span class="bag-name" style="font-size:calc(12px * var(--font-scale,1));font-weight:700;color:' + color + ';">' + this._esc(equip.name || '') + '</span>'
@@ -45216,9 +45257,10 @@ window.SkillTreeUI = SkillTreeUI;
                 const wColor = this._color({ kind: 'weapon', rarity: CONFIG.WEAPON_TIERS[w.tier | 0] });
                 const sel = this.sel === 'eq:weapon';
                 const wIc = this._weaponIconId(w);
+                const wImg = this._medalImg(this._weaponGlyphKey(w), wColor, 24) || ('<svg class="icon-inline" width="16" height="16" style="color:' + wColor + ';" aria-hidden="true"><use href="#' + wIc + '"/></svg>');
                 weaponHtml = '<button type="button" class="bag-card" aria-pressed="' + (sel ? 'true' : 'false') + '" onclick="BagPanel.select(\'eq:weapon\')" style="border-color:' + wColor + '66;">'
                     + '<span style="display:flex;align-items:center;gap:8px;">'
-                    + '<span style="flex:none;width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:' + wColor + '22;border:1px solid ' + wColor + '77;"><svg class="icon-inline" width="16" height="16" style="color:' + wColor + ';" aria-hidden="true"><use href="#' + wIc + '"/></svg></span>'
+                    + '<span style="flex:none;width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:' + wColor + '22;border:1px solid ' + wColor + '77;">' + wImg + '</span>'
                     + '<span style="min-width:0;flex:1;">'
                     + '<span style="display:block;font-size:calc(10px * var(--font-scale,1));color:rgba(255,255,255,0.6);">' + this._esc(_L('inv.weapon', 'Arma')) + ' · ' + this._esc(EquipmentCard._rarityText(CONFIG.WEAPON_TIERS[w.tier | 0])) + '</span>'
                     + '<span class="bag-name" style="font-size:calc(12px * var(--font-scale,1));font-weight:700;color:' + wColor + ';">' + this._esc(WeaponSystem.displayName(w) || w.name || '') + '</span>'
@@ -45260,13 +45302,17 @@ window.SkillTreeUI = SkillTreeUI;
         _tabCons() {
             const groups = Inventory.groupConsumables(Inventory.items);
             if (!groups.length) return this._empty(_L('inv.emptyCons', 'Nenhum consumível na bolsa.'));
+            const consColors = { healthPotion: '#f43f5e', shieldPotion: '#38bdf8', fullHeal: '#f59e0b', bomb: '#fb7185' };
             return '<div class="bag-grid">' + groups.map(g => {
                 const def = SHOP_ITEMS.find(x => x.id === g.id) || {};
                 const sel = g.uids.indexOf(this.sel) >= 0;
-                const color = '#ffcc00';
+                const color = consColors[g.id] || '#ffcc00';
+                const cImg = this._medalImg(g.id, color, 22);
                 return '<button type="button" class="bag-card" aria-pressed="' + (sel ? 'true' : 'false') + '" onclick="BagPanel.select(\'' + g.uids[0] + '\')" style="border-color:' + color + '66;">'
                     + '<span style="display:flex;justify-content:space-between;align-items:center;gap:8px;">'
-                    + '<span style="font-size:calc(12px * var(--font-scale,1));font-weight:700;color:' + color + ';">' + this._esc(this._name({ kind: 'consumable', id: g.id, name: g.name })) + '</span>'
+                    + '<span style="display:flex;align-items:center;gap:6px;min-width:0;">'
+                    + (cImg ? '<span style="flex:none;width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;background:' + color + '22;border:1px solid ' + color + '77;">' + cImg + '</span>' : '')
+                    + '<span class="bag-name" style="font-size:calc(12px * var(--font-scale,1));font-weight:700;color:' + color + ';">' + this._esc(this._name({ kind: 'consumable', id: g.id, name: g.name })) + '</span></span>'
                     + '<span style="flex:none;font-size:calc(12px * var(--font-scale,1));font-weight:800;color:#fff;background:rgba(255,204,0,0.18);border-radius:999px;padding:1px 8px;">×' + g.count + '</span></span>'
                     + '<span style="display:block;font-size:calc(11px * var(--font-scale,1));color:#fff;margin-top:4px;line-height:1.3;">' + this._esc(_L(def.descKey, def.desc || '')) + '</span>'
                     + '</button>';
