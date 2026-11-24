@@ -4484,6 +4484,9 @@ const I18n = {
         'update.entry.v111.l2': 'Narrativa cinematográfica: novo motor de cutscenes com ritmo controlado por você, trilha dedicada nos 3 finais, sussurros de Eiran com distorção viva, últimas palavras nos chefes, Ecos de Memória nos andares e Grimório de Mistérios.',
         'update.entry.v111.l3': 'Herói e combate evoluídos: sprite vivo (Paper-Doll) refletindo armas e equipamentos reais, combos progressivos por nível (até 4 golpes), nova Técnica de Classe, Especial Desperto no Overdrive e NPCs em pixel art 48×48.',
         'update.entry.v111.l4': 'Telas e mobile refinados: nova ficha interativa do Personagem com slots clicáveis (equipar, substituir e retirar), Bolsa/Loja/Skills melhoradas, diálogos sem sobreposição de HUD, joystick ergonômico e curandeiro ativo no minimapa. Seus saves continuam funcionando.',
+        'update.entry.v115.title': 'v115 - Pickups, projéteis, montaria do Dragão e medalhões 3D',
+        'update.entry.v115.l1': 'Pickups e combates renovados: moedas 3D, poções de vidro com rolha, gemas, poças ácidas 3/4, ícones de status elemental, projéteis direcionais, Altar de Sangue 3D e pórticos dos portais.',
+        'update.entry.v115.l2': 'Dragão montado em duas camadas com sela-trono, medalhões 3D multi-material na Bolsa e venda automática ao coletar equipamentos inferiores com a bolsa cheia.',
         'update.entry.v114.title': 'v114 - Objetos do mundo em pixel art 3D',
         'update.entry.v114.l1': 'Baús, cristais, armadilhas de espinhos, medalhões, Ecos de Memória e pórticos reconstruídos em camadas 3D com iluminação direcional e rampas de cor refinadas.',
         'update.entry.v114.l2': 'Cenários vivos na História: Beliche 14, Biblioteca, Altar, Árvore E+S, Quarto de Eiran e Câmara do Pacto com modelos 3D próprios e animações sutis.',
@@ -7227,6 +7230,9 @@ const I18n = {
         'update.entry.v111.l2': 'Cinematic storytelling: unified player-paced cutscene engine, dedicated music for all 3 endings, live-glitching Eiran whispers, boss last words, Memory Echoes across floors, and a Mystery Board Grimoire.',
         'update.entry.v111.l3': 'Evolved hero & combat: live Paper-Doll sprite reflecting your equipped gear and weapons, progressive level-up combos (up to 4-hit finishers), a new Class Technique, Awakened Overdrive Specials, and 48×48 pixel-art NPCs.',
         'update.entry.v111.l4': 'Refined RPG screens & mobile feel: interactive Character sheet with clickable slots (equip, swap, unequip), upgraded Bag/Shop/Skills screens, overlap-free NPC dialogues, ergonomic thumb joystick, and active Healer minimap tracking. Your saves keep working.',
+        'update.entry.v115.title': 'v115 - Pickups, projectiles, Dragon mount and 3D medallions',
+        'update.entry.v115.l1': 'Renewed pickups and combat visuals: 3D spinning coins, glass potion flasks, faceted gems, 3/4 acid pools, elemental status icons, directional projectiles, 3D Blood Altar and portal archways.',
+        'update.entry.v115.l2': 'Two-layer Dragon mount with throne saddle, multi-material 3D medallions in the Bag, and automatic gold sale when picking up lower gear with a full bag.',
         'update.entry.v114.title': 'v114 - 3D pixel-art world objects',
         'update.entry.v114.l1': 'Chests, crystals, spike traps, item medallions, Memory Echoes and archways rebuilt in stacked 3D layers with directional lighting and refined color ramps.',
         'update.entry.v114.l2': 'Living Story scenes: Bunk 14, Library, Altar, E+S Tree, Eiran’s Room and the Pact Chamber now feature dedicated 3D models with subtle animations.',
@@ -9980,6 +9986,9 @@ const I18n = {
         'update.entry.v111.l2': 'Narrativa cinematográfica: nuevo motor de escenas a tu ritmo, música dedicada en los 3 finales, susurros de Eiran con distorsión viva, últimas palabras de jefes, Ecos de Memoria y Grimorio de Misterios.',
         'update.entry.v111.l3': 'Héroe y combate evolucionados: sprite vivo (Paper-Doll) que muestra armas y equipo reales, combos progresivos por nivel (hasta 4 golpes), nueva Técnica de Clase, Especial Despierto en Overdrive y PNJ en pixel art 48×48.',
         'update.entry.v111.l4': 'Pantallas y móvil refinados: nueva ficha interactiva del Personaje con ranuras clicables (equipar, cambiar y retirar), Bolsa/Tienda/Habilidades mejoradas, diálogos sin solapamiento de HUD, joystick ergonómico y curandero activo en el minimapa. Tus partidas guardadas siguen funcionando.',
+        'update.entry.v115.title': 'v115 - Objetos, proyectiles, montura de Dragón y medallones 3D',
+        'update.entry.v115.l1': 'Objetos y combate renovados: monedas 3D, frascos de poción de vidrio, gemas, charcos ácidos 3/4, iconos de estado elemental, proyectiles direccionales, Altar de Sangre 3D y pórticos de portales.',
+        'update.entry.v115.l2': 'Dragón montado en dos capas con silla-trono, medallones 3D multimaterial en la Bolsa y venta automática por oro al recoger equipo inferior con la bolsa llena.',
         'update.entry.v114.title': 'v114 - Objetos del mundo en pixel art 3D',
         'update.entry.v114.l1': 'Cofres, cristales, trampas de espinas, medallones, Ecos de Memoria y pórticos reconstruidos en capas 3D con iluminación direccional y rampas de color refinadas.',
         'update.entry.v114.l2': 'Escenarios vivos en la Historia: Litera 14, Biblioteca, Altar, Árbol E+S, Habitación de Eiran y Cámara del Pacto con modelos 3D propios y animaciones sutiles.',
@@ -15155,17 +15164,16 @@ function _drawMinimapDots(c, scaleX, scaleY, dotMult) {
         const isSupport = !!(e.isHealer || e.enemyType === 'healer' || e.isSummoner);
         const dotColor = e.isBoss ? CONFIG.MINIMAP_BOSS_COLOR
             : (e.elite ? CONFIG.ELITE_COLOR
-            : (e.isTreasureGoblin ? CONFIG.MINIMAP_GOBLIN_COLOR
-            : (isSupport ? '#ff7a29' : '#ff3838')));
+            : (isSupport || e.isTreasureGoblin ? '#ff7a29' : '#ff3838'));
         const baseR = e.isBoss ? CONFIG.MINIMAP_BOSS_DOT_SIZE * 1.25
-            : (e.elite || isSupport ? Math.max(2.6, CONFIG.MINIMAP_DOT_SIZE * 1.3)
+            : (e.elite || isSupport || e.isTreasureGoblin ? Math.max(2.6, CONFIG.MINIMAP_DOT_SIZE * 1.3)
             : Math.max(2.3, CONFIG.MINIMAP_DOT_SIZE * 1.15));
         const dotSize = baseR * dotMult;
         const ex = (e.x / CONFIG.TILE_SIZE) * scaleX;
         const ey = (e.y / CONFIG.TILE_SIZE) * scaleY;
 
-        // Halo pulsante para chefe, elite, ou quando restam <= 3 inimigos (evita inimigo escondido no canto)
-        if (e.isBoss || e.elite || fewLeft) {
+        // Halo pulsante para chefe, elite, goblin ou quando restam <= 3 inimigos (evita inimigo escondido no canto)
+        if (e.isBoss || e.elite || e.isTreasureGoblin || fewLeft) {
             const pulse = fewLeft ? (0.32 + Math.sin(gameTime * 0.16) * 0.16) : 0.28;
             c.globalAlpha = pulse;
             c.fillStyle = dotColor;
@@ -17134,7 +17142,10 @@ function _updateEnemySpawning() {
     // Only recount alive enemies on spawn ticks (spawning is throttled to gameTime % 60)
     if (gameTime % 60 === 0) {
         _cachedAliveEnemies = 0;
-        for (let i = 0; i < entities.length; i++) { if (entities[i] !== player && entities[i].alive) _cachedAliveEnemies++; }
+        for (let i = 0; i < entities.length; i++) {
+            const e = entities[i];
+            if (e && e !== player && e.alive && !e.isBarrier && !e.isP) _cachedAliveEnemies++;
+        }
     }
     const aliveEnemies = _cachedAliveEnemies;
     const _tutSuppressSpawn = typeof TutorialSystem !== 'undefined' && TutorialSystem.active && TutorialSystem.suppressEnemySpawns;
@@ -34356,16 +34367,13 @@ class GuidedBullet {
 }
 
 class TreasureGoblin extends Enemy {
-    constructor(x,y) { super(x,y,false); this.color='#ffdd00'; this.s=CONFIG.TREASURE_GOBLIN_SPEED; this.hp=CONFIG.TREASURE_GOBLIN_HP; this.maxHp=CONFIG.TREASURE_GOBLIN_HP; this.enemyType='melee'; this.isTreasureGoblin = true; this._dsT = 'goblin'; this._dsS = 2.0; }
+    constructor(x,y) { super(x,y,false,'melee'); this.color='#ffdd00'; this.s=CONFIG.TREASURE_GOBLIN_SPEED; this.hp=CONFIG.TREASURE_GOBLIN_HP; this.maxHp=CONFIG.TREASURE_GOBLIN_HP; this.enemyType='melee'; this.isTreasureGoblin = true; this._dsT = 'goblin'; this._dsS = 2.0; }
     onDeath(source) {
         for(let i=0; i<CONFIG.TREASURE_GOBLIN_CURRENCY_DROP; i++) pickups.push(new Pickup(this.x+(Math.random()-0.5)*50, this.y+(Math.random()-0.5)*50, 'currency'));
         SND.playTreasure('raro'); addLog(window.I18n ? I18n.t('log.goblinDefeated') : ' Goblin derrotado!');
     }
     update(p, m) {
-        let dx = p.x - this.x, dy = p.y - this.y;
-        let dSq = dx * dx + dy * dy;
-        let chaseRangeSq = CONFIG.ENEMY_CHASE_RANGE * CONFIG.ENEMY_CHASE_RANGE;
-        if(dSq > 0 && dSq < chaseRangeSq) { let invD = 1/Math.sqrt(dSq); let vx = -(dx*invD)*this.s, vy = -(dy*invD)*this.s; this.move(vx, vy, m); }
+        super.update(p, m);
     }
     draw(ctx, cx, cy) {
         if(!this.alive) return;
@@ -34376,7 +34384,9 @@ class TreasureGoblin extends Enemy {
         ctx.fillStyle = '#5a3b14'; ctx.fillRect(bx - 6, by - 5, 12, 11);
         ctx.fillStyle = '#c8922e'; ctx.fillRect(bx - 5, by - 4, 10, 9);
         ctx.fillStyle = '#ffe455'; ctx.fillRect(bx - 3, by - 3, 4, 3);
-        SpriteRenderer.drawEnemy.call(this, ctx, px, py, 'goblin', this.walkTimer, this.angle, 2.0, this.ft > 0, this.walkTimer > 0 ? 'walk' : 'idle');
+        const st = this.attackAnim > 0 ? 'attack' : (this.walkTimer > 0 ? 'walk' : 'idle');
+        const animT = this.attackAnim > 0 ? (12 - this.attackAnim) : this.walkTimer;
+        SpriteRenderer.drawEnemy.call(this, ctx, px, py, 'goblin', animT, this.angle, 2.0, this.ft > 0, st);
         _drawEntityOverlays(ctx, this, px, py, cx, cy);
         if (this.hp < this.maxHp) {
             ctx.fillStyle = '#333'; ctx.fillRect(px - 12, py - this.radius - 12, 24, 3);
@@ -36845,7 +36855,6 @@ const PetRescue = {
         if (_anyPanelOpen() || (typeof SceneDirector !== 'undefined' && SceneDirector.active)) return;
         if (typeof TutorialSystem !== 'undefined' && TutorialSystem.active) return;
         for (const o of this.objs) {
-            if (!o.abyss && _cachedAliveEnemies > 0) continue;
             if (!this.isActive(o)) continue;
             const d = Math.hypot(player.x - o.x, player.y - o.y);
             if (d > 110) o.dismissed = false;
@@ -52000,8 +52009,12 @@ Input.init();
        current MUST stay in sync with the SW CACHE_VERSION suffix (sw.js).
     */
     window.UPDATE_LOG = {
-        current: 'v114',
+        current: 'v115',
         entries: [
+            { v: 'v115', date: '2026-11-24', titleKey: 'update.entry.v115.title', title: 'v115 — Pickups, projéteis, montaria do Dragão e medalhões 3D',
+              linesKeys: ['update.entry.v115.l1', 'update.entry.v115.l2'],
+              lines: ['Pickups e combates renovados: moedas 3D, poções de vidro com rolha, gemas, poças ácidas 3/4, ícones de status elemental, projéteis direcionais, Altar de Sangue 3D e pórticos dos portais.',
+                      'Dragão montado em duas camadas com sela-trono, medalhões 3D multi-material na Bolsa e venda automática ao coletar equipamentos inferiores com a bolsa cheia.'] },
             { v: 'v114', date: '2026-11-24', titleKey: 'update.entry.v114.title', title: 'v114 — Objetos do mundo em pixel art 3D',
               linesKeys: ['update.entry.v114.l1', 'update.entry.v114.l2'],
               lines: ['Baús, cristais, armadilhas de espinhos, medalhões, Ecos de Memória e pórticos reconstruídos em camadas 3D com iluminação direcional e rampas de cor refinadas.',
