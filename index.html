@@ -17362,10 +17362,35 @@ const PixelFX = (() => {
         const mix = c => Math.max(0, Math.min(255, Math.round(c + (t - c) * k)));
         return '#' + ((1 << 24) | (mix(r) << 16) | (mix(g) << 8) | mix(b)).toString(16).slice(1);
     };
-    // Paleta de tons derivada de uma cor: o=contorno, s=sombra, b=base, l=brilho, w=branco, g=cinza
-    const tones = color => ({
-        o: shade(color, -0.7), s: shade(color, -0.35), b: color, l: shade(color, 0.35), w: '#ffffff', g: '#9aa3ad'
-    });
+    // Paleta de tons com Hue-Shift real (Codixel + aseprite-ai-artist):
+    // sombras (s, o) deslocam matiz para violeta/azul frio; brilho (l) desloca para amarelo/dourado quente;
+    // r=refração saturada, k_lit=contorno seletivo iluminado, w=branco, g=cinza.
+    const tones = color => {
+        let r = 128, g = 128, b = 128;
+        const h = String(color).trim();
+        const m = /^#([0-9a-f]{6})$/i.exec(h) || /^#([0-9a-f]{3})$/i.exec(h);
+        if (m) {
+            const hex = m[1].length === 3 ? m[1].split('').map(c => c + c).join('') : m[1];
+            const n = parseInt(hex, 16);
+            r = (n >> 16) & 255; g = (n >> 8) & 255; b = n & 255;
+        } else {
+            const rgb = /^rgba?\((\d+),\s*(\d+),\s*(\d+)/i.exec(h);
+            if (!rgb) return { o: shade(color, -0.7), k_lit: shade(color, -0.52), s: shade(color, -0.35), r: shade(color, -0.18), b: color, l: shade(color, 0.35), w: '#ffffff', g: '#9aa3ad' };
+            r = +rgb[1]; g = +rgb[2]; b = +rgb[3];
+        }
+        const cl = v => Math.max(0, Math.min(255, Math.round(v)));
+        const hx = (rr, gg, bb) => '#' + ((1 << 24) | (cl(rr) << 16) | (cl(gg) << 8) | cl(bb)).toString(16).slice(1);
+        return {
+            o: hx(r * 0.25 + 14, g * 0.16 + 6,  b * 0.34 + 28),
+            k_lit: hx(r * 0.42 + 18, g * 0.32 + 10, b * 0.50 + 32),
+            s: hx(r * 0.62 + 12, g * 0.50 + 4,  b * 0.72 + 26),
+            r: hx(r * 0.78 + 24, g * 0.58 + 6,  b * 0.88 + 34),
+            b: color,
+            l: hx(r + (255 - r) * 0.42, g + (248 - g) * 0.38, b + (210 - b) * 0.20),
+            w: '#ffffff',
+            g: '#9aa3ad'
+        };
+    };
     // Sprite tonal: a paleta é derivada de `color` só na primeira vez (cache por name+cor)
     const tonal = (name, rows, color, scale = 2) => {
         const key = name + '|' + color;
@@ -29074,7 +29099,9 @@ const WorldSprites = (() => {
     };
 
     // Rasterizador 3D de Sprite Stacking: empilha fatias 2D (z = 0..N-1) rotacionadas por angleDeg
-    // com achatamento oblíquo (squash) e passo vertical (spacing), aplicando contorno 1x no volume final.
+    // com achatamento oblíquo (squash), passo vertical (spacing), anti-subsampling (+0.45),
+    // sombra de contato no chão ('_'), iluminação 3D em coordenadas de tela (fixedLight) e
+    // Selective Outline + Rim Light ('K' no canto superior-esquerdo, 'k' nas demais bordas).
     const stack = (key, slices, pal, angleDeg, opts) => {
         const o = opts || {};
         const haloColor = o.haloColor !== undefined ? o.haloColor : null;
@@ -29083,58 +29110,173 @@ const WorldSprites = (() => {
             const spacing = o.spacing !== undefined ? o.spacing : 1.0;
             const scale = o.scale !== undefined ? o.scale : 2;
             const outlineChar = o.outlineChar !== undefined ? o.outlineChar : 'k';
+            const outlineLitChar = o.outlineLitChar !== undefined ? o.outlineLitChar : 'K';
+            const groundShadow = o.groundShadow !== false;
+            const fixedLight = !!o.fixedLight;
+            const autoShade = !!o.autoShade;
             const H = slices[0].length, W = slices[0][0].length;
             const diag = Math.ceil(Math.hypot(W, H)) + 4;
             const liftMax = Math.ceil((slices.length - 1) * spacing);
-            const cw = diag + 4;
-            const ch = Math.ceil(diag * squash) + liftMax + 6;
+            const cw = diag + 6;
+            const ch = Math.ceil(diag * squash) + liftMax + 8;
             const cx = (cw - 1) * 0.5;
-            const baseY = ch - Math.ceil(diag * squash * 0.5) - 3;
+            const baseY = ch - Math.ceil(diag * squash * 0.5) - 4;
             const rad = (angleDeg || 0) * Math.PI / 180;
             const ca = Math.cos(rad), sa = Math.sin(rad);
             const out = Array.from({ length: ch }, () => new Array(cw).fill('.'));
+            const zBuf = Array.from({ length: ch }, () => new Int16Array(cw).fill(-1));
             const hw = (W - 1) * 0.5, hh = (H - 1) * 0.5;
+            const rHalf = Math.max(1, Math.min(hw, hh));
+
+            // Sombra projetada no chão (união de z = 0..1 deslocada +2 px em X e +2 px em Y como '_')
+            if (groundShadow) {
+                const zMaxSh = Math.min(2, slices.length);
+                for (let z = 0; z < zMaxSh; z++) {
+                    const slice = slices[z];
+                    const cy = baseY - Math.round(z * spacing) + 2;
+                    for (let y = 0; y < ch; y++) {
+                        const dy0 = (y - cy) / squash;
+                        const rowOut = out[y];
+                        for (let x = 2; x < cw; x++) {
+                            const dx = (x - 2) - cx;
+                            const sx = Math.round(dx * ca + dy0 * sa + hw);
+                            const sy = Math.round(-dx * sa + dy0 * ca + hh);
+                            if (sx >= 0 && sx < W && sy >= 0 && sy < H && slice[sy][sx] !== '.') {
+                                rowOut[x] = '_';
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Empilhamento 3D das fatias com anti-subsampling (dy e dy + 0.45)
             for (let z = 0; z < slices.length; z++) {
                 const slice = slices[z];
                 const liftY = Math.round(z * spacing);
                 const cy = baseY - liftY;
                 for (let y = 0; y < ch; y++) {
-                    const dy = (y - cy) / squash;
-                    const rowOut = out[y];
+                    const dy0 = (y - cy) / squash;
+                    const dy1 = (y - cy + 0.45) / squash;
+                    const rowOut = out[y], rowZ = zBuf[y];
                     for (let x = 0; x < cw; x++) {
                         const dx = x - cx;
-                        const sx = Math.round(dx * ca + dy * sa + hw);
-                        const sy = Math.round(-dx * sa + dy * ca + hh);
-                        if (sx >= 0 && sx < W && sy >= 0 && sy < H) {
-                            const c = slice[sy][sx];
-                            if (c !== '.') rowOut[x] = c;
+                        let c = '.';
+                        const sx0 = Math.round(dx * ca + dy0 * sa + hw);
+                        const sy0 = Math.round(-dx * sa + dy0 * ca + hh);
+                        if (sx0 >= 0 && sx0 < W && sy0 >= 0 && sy0 < H) c = slice[sy0][sx0];
+                        if (c === '.') {
+                            const sx1 = Math.round(dx * ca + dy1 * sa + hw);
+                            const sy1 = Math.round(-dx * sa + dy1 * ca + hh);
+                            if (sx1 >= 0 && sx1 < W && sy1 >= 0 && sy1 < H) c = slice[sy1][sx1];
+                        }
+                        if (c !== '.') {
+                            rowOut[x] = c;
+                            rowZ[x] = z;
                         }
                     }
                 }
             }
-            const grid = out.map(r => r.join(''));
-            const rows = outlineChar ? outline(grid, outlineChar) : grid;
-            PixelFX.bake(key, rows, pal, scale);
-            if (haloColor) PixelFX.bake(key + '|h', halo(rows), { h: haloColor }, scale);
+
+            // Iluminação 3D em coordenadas de tela (luz fixa no canto superior-esquerdo [-1, -1])
+            if (fixedLight || autoShade) {
+                const topZ = slices.length - 1;
+                for (let y = 0; y < ch; y++) {
+                    const rowOut = out[y], rowZ = zBuf[y];
+                    for (let x = 0; x < cw; x++) {
+                        const z = rowZ[x];
+                        if (z < 0) continue;
+                        const c = rowOut[x];
+                        if (c === 'w') continue;
+                        const cy = baseY - Math.round(z * spacing);
+                        const dx = x - cx, dy = y - cy;
+                        const zf = Math.max(0.35, 1 - Math.max(0, z - topZ * 0.55) / (topZ * 0.75 + 1));
+                        const radZ = rHalf * zf;
+                        const nd = (dx + dy * 0.7) / Math.max(1, radZ);
+                        const isTopExp = (z === topZ) || (y > 0 && zBuf[y - 1][x] < z);
+                        if (fixedLight && (c === 'b' || c === 'l' || c === 's' || c === 'r' || c === 'd')) {
+                            if (z >= topZ - 1 && nd < 0.05 && pal.w) rowOut[x] = 'w';
+                            else if (isTopExp && nd < -0.22 && pal.w && z >= topZ - 3) rowOut[x] = 'w';
+                            else if (nd < -0.18 || (isTopExp && nd < 0.15)) rowOut[x] = pal.l ? 'l' : c;
+                            else if (nd > 0.42) rowOut[x] = (z <= 2 && pal.r) ? 'r' : (pal.s ? 's' : c);
+                            else if (nd > 0.16) rowOut[x] = (pal.r && z >= 2 && z <= 5) ? 'r' : (pal.s ? 's' : c);
+                            else rowOut[x] = pal.b ? 'b' : c;
+                        } else if (autoShade) {
+                            if (isTopExp && dx + dy < 0 && c === 'b' && pal.l) rowOut[x] = 'l';
+                            else if (dx > 1.2 && c === 'l' && pal.b) rowOut[x] = 'b';
+                        }
+                    }
+                }
+            }
+
+            // Contorno seletivo único no volume 3D inteiro (sem contar a sombra '_') + Rim Light ('K' vs 'k')
+            const hasVolNeighbor = (x, y, diagN) => {
+                for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+                    if (!dx && !dy) continue;
+                    if (!diagN && dx && dy) continue;
+                    const yy = y + dy, xx = x + dx;
+                    if (yy >= 0 && yy < ch && xx >= 0 && xx < cw && zBuf[yy][xx] >= 0) return true;
+                }
+                return false;
+            };
+            const rows = [];
+            const haloRows = haloColor ? [] : null;
+            const litLimY = baseY - liftMax * 0.4;
+            for (let y = 0; y < ch; y++) {
+                let rBody = '', rHalo = '';
+                const rowOut = out[y], rowZ = zBuf[y];
+                for (let x = 0; x < cw; x++) {
+                    let chPx = rowOut[x];
+                    if (rowZ[x] < 0 && outlineChar && hasVolNeighbor(x, y, false)) {
+                        chPx = (x <= cx && y <= litLimY) ? outlineLitChar : outlineChar;
+                    }
+                    rBody += chPx;
+                    if (haloRows) {
+                        const isSolid = (rowZ[x] >= 0) || chPx === outlineChar || chPx === outlineLitChar;
+                        rHalo += (!isSolid && hasVolNeighbor(x, y, true)) ? 'h' : '.';
+                    }
+                }
+                rows.push(rBody);
+                if (haloRows) haloRows.push(rHalo);
+            }
+            const palFull = Object.assign({
+                _: 'rgba(10,6,20,0.42)',
+                K: pal.K || pal.k_lit || PixelFX.shade(pal.k || '#141020', 0.22)
+            }, pal);
+            PixelFX.bake(key, rows, palFull, scale);
+            if (haloColor) PixelFX.bake(key + '|h', haloRows, { h: haloColor }, scale);
         }
         return { body: PixelFX.get(key), halo: haloColor ? PixelFX.get(key + '|h') : null };
     };
 
-    // Chama de fogo: 4 quadros (sway e ponta variam), núcleo claro na base
+    // Chama de fogo: 6 quadros (sway, ponta e fagulhas soltas subindo), sem contorno preto (regra de VFX emissivo)
     const fireBody = frame => {
-        const W = 15, H = 14, c = 7, f = frame % 6, sway = [0, 1, 1, 0, -1, -1][f], g = [];
+        const W = 15, H = 16, c = 7, f = frame % 6, sway = [0, 1, 1, 0, -1, -1][f], g = [];
         for (let y = 0; y < H; y++) {
-            const t = (H - 1 - y) / (H - 1);
-            const hw = [6.4, 5.8, 6.8, 6.1, 6.6, 5.6][f] * Math.pow(1 - t, 0.75);
+            if (y < 2) { g.push('.'.repeat(W)); continue; }
+            const t = (H - 1 - y) / (H - 3);
+            const hw = [6.4, 5.8, 6.8, 6.1, 6.6, 5.6][f] * Math.pow(Math.max(0, 1 - t), 0.75);
             const cc = c + Math.round(sway * t);
             let row = '';
             for (let x = 0; x < W; x++) {
                 const d = Math.abs(x - cc);
                 const dn = d / Math.max(hw, 1);
                 if (d > hw) row += '.';
-                else row += (t < 0.3 && dn < 0.5) ? 'c' : ((t < 0.55 && dn < 0.8) ? 'y' : 'o');
+                else row += (t < 0.28 && dn < 0.48) ? 'c' : ((t < 0.56 && dn < 0.78) ? 'y' : 'o');
             }
             g.push(row);
+        }
+        // 2 fagulhas soltas subindo no topo nos quadros
+        const sparks = [
+            [[5, 1, 'y'], [9, 0, 'o']],
+            [[6, 0, 'c'], [10, 2, 'y']],
+            [[8, 1, 'y'], [5, 2, 'o']],
+            [[7, 0, 'y'], [9, 1, 'c']],
+            [[5, 1, 'c'], [8, 0, 'o']],
+            [[6, 2, 'y'], [9, 1, 'y']]
+        ][f];
+        for (let i = 0; i < sparks.length; i++) {
+            const sx = sparks[i][0], sy = sparks[i][1], sc = sparks[i][2];
+            const r = g[sy].split(''); r[sx] = sc; g[sy] = r.join('');
         }
         return g;
     };
@@ -29142,32 +29284,31 @@ const WorldSprites = (() => {
         const sc = scale || 3;   // 3 = fogo comum; 2 = versão menor (poça da Salamandra)
         const key = 'hz|fire|' + color + '|' + (frame % 6) + '|' + sc;
         if (!PixelFX.get(key)) {
-            return build(key, fireBody(frame), { k: '#3a0e00', o: color, y: '#ffaa00', c: '#fff2b0' }, sc, '#ff4400');
+            const kEmissive = PixelFX.shade(color || '#ff5500', -0.45);
+            return build(key, fireBody(frame), { k: kEmissive, o: color, y: '#ffaa00', c: '#fff2b0' }, sc, '#ff4400');
         }
         return { body: PixelFX.get(key), halo: PixelFX.get(key + '|h') };
     };
 
-    // Cristal 3D facetado (obelisco/prisma empilhado em 12 fatias, girando em 8 ângulos)
+    // Cristal 3D facetado (obelisco/prisma octogonal em 12 fatias, girando em 8 ângulos com luz fixa upper-left)
     const _crystalSlices = (W, H) => {
         const w = Math.max(7, W | 1), h = Math.max(7, H | 1);
         const cx = (w - 1) * 0.5, cy = (h - 1) * 0.5, rMax = Math.min(cx, cy);
         const N = 12, slices = [];
         for (let z = 0; z < N; z++) {
-            // Base chanfrada (z=0..1), corpo facetado largo (z=2..6), ponta piramidal (z=7..11)
-            const rf = z === 0 ? 0.68 : (z === 1 ? 0.85 : (z <= 6 ? 0.96 - (z - 2) * 0.04 : Math.max(0.18, 0.78 * (1 - (z - 6) / 5.4))));
+            // Base chanfrada (z=0..1), corpo octogonal facetado (z=2..6), coroa piramidal (z=7..11)
+            const rf = z === 0 ? 0.68 : (z === 1 ? 0.86 : (z <= 6 ? 0.96 - (z - 2) * 0.035 : Math.max(0.20, 0.78 * (1 - (z - 6) / 5.3))));
             const rad = rMax * rf;
             const rows = [];
             for (let y = 0; y < h; y++) {
                 let row = '';
                 for (let x = 0; x < w; x++) {
                     const dx = x - cx, dy = y - cy;
-                    // Norma octogonal/losangular para faces de cristal
-                    const d = Math.max(Math.abs(dx) + Math.abs(dy) * 0.75, Math.abs(dy) + Math.abs(dx) * 0.75);
+                    const d = Math.max(Math.abs(dx) + Math.abs(dy) * 0.72, Math.abs(dy) + Math.abs(dx) * 0.72);
                     if (d > rad + 0.15) { row += '.'; continue; }
-                    if (z >= 10 || d < rad * 0.28) row += 'w';
-                    else if (dx + dy < -rad * 0.25) row += 'l';
-                    else if (dx + dy > rad * 0.35) row += 's';
-                    else row += 'b';
+                    // Crista das arestas octogonais ('l') + corpo facetado ('b', sombreado em tela por fixedLight)
+                    const isRidge = Math.abs(Math.abs(dx) - Math.abs(dy)) < 0.65 && d > rad * 0.45;
+                    row += isRidge ? 'l' : 'b';
                 }
                 rows.push(row);
             }
@@ -29184,8 +29325,8 @@ const WorldSprites = (() => {
             if (!_crySliceCache[sk]) _crySliceCache[sk] = _crystalSlices(W, H);
             const t = PixelFX.tones(color);
             return stack(key, _crySliceCache[sk],
-                { k: t.o, s: t.s, b: t.b, l: t.l, w: '#ffffff' },
-                f * 45, { scale: 2, spacing: 1.0, squash: 0.75, haloColor: haloColor || color });
+                { k: t.o, K: t.k_lit, s: t.s, r: t.r, b: t.b, l: t.l, w: '#ffffff' },
+                f * 45, { scale: 2, spacing: 1.0, squash: 0.75, fixedLight: true, haloColor: haloColor || color });
         }
         return { body: PixelFX.get(key), halo: PixelFX.get(key + '|h') };
     };
@@ -29331,21 +29472,22 @@ const WorldSprites = (() => {
     };
 
     // Baú 3D empilhado em 11 fatias de 12x8 células (scale = 2, ângulo 3/4 isométrico de 28 graus)
+    // Rampa de madeira com sombra carmesim (d->w->p->h->e) + ferragens e fecho da raridade (m->l->s)
     const CHEST_SLICES_CLOSED = [
         // z=0: pés/cantoneiras e base escura
         ['mmmmmmmmmmmm', 'mddddddddddm', 'mddddddddddm', 'mddddddddddm', 'mddddddddddm', 'mddddddddddm', 'mddddddddddm', 'mmmmmmmmmmmm'],
-        // z=1..4: corpo de madeira com cintas metálicas e fecho frontal
-        ['mmmmmmmmmmmm', 'mddmmddmmddm', 'mwwmmwwmmwwm', 'mddddddddddm', 'mwwmmwwmmwwm', 'mddmmddmmddm', 'mwwmmwwmmwwm', 'mmmmmmmmmmmm'],
-        ['mddmmddmmddm', 'mwwmmwwmmwwm', 'mddddddddddm', 'mwwmmwwmmwwm', 'mddmmddmmddm', 'mwwmmwwmmwwm', 'mddmmllmdddm', 'mmmmsllsmmmm'],
-        ['mwwmmwwmmwwm', 'mddddddddddm', 'mwwmmwwmmwwm', 'mddmmddmmddm', 'mwwmmwwmmwwm', 'mddmmddmmddm', 'mwwmmllmwwwm', 'mmmmmmmmmmmm'],
-        ['mmmmmmmmmmmm', 'mmmmmmmmmmmm', 'mddmmddmmddm', 'mwwmmwwmmwwm', 'mwwmmwwmmwwm', 'mddmmddmmddm', 'mmmmmmmmmmmm', 'mmmmmmmmmmmm'],
-        // z=5..10: tampa abobadada estreitando no eixo Y com brilho h no topo
-        ['mmmmmmmmmmmm', 'mwwmmwwmmwwm', 'mhhmmhhmmhhm', 'mwwmmwwmmwwm', 'mwwmmwwmmwwm', 'mhhmmhhmmhhm', 'mwwmmllmwwwm', 'mmmmmmmmmmmm'],
-        ['.mmmmmmmmmm.', '.mwmwwwwmwm.', '.mhmhhhhmhm.', '.mwmwwwwmwm.', '.mwmwwwwmwm.', '.mhmhhhhmhm.', '.mwmwwwwmwm.', '.mmmmmmmmmm.'],
-        ['.mmmmmmmmmm.', '.mhmhhhhmhm.', '.mwmwwwwmwm.', '.mhmhhhhmhm.', '.mhmhhhhmhm.', '.mwmwwwwmwm.', '.mhmhhhhmhm.', '.mmmmmmmmmm.'],
-        ['..mmmmmmmm..', '..mhhhhhhm..', '..mwwwwwwm..', '..mhhhhhhm..', '..mhhhhhhm..', '..mwwwwwwm..', '..mhhhhhhm..', '..mmmmmmmm..'],
-        ['............', '..mmmmmmmm..', '..mhhhhhhm..', '..mhhhhhhm..', '..mhhhhhhm..', '..mhhhhhhm..', '..mmmmmmmm..', '............'],
-        ['............', '............', '...mmmmmm...', '...mhhhhm...', '...mhhhhm...', '...mmmmmm...', '............', '............']
+        // z=1..4: corpo de madeira com tábuas chanfradas, cintas metálicas e fecho frontal
+        ['mmmmmmmmmmmm', 'mddmmddmmddm', 'mwwmmwwmmwwm', 'mppppppppppm', 'mwwmmwwmmwwm', 'mddmmddmmddm', 'mwwmmwwmmwwm', 'mmmmmmmmmmmm'],
+        ['mddmmddmmddm', 'mwwmmwwmmwwm', 'mppppppppppm', 'mwwmmwwmmwwm', 'mddmmddmmddm', 'mppppppppppm', 'mddmmllmdddm', 'mmmmsllsmmmm'],
+        ['mwwmmwwmmwwm', 'mppppppppppm', 'mhhmmhhmmhhm', 'mddmmddmmddm', 'mppppppppppm', 'mddmmddmmddm', 'mwwmmllmwwwm', 'mmmmmmmmmmmm'],
+        ['mmmmmmmmmmmm', 'mmmmmmmmmmmm', 'mddmmddmmddm', 'mppppppppppm', 'mppppppppppm', 'mddmmddmmddm', 'mmmmmmmmmmmm', 'mmmmmmmmmmmm'],
+        // z=5..10: tampa abobadada estreitando no eixo Y com chanfro claro (h/e) no topo
+        ['mmmmmmmmmmmm', 'mwwmmwwmmwwm', 'mhhmmhhmmhhm', 'mppppppppppm', 'mppppppppppm', 'mhhmmhhmmhhm', 'mwwmmllmwwwm', 'mmmmmmmmmmmm'],
+        ['.mmmmmmmmmm.', '.mpmppppmpm.', '.mhmhhhhmhm.', '.mpmppppmpm.', '.mpmppppmpm.', '.mhmhhhhmhm.', '.mpmppppmpm.', '.mmmmmmmmmm.'],
+        ['.mmmmmmmmmm.', '.mhmhhhhmhm.', '.memeeeemem.', '.mhmhhhhmhm.', '.mhmhhhhmhm.', '.mpmppppmpm.', '.mhmhhhhmhm.', '.mmmmmmmmmm.'],
+        ['..mmmmmmmm..', '..mhhhhhhm..', '..meeeeeem..', '..mhhhhhhm..', '..mhhhhhhm..', '..mppppppm..', '..mhhhhhhm..', '..mmmmmmmm..'],
+        ['............', '..mmmmmmmm..', '..meeeeeem..', '..mhhhhhhm..', '..mhhhhhhm..', '..mhhhhhhm..', '..mmmmmmmm..', '............'],
+        ['............', '............', '...mmmmmm...', '...meeeem...', '...mhhhhm...', '...mmmmmm...', '............', '............']
     ];
     const CHEST_SLICES_OPEN = [
         // z=0..1: fundo do baú
@@ -29357,27 +29499,30 @@ const WorldSprites = (() => {
         ['mmmmmmmmmmmm', 'mmnnnnnnnnmm', 'mnnggsggsnnm', 'mnnggggggnnm', 'mnngsggggnnm', 'mnnnnnnnnnnm', 'mmmmmmmmmmmm', 'mmmmmmmmmmmm'],
         // z=5..10: tampa levantada na parte de trás (y=0..2)
         ['mmmmmmmmmmmm', 'mwwmmwwmmwwm', 'mmmmmmmmmmmm', '............', '............', '............', '............', '............'],
-        ['mmmmmmmmmmmm', 'mhhmmhhmmhhm', 'mwwmmwwmmwwm', '............', '............', '............', '............', '............'],
-        ['.mmmmmmmmmm.', '.mwmwwwwmwm.', '.mhmhhhhmhm.', '............', '............', '............', '............', '............'],
-        ['.mmmmmmmmmm.', '.mhmhhhhmhm.', '.mwmwwwwmwm.', '............', '............', '............', '............', '............'],
-        ['..mmmmmmmm..', '..mhhhhhhm..', '..mmmmmmmm..', '............', '............', '............', '............', '............'],
-        ['...mmmmmm...', '...mhhhhm...', '............', '............', '............', '............', '............', '............']
+        ['mmmmmmmmmmmm', 'mhhmmhhmmhhm', 'mppppppppppm', '............', '............', '............', '............', '............'],
+        ['.mmmmmmmmmm.', '.mpmppppmpm.', '.mhmhhhhmhm.', '............', '............', '............', '............', '............'],
+        ['.mmmmmmmmmm.', '.mhmhhhhmhm.', '.memeeeemem.', '............', '............', '............', '............', '............'],
+        ['..mmmmmmmm..', '..meeeeeem..', '..mmmmmmmm..', '............', '............', '............', '............', '............'],
+        ['...mmmmmm...', '...meeeem...', '............', '............', '............', '............', '............', '............']
     ];
     const chest = (color, frame, opened = false) => {
         const f = opened ? 'o' : (frame & 3);
         const key = 'chest3d|' + color + '|' + f;
         if (!PixelFX.get(key)) {
             const base = (opened ? CHEST_SLICES_OPEN : CHEST_SLICES_CLOSED).map(sl => sl.slice());
-            if (!opened && (f === 1 || f === 3)) {
-                const zSp = f === 1 ? 7 : 9;
-                const rSp = base[zSp][3].split('');
-                rSp[f === 1 ? 4 : 7] = 's';
+            if (!opened) {
+                const spCoords = [[2, 7, 5], [7, 3, 4], [9, 2, 6], [5, 7, 6]][f];
+                const zSp = spCoords[0], ySp = spCoords[1], xSp = spCoords[2];
+                const rSp = base[zSp][ySp].split('');
+                rSp[xSp] = 's';
                 base[zSp] = base[zSp].slice();
-                base[zSp][3] = rSp.join('');
+                base[zSp][ySp] = rSp.join('');
             }
+            const t = PixelFX.tones(color);
             const pal = {
-                k: '#1a0e02', d: '#4a2e0a', w: '#6a4520', h: '#9a6b38',
-                m: color, l: PixelFX.shade(color, 0.4), g: '#ffd86b', n: '#141018', s: '#ffffff'
+                k: '#241217', K: '#422127',
+                d: '#422127', w: '#6b3f30', p: '#996740', h: '#c2966b', e: '#e0bb8b',
+                m: color, l: t.l, g: '#ffd86b', n: '#141018', s: '#fffad1'
             };
             return stack(key, base, pal, 28, { scale: 2, spacing: 1.0, squash: 0.75, haloColor: opened ? null : color });
         }
@@ -29385,53 +29530,101 @@ const WorldSprites = (() => {
     };
 
     // Objetos 3D de cena narrativa (SceneDirector): beliche, biblioteca, altar, árvore, quarto, câmara do pacto
+    // Todos plantados no chão com sombra projetada e animação secundária viva nos quadros (chama, tomo, cálice, folhagem, coroa, anel).
     const _sceneModels = (() => {
         const models = Object.create(null);
-        // 'bunk' (Beliche 14): estrutura 3D de beliche de madeira e ferro com dois leitos empilhados e travesseiro (12x8, 11 fatias)
+        // 'bunk' (Beliche 14): madeira com sombra carmesim, postes de ferro frio, dois colchões com travesseiro creme e lanterna no poste superior
         models.bunk = {
             rot: false, angle: 30, halo: '#88ccff',
-            pal: { k: '#120a04', p: '#3b4252', w: '#5c3a1e', h: '#855830', b: '#3d5a80', l: '#6b8cae', c: '#e8eef5' },
+            pal: {
+                k: '#181425', K: '#262b44',
+                p: '#3a4466', i: '#8b9bb4',
+                d: '#422127', w: '#6b3f30', h: '#996740', e: '#c2966b',
+                b: '#3d5a80', l: '#6b8cae', c: '#e8eef5',
+                g: '#e8b84b', f: '#ff8822', s: '#fffad1'
+            },
             slices: [
                 ['pp........pp', 'pp........pp', '............', '............', '............', '............', 'pp........pp', 'pp........pp'],
-                ['ppwwwwwwwwpp', 'pwwwwwwwwwwp', 'pwbbbbbbbbwp', 'pwbbbbbbbbwp', 'pwbbbbbbbbwp', 'pwbbbbbbbbwp', 'pwwwwwwwwwwp', 'ppwwwwwwwwpp'],
-                ['pphhhhhhhhpp', 'phccccccccbp', 'phccclllllbp', 'phccclllllbp', 'phccclllllbp', 'phccccccccbp', 'phhhhhhhhhhp', 'pphhhhhhhhpp'],
-                ['pp........pp', 'pp........pp', '............', '............', '............', '............', 'pp...hh...pp', 'pp...hh...pp'],
-                ['pp........pp', 'pp........pp', '............', '............', '............', '............', 'pp...ww...pp', 'pp...ww...pp'],
-                ['pp........pp', 'pp........pp', '............', '............', '............', '............', 'pp...hh...pp', 'pp...hh...pp'],
-                ['ppwwwwwwwwpp', 'pwwwwwwwwwwp', 'pwbbbbbbbbwp', 'pwbbbbbbbbwp', 'pwbbbbbbbbwp', 'pwbbbbbbbbwp', 'pwwwwwwwwwwp', 'ppwwwwwwwwpp'],
-                ['pphhhhhhhhpp', 'phccccccccbp', 'phccclllllbp', 'phccclllllbp', 'phccclllllbp', 'phccccccccbp', 'phhhhhhhhhhp', 'pphhhhhhhhpp'],
-                ['pp........pp', 'pp........pp', '............', '............', '............', '............', 'pp........pp', 'pp........pp'],
-                ['pphhhhhhhhpp', 'pp........pp', '............', '............', '............', '............', 'pp........pp', 'pphhhhhhhhpp']
-            ]
+                ['ppddddddddpp', 'pwwwwwwwwwwp', 'pwbbbbbbbbwp', 'pwbbbbbbbbwp', 'pwbbbbbbbbwp', 'pwbbbbbbbbwp', 'pwwwwwwwwwwp', 'ppddddddddpp'],
+                ['pphhhhhhhhpp', 'phccccccccbp', 'phccclllllbp', 'phccclllllbp', 'phccclllllbp', 'phccccccccbp', 'pheeeeeeeehp', 'pphhhhhhhhpp'],
+                ['pi........pp', 'pp........pp', '............', '............', '............', '............', 'pi...hh...pp', 'pp...hh...pp'],
+                ['pi........pp', 'pp........pp', '............', '............', '............', '............', 'pi...ww...pp', 'pp...ww...pp'],
+                ['pi........pp', 'pp........pp', '............', '............', '............', '............', 'pi...hh...pp', 'pp...hh...pp'],
+                ['ppddddddddpp', 'pwwwwwwwwwwp', 'pwbbbbbbbbwp', 'pwbbbbbbbbwp', 'pwbbbbbbbbwp', 'pwbbbbbbbbwp', 'pwwwwwwwwwwp', 'ppddddddddpp'],
+                ['pphhhhhhhhpp', 'phccccccccbp', 'phccclllllbp', 'phccclllllbp', 'phccclllllbp', 'phccccccccbp', 'pheeeeeeeehp', 'pphhhhhhhhpp'],
+                ['pi........pp', 'pp........pp', '............', '............', '............', '............', 'pi........pp', 'pp........pp'],
+                ['pihhhhhhhhpp', 'pp........pp', '............', '............', '............', '............', 'pg........pp', 'pphhhhhhhhpp'],
+                ['............', '............', '............', '............', '............', '............', 'fs..........', 'gg..........'],
+                ['............', '............', '............', '............', '............', '............', '.s..........', '............']
+            ],
+            anim(base, f) {
+                const r10 = base[10][6].split(''), r11 = base[11][6].split('');
+                r10[0] = (f & 1) ? 's' : 'f';
+                r10[1] = (f === 2) ? 'f' : 's';
+                r11[0] = (f === 1) ? 'f' : '.';
+                r11[1] = (f === 3) ? 'f' : 's';
+                base[10] = base[10].slice(); base[10][6] = r10.join('');
+                base[11] = base[11].slice(); base[11][6] = r11.join('');
+            }
         };
-        // 'library' (Biblioteca): estante 3D de madeira escura com fileiras de tomos coloridos/dourados nas prateleiras (12x6, 12 fatias)
+        // 'library' (Biblioteca): estante 3D de madeira nobre com 3 prateleiras de lombadas (azul, rubi, esmeralda, ouro) e tomo aberto/vela rúnica no topo
         models.library = {
             rot: false, angle: 28, halo: '#c084fc',
-            pal: { k: '#120804', d: '#3d2310', w: '#5e3819', h: '#8a562c', r: '#c93b3b', b: '#3b78c9', v: '#9d4edd', g: '#ffd86b', p: '#e5d4b3' },
+            pal: {
+                k: '#241217', K: '#422127',
+                d: '#422127', w: '#6b3f30', h: '#996740', e: '#c2966b',
+                r: '#e43b44', b: '#3b78c9', m: '#2eaa68', v: '#9d4edd', g: '#e8b84b', p: '#e5d4b3', s: '#fffad1'
+            },
             slices: [
                 ['dddddddddddd', 'dwwwwwwwwwwd', 'dwwwwwwwwwwd', 'dwwwwwwwwwwd', 'dwwwwwwwwwwd', 'dddddddddddd'],
-                ['dwwwwwwwwwwd', 'dwwrrbbvvggd', 'dwwrrbbvvggd', 'dwwrrbbvvggd', 'dwwppppppppd', 'dwwwwwwwwwwd'],
-                ['dwwwwwwwwwwd', 'dwwrrbbvvggd', 'dwwrrbbvvggd', 'dwwrrbbvvggd', 'dwwppppppppd', 'dwwwwwwwwwwd'],
-                ['dhhhhhhhhhhd', 'dwwwwwwwwwwd', 'dwwwwwwwwwwd', 'dwwwwwwwwwwd', 'dwwwwwwwwwwd', 'dhhhhhhhhhhd'],
-                ['dwwwwwwwwwwd', 'dwwvvggrrbbd', 'dwwvvggrrbbd', 'dwwvvggrrbbd', 'dwwppppppppd', 'dwwwwwwwwwwd'],
-                ['dwwwwwwwwwwd', 'dwwvvggrrbbd', 'dwwvvggrrbbd', 'dwwvvggrrbbd', 'dwwppppppppd', 'dwwwwwwwwwwd'],
-                ['dhhhhhhhhhhd', 'dwwwwwwwwwwd', 'dwwwwwwwwwwd', 'dwwwwwwwwwwd', 'dwwwwwwwwwwd', 'dhhhhhhhhhhd'],
+                ['dwwwwwwwwwwd', 'dwwrrbbmmggd', 'dwwrrbbmmggd', 'dwwrrbbmmggd', 'dwwppppppppd', 'dwwwwwwwwwwd'],
+                ['dwwwwwwwwwwd', 'dwwrrbbmmggd', 'dwwrrbbmmggd', 'dwwrrbbmmggd', 'dwwppppppppd', 'dwwwwwwwwwwd'],
+                ['deeeeeeeeeed', 'dhhhhhhhhhhd', 'dwwwwwwwwwwd', 'dwwwwwwwwwwd', 'dhhhhhhhhhhd', 'deeeeeeeeeed'],
+                ['dwwwwwwwwwwd', 'dwwmmggrrbbd', 'dwwmmggrrbbd', 'dwwmmggrrbbd', 'dwwppppppppd', 'dwwwwwwwwwwd'],
+                ['dwwwwwwwwwwd', 'dwwmmggrrbbd', 'dwwmmggrrbbd', 'dwwmmggrrbbd', 'dwwppppppppd', 'dwwwwwwwwwwd'],
+                ['deeeeeeeeeed', 'dhhhhhhhhhhd', 'dwwwwwwwwwwd', 'dwwwwwwwwwwd', 'dhhhhhhhhhhd', 'deeeeeeeeeed'],
                 ['dwwwwwwwwwwd', 'dwwggrrvvbbd', 'dwwggrrvvbbd', 'dwwggrrvvbbd', 'dwwppppppppd', 'dwwwwwwwwwwd'],
                 ['dwwwwwwwwwwd', 'dwwggrrvvbbd', 'dwwggrrvvbbd', 'dwwggrrvvbbd', 'dwwppppppppd', 'dwwwwwwwwwwd'],
-                ['dhhhhhhhhhhd', 'dhhhhhhhhhhd', 'dwwwwwwwwwwd', 'dwwwwwwwwwwd', 'dhhhhhhhhhhd', 'dhhhhhhhhhhd'],
-                ['.dddddddddd.', '.dhhhhhhhhd.', '.dhhhhhhhhd.', '.dhhhhhhhhd.', '.dhhhhhhhhd.', '.dddddddddd.']
-            ]
+                ['deeeeeeeeeed', 'dhhhhhhhhhhd', 'dwwwwwwwwwwd', 'dwwwwwwwwwwd', 'dhhhhhhhhhhd', 'deeeeeeeeeed'],
+                ['.dddddddddd.', '.dhhhhhhhhd.', '.dhppgppghd.', '.dhpsgspghd.', '.dhhhhhhhhd.', '.dddddddddd.'],
+                ['............', '............', '...ppvpp....', '...psvsp....', '............', '............']
+            ],
+            anim(base, f) {
+                if (f === 1 || f === 3) {
+                    base[11] = [
+                        '............',
+                        '...ppgpp....',
+                        '...psssp....',
+                        '...ppvpp....',
+                        '............',
+                        '............'
+                    ];
+                } else if (f === 2) {
+                    base[11] = [
+                        '............',
+                        '............',
+                        '...psvsp....',
+                        '...pvsvp....',
+                        '............',
+                        '............'
+                    ];
+                }
+            }
         };
-        // 'altar' (Altar): pedestal de pedra em degraus com cálice/chama rúnica violeta/dourada no topo, girando em 8 ângulos (11x11, 12 fatias)
+        // 'altar' (Altar): pedestal de pedra em 4 planos de cinza cromático plantado no chão, toalha carmesim/violeta e cálice dourado cuja chama astral sobe e gira
         models.altar = {
-            rot: true, halo: '#e0b6ff',
-            pal: { k: '#110b1a', d: '#39324b', s: '#5c5275', l: '#8c7fa8', g: '#ffd86b', v: '#c084fc', w: '#ffffff' },
+            rot: false, angle: 28, halo: '#e0b6ff',
+            pal: {
+                k: '#181522', K: '#2a2638',
+                d: '#2a2638', s: '#45425a', m: '#6a687d', l: '#948d8a', t: '#c4bdb0',
+                c: '#9e2444', v: '#b458f2', g: '#e8b84b', w: '#fffad1'
+            },
             slices: [
-                ['.ddddddddd.', 'dsssssssssd', 'dsssssssssd', 'dsssssssssd', 'dsssssssssd', 'dsssssssssd', 'dsssssssssd', 'dsssssssssd', 'dsssssssssd', 'dsssssssssd', '.ddddddddd.'],
-                ['..ddddddd..', '.dsssssssd.', '.dslllllsd.', '.dslllllsd.', '.dslllllsd.', '.dslllllsd.', '.dslllllsd.', '.dslllllsd.', '.dslllllsd.', '.dsssssssd.', '..ddddddd..'],
-                ['...ddddd...', '..dsssssd..', '..dslllsd..', '..dslllsd..', '..dslllsd..', '..dslllsd..', '..dslllsd..', '..dslllsd..', '..dslllsd..', '..dsssssd..', '...ddddd...'],
-                ['...........', '...ddddd...', '..dsgggsd..', '..dgggggd..', '..dgglggd..', '..dgglggd..', '..dgglggd..', '..dgggggd..', '..dsgggsd..', '...ddddd...', '...........'],
-                ['...........', '...........', '...sssss...', '..sllllls..', '..sllllls..', '..sllglls..', '..sllllls..', '..sllllls..', '...sssss...', '...........', '...........'],
+                ['.ddddddddd.', 'dsssssssssd', 'dssmmmmmssd', 'dssmmmmmssd', 'dssmmmmmssd', 'dssmmmmmssd', 'dssmmmmmssd', 'dssmmmmmssd', 'dssmmmmmssd', 'dsssssssssd', '.ddddddddd.'],
+                ['..ddddddd..', '.dsssssssd.', '.dsmmmmmsd.', '.dsmlllmsd.', '.dsmlllmsd.', '.dsmlllmsd.', '.dsmlllmsd.', '.dsmlllmsd.', '.dsmmmmmsd.', '.dsssssssd.', '..ddddddd..'],
+                ['...ddddd...', '..dsssssd..', '..dslllsd..', '..dsltlsd..', '..dsltlsd..', '..dsltlsd..', '..dsltlsd..', '..dsltlsd..', '..dslllsd..', '..dsssssd..', '...ddddd...'],
+                ['...........', '...ddddd...', '..dctttcd..', '..dcccccd..', '..dccvccd..', '..dccgccd..', '..dccvccd..', '..dcccccd..', '..dctttcd..', '...ddddd...', '...........'],
+                ['...........', '...........', '...ttttt...', '..tccccct..', '..tccgcct..', '..tcgggct..', '..tccgcct..', '..tccccct..', '...ttttt...', '...........', '...........'],
                 ['...........', '...........', '...........', '...ggggg...', '...gvvvg...', '...gvwwvg..', '...gvvvg...', '...ggggg...', '...........', '...........', '...........'],
                 ['...........', '...........', '...........', '....ggg....', '...gvvvg...', '...gvwvg...', '...gvvvg...', '....ggg....', '...........', '...........', '...........'],
                 ['...........', '...........', '...........', '....vvv....', '...vvgvv...', '...vgwgv...', '...vvgvv...', '....vvv....', '...........', '...........', '...........'],
@@ -29439,53 +29632,105 @@ const WorldSprites = (() => {
                 ['...........', '...........', '...........', '...........', '....ggg....', '...gwwwg...', '....ggg....', '...........', '...........', '...........', '...........'],
                 ['...........', '...........', '...........', '...........', '.....v.....', '....vwv....', '.....v.....', '...........', '...........', '...........', '...........'],
                 ['...........', '...........', '...........', '...........', '...........', '.....w.....', '...........', '...........', '...........', '...........', '...........']
-            ]
+            ],
+            anim(base, f) {
+                const ox = [0, 1, 0, -1][f], oy = [0, 0, 1, 0][f];
+                for (let z = 8; z <= 11; z++) {
+                    const g = Array.from({ length: 11 }, () => new Array(11).fill('.'));
+                    const rad = 12 - z;
+                    for (let y = 0; y < 11; y++) for (let x = 0; x < 11; x++) {
+                        const d = Math.abs(x - (5 + ox)) + Math.abs(y - (5 + oy));
+                        if (d === 0) g[y][x] = 'w';
+                        else if (d <= (rad >> 1)) g[y][x] = ((z + f) & 1) ? 'g' : 'v';
+                    }
+                    base[z] = g.map(r => r.join(''));
+                }
+            }
         };
-        // 'tree' (Árvore E+S): tronco retorcido escuro com raízes e copa volumétrica em camadas (folhagem azul-escura/prateada luminosa do Véu, 13x13, 13 fatias)
+        // 'tree' (Árvore E+S): tronco retorcido com raízes profundas, entalhe dourado E+S iluminado e copa azul-prateada do Véu com leafFlicker
         models.tree = {
             rot: false, angle: 25, halo: '#88ccff',
-            pal: { k: '#0c0914', d: '#3b2416', w: '#5e3b24', g: '#ffd86b', b: '#1e3a5f', c: '#4a7c9b', l: '#98c1d9', s: '#e0fbfc' },
+            pal: {
+                k: '#121726', K: '#1e2b3c',
+                d: '#422127', w: '#6b3f30', h: '#996740', g: '#ffe97d',
+                b: '#1e2b3c', c: '#2d4a5e', m: '#4b7a8c', l: '#7ab3bd', s: '#bce8ed'
+            },
             slices: [
                 ['...dd...dd...', '..dwwd.dwwd..', '.dwwwwdwwwwd.', '..dwwwwwwwd..', '...dwwwwwd...', '..dwwwwwwwd..', '.dwwwwwwwwwd.', '..dwwwdwwwd..', '.dwwwd.dwwwd.', 'dwwwd...dwwwd', '.dd.......dd.', '.............', '.............'],
-                ['.............', '....dd.dd....', '...dwwwwwd...', '...dwwwwwd...', '....dwwwd....', '....dwwwd....', '...dwwwwwd...', '...dwwdwwd...', '..dwwd.dwwd..', '.............', '.............', '.............', '.............'],
-                ['.............', '.............', '....ddddd....', '...dwwwwwd...', '....dwwwd....', '....dwgwd....', '....dwwwd....', '...dwwwwwd...', '.............', '.............', '.............', '.............', '.............'],
-                ['.............', '.............', '.............', '....ddddd....', '....dwgwd....', '....dwwwd....', '....dwgwd....', '....ddddd....', '.............', '.............', '.............', '.............', '.............'],
-                ['.............', '.............', '.............', '....dd.dd....', '...dww.wwd...', '....dwwwd....', '...dww.wwd...', '....dd.dd....', '.............', '.............', '.............', '.............', '.............'],
-                ['.............', '....bbbbb....', '..bbcccccbb..', '.bccclllcccb.', '.bccldwdlcgb.', '.bcclwwwlccb.', '.bccldwdlccb.', '.bccclllcccb.', '..bbcccccbb..', '....bbbbb....', '.............', '.............', '.............'],
-                ['...bbbbbbb...', '.bbcccccccbb.', 'bccclllllcccb', 'bcclllsslcccb', 'bccllsdslcccb', 'bccllssslcccb', 'bcclllsslcccb', 'bccclllllcccb', '.bbcccccccbb.', '...bbbbbbb...', '.............', '.............', '.............'],
-                ['..bbbbbbbbb..', '.bcccccccccbb', 'bccclllllllcb', 'bcclllsssllcb', 'bccllssssslcb', 'bccllssssslcb', 'bcclllsssllcb', 'bccclllllllcb', '.bbccccccccb.', '..bbbbbbbbb..', '.............', '.............', '.............'],
-                ['...bbbbbbb...', '.bbcccccccbb.', 'bccclllllcccb', 'bcclllsslcccb', 'bccllsssslccb', 'bcclllsslcccb', 'bccclllllcccb', '.bbcccccccbb.', '...bbbbbbb...', '.............', '.............', '.............', '.............'],
-                ['.............', '...bbbbbbb...', '..bcccccccb..', '.bcclllllccb.', '.bccllsslccb.', '.bccllsslccb.', '.bcclllllccb.', '..bcccccccb..', '...bbbbbbb...', '.............', '.............', '.............', '.............'],
-                ['.............', '.............', '...bbbbbbb...', '..bcclllccb..', '..bclssslcb..', '..bclssslcb..', '..bcclllccb..', '...bbbbbbb...', '.............', '.............', '.............', '.............', '.............'],
-                ['.............', '.............', '.............', '....bbbbb....', '...bclllcb...', '...bclslcb...', '...bclllcb...', '....bbbbb....', '.............', '.............', '.............', '.............', '.............']
-            ]
+                ['.............', '....dd.dd....', '...dwwwwwd...', '...dwwhwwd...', '....dwhwd....', '....dwwwd....', '...dwwwwwd...', '...dwwdwwd...', '..dwwd.dwwd..', '.............', '.............', '.............', '.............'],
+                ['.............', '.............', '....ddddd....', '...dwwwwwd...', '....dgggd....', '....dwhwd....', '....dgggd....', '...dwwwwwd...', '.............', '.............', '.............', '.............', '.............'],
+                ['.............', '.............', '.............', '....ddddd....', '....dgggd....', '....dwhwd....', '....dgggd....', '....ddddd....', '.............', '.............', '.............', '.............', '.............'],
+                ['.............', '.............', '.............', '....dd.dd....', '...dww.wwd...', '....dwgwd....', '...dww.wwd...', '....dd.dd....', '.............', '.............', '.............', '.............', '.............'],
+                ['.............', '....bbbbb....', '..bbcccccbb..', '.bccmmmmmccb.', '.bcmldwdlmgb.', '.bcmlwwwlmcb.', '.bcmldwdlmcb.', '.bccmmmmmccb.', '..bbcccccbb..', '....bbbbb....', '.............', '.............', '.............'],
+                ['...bbbbbbb...', '.bbcccccccbb.', 'bccmmmmmmmccb', 'bcmlllllllmcb', 'bcmllsdslmmcb', 'bcmllssslmmcb', 'bcmlllllllmcb', 'bccmmmmmmmccb', '.bbcccccccbb.', '...bbbbbbb...', '.............', '.............', '.............'],
+                ['..bbbbbbbbb..', '.bcccccccccbb', 'bccmmmmmmmmcb', 'bcmlllsssllcb', 'bcmllssssslcb', 'bcmllssssslcb', 'bcmlllsssllcb', 'bccmmmmmmmmcb', '.bbccccccccb.', '..bbbbbbbbb..', '.............', '.............', '.............'],
+                ['...bbbbbbb...', '.bbcccccccbb.', 'bccmmmmmmmccb', 'bcmlllsslmccb', 'bcmllsssslmcb', 'bcmlllsslmccb', 'bccmmmmmmmccb', '.bbcccccccbb.', '...bbbbbbb...', '.............', '.............', '.............', '.............'],
+                ['.............', '...bbbbbbb...', '..bcccccccb..', '.bccmmmmmccb.', '.bcmllsslmcb.', '.bcmllsslmcb.', '.bccmmmmmccb.', '..bcccccccb..', '...bbbbbbb...', '.............', '.............', '.............', '.............'],
+                ['.............', '.............', '...bbbbbbb...', '..bccmmmccb..', '..bmlssslmb..', '..bmlssslmb..', '..bccmmmccb..', '...bbbbbbb...', '.............', '.............', '.............', '.............', '.............'],
+                ['.............', '.............', '.............', '....bbbbb....', '...bmlllmb...', '...bmlslmb...', '...bmlllmb...', '....bbbbb....', '.............', '.............', '.............', '.............', '.............']
+            ],
+            anim(base, f) {
+                const leafPts = [
+                    [[7, 3, 5, 's'], [9, 4, 6, 'l'], [11, 5, 5, 's']],
+                    [[7, 4, 7, 's'], [8, 3, 6, 's'], [10, 4, 5, 's']],
+                    [[7, 5, 4, 's'], [9, 5, 5, 's'], [11, 4, 6, 's']],
+                    [[8, 4, 4, 's'], [10, 5, 6, 's'], [11, 5, 5, 'l']]
+                ][f];
+                for (let i = 0; i < leafPts.length; i++) {
+                    const z = leafPts[i][0], y = leafPts[i][1], x = leafPts[i][2], ch = leafPts[i][3];
+                    const r = base[z][y].split(''); r[x] = ch;
+                    base[z] = base[z].slice(); base[z][y] = r.join('');
+                }
+            }
         };
-        // 'room' (Quarto de Eiran): berço/arca real esculpida com relíquia luminosa (coroa de sol) sobre almofada (12x8, 10 fatias)
+        // 'room' (Quarto de Eiran): arca/berço real entalhado em madeira escura e ouro com almofada de veludo violeta e coroa solar que pulsa nos 4 quadros
         models.room = {
             rot: false, angle: 30, halo: '#ffd86b',
-            pal: { k: '#140c1c', d: '#3d2645', w: '#643a71', l: '#9b6b9e', v: '#c084fc', g: '#ffd86b', s: '#ffffff' },
+            pal: {
+                k: '#241217', K: '#422127',
+                d: '#422127', w: '#6b3f30', h: '#996740',
+                l: '#7a2eb8', v: '#b458f2',
+                g: '#e8b84b', y: '#ffe97d', s: '#fffad1'
+            },
             slices: [
                 ['ggddddddddgg', 'gwwwwwwwwwwg', 'gwwwwwwwwwwg', 'gwwwwwwwwwwg', 'gwwwwwwwwwwg', 'gwwwwwwwwwwg', 'gwwwwwwwwwwg', 'ggddddddddgg'],
-                ['gddddddddddg', 'dwwwwwwwwwwd', 'dwllllllllwd', 'dwllllllllwd', 'dwllllllllwd', 'dwllllllllwd', 'dwwwwwwwwwwd', 'gddddddddddg'],
+                ['gddddddddddg', 'dwwwwwwwwwwd', 'dwhhhhhhhhwd', 'dwhhhhhhhhwd', 'dwhhhhhhhhwd', 'dwhhhhhhhhwd', 'dwwwwwwwwwwd', 'gddddddddddg'],
                 ['gddddddddddg', 'dwllllllllwd', 'dwlvvvvvvlwd', 'dwlvvvvvvlwd', 'dwlvvvvvvlwd', 'dwlvvvvvvlwd', 'dwllllllllwd', 'gddddddddddg'],
-                ['gddddddddddg', 'dwlvvvvvvlwd', 'dwlvvggvvlwd', 'dwlvgssgvlwd', 'dwlvgssgvlwd', 'dwlvvggvvlwd', 'dwlvvvvvvlwd', 'gddddddddddg'],
-                ['gg........gg', 'gd...gg...dg', 'gd..gssg..dg', 'gd..gwwg..dg', 'gd..gssg..dg', 'gd...gg...dg', 'gd........dg', 'gg........gg'],
-                ['gg........gg', 'gd........dg', '....g..g....', '...gs..sg...', '...gs..sg...', '....g..g....', 'gd........dg', 'gg........gg'],
+                ['ghhhhhhhhhhg', 'dwlvvvvvvlwd', 'dwlvvggvvlwd', 'dwlvgyygvlwd', 'dwlvgyygvlwd', 'dwlvvggvvlwd', 'dwlvvvvvvlwd', 'ghhhhhhhhhhg'],
+                ['gg........gg', 'gd...gg...dg', 'gd..gyyg..dg', 'gd..gwwg..dg', 'gd..gyyg..dg', 'gd...gg...dg', 'gd........dg', 'gg........gg'],
+                ['gg........gg', 'gd........dg', '....g..g....', '...gy..yg...', '...gy..yg...', '....g..g....', 'gd........dg', 'gg........gg'],
                 ['gg........gg', '............', '............', '....s..s....', '............', '............', '............', 'gg........gg'],
                 ['gg........gg', '............', '............', '............', '............', '............', '............', 'gg........gg']
-            ]
+            ],
+            anim(base, f) {
+                const crowns = [
+                    '....s..y....',
+                    '....y..s....',
+                    '...sy..ys...',
+                    '....s..s....'
+                ];
+                base[6] = base[6].slice();
+                base[6][3] = crowns[f & 3];
+                if (f === 1 || f === 3) {
+                    base[5] = base[5].slice();
+                    base[5][3] = '...gs..sg...';
+                }
+            }
         };
-        // 'chamber' (Câmara do pacto): obelisco rúnico partido com anel flutuante em camadas, girando em 8 ângulos (11x11, 13 fatias)
+        // 'chamber' (Câmara do pacto): base de pedra rúnica rachada plantada no chão + anel/cristal do pacto nas fatias superiores que gira nos 8 ângulos
         models.chamber = {
-            rot: true, halo: '#c084fc',
-            pal: { k: '#0d0714', d: '#2b1e3d', s: '#4c386e', l: '#7c62a8', v: '#c084fc', g: '#ffd86b', w: '#ffffff' },
+            rot: false, frames: 8, angle: 26, halo: '#c084fc',
+            pal: {
+                k: '#181522', K: '#2a2638',
+                d: '#2a2638', s: '#45425a', m: '#6a687d', l: '#948d8a',
+                v: '#b458f2', g: '#e8b84b', w: '#fffad1'
+            },
             slices: [
-                ['..ddddddd..', '.dsssssssd.', 'dsssssssssd', 'dsssssssssd', 'dsssssssssd', 'dsssssssssd', 'dsssssssssd', 'dsssssssssd', 'dsssssssssd', '.dsssssssd.', '..ddddddd..'],
-                ['...ddddd...', '..dsssssd..', '.dsslllssd.', '.dslllllsd.', '.dslllllsd.', '.dslllllsd.', '.dslllllsd.', '.dslllllsd.', '.dsslllssd.', '..dsssssd..', '...ddddd...'],
+                ['..ddddddd..', '.dsssssssd.', 'dssmmmmmssd', 'dssmmmmmssd', 'dssmmmmmssd', 'dssmmmmmssd', 'dssmmmmmssd', 'dssmmmmmssd', 'dssmmmmmssd', '.dsssssssd.', '..ddddddd..'],
+                ['...ddddd...', '..dsssssd..', '.dsslllssd.', '.dslllllsd.', '.dslvvvlsd.', '.dslvwwlsd.', '.dslvvvlsd.', '.dslllllsd.', '.dsslllssd.', '..dsssssd..', '...ddddd...'],
                 ['...........', '...ddddd...', '..dsssssd..', '..dslllsd..', '..dslvlsd..', '..dslvlsd..', '..dslvlsd..', '..dslllsd..', '..dsssssd..', '...ddddd...', '...........'],
-                ['...........', '...........', '...ddddd...', '...dsssd...', '...dsvsd...', '...dvuvd...'.replace('u', 'w'), '...dsvsd...', '...dsssd...', '...ddddd...', '...........', '...........'],
+                ['...........', '...........', '...ddddd...', '...dsssd...', '...dsvsd...', '...dvwvd...', '...dsvsd...', '...dsssd...', '...ddddd...', '...........', '...........'],
                 ['...........', '...........', '....ddd....', '...dsssd...', '...dsvsd...', '...dvwvd...', '...dsvsd...', '...dsssd...', '....ddd....', '...........', '...........'],
-                // Vão partido + anel flutuante
                 ['...........', '...vvvvv...', '..vv...vv..', '.vv.....vv.', '.v...w...v.', '.v..www..v.', '.v...w...v.', '.vv.....vv.', '..vv...vv..', '...vvvvv...', '...........'],
                 ['...........', '...ggggg...', '..gg...gg..', '.gg.sss.gg.', '.g..svs..g.', '.g..vwv..g.', '.g..svs..g.', '.gg.sss.gg.', '..gg...gg..', '...ggggg...', '...........'],
                 ['...........', '...........', '...........', '...dsssd...', '...dslsd...', '...dlwld...', '...dslsd...', '...dsssd...', '...........', '...........', '...........'],
@@ -29493,18 +29738,36 @@ const WorldSprites = (() => {
                 ['...........', '...........', '...........', '....ddd....', '...dslsd...', '...dlwld...', '...dslsd...', '....ddd....', '...........', '...........', '...........'],
                 ['...........', '...........', '...........', '...........', '....vvv....', '...vvwvv...', '....vvv....', '...........', '...........', '...........', '...........'],
                 ['...........', '...........', '...........', '...........', '.....g.....', '....gwg....', '.....g.....', '...........', '...........', '...........', '...........']
-            ]
+            ],
+            anim(base, f) {
+                const rad = (f * 45) * Math.PI / 180;
+                const ca = Math.cos(rad), sa = Math.sin(rad);
+                for (let z = 5; z < base.length; z++) {
+                    const src = base[z];
+                    const dst = Array.from({ length: 11 }, () => new Array(11).fill('.'));
+                    for (let y = 0; y < 11; y++) for (let x = 0; x < 11; x++) {
+                        const dx = x - 5, dy = y - 5;
+                        const sx = Math.round(dx * ca + dy * sa + 5);
+                        const sy = Math.round(-dx * sa + dy * ca + 5);
+                        if (sx >= 0 && sx < 11 && sy >= 0 && sy < 11) dst[y][x] = src[sy][sx];
+                    }
+                    base[z] = dst.map(r => r.join(''));
+                }
+            }
         };
         models.default = models.altar;
         return models;
     })();
     const sceneObj = (type, frame) => {
         const m = _sceneModels[type] || _sceneModels.default;
-        const f = m.rot ? (frame & 7) : 0;
+        const nFrames = m.frames || (m.rot ? 8 : 4);
+        const f = (frame || 0) & (nFrames - 1);
         const key = 'sc3d|' + (type || 'def') + '|' + f;
         if (!PixelFX.get(key)) {
+            const slices = m.slices.map(sl => sl.slice());
+            if (m.anim) m.anim(slices, f);
             const angle = m.rot ? (f * 45) : m.angle;
-            return stack(key, m.slices, m.pal, angle, { scale: 2, spacing: 1.0, squash: 0.75, haloColor: m.halo });
+            return stack(key, slices, m.pal, angle, { scale: 2, spacing: 1.0, squash: 0.75, haloColor: m.halo });
         }
         return { body: PixelFX.get(key), halo: PixelFX.get(key + '|h') };
     };
@@ -29888,7 +30151,7 @@ class Chest {
 
         const op = this._openingT > 0 ? (1 - this._openingT / 14) : 0;
         const jx = op > 0 ? Math.sin(this._openingT * 2.4) * (2 + op * 3) : 0;
-        const bob = op > 0 ? -op * 4 : Math.sin((gameTime + this.bobOffset) * 0.08) * 3;
+        const bob = op > 0 ? -op * 4 : 0;
         const glow = (op > 0 ? 0.55 + op * 0.4 : 0.25 + Math.sin(gameTime * 0.12 + this.glowPhase) * 0.15);
         if (op > 0 && (window.GFX === undefined || window.GFX.glows)) {
             const bh = 18 + op * 52;
@@ -41874,21 +42137,20 @@ const SceneDirector = {
         if (sx < -60 || sx > W + 60 || sy < -60 || sy > H + 60) return;
         const rm = !!(window.GameSettings && GameSettings.reducedMotion);
         const t = typeof gameTime === 'number' ? gameTime : 0;
-        const bob = rm ? 0 : Math.sin(t * 0.04) * 3;
         const pulse = rm ? 0.85 : (0.65 + 0.35 * Math.sin(t * 0.06));
         ctx.save();
         if (typeof drawGroundShadow === 'function') drawGroundShadow(ctx, this.object.x, this.object.y, 16, camX, camY);
         const sp = WorldSprites.sceneObj(this.object.type, rm ? 0 : Math.floor(t / 10));
         if (sp.halo && (window.GFX === undefined || window.GFX.glows)) {
             ctx.globalAlpha = pulse * 0.5;
-            PixelFX.draw(ctx, sp.halo, sx, sy + bob - 6);
+            PixelFX.draw(ctx, sp.halo, sx, sy - 6);
         }
         ctx.globalAlpha = 1;
-        PixelFX.draw(ctx, sp.body, sx, sy + bob - 6);
+        PixelFX.draw(ctx, sp.body, sx, sy - 6);
         ctx.font = '9px ' + COLORS.CANVAS_FONT; ctx.fillStyle = '#cbb8e8';
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         const label = _scT(this.object.label || { pt: '', en: '', es: '' });
-        if (label) ctx.fillText(label, sx, sy + 26 + bob);
+        if (label) ctx.fillText(label, sx, sy + 26);
         ctx.textBaseline = 'alphabetic';
         ctx.restore();
     },
