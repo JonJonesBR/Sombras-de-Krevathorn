@@ -4484,6 +4484,9 @@ const I18n = {
         'update.entry.v111.l2': 'Narrativa cinematográfica: novo motor de cutscenes com ritmo controlado por você, trilha dedicada nos 3 finais, sussurros de Eiran com distorção viva, últimas palavras nos chefes, Ecos de Memória nos andares e Grimório de Mistérios.',
         'update.entry.v111.l3': 'Herói e combate evoluídos: sprite vivo (Paper-Doll) refletindo armas e equipamentos reais, combos progressivos por nível (até 4 golpes), nova Técnica de Classe, Especial Desperto no Overdrive e NPCs em pixel art 48×48.',
         'update.entry.v111.l4': 'Telas e mobile refinados: nova ficha interativa do Personagem com slots clicáveis (equipar, substituir e retirar), Bolsa/Loja/Skills melhoradas, diálogos sem sobreposição de HUD, joystick ergonômico e curandeiro ativo no minimapa. Seus saves continuam funcionando.',
+        'update.entry.v116.title': 'v116 - Combate mais legível',
+        'update.entry.v116.l1': 'Avisos de golpe, auras de inimigos e do herói deixam de ser discos cheios: agora são anéis e halos que mantêm os sprites visíveis, mesmo com vários inimigos atacando ao mesmo tempo.',
+        'update.entry.v116.l2': 'Telegrafias do chefe em anel, preenchimento da área de impacto mais discreto e sombra com viés frio: a cena fica menos lavada sem clarear o clima.',
         'update.entry.v115.title': 'v115 - Pickups, projéteis, montaria do Dragão e medalhões 3D',
         'update.entry.v115.l1': 'Pickups e combates renovados: moedas 3D, poções de vidro com rolha, gemas, poças ácidas 3/4, ícones de status elemental, projéteis direcionais, Altar de Sangue 3D e pórticos dos portais.',
         'update.entry.v115.l2': 'Dragão montado em duas camadas com sela-trono, medalhões 3D multi-material na Bolsa e venda automática ao coletar equipamentos inferiores com a bolsa cheia.',
@@ -7230,6 +7233,9 @@ const I18n = {
         'update.entry.v111.l2': 'Cinematic storytelling: unified player-paced cutscene engine, dedicated music for all 3 endings, live-glitching Eiran whispers, boss last words, Memory Echoes across floors, and a Mystery Board Grimoire.',
         'update.entry.v111.l3': 'Evolved hero & combat: live Paper-Doll sprite reflecting your equipped gear and weapons, progressive level-up combos (up to 4-hit finishers), a new Class Technique, Awakened Overdrive Specials, and 48×48 pixel-art NPCs.',
         'update.entry.v111.l4': 'Refined RPG screens & mobile feel: interactive Character sheet with clickable slots (equip, swap, unequip), upgraded Bag/Shop/Skills screens, overlap-free NPC dialogues, ergonomic thumb joystick, and active Healer minimap tracking. Your saves keep working.',
+        'update.entry.v116.title': 'v116 - More readable combat',
+        'update.entry.v116.l1': 'Attack warnings, enemy auras and the hero aura are no longer filled discs: they are rings and halos that keep sprites visible, even with several enemies attacking at once.',
+        'update.entry.v116.l2': 'Boss telegraphs in rings, a subtler impact-area fill and cool-shifted shadows: the scene reads cleaner without brightening the mood.',
         'update.entry.v115.title': 'v115 - Pickups, projectiles, Dragon mount and 3D medallions',
         'update.entry.v115.l1': 'Renewed pickups and combat visuals: 3D spinning coins, glass potion flasks, faceted gems, 3/4 acid pools, elemental status icons, directional projectiles, 3D Blood Altar and portal archways.',
         'update.entry.v115.l2': 'Two-layer Dragon mount with throne saddle, multi-material 3D medallions in the Bag, and automatic gold sale when picking up lower gear with a full bag.',
@@ -9986,6 +9992,9 @@ const I18n = {
         'update.entry.v111.l2': 'Narrativa cinematográfica: nuevo motor de escenas a tu ritmo, música dedicada en los 3 finales, susurros de Eiran con distorsión viva, últimas palabras de jefes, Ecos de Memoria y Grimorio de Misterios.',
         'update.entry.v111.l3': 'Héroe y combate evolucionados: sprite vivo (Paper-Doll) que muestra armas y equipo reales, combos progresivos por nivel (hasta 4 golpes), nueva Técnica de Clase, Especial Despierto en Overdrive y PNJ en pixel art 48×48.',
         'update.entry.v111.l4': 'Pantallas y móvil refinados: nueva ficha interactiva del Personaje con ranuras clicables (equipar, cambiar y retirar), Bolsa/Tienda/Habilidades mejoradas, diálogos sin solapamiento de HUD, joystick ergonómico y curandero activo en el minimapa. Tus partidas guardadas siguen funcionando.',
+        'update.entry.v116.title': 'v116 - Combate más legible',
+        'update.entry.v116.l1': 'Los avisos de golpe, las auras de enemigos y la del héroe dejan de ser discos rellenos: ahora son anillos y halos que mantienen visibles los sprites, incluso con varios enemigos atacando a la vez.',
+        'update.entry.v116.l2': 'Telegrafías del jefe en anillo, relleno del área de impacto más discreto y sombras con tono frío: la escena se ve más limpia sin aclarar el ambiente.',
         'update.entry.v115.title': 'v115 - Objetos, proyectiles, montura de Dragón y medallones 3D',
         'update.entry.v115.l1': 'Objetos y combate renovados: monedas 3D, frascos de poción de vidrio, gemas, charcos ácidos 3/4, iconos de estado elemental, proyectiles direccionales, Altar de Sangre 3D y pórticos de portales.',
         'update.entry.v115.l2': 'Dragón montado en dos capas con silla-trono, medallones 3D multimaterial en la Bolsa y venta automática por oro al recoger equipo inferior con la bolsa llena.',
@@ -17560,7 +17569,7 @@ const PixelFX = (() => {
 
 // Luz em pixel art: o buffer de luz (células grandes, suave) é ampliado para uma grade de 4 px (6 px em aparelho fraco),
 // o alfa é quantizado em poucos níveis com dithering de Bayer 4x4 e o resultado é ampliado sem
-// suavização. Só o alfa importa (a camada é preta com buracos). Custo: ~(w/4)*(h/4) pixels por
+// suavização. O alfa vira escuridão com viés frio (RGB fixo) em vez de preto puro. Custo: ~(w/4)*(h/4) pixels por
 // recálculo da luz, que já é espaçado por LIGHTING_THROTTLE.
 const LightPixelizer = (() => {
     // Grade de 4 px no padrão; 6 px (menos pixels no getImageData) em aparelho fraco ou quando o
@@ -17584,7 +17593,9 @@ const LightPixelizer = (() => {
                     const i = (y * mw + x) * 4;
                     const a = d[i + 3] / 255 * (LEVELS - 1), lo = Math.floor(a);
                     const q = lo + ((a - lo) > (BAYER[(y & 3) * 4 + (x & 3)] + 0.5) / 16 ? 1 : 0);
-                    d[i] = 0; d[i + 1] = 0; d[i + 2] = 0;
+                    // Sombra com viés frio (violeta) em vez de preto puro: no pixel art a
+                    // penumbra puxa para o azul/violeta e o fogo quente ganha contraste.
+                    d[i] = 14; d[i + 1] = 10; d[i + 2] = 30;
                     d[i + 3] = Math.round(q / (LEVELS - 1) * 255);
                 }
             }
@@ -36064,16 +36075,20 @@ class Boss extends Enemy {
         ctx.fillText(`FASE ${this.phase}`, this.x-cx, this.y-cy-this.radius-8);
         ctx.lineWidth = 1;
 
-        // Telegraph: projectile burst warning circles
+        // Telegraph: projectile burst warning circles. Em anéis (mesmo padrão do melee):
+        // disco cheio sobre o corpo do chefe escondia a arte e pintava o cenário.
         if(this._burstTelegraph && this._burstTelegraph > 0) {
             const progress = 1 - (this._burstTelegraph / 25);
             const maxRadius = this.radius + 60;
-            ctx.globalAlpha = 0.2;
-            ctx.fillStyle = '#ff00ff';
-            PixelFX.drawDisc(ctx, this.x-cx, this.y-cy, maxRadius, '#ff00ff');
-            
-            ctx.globalAlpha = 0.5;
-            PixelFX.drawDisc(ctx, this.x-cx, this.y-cy, maxRadius * progress, '#ff00ff');
+            const bx = this.x-cx, by = this.y-cy;
+            ctx.globalAlpha = 0.28;
+            PixelFX.ring(ctx, bx, by, maxRadius, '#ff00ff', 3, { dash: 4 });
+            ctx.globalAlpha = 0.22 + 0.33 * progress;
+            PixelFX.ring(ctx, bx, by, Math.max(6, maxRadius * progress), '#ff55dd', 3);
+            if (progress >= 0.7) {
+                ctx.globalAlpha = 0.55;
+                PixelFX.ring(ctx, bx, by, this.radius + 3, '#ff99ee', 2);
+            }
             ctx.globalAlpha = 1;
         }
 
@@ -36082,8 +36097,10 @@ class Boss extends Enemy {
         if(this._poundTelegraph > 0) {
             const pp = Math.max(0.05, Math.min(1, 1 - this._poundTelegraph / 28));
             ctx.save();
-            ctx.globalAlpha = 0.18 + pp * 0.22;
-            PixelFX.drawDisc(ctx, this.x-cx, this.y-cy, this._poundRange * pp, '#ff2a6d');
+            // Preenchimento da área de impacto: dither e alfa baixo para o corpo do chefe
+            // continuar visível; o anel amarelo é que marca a borda exata.
+            ctx.globalAlpha = 0.10 + pp * 0.10;
+            PixelFX.drawDisc(ctx, this.x-cx, this.y-cy, this._poundRange * pp, '#ff2a6d', null, true);
             ctx.globalAlpha = 0.45 + pp * 0.5;
             PixelFX.ring(ctx, this.x-cx, this.y-cy, this._poundRange, '#ffdd33', 3, { dash: 3 });
             ctx.restore();
@@ -52016,8 +52033,12 @@ Input.init();
        current MUST stay in sync with the SW CACHE_VERSION suffix (sw.js).
     */
     window.UPDATE_LOG = {
-        current: 'v115',
+        current: 'v116',
         entries: [
+            { v: 'v116', date: '2026-11-24', titleKey: 'update.entry.v116.title', title: 'v116 — Combate mais legível',
+              linesKeys: ['update.entry.v116.l1', 'update.entry.v116.l2'],
+              lines: ['Avisos de golpe, auras de inimigos e do herói deixam de ser discos cheios: agora são anéis e halos que mantêm os sprites visíveis, mesmo com vários inimigos atacando ao mesmo tempo.',
+                      'Telegrafias do chefe em anel, preenchimento da área de impacto mais discreto e sombra com viés frio: a cena fica menos lavada sem clarear o clima.'] },
             { v: 'v115', date: '2026-11-24', titleKey: 'update.entry.v115.title', title: 'v115 — Pickups, projéteis, montaria do Dragão e medalhões 3D',
               linesKeys: ['update.entry.v115.l1', 'update.entry.v115.l2'],
               lines: ['Pickups e combates renovados: moedas 3D, poções de vidro com rolha, gemas, poças ácidas 3/4, ícones de status elemental, projéteis direcionais, Altar de Sangue 3D e pórticos dos portais.',
