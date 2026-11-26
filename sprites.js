@@ -178,7 +178,7 @@ const SpriteCore = (() => {
     }
 
     const AROUND = [[0, 1], [1, 0], [-1, 0], [0, -1]];
-    function outlineGrid(roles, tones, sz = N) {
+    function outlineGrid(roles, tones, sz = N, lit) {
         const out = Array.from({ length: sz }, () => Array(sz).fill(0));
         for (let y = 0; y < sz; y++) for (let x = 0; x < sz; x++) {
             const r = roles[y][x];
@@ -189,7 +189,9 @@ const SpriteCore = (() => {
             for (const [dx, dy] of AROUND) {
                 const r = getAt(roles, x + dx, y + dy, sz);
                 if (r === '.') continue;
-                out[y][x] = (r === 'G' || r === 'O') ? 1 : idxOf(r, 0);
+                // rim light: borda voltada para cima/esquerda usa o tom claro do próprio material
+                const t = (lit && (dx < 0 || dy < 0) && lit.mats.indexOf(r) >= 0) ? lit.tone : 0;
+                out[y][x] = (r === 'G' || r === 'O') ? 1 : idxOf(r, t);
                 break;
             }
         }
@@ -204,7 +206,7 @@ const SpriteCore = (() => {
     }
 
     // Versão 48x48: EPX 24->48, detalhe sub-pixel opcional, sombreamento volumétrico e contorno 1px.
-    function finish48(grid24, detailFn) {
+    function finish48(grid24, detailFn, lit) {
         let g = (grid24 && grid24.length === M)
             ? grid24.map(r => (typeof r === 'string' ? r.split('') : r.slice()))
             : upscaleRole48(grid24);
@@ -212,7 +214,7 @@ const SpriteCore = (() => {
             const res = detailFn(g);
             if (Array.isArray(res) && res.length === M) g = res;
         }
-        return outlineGrid(g, shadeTones48(g, components(g, M)), M);
+        return outlineGrid(g, shadeTones48(g, components(g, M)), M, lit);
     }
 
     // Versão para grades já sombreadas (renderizador 3D): roles + tons prontos, só aplica contorno.
@@ -2540,7 +2542,7 @@ const SpriteManager = {
 
     // Define pixel art palettes: [0=outline, 1=skin, 2=main, 3=accent, 4=weapon, 5=eye, 6=shadow, 7=glow, 8=highlight]
     palettes: {
-        warrior: ['#12141c', '#5c4441', '#a17772', '#e3a981', '#ebc09b', '#3e4258', '#6d7499', '#93a4bd', '#b3bcc5', '#21233b', '#3a3e66', '#465370', '#7e838f', '#55586b', '#9599ba', '#d0ddee', '#dee4e7', '#5a1a2b', '#9d2e4c', '#dc3b48', '#e77373', '#62606e', '#aba9c0', '#f1f4f8', '#f5f4ee', '#412a27', '#734b44', '#9c663b', '#ba916a', '#ffd860', '#fff1c7'],
+        warrior: ['#12141c', '#5c4441', '#a17772', '#e3a981', '#ebc09b', '#3a3f57', '#6d789e', '#9aaecc', '#c6d3e2', '#21233b', '#3a3e66', '#465370', '#7e838f', '#4f5366', '#959bbd', '#d4e0f0', '#e6ecf0', '#5a1a2b', '#a02c4d', '#e2414c', '#f08383', '#62606e', '#aba9c0', '#f1f4f8', '#f5f4ee', '#412a27', '#734b44', '#9c663b', '#ba916a', '#ffd860', '#fff1c7'],
         rogue: ['#0b0d12', '#563f3d', '#966e6a', '#d19b76', '#dfb693', '#22253c', '#3b4268', '#485873', '#7f8791', '#171729', '#292948', '#2c3342', '#6b6d6e', '#353b53', '#5d6891', '#7c92b0', '#a3afbb', '#58192b', '#992c4b', '#d63847', '#e27072', '#5d5c6c', '#a2a1bc', '#eaf0f7', '#ecece9', '#362024', '#5e3840', '#7d4a35', '#9a725c', '#ff4d5e', '#ffc1c7'],
         mage: ['#170d2b', '#5e4948', '#a3807e', '#e6b693', '#eec9a7', '#322059', '#57399b', '#734bc0', '#9d7ec7', '#1a1038', '#301d63', '#39206e', '#765b91', '#473869', '#7c62b8', '#aa89eb', '#c4a9e5', '#63512c', '#ad8d4d', '#f5cb4a', '#f8d774', '#615c6e', '#a9a1bf', '#efe8f6', '#f4ecec', '#3b2a29', '#674b47', '#8a6641', '#ad916e', '#52ecff', '#c2f8ff'],
         elf: ['#0a1d0c', '#61514f', '#aa8e89', '#f0cca5', '#f5d8b4', '#1e3428', '#355c47', '#3f8040', '#79a36d', '#142320', '#243e38', '#255229', '#66835d', '#324930', '#588053', '#74b653', '#9ec97a', '#5e4b2b', '#a5834c', '#e8bb48', '#efcc73', '#594436', '#9b785f', '#d9aa64', '#e4c086', '#2f1e1f', '#523437', '#6b4428', '#97795c', '#c4ff8e', '#eaffd7'],
@@ -3030,7 +3032,9 @@ const SpriteManager = {
                 if (det) det(g48, row, name);
                 if (gearProfile) this._applyHeroGearDetail(g48, row, name, type, gearProfile);
             }) : null;
-            const idx = SpriteCore.finish48(SpriteCore.directions(auth, ref, row), detailFn);
+            // Rim light só no Guerreiro por enquanto (teste): borda iluminada com o tom claro do material.
+            const lit = (type === 'warrior') ? { tone: 3, mats: 'MLWA' } : null;
+            const idx = SpriteCore.finish48(SpriteCore.directions(auth, ref, row), detailFn, lit);
             for (let yy = 0; yy < ts; yy++) for (let xx = 0; xx < ts; xx++) {
                 const k = idx[yy][xx];
                 px[yy * ts + xx] = k ? rgba[k - 1] : 0;
@@ -6462,12 +6466,309 @@ const PetSprites = (() => {
     return { get, getMountLayers, clear, TYPES: Object.keys(PET_ART), MOUNT: { WAIST: MOUNT_WAIST } };
 })();
 
+// ---------------------------------------------------------------
+// Modo "papel": sprites planos animados, estilo Paper Mario.
+// Guerreiro tem idle, walk, attack e hit; o Ladino só walk (idle usa o quadro 0 dela).
+// Qualquer outro estado devolve false e SpriteRenderer.drawCharacter segue o desenho antigo.
+// Pés: a âncora do atlas cai no mesmo ponto dos pés do SpriteManager.draw
+// (x, y + 24, porque o sprite antigo tem 48 px e o desenho é feito com halfD = 24).
+// ---------------------------------------------------------------
+const PAPER_ATLAS = {
+    warrior: {
+        idle: {
+          "imagem": "art/anim/warrior-idle.png",
+          "celula": [52, 71],
+          "ancora": [28, 69],
+          "vistas": { "frente": { "linha": 0 }, "costas": { "linha": 1 }, "lado": { "linha": 2 } },
+          "ladoOlha": "left",
+          "estado": "idle",
+          "quadros": 2,
+          "fps": 3,
+          "loop": true
+        },
+        walk: {
+          "imagem": "art/anim/warrior-walk.png",
+          "celula": [58, 70],
+          "ancora": [30, 68],
+          "vistas": { "frente": { "linha": 0 }, "costas": { "linha": 1 }, "lado": { "linha": 2 } },
+          "ladoOlha": "left",
+          "estado": "walk",
+          "quadros": 4,
+          "fps": 8,
+          "loop": true
+        },
+        attack: {
+          "imagem": "art/anim/warrior-attack.png",
+          "celula": [79, 70],
+          "ancora": [55, 68],
+          "vistas": { "lado": { "linha": 0 } },
+          "ladoOlha": "left",
+          "estado": "attack",
+          "quadros": 4,
+          "fps": 20,
+          "loop": false
+        },
+        hit: {
+          "imagem": "art/anim/warrior-hit.png",
+          "celula": [67, 68],
+          "ancora": [35, 66],
+          "vistas": { "frente": { "linha": 0 } },
+          "ladoOlha": "left",
+          "estado": "hit",
+          "quadros": 2,
+          "fps": 24,
+          "loop": false
+        }
+    },
+    rogue: {
+        walk: {
+          "formato": "krev-anim2d-1",
+          "imagem": "art/anim/rogue-walk.png",
+          "celula": [
+            52,
+            55
+          ],
+          "ancora": [
+            28,
+            52
+          ],
+          "vistas": {
+            "frente": {
+              "linha": 0
+            },
+            "costas": {
+              "linha": 1
+            },
+            "lado": {
+              "linha": 2
+            }
+          },
+          "ladoOlha": "right",
+          "estado": "walk",
+          "quadros": 4,
+          "fps": 8,
+          "loop": true,
+          "paleta": [
+            "#00000000",
+            "#1e1b2e",
+            "#575969",
+            "#04020d",
+            "#49444c",
+            "#2a1125",
+            "#8e8b92",
+            "#0d0819",
+            "#130d1e",
+            "#33313a",
+            "#3d1728",
+            "#f7f7f8",
+            "#181326",
+            "#39373e",
+            "#080414",
+            "#1f0c1f",
+            "#c4c2c8",
+            "#70707c",
+            "#a6a6b0",
+            "#875648",
+            "#252331",
+            "#2c2935"
+          ],
+          "alturaArte": 48,
+          "bloco": 5,
+          "limiteCores": 24,
+          "origem": "rogue-walk.jpg"
+        }
+    }
+};
+
+const PaperSprites = (() => {
+    const PES_Y = 24;               // metade de 48 px: mesmo halfD do SpriteManager.draw com escala 2
+    // Desenho 1:1: a arte do atlas tem 64 px e cada pixel cai exatamente num pixel do canvas
+    // (escala fracionária era o que quadriculava o herói). A arte é ~45% mais alta que o
+    // sprite antigo visível (~44 px), de propósito.
+    const BASE = 1;
+    const VIRADA_TICKS = 6;         // duração da virada de papel, em ticks de gameTime
+    const VISTAS = ['frente', 'costas', 'lado'];
+    const _artes = new Map();       // src -> { img, pronto, falhou } (uma imagem por atlas)
+    const _sil = new Map();         // silhuetas brancas por atlas+vista+quadro, criadas sob demanda
+    const _compartilhado = {};      // estado de papel quando não há entidade (ex.: tela de seleção)
+    // Piloto de papel: agora é opt-in (?papel=1). O padrão voltou a ser a arte original.
+    const _ligadoURL = (typeof location !== 'undefined' && /[?&]papel=1(&|$)/.test(location.search));
+
+    // Carrega (uma vez) a imagem de um atlas; o mesmo src devolve sempre a mesma entrada
+    function _arte(src) {
+        let a = _artes.get(src);
+        if (a) return a;
+        a = { src: src, img: null, pronto: false, falhou: false };
+        _artes.set(src, a);
+        if (typeof Image === 'undefined') { a.falhou = true; return a; }
+        a.img = new Image();
+        a.img.onload = () => { a.pronto = true; };
+        a.img.onerror = () => { a.falhou = true; };
+        a.img.src = src;
+        return a;
+    }
+
+    // Pré-carrega todos os atlas para não piscar o desenho antigo na primeira vez.
+    // Só faz sentido no modo opt-in: sem ele os arquivos nem são pedidos (não geram 404).
+    if (_ligadoURL) Object.keys(PAPER_ATLAS).forEach(t => {
+        const estados = PAPER_ATLAS[t];
+        Object.keys(estados).forEach(s => _arte(estados[s].imagem));
+    });
+
+    // Atlas do estado: idle/walk/attack/hit; idle sem atlas próprio cai no walk (quadro 0).
+    function _atlasDe(type, state) {
+        const t = PAPER_ATLAS[type];
+        if (!t) return null;
+        if (state === 'walk') return t.walk || null;
+        if (state === 'attack') return t.attack || null;
+        if (state === 'hit') return t.hit || null;
+        if (state === undefined || state === '' || state === 'idle') return t.idle || t.walk || null;
+        return null;
+    }
+
+    // Vista pelo seno do ângulo (y da tela cresce para baixo: sin > 0 = olhando para baixo = frente).
+    // Histerese de 0,1 para a vista não piscar na fronteira.
+    function _vistaDe(s, anterior) {
+        if (anterior === 'frente' && s > 0.5) return 'frente';
+        if (anterior === 'costas' && s < -0.5) return 'costas';
+        if (s > 0.6) return 'frente';
+        if (s < -0.6) return 'costas';
+        return 'lado';
+    }
+
+    // Espelho do lado: a arte precisa olhar para o lado do cosseno (cos >= 0 = direita)
+    function _espelhoLado(atlas, c) {
+        if (atlas.ladoOlha === 'left') return c >= 0 ? -1 : 1;
+        return c < 0 ? -1 : 1;
+    }
+
+    // Silhueta branca de uma célula, pré-assada na primeira vez que o flash de dano aparece
+    function _silhueta(a, linha, quadro, cw, ch) {
+        const src = a.src;
+        const k = src + '|' + linha + '|' + quadro;
+        let cv = _sil.get(k);
+        if (cv) return cv;
+        cv = document.createElement('canvas');
+        cv.width = cw; cv.height = ch;
+        const g = cv.getContext('2d');
+        g.imageSmoothingEnabled = false;
+        g.drawImage(a.img, quadro * cw, linha * ch, cw, ch, 0, 0, cw, ch);
+        g.globalCompositeOperation = 'source-in';
+        g.fillStyle = '#ffffff';
+        g.fillRect(0, 0, cw, ch);
+        _sil.set(k, cv);
+        return cv;
+    }
+
+    // Retorna true se desenhou; false = o chamador usa o desenho antigo.
+    // Chamado com .call(entidade, ...): o estado da virada fica em entidade._pap.
+    function draw(ctx, x, y, type, f, angle, isHit) {
+        if (!_ligadoURL) return false;
+        if (typeof window !== 'undefined' && window.GameSettings && GameSettings.paperSprites === false) return false;
+        const estado = f ? f.state : undefined;
+        const atlas = _atlasDe(type, estado);
+        if (!atlas) return false;
+        const a = _arte(atlas.imagem);
+        if (!a.pronto || a.falhou) return false;
+
+        const ent = (this && typeof this === 'object' && this !== PaperSprites && this !== SpriteRenderer &&
+            (typeof window === 'undefined' || this !== window)) ? this : _compartilhado;
+        const rm = !!(typeof window !== 'undefined' && window.GameSettings && GameSettings.reducedMotion);
+        const gt = (typeof gameTime === 'number' && Number.isFinite(gameTime)) ? gameTime : 0;
+        const tempo = (f && Number.isFinite(f.time)) ? f.time : 0;
+        const paradoNome = (estado === undefined || estado === '' || estado === 'idle');
+        // Idle sem atlas próprio usa o quadro 0 do walk (o Ladino só tem walk)
+        const quadroFixo = paradoNome && atlas !== PAPER_ATLAS[type].idle;
+        const andando = (estado === 'walk' && tempo > 0);
+        const ang = Number.isFinite(angle) ? angle : 0;
+        const s = Math.sin(ang), c = Math.cos(ang);
+        const repetindo = !!atlas.loop;
+
+        // Vista alvo (com histerese nas vistas direcionais) e espelho só no lado
+        let p = ent._pap;
+        if (!p) p = ent._pap = { vista: 'frente', chave: undefined, virando: false, t0: 0 };
+        const vistas = atlas.vistas || {};
+        // Uma só vista (attack = lado, hit = frente): usa ela; com as três, segue o ângulo
+        const nVistas = (vistas.frente ? 1 : 0) + (vistas.costas ? 1 : 0) + (vistas.lado ? 1 : 0);
+        let vista, espelho;
+        if (nVistas <= 1) {
+            vista = vistas.frente ? 'frente' : (vistas.costas ? 'costas' : 'lado');
+            espelho = (vista === 'lado') ? _espelhoLado(atlas, c) : 1;
+        } else {
+            vista = _vistaDe(s, p.vista);
+            p.vista = vista;
+            espelho = (vista === 'lado') ? _espelhoLado(atlas, c) : 1;
+        }
+        if (!vistas[vista]) return false;
+        const chave = VISTAS.indexOf(vista) * 2 + (espelho < 0 ? 1 : 0);
+
+        // Virada de papel (só idle/walk): scaleX 1 -> 0 -> 1 em VIRADA_TICKS, trocando a vista no meio.
+        // Em attack/hit a vista e o espelho trocam na hora, sem girar no meio do golpe.
+        let escala = 1, mostra = chave;
+        if (p.chave === undefined) p.chave = chave;
+        if (rm || !repetindo) {
+            p.chave = chave; p.virando = false; mostra = chave;
+        } else if (p.virando || chave !== p.chave) {
+            if (!p.virando) { p.virando = true; p.t0 = gt; }
+            let k = (gt - p.t0) / VIRADA_TICKS;
+            if (k < 0) { p.t0 = gt; k = 0; }
+            if (k >= 1) { p.virando = false; p.chave = chave; mostra = chave; }
+            else if (k < 0.5) { escala = 1 - 2 * k; mostra = p.chave; }
+            else { p.chave = chave; mostra = chave; escala = 2 * k - 1; }
+        } else {
+            mostra = p.chave;
+        }
+        const esp = (mostra & 1) ? -1 : 1;
+        const linha = vistas[VISTAS[mostra >> 1]].linha;
+
+        // Quadro: walk/idle giram por f.time; attack/hit pelo animT do golpe (60 ticks = 1 s)
+        const cw = atlas.celula[0], ch = atlas.celula[1];
+        const quadros = atlas.quadros | 0;
+        let quadro = 0;
+        if (!quadroFixo && quadros > 0) {
+            const prog = (andando || paradoNome)
+                ? tempo
+                : ((f && Number.isFinite(f.animT)) ? f.animT : tempo);
+            const q = Math.floor(prog * atlas.fps / 60);
+            quadro = repetindo
+                ? (((q % quadros) + quadros) % quadros)
+                : Math.max(0, Math.min(quadros - 1, q));
+        }
+
+        // Balanço (só andando, sem reducedMotion): sobe 1 px nos quadros 1 e 3; inclina ±0,03 rad em sincronia com o passo
+        let sobe = 0, inclina = 0, respira = 1;
+        if (andando && !rm) {
+            sobe = (quadro === 1 || quadro === 3) ? -1 : 0;
+            inclina = 0.03 * Math.sin(tempo * Math.PI / 15) * esp;
+        }
+        // Respiração parada (sem reducedMotion, só idle/walk): scaleY 1 -> 1,02 pelo gameTime, ancorada nos pés
+        if (!andando && repetindo && !rm) respira = 1 + 0.01 * (1 + Math.sin(gt * 0.085));
+
+        const fonte = isHit ? _silhueta(a, linha, quadro, cw, ch) : a.img;
+        const sx = isHit ? 0 : quadro * cw;
+        const sy = isHit ? 0 : linha * ch;
+
+        ctx.save();
+        ctx.imageSmoothingEnabled = false;
+        ctx.translate(x | 0, (y | 0) + PES_Y + sobe);
+        if (inclina) ctx.rotate(inclina);
+        ctx.scale(BASE * escala * esp, BASE * respira);
+        ctx.drawImage(fonte, sx, sy, cw, ch, -atlas.ancora[0], -atlas.ancora[1], cw, ch);
+        ctx.restore();
+        return true;
+    }
+
+    return { draw };
+})();
+
 const SpriteRenderer = {
     drawCharacter(ctx, x, y, type, frame, angle=0, isHit=false) {
         const f = (typeof frame === 'object') ? frame : { time: frame || 0, state: 'idle' };
         const hitState = f.isHit || isHit;
         const charAngle = f.angle || angle;
         if (this && this !== SpriteRenderer) { this._dsT = type; this._dsS = 2.0; this._dsA = charAngle; }   // para a animação de morte
+        // Modo papel (piloto): só o que tem atlas; o resto segue o desenho antigo abaixo
+        if (window.PaperSprites && PaperSprites.draw.call(this, ctx, x, y, type, f, charAngle, hitState)) return;
         SpriteManager.draw(ctx, x, y, type, f.time, hitState, charAngle, 2.0, f.state);
     },
     drawEnemy(ctx, x, y, type, frame, angle=0, scale=1.5, isHit=false, state='idle') {
@@ -6485,6 +6786,7 @@ if (typeof window !== 'undefined') {
     window.SpriteRenderer = SpriteRenderer;
     window.NpcSprites = NpcSprites;
     window.PetSprites = PetSprites;
+    window.PaperSprites = PaperSprites;
 }
 
 // Export for Node.js testing
