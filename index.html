@@ -775,6 +775,14 @@ body.reduce-motion.npc-dialog-open #top-bar, body.reduce-motion.npc-dialog-open 
 .glass-panel{border-width:6px!important;border-radius:16px!important;background:radial-gradient(120% 45% at 50% 0%,rgba(120,64,200,.22),transparent 62%),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' seed='7'/%3E%3CfeColorMatrix values='0 0 0 0 .75 0 0 0 0 .7 0 0 0 0 .8 0 0 0 .26 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E"),var(--k-stone) padding-box,var(--k-frame) border-box!important;box-shadow:inset 0 0 0 2px #c9a24a,inset 0 0 0 4px rgba(0,0,0,.7),inset 0 0 46px rgba(110,50,190,.25),0 10px 40px rgba(0,0,0,.65),0 0 28px rgba(120,60,200,.2)!important}
 .glass-panel::before{border-radius:10px;padding:0!important;background:var(--k-gem) no-repeat 0 0/22px 22px,var(--k-gem) no-repeat 100% 0/22px 22px,var(--k-gem) no-repeat 0 100%/22px 22px,var(--k-gem) no-repeat 100% 100%/22px 22px,radial-gradient(ellipse at 50% 72%,#fff6c0 0 14%,#ffbc38 38%,#ff5a12 64%,transparent 72%) no-repeat 1px 42%/15px 30px,radial-gradient(ellipse at 50% 72%,#fff6c0 0 14%,#ffbc38 38%,#ff5a12 64%,transparent 72%) no-repeat calc(100% - 1px) 42%/15px 30px,radial-gradient(circle,rgba(255,140,40,.34),transparent 70%) no-repeat -16px 38%/56px 100px,radial-gradient(circle,rgba(255,140,40,.34),transparent 70%) no-repeat calc(100% + 16px) 38%/56px 100px!important}
 #game-dialog-title{margin-left:44px!important;background:linear-gradient(180deg,#5a3396,#2d1655) padding-box,var(--k-frame) border-box!important;border-width:3px;box-shadow:inset 0 0 0 1px #c9a24a,inset 0 1px 0 rgba(255,255,255,.25),0 3px 10px rgba(0,0,0,.6)}
+
+/* brilho metálico no título, pontas de gema na placa e botões com relevo */
+.k-ttl{background:linear-gradient(180deg,#ffffff 0%,#e9deff 45%,#a58ad6 100%);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;filter:drop-shadow(0 2px 0 #1a0a30) drop-shadow(0 0 8px rgba(190,130,255,.7))}
+#game-dialog-title{position:relative;text-shadow:none!important}
+#game-dialog-title::before,#game-dialog-title::after{content:"";position:absolute;top:50%;width:12px;height:12px;margin-top:-6px;transform:rotate(45deg);background:var(--k-gem);border:2px solid #c9a24a;box-shadow:0 0 8px rgba(170,100,255,.8)}
+#game-dialog-title::before{left:-8px}#game-dialog-title::after{right:-8px}
+.glass-panel .custom-scrollbar button{border-radius:12px!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.2),inset 0 -8px 14px rgba(0,0,0,.25),0 3px 0 rgba(0,0,0,.5)!important;text-shadow:0 1px 2px #000}
+.glass-panel .custom-scrollbar button[style*="border:1.5px solid rgba(255,255,255"]{border-color:#6d6788!important}
 </style>
 
 </head>
@@ -46391,7 +46399,7 @@ window.SkillTreeUI = SkillTreeUI;
 
              panel.innerHTML = `
                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
-                     <h2 id="game-dialog-title" style="font-size:20px;font-weight:bold;color:#e0b6ff;text-transform:uppercase;letter-spacing:0.1em;text-shadow:0 0 20px rgba(224,182,255,0.6)" class="font-headline-xl">${title}</h2>
+                     <h2 id="game-dialog-title" style="font-size:20px;font-weight:bold;color:#e0b6ff;text-transform:uppercase;letter-spacing:0.1em;text-shadow:0 0 20px rgba(224,182,255,0.6)" class="font-headline-xl"><span class="k-ttl">${title}</span></h2>
                      <button type="button" aria-label="${_L('a11y.closeDialog', 'Fechar diálogo')}" onclick="window.UIManager.closePanel()" style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:9999px;background:rgba(255,255,255,0.1);border:1.5px solid rgba(255,255,255,0.2);transition:transform 0.2s;cursor:pointer">
                          <span style="color:${COLORS.TEXT_DIM};font-size:24px">&times;</span>
                      </button>
