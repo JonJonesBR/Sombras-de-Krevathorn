@@ -2205,6 +2205,20 @@ let _frameStale = true;    // canvas precisa de um draw mesmo sem passo de simul
 let _autoResMin = 0.6;     // lowest internal resolution multiplier
 let _autoResStable = 0;    // consecutive healthy seconds before scaling back up
 let _perfSkipSample = false; // true depois de um bloco de FPS com menu aberto: o próximo bloco é descartado
+// EXPERIMENTO (?res=N): fixa a resolução interna do mundo acima (ou abaixo) de 1.
+// Sem o parâmetro nada muda: _resFixa fica false e o auto-res segue como sempre.
+let _resFixa = false;
+(function _lerResDaURL() {
+    try {
+        const m = /[?&]res=([^&]*)/.exec(location.search);
+        if (!m) return;
+        const v = parseFloat(decodeURIComponent(m[1]));
+        if (!Number.isFinite(v)) return;              // ?res=abc (ou vazio) → padrão
+        _autoResScale = Math.max(0.6, Math.min(3, v));
+        _resFixa = true;
+    } catch (e) {}
+})();
+
 // Logical -> physical scale for the MAIN canvas. The main canvas always runs
 // at full window resolution (so canvas text stays crisp even when auto-res
 // shrinks the world buffers); this maps logical coords (width/height) onto it.
@@ -2214,7 +2228,7 @@ let _cssScale = 1;
 // so you can eyeball joystick/HUD/FOV at the extremes without waiting for low FPS.
 // Usage: window._setResScale(0.6)  /  window._setResScale(1)
 window._setResScale = function(s) {
-    _autoResScale = Math.max(_autoResMin, Math.min(1, s));
+    _autoResScale = Math.max(_autoResMin, Math.min(_resFixa ? 3 : 1, s));
     if (typeof resize === 'function') resize();
     return _autoResScale;
 };
@@ -18650,7 +18664,9 @@ function draw() {
                     wctx.fillRect(0, 0, width, height);
                 }
                 ctx.save();
-                ctx.imageSmoothingEnabled = false;
+                // Buffer maior que o destino (res > _cssScale) precisa de filtro na redução;
+                // upscale (res <= 1) continua nearest, igual a hoje.
+                ctx.imageSmoothingEnabled = worldCanvas.width > canvas.width * 1.02;
                 ctx.drawImage(worldCanvas, 0, 0, width, height);
                 ctx.restore();
             }
@@ -19907,6 +19923,8 @@ function loop(timestamp) {
                 _autoQualityStep(fps);
                 // Two-tier drop: hard dips (fps < 40) jump a full tier (x0.75) so
                 // the game recovers fast on weak devices; mild dips crawl x0.9.
+                // Com ?res=N a resolução fica FIXA: nem cai nem sobe (o teste se perderia).
+                if (!_resFixa) {
                 if (fps < 40 && _autoResScale > _autoResMin) {
                     _autoResScale = Math.max(_autoResMin, Math.round((_autoResScale * 0.75) * 100) / 100);
                     _autoResStable = 0;
@@ -19923,6 +19941,7 @@ function loop(timestamp) {
                     }
                 } else if (fps < 57) {
                     _autoResStable = 0;
+                }
                 }
             }
         }
