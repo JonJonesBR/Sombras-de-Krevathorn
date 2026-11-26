@@ -783,6 +783,27 @@ body.reduce-motion.npc-dialog-open #top-bar, body.reduce-motion.npc-dialog-open 
 #game-dialog-title::before{left:-8px}#game-dialog-title::after{right:-8px}
 .glass-panel .custom-scrollbar button{border-radius:12px!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.2),inset 0 -8px 14px rgba(0,0,0,.25),0 3px 0 rgba(0,0,0,.5)!important;text-shadow:0 1px 2px #000}
 .glass-panel .custom-scrollbar button[style*="border:1.5px solid rgba(255,255,255"]{border-color:#6d6788!important}
+
+/* v2: menos brilho de interface, gemas com engaste, tochas com chama animada (só transform/opacity) */
+.glass-panel{background:radial-gradient(circle,#efdcff 0 10%,#a35cf0 28%,#4c1c92 50%,#c9a24a 54% 68%,#2c1f0c 72%,transparent 75%) no-repeat 3px 3px/20px 20px,radial-gradient(circle,#efdcff 0 10%,#a35cf0 28%,#4c1c92 50%,#c9a24a 54% 68%,#2c1f0c 72%,transparent 75%) no-repeat calc(100% - 3px) 3px/20px 20px,radial-gradient(circle,#efdcff 0 10%,#a35cf0 28%,#4c1c92 50%,#c9a24a 54% 68%,#2c1f0c 72%,transparent 75%) no-repeat 3px calc(100% - 3px)/20px 20px,radial-gradient(circle,#efdcff 0 10%,#a35cf0 28%,#4c1c92 50%,#c9a24a 54% 68%,#2c1f0c 72%,transparent 75%) no-repeat calc(100% - 3px) calc(100% - 3px)/20px 20px,radial-gradient(ellipse 60px 90px at 0 42%,rgba(255,140,40,.22),transparent 70%),radial-gradient(ellipse 60px 90px at 100% 42%,rgba(255,140,40,.22),transparent 70%),radial-gradient(120% 45% at 50% 0%,rgba(120,64,200,.18),transparent 62%),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' seed='7'/%3E%3CfeColorMatrix values='0 0 0 0 .75 0 0 0 0 .7 0 0 0 0 .8 0 0 0 .26 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E"),var(--k-stone) padding-box,var(--k-frame) border-box!important;box-shadow:inset 0 0 0 2px #b08c44,inset 0 0 0 4px rgba(0,0,0,.7),0 10px 36px rgba(0,0,0,.7)!important}
+.glass-panel::before,.glass-panel::after{content:"";position:absolute;inset:auto;top:40%;width:16px;height:38px;margin:0;border:0;border-radius:0;transform-origin:50% 68%;background:radial-gradient(ellipse 45% 38% at 50% 62%,#fff4c4 0 40%,transparent 100%) no-repeat 0 0/100% 70%,radial-gradient(ellipse 50% 46% at 50% 64%,#ffb53a 0 55%,transparent 100%) no-repeat 0 0/100% 70%,radial-gradient(ellipse 62% 55% at 50% 66%,#e8501a 0 60%,transparent 100%) no-repeat 0 0/100% 70%,linear-gradient(#8a6a34,#33250f) no-repeat 50% 100%/4px 30%,linear-gradient(#8a6a34,#33250f) no-repeat 50% 74%/11px 3px!important;filter:none!important;box-shadow:none!important;pointer-events:none;z-index:3;animation:kFlame 1.3s infinite steps(1,end)}
+.glass-panel::before{left:2px;right:auto;bottom:auto}
+.glass-panel::after{right:2px;left:auto;bottom:auto;animation-duration:1.7s;animation-delay:-.6s}
+@keyframes kFlame{0%{transform:scale(1,1);opacity:1}17%{transform:scale(.94,1.07) skewX(2deg);opacity:.9}34%{transform:scale(1.04,.95) skewX(-2deg);opacity:1}52%{transform:scale(.97,1.1) skewX(1deg);opacity:.86}71%{transform:scale(1.02,.97) skewX(-1deg);opacity:.97}86%{transform:scale(.95,1.04);opacity:.9}}
+body.reduce-motion .glass-panel::before,body.reduce-motion .glass-panel::after,body.gfx-low .glass-panel::before,body.gfx-low .glass-panel::after{animation:none}
+@media (prefers-reduced-motion:reduce){.glass-panel::before,.glass-panel::after{animation:none}}
+.k-ttl{filter:drop-shadow(0 2px 0 #1a0a30)}
+#start-screen h1{filter:drop-shadow(0 2px 0 #1c0b34) drop-shadow(0 0 10px rgba(150,90,230,.4))}
+#game-dialog-title{box-shadow:inset 0 0 0 1px #b08c44,0 3px 8px rgba(0,0,0,.6)}
+#game-dialog-title::before,#game-dialog-title::after{box-shadow:none}
+.panel-btn,.panel-btn.selected,.start-tile,.start-continue,#pause-resume,#pause-quit,#pause-settings,.glass-panel .custom-scrollbar button{box-shadow:0 3px 0 rgba(0,0,0,.55)!important}
+.glass-panel .custom-scrollbar [style*="border-radius:12px"],.glass-panel .custom-scrollbar [style*="border-radius:10px"],.glass-panel .custom-scrollbar [style*="border-radius:14px"],.glass-panel .custom-scrollbar [style*="border-radius:8px"]{background-image:none!important;box-shadow:inset 0 0 0 1px rgba(0,0,0,.5),0 2px 0 rgba(0,0,0,.45)!important}
+.start-card{box-shadow:inset 0 0 0 1px rgba(0,0,0,.6),0 6px 16px rgba(0,0,0,.5)}
+.start-card::before,.start-card::after{box-shadow:none}
+#tutorial-prompt>.glass-panel{padding:24px!important;max-width:340px!important}
+.k-x{position:absolute;top:26px;right:14px;width:40px;height:40px;align-items:center;justify-content:center;font-size:24px;line-height:1;color:#d9ccf0;cursor:pointer;touch-action:manipulation;border:2px solid transparent;border-radius:50%;background:linear-gradient(180deg,#3a2e4c,#1a1326) padding-box,var(--k-frame) border-box;box-shadow:0 2px 6px rgba(0,0,0,.6);z-index:5}
+.k-x:active{transform:scale(.92)}
+.k-x:focus-visible{outline:2px solid #c9a24a;outline-offset:2px}
 </style>
 
 </head>
@@ -1049,7 +1070,8 @@ body.reduce-motion.npc-dialog-open #top-bar, body.reduce-motion.npc-dialog-open 
     </div>
     <!-- TUTORIAL PROMPT (shown on first game start) -->
     <div id="tutorial-prompt" role="dialog" aria-modal="true" aria-labelledby="tutorial-prompt-title" style="display:none;position:fixed;inset:0;z-index:100;flex-direction:column;align-items:center;justify-content:center;background:rgba(4,2,8,0.85);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);padding:20px;">
-        <div style="background:rgba(22,17,32,0.98);border:1.5px solid rgba(224,182,255,0.3);border-radius:24px;padding:24px;max-width:340px;width:100%;box-shadow:0 10px 50px rgba(0,0,0,0.6);text-align:center;">
+        <div class="glass-panel" style="background:rgba(22,17,32,0.98);border:1.5px solid rgba(224,182,255,0.3);border-radius:24px;padding:24px;max-width:340px;width:100%;box-shadow:0 10px 50px rgba(0,0,0,0.6);text-align:center;position:relative;">
+            <button type="button" id="tutorial-close-btn" class="k-x" data-i18n-aria-label="a11y.closeDialog" aria-label="Fechar diálogo" style="display:none;" onclick="window._closeTutorialMenu()">&times;</button>
             <div style="font-size:1.2rem;font-weight:800;color:#e0b6ff;margin-bottom:6px;" data-i18n="tutorial.promptTitle">Tutorial</div>
             <h2 id="tutorial-prompt-title" style="font-size:1.5rem;font-weight:900;color:#f0e0ff;margin-bottom:10px;line-height:1.3;" data-i18n="tutorial.promptHeading">Aprenda a Jogar?</h2>
             <p style="font-size:0.85rem;color:rgba(255,255,255,0.6);margin-bottom:18px;line-height:1.5;" data-i18n="tutorial.promptText">
@@ -51434,7 +51456,21 @@ window._showTutorialMenu = function() {
     }
     if(quickBtn) quickBtn.onclick = () => _launchFromMenu('quick');
     if(fullBtn)  fullBtn.onclick  = () => _launchFromMenu('full');
+    const xBtn = document.getElementById('tutorial-close-btn');
+    if(xBtn) xBtn.style.display = 'flex';
     prompt.style.display = 'flex';
+};
+// Fecha o menu de tutorial aberto pela tela inicial e volta ao menu principal
+window._closeTutorialMenu = function() {
+    const prompt = document.getElementById('tutorial-prompt');
+    if(prompt) prompt.style.display = 'none';
+    const xBtn = document.getElementById('tutorial-close-btn');
+    if(xBtn) xBtn.style.display = 'none';
+    const picker = document.getElementById('tutorial-class-picker');
+    if(picker) picker.remove(); // recriado na próxima abertura, sem seleção antiga
+    if(window.TutorialSystem) TutorialSystem._pendingClass = null;
+    const startBtn = document.getElementById('tutorial-btn-start');
+    if(startBtn) startBtn.focus();
 };
 
 
