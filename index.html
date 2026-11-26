@@ -29756,9 +29756,12 @@ const WorldSprites = (() => {
     };
 
     // Rasterizador 3D de Sprite Stacking: empilha fatias 2D (z = 0..N-1) rotacionadas por angleDeg
-    // com achatamento oblíquo (squash), passo vertical (spacing), anti-subsampling (+0.45),
+    // com achatamento oblíquo (squash), passo vertical (spacing), subpassos de altura (anti-subsampling:
+    // substeps = max(2, ceil(spacing / squash)), z_eff = z + s/substeps), vinco por profundidade ('o.crease':
+    // pixel atrás de um vizinho mais próximo da câmera escurece um passo na rampa da paleta),
     // sombra de contato no chão ('_'), iluminação 3D em coordenadas de tela (fixedLight) e
     // Selective Outline + Rim Light ('K' no canto superior-esquerdo, 'k' nas demais bordas).
+    // Amostragem simétrica: empate de .5 arredonda para o lado do centro da fatia, então 0° e 180° batem.
     const stack = (key, slices, pal, angleDeg, opts) => {
         const o = opts || {};
         const haloColor = o.haloColor !== undefined ? o.haloColor : null;
@@ -29771,7 +29774,11 @@ const WorldSprites = (() => {
             const groundShadow = o.groundShadow !== false;
             const fixedLight = !!o.fixedLight;
             const autoShade = !!o.autoShade;
+            const crease = o.crease !== false;
+            const creaseDepth = o.creaseDepth !== undefined ? o.creaseDepth : 2.5;
             const H = slices[0].length, W = slices[0][0].length;
+            // Subpassos de altura: o passo vertical de cada fatia é coberto por substeps amostras
+            const substeps = Math.max(2, Math.ceil(spacing / Math.max(0.25, squash)));
             const diag = Math.ceil(Math.hypot(W, H)) + 4;
             const liftMax = Math.ceil((slices.length - 1) * spacing);
             const cw = diag + 6;
@@ -29779,11 +29786,20 @@ const WorldSprites = (() => {
             const cx = (cw - 1) * 0.5;
             const baseY = ch - Math.ceil(diag * squash * 0.5) - 4;
             const rad = (angleDeg || 0) * Math.PI / 180;
-            const ca = Math.cos(rad), sa = Math.sin(rad);
+            // Seno/cosseno zerados quando ~0 (sin(PI) != 0 exato) para não empurrar empates de arredondamento
+            const ca = Math.abs(Math.cos(rad)) < 1e-12 ? 0 : Math.cos(rad);
+            const sa = Math.abs(Math.sin(rad)) < 1e-12 ? 0 : Math.sin(rad);
             const out = Array.from({ length: ch }, () => new Array(cw).fill('.'));
             const zBuf = Array.from({ length: ch }, () => new Int16Array(cw).fill(-1));
             const hw = (W - 1) * 0.5, hh = (H - 1) * 0.5;
             const rHalf = Math.max(1, Math.min(hw, hh));
+            // Índice de amostra: round(v), mas empate de .5 vai para o lado do centro (c). Assim a
+            // reflexão em torno do centro é exata e a silhueta de 0° e 180° é a mesma em fatias simétricas.
+            const sIdx = (v, c) => {
+                const f = Math.floor(v), d = v - f;
+                if (Math.abs(d - 0.5) < 1e-9) return v < c ? f + 1 : f;
+                return Math.round(v);
+            };
 
             // Sombra projetada no chão (união de z = 0..1 deslocada +2 px em X e +2 px em Y como '_')
             if (groundShadow) {
@@ -29796,8 +29812,8 @@ const WorldSprites = (() => {
                         const rowOut = out[y];
                         for (let x = 2; x < cw; x++) {
                             const dx = (x - 2) - cx;
-                            const sx = Math.round(dx * ca + dy0 * sa + hw);
-                            const sy = Math.round(-dx * sa + dy0 * ca + hh);
+                            const sx = sIdx(dx * ca + dy0 * sa + hw, hw);
+                            const sy = sIdx(-dx * sa + dy0 * ca + hh, hh);
                             if (sx >= 0 && sx < W && sy >= 0 && sy < H && slice[sy][sx] !== '.') {
                                 rowOut[x] = '_';
                             }
@@ -29806,25 +29822,22 @@ const WorldSprites = (() => {
                 }
             }
 
-            // Empilhamento 3D das fatias com anti-subsampling (dy e dy + 0.45)
+            // Empilhamento 3D das fatias com subpassos de altura: z_eff = z + s/substeps (s = 0..substeps-1).
+            // Cada subpasso desloca a amostra em s*spacing/substeps px de tela; o primeiro que acerta a fatia vence.
             for (let z = 0; z < slices.length; z++) {
                 const slice = slices[z];
                 const liftY = Math.round(z * spacing);
                 const cy = baseY - liftY;
                 for (let y = 0; y < ch; y++) {
-                    const dy0 = (y - cy) / squash;
-                    const dy1 = (y - cy + 0.45) / squash;
                     const rowOut = out[y], rowZ = zBuf[y];
                     for (let x = 0; x < cw; x++) {
                         const dx = x - cx;
                         let c = '.';
-                        const sx0 = Math.round(dx * ca + dy0 * sa + hw);
-                        const sy0 = Math.round(-dx * sa + dy0 * ca + hh);
-                        if (sx0 >= 0 && sx0 < W && sy0 >= 0 && sy0 < H) c = slice[sy0][sx0];
-                        if (c === '.') {
-                            const sx1 = Math.round(dx * ca + dy1 * sa + hw);
-                            const sy1 = Math.round(-dx * sa + dy1 * ca + hh);
-                            if (sx1 >= 0 && sx1 < W && sy1 >= 0 && sy1 < H) c = slice[sy1][sx1];
+                        for (let s = 0; s < substeps && c === '.'; s++) {
+                            const dyS = (y - cy + s * spacing / substeps) / squash;
+                            const sx = sIdx(dx * ca + dyS * sa + hw, hw);
+                            const sy = sIdx(-dx * sa + dyS * ca + hh, hh);
+                            if (sx >= 0 && sx < W && sy >= 0 && sy < H) c = slice[sy][sx];
                         }
                         if (c !== '.') {
                             rowOut[x] = c;
@@ -29861,6 +29874,31 @@ const WorldSprites = (() => {
                             if (isTopExp && dx + dy < 0 && c === 'b' && pal.l) rowOut[x] = 'l';
                             else if (dx > 1.2 && c === 'l' && pal.b) rowOut[x] = 'b';
                         }
+                    }
+                }
+            }
+
+            // Vinco por profundidade: P = y + z*spacing (maior = mais perto da câmera: mais embaixo na tela e mais
+            // alto em z). Numa parede contínua P é constante ao longo do empilhamento, então só degraus de oclusão
+            // (tampa sobre corpo, braço sobre tronco) passam do limiar creaseDepth e escurecem um passo na rampa.
+            if (crease) {
+                const CREASE_RAMP = { w: 'l', l: 'b', b: 's', r: 's', s: 'd', d: 'd' };
+                for (let y = 0; y < ch; y++) {
+                    const rowOut = out[y], rowZ = zBuf[y];
+                    for (let x = 0; x < cw; x++) {
+                        const z = rowZ[x];
+                        if (z < 0) continue;
+                        const target = CREASE_RAMP[rowOut[x]];
+                        if (!target || !pal[target]) continue;
+                        const p = y + z * spacing;
+                        let behind = false;
+                        for (let k = 0; k < 4 && !behind; k++) {
+                            const nx = x + (k === 0 ? -1 : k === 1 ? 1 : 0), ny = y + (k === 2 ? -1 : k === 3 ? 1 : 0);
+                            if (nx < 0 || nx >= cw || ny < 0 || ny >= ch) continue;
+                            const zn = zBuf[ny][nx];
+                            if (zn >= 0 && ny + zn * spacing - p > creaseDepth) behind = true;
+                        }
+                        if (behind) rowOut[x] = target;
                     }
                 }
             }
