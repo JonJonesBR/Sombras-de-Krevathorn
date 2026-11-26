@@ -31344,11 +31344,91 @@ const MapTileArt = (() => {
             p: PixelFX.shade(c, 0.05), q: PixelFX.shade(c, -0.08), L: PixelFX.shade(c, 0.5)
         });
     };
+    // Pedra com matiz deslocado: sombras puxam para anil/violeta, luzes para creme/âmbar.
+    // Só para o bioma de pedra (kind 'stone'); cores não hex caem na paleta comum.
+    const mixHex = (a, b, t) => {
+        const A = parseInt(a.slice(1), 16), B = parseInt(b.slice(1), 16);
+        const ch = [16, 8, 0].map(s => {
+            const va = (A >> s) & 255, vb = (B >> s) & 255;
+            return Math.round(va + (vb - va) * t).toString(16).padStart(2, '0');
+        });
+        return '#' + ch.join('');
+    };
+    // Luminância de um hex (0..255): a pedra troca só o matiz, nunca o brilho da paleta comum
+    const lumOf = h => { const n = parseInt(h.slice(1), 16); return 0.299 * (n >> 16 & 255) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255); };
+    const lumMatch = (ref, h) => {
+        if (!/^#[0-9a-f]{6}$/i.test(ref)) return h;
+        const k = lumOf(ref) / Math.max(1, lumOf(h)), n = parseInt(h.slice(1), 16);
+        const ch = [16, 8, 0].map(s => Math.max(0, Math.min(255, Math.round(((n >> s) & 255) * k))).toString(16).padStart(2, '0'));
+        return '#' + ch.join('');
+    };
+    const palStoneCache = Object.create(null);
+    const palStone = c => {
+        if (!/^#[0-9a-f]{6}$/i.test(c)) return pal(c);
+        if (palStoneCache[c]) return palStoneCache[c];
+        const P0 = pal(c);
+        const m = (t, k, key) => lumMatch(P0[key], mixHex(c, t, k));
+        return (palStoneCache[c] = {
+            o: m('#141020', 0.72, 'o'), s: m('#1a1228', 0.4, 's'), b: c,
+            w: m('#f0d8a0', 0.16, 'w'), l: m('#e0c08a', 0.1, 'l'), j: m('#141020', 0.5, 'j'),
+            x: m('#141020', 0.55, 'x'), e: m('#1a1228', 0.4, 'e'), p: m('#5a5278', 0.12, 'p'), q: m('#2a2440', 0.14, 'q'),
+            L: m('#f4e2b4', 0.32, 'L'),
+            // Musgo dessaturado: 'M' verde-oliva escuro, 'm' um tom mais claro
+            M: '#3d4a2a', m: '#566b34', N: '#2c3f24'
+        });
+    };
+    // Hash determinístico (sem Math.random) para o musgo: depende só de v e coordenadas.
+    const mh = (a, b, c = 0) => {
+        let h = Math.imul(a + 1, 0x9E3779B1) ^ Math.imul(b + 7, 0x85EBCA77) ^ Math.imul(c + 13, 0xC2B2AE3D);
+        h ^= h >>> 15; h = Math.imul(h, 0x2C1B3C6D); h ^= h >>> 12;
+        return h >>> 0;
+    };
+    // Musgo em manchas: ~35% dos tiles; cada mancha nasce numa borda/canto e cresce por um passeio
+    // de 4-8 passos (carimbo 2x2 por passo). Só cobre juntas e faces de pedra (nunca contorno
+    // escuro nem lasca clara 'w'). Mancha com menos de 2 células em largura ou altura é descartada.
+    // Tile de luz (moss = false) fica limpo.
+    const mossify = (g, v, moss) => {
+        if (!moss || (mh(v, 101, 0) % 100) >= 35) return;
+        const EDGE = [0, 1, N - 2, N - 1], DX = [1, -1, 0, 0], DY = [0, 0, 1, -1];
+        const ok = c => c === 'j' || c === 'b' || c === 'l' || c === 'p' || c === 'q';
+        const seeds = 1 + (mh(v, 102, 0) & 1);
+        for (let s = 0; s < seeds; s++) {
+            const hs = mh(v, 110 + s, 1);
+            let x, y;
+            if (hs & 1) { x = EDGE[(hs >> 1) & 3]; y = (hs >>> 3) % N; }
+            else { y = EDGE[(hs >> 1) & 3]; x = (hs >>> 3) % N; }
+            x = Math.min(x, N - 2); y = Math.min(y, N - 2);
+            const len = 4 + (mh(v, 120 + s, 2) % 5);
+            const cells = new Set();
+            for (let st = 0; st < len; st++) {
+                for (let ay = 0; ay < 2; ay++) for (let ax = 0; ax < 2; ax++) {
+                    const cx = x + ax, cy = y + ay;
+                    if (ok(g[cy][cx])) cells.add(cy * N + cx);
+                }
+                const d = mh(v, x * 31 + y, st) & 3;
+                x = Math.max(0, Math.min(N - 2, x + DX[d]));
+                y = Math.max(0, Math.min(N - 2, y + DY[d]));
+            }
+            if (cells.size < 4) continue;
+            let x0 = N, x1 = -1, y0 = N, y1 = -1;
+            for (const k of cells) {
+                const cx = k % N, cy = (k - cx) / N;
+                x0 = Math.min(x0, cx); x1 = Math.max(x1, cx); y0 = Math.min(y0, cy); y1 = Math.max(y1, cy);
+            }
+            if (x1 - x0 < 1 || y1 - y0 < 1) continue; // nunca fio de 1 célula
+            for (const k of cells) {
+                const cx = k % N, cy = (k - cx) / N;
+                const inner = cx > 0 && cy > 0 && cx < N - 1 && cy < N - 1 &&
+                    cells.has(k - 1) && cells.has(k + 1) && cells.has(k - N) && cells.has(k + N);
+                g[cy][cx] = inner ? 'M' : 'm';
+            }
+        }
+    };
     const grid = () => Array.from({ length: N }, () => new Array(N).fill('.'));
     const toRows = g => g.map(r => r.join(''));
 
     // Parede por bioma: alvenaria (stone), copa orgânica/tronco (forest) ou basalto fraturado (lavaCave).
-    const wallRows = (mask, v, kind = 'stone') => {
+    const wallRows = (mask, v, kind = 'stone', moss = true) => {
         const g = grid();
         if (kind === 'forest') {
             // Copa orgânica com tufos de folhas e sombras de folhagem
@@ -31417,6 +31497,7 @@ const MapTileArt = (() => {
                 }
             }
         }
+        if (kind === 'stone') mossify(g, v, moss);
         if (mask & 4) for (let y = 0; y < N; y++) g[y][0] = 'x';
         if (mask & 8) for (let y = 0; y < N; y++) g[y][N - 1] = 'x';
         if (mask & 1) for (let x = 0; x < N; x++) g[0][x] = 'L'; // topo iluminado (chão ao norte)
@@ -31424,7 +31505,7 @@ const MapTileArt = (() => {
     };
 
     // Piso por bioma: lajes de pedra (stone), terra musgosa orgânica (forest) ou obsidiana rachada (lavaCave).
-    const floorRows = (mask, v, kind = 'stone') => {
+    const floorRows = (mask, v, kind = 'stone', moss = true) => {
         const g = grid();
         if (kind === 'forest') {
             // Solo musgoso com manchas orgânicas e pedrinhas esparsas (sem grade de tijolos)
@@ -31468,6 +31549,7 @@ const MapTileArt = (() => {
                 }
             }
         }
+        if (kind === 'stone') mossify(g, v, moss);
         if (mask & 1) {
             for (let x = 0; x < N; x++) {
                 g[0][x] = 'x';
@@ -31503,13 +31585,13 @@ const MapTileArt = (() => {
         return toRows(g);
     };
 
-    const wall = (color, mask, v, kind = 'stone') => {
+    const wall = (color, mask, v, kind = 'stone', moss = true) => {
         const key = 'tile|w|' + kind + '|' + color + '|' + mask + '|' + v;
-        return PixelFX.get(key) || PixelFX.bake(key, wallRows(mask, v, kind), pal(color), P);
+        return PixelFX.get(key) || PixelFX.bake(key, wallRows(mask, v, kind, moss), kind === 'stone' ? palStone(color) : pal(color), P);
     };
-    const floor = (color, mask, v, kind = 'stone') => {
-        const key = 'tile|f|' + kind + '|' + color + '|' + mask + '|' + v;
-        return PixelFX.get(key) || PixelFX.bake(key, floorRows(mask, v, kind), pal(color), P);
+    const floor = (color, mask, v, kind = 'stone', moss = true) => {
+        const key = 'tile|f|' + kind + '|' + color + '|' + mask + '|' + v + (moss ? '' : '|L');
+        return PixelFX.get(key) || PixelFX.bake(key, floorRows(mask, v, kind, moss), kind === 'stone' ? palStone(color) : pal(color), P);
     };
     const rock = (wallColor, floorColor) => {
         const key = 'tile|rock|' + wallColor + '|' + floorColor;
@@ -31525,6 +31607,7 @@ const MapTileArt = (() => {
         if (h1 % 100 >= 6) return;
         const ax = 4 + (h1 >> 3) % 6, ay = 2 + (h1 >> 6) % 6;
         for (const [dx, dy] of [[0, 0], [0, 1], [1, 1], [1, 2], [2, 2]]) cell(ctx, px, py, ax + dx, ay + dy, color, 'o');
+        cell(ctx, px, py, ax + 3, ay + 2, color, 'w'); // lasca clara de 1 px no fim da rachadura
     };
     const floorDetail = (ctx, color, px, py, h1) => {
         const m = h1 % 100;
@@ -32279,13 +32362,49 @@ class Map {
         if (window.GFX === undefined || window.GFX.glows !== false) {
             bctx.save();
             bctx.globalCompositeOperation = 'lighter';
-            for (let i = -9; i <= 9; i++) {
-                for (let j = -9; j <= 9; j++) {
-                    const d2 = i * i + j * j;
-                    if (d2 > 81) continue;
-                    if (d2 > 42 && ((i + j) & 1)) continue; // borda externa em xadrez
-                    bctx.fillStyle = pal.glow + (d2 <= 12 ? '0.11)' : (d2 <= 42 ? '0.075)' : '0.045)'));
-                    bctx.fillRect(px + (8 + i) * 3, py + (8 + j) * 3, 3, 3);
+            // Anéis escalonados (mais forte perto da tocha); borda externa com dither Bayer 4x4
+            const BAYER4 = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]];
+            if (b === 'dungeon') {
+                // Poça de tocha (masmorra): um gradiente radial baked no buffer (nada por quadro), raio 120 px,
+                // aditivo ('lighter'). Sem anel de dither nem borda em escada.
+                const cx = px + ts / 2, cy = py + ts / 2;
+                const grad = bctx.createRadialGradient(cx, cy, 0, cx, cy, 120);
+                grad.addColorStop(0.00, 'rgba(255,150,60,0.40)');
+                grad.addColorStop(0.30, 'rgba(255,128,40,0.22)');
+                grad.addColorStop(0.65, 'rgba(200,72,22,0.08)');
+                grad.addColorStop(1.00, 'rgba(200,72,22,0)');
+                bctx.globalCompositeOperation = 'lighter';
+                bctx.fillStyle = grad;
+                bctx.fillRect(cx - 120, cy - 120, 240, 240);
+                // Pedra aquecida: paredes a até 1,5 tiles recebem 40% de #d98a3a (mistura normal) e um
+                // passo de luminância na faixa da face voltada para a tocha (a que encosta no chão aceso)
+                const tiles = this.tiles;
+                bctx.globalCompositeOperation = 'source-over';
+                for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) {
+                    if (Math.hypot(dx, dy) > 1.5 || (dx === 0 && dy === 0)) continue;
+                    const tx = x + dx, ty = y + dy;
+                    if (!tiles || tx < 0 || ty < 0 || tx >= this.width || ty >= this.height) continue;
+                    if (!tiles[tx] || !tiles[tx][ty] || tiles[tx][ty].t !== 1) continue;
+                    const wx = px + dx * ts, wy = py + dy * ts;
+                    bctx.fillStyle = 'rgba(217,138,58,0.4)';
+                    bctx.fillRect(wx, wy, ts, ts);
+                    bctx.globalCompositeOperation = 'lighter';
+                    bctx.fillStyle = 'rgba(40,26,12,0.3)';
+                    if (Math.abs(dx) >= Math.abs(dy)) bctx.fillRect(dx > 0 ? wx : wx + ts - 12, wy, 12, ts);
+                    else bctx.fillRect(wx, dy > 0 ? wy : wy + ts - 12, ts, 12);
+                    bctx.globalCompositeOperation = 'source-over';
+                }
+                bctx.globalCompositeOperation = 'lighter';
+            } else {
+                for (let i = -9; i <= 9; i++) {
+                    for (let j = -9; j <= 9; j++) {
+                        const d2 = i * i + j * j;
+                        if (d2 > 81) continue;
+                        if (d2 > 42 && BAYER4[(j + 9) & 3][(i + 9) & 3] > 8) continue;
+                        const a = d2 <= 12 ? 0.11 : (d2 <= 42 ? 0.075 : 0.045);
+                        bctx.fillStyle = pal.glow + a.toFixed(3) + ')';
+                        bctx.fillRect(px + (8 + i) * 3, py + (8 + j) * 3, 3, 3);
+                    }
                 }
             }
             bctx.restore();
@@ -32554,7 +32673,7 @@ class Map {
                     const wW = x > 0 && this.tiles[x-1][y].t === 1;
                     const wE = x < this.width-1 && this.tiles[x+1][y].t === 1;
                     const fmask = (wN ? 1 : 0) | (wS ? 2 : 0) | (wW ? 4 : 0) | (wE ? 8 : 0);
-                    PixelFX.draw(bctx, MapTileArt.floor(floorColor, fmask, (h1 >> 4) & 7, biomeKind), px + ts/2, py + ts/2);
+                    PixelFX.draw(bctx, MapTileArt.floor(floorColor, fmask, (h1 >> 4) & 7, biomeKind, !this.tiles[x][y].lit), px + ts/2, py + ts/2);
                     MapTileArt.floorDetail(bctx, floorColor, px, py, h1);
 
                     const wNW = !wN && !wW && x > 0 && y > 0 && this.tiles[x-1][y-1].t === 1;
